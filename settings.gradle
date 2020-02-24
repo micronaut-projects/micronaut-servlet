@@ -1,0 +1,7 @@
+rootProject.name = 'servlet'
+
+include 'servlet-core'
+include 'servlet-engine'
+include 'http-server-jetty'
+include 'http-server-undertow'
+include 'http-server-tomcat'
