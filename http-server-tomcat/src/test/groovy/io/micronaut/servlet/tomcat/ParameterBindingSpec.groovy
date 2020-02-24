@@ -1,4 +1,4 @@
-package io.micronaut.servlet.jetty
+package io.micronaut.servlet.tomcat
 
 import io.micronaut.core.annotation.Introspected
 import io.micronaut.http.*
@@ -75,7 +75,6 @@ class ParameterBindingSpec  extends Specification {
         HttpMethod.GET  | '/parameter/exploded?title=The%20Stand&age=20'  | "Parameter Value: The Stand 20" | HttpStatus.OK
         HttpMethod.GET  | '/parameter/queryName/Fr%20ed'                  | "Parameter Value: Fr ed"    | HttpStatus.OK
         HttpMethod.POST | '/parameter/query?name=Fr%20ed'                 | "Parameter Value: Fr ed"    | HttpStatus.OK
-        HttpMethod.GET  | '/parameter/arrayStyle?param[]=a&param[]=b&param[]=c' | "Parameter Value: [a, b, c]"    | HttpStatus.OK
     }
 
     void "test list to single error"() {
@@ -234,4 +233,5 @@ class ParameterBindingSpec  extends Specification {
         }
     }
 }
+
 

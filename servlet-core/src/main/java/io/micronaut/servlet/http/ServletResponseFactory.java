@@ -70,7 +70,7 @@ public class ServletResponseFactory implements HttpResponseFactory {
         final HttpRequest<Object> req = ServerRequestContext.currentRequest().orElse(null);
         if (req instanceof ServletExchange) {
             final MutableHttpResponse response = ((ServletExchange) req).getResponse();
-            return response.body(body).status(status);
+            return response.status(status).body(body);
         } else {
             if (ALTERNATE != null) {
                 return ALTERNATE.status(status, body);

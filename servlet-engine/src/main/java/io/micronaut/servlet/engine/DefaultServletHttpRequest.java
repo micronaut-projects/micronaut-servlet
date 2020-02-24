@@ -1,6 +1,7 @@
 package io.micronaut.servlet.engine;
 
 import io.micronaut.core.convert.ArgumentConversionContext;
+import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.convert.value.ConvertibleValues;
 import io.micronaut.core.convert.value.MutableConvertibleValues;
@@ -402,7 +403,8 @@ public class DefaultServletHttpRequest<B> implements
         public <T> Optional<T> get(CharSequence name, ArgumentConversionContext<T> conversionContext) {
             final Argument<T> argument = conversionContext.getArgument();
             Class rawType = argument.getType();
-            if (rawType == Optional.class) {
+            final boolean isOptional = rawType == Optional.class;
+            if (isOptional) {
                 rawType = argument.getFirstTypeVariable().map(Argument::getType).orElse(rawType);
             }
             final boolean isIterable = Iterable.class.isAssignableFrom(rawType);
@@ -412,7 +414,13 @@ public class DefaultServletHttpRequest<B> implements
                 if (parameterValues.length == 1) {
                     return ConversionService.SHARED.convert(parameterValues[0], conversionContext);
                 } else {
-                    return ConversionService.SHARED.convert(parameterValues, conversionContext);
+                    if (isOptional) {
+                        return (Optional<T>) ConversionService.SHARED.convert(parameterValues, ConversionContext.of(
+                                argument.getFirstTypeVariable().orElse(argument)
+                        ));
+                    } else {
+                        return ConversionService.SHARED.convert(parameterValues, conversionContext);
+                    }
                 }
             } else {
                 final String v = get(name);
