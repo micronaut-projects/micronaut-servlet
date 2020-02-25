@@ -1,0 +1,11 @@
+dependencies {
+    annotationProcessor "io.micronaut:micronaut-inject-java"
+    api project(":servlet-engine")
+    api "io.micronaut:micronaut-http-server:$micronautVersion"
+
+    implementation 'io.undertow:undertow-servlet:2.0.1.Final'
+
+    testImplementation "io.micronaut:micronaut-inject-groovy"
+    testImplementation "io.micronaut:micronaut-http-client"
+    testImplementation "io.micronaut.test:micronaut-test-spock"
+}
