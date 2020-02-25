@@ -1,4 +1,4 @@
-package io.micronaut.servlet.tomcat
+package io.micronaut.servlet.undertow
 
 import io.micronaut.core.annotation.Introspected
 import io.micronaut.http.*
@@ -20,7 +20,7 @@ import javax.inject.Inject
  * Created by graemerocher on 25/08/2017.
  */
 @MicronautTest
-class ParameterBindingSpec  extends Specification {
+class UndertowParameterBindingSpec extends Specification {
 
     @Inject
     @Client("/")
@@ -233,5 +233,3 @@ class ParameterBindingSpec  extends Specification {
         }
     }
 }
-
-

@@ -20,7 +20,7 @@ import javax.inject.Inject
  * Created by graemerocher on 25/08/2017.
  */
 @MicronautTest
-class ParameterBindingSpec  extends Specification {
+class JettyParameterBindingSpec extends Specification {
 
     @Inject
     @Client("/")

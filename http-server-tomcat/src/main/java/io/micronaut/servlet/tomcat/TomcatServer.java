@@ -1,17 +1,12 @@
 package io.micronaut.servlet.tomcat;
 
 import io.micronaut.context.ApplicationContext;
-import io.micronaut.core.io.socket.SocketUtils;
-import io.micronaut.http.server.HttpServerConfiguration;
 import io.micronaut.http.server.exceptions.HttpServerException;
 import io.micronaut.http.server.exceptions.InternalServerException;
 import io.micronaut.http.server.exceptions.ServerStartupException;
 import io.micronaut.runtime.ApplicationConfiguration;
 import io.micronaut.runtime.server.EmbeddedServer;
-import io.micronaut.servlet.engine.DefaultMicronautServlet;
-import org.apache.catalina.Context;
 import org.apache.catalina.LifecycleException;
-import org.apache.catalina.connector.Connector;
 import org.apache.catalina.startup.Tomcat;
 
 import javax.inject.Singleton;
@@ -19,46 +14,35 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 
+/**
+ * Implementation of {@link EmbeddedServer} for Tomcat.
+ *
+ * @author graemerocher
+ * @since 1.0.0
+ */
 @Singleton
 public class TomcatServer implements EmbeddedServer {
 
     private final Tomcat tomcat;
     private final ApplicationContext applicationContext;
     private final ApplicationConfiguration applicationConfiguration;
-    private final Integer port;
-    private final String host;
 
+    /**
+     * Default constructor.
+     *
+     * @param applicationContext       The context
+     * @param applicationConfiguration The configuration
+     * @param tomcat                   The tomcat instance
+     */
     public TomcatServer(
             ApplicationContext applicationContext,
             ApplicationConfiguration applicationConfiguration,
-            HttpServerConfiguration configuration) {
+            Tomcat tomcat) {
         this.applicationContext = applicationContext;
         this.applicationConfiguration = applicationConfiguration;
-        this.tomcat = new Tomcat();
-        this.port = configuration.getPort().map( p ->
-            p == -1 ? SocketUtils.findAvailableTcpPort() : p
-        ).orElse(8080);
-        this.host = configuration.getHost().orElse("localhost");
-        final String contextPath = configuration.getContextPath();
-        this.tomcat.getHost().setAutoDeploy(false);
-        this.tomcat.setConnector(newConnector());
-        final Context context = tomcat.addContext(contextPath != null ? contextPath : "", "/");
-        Tomcat.addServlet(
-                context,
-                "micronaut",
-                DefaultMicronautServlet.class.getName()
-        ).addMapping("/*");
-
+        this.tomcat = tomcat;
     }
 
-    /**
-     * @return Create the protocol.
-     */
-    protected Connector newConnector() {
-        final Connector connector = new Connector("org.apache.coyote.http11.Http11NioProtocol");
-        connector.setPort(port);
-        return connector;
-    }
 
     @Override
     public EmbeddedServer start() {
@@ -93,7 +77,7 @@ public class TomcatServer implements EmbeddedServer {
 
     @Override
     public String getHost() {
-        return host;
+        return tomcat.getHost().getName();
     }
 
     @Override

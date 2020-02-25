@@ -30,36 +30,18 @@ public class JettyServer implements EmbeddedServer {
 
     /**
      * Default constructor.
-     * @param applicationContext The application context
+     *
+     * @param applicationContext       The application context
      * @param applicationConfiguration The application configuration
-     * @param configuration The server configuration
+     * @param server                   The jetty server
      */
     public JettyServer(
             ApplicationContext applicationContext,
             ApplicationConfiguration applicationConfiguration,
-            HttpServerConfiguration configuration) {
+            Server server) {
         this.applicationContext = applicationContext;
         this.applicationConfiguration = applicationConfiguration;
-        final String host = configuration.getHost().orElse(null);
-        final Integer port = configuration.getPort().orElse(8080);
-        if (host != null) {
-
-            server = new Server(
-                    new InetSocketAddress(
-                            host,
-                            port
-                    )
-            );
-        } else {
-            server = new Server(port);
-        }
-
-        final ServletHandler handler = new ServletHandler();
-        server.setHandler(handler);
-        handler.addServletWithMapping(
-                DefaultMicronautServlet.class,
-                "/*"
-        );
+        this.server = server;
     }
 
     /**

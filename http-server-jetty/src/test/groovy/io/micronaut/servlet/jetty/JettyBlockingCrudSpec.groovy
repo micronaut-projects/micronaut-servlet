@@ -13,7 +13,7 @@ import javax.inject.Inject
 import java.util.concurrent.atomic.AtomicLong
 
 @MicronautTest
-class BlockingCrudSpec extends Specification {
+class JettyBlockingCrudSpec extends Specification {
 
     @Inject
     ApplicationContext context
