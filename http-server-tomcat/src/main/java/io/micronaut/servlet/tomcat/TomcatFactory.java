@@ -24,9 +24,14 @@ public class TomcatFactory extends ServletServerFactory {
      */
     protected TomcatFactory(
             ResourceResolver resourceResolver,
-            HttpServerConfiguration serverConfiguration,
+            TomcatConfiguration serverConfiguration,
             SslConfiguration sslConfiguration) {
         super(resourceResolver, serverConfiguration, sslConfiguration);
+    }
+
+    @Override
+    public TomcatConfiguration getServerConfiguration() {
+        return (TomcatConfiguration) super.getServerConfiguration();
     }
 
     @Singleton
@@ -54,9 +59,9 @@ public class TomcatFactory extends ServletServerFactory {
     @Singleton
     @Primary
     protected Connector tomcatConnector() {
-        final Connector connector = new Connector("org.apache.coyote.http11.Http11NioProtocol");
-        connector.setPort(getConfiguredPort());
-        return connector;
+        final Connector tomcatConnector = getServerConfiguration().getTomcatConnector();
+        tomcatConnector.setPort(getConfiguredPort());
+        return tomcatConnector;
     }
 
 }
