@@ -86,11 +86,7 @@ public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpSe
         if (message == null) {
             return status(status);
         }
-        try {
-            delegate.sendError(status, message.toString());
-        } catch (IOException e) {
-            throw new InternalServerException("Error sending error code: " + e.getMessage(), e);
-        }
+        delegate.setStatus(status);
         return this;
     }
 

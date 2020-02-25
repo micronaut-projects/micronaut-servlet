@@ -24,6 +24,7 @@ import io.micronaut.http.filter.HttpFilter;
 import io.micronaut.http.filter.HttpServerFilter;
 import io.micronaut.http.filter.OncePerRequestHttpServerFilter;
 import io.micronaut.http.filter.ServerFilterChain;
+import io.micronaut.http.hateoas.JsonError;
 import io.micronaut.http.server.binding.RequestArgumentSatisfier;
 import io.micronaut.http.server.exceptions.ExceptionHandler;
 import io.micronaut.inject.qualifiers.Qualifiers;
@@ -336,8 +337,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable {
             });
             final MediaTypeCodec codec = ct != null ? mediaTypeCodecRegistry.findCodec(ct, body.getClass()).orElse(null) : null;
             if (codec != null) {
-                try {
-                    final OutputStream outputStream = exchange.getResponse().getOutputStream();
+                try (OutputStream outputStream = exchange.getResponse().getOutputStream()) {
                     codec.encode(body, outputStream);
                     outputStream.flush();
                 } catch (Throwable e) {
@@ -345,8 +345,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable {
                 }
             } else {
                 if (ct == null) {
-                    try {
-                        final BufferedWriter writer = exchange.getResponse().getWriter();
+                    try (BufferedWriter writer = exchange.getResponse().getWriter()) {
                         writer.write(body.toString());
                         writer.flush();
                     } catch (IOException e) {
@@ -360,7 +359,8 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable {
     }
 
     private void setHeadersFromMetadata(MutableHttpResponse<Object> res, AnnotationMetadata annotationMetadata, Object result) {
-        final String contentType = annotationMetadata.stringValue(Produces.class).orElse(result != null ? MediaType.APPLICATION_JSON : null);
+        final String contentType = annotationMetadata.stringValue(Produces.class)
+                .orElse(getDefaultMediaType(result));
         if (contentType != null) {
             res.contentType(contentType);
         }
@@ -375,6 +375,15 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable {
                 res.header(name, value);
             }
         }
+    }
+
+    private String getDefaultMediaType(Object result) {
+        if (result instanceof CharSequence) {
+            return MediaType.TEXT_PLAIN;
+        } if (result != null) {
+            return MediaType.APPLICATION_JSON;
+        }
+        return null;
     }
 
     private void handleException(HttpRequest<Object> req, MutableHttpResponse<Object> res, RouteMatch<?> route, boolean isErrorRoute, Throwable e, ServletExchange<Req, Res> exchange) {
@@ -396,12 +405,20 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable {
             } else if (e instanceof HttpStatusException) {
                 HttpStatusException statusException = (HttpStatusException) e;
                 final HttpStatus status = statusException.getStatus();
-                final RouteMatch<Object> statusRoute = status.getCode() >= 400 ? lookupStatusRoute(route, status) : null;
+                final int code = status.getCode();
+                final boolean isErrorStatus = code >= 400;
+                final RouteMatch<Object> statusRoute = isErrorStatus ? lookupStatusRoute(route, status) : null;
                 if (statusRoute != null) {
                     invokeRouteMatch(req, res, statusRoute, true, exchange);
                 } else {
-                    res.status(status.getCode(), statusException.getMessage());
-                    statusException.getBody().ifPresent(res::body);
+                    res.status(code, statusException.getMessage());
+                    final Object body = statusException.getBody().orElse(null);
+                    if (body != null) {
+                        res.body(body);
+                    } else if (isErrorStatus) {
+                        res.body(new JsonError(statusException.getMessage()));
+                    }
+                    encodeResponse(exchange, res);
                 }
 
             } else {
@@ -437,7 +454,10 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable {
                 res.status(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
             }
         } else {
-            res.status(defaultStatus, e.getMessage());
+            res.status(defaultStatus)
+                .body(new JsonError(e.getMessage()));
+
+            encodeResponse(exchange, res);
         }
     }
 

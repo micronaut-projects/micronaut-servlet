@@ -9,7 +9,8 @@ import io.micronaut.servlet.engine.DefaultMicronautServlet;
 import io.micronaut.servlet.engine.server.ServletServerFactory;
 import org.eclipse.jetty.http.HttpVersion;
 import org.eclipse.jetty.server.*;
-import org.eclipse.jetty.servlet.ServletHandler;
+import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 
 import javax.inject.Singleton;
@@ -41,21 +42,26 @@ public class JettyFactory extends ServletServerFactory {
 
     /**
      * Builds the Jetty server bean.
-     * @param handler The servlet handler
      * @return The Jetty server bean
      */
     @Singleton
     @Primary
-    protected Server jettyServer(ServletHandler handler) {
+    protected Server jettyServer() {
         final String host = getConfiguredHost();
         final Integer port = getConfiguredPort();
         Server server = new Server();
+        final ServletContextHandler handler = new ServletContextHandler(server, getContextPath(), false, false);
+        final ServletHolder servletHolder = handler.addServlet(
+                DefaultMicronautServlet.class,
+                "/"
+        );
+        servletHolder.setAsyncSupported(true);
+
+        jettyConfiguration.getMultipartConfiguration().ifPresent(multipartConfiguration ->
+                servletHolder.getRegistration().setMultipartConfig(multipartConfiguration)
+        );
 
         server.setHandler(handler);
-        handler.addServletWithMapping(
-                DefaultMicronautServlet.class,
-                "/*"
-        );
 
         final SslConfiguration sslConfiguration = getSslConfiguration();
         if (sslConfiguration.isEnabled()) {
@@ -93,12 +99,4 @@ public class JettyFactory extends ServletServerFactory {
         return server;
     }
 
-    /**
-     * @return The ServletHandler bean.
-     */
-    @Singleton
-    @Primary
-    protected ServletHandler servletHandler() {
-        return new ServletHandler();
-    }
 }

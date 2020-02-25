@@ -5,6 +5,7 @@ dependencies {
 
     implementation 'org.eclipse.jetty:jetty-servlet:9.4.26.v20200117'
 
+    testAnnotationProcessor "io.micronaut:micronaut-inject-java"
     testImplementation "io.micronaut:micronaut-inject-groovy"
     testImplementation "io.micronaut:micronaut-http-client"
     testImplementation "io.micronaut.test:micronaut-test-spock"
