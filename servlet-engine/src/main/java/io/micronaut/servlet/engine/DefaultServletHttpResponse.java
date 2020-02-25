@@ -208,7 +208,8 @@ public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpSe
                         return mediaType;
                     }
                 }
-                return null;
+                contentType(MediaType.APPLICATION_JSON_TYPE);
+                return MediaType.APPLICATION_JSON_TYPE;
             });
             final MediaTypeCodec codec = ct != null ? codecRegistry.findCodec(ct, body.getClass()).orElse(null) : null;
             if (codec != null) {

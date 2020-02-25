@@ -7,6 +7,7 @@ import io.micronaut.core.async.publisher.Publishers;
 import io.micronaut.core.convert.exceptions.ConversionErrorException;
 import io.micronaut.core.convert.value.ConvertibleValues;
 import io.micronaut.core.type.Argument;
+import io.micronaut.core.type.ReturnType;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.http.*;
 import io.micronaut.http.annotation.Header;
@@ -28,6 +29,7 @@ import io.micronaut.web.router.UriRoute;
 import io.micronaut.web.router.UriRouteMatch;
 import io.micronaut.web.router.exceptions.DuplicateRouteException;
 import io.micronaut.web.router.exceptions.UnsatisfiedRouteException;
+import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
@@ -210,25 +212,34 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable {
             }
             RouteMatch<?> finalRoute = route;
             final AnnotationMetadata annotationMetadata = finalRoute.getAnnotationMetadata();
+
             Publisher<? extends MutableHttpResponse<?>> responsePublisher
                     = Flowable.defer(() -> {
-                annotationMetadata.stringValue(Produces.class)
-                        .ifPresent(res::contentType);
-                annotationMetadata.enumValue(Status.class, HttpStatus.class)
-                        .ifPresent(s -> res.status(s));
-                final List<AnnotationValue<Header>> headers = annotationMetadata.getAnnotationValuesByType(Header.class);
-                for (AnnotationValue<Header> header : headers) {
-                    final String value = header.stringValue().orElse(null);
-                    final String name = header.stringValue("name").orElse(null);
-                    if (name != null && value != null) {
-                        res.header(name, value);
+
+                Object result = finalRoute.execute();
+                if (result instanceof Optional) {
+                    result = ((Optional) result).orElse(null);
+                }
+                if (result == null) {
+                    final ReturnType<?> returnType = finalRoute.getReturnType();
+                    final Argument<?> genericReturnType = returnType.asArgument();
+                    final Class<?> javaReturnType = returnType.getType();
+                    boolean isVoid = javaReturnType == void.class ||
+                            Completable.class.isAssignableFrom(javaReturnType) ||
+                            (genericReturnType.getFirstTypeVariable()
+                                    .map(arg -> arg.getType() == Void.class).orElse(false));
+                    if (isVoid) {
+                        setHeadersFromMetadata(res, annotationMetadata, result);
+                        return Publishers.just(res);
+                    } else {
+                        return Publishers.just(HttpResponse.notFound());
                     }
                 }
-                final Object result = finalRoute.execute();
-                if (result == null) {
-                    return Publishers.just(res);
-                }
-                if (Publishers.isConvertibleToPublisher(result)) {
+
+                setHeadersFromMetadata(res, annotationMetadata, result);
+
+                final boolean isReactiveReturnType = Publishers.isConvertibleToPublisher(result);
+                if (isReactiveReturnType) {
                     final Publisher<?> publisher;
                     if (!Publishers.isSingle(result.getClass())) {
                         final Flowable flowable = Publishers.convertPublisher(result, Flowable.class);
@@ -269,6 +280,24 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable {
                     }, error -> handleException(req, res, finalRoute, isErrorRoute, error));
         } catch (Throwable e) {
             handleException(req, res, route, isErrorRoute, e);
+        }
+    }
+
+    private void setHeadersFromMetadata(MutableHttpResponse<Object> res, AnnotationMetadata annotationMetadata, Object result) {
+        final String contentType = annotationMetadata.stringValue(Produces.class).orElse(result != null ? MediaType.APPLICATION_JSON : null);
+        if (contentType != null) {
+            res.contentType(contentType);
+        }
+
+        annotationMetadata.enumValue(Status.class, HttpStatus.class)
+                .ifPresent(s -> res.status(s));
+        final List<AnnotationValue<Header>> headers = annotationMetadata.getAnnotationValuesByType(Header.class);
+        for (AnnotationValue<Header> header : headers) {
+            final String value = header.stringValue().orElse(null);
+            final String name = header.stringValue("name").orElse(null);
+            if (name != null && value != null) {
+                res.header(name, value);
+            }
         }
     }
 
