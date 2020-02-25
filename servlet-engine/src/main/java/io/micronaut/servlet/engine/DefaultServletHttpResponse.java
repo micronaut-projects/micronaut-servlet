@@ -3,18 +3,13 @@ package io.micronaut.servlet.engine;
 import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.convert.value.MutableConvertibleValues;
-import io.micronaut.core.io.Writable;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.MutableHttpHeaders;
 import io.micronaut.http.MutableHttpResponse;
 import io.micronaut.http.annotation.Produces;
-import io.micronaut.http.codec.CodecException;
-import io.micronaut.http.codec.MediaTypeCodec;
-import io.micronaut.http.codec.MediaTypeCodecRegistry;
 import io.micronaut.http.cookie.Cookie;
-import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.http.server.exceptions.InternalServerException;
 import io.micronaut.servlet.http.ServletHttpResponse;
 
@@ -24,7 +19,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.PrintWriter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -33,17 +27,14 @@ public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpSe
     private final HttpServletResponse delegate;
     private final DefaultServletHttpRequest<?> request;
     private final ServletResponseHeaders headers;
-    private final MediaTypeCodecRegistry codecRegistry;
     private B body;
 
     public DefaultServletHttpResponse(
             DefaultServletHttpRequest request,
-            HttpServletResponse delegate,
-            MediaTypeCodecRegistry codecRegistry) {
+            HttpServletResponse delegate) {
         this.delegate = delegate;
         this.request = request;
         this.headers = new ServletResponseHeaders();
-        this.codecRegistry = codecRegistry;
     }
 
 
@@ -175,30 +166,8 @@ public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpSe
             if (!getContentType().isPresent()) {
                 contentType(MediaType.TEXT_PLAIN_TYPE);
             }
-            try {
-                final PrintWriter writer = delegate.getWriter();
-                writer.write(body.toString());
-                writer.flush();
-            } catch (IOException e) {
-                throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-            }
-        } else if (body instanceof byte[]) {
-            try (OutputStream outputStream = delegate.getOutputStream()) {
-                outputStream.write((byte[]) body);
-                outputStream.flush();
-            } catch (IOException e) {
-                throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-            }
-        } else if (body instanceof Writable) {
-            Writable writable = (Writable) body;
-            try (OutputStream outputStream = delegate.getOutputStream()) {
-                writable.writeTo(outputStream, getCharacterEncoding());
-                outputStream.flush();
-            } catch (IOException e) {
-                throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-            }
         } else if (body != null) {
-            final MediaType ct = getContentType().orElseGet(() -> {
+            getContentType().orElseGet(() -> {
                 final Produces ann = body.getClass().getAnnotation(Produces.class);
                 if (ann != null) {
                     final String[] v = ann.value();
@@ -211,28 +180,6 @@ public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpSe
                 contentType(MediaType.APPLICATION_JSON_TYPE);
                 return MediaType.APPLICATION_JSON_TYPE;
             });
-            final MediaTypeCodec codec = ct != null ? codecRegistry.findCodec(ct, body.getClass()).orElse(null) : null;
-            if (codec != null) {
-                try {
-                    final OutputStream outputStream = delegate.getOutputStream();
-                    codec.encode(body, outputStream);
-                    outputStream.flush();
-                } catch (Throwable e) {
-                    throw new CodecException("Failed to encode object [" + body + "] to content type [" + ct + "]: " + e.getMessage(), e);
-                }
-            } else {
-                if (ct == null) {
-                    try {
-                        final PrintWriter writer = delegate.getWriter();
-                        writer.write(body.toString());
-                        writer.flush();
-                    } catch (IOException e) {
-                        throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-                    }
-                } else {
-                    throw new CodecException("No codec present capable of encoding object [" + body + "] to content type [" + ct + "]");
-                }
-            }
         }
         this.body = body;
         return this;

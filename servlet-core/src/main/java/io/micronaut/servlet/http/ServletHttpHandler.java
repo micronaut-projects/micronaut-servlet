@@ -6,13 +6,17 @@ import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.async.publisher.Publishers;
 import io.micronaut.core.convert.exceptions.ConversionErrorException;
 import io.micronaut.core.convert.value.ConvertibleValues;
+import io.micronaut.core.io.Writable;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.type.ReturnType;
+import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.http.*;
 import io.micronaut.http.annotation.Header;
 import io.micronaut.http.annotation.Produces;
 import io.micronaut.http.annotation.Status;
+import io.micronaut.http.codec.CodecException;
+import io.micronaut.http.codec.MediaTypeCodec;
 import io.micronaut.http.codec.MediaTypeCodecRegistry;
 import io.micronaut.http.context.ServerRequestContext;
 import io.micronaut.http.exceptions.HttpStatusException;
@@ -35,6 +39,9 @@ import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -129,7 +136,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable {
                     LOG.debug("Matched route {} - {} to controller {}", req.getMethodName(), req.getPath(), route.getDeclaringType());
                 }
 
-                invokeRouteMatch(req, res, route, false);
+                invokeRouteMatch(req, res, route, false, exchange);
 
             } else {
                 Set<String> existingRouteMethods = router
@@ -143,7 +150,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable {
                             router.route(HttpStatus.METHOD_NOT_ALLOWED).orElse(null);
 
                     if (notAllowedRoute != null) {
-                        invokeRouteMatch(req, res, notAllowedRoute, true);
+                        invokeRouteMatch(req, res, notAllowedRoute, true, exchange);
                     } else {
                         res.getHeaders().allowGeneric(existingRouteMethods);
                         res.status(HttpStatus.METHOD_NOT_ALLOWED);
@@ -153,7 +160,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable {
                             router.route(HttpStatus.NOT_FOUND).orElse(null);
 
                     if (notFoundRoute != null) {
-                        invokeRouteMatch(req, res, notFoundRoute, true);
+                        invokeRouteMatch(req, res, notFoundRoute, true, exchange);
                     } else {
                         res.status(HttpStatus.NOT_FOUND);
                     }
@@ -184,7 +191,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable {
             HttpRequest<Object> req,
             MutableHttpResponse<Object> res,
             RouteMatch<?> route,
-            boolean isErrorRoute) {
+            boolean isErrorRoute, ServletExchange<Req, Res> exchange) {
 
         try {
             if (!route.isExecutable()) {
@@ -274,12 +281,81 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable {
                         if (!isErrorRoute && status.getCode() >= 400) {
                             final RouteMatch<Object> errorRoute = lookupStatusRoute(finalRoute, status);
                             if (errorRoute != null) {
-                                invokeRouteMatch(req, res, errorRoute, true);
+                                invokeRouteMatch(req, res, errorRoute, true, exchange);
                             }
+                        } else {
+                            encodeResponse(exchange, response);
                         }
-                    }, error -> handleException(req, res, finalRoute, isErrorRoute, error));
+                    }, error -> handleException(req, res, finalRoute, isErrorRoute, error, exchange));
         } catch (Throwable e) {
-            handleException(req, res, route, isErrorRoute, e);
+            handleException(req, res, route, isErrorRoute, e, exchange);
+        }
+    }
+
+    private void encodeResponse(ServletExchange<Req, Res> exchange, MutableHttpResponse<?> response) {
+        final Object body = response.getBody().orElse(null);
+        if (body instanceof CharSequence) {
+            if (!response.getContentType().isPresent()) {
+                response.contentType(MediaType.TEXT_PLAIN_TYPE);
+            }
+            try {
+                final BufferedWriter writer = exchange.getResponse().getWriter();
+                writer.write(body.toString());
+                writer.flush();
+            } catch (IOException e) {
+                throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+            }
+        } else if (body instanceof byte[]) {
+            try (OutputStream outputStream = exchange.getResponse().getOutputStream()) {
+                outputStream.write((byte[]) body);
+                outputStream.flush();
+            } catch (IOException e) {
+                throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+            }
+        } else if (body instanceof Writable) {
+            Writable writable = (Writable) body;
+            try (OutputStream outputStream = exchange.getResponse().getOutputStream()) {
+                writable.writeTo(outputStream, response.getCharacterEncoding());
+                outputStream.flush();
+            } catch (IOException e) {
+                throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+            }
+        } else if (body != null) {
+            final MediaType ct = response.getContentType().orElseGet(() -> {
+                final Produces ann = body.getClass().getAnnotation(Produces.class);
+                if (ann != null) {
+                    final String[] v = ann.value();
+                    if (ArrayUtils.isNotEmpty(v)) {
+                        final MediaType mediaType = new MediaType(v[0]);
+                        response.contentType(mediaType);
+                        return mediaType;
+                    }
+                }
+                response.contentType(MediaType.APPLICATION_JSON_TYPE);
+                return MediaType.APPLICATION_JSON_TYPE;
+            });
+            final MediaTypeCodec codec = ct != null ? mediaTypeCodecRegistry.findCodec(ct, body.getClass()).orElse(null) : null;
+            if (codec != null) {
+                try {
+                    final OutputStream outputStream = exchange.getResponse().getOutputStream();
+                    codec.encode(body, outputStream);
+                    outputStream.flush();
+                } catch (Throwable e) {
+                    throw new CodecException("Failed to encode object [" + body + "] to content type [" + ct + "]: " + e.getMessage(), e);
+                }
+            } else {
+                if (ct == null) {
+                    try {
+                        final BufferedWriter writer = exchange.getResponse().getWriter();
+                        writer.write(body.toString());
+                        writer.flush();
+                    } catch (IOException e) {
+                        throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+                    }
+                } else {
+                    throw new CodecException("No codec present capable of encoding object [" + body + "] to content type [" + ct + "]");
+                }
+            }
         }
     }
 
@@ -301,7 +377,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable {
         }
     }
 
-    private void handleException(HttpRequest<Object> req, MutableHttpResponse<Object> res, RouteMatch<?> route, boolean isErrorRoute, Throwable e) {
+    private void handleException(HttpRequest<Object> req, MutableHttpResponse<Object> res, RouteMatch<?> route, boolean isErrorRoute, Throwable e, ServletExchange<Req, Res> exchange) {
         req.setAttribute(HttpAttributes.ERROR, e);
         if (isErrorRoute) {
             // handle error default
@@ -313,16 +389,16 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable {
             if (e instanceof UnsatisfiedRouteException || e instanceof ConversionErrorException) {
                 final RouteMatch<Object> badRequestRoute = lookupStatusRoute(route, HttpStatus.BAD_REQUEST);
                 if (badRequestRoute != null) {
-                    invokeRouteMatch(req, res, badRequestRoute, true);
+                    invokeRouteMatch(req, res, badRequestRoute, true, exchange);
                 } else {
-                    invokeExceptionHandlerIfPossible(req, res, e, HttpStatus.BAD_REQUEST);
+                    invokeExceptionHandlerIfPossible(req, res, e, HttpStatus.BAD_REQUEST, exchange);
                 }
             } else if (e instanceof HttpStatusException) {
                 HttpStatusException statusException = (HttpStatusException) e;
                 final HttpStatus status = statusException.getStatus();
                 final RouteMatch<Object> statusRoute = status.getCode() >= 400 ? lookupStatusRoute(route, status) : null;
                 if (statusRoute != null) {
-                    invokeRouteMatch(req, res, statusRoute, true);
+                    invokeRouteMatch(req, res, statusRoute, true, exchange);
                 } else {
                     res.status(status.getCode(), statusException.getMessage());
                     statusException.getBody().ifPresent(res::body);
@@ -332,20 +408,27 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable {
 
                 final RouteMatch<Object> errorRoute = lookupErrorRoute(route, e);
                 if (errorRoute != null) {
-                    invokeRouteMatch(req, res, errorRoute, true);
+                    invokeRouteMatch(req, res, errorRoute, true, exchange);
                 } else {
-                    invokeExceptionHandlerIfPossible(req, res, e, HttpStatus.INTERNAL_SERVER_ERROR);
+                    invokeExceptionHandlerIfPossible(req, res, e, HttpStatus.INTERNAL_SERVER_ERROR, exchange);
                 }
             }
         }
     }
 
-    private void invokeExceptionHandlerIfPossible(HttpRequest<Object> req, MutableHttpResponse<Object> res, Throwable e, HttpStatus defaultStatus) {
+    private void invokeExceptionHandlerIfPossible(HttpRequest<Object> req, MutableHttpResponse<Object> res, Throwable e, HttpStatus defaultStatus, ServletExchange<Req, Res> exchange) {
         final ExceptionHandler<Throwable, ?> exceptionHandler = lookupExceptionHandler(e);
         if (exceptionHandler != null) {
             try {
                 ServerRequestContext.with(req, () -> {
-                    exceptionHandler.handle(req, e);
+                    final Object result = exceptionHandler.handle(req, e);
+                    if (result instanceof MutableHttpResponse) {
+                        encodeResponse(exchange, (MutableHttpResponse<?>) result);
+                    } else if (result != null){
+                        final MutableHttpResponse<? super Object> response =
+                                exchange.getResponse().status(defaultStatus).body(result);
+                        encodeResponse(exchange, response);
+                    }
                 });
             } catch (Throwable ex) {
                 if (LOG.isErrorEnabled()) {

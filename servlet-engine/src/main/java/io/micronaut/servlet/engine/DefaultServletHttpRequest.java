@@ -72,8 +72,7 @@ public class DefaultServletHttpRequest<B> implements
         this.parameters = new ServletParameters();
         this.response = new DefaultServletHttpResponse<>(
                 this,
-                response,
-                codecRegistry
+                response
         );
     }
 
