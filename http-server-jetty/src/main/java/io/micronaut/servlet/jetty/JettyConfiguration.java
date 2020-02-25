@@ -14,27 +14,13 @@ import org.eclipse.jetty.server.HttpConfiguration;
 @ConfigurationProperties("jetty")
 public class JettyConfiguration extends HttpServerConfiguration {
 
-    @ConfigurationBuilder("http")
+    @ConfigurationBuilder
     protected HttpConfiguration httpConfiguration = new HttpConfiguration();
-
-    @ConfigurationBuilder("https")
-    protected HttpConfiguration httpsConfiguration = new HttpConfiguration();
-
-    public JettyConfiguration() {
-        httpsConfiguration.setSecureScheme("https");
-    }
 
     /**
      * @return The HTTP configuration instance
      */
     public HttpConfiguration getHttpConfiguration() {
         return httpConfiguration;
-    }
-
-    /**
-     * @return The HTTPS configuration
-     */
-    public HttpConfiguration getHttpsConfiguration() {
-        return httpsConfiguration;
     }
 }
