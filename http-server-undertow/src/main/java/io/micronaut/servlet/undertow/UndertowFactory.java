@@ -91,13 +91,15 @@ public class UndertowFactory extends ServletServerFactory {
     protected DeploymentInfo deploymentInfo(Environment environment) {
         final String cp = getContextPath();
 
-        return Servlets.deployment()
-                    .setDeploymentName(Environment.MICRONAUT)
-                    .setClassLoader(environment.getClassLoader())
-                    .setContextPath(cp)
-                    .addServlet(Servlets.servlet(
-                            DefaultMicronautServlet.class
-                    ).addMapping("/*"));
+        final DeploymentInfo deploymentInfo = Servlets.deployment()
+                .setDeploymentName(Environment.MICRONAUT)
+                .setClassLoader(environment.getClassLoader())
+                .setContextPath(cp)
+                .addServlet(Servlets.servlet(
+                        DefaultMicronautServlet.class
+                ).addMapping("/*"));
+        configuration.getMultipartConfiguration().ifPresent(deploymentInfo::setDefaultMultipartConfig);
+        return deploymentInfo;
     }
 
 }
