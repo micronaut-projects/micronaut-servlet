@@ -32,18 +32,26 @@ public class UndertowFactory extends ServletServerFactory {
 
     /**
      * Default constructor.
-     * @param resourceResolver The resource resolver
-     * @param configuration The configuration
-     * @param sslConfiguration The SSL configuration
+     *
+     * @param resourceResolver   The resource resolver
+     * @param configuration      The configuration
+     * @param sslConfiguration   The SSL configuration
+     * @param applicationContext The app context
      */
     public UndertowFactory(
             ResourceResolver resourceResolver,
             UndertowConfiguration configuration,
-            SslConfiguration sslConfiguration) {
-        super(resourceResolver, configuration, sslConfiguration);
+            SslConfiguration sslConfiguration,
+            ApplicationContext applicationContext) {
+        super(resourceResolver, configuration, sslConfiguration, applicationContext);
         this.configuration = configuration;
     }
 
+    /**
+     * The undertow builder bean.
+     * @param deploymentInfo The deployment info
+     * @return The builder
+     */
     @Singleton
     @Primary
     protected Undertow.Builder undertowBuilder(DeploymentInfo deploymentInfo) {
@@ -51,8 +59,8 @@ public class UndertowFactory extends ServletServerFactory {
         int port = getConfiguredPort();
         String host = getConfiguredHost();
         builder.addHttpListener(
-            port,
-            host
+                port,
+                host
         );
 
         final String cp = getContextPath();
@@ -81,15 +89,24 @@ public class UndertowFactory extends ServletServerFactory {
         return builder;
     }
 
+    /**
+     * The undertow bean.
+     * @param builder The builder
+     * @return The undertow bean
+     */
     @Singleton
     @Primary
     protected Undertow undertowServer(Undertow.Builder builder) {
         return builder.build();
     }
 
+    /**
+     * The deployment info bean.
+     * @return The deployment info
+     */
     @Singleton
     @Primary
-    protected DeploymentInfo deploymentInfo(ApplicationContext applicationContext) {
+    protected DeploymentInfo deploymentInfo() {
         final String cp = getContextPath();
 
         ServletInfo servletInfo = Servlets.servlet(
@@ -99,7 +116,7 @@ public class UndertowFactory extends ServletServerFactory {
 
                     @Override
                     public Servlet getInstance() {
-                        instance = new DefaultMicronautServlet(applicationContext);
+                        instance = new DefaultMicronautServlet(getApplicationContext());
                         return instance;
                     }
 
@@ -114,7 +131,7 @@ public class UndertowFactory extends ServletServerFactory {
         servletInfo.setAsyncSupported(true);
         final DeploymentInfo deploymentInfo = Servlets.deployment()
                 .setDeploymentName(Environment.MICRONAUT)
-                .setClassLoader(applicationContext.getEnvironment().getClassLoader())
+                .setClassLoader(getEnvironment().getClassLoader())
                 .setContextPath(cp)
                 .addServlet(servletInfo.addMapping("/*"));
         configuration.getMultipartConfiguration().ifPresent(deploymentInfo::setDefaultMultipartConfig);

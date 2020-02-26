@@ -9,6 +9,13 @@ import io.micronaut.servlet.http.ServletExchange;
 import javax.servlet.http.HttpServletResponse;
 import java.util.Optional;
 
+/**
+ * A binder capable of binding the servlet response.
+ *
+ * @author graemerocher
+ * @since 1.0.0
+ *
+ */
 public class ServletResponseBinder implements TypedRequestArgumentBinder<HttpServletResponse> {
 
     public static final Argument<HttpServletResponse> TYPE = Argument.of(HttpServletResponse.class);

@@ -29,20 +29,24 @@ public class JettyFactory extends ServletServerFactory {
 
     /**
      * Default constructor.
-     * @param resourceResolver The resource resolver
+     *
+     * @param resourceResolver    The resource resolver
      * @param serverConfiguration The server config
-     * @param sslConfiguration The SSL config
+     * @param sslConfiguration    The SSL config
+     * @param applicationContext  The app context
      */
     public JettyFactory(
             ResourceResolver resourceResolver,
             JettyConfiguration serverConfiguration,
-            SslConfiguration sslConfiguration) {
-        super(resourceResolver, serverConfiguration, sslConfiguration);
+            SslConfiguration sslConfiguration,
+            ApplicationContext applicationContext) {
+        super(resourceResolver, serverConfiguration, sslConfiguration, applicationContext);
         this.jettyConfiguration = serverConfiguration;
     }
 
     /**
      * Builds the Jetty server bean.
+     *
      * @param applicationContext This application context
      * @return The Jetty server bean
      */
@@ -75,7 +79,7 @@ public class JettyFactory extends ServletServerFactory {
             SslContextFactory sslContextFactory = new SslContextFactory.Server();
             final SslConfiguration.KeyStoreConfiguration keyStoreConfig = sslConfiguration.getKeyStore();
             sslContextFactory.setKeyStorePath(keyStoreConfig.getPath()
-                .orElseThrow(() -> new HttpServerException("Invalid SSL configuration: Missing key store path")));
+                    .orElseThrow(() -> new HttpServerException("Invalid SSL configuration: Missing key store path")));
             sslContextFactory.setKeyStorePassword(keyStoreConfig.getPassword()
                     .orElseThrow(() -> new HttpServerException("Invalid SSL configuration: Missing key store password")));
             sslContextFactory.setKeyManagerPassword(sslConfiguration.getKey().getPassword().orElseThrow(() -> new HttpServerException("Invalid SSL configuration: Missing key manager password")));

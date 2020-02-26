@@ -3,7 +3,6 @@ package io.micronaut.servlet.jetty;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.http.server.exceptions.HttpServerException;
 import io.micronaut.runtime.ApplicationConfiguration;
-import io.micronaut.runtime.server.EmbeddedServer;
 import io.micronaut.servlet.engine.server.AbstractServletServer;
 import org.eclipse.jetty.server.Server;
 
@@ -13,7 +12,7 @@ import java.net.URI;
 import java.net.URL;
 
 /**
- * An implementation of the {@link EmbeddedServer} interface for Jetty.
+ * An implementation of the {@link io.micronaut.runtime.server.EmbeddedServer} interface for Jetty.
  *
  * @author graemerocher
  * @since 1.0

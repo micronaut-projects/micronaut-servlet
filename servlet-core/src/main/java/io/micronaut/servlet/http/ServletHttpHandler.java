@@ -36,7 +36,6 @@ import io.micronaut.web.router.exceptions.DuplicateRouteException;
 import io.micronaut.web.router.exceptions.UnsatisfiedRouteException;
 import io.reactivex.Completable;
 import io.reactivex.Flowable;
-import io.reactivex.functions.Function;
 import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -189,6 +188,15 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable {
             applicationContext.close();
         }
     }
+
+    /**
+     * Creates the {@link DefaultServletExchange} object.
+     *
+     * @param request  The request
+     * @param response The response
+     * @return The exchange object
+     */
+    protected abstract ServletExchange<Req, Res> createExchange(Req request, Res response);
 
     private void invokeRouteMatch(
             HttpRequest<Object> req,
@@ -415,7 +423,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable {
     private String getDefaultMediaType(Object result) {
         if (result instanceof CharSequence) {
             return MediaType.TEXT_PLAIN;
-        } if (result != null) {
+        } else if (result != null) {
             return MediaType.APPLICATION_JSON;
         }
         return null;
@@ -482,7 +490,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable {
                     final Object result = exceptionHandler.handle(req, e);
                     if (result instanceof MutableHttpResponse) {
                         encodeResponse(exchange, (MutableHttpResponse<?>) result);
-                    } else if (result != null){
+                    } else if (result != null) {
                         final MutableHttpResponse<? super Object> response =
                                 exchange.getResponse().status(defaultStatus).body(result);
                         encodeResponse(exchange, response);
@@ -508,15 +516,6 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable {
         return applicationContext.findBean(ExceptionHandler.class, Qualifiers.byTypeArgumentsClosest(type, HttpResponse.class))
                 .orElse(null);
     }
-
-    /**
-     * Creates the {@link DefaultServletExchange} object.
-     *
-     * @param request  The request
-     * @param response The response
-     * @return The exchange object
-     */
-    protected abstract ServletExchange<Req, Res> createExchange(Req request, Res response);
 
     private RouteMatch<Object> lookupErrorRoute(RouteMatch<?> route, Throwable e) {
         return router.route(route.getDeclaringType(), e)

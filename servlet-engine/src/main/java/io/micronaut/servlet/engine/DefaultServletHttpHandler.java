@@ -8,6 +8,12 @@ import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+/**
+ * Default implementation of {@link ServletHttpHandler} for the Servlet API.
+ *
+ * @author graemerocher
+ * @since 1.0.0
+ */
 @Singleton
 public class DefaultServletHttpHandler extends ServletHttpHandler<HttpServletRequest, HttpServletResponse> {
     /**

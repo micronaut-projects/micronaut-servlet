@@ -101,9 +101,19 @@ public class TomcatConfiguration extends HttpServerConfiguration {
         return Optional.ofNullable(multipartConfiguration);
     }
 
+    /**
+     * The multipart configuration.
+     */
     @ConfigurationProperties("multipart")
     public static class MultipartConfiguration extends MultipartConfigElement {
 
+        /**
+         * Default constructor.
+         * @param location The location
+         * @param maxFileSize The file size
+         * @param maxRequestSize The max request size
+         * @param fileSizeThreshold The threshold
+         */
         @ConfigurationInject
         public MultipartConfiguration(
                 @Nullable String location,

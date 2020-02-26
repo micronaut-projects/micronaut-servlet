@@ -3,7 +3,6 @@ package io.micronaut.servlet.tomcat;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.http.server.exceptions.InternalServerException;
 import io.micronaut.runtime.ApplicationConfiguration;
-import io.micronaut.runtime.server.EmbeddedServer;
 import io.micronaut.servlet.engine.server.AbstractServletServer;
 import org.apache.catalina.startup.Tomcat;
 
@@ -14,7 +13,7 @@ import java.net.URL;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Implementation of {@link EmbeddedServer} for Tomcat.
+ * Implementation of {@link io.micronaut.runtime.server.EmbeddedServer} for Tomcat.
  *
  * @author graemerocher
  * @since 1.0.0

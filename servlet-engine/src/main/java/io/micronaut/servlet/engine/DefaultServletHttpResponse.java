@@ -1,5 +1,6 @@
 package io.micronaut.servlet.engine;
 
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.convert.value.MutableConvertibleValues;
@@ -23,6 +24,13 @@ import java.io.OutputStream;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * Implementation of {@link ServletHttpResponse} for the Servlet API.
+ * @param <B> The body type
+ * @author graemerocher
+ * @since 1.0.0
+ */
+@Internal
 public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpServletResponse, B> {
 
     private final HttpServletResponse delegate;
@@ -30,14 +38,18 @@ public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpSe
     private final ServletResponseHeaders headers;
     private B body;
 
-    public DefaultServletHttpResponse(
+    /**
+     * Default constructor.
+     * @param request The servlet request
+     * @param delegate The servlet response
+     */
+    protected DefaultServletHttpResponse(
             DefaultServletHttpRequest request,
             HttpServletResponse delegate) {
         this.delegate = delegate;
         this.request = request;
         this.headers = new ServletResponseHeaders();
     }
-
 
     @Override
     public MutableHttpResponse<B> contentType(CharSequence contentType) {
@@ -208,6 +220,9 @@ public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpSe
         );
     }
 
+    /**
+     * The response headers.
+     */
     private class ServletResponseHeaders implements MutableHttpHeaders {
 
         @Override

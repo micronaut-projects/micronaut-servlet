@@ -1,5 +1,7 @@
 package io.micronaut.servlet.engine.server;
 
+import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.env.Environment;
 import io.micronaut.core.io.ResourceResolver;
 import io.micronaut.core.io.socket.SocketUtils;
 import io.micronaut.http.server.HttpServerConfiguration;
@@ -21,13 +23,38 @@ import java.util.Optional;
 public abstract class ServletServerFactory extends SslBuilder<SSLContext> {
     private final HttpServerConfiguration serverConfiguration;
     private final SslConfiguration sslConfiguration;
+    private final ApplicationContext applicationContext;
 
+    /**
+     * Default constructor.
+     *
+     * @param resourceResolver    The resource resolver.
+     * @param serverConfiguration The server configuration
+     * @param sslConfiguration    The SSL configuration
+     * @param applicationContext  The app context
+     */
     protected ServletServerFactory(ResourceResolver resourceResolver,
-                                HttpServerConfiguration serverConfiguration,
-                                SslConfiguration sslConfiguration) {
+                                   HttpServerConfiguration serverConfiguration,
+                                   SslConfiguration sslConfiguration,
+                                   ApplicationContext applicationContext) {
         super(resourceResolver);
         this.serverConfiguration = serverConfiguration;
         this.sslConfiguration = sslConfiguration;
+        this.applicationContext = applicationContext;
+    }
+
+    /**
+     * @return The environment
+     */
+    public Environment getEnvironment() {
+        return applicationContext.getEnvironment();
+    }
+
+    /**
+     * @return The app context
+     */
+    public ApplicationContext getApplicationContext() {
+        return applicationContext;
     }
 
     /**
@@ -76,15 +103,27 @@ public abstract class ServletServerFactory extends SslBuilder<SSLContext> {
         return Optional.empty();
     }
 
+    /**
+     * @return The configured host.
+     */
     protected String getConfiguredHost() {
         return serverConfiguration
                 .getHost()
                 .orElseGet(() -> Optional.ofNullable(System.getenv("HOST")).orElse("localhost"));
     }
 
+    /**
+     * @return The configured port.
+     */
     protected Integer getConfiguredPort() {
-        return serverConfiguration.getPort().map( p ->
+        return serverConfiguration.getPort().map(p ->
                 p == -1 ? SocketUtils.findAvailableTcpPort() : p
-        ).orElse(8080);
+        ).orElseGet(() -> {
+            if (getEnvironment().getActiveNames().contains(Environment.TEST)) {
+                return SocketUtils.findAvailableTcpPort();
+            } else {
+                return 8080;
+            }
+        });
     }
 }

@@ -23,6 +23,13 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 
+/**
+ * A binder capable of binding servlet multipart requests.
+ * @param <T> The argument type
+ *
+ * @author graemerocher
+ * @since 1.0.0
+ */
 public class ServletPartBinder<T> implements AnnotatedRequestArgumentBinder<Part, T> {
 
     private final MediaTypeCodecRegistry codecRegistry;

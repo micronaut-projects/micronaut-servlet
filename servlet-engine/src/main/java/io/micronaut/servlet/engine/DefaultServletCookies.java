@@ -18,6 +18,10 @@ public class DefaultServletCookies implements Cookies {
 
     private final javax.servlet.http.Cookie[] cookies;
 
+    /**
+     * Default constructor.
+     * @param cookies The cookies
+     */
     public DefaultServletCookies(javax.servlet.http.Cookie[] cookies) {
         this.cookies = cookies;
     }

@@ -25,6 +25,10 @@ public class JettyConfiguration extends HttpServerConfiguration {
 
     private final MultipartConfiguration multipartConfiguration;
 
+    /**
+     * Default constructor.
+     * @param multipartConfiguration The multipart configuration.
+     */
     public JettyConfiguration(@Nullable MultipartConfiguration multipartConfiguration) {
         this.multipartConfiguration = multipartConfiguration;
     }
@@ -43,9 +47,19 @@ public class JettyConfiguration extends HttpServerConfiguration {
         return Optional.ofNullable(multipartConfiguration);
     }
 
+    /**
+     * The multipart configuration.
+     */
     @ConfigurationProperties("multipart")
     public static class MultipartConfiguration extends MultipartConfigElement {
 
+        /**
+         * Default constructor.
+         * @param location The location
+         * @param maxFileSize The file size
+         * @param maxRequestSize The max request size
+         * @param fileSizeThreshold The threshold
+         */
         @ConfigurationInject
         public MultipartConfiguration(
                 @Nullable String location,

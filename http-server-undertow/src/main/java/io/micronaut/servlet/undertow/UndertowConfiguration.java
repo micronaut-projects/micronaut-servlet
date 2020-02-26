@@ -11,6 +11,12 @@ import javax.annotation.Nullable;
 import javax.servlet.MultipartConfigElement;
 import java.util.Optional;
 
+/**
+ * Configuration for the Undertow server.
+ *
+ * @author graemerocher
+ * @since 1.0.0
+ */
 @ConfigurationProperties("undertow")
 public class UndertowConfiguration extends HttpServerConfiguration {
 
@@ -19,6 +25,10 @@ public class UndertowConfiguration extends HttpServerConfiguration {
 
     private final MultipartConfiguration multipartConfiguration;
 
+    /**
+     * Default constructor.
+     * @param multipartConfiguration The multipart configuration
+     */
     public UndertowConfiguration(@Nullable MultipartConfiguration multipartConfiguration) {
         this.multipartConfiguration = multipartConfiguration;
     }
@@ -38,9 +48,19 @@ public class UndertowConfiguration extends HttpServerConfiguration {
         return Optional.ofNullable(multipartConfiguration);
     }
 
+    /**
+     * The multipart configuration.
+     */
     @ConfigurationProperties("multipart")
     public static class MultipartConfiguration extends MultipartConfigElement {
 
+        /**
+         * Default constructor.
+         * @param location The location
+         * @param maxFileSize The file size
+         * @param maxRequestSize The max request size
+         * @param fileSizeThreshold The threshold
+         */
         @ConfigurationInject
         public MultipartConfiguration(
                 @Nullable String location,

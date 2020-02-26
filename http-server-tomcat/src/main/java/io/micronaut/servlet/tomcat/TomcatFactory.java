@@ -4,7 +4,6 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Primary;
 import io.micronaut.core.io.ResourceResolver;
-import io.micronaut.http.server.HttpServerConfiguration;
 import io.micronaut.http.ssl.SslConfiguration;
 import io.micronaut.servlet.engine.DefaultMicronautServlet;
 import io.micronaut.servlet.engine.server.ServletServerFactory;
@@ -15,7 +14,6 @@ import org.apache.catalina.startup.Tomcat;
 
 import javax.inject.Singleton;
 import java.io.File;
-import java.util.function.Consumer;
 
 /**
  * Factory for the {@link Tomcat} instance.
@@ -28,15 +26,18 @@ public class TomcatFactory extends ServletServerFactory {
 
     /**
      * Default constructor.
-     * @param resourceResolver The resource resolver
+     *
+     * @param resourceResolver    The resource resolver
      * @param serverConfiguration The server config
-     * @param sslConfiguration The SSL config
+     * @param sslConfiguration    The SSL config
+     * @param applicationContext  The app context
      */
     protected TomcatFactory(
             ResourceResolver resourceResolver,
             TomcatConfiguration serverConfiguration,
-            SslConfiguration sslConfiguration) {
-        super(resourceResolver, serverConfiguration, sslConfiguration);
+            SslConfiguration sslConfiguration,
+            ApplicationContext applicationContext) {
+        super(resourceResolver, serverConfiguration, sslConfiguration, applicationContext);
     }
 
     @Override
@@ -44,9 +45,15 @@ public class TomcatFactory extends ServletServerFactory {
         return (TomcatConfiguration) super.getServerConfiguration();
     }
 
+    /**
+     * The Tomcat server bean.
+     *
+     * @param connector          The connector
+     * @return The Tomcat server
+     */
     @Singleton
     @Primary
-    protected Tomcat tomcatServer(Connector connector, ApplicationContext applicationContext) {
+    protected Tomcat tomcatServer(Connector connector) {
         Tomcat tomcat = new Tomcat();
         tomcat.setHostname(getConfiguredHost());
         final String contextPath = getContextPath();
@@ -57,7 +64,7 @@ public class TomcatFactory extends ServletServerFactory {
         final Wrapper servlet = Tomcat.addServlet(
                 context,
                 "micronaut",
-                new DefaultMicronautServlet(applicationContext)
+                new DefaultMicronautServlet(getApplicationContext())
         );
         servlet.addMapping("/*");
         getServerConfiguration()

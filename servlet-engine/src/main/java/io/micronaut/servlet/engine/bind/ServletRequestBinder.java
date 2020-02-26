@@ -9,6 +9,12 @@ import io.micronaut.servlet.http.ServletHttpRequest;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Optional;
 
+/**
+ * A binder capable of binding the servlet request.
+ *
+ * @author graemerocher
+ * @since 1.0.0
+ */
 public class ServletRequestBinder implements TypedRequestArgumentBinder<HttpServletRequest> {
 
     public static final Argument<HttpServletRequest> TYPE = Argument.of(HttpServletRequest.class);

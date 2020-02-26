@@ -1,5 +1,6 @@
 package io.micronaut.servlet.engine;
 
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.convert.ConversionService;
@@ -42,6 +43,7 @@ import java.util.stream.Collectors;
  * @param <B> The body type
  * @since 1.0.0
  */
+@Internal
 public class DefaultServletHttpRequest<B> implements
         ServletHttpRequest<HttpServletRequest, B>, MutableConvertibleValues<Object>, ServletExchange<HttpServletRequest, HttpServletResponse> {
 
@@ -55,7 +57,13 @@ public class DefaultServletHttpRequest<B> implements
     private DefaultServletCookies cookies;
     private Object body;
 
-    public DefaultServletHttpRequest(
+    /**
+     * Default constructor.
+     * @param delegate The servlet request
+     * @param response The servlet response
+     * @param codecRegistry The codec registry
+     */
+    protected DefaultServletHttpRequest(
             HttpServletRequest delegate,
             HttpServletResponse response,
             MediaTypeCodecRegistry codecRegistry) {
@@ -356,6 +364,21 @@ public class DefaultServletHttpRequest<B> implements
         return response;
     }
 
+    private boolean isFormSubmission(MediaType contentType) {
+        return MediaType.MULTIPART_FORM_DATA_TYPE.equals(contentType) || MediaType.MULTIPART_FORM_DATA_TYPE.equals(contentType);
+    }
+
+    private <T> List<T> enumerationToList(Enumeration<T> enumeration) {
+        List<T> set = new ArrayList<>(10);
+        while (enumeration.hasMoreElements()) {
+            set.add(enumeration.nextElement());
+        }
+        return set;
+    }
+
+    /**
+     * The servlet request headers.
+     */
     private class ServletRequestHeaders implements HttpHeaders {
 
         @Override
@@ -395,10 +418,9 @@ public class DefaultServletHttpRequest<B> implements
         }
     }
 
-    private boolean isFormSubmission(MediaType contentType) {
-        return MediaType.MULTIPART_FORM_DATA_TYPE.equals(contentType) || MediaType.MULTIPART_FORM_DATA_TYPE.equals(contentType);
-    }
-
+    /**
+     * The servlet request parameters.
+     */
     private class ServletParameters implements HttpParameters {
 
         @Override
@@ -467,13 +489,4 @@ public class DefaultServletHttpRequest<B> implements
             return Optional.empty();
         }
     }
-
-    private <T> List<T> enumerationToList(Enumeration<T> enumeration) {
-        List<T> set = new ArrayList<>(10);
-        while (enumeration.hasMoreElements()) {
-            set.add(enumeration.nextElement());
-        }
-        return set;
-    }
-
 }

@@ -10,9 +10,9 @@ import io.micronaut.runtime.server.event.ServerStartupEvent;
 /**
  * Abstract base class for servlet embedded servers.
  *
+ * @param <T> The server type
  * @author graemerocher
  * @since 1.0.0
- * @param <T> The server type
  */
 public abstract class AbstractServletServer<T> implements EmbeddedServer {
 
@@ -22,8 +22,10 @@ public abstract class AbstractServletServer<T> implements EmbeddedServer {
 
     /**
      * Default constructor.
-     * @param applicationContext The application context
+     *
+     * @param applicationContext       The application context
      * @param applicationConfiguration The application configuration
+     * @param server                   The server object
      */
     protected AbstractServletServer(
             ApplicationContext applicationContext,
@@ -92,6 +94,7 @@ public abstract class AbstractServletServer<T> implements EmbeddedServer {
 
     /**
      * Stop the server.
+     *
      * @throws Exception when an error occurred stopping the server
      */
     protected abstract void stopServer() throws Exception;

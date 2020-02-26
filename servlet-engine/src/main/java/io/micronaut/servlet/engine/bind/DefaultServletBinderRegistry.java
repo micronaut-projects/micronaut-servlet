@@ -13,6 +13,12 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
+/**
+ * Replaces the {@link DefaultRequestBinderRegistry} with one capable of binding from servlet requests.
+ *
+ * @author graemerocher
+ * @since 1.0.0
+ */
 @Singleton
 @Replaces(DefaultRequestBinderRegistry.class)
 @Internal

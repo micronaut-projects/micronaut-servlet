@@ -21,10 +21,17 @@ public class DefaultMicronautServlet extends HttpServlet {
     private ApplicationContext applicationContext;
     private DefaultServletHttpHandler handler;
 
+    /**
+     * Constructor that takes an application context.
+     * @param applicationContext The application context.
+     */
     public DefaultMicronautServlet(ApplicationContext applicationContext) {
-        this.applicationContext = applicationContext;
+        this.applicationContext = Objects.requireNonNull(applicationContext, "The application context cannot be null");
     }
 
+    /**
+     * Default constructor.
+     */
     public DefaultMicronautServlet() {
     }
 

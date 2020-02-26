@@ -140,7 +140,7 @@ public final class ServletCookieAdapter implements Cookie {
             if (o.getDomain() != null) {
                 return -1;
             }
-        } else if (o.getPath()== null) {
+        } else if (o.getPath() == null) {
             return 1;
         } else {
             v = getDomain().compareToIgnoreCase(o.getDomain());
