@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":10};
+var methods = {"i0":10,"i1":10};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -188,6 +188,13 @@ implements io.micronaut.http.bind.RequestBinderRegistry</pre>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/servlet/http/ServletBinderRegistry.html#findArgumentBinder-io.micronaut.core.type.Argument-io.micronaut.http.HttpRequest-">findArgumentBinder</a></span>(io.micronaut.core.type.Argument&lt;T&gt;&nbsp;argument,
                   io.micronaut.http.HttpRequest&lt;?&gt;&nbsp;source)</code>&nbsp;</td>
 </tr>
+<tr id="i1" class="rowColor">
+<td class="colFirst"><code>protected <a href="../../../../io/micronaut/servlet/http/ServletBodyBinder.html" title="class in io.micronaut.servlet.http">ServletBodyBinder</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/servlet/http/ServletBinderRegistry.html#newServletBodyBinder-io.micronaut.http.codec.MediaTypeCodecRegistry-io.micronaut.core.convert.ConversionService-">newServletBodyBinder</a></span>(io.micronaut.http.codec.MediaTypeCodecRegistry&nbsp;mediaTypeCodecRegistry,
+                    io.micronaut.core.convert.ConversionService&nbsp;conversionService)</code>
+<div class="block">Creates the servlet body binder.</div>
+</td>
+</tr>
 </table>
 <ul class="blockList">
 <li class="blockList"><a name="methods.inherited.from.class.java.lang.Object">
@@ -262,6 +269,24 @@ implements io.micronaut.http.bind.RequestBinderRegistry</pre>
 <!--   -->
 </a>
 <h3>Method Detail</h3>
+<a name="newServletBodyBinder-io.micronaut.http.codec.MediaTypeCodecRegistry-io.micronaut.core.convert.ConversionService-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>newServletBodyBinder</h4>
+<pre>protected&nbsp;<a href="../../../../io/micronaut/servlet/http/ServletBodyBinder.html" title="class in io.micronaut.servlet.http">ServletBodyBinder</a>&nbsp;newServletBodyBinder(io.micronaut.http.codec.MediaTypeCodecRegistry&nbsp;mediaTypeCodecRegistry,
+                                                 io.micronaut.core.convert.ConversionService&nbsp;conversionService)</pre>
+<div class="block">Creates the servlet body binder.</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>mediaTypeCodecRegistry</code> - The media type registry</dd>
+<dd><code>conversionService</code> - The conversion service</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The servlet body body</dd>
+</dl>
+</li>
+</ul>
 <a name="findArgumentBinder-io.micronaut.core.type.Argument-io.micronaut.http.HttpRequest-">
 <!--   -->
 </a>
