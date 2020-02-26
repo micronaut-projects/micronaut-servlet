@@ -1,6 +1,5 @@
 package io.micronaut.servlet.http;
 
-import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.async.publisher.Publishers;
 import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.convert.ConversionError;
@@ -23,7 +22,6 @@ import org.reactivestreams.Publisher;
 
 import javax.annotation.Nonnull;
 import java.io.*;
-import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -35,8 +33,7 @@ import java.util.Optional;
  * @author graemerocher
  * @since 2.0.0
  */
-@Internal
-final class ServletBodyBinder<T> extends DefaultBodyAnnotationBinder<T> implements AnnotatedRequestArgumentBinder<Body, T> {
+public final class ServletBodyBinder<T> extends DefaultBodyAnnotationBinder<T> implements AnnotatedRequestArgumentBinder<Body, T> {
     private final MediaTypeCodecRegistry mediaTypeCodeRegistry;
 
     /**
@@ -44,7 +41,7 @@ final class ServletBodyBinder<T> extends DefaultBodyAnnotationBinder<T> implemen
      * @param conversionService The conversion service
      * @param mediaTypeCodecRegistry The codec registry
      */
-    ServletBodyBinder(
+    protected ServletBodyBinder(
             ConversionService<?> conversionService,
             MediaTypeCodecRegistry mediaTypeCodecRegistry) {
         super(conversionService);
