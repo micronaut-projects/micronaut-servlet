@@ -16,6 +16,12 @@ import org.apache.catalina.startup.Tomcat;
 import javax.inject.Singleton;
 import java.util.function.Consumer;
 
+/**
+ * Factory for the {@link Tomcat} instance.
+ *
+ * @author graemerocher
+ * @since 1.0.0
+ */
 @Factory
 public class TomcatFactory extends ServletServerFactory {
 

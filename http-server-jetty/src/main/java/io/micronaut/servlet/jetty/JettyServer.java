@@ -1,16 +1,13 @@
 package io.micronaut.servlet.jetty;
 
 import io.micronaut.context.ApplicationContext;
-import io.micronaut.http.server.HttpServerConfiguration;
 import io.micronaut.http.server.exceptions.HttpServerException;
 import io.micronaut.runtime.ApplicationConfiguration;
 import io.micronaut.runtime.server.EmbeddedServer;
-import io.micronaut.servlet.engine.DefaultMicronautServlet;
+import io.micronaut.servlet.engine.server.AbstractServletServer;
 import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.servlet.ServletHandler;
 
 import javax.inject.Singleton;
-import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
@@ -22,11 +19,8 @@ import java.net.URL;
  * @since 1.0
  */
 @Singleton
-public class JettyServer implements EmbeddedServer {
+public class JettyServer extends AbstractServletServer<Server> {
 
-    private final Server server;
-    private final ApplicationContext applicationContext;
-    private final ApplicationConfiguration applicationConfiguration;
 
     /**
      * Default constructor.
@@ -39,67 +33,38 @@ public class JettyServer implements EmbeddedServer {
             ApplicationContext applicationContext,
             ApplicationConfiguration applicationConfiguration,
             Server server) {
-        this.applicationContext = applicationContext;
-        this.applicationConfiguration = applicationConfiguration;
-        this.server = server;
-    }
-
-    /**
-     * @return The underlying Jetty server
-     */
-    public Server getServer() {
-        return server;
+        super(applicationContext, applicationConfiguration, server);
     }
 
     @Override
-    public EmbeddedServer start() {
-        try {
-            if (!applicationContext.isRunning()) {
-                applicationContext.start();
-            }
-            server.start();
-        } catch (Exception e) {
-            throw new HttpServerException(
-                    "Error starting Jetty server: " + e.getMessage(), e
-            );
-        }
-        return this;
+    protected void startServer() throws Exception {
+        getServer().start();
     }
 
     @Override
-    public EmbeddedServer stop() {
-        try {
-            server.stop();
-            if (applicationContext.isRunning()) {
-                applicationContext.stop();
-            }
-        } catch (Exception e) {
-            throw new HttpServerException(
-                    "Error stopping Jetty server: " + e.getMessage(), e
-            );
-        }
-        return this;
+    protected void stopServer() throws Exception {
+        getServer().stop();
     }
 
     @Override
     public int getPort() {
-        return server.getURI().getPort();
+        return getServer().getURI().getPort();
     }
 
     @Override
     public String getHost() {
-        return server.getURI().getHost();
+        return getServer().getURI().getHost();
     }
 
     @Override
     public String getScheme() {
-        return server.getURI().getScheme();
+        return getServer().getURI().getScheme();
     }
 
     @Override
     public URL getURL() {
         try {
-            return server.getURI().toURL();
+            return getServer().getURI().toURL();
         } catch (MalformedURLException e) {
             throw new HttpServerException(e.getMessage(), e);
         }
@@ -107,21 +72,11 @@ public class JettyServer implements EmbeddedServer {
 
     @Override
     public URI getURI() {
-        return server.getURI();
-    }
-
-    @Override
-    public ApplicationContext getApplicationContext() {
-        return applicationContext;
-    }
-
-    @Override
-    public ApplicationConfiguration getApplicationConfiguration() {
-        return applicationConfiguration;
+        return getServer().getURI();
     }
 
     @Override
     public boolean isRunning() {
-        return server.isRunning();
+        return getServer().isRunning();
     }
 }

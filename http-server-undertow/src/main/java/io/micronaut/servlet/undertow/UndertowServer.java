@@ -3,61 +3,59 @@ package io.micronaut.servlet.undertow;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.http.server.exceptions.InternalServerException;
 import io.micronaut.runtime.ApplicationConfiguration;
-import io.micronaut.runtime.server.EmbeddedServer;
+import io.micronaut.servlet.engine.server.AbstractServletServer;
 import io.undertow.Undertow;
 
 import javax.inject.Singleton;
 import java.net.*;
 
+/**
+ * Implementation of {@link AbstractServletServer} for Undertow.
+ *
+ * @author graemerocher
+ * @since 1.0.0
+ */
 @Singleton
-public class UndertowServer implements EmbeddedServer {
+public class UndertowServer extends AbstractServletServer<Undertow> {
 
-    private final Undertow undertow;
-    private final ApplicationContext applicationContext;
-    private final ApplicationConfiguration applicationConfiguration;
-
+    /**
+     * Default constructor.
+     * @param applicationContext The app context
+     * @param applicationConfiguration The app config
+     * @param undertow The undertow instance
+     */
     public UndertowServer(
             ApplicationContext applicationContext,
             ApplicationConfiguration applicationConfiguration,
             Undertow undertow) {
-        this.applicationConfiguration = applicationConfiguration;
-        this.applicationContext = applicationContext;
-        this.undertow = undertow;
+        super(applicationContext, applicationConfiguration, undertow);
     }
 
     @Override
-    public EmbeddedServer start() {
-        if (!applicationContext.isRunning()) {
-            applicationContext.start();
-        }
-        undertow.start();
-        return this;
+    protected void startServer() throws Exception {
+        getServer().start();
     }
 
     @Override
-    public EmbeddedServer stop() {
-        undertow.stop();
-        if (applicationContext.isRunning()) {
-            applicationContext.stop();
-        }
-        return this;
+    protected void stopServer() throws Exception {
+        getServer().stop();
     }
 
     @Override
     public int getPort() {
-        final SocketAddress address = undertow.getListenerInfo().get(0).getAddress();
+        final SocketAddress address = getServer().getListenerInfo().get(0).getAddress();
         return ((InetSocketAddress) address).getPort();
     }
 
     @Override
     public String getHost() {
-        final SocketAddress address = undertow.getListenerInfo().get(0).getAddress();
+        final SocketAddress address = getServer().getListenerInfo().get(0).getAddress();
         return ((InetSocketAddress) address).getHostName();
     }
 
     @Override
     public String getScheme() {
-        return undertow.getListenerInfo().get(0).getProtcol();
+        return getServer().getListenerInfo().get(0).getProtcol();
     }
 
     @Override
@@ -75,17 +73,7 @@ public class UndertowServer implements EmbeddedServer {
     }
 
     @Override
-    public ApplicationContext getApplicationContext() {
-        return applicationContext;
-    }
-
-    @Override
-    public ApplicationConfiguration getApplicationConfiguration() {
-        return applicationConfiguration;
-    }
-
-    @Override
     public boolean isRunning() {
-        return applicationContext.isRunning();
+        return getApplicationContext().isRunning();
     }
 }
