@@ -37,7 +37,7 @@ public abstract class AbstractServletServer<T> implements EmbeddedServer {
     /**
      * @return The server object.
      */
-    public T getServer() {
+    public final T getServer() {
         return server;
     }
 

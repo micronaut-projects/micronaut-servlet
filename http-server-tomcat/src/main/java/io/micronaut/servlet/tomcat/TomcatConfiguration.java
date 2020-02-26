@@ -2,11 +2,16 @@ package io.micronaut.servlet.tomcat;
 
 import io.micronaut.context.annotation.*;
 import io.micronaut.core.bind.annotation.Bindable;
+import io.micronaut.core.convert.format.MapFormat;
+import io.micronaut.core.naming.conventions.StringConvention;
+import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.http.server.HttpServerConfiguration;
 import org.apache.catalina.connector.Connector;
 
 import javax.annotation.Nullable;
 import javax.servlet.MultipartConfigElement;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -36,6 +41,17 @@ public class TomcatConfiguration extends HttpServerConfiguration {
         this.tomcatConnector = new Connector(
                 protocol != null ? protocol : "org.apache.coyote.http11.Http11NioProtocol"
         );
+    }
+
+    /**
+     * @param attributes The connector attributes
+     */
+    public void setAttributes(@MapFormat(
+            transformation = MapFormat.MapTransformation.FLAT,
+            keyFormat = StringConvention.RAW) Map<String, String> attributes) {
+        if (CollectionUtils.isNotEmpty(attributes)) {
+            attributes.forEach(tomcatConnector::setAttribute);
+        }
     }
 
     /**

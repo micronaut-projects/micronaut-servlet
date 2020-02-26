@@ -14,6 +14,7 @@ import org.apache.catalina.connector.Connector;
 import org.apache.catalina.startup.Tomcat;
 
 import javax.inject.Singleton;
+import java.io.File;
 import java.util.function.Consumer;
 
 /**
@@ -62,6 +63,29 @@ public class TomcatFactory extends ServletServerFactory {
         getServerConfiguration()
                 .getMultipartConfiguration()
                 .ifPresent(servlet::setMultipartConfigElement);
+
+        SslConfiguration sslConfiguration = getSslConfiguration();
+        if (sslConfiguration.isEnabled()) {
+            String protocol = sslConfiguration.getProtocol().orElse("TLS");
+            int sslPort = sslConfiguration.getPort();
+
+            SslConfiguration.KeyStoreConfiguration keyStoreConfig = sslConfiguration.getKeyStore();
+            SslConfiguration.KeyConfiguration keyConfig = sslConfiguration.getKey();
+            Connector httpsConnector = new Connector();
+            httpsConnector.setPort(sslPort);
+            httpsConnector.setSecure(true);
+            httpsConnector.setScheme("https");
+
+            keyConfig.getAlias().ifPresent(s -> httpsConnector.setAttribute("keyAlias", s));
+            keyStoreConfig.getPassword().ifPresent(s -> httpsConnector.setAttribute("keystorePass", s));
+            keyStoreConfig.getPath().ifPresent(s ->
+                    httpsConnector.setAttribute("keystoreFile", new File(s).getAbsolutePath())
+            );
+
+            httpsConnector.setAttribute("clientAuth", "false");
+            httpsConnector.setAttribute("sslProtocol", protocol);
+            httpsConnector.setAttribute("SSLEnabled", true);
+        }
 
         return tomcat;
     }
