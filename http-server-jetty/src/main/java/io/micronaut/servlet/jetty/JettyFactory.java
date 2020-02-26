@@ -1,5 +1,6 @@
 package io.micronaut.servlet.jetty;
 
+import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Primary;
 import io.micronaut.core.io.ResourceResolver;
@@ -42,17 +43,19 @@ public class JettyFactory extends ServletServerFactory {
 
     /**
      * Builds the Jetty server bean.
+     * @param applicationContext This application context
      * @return The Jetty server bean
      */
     @Singleton
     @Primary
-    protected Server jettyServer() {
+    protected Server jettyServer(ApplicationContext applicationContext) {
         final String host = getConfiguredHost();
         final Integer port = getConfiguredPort();
         Server server = new Server();
         final ServletContextHandler handler = new ServletContextHandler(server, getContextPath(), false, false);
-        final ServletHolder servletHolder = handler.addServlet(
-                DefaultMicronautServlet.class,
+        final ServletHolder servletHolder = new ServletHolder(new DefaultMicronautServlet(applicationContext));
+        handler.addServlet(
+                servletHolder,
                 "/"
         );
         servletHolder.setAsyncSupported(true);

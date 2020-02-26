@@ -6,6 +6,7 @@ import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.convert.ConversionError;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.io.IOUtils;
+import io.micronaut.core.io.Readable;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpStatus;
@@ -20,10 +21,9 @@ import io.micronaut.http.exceptions.HttpStatusException;
 import io.reactivex.Flowable;
 import org.reactivestreams.Publisher;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import javax.annotation.Nonnull;
+import java.io.*;
+import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -61,9 +61,34 @@ final class ServletBodyBinder<T> extends DefaultBodyAnnotationBinder<T> implemen
         final Argument<T> argument = context.getArgument();
         final Class<T> type = argument.getType();
         if (source instanceof ServletHttpRequest) {
-            ServletHttpRequest<?, ?> functionHttpRequest = (ServletHttpRequest<?, ?>) source;
-            if (CharSequence.class.isAssignableFrom(type)) {
-                try (InputStream inputStream = functionHttpRequest.getInputStream()) {
+            ServletHttpRequest<?, ?> servletHttpRequest = (ServletHttpRequest<?, ?>) source;
+            if (Readable.class.isAssignableFrom(type)) {
+                Readable readable = new Readable() {
+                    @Override
+                    public Reader asReader() throws IOException {
+                        return servletHttpRequest.getReader();
+                    }
+
+                    @Nonnull
+                    @Override
+                    public InputStream asInputStream() throws IOException {
+                        return servletHttpRequest.getInputStream();
+                    }
+
+                    @Override
+                    public boolean exists() {
+                        return true;
+                    }
+
+                    @Nonnull
+                    @Override
+                    public String getName() {
+                        return servletHttpRequest.getPath();
+                    }
+                };
+                return () -> (Optional<T>) Optional.of(readable);
+            } else if (CharSequence.class.isAssignableFrom(type)) {
+                try (InputStream inputStream = servletHttpRequest.getInputStream()) {
                     final String content = IOUtils.readText(new BufferedReader(new InputStreamReader(inputStream, source.getCharacterEncoding())));
                     return () -> (Optional<T>) Optional.of(content);
                 } catch (IOException e) {
@@ -90,7 +115,7 @@ final class ServletBodyBinder<T> extends DefaultBodyAnnotationBinder<T> implemen
 
                 if (codec != null) {
 
-                    try (InputStream inputStream = functionHttpRequest.getInputStream()) {
+                    try (InputStream inputStream = servletHttpRequest.getInputStream()) {
                         if (Publishers.isConvertibleToPublisher(type)) {
                             final Argument<?> typeArg = argument.getFirstTypeVariable().orElse(Argument.OBJECT_ARGUMENT);
                             if (Publishers.isSingle(type)) {

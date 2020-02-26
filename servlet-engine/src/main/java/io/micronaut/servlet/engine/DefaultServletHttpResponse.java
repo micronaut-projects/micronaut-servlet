@@ -3,6 +3,7 @@ package io.micronaut.servlet.engine;
 import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.convert.value.MutableConvertibleValues;
+import io.micronaut.core.io.Writable;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
@@ -173,8 +174,12 @@ public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpSe
                         return mediaType;
                     }
                 }
-                contentType(MediaType.APPLICATION_JSON_TYPE);
-                return MediaType.APPLICATION_JSON_TYPE;
+                if (!(body instanceof Writable)) {
+                    contentType(MediaType.APPLICATION_JSON_TYPE);
+                    return MediaType.APPLICATION_JSON_TYPE;
+                } else {
+                    return null;
+                }
             });
         }
         this.body = body;

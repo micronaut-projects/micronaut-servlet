@@ -18,6 +18,13 @@ public class DefaultMicronautServlet extends HttpServlet {
     private ApplicationContext applicationContext;
     private DefaultServletHttpHandler handler;
 
+    public DefaultMicronautServlet(ApplicationContext applicationContext) {
+        this.applicationContext = applicationContext;
+    }
+
+    public DefaultMicronautServlet() {
+    }
+
     @Override
     protected void service(HttpServletRequest req, HttpServletResponse resp) {
         if (handler != null) {
@@ -38,10 +45,16 @@ public class DefaultMicronautServlet extends HttpServlet {
 
     @Override
     public void init() {
-        final ApplicationContextBuilder builder =
-                Objects.requireNonNull(newApplicationContextBuilder(), "builder cannot be null");
-        this.applicationContext = Objects.requireNonNull(buildApplicationContext(builder), "Context cannot be null");
-        this.applicationContext.start();
+        if (this.applicationContext == null) {
+
+            final ApplicationContextBuilder builder =
+                    Objects.requireNonNull(newApplicationContextBuilder(), "builder cannot be null");
+            this.applicationContext = Objects.requireNonNull(buildApplicationContext(builder), "Context cannot be null");
+        }
+
+        if (!this.applicationContext.isRunning()) {
+            this.applicationContext.start();
+        }
         this.handler = applicationContext.getBean(DefaultServletHttpHandler.class);
     }
 

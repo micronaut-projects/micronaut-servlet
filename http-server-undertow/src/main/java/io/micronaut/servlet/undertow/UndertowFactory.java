@@ -1,5 +1,6 @@
 package io.micronaut.servlet.undertow;
 
+import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Primary;
 import io.micronaut.context.env.Environment;
@@ -14,8 +15,11 @@ import io.undertow.server.handlers.PathHandler;
 import io.undertow.servlet.Servlets;
 import io.undertow.servlet.api.DeploymentInfo;
 import io.undertow.servlet.api.DeploymentManager;
+import io.undertow.servlet.api.InstanceFactory;
+import io.undertow.servlet.api.InstanceHandle;
 
 import javax.inject.Singleton;
+import javax.servlet.Servlet;
 import javax.servlet.ServletException;
 
 /**
@@ -88,15 +92,31 @@ public class UndertowFactory extends ServletServerFactory {
 
     @Singleton
     @Primary
-    protected DeploymentInfo deploymentInfo(Environment environment) {
+    protected DeploymentInfo deploymentInfo(ApplicationContext applicationContext) {
         final String cp = getContextPath();
 
         final DeploymentInfo deploymentInfo = Servlets.deployment()
                 .setDeploymentName(Environment.MICRONAUT)
-                .setClassLoader(environment.getClassLoader())
+                .setClassLoader(applicationContext.getEnvironment().getClassLoader())
                 .setContextPath(cp)
                 .addServlet(Servlets.servlet(
-                        DefaultMicronautServlet.class
+                        Environment.MICRONAUT, DefaultMicronautServlet.class, () -> new InstanceHandle<Servlet>() {
+
+                            private DefaultMicronautServlet instance;
+
+                            @Override
+                            public Servlet getInstance() {
+                                instance = new DefaultMicronautServlet(applicationContext);
+                                return instance;
+                            }
+
+                            @Override
+                            public void release() {
+                                if (instance != null) {
+                                    instance.destroy();
+                                }
+                            }
+                        }
                 ).addMapping("/*"));
         configuration.getMultipartConfiguration().ifPresent(deploymentInfo::setDefaultMultipartConfig);
         return deploymentInfo;

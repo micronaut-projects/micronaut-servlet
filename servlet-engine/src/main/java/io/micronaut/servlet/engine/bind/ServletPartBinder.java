@@ -2,6 +2,7 @@ package io.micronaut.servlet.engine.bind;
 
 import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.io.IOUtils;
+import io.micronaut.core.io.Readable;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpStatus;
@@ -14,6 +15,7 @@ import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.http.server.exceptions.InternalServerException;
 import io.micronaut.servlet.http.ServletExchange;
 
+import javax.annotation.Nonnull;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import java.io.*;
@@ -56,6 +58,33 @@ public class ServletPartBinder<T> implements AnnotatedRequestArgumentBinder<Part
                 if (javax.servlet.http.Part.class.isAssignableFrom(type)) {
                     //noinspection unchecked
                     return () -> (Optional<T>) Optional.of(part);
+                } else if (Readable.class.isAssignableFrom(type)) {
+                    //noinspection unchecked
+                    return () -> (Optional<T>) Optional.of(new Readable() {
+                        @Nonnull
+                        @Override
+                        public String getName() {
+                            return part.getName();
+                        }
+
+                        @Override
+                        public Reader asReader() throws IOException {
+                            final Charset charset = Optional.ofNullable(part.getContentType()).map(MediaType::new)
+                                    .flatMap(MediaType::getCharset).orElse(StandardCharsets.UTF_8);
+                            return new InputStreamReader(asInputStream(), charset);
+                        }
+
+                        @Nonnull
+                        @Override
+                        public InputStream asInputStream() throws IOException {
+                            return part.getInputStream();
+                        }
+
+                        @Override
+                        public boolean exists() {
+                            return true;
+                        }
+                    });
                 } else if (String.class.isAssignableFrom(type)) {
                     try (BufferedReader reader = newReader(part)) {
                         final String content = IOUtils.readText(reader);

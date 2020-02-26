@@ -25,4 +25,10 @@ public class DefaultServletHttpHandler extends ServletHttpHandler<HttpServletReq
             HttpServletResponse response) {
         return new DefaultServletHttpRequest<>(request, response, getMediaTypeCodecRegistry());
     }
+
+    @Override
+    public void service(HttpServletRequest request, HttpServletResponse response) {
+        final ServletExchange<HttpServletRequest, HttpServletResponse> exchange = createExchange(request, response);
+        service(exchange);
+    }
 }
