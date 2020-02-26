@@ -34,6 +34,7 @@ import io.micronaut.web.router.UriRoute;
 import io.micronaut.web.router.UriRouteMatch;
 import io.micronaut.web.router.exceptions.DuplicateRouteException;
 import io.micronaut.web.router.exceptions.UnsatisfiedRouteException;
+import io.reactivex.BackpressureStrategy;
 import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import org.reactivestreams.Publisher;
@@ -44,6 +45,8 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.*;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -252,13 +255,21 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable {
         }
     }
 
-    private Publisher<? extends MutableHttpResponse<?>> buildResponsePublisher(HttpRequest<Object> req, MutableHttpResponse<Object> res, RouteMatch<?> route, boolean isErrorRoute) {
+    private Publisher<? extends MutableHttpResponse<?>> buildResponsePublisher(
+            HttpRequest<Object> req,
+            MutableHttpResponse<Object> res,
+            RouteMatch<?> route,
+            boolean isErrorRoute) {
         Publisher<? extends MutableHttpResponse<?>> responsePublisher
                 = Flowable.defer(() -> {
             RouteMatch<?> computedRoute = route;
             final AnnotationMetadata annotationMetadata = computedRoute.getAnnotationMetadata();
             if (!computedRoute.isExecutable()) {
-                computedRoute = requestArgumentSatisfier.fulfillArgumentRequirements(computedRoute, req, false);
+                computedRoute = requestArgumentSatisfier.fulfillArgumentRequirements(
+                        computedRoute,
+                        req,
+                        false
+                );
             }
             if (!computedRoute.isExecutable() && HttpMethod.permitsRequestBody(req.getMethod()) && !computedRoute.getBodyArgument().isPresent()) {
                 final ConvertibleValues<?> convertibleValues = req.getBody(ConvertibleValues.class).orElse(null);
@@ -303,30 +314,61 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable {
 
             setHeadersFromMetadata(res, annotationMetadata, result);
 
-            final boolean isReactiveReturnType = Publishers.isConvertibleToPublisher(result);
-            if (isReactiveReturnType) {
-                final Publisher<?> publisher;
-                if (!Publishers.isSingle(result.getClass())) {
-                    final Flowable flowable = Publishers.convertPublisher(result, Flowable.class);
-                    publisher = Publishers.convertPublisher(flowable.toList(), Publisher.class);
+            if (result instanceof Future) {
+                Flowable<?> responseEmitter;
+                if (result instanceof CompletionStage) {
+                    CompletionStage<?> cs = (CompletionStage) result;
+                    responseEmitter = Flowable.create(emitter -> cs.whenComplete((o, throwable) -> {
+                        if (throwable != null) {
+                            emitter.onError(throwable);
+                        } else {
+                            if (o != null) {
+                                emitter.onNext(o);
+                            }
+                            emitter.onComplete();
+                        }
+                    }), BackpressureStrategy.ERROR);
                 } else {
-                    publisher = Publishers.convertPublisher(result, Publisher.class);
+                    responseEmitter = Flowable.fromFuture((Future<?>) result);
                 }
-                return Publishers.map(publisher, o -> {
+                return responseEmitter.map(o -> {
                     if (o instanceof MutableHttpResponse) {
                         return (MutableHttpResponse<?>) o;
                     } else {
                         res.body(o);
                         return res;
                     }
-                });
-            } else if (result instanceof MutableHttpResponse) {
-                return Publishers.just((MutableHttpResponse<?>) result);
-            } else {
-                return Publishers.just(
-                        res.body(result)
+                }).switchIfEmpty(Flowable.fromCallable(() ->
+                        res.status(HttpStatus.NOT_FOUND))
                 );
+            } else {
+                final boolean isReactiveReturnType = Publishers.isConvertibleToPublisher(result);
+                if (isReactiveReturnType) {
+                    final Flowable<?> publisher;
+                    boolean isSingle = Publishers.isSingle(result.getClass());
+                    if (!isSingle) {
+                        final Flowable flowable = Publishers.convertPublisher(result, Flowable.class);
+                        publisher = flowable.toList().toFlowable();
+                    } else {
+                        publisher = Publishers.convertPublisher(result, Flowable.class);
+                    }
+                    return publisher.map(o -> {
+                        if (o instanceof MutableHttpResponse) {
+                            return (MutableHttpResponse<?>) o;
+                        } else {
+                            res.body(o);
+                            return res;
+                        }
+                    }).switchIfEmpty(Flowable.fromCallable(() -> res.status(HttpStatus.NOT_FOUND)));
+                } else if (result instanceof MutableHttpResponse) {
+                    return Publishers.just((MutableHttpResponse<?>) result);
+                } else {
+                    return Publishers.just(
+                            res.body(result)
+                    );
+                }
             }
+
         });
         final List<HttpFilter> filters = router.findFilters(req);
         if (CollectionUtils.isNotEmpty(filters)) {
@@ -503,6 +545,9 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable {
                 res.status(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
             }
         } else {
+            if (LOG.isErrorEnabled()) {
+                LOG.error("Internal Server Error: " + e.getMessage(), e);
+            }
             res.status(defaultStatus)
                 .body(new JsonError(e.getMessage()));
 

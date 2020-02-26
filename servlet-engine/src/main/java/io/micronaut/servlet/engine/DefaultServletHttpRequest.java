@@ -122,11 +122,13 @@ public class DefaultServletHttpRequest<B> implements
         if (arg != null) {
             final Class<T> type = arg.getType();
             final MediaType contentType = getContentType().orElse(MediaType.APPLICATION_JSON_TYPE);
-            if (body == null) {
+            long contentLength = getContentLength();
+            if (body == null && contentLength != 0) {
 
+                boolean isConvertibleValues = ConvertibleValues.class == type;
                 if (isFormSubmission(contentType)) {
                     body = getParameters();
-                    if (ConvertibleValues.class == type) {
+                    if (isConvertibleValues) {
                         return (Optional<T>) Optional.of(body);
                     } else {
                         return Optional.empty();
@@ -136,7 +138,7 @@ public class DefaultServletHttpRequest<B> implements
                     final MediaTypeCodec codec = codecRegistry.findCodec(contentType, type).orElse(null);
                     if (codec != null) {
                         try (InputStream inputStream = delegate.getInputStream()) {
-                            if (ConvertibleValues.class == type) {
+                            if (isConvertibleValues) {
                                 final Map map = codec.decode(Map.class, inputStream);
                                 body = ConvertibleValues.of(map);
                                 return (Optional<T>) Optional.of(body);
@@ -155,7 +157,7 @@ public class DefaultServletHttpRequest<B> implements
                 if (type.isInstance(body)) {
                     return (Optional<T>) Optional.of(body);
                 } else {
-                    if (body != parameters) {
+                    if (body != null && body != parameters) {
                         final T result = ConversionService.SHARED.convertRequired(body, arg);
                         return Optional.ofNullable(result);
                     }
