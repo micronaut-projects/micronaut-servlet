@@ -1,6 +1,8 @@
 package io.micronaut.servlet.http;
 
 import io.micronaut.http.HttpRequest;
+import io.micronaut.http.MutableHttpResponse;
+import org.reactivestreams.Publisher;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -40,4 +42,33 @@ public interface ServletHttpRequest<N, B> extends HttpRequest<B> {
      * @return The native request type
      */
     N getNativeRequest();
+
+    /**
+     * Checks if this request supports asynchronous operation.
+     *
+     * <p>Asynchronous operation is disabled for this request if this request
+     * is within the scope of a filter or servlet that has not been annotated
+     * or flagged in the deployment descriptor as being able to support
+     * asynchronous handling.
+     *
+     * @return true if this request supports asynchronous operation, false
+     * otherwise
+     *
+     * @since Servlet 3.0
+     */
+    default boolean isAsyncSupported() {
+        return false;
+    }
+
+    /**
+     * Causes the container to dispatch a thread, possibly from a managed
+     * thread pool, to run the specified <tt>Runnable</tt>. The container may
+     * propagate appropriate contextual information to the <tt>Runnable</tt>.
+     *
+     * @param responsePublisher The response publisher
+     */
+    default void subscribe(Publisher<? extends MutableHttpResponse<?>> responsePublisher) {
+        throw new UnsupportedOperationException("Asynchronous processing is not supported");
+    }
+
 }

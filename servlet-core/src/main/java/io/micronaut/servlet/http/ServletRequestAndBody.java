@@ -33,6 +33,11 @@ final class ServletRequestAndBody<N, B> extends HttpRequestWrapper<B> implements
     }
 
     @Override
+    public boolean isAsyncSupported() {
+        return ((ServletHttpRequest<N, B>) getDelegate()).isAsyncSupported();
+    }
+
+    @Override
     public Optional<B> getBody() {
         return Optional.of(body);
     }

@@ -13,10 +13,7 @@ import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.server.handlers.PathHandler;
 import io.undertow.servlet.Servlets;
-import io.undertow.servlet.api.DeploymentInfo;
-import io.undertow.servlet.api.DeploymentManager;
-import io.undertow.servlet.api.InstanceFactory;
-import io.undertow.servlet.api.InstanceHandle;
+import io.undertow.servlet.api.*;
 
 import javax.inject.Singleton;
 import javax.servlet.Servlet;
@@ -95,29 +92,31 @@ public class UndertowFactory extends ServletServerFactory {
     protected DeploymentInfo deploymentInfo(ApplicationContext applicationContext) {
         final String cp = getContextPath();
 
+        ServletInfo servletInfo = Servlets.servlet(
+                Environment.MICRONAUT, DefaultMicronautServlet.class, () -> new InstanceHandle<Servlet>() {
+
+                    private DefaultMicronautServlet instance;
+
+                    @Override
+                    public Servlet getInstance() {
+                        instance = new DefaultMicronautServlet(applicationContext);
+                        return instance;
+                    }
+
+                    @Override
+                    public void release() {
+                        if (instance != null) {
+                            instance.destroy();
+                        }
+                    }
+                }
+        );
+        servletInfo.setAsyncSupported(true);
         final DeploymentInfo deploymentInfo = Servlets.deployment()
                 .setDeploymentName(Environment.MICRONAUT)
                 .setClassLoader(applicationContext.getEnvironment().getClassLoader())
                 .setContextPath(cp)
-                .addServlet(Servlets.servlet(
-                        Environment.MICRONAUT, DefaultMicronautServlet.class, () -> new InstanceHandle<Servlet>() {
-
-                            private DefaultMicronautServlet instance;
-
-                            @Override
-                            public Servlet getInstance() {
-                                instance = new DefaultMicronautServlet(applicationContext);
-                                return instance;
-                            }
-
-                            @Override
-                            public void release() {
-                                if (instance != null) {
-                                    instance.destroy();
-                                }
-                            }
-                        }
-                ).addMapping("/*"));
+                .addServlet(servletInfo.addMapping("/*"));
         configuration.getMultipartConfiguration().ifPresent(deploymentInfo::setDefaultMultipartConfig);
         return deploymentInfo;
     }

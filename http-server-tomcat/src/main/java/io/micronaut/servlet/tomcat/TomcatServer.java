@@ -7,12 +7,14 @@ import io.micronaut.http.server.exceptions.ServerStartupException;
 import io.micronaut.runtime.ApplicationConfiguration;
 import io.micronaut.runtime.server.EmbeddedServer;
 import org.apache.catalina.LifecycleException;
+import org.apache.catalina.connector.Connector;
 import org.apache.catalina.startup.Tomcat;
 
 import javax.inject.Singleton;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Implementation of {@link EmbeddedServer} for Tomcat.
@@ -26,6 +28,7 @@ public class TomcatServer implements EmbeddedServer {
     private final Tomcat tomcat;
     private final ApplicationContext applicationContext;
     private final ApplicationConfiguration applicationConfiguration;
+    private final AtomicBoolean running = new AtomicBoolean(false);
 
     /**
      * Default constructor.
@@ -46,26 +49,31 @@ public class TomcatServer implements EmbeddedServer {
 
     @Override
     public EmbeddedServer start() {
-        try {
-            if (!applicationContext.isRunning()) {
-                applicationContext.start();
+        if (running.compareAndSet(false, true)) {
+            try {
+                if (!applicationContext.isRunning()) {
+                    applicationContext.start();
+                }
+                tomcat.start();
+            } catch (LifecycleException e) {
+                throw new ServerStartupException("Error starting Tomcat server: " + e.getMessage(), e);
             }
-            tomcat.start();
-        } catch (LifecycleException e) {
-            throw new ServerStartupException("Error starting Tomcat server: " + e.getMessage(), e);
         }
         return this;
     }
 
     @Override
     public EmbeddedServer stop() {
-        try {
-            if (applicationContext.isRunning()) {
-                applicationContext.stop();
+        if (running.compareAndSet(true, false)) {
+            try {
+                if (applicationContext.isRunning()) {
+                    applicationContext.stop();
+                }
+                tomcat.stop();
+                tomcat.destroy();
+            } catch (LifecycleException e) {
+                throw new HttpServerException("Error shutting down Tomcat server: " + e.getMessage(), e);
             }
-            tomcat.stop();
-        } catch (LifecycleException e) {
-            throw new HttpServerException("Error shutting down Tomcat server: " + e.getMessage(), e);
         }
         return this;
     }
@@ -111,6 +119,6 @@ public class TomcatServer implements EmbeddedServer {
 
     @Override
     public boolean isRunning() {
-        return applicationContext.isRunning();
+        return running.get();
     }
 }

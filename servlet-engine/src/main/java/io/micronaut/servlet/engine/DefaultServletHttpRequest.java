@@ -7,10 +7,7 @@ import io.micronaut.core.convert.value.ConvertibleValues;
 import io.micronaut.core.convert.value.MutableConvertibleValues;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.CollectionUtils;
-import io.micronaut.http.HttpHeaders;
-import io.micronaut.http.HttpMethod;
-import io.micronaut.http.HttpParameters;
-import io.micronaut.http.MediaType;
+import io.micronaut.http.*;
 import io.micronaut.http.codec.CodecException;
 import io.micronaut.http.codec.MediaTypeCodec;
 import io.micronaut.http.codec.MediaTypeCodecRegistry;
@@ -18,9 +15,13 @@ import io.micronaut.http.cookie.Cookies;
 import io.micronaut.servlet.http.ServletExchange;
 import io.micronaut.servlet.http.ServletHttpRequest;
 import io.micronaut.servlet.http.ServletHttpResponse;
+import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.servlet.AsyncContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.BufferedReader;
@@ -74,6 +75,37 @@ public class DefaultServletHttpRequest<B> implements
                 this,
                 response
         );
+    }
+
+    @Override
+    public boolean isAsyncSupported() {
+        return delegate.isAsyncSupported();
+    }
+
+    @Override
+    public void subscribe(Publisher<? extends MutableHttpResponse<?>> responsePublisher) {
+        final AsyncContext asyncContext = delegate.startAsync();
+        asyncContext.start(() -> responsePublisher.subscribe(new Subscriber<MutableHttpResponse<?>>() {
+            @Override
+            public void onSubscribe(Subscription s) {
+                s.request(1);
+            }
+
+            @Override
+            public void onNext(MutableHttpResponse<?> mutableHttpResponse) {
+
+            }
+
+            @Override
+            public void onError(Throwable t) {
+                asyncContext.complete();
+            }
+
+            @Override
+            public void onComplete() {
+                asyncContext.complete();
+            }
+        }));
     }
 
     @Nonnull
