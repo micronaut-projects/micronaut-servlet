@@ -367,7 +367,7 @@ public class DefaultServletHttpRequest<B> implements
     }
 
     private boolean isFormSubmission(MediaType contentType) {
-        return MediaType.MULTIPART_FORM_DATA_TYPE.equals(contentType) || MediaType.MULTIPART_FORM_DATA_TYPE.equals(contentType);
+        return MediaType.APPLICATION_FORM_URLENCODED_TYPE.equals(contentType) || MediaType.MULTIPART_FORM_DATA_TYPE.equals(contentType);
     }
 
     private <T> List<T> enumerationToList(Enumeration<T> enumeration) {

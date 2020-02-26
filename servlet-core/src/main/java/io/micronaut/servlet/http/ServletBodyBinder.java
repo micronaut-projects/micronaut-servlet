@@ -33,7 +33,7 @@ import java.util.Optional;
  * @author graemerocher
  * @since 2.0.0
  */
-public final class ServletBodyBinder<T> extends DefaultBodyAnnotationBinder<T> implements AnnotatedRequestArgumentBinder<Body, T> {
+public class ServletBodyBinder<T> extends DefaultBodyAnnotationBinder<T> implements AnnotatedRequestArgumentBinder<Body, T> {
     private final MediaTypeCodecRegistry mediaTypeCodeRegistry;
 
     /**
@@ -103,41 +103,49 @@ public final class ServletBodyBinder<T> extends DefaultBodyAnnotationBinder<T> i
                         }
                     };
                 }
-
             } else {
                 final MediaType mediaType = source.getContentType().orElse(MediaType.APPLICATION_JSON_TYPE);
-                final MediaTypeCodec codec = mediaTypeCodeRegistry
-                        .findCodec(mediaType, type)
-                        .orElse(null);
+                if (isFormSubmission(mediaType)) {
+                    Optional<T> result = conversionService.convert(servletHttpRequest.getParameters().asMap(), context);
+                    return () -> result;
+                } else {
+                    final MediaTypeCodec codec = mediaTypeCodeRegistry
+                            .findCodec(mediaType, type)
+                            .orElse(null);
 
-                if (codec != null) {
+                    if (codec != null) {
 
-                    try (InputStream inputStream = servletHttpRequest.getInputStream()) {
-                        if (Publishers.isConvertibleToPublisher(type)) {
-                            final Argument<?> typeArg = argument.getFirstTypeVariable().orElse(Argument.OBJECT_ARGUMENT);
-                            if (Publishers.isSingle(type)) {
-                                T content = (T) codec.decode(typeArg, inputStream);
-                                final Publisher<T> publisher = Publishers.just(content);
-                                final T converted = conversionService.convertRequired(publisher, type);
-                                return () -> Optional.of(converted);
+                        try (InputStream inputStream = servletHttpRequest.getInputStream()) {
+                            if (Publishers.isConvertibleToPublisher(type)) {
+                                final Argument<?> typeArg = argument.getFirstTypeVariable().orElse(Argument.OBJECT_ARGUMENT);
+                                if (Publishers.isSingle(type)) {
+                                    T content = (T) codec.decode(typeArg, inputStream);
+                                    final Publisher<T> publisher = Publishers.just(content);
+                                    final T converted = conversionService.convertRequired(publisher, type);
+                                    return () -> Optional.of(converted);
+                                } else {
+                                    final Argument<? extends List<?>> containerType = Argument.listOf(typeArg.getType());
+                                    T content = (T) codec.decode(containerType, inputStream);
+                                    final Flowable flowable = Flowable.fromIterable((Iterable) content);
+                                    final T converted = conversionService.convertRequired(flowable, type);
+                                    return () -> Optional.of(converted);
+                                }
                             } else {
-                                final Argument<? extends List<?>> containerType = Argument.listOf(typeArg.getType());
-                                T content = (T) codec.decode(containerType, inputStream);
-                                final Flowable flowable = Flowable.fromIterable((Iterable) content);
-                                final T converted = conversionService.convertRequired(flowable, type);
-                                return () -> Optional.of(converted);
+                                T content = codec.decode(argument, inputStream);
+                                return () -> Optional.of(content);
                             }
-                        } else {
-                            T content = codec.decode(argument, inputStream);
-                            return () -> Optional.of(content);
+                        } catch (CodecException | IOException e) {
+                            throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Unable to decode request body: " + e.getMessage());
                         }
-                    } catch (CodecException | IOException e) {
-                        throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Unable to decode request body: " + e.getMessage());
                     }
                 }
 
             }
         }
         return super.bind(context, source);
+    }
+
+    private boolean isFormSubmission(MediaType contentType) {
+        return MediaType.APPLICATION_FORM_URLENCODED_TYPE.equals(contentType) || MediaType.MULTIPART_FORM_DATA_TYPE.equals(contentType);
     }
 }

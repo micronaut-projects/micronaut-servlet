@@ -48,8 +48,9 @@ class ServletRequestBinder implements TypedRequestArgumentBinder<HttpRequest> {
     public BindingResult<HttpRequest> bind(ArgumentConversionContext<HttpRequest> context, HttpRequest<?> source) {
         if (source instanceof ServletHttpRequest) {
             ServletHttpRequest<?, ?> serverlessHttpRequest = (ServletHttpRequest<?, ?>) source;
+            long contentLength = serverlessHttpRequest.getContentLength();
             final Argument<?> bodyType = context.getArgument().getFirstTypeVariable().orElse(null);
-            if (bodyType != null) {
+            if (bodyType != null && contentLength != 0) {
                 final Class<?> bodyJavaType = bodyType.getType();
                 if (CharSequence.class.isAssignableFrom(bodyJavaType)) {
                     try (BufferedReader reader = serverlessHttpRequest.getReader()) {

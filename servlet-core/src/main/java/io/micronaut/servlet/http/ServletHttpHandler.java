@@ -45,6 +45,7 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.*;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -157,7 +158,11 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable {
                         invokeRouteMatch(req, res, notAllowedRoute, true, exchange);
                     } else {
                         res.getHeaders().allowGeneric(existingRouteMethods);
-                        res.status(HttpStatus.METHOD_NOT_ALLOWED);
+                        res.status(HttpStatus.METHOD_NOT_ALLOWED)
+                            .body(new JsonError(
+                                    "Method [" + req.getMethod() + "] not allowed for URI [" + req.getPath() + "]. Allowed methods: " + existingRouteMethods
+                            ));
+                        encodeResponse(exchange, res);
                     }
                 } else {
                     final RouteMatch<Object> notFoundRoute =
@@ -292,7 +297,8 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable {
                 }
             }
 
-            Object result = computedRoute.execute();
+            RouteMatch<?> finalComputedRoute = computedRoute;
+            Object result = ServerRequestContext.with(req, (Callable<Object>) finalComputedRoute::execute);
             if (result instanceof Optional) {
                 result = ((Optional) result).orElse(null);
             }

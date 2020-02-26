@@ -42,8 +42,20 @@ public abstract class ServletBinderRegistry implements RequestBinderRegistry {
             ConversionService conversionService,
             List<RequestArgumentBinder> binders) {
         this.defaultRegistry = new DefaultRequestBinderRegistry(conversionService, binders);
-        this.byAnnotation.put(Body.class, new ServletBodyBinder(conversionService, mediaTypeCodecRegistry));
+        this.byAnnotation.put(Body.class, newServletBodyBinder(mediaTypeCodecRegistry, conversionService));
         this.byType.put(HttpRequest.class, new ServletRequestBinder(mediaTypeCodecRegistry));
+    }
+
+    /**
+     * Creates the servlet body binder.
+     * @param mediaTypeCodecRegistry The media type registry
+     * @param conversionService The conversion service
+     * @return The servlet body body
+     */
+    protected ServletBodyBinder newServletBodyBinder(
+            MediaTypeCodecRegistry mediaTypeCodecRegistry,
+            ConversionService conversionService) {
+        return new ServletBodyBinder(conversionService, mediaTypeCodecRegistry);
     }
 
     @Override

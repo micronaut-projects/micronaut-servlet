@@ -12,7 +12,9 @@ import io.micronaut.http.bind.binders.AnnotatedRequestArgumentBinder;
 import io.micronaut.http.codec.MediaTypeCodec;
 import io.micronaut.http.codec.MediaTypeCodecRegistry;
 import io.micronaut.http.exceptions.HttpStatusException;
+import io.micronaut.http.multipart.CompletedFileUpload;
 import io.micronaut.http.server.exceptions.InternalServerException;
+import io.micronaut.servlet.engine.ServletCompletedFileUpload;
 import io.micronaut.servlet.http.ServletExchange;
 
 import javax.annotation.Nonnull;
@@ -121,6 +123,9 @@ public class ServletPartBinder<T> implements AnnotatedRequestArgumentBinder<Part
                         );
                     }
 
+                } else if (CompletedFileUpload.class.isAssignableFrom(type)) {
+                    //noinspection unchecked
+                    return () -> (Optional<T>) Optional.of(new ServletCompletedFileUpload(part));
                 } else {
                     final MediaType contentType =
                             Optional.ofNullable(part.getContentType()).map(MediaType::new)
@@ -153,4 +158,5 @@ public class ServletPartBinder<T> implements AnnotatedRequestArgumentBinder<Part
         final InputStreamReader inputStreamReader = new InputStreamReader(part.getInputStream(), charset);
         return new BufferedReader(inputStreamReader);
     }
+
 }
