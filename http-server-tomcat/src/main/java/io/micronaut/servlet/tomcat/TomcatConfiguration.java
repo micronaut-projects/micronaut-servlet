@@ -1,16 +1,26 @@
 package io.micronaut.servlet.tomcat;
 
-import io.micronaut.context.annotation.*;
+import io.micronaut.context.annotation.ConfigurationBuilder;
+import io.micronaut.context.annotation.ConfigurationInject;
+import io.micronaut.context.annotation.ConfigurationProperties;
+import io.micronaut.context.annotation.Property;
+import io.micronaut.core.annotation.TypeHint;
 import io.micronaut.core.bind.annotation.Bindable;
 import io.micronaut.core.convert.format.MapFormat;
 import io.micronaut.core.naming.conventions.StringConvention;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.http.server.HttpServerConfiguration;
 import org.apache.catalina.connector.Connector;
+import org.apache.coyote.ajp.AjpAprProtocol;
+import org.apache.coyote.ajp.AjpNio2Protocol;
+import org.apache.coyote.ajp.AjpNioProtocol;
+import org.apache.coyote.http11.Http11AprProtocol;
+import org.apache.coyote.http11.Http11Nio2Protocol;
+import org.apache.coyote.http11.Http11NioProtocol;
+import org.apache.coyote.http2.Http2Protocol;
 
 import javax.annotation.Nullable;
 import javax.servlet.MultipartConfigElement;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -21,6 +31,15 @@ import java.util.Optional;
  * @since 1.0
  */
 @ConfigurationProperties("tomcat")
+@TypeHint({
+        Http11NioProtocol.class,
+        Http11Nio2Protocol.class,
+        Http11AprProtocol.class,
+        Http2Protocol.class,
+        AjpAprProtocol.class,
+        AjpNio2Protocol.class,
+        AjpNioProtocol.class
+})
 public class TomcatConfiguration extends HttpServerConfiguration {
 
     @ConfigurationBuilder

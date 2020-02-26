@@ -2,6 +2,8 @@ package io.micronaut.servlet.engine;
 
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.ApplicationContextBuilder;
+import io.micronaut.core.annotation.TypeHint;
+
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -13,6 +15,7 @@ import java.util.Objects;
  * @author graemerocher
  * @since 1.0
  */
+@TypeHint(DefaultMicronautServlet.class)
 public class DefaultMicronautServlet extends HttpServlet {
 
     private ApplicationContext applicationContext;

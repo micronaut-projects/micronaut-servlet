@@ -164,7 +164,8 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable {
                     if (notFoundRoute != null) {
                         invokeRouteMatch(req, res, notFoundRoute, true, exchange);
                     } else {
-                        res.status(HttpStatus.NOT_FOUND);
+                        res.status(HttpStatus.NOT_FOUND).body(new JsonError("Page Not Found"));
+                        encodeResponse(exchange, res);
                     }
                 }
 
