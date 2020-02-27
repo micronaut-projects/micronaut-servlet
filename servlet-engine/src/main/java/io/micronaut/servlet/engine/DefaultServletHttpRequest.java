@@ -94,6 +94,13 @@ public class DefaultServletHttpRequest<B> implements
         );
     }
 
+    /**
+     * @return The codec registry.
+     */
+    public MediaTypeCodecRegistry getCodecRegistry() {
+        return codecRegistry;
+    }
+
     @Override
     public boolean isAsyncSupported() {
         return delegate.isAsyncSupported();

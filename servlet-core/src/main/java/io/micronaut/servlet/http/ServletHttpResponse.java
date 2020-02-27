@@ -49,8 +49,9 @@ public interface ServletHttpResponse<N, B> extends MutableHttpResponse<B> {
      * Streams data using the given data publisher.
      *
      * @param dataPublisher The data publisher
+     * @return Emits the response once the stream has completed
      */
-    default void stream(Publisher<?> dataPublisher) {
+    default Publisher<MutableHttpResponse<?>> stream(Publisher<?> dataPublisher) {
         throw new UnsupportedOperationException("Data streaming not supported by implementation");
     }
 }

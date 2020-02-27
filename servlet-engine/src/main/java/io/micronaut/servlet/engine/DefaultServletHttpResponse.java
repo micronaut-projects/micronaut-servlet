@@ -6,22 +6,30 @@ import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.convert.value.MutableConvertibleValues;
 import io.micronaut.core.io.Writable;
 import io.micronaut.core.util.ArrayUtils;
-import io.micronaut.http.HttpStatus;
-import io.micronaut.http.MediaType;
-import io.micronaut.http.MutableHttpHeaders;
-import io.micronaut.http.MutableHttpResponse;
+import io.micronaut.http.*;
 import io.micronaut.http.annotation.Produces;
+import io.micronaut.http.codec.MediaTypeCodec;
 import io.micronaut.http.cookie.Cookie;
 import io.micronaut.http.server.exceptions.InternalServerException;
 import io.micronaut.servlet.http.ServletHttpResponse;
+import io.reactivex.BackpressureStrategy;
+import io.reactivex.Flowable;
+import io.reactivex.FlowableEmitter;
+import io.reactivex.FlowableOnSubscribe;
+import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.servlet.ServletOutputStream;
+import javax.servlet.WriteListener;
 import javax.servlet.http.HttpServletResponse;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 /**
@@ -49,6 +57,87 @@ public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpSe
         this.delegate = delegate;
         this.request = request;
         this.headers = new ServletResponseHeaders();
+    }
+
+    @Override
+    public Publisher<MutableHttpResponse<?>> stream(Publisher<?> dataPublisher) {
+        MediaType contentType = getContentType().orElse(MediaType.APPLICATION_JSON_TYPE);
+        MediaTypeCodec codec = request.getCodecRegistry().findCodec(contentType).orElse(null);
+        boolean isJson = contentType.getSubtype().equals("json");
+        Publisher<?> finalDataPublisher = dataPublisher;
+        return Flowable.create(emitter -> finalDataPublisher.subscribe(new Subscriber<Object>() {
+            ServletOutputStream outputStream;
+            Subscription subscription;
+            AtomicBoolean finished = new AtomicBoolean();
+            @Override
+            public void onSubscribe(Subscription s) {
+                subscription = s;
+                delegate.setHeader(HttpHeaders.TRANSFER_ENCODING, "chunked");
+                try {
+                    outputStream = delegate.getOutputStream();
+                    if (isJson) {
+                        outputStream.write('[');
+                    }
+                    outputStream.setWriteListener(new WriteListener() {
+                        @Override
+                        public void onWritePossible() {
+                            s.request(1);
+                        }
+
+                        @Override
+                        public void onError(Throwable t) {
+                            emitter.onError(t);
+                        }
+                    });
+                } catch (IOException e) {
+                    finished.set(true);
+                    emitter.onError(e);
+                    subscription.cancel();
+                }
+            }
+
+            @Override
+            public void onNext(Object o) {
+                try {
+                    if (outputStream.isReady() && !finished.get()) {
+                        if (o instanceof CharSequence) {
+                          outputStream.write(o.toString().getBytes(getCharacterEncoding()));
+                        } else if (o instanceof byte[]) {
+                            outputStream.write((byte[]) o);
+                        } else if (codec != null) {
+                            byte[] bytes = codec.encode(o);
+                            outputStream.write(bytes);
+                        }
+                    }
+                } catch (IOException e) {
+                    finished.set(true);
+                    onError(e);
+                }
+            }
+
+            @Override
+            public void onError(Throwable t) {
+                if (finished.compareAndSet(false, true)) {
+                    emitter.onError(t);
+                    subscription.cancel();
+                }
+            }
+
+            @Override
+            public void onComplete() {
+                if (finished.compareAndSet(false, true)) {
+                    try {
+                        if (isJson && outputStream.isReady()) {
+                            outputStream.write(']');
+                        }
+                        emitter.onNext(DefaultServletHttpResponse.this);
+                        emitter.onComplete();
+                    } catch (IOException e) {
+                        emitter.onError(e);
+                    }
+                }
+            }
+        }), BackpressureStrategy.ERROR);
     }
 
     @Override

@@ -248,40 +248,47 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable {
                             final HttpStatus status = response.status();
                             Object body = response.body();
                             if (body != null) {
-                                if (Publishers.isSingle(body.getClass())) {
-                                    Flowable<?> flowable = Publishers.convertPublisher(body, Flowable.class);
-                                    return flowable.map((Function<Object, MutableHttpResponse<?>>) o -> {
-                                        if (o instanceof HttpResponse) {
-                                            encodeResponse(exchange, (HttpResponse<?>) o);
-                                            return res;
-                                        } else {
-                                            ServletHttpResponse<Res, ? super Object> res1 = exchange.getResponse();
-                                            res1.body(o);
-                                            encodeResponse(exchange, response);
-                                            return res1;
-                                        }
-                                    }).switchIfEmpty(Flowable.defer(() -> {
-                                        final RouteMatch<Object> errorRoute = lookupStatusRoute(route, HttpStatus.NOT_FOUND);
-                                        if (errorRoute != null) {
-                                            Flowable<MutableHttpResponse<?>> notFoundFlowable = Flowable.fromPublisher(buildResponsePublisher(
-                                                    req,
-                                                    (MutableHttpResponse<Object>) response,
-                                                    errorRoute,
-                                                    true
-                                            ));
-                                            return notFoundFlowable.onErrorReturn(throwable -> {
+                                if (Publishers.isConvertibleToPublisher(body)) {
+                                    boolean isSingle = Publishers.isSingle(body.getClass());
+                                    if (isSingle) {
+                                        Flowable<?> flowable = Publishers.convertPublisher(body, Flowable.class);
+                                        return flowable.map((Function<Object, MutableHttpResponse<?>>) o -> {
+                                            if (o instanceof HttpResponse) {
+                                                encodeResponse(exchange, (HttpResponse<?>) o);
+                                                return res;
+                                            } else {
+                                                ServletHttpResponse<Res, ? super Object> res1 = exchange.getResponse();
+                                                res1.body(o);
+                                                encodeResponse(exchange, response);
+                                                return res1;
+                                            }
+                                        }).switchIfEmpty(Flowable.defer(() -> {
+                                            final RouteMatch<Object> errorRoute = lookupStatusRoute(route, HttpStatus.NOT_FOUND);
+                                            if (errorRoute != null) {
+                                                Flowable<MutableHttpResponse<?>> notFoundFlowable = Flowable.fromPublisher(buildResponsePublisher(
+                                                        req,
+                                                        (MutableHttpResponse<Object>) response,
+                                                        errorRoute,
+                                                        true
+                                                ));
+                                                return notFoundFlowable.onErrorReturn(throwable -> {
 
-                                                if (LOG.isErrorEnabled()) {
-                                                    LOG.error("Error occuring invoking 404 handler: " + throwable.getMessage());
-                                                }
-                                                MutableHttpResponse<Object> defaultNotFound = res.status(404).body(newJsonError(req, "Page Not Found"));
-                                                encodeResponse(exchange, defaultNotFound);
-                                                return defaultNotFound;
-                                            });
-                                        } else {
-                                            return Publishers.just(res.status(404).body(newJsonError(req, "Page Not Found")));
-                                        }
-                                    }));
+                                                    if (LOG.isErrorEnabled()) {
+                                                        LOG.error("Error occuring invoking 404 handler: " + throwable.getMessage());
+                                                    }
+                                                    MutableHttpResponse<Object> defaultNotFound = res.status(404).body(newJsonError(req, "Page Not Found"));
+                                                    encodeResponse(exchange, defaultNotFound);
+                                                    return defaultNotFound;
+                                                });
+                                            } else {
+                                                return Publishers.just(res.status(404).body(newJsonError(req, "Page Not Found")));
+                                            }
+                                        }));
+                                    } else {
+                                        // stream case
+                                        Flowable<?> flowable = Publishers.convertPublisher(body, Flowable.class);
+                                        return exchange.getResponse().stream(flowable);
+                                    }
                                 } else {
 
                                     if (!isErrorRoute && status.getCode() >= 400) {
