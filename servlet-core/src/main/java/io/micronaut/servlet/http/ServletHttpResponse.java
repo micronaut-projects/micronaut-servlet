@@ -1,6 +1,7 @@
 package io.micronaut.servlet.http;
 
 import io.micronaut.http.MutableHttpResponse;
+import org.reactivestreams.Publisher;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -43,4 +44,13 @@ public interface ServletHttpResponse<N, B> extends MutableHttpResponse<B> {
      * @return The writer
      */
     BufferedWriter getWriter() throws IOException;
+
+    /**
+     * Streams data using the given data publisher.
+     *
+     * @param dataPublisher The data publisher
+     */
+    default void stream(Publisher<?> dataPublisher) {
+        throw new UnsupportedOperationException("Data streaming not supported by implementation");
+    }
 }

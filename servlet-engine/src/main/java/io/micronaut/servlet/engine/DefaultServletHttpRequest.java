@@ -16,15 +16,18 @@ import io.micronaut.http.cookie.Cookies;
 import io.micronaut.servlet.http.ServletExchange;
 import io.micronaut.servlet.http.ServletHttpRequest;
 import io.micronaut.servlet.http.ServletHttpResponse;
+import io.micronaut.servlet.http.StreamedServletMessage;
+import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
 import io.reactivex.schedulers.Schedulers;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
-import org.reactivestreams.Subscription;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.servlet.AsyncContext;
+import javax.servlet.ReadListener;
+import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.BufferedReader;
@@ -48,7 +51,10 @@ import java.util.stream.Collectors;
  */
 @Internal
 public class DefaultServletHttpRequest<B> implements
-        ServletHttpRequest<HttpServletRequest, B>, MutableConvertibleValues<Object>, ServletExchange<HttpServletRequest, HttpServletResponse> {
+        ServletHttpRequest<HttpServletRequest, B>,
+        MutableConvertibleValues<Object>,
+        ServletExchange<HttpServletRequest, HttpServletResponse>,
+        StreamedServletMessage<B, byte[]> {
 
     private final HttpServletRequest delegate;
     private final URI uri;
@@ -363,6 +369,60 @@ public class DefaultServletHttpRequest<B> implements
         }
         return set;
     }
+
+    @Override
+    public void subscribe(Subscriber<? super byte[]> s) {
+        Flowable.<byte[]>create(emitter -> {
+            ServletInputStream inputStream;
+            try {
+                inputStream = delegate.getInputStream();
+            } catch (IOException e) {
+                emitter.onError(e);
+                return;
+            }
+            byte[] buffer = new byte[1024];
+            inputStream.setReadListener(new ReadListener() {
+                boolean complete = false;
+                @Override
+                public void onDataAvailable() {
+                    if (!complete) {
+                        try {
+                            do {
+                                int length = inputStream.read(buffer);
+                                if (buffer.length == length) {
+                                    emitter.onNext(buffer);
+                                } else {
+                                    byte[] newArray = new byte[length];
+                                    System.arraycopy(buffer, 0, newArray, 0, length);
+                                    emitter.onNext(newArray);
+                                }
+                            } while (inputStream.isReady());
+                        } catch (IOException e) {
+                            complete = true;
+                            emitter.onError(e);
+                        }
+                    }
+                }
+
+                @Override
+                public void onAllDataRead() {
+                    if (!complete) {
+                        complete = true;
+                        emitter.onComplete();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable t) {
+                    if (!complete) {
+                        complete = true;
+                        emitter.onError(t);
+                    }
+                }
+            });
+        }, BackpressureStrategy.BUFFER).subscribe(s);
+    }
+
 
     /**
      * The servlet request headers.
