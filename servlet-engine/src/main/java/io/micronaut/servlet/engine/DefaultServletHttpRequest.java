@@ -16,6 +16,8 @@ import io.micronaut.http.cookie.Cookies;
 import io.micronaut.servlet.http.ServletExchange;
 import io.micronaut.servlet.http.ServletHttpRequest;
 import io.micronaut.servlet.http.ServletHttpResponse;
+import io.reactivex.Flowable;
+import io.reactivex.schedulers.Schedulers;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
@@ -34,6 +36,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.Principal;
 import java.util.*;
+import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 
 /**
@@ -91,29 +94,12 @@ public class DefaultServletHttpRequest<B> implements
     }
 
     @Override
-    public void subscribe(Publisher<? extends MutableHttpResponse<?>> responsePublisher) {
+    public Publisher<? extends MutableHttpResponse<?>> subscribeOnExecutor(Publisher<? extends MutableHttpResponse<?>> responsePublisher) {
         final AsyncContext asyncContext = delegate.startAsync();
-        asyncContext.start(() -> responsePublisher.subscribe(new Subscriber<MutableHttpResponse<?>>() {
-            @Override
-            public void onSubscribe(Subscription s) {
-                s.request(1);
-            }
-
-            @Override
-            public void onNext(MutableHttpResponse<?> mutableHttpResponse) {
-
-            }
-
-            @Override
-            public void onError(Throwable t) {
-                asyncContext.complete();
-            }
-
-            @Override
-            public void onComplete() {
-                asyncContext.complete();
-            }
-        }));
+        Executor executor = asyncContext::start;
+        return Flowable.fromPublisher(responsePublisher)
+                .subscribeOn(Schedulers.from(executor))
+                .doAfterTerminate(asyncContext::complete);
     }
 
     @Nonnull

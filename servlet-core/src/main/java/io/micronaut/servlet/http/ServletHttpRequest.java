@@ -67,7 +67,7 @@ public interface ServletHttpRequest<N, B> extends HttpRequest<B> {
      *
      * @param responsePublisher The response publisher
      */
-    default void subscribe(Publisher<? extends MutableHttpResponse<?>> responsePublisher) {
+    default Publisher<? extends MutableHttpResponse<?>> subscribeOnExecutor(Publisher<? extends MutableHttpResponse<?>> responsePublisher) {
         throw new UnsupportedOperationException("Asynchronous processing is not supported");
     }
 

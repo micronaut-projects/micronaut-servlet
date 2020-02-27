@@ -239,7 +239,17 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable {
                     handleException(req, res, route, isErrorRoute, throwable, exchange);
                     return Flowable.error(throwable);
                 });
-                exchangeRequest.subscribe(responseFlowable);
+                //noinspection ResultOfMethodCallIgnored
+                Flowable.fromPublisher(exchangeRequest.subscribeOnExecutor(responseFlowable))
+                        .subscribe(response -> {
+                            if (LOG.isDebugEnabled()) {
+                                LOG.debug("Request [{} - {}] completed successfully", req.getMethodName(), req.getUri());
+                            }
+                        }, throwable -> {
+                            if (LOG.isDebugEnabled()) {
+                                LOG.debug("Request [" + req.getMethodName() + " - " + req.getUri() + "] completed with error: " + throwable.getMessage(), throwable);
+                            }
+                        });
 
             } else {
                 Flowable.fromPublisher(responsePublisher)
@@ -353,7 +363,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable {
                     final Flowable<?> publisher;
                     boolean isSingle = Publishers.isSingle(result.getClass());
                     if (!isSingle) {
-                        final Flowable flowable = Publishers.convertPublisher(result, Flowable.class);
+                        final Flowable<?> flowable = Publishers.convertPublisher(result, Flowable.class);
                         publisher = flowable.toList().toFlowable();
                     } else {
                         publisher = Publishers.convertPublisher(result, Flowable.class);
@@ -426,7 +436,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable {
                 response.contentType(MediaType.APPLICATION_JSON_TYPE);
                 return MediaType.APPLICATION_JSON_TYPE;
             });
-            final MediaTypeCodec codec = ct != null ? mediaTypeCodecRegistry.findCodec(ct, body.getClass()).orElse(null) : null;
+            final MediaTypeCodec codec = mediaTypeCodecRegistry.findCodec(ct, body.getClass()).orElse(null);
             if (codec != null) {
                 try (OutputStream outputStream = exchange.getResponse().getOutputStream()) {
                     codec.encode(body, outputStream);
@@ -435,16 +445,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable {
                     throw new CodecException("Failed to encode object [" + body + "] to content type [" + ct + "]: " + e.getMessage(), e);
                 }
             } else {
-                if (ct == null) {
-                    try (BufferedWriter writer = exchange.getResponse().getWriter()) {
-                        writer.write(body.toString());
-                        writer.flush();
-                    } catch (IOException e) {
-                        throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-                    }
-                } else {
-                    throw new CodecException("No codec present capable of encoding object [" + body + "] to content type [" + ct + "]");
-                }
+                throw new CodecException("No codec present capable of encoding object [" + body + "] to content type [" + ct + "]");
             }
         }
     }
@@ -457,7 +458,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable {
         }
 
         annotationMetadata.enumValue(Status.class, HttpStatus.class)
-                .ifPresent(s -> res.status(s));
+                .ifPresent(res::status);
         final List<AnnotationValue<Header>> headers = annotationMetadata.getAnnotationValuesByType(Header.class);
         for (AnnotationValue<Header> header : headers) {
             final String value = header.stringValue().orElse(null);
