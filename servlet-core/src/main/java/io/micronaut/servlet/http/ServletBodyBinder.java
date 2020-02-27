@@ -22,6 +22,7 @@ import org.reactivestreams.Publisher;
 
 import javax.annotation.Nonnull;
 import java.io.*;
+import java.lang.reflect.Array;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -136,8 +137,15 @@ public class ServletBodyBinder<T> extends DefaultBodyAnnotationBinder<T> impleme
                                     return () -> Optional.of(converted);
                                 }
                             } else {
-                                T content = codec.decode(argument, inputStream);
-                                return () -> Optional.of(content);
+                                if (type.isArray()) {
+                                    Class<?> componentType = type.getComponentType();
+                                    List<T> content = (List<T>) codec.decode(Argument.listOf(componentType), inputStream);
+                                    Object[] array = content.toArray((Object[]) Array.newInstance(componentType, 0));
+                                    return () -> Optional.of((T) array);
+                                } else {
+                                    T content = codec.decode(argument, inputStream);
+                                    return () -> Optional.of(content);
+                                }
                             }
                         } catch (IOException e) {
                             throw new CodecException("Error decoding request body: " + e.getMessage(), e);

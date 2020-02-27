@@ -389,12 +389,16 @@ public class DefaultServletHttpRequest<B> implements
                         try {
                             do {
                                 int length = inputStream.read(buffer);
-                                if (buffer.length == length) {
-                                    emitter.onNext(buffer);
+                                if (length == -1) {
+                                    complete = true;
+                                    emitter.onComplete();
+                                    break;
                                 } else {
-                                    byte[] newArray = new byte[length];
-                                    System.arraycopy(buffer, 0, newArray, 0, length);
-                                    emitter.onNext(newArray);
+                                    if (buffer.length == length) {
+                                        emitter.onNext(buffer);
+                                    } else {
+                                        emitter.onNext(Arrays.copyOf(buffer, length));
+                                    }
                                 }
                             } while (inputStream.isReady());
                         } catch (IOException e) {
