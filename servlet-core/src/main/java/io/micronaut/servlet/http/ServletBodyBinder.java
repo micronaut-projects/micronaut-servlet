@@ -57,6 +57,7 @@ public class ServletBodyBinder<T> extends DefaultBodyAnnotationBinder<T> impleme
     public BindingResult<T> bind(ArgumentConversionContext<T> context, HttpRequest<?> source) {
         final Argument<T> argument = context.getArgument();
         final Class<T> type = argument.getType();
+        String name = argument.getAnnotationMetadata().stringValue(Body.class).orElse(null);
         if (source instanceof ServletHttpRequest) {
             ServletHttpRequest<?, ?> servletHttpRequest = (ServletHttpRequest<?, ?>) source;
             if (Readable.class.isAssignableFrom(type)) {
@@ -84,7 +85,7 @@ public class ServletBodyBinder<T> extends DefaultBodyAnnotationBinder<T> impleme
                     }
                 };
                 return () -> (Optional<T>) Optional.of(readable);
-            } else if (CharSequence.class.isAssignableFrom(type)) {
+            } else if (CharSequence.class.isAssignableFrom(type) && name == null) {
                 try (InputStream inputStream = servletHttpRequest.getInputStream()) {
                     final String content = IOUtils.readText(new BufferedReader(new InputStreamReader(inputStream, source.getCharacterEncoding())));
                     return () -> (Optional<T>) Optional.of(content);
@@ -106,8 +107,12 @@ public class ServletBodyBinder<T> extends DefaultBodyAnnotationBinder<T> impleme
             } else {
                 final MediaType mediaType = source.getContentType().orElse(MediaType.APPLICATION_JSON_TYPE);
                 if (isFormSubmission(mediaType)) {
-                    Optional<T> result = conversionService.convert(servletHttpRequest.getParameters().asMap(), context);
-                    return () -> result;
+                    if (name != null) {
+                        return () -> servletHttpRequest.getParameters().get(name, context);
+                    } else {
+                        Optional<T> result = conversionService.convert(servletHttpRequest.getParameters().asMap(), context);
+                        return () -> result;
+                    }
                 } else {
                     final MediaTypeCodec codec = mediaTypeCodeRegistry
                             .findCodec(mediaType, type)
@@ -134,8 +139,8 @@ public class ServletBodyBinder<T> extends DefaultBodyAnnotationBinder<T> impleme
                                 T content = codec.decode(argument, inputStream);
                                 return () -> Optional.of(content);
                             }
-                        } catch (CodecException | IOException e) {
-                            throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Unable to decode request body: " + e.getMessage());
+                        } catch (IOException e) {
+                            throw new CodecException("Error decoding request body: " + e.getMessage(), e);
                         }
                     }
                 }

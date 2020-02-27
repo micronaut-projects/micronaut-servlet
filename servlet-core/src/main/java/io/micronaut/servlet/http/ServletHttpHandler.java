@@ -150,29 +150,38 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable {
                         .collect(Collectors.toSet());
 
                 if (CollectionUtils.isNotEmpty(existingRouteMethods)) {
-                    final RouteMatch<Object> notAllowedRoute =
-                            router.route(HttpStatus.METHOD_NOT_ALLOWED).orElse(null);
+                    if (existingRouteMethods.contains(req.getMethodName())) {
+                        MediaType contentType = req.getContentType().orElse(null);
+                        if (contentType != null) {
+                            // must be invalid mime type
+                            boolean invalidMediaType = router.findAny(req.getUri().toString(), req)
+                                    .anyMatch(rm -> rm.accept(contentType));
+                            if (!invalidMediaType) {
+                                handleStatusRoute(exchange, res, req, HttpStatus.UNSUPPORTED_MEDIA_TYPE);
+                            } else {
+                                handlePageNotFound(exchange, res, req);
+                            }
 
-                    if (notAllowedRoute != null) {
-                        invokeRouteMatch(req, res, notAllowedRoute, true, exchange);
+                        } else {
+                            handlePageNotFound(exchange, res, req);
+                        }
                     } else {
-                        res.getHeaders().allowGeneric(existingRouteMethods);
-                        res.status(HttpStatus.METHOD_NOT_ALLOWED)
-                                .body(new JsonError(
-                                        "Method [" + req.getMethod() + "] not allowed for URI [" + req.getPath() + "]. Allowed methods: " + existingRouteMethods
-                                ));
-                        encodeResponse(exchange, res);
+                        final RouteMatch<Object> notAllowedRoute =
+                                router.route(HttpStatus.METHOD_NOT_ALLOWED).orElse(null);
+
+                        if (notAllowedRoute != null) {
+                            invokeRouteMatch(req, res, notAllowedRoute, true, exchange);
+                        } else {
+                            res.getHeaders().allowGeneric(existingRouteMethods);
+                            res.status(HttpStatus.METHOD_NOT_ALLOWED)
+                                    .body(new JsonError(
+                                            "Method [" + req.getMethod() + "] not allowed for URI [" + req.getPath() + "]. Allowed methods: " + existingRouteMethods
+                                    ));
+                            encodeResponse(exchange, res);
+                        }
                     }
                 } else {
-                    final RouteMatch<Object> notFoundRoute =
-                            router.route(HttpStatus.NOT_FOUND).orElse(null);
-
-                    if (notFoundRoute != null) {
-                        invokeRouteMatch(req, res, notFoundRoute, true, exchange);
-                    } else {
-                        res.status(HttpStatus.NOT_FOUND).body(new JsonError("Page Not Found"));
-                        encodeResponse(exchange, res);
-                    }
+                    handlePageNotFound(exchange, res, req);
                 }
 
 
@@ -186,6 +195,22 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable {
                         (System.currentTimeMillis() - time)
                 );
             }
+        }
+    }
+
+    private void handlePageNotFound(ServletExchange<Req, Res> exchange, MutableHttpResponse<Object> res, HttpRequest<Object> req) {
+        handleStatusRoute(exchange, res, req, HttpStatus.NOT_FOUND);
+    }
+
+    private void handleStatusRoute(ServletExchange<Req, Res> exchange, MutableHttpResponse<Object> res, HttpRequest<Object> req, HttpStatus httpStatus) {
+        final RouteMatch<Object> notFoundRoute =
+                router.route(httpStatus).orElse(null);
+
+        if (notFoundRoute != null) {
+            invokeRouteMatch(req, res, notFoundRoute, true, exchange);
+        } else {
+            res.status(httpStatus).body(newJsonError(req, httpStatus.getReason()));
+            encodeResponse(exchange, res);
         }
     }
 
@@ -249,12 +274,12 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable {
                                                 if (LOG.isErrorEnabled()) {
                                                     LOG.error("Error occuring invoking 404 handler: " + throwable.getMessage());
                                                 }
-                                                MutableHttpResponse<Object> defaultNotFound = res.status(404).body(new JsonError("Page Not Found"));
+                                                MutableHttpResponse<Object> defaultNotFound = res.status(404).body(newJsonError(req, "Page Not Found"));
                                                 encodeResponse(exchange, defaultNotFound);
                                                 return defaultNotFound;
                                             });
                                         } else {
-                                            return Publishers.just(res.status(404).body(new JsonError("Page Not Found")));
+                                            return Publishers.just(res.status(404).body(newJsonError(req, "Page Not Found")));
                                         }
                                     }));
                                 } else {
@@ -537,14 +562,31 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable {
                     if (body != null) {
                         res.body(body);
                     } else if (isErrorStatus) {
-                        res.body(new JsonError(statusException.getMessage()));
+                        res.body(newJsonError(req, statusException.getMessage()));
                     }
                     encodeResponse(exchange, res);
                 }
 
             } else {
 
-                final RouteMatch<Object> errorRoute = lookupErrorRoute(route, e);
+                RouteMatch<Object> errorRoute = lookupErrorRoute(route, e);
+                if (errorRoute == null) {
+                    if (e instanceof CodecException) {
+                        Throwable cause = e.getCause();
+                        if (cause != null) {
+                            errorRoute = lookupErrorRoute(route, cause);
+                        }
+                        if (errorRoute == null) {
+                            final RouteMatch<Object> badRequestRoute = lookupStatusRoute(route, HttpStatus.BAD_REQUEST);
+                            if (badRequestRoute != null) {
+                                invokeRouteMatch(req, res, badRequestRoute, true, exchange);
+                            } else {
+                                invokeExceptionHandlerIfPossible(req, res, e, HttpStatus.BAD_REQUEST, exchange);
+                            }
+                            return;
+                        }
+                    }
+                }
                 if (errorRoute != null) {
                     invokeRouteMatch(req, res, errorRoute, true, exchange);
                 } else {
@@ -554,7 +596,12 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable {
         }
     }
 
-    private void invokeExceptionHandlerIfPossible(HttpRequest<Object> req, MutableHttpResponse<Object> res, Throwable e, HttpStatus defaultStatus, ServletExchange<Req, Res> exchange) {
+    private void invokeExceptionHandlerIfPossible(
+            HttpRequest<Object> req,
+            MutableHttpResponse<Object> res,
+            Throwable e,
+            HttpStatus defaultStatus,
+            ServletExchange<Req, Res> exchange) {
         final ExceptionHandler<Throwable, ?> exceptionHandler = lookupExceptionHandler(e);
         if (exceptionHandler != null) {
             try {
@@ -575,14 +622,26 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable {
                 res.status(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
             }
         } else {
-            if (LOG.isErrorEnabled()) {
-                LOG.error("Internal Server Error: " + e.getMessage(), e);
+            if (defaultStatus.getCode() >= 500) {
+                if (LOG.isErrorEnabled()) {
+                    LOG.error(defaultStatus.getReason() + ": " + e.getMessage(), e);
+                }
+            } else {
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug(defaultStatus.getReason() + ": " + e.getMessage(), e);
+                }
             }
             res.status(defaultStatus)
-                    .body(new JsonError(e.getMessage()));
+                    .body(newJsonError(req, e.getMessage()));
 
             encodeResponse(exchange, res);
         }
+    }
+
+    private JsonError newJsonError(HttpRequest<Object> req, String message) {
+        JsonError jsonError = new JsonError(message);
+        jsonError.link("self", req.getPath());
+        return jsonError;
     }
 
     @SuppressWarnings("unchecked")
