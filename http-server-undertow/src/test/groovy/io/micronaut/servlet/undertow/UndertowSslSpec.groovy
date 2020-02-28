@@ -1,4 +1,4 @@
-package io.micronaut.servlet.jetty
+package io.micronaut.servlet.undertow
 
 import io.micronaut.http.HttpRequest
 import io.micronaut.http.HttpStatus
@@ -13,7 +13,7 @@ import spock.lang.Specification
 import javax.inject.Inject
 
 @MicronautTest
-class RequestCertificateSpec extends Specification implements TestPropertyProvider {
+class UndertowSslSpec extends Specification implements TestPropertyProvider {
 
     @Inject
     @Client("/")
@@ -55,4 +55,3 @@ class RequestCertificateSpec extends Specification implements TestPropertyProvid
         }
     }
 }
-

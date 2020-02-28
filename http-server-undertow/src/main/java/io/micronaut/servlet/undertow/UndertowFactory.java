@@ -83,10 +83,11 @@ public class UndertowFactory extends ServletServerFactory {
         final SslConfiguration sslConfiguration = getSslConfiguration();
         if (sslConfiguration.isEnabled()) {
             final int sslPort = sslConfiguration.getPort();
-            build(sslConfiguration).ifPresent(sslContext -> builder.addHttpsListener(
-                    sslPort,
-                    host,
-                    sslContext
+            build(sslConfiguration).ifPresent(sslContext ->
+                    builder.addHttpsListener(
+                        sslPort,
+                        host,
+                        sslContext
             ));
 
         }

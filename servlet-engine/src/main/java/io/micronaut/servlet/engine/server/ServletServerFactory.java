@@ -106,19 +106,23 @@ public abstract class ServletServerFactory extends SslBuilder<SSLContext> {
     public Optional<SSLContext> build(SslConfiguration ssl) {
         if (sslConfiguration.isEnabled()) {
             final String protocol = sslConfiguration
-                    .getProtocol().orElseThrow(() -> new ServerStartupException("No SSL protocal specified"));
+                    .getProtocol().orElseThrow(() -> new ServerStartupException("No SSL protocol specified"));
+
 
             try {
+
                 final SSLContext sslContext = SSLContext.getInstance(protocol);
                 final KeyManagerFactory keyManagerFactory = getKeyManagerFactory(ssl);
                 final KeyManager[] keyManagers = keyManagerFactory.getKeyManagers();
                 final TrustManagerFactory trustManagerFactory = getTrustManagerFactory(ssl);
                 final TrustManager[] trustManagers = trustManagerFactory.getTrustManagers();
+
                 sslContext.init(
                         keyManagers,
                         trustManagers,
                         new SecureRandom()
                 );
+                return Optional.of(sslContext);
             } catch (Throwable e) {
                 throw new HttpServerException("HTTPS configuration error: " + e.getMessage(), e);
             }

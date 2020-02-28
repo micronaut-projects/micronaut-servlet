@@ -8,6 +8,9 @@ import io.undertow.Undertow;
 
 import javax.inject.Singleton;
 import java.net.*;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Implementation of {@link AbstractServletServer} for Undertow.
@@ -17,6 +20,8 @@ import java.net.*;
  */
 @Singleton
 public class UndertowServer extends AbstractServletServer<Undertow> {
+
+    private Map<String, Undertow.ListenerInfo> listenersByProtocol;
 
     /**
      * Default constructor.
@@ -33,7 +38,12 @@ public class UndertowServer extends AbstractServletServer<Undertow> {
 
     @Override
     protected void startServer() throws Exception {
-        getServer().start();
+        Undertow server = getServer();
+        server.start();
+        this.listenersByProtocol = server.getListenerInfo().stream().collect(Collectors.toMap(
+                Undertow.ListenerInfo::getProtcol,
+                (listenerInfo -> listenerInfo)
+        ));
     }
 
     @Override
@@ -43,19 +53,37 @@ public class UndertowServer extends AbstractServletServer<Undertow> {
 
     @Override
     public int getPort() {
-        final SocketAddress address = getServer().getListenerInfo().get(0).getAddress();
-        return ((InetSocketAddress) address).getPort();
+        Undertow.ListenerInfo https = listenersByProtocol.get("https");
+        if (https != null) {
+            return ((InetSocketAddress) https.getAddress()).getPort();
+        }
+        Undertow.ListenerInfo http = listenersByProtocol.get("http");
+        if (http != null) {
+            return ((InetSocketAddress) http.getAddress()).getPort();
+        }
+        return -1;
     }
 
     @Override
     public String getHost() {
-        final SocketAddress address = getServer().getListenerInfo().get(0).getAddress();
-        return ((InetSocketAddress) address).getHostName();
+        Undertow.ListenerInfo https = listenersByProtocol.get("https");
+        if (https != null) {
+            return ((InetSocketAddress) https.getAddress()).getHostName();
+        }
+        Undertow.ListenerInfo http = listenersByProtocol.get("http");
+        if (http != null) {
+            return ((InetSocketAddress) http.getAddress()).getHostName();
+        }
+        return "localhost";
     }
 
     @Override
     public String getScheme() {
-        return getServer().getListenerInfo().get(0).getProtcol();
+        Undertow.ListenerInfo https = listenersByProtocol.get("https");
+        if (https != null) {
+            return https.getProtcol();
+        }
+        return "http";
     }
 
     @Override
