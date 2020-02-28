@@ -1,0 +1,7 @@
+To use http://undertow.io/[Undertow] as a server add the following dependency:
+
+dependency:io.micronaut.servlet:micronaut-http-server-undertow[version="{version}"]
+
+
+NOTE: If you plan to produce a WAR file then the dependency should be `developmentOnly`.
+

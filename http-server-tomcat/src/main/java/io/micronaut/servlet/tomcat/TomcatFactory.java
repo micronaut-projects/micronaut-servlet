@@ -3,7 +3,9 @@ package io.micronaut.servlet.tomcat;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Primary;
+import io.micronaut.context.env.Environment;
 import io.micronaut.core.io.ResourceResolver;
+import io.micronaut.core.io.socket.SocketUtils;
 import io.micronaut.http.ssl.SslConfiguration;
 import io.micronaut.servlet.engine.DefaultMicronautServlet;
 import io.micronaut.servlet.engine.server.ServletServerFactory;
@@ -80,9 +82,9 @@ public class TomcatFactory extends ServletServerFactory {
         if (sslConfiguration.isEnabled()) {
             String protocol = sslConfiguration.getProtocol().orElse("TLS");
             int sslPort = sslConfiguration.getPort();
-
-
-
+            if (sslPort == SslConfiguration.DEFAULT_PORT && getEnvironment().getActiveNames().contains(Environment.TEST)) {
+                sslPort = SocketUtils.findAvailableTcpPort();
+            }
             Connector httpsConnector = new Connector();
             httpsConnector.setPort(sslPort);
             httpsConnector.setSecure(true);

@@ -3,8 +3,10 @@ package io.micronaut.servlet.jetty;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Primary;
+import io.micronaut.context.env.Environment;
 import io.micronaut.context.exceptions.ConfigurationException;
 import io.micronaut.core.io.ResourceResolver;
+import io.micronaut.core.io.socket.SocketUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.http.ssl.ClientAuthentication;
@@ -193,7 +195,10 @@ public class JettyFactory extends ServletServerFactory {
         final SslConfiguration sslConfiguration = getSslConfiguration();
         if (sslConfiguration.isEnabled()) {
             final HttpConfiguration httpConfig = jettyConfiguration.getHttpConfiguration();
-            final int securePort = sslConfiguration.getPort();
+            int securePort = sslConfiguration.getPort();
+            if (securePort == SslConfiguration.DEFAULT_PORT && getEnvironment().getActiveNames().contains(Environment.TEST)) {
+                securePort = SocketUtils.findAvailableTcpPort();
+            }
             httpConfig.setSecurePort(securePort);
 
             SslContextFactory.Server sslContextFactory = new SslContextFactory.Server();

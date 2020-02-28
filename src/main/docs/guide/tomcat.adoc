@@ -1,0 +1,7 @@
+To use https://tomcat.apache.org/[Tomcat] as a server add the following dependency:
+
+dependency:io.micronaut.servlet:micronaut-http-server-tomcat[version="{version}"]
+
+
+NOTE: If you plan to produce a WAR file then the dependency should be `developmentOnly`.
+

@@ -1,0 +1,17 @@
+In general you can follow the https://docs.micronaut.io/latest/guide/index.html#httpServer[documentation for the HTTP server] when building applications. All non-Netty specific features of the default HTTP server  should work the same for Servlet containers (https://github.com/micronaut-projects/micronaut-servlet/issues[Report an issue] if you find a difference).
+
+There are a couple of additional extensions within Micronaut Servlet that make it easier to work with the Servlet API which are detailed in the following sections.
+
+=== Injecting the Servlet Request and Response
+
+TODO
+
+=== Simplified I/O code with Readable and Writable
+
+TODO
+
+=== Multipart support with `@Part`
+
+TODO
+
+

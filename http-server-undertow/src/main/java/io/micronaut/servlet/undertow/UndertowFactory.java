@@ -5,6 +5,7 @@ import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Primary;
 import io.micronaut.context.env.Environment;
 import io.micronaut.core.io.ResourceResolver;
+import io.micronaut.core.io.socket.SocketUtils;
 import io.micronaut.http.server.exceptions.ServerStartupException;
 import io.micronaut.http.ssl.SslConfiguration;
 import io.micronaut.servlet.engine.DefaultMicronautServlet;
@@ -82,10 +83,14 @@ public class UndertowFactory extends ServletServerFactory {
 
         final SslConfiguration sslConfiguration = getSslConfiguration();
         if (sslConfiguration.isEnabled()) {
-            final int sslPort = sslConfiguration.getPort();
+            int sslPort = sslConfiguration.getPort();
+            if (sslPort == SslConfiguration.DEFAULT_PORT && getEnvironment().getActiveNames().contains(Environment.TEST)) {
+                sslPort = SocketUtils.findAvailableTcpPort();
+            }
+            int finalSslPort = sslPort;
             build(sslConfiguration).ifPresent(sslContext ->
                     builder.addHttpsListener(
-                        sslPort,
+                            finalSslPort,
                         host,
                         sslContext
             ));
