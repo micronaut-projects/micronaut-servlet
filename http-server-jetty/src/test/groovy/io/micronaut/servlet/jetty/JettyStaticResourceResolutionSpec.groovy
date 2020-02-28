@@ -146,50 +146,6 @@ class JettyStaticResourceResolutionSpec extends Specification implements TestPro
         embeddedServer.stop()
     }
 
-    void "test resources with multiple configured mappings"() {
-        given:
-        EmbeddedServer embeddedServer = ApplicationContext.run(EmbeddedServer, [
-                'micronaut.router.static-resources.cp.paths': ['classpath:public', 'file:' + tempFile.parent],
-                'micronaut.router.static-resources.cp.mapping': '/static/**',
-                'micronaut.router.static-resources.file.paths': ['file:' + tempFile.parent],
-                'micronaut.router.static-resources.file.mapping': '/file/**'], Environment.TEST)
-        RxHttpClient rxClient = embeddedServer.applicationContext.createBean(RxHttpClient, embeddedServer.getURL())
-
-        expect:
-        embeddedServer.applicationContext.getBeansOfType(StaticResourceConfiguration).size() == 2
-
-        when:
-        def response = rxClient.exchange(
-                HttpRequest.GET("/static/index.html"), String
-        ).blockingFirst()
-        File file = Paths.get(JettyStaticResourceResolutionSpec.classLoader.getResource("public/index.html").toURI()).toFile()
-
-        then:
-        file.exists()
-        response.code() == HttpStatus.OK.code
-        response.header(CONTENT_TYPE) == "text/html"
-        Integer.parseInt(response.header(CONTENT_LENGTH)) > 0
-        !response.headers.contains(CACHE_CONTROL)
-
-        response.body() == "<html><head></head><body>HTML Page from resources</body></html>"
-
-        when:
-        response = rxClient.exchange(
-                HttpRequest.GET('/file/'+tempFile.getName()), String
-        ).blockingFirst()
-
-        then:
-        response.status == HttpStatus.OK
-        response.header(CONTENT_TYPE) == "text/html"
-        Integer.parseInt(response.header(CONTENT_LENGTH)) > 0
-        !response.headers.contains(CACHE_CONTROL)
-
-        response.body() == "<html><head></head><body>HTML Page from static file</body></html>"
-
-        cleanup:
-        embeddedServer.stop()
-    }
-
     void "test resources with multiple configured mappings and one is disabled"() {
         given:
         EmbeddedServer embeddedServer = ApplicationContext.run(EmbeddedServer, [
