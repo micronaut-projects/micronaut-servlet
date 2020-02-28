@@ -32,10 +32,11 @@ public abstract class ServletServerFactory extends SslBuilder<SSLContext> {
     /**
      * Default constructor.
      *
-     * @param resourceResolver    The resource resolver.
-     * @param serverConfiguration The server configuration
-     * @param sslConfiguration    The SSL configuration
-     * @param applicationContext  The app context
+     * @param resourceResolver             The resource resolver.
+     * @param serverConfiguration          The server configuration
+     * @param sslConfiguration             The SSL configuration
+     * @param applicationContext           The app context
+     * @param staticResourceConfigurations The static resource definitions
      */
     protected ServletServerFactory(ResourceResolver resourceResolver,
                                    HttpServerConfiguration serverConfiguration,
