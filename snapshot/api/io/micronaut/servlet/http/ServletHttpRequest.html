@@ -162,8 +162,8 @@ extends io.micronaut.http.HttpRequest&lt;B&gt;</pre>
 </td>
 </tr>
 <tr id="i4" class="altColor">
-<td class="colFirst"><code>default void</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/servlet/http/ServletHttpRequest.html#subscribe-org.reactivestreams.Publisher-">subscribe</a></span>(org.reactivestreams.Publisher&lt;? extends io.micronaut.http.MutableHttpResponse&lt;?&gt;&gt;&nbsp;responsePublisher)</code>
+<td class="colFirst"><code>default org.reactivestreams.Publisher&lt;? extends io.micronaut.http.MutableHttpResponse&lt;?&gt;&gt;</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/servlet/http/ServletHttpRequest.html#subscribeOnExecutor-org.reactivestreams.Publisher-">subscribeOnExecutor</a></span>(org.reactivestreams.Publisher&lt;? extends io.micronaut.http.MutableHttpResponse&lt;?&gt;&gt;&nbsp;responsePublisher)</code>
 <div class="block">Causes the container to dispatch a thread, possibly from a managed
  thread pool, to run the specified <tt>Runnable</tt>.</div>
 </td>
@@ -285,19 +285,21 @@ extends io.micronaut.http.HttpRequest&lt;B&gt;</pre>
 </dl>
 </li>
 </ul>
-<a name="subscribe-org.reactivestreams.Publisher-">
+<a name="subscribeOnExecutor-org.reactivestreams.Publisher-">
 <!--   -->
 </a>
 <ul class="blockListLast">
 <li class="blockList">
-<h4>subscribe</h4>
-<pre>default&nbsp;void&nbsp;subscribe(org.reactivestreams.Publisher&lt;? extends io.micronaut.http.MutableHttpResponse&lt;?&gt;&gt;&nbsp;responsePublisher)</pre>
+<h4>subscribeOnExecutor</h4>
+<pre>default&nbsp;org.reactivestreams.Publisher&lt;? extends io.micronaut.http.MutableHttpResponse&lt;?&gt;&gt;&nbsp;subscribeOnExecutor(org.reactivestreams.Publisher&lt;? extends io.micronaut.http.MutableHttpResponse&lt;?&gt;&gt;&nbsp;responsePublisher)</pre>
 <div class="block">Causes the container to dispatch a thread, possibly from a managed
  thread pool, to run the specified <tt>Runnable</tt>. The container may
  propagate appropriate contextual information to the <tt>Runnable</tt>.</div>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
 <dd><code>responsePublisher</code> - The response publisher</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>A publisher that emits the response</dd>
 </dl>
 </li>
 </ul>
