@@ -5,6 +5,8 @@ import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.convert.value.MutableConvertibleValues;
 import io.micronaut.core.io.Writable;
+import io.micronaut.core.io.buffer.ByteBuffer;
+import io.micronaut.core.io.buffer.ReferenceCounted;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.http.*;
 import io.micronaut.http.annotation.Produces;
@@ -62,20 +64,18 @@ public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpSe
         MediaType contentType = getContentType().orElse(MediaType.APPLICATION_JSON_TYPE);
         MediaTypeCodec codec = request.getCodecRegistry().findCodec(contentType).orElse(null);
         boolean isJson = contentType.getSubtype().equals("json");
-        Publisher<?> finalDataPublisher = dataPublisher;
-        return Flowable.create(emitter -> finalDataPublisher.subscribe(new Subscriber<Object>() {
+        return Flowable.create(emitter -> dataPublisher.subscribe(new Subscriber<Object>() {
             ServletOutputStream outputStream;
             Subscription subscription;
             AtomicBoolean finished = new AtomicBoolean();
+            boolean first = true;
+            boolean raw = false;
             @Override
             public void onSubscribe(Subscription s) {
                 subscription = s;
                 delegate.setHeader(HttpHeaders.TRANSFER_ENCODING, "chunked");
                 try {
                     outputStream = delegate.getOutputStream();
-                    if (isJson) {
-                        outputStream.write('[');
-                    }
                     outputStream.setWriteListener(new WriteListener() {
                         @Override
                         public void onWritePossible() {
@@ -99,14 +99,40 @@ public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpSe
             public void onNext(Object o) {
                 try {
                     if (outputStream.isReady() && !finished.get()) {
-                        if (o instanceof CharSequence) {
-                          outputStream.write(o.toString().getBytes(getCharacterEncoding()));
-                        } else if (o instanceof byte[]) {
+
+                        if (o instanceof byte[]) {
+                            raw = true;
                             outputStream.write((byte[]) o);
+                        } else if (o instanceof ByteBuffer) {
+                            ByteBuffer buf = (ByteBuffer) o;
+                            try {
+                                raw = true;
+                                outputStream.write(buf.toByteArray());
+                            } finally {
+                                if (buf instanceof ReferenceCounted) {
+                                    ((ReferenceCounted) buf).release();
+                                }
+                            }
                         } else if (codec != null) {
-                            byte[] bytes = codec.encode(o);
-                            outputStream.write(bytes);
+
+                            if (isJson) {
+                                if (first) {
+                                    outputStream.write('[');
+                                    first = false;
+                                } else {
+                                    outputStream.write(',');
+                                }
+                            }
+                            if (outputStream.isReady()) {
+                                if (o instanceof CharSequence) {
+                                    outputStream.write(o.toString().getBytes(getCharacterEncoding()));
+                                } else {
+                                    byte[] bytes = codec.encode(o);
+                                    outputStream.write(bytes);
+                                }
+                            }
                         }
+
                         if (outputStream.isReady()) {
                             subscription.request(1);
                         }
@@ -131,7 +157,7 @@ public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpSe
             public void onComplete() {
                 if (finished.compareAndSet(false, true)) {
                     try {
-                        if (isJson && outputStream.isReady()) {
+                        if (!raw && isJson && outputStream.isReady()) {
                             outputStream.write(']');
                         }
                         emitter.onNext(DefaultServletHttpResponse.this);
