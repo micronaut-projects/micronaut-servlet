@@ -4,12 +4,14 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.http.server.exceptions.InternalServerException;
 import io.micronaut.runtime.ApplicationConfiguration;
 import io.micronaut.servlet.engine.server.AbstractServletServer;
+import org.apache.catalina.connector.Connector;
 import org.apache.catalina.startup.Tomcat;
 
 import javax.inject.Singleton;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -55,7 +57,15 @@ public class TomcatServer extends AbstractServletServer<Tomcat> {
 
     @Override
     public int getPort() {
-        return getServer().getConnector().getPort();
+        Connector[] connectors = getServer().getService().findConnectors();
+        if (connectors.length == 1) {
+            return getServer().getConnector().getPort();
+        } else {
+            return Arrays.stream(connectors).filter(Connector::getSecure)
+                    .findFirst()
+                    .map(Connector::getPort)
+                    .orElseGet(() -> getServer().getConnector().getPort());
+        }
     }
 
     @Override
@@ -65,7 +75,16 @@ public class TomcatServer extends AbstractServletServer<Tomcat> {
 
     @Override
     public String getScheme() {
-        return getServer().getConnector().getScheme();
+        Connector[] connectors = getServer().getService().findConnectors();
+        if (connectors.length == 1) {
+            return getServer().getConnector().getScheme();
+        } else {
+            if (Arrays.stream(connectors).anyMatch(Connector::getSecure)) {
+                return "https";
+            } else {
+                return "http";
+            }
+        }
     }
 
     @Override

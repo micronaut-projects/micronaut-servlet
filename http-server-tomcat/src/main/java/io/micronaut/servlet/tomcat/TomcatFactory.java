@@ -15,6 +15,7 @@ import org.apache.catalina.startup.Tomcat;
 
 import javax.inject.Singleton;
 import java.io.File;
+import java.net.URL;
 import java.util.List;
 
 /**
@@ -80,22 +81,65 @@ public class TomcatFactory extends ServletServerFactory {
             String protocol = sslConfiguration.getProtocol().orElse("TLS");
             int sslPort = sslConfiguration.getPort();
 
-            SslConfiguration.KeyStoreConfiguration keyStoreConfig = sslConfiguration.getKeyStore();
-            SslConfiguration.KeyConfiguration keyConfig = sslConfiguration.getKey();
+
+
             Connector httpsConnector = new Connector();
             httpsConnector.setPort(sslPort);
             httpsConnector.setSecure(true);
             httpsConnector.setScheme("https");
-
-            keyConfig.getAlias().ifPresent(s -> httpsConnector.setAttribute("keyAlias", s));
-            keyStoreConfig.getPassword().ifPresent(s -> httpsConnector.setAttribute("keystorePass", s));
-            keyStoreConfig.getPath().ifPresent(s ->
-                    httpsConnector.setAttribute("keystoreFile", new File(s).getAbsolutePath())
-            );
-
             httpsConnector.setAttribute("clientAuth", "false");
             httpsConnector.setAttribute("sslProtocol", protocol);
             httpsConnector.setAttribute("SSLEnabled", true);
+            sslConfiguration.getCiphers().ifPresent(cyphers -> httpsConnector.setAttribute("cyphers", cyphers));
+            sslConfiguration.getClientAuthentication().ifPresent(ca -> {
+                switch (ca) {
+                    case WANT:
+                        httpsConnector.setAttribute("clientAuth", "want");
+                        break;
+                    default:
+                    case NEED:
+                        httpsConnector.setAttribute("clientAuth", "true");
+                        break;
+
+                }
+            });
+
+
+            SslConfiguration.KeyStoreConfiguration keyStoreConfig = sslConfiguration.getKeyStore();
+            keyStoreConfig.getPassword().ifPresent(s ->
+                    httpsConnector.setAttribute("keystorePass", s)
+            );
+            keyStoreConfig.getPath().ifPresent(path ->
+                    setPathAttribute(httpsConnector, "keystoreFile", path)
+            );
+            keyStoreConfig.getProvider().ifPresent(provider ->
+                    httpsConnector.setAttribute("keystoreProvider", provider)
+            );
+            keyStoreConfig.getType().ifPresent(type ->
+                    httpsConnector.setAttribute("keystoreType", type)
+            );
+
+            SslConfiguration.TrustStoreConfiguration trustStore = sslConfiguration.getTrustStore();
+            trustStore.getPassword().ifPresent(s ->
+                    httpsConnector.setAttribute("truststorePass", s)
+            );
+            trustStore.getPath().ifPresent(path ->
+                    setPathAttribute(httpsConnector, "truststoreFile", path)
+            );
+            trustStore.getProvider().ifPresent(provider ->
+                    httpsConnector.setAttribute("truststoreProvider", provider)
+            );
+            trustStore.getType().ifPresent(type ->
+                    httpsConnector.setAttribute("truststoreType", type)
+            );
+
+
+            SslConfiguration.KeyConfiguration keyConfig = sslConfiguration.getKey();
+
+            keyConfig.getAlias().ifPresent(s -> httpsConnector.setAttribute("keyAlias", s));
+            keyConfig.getPassword().ifPresent(s -> httpsConnector.setAttribute("keyPass", s));
+
+            tomcat.getService().addConnector(httpsConnector);
         }
 
         return tomcat;
@@ -110,6 +154,21 @@ public class TomcatFactory extends ServletServerFactory {
         final Connector tomcatConnector = getServerConfiguration().getTomcatConnector();
         tomcatConnector.setPort(getConfiguredPort());
         return tomcatConnector;
+    }
+
+    private void setPathAttribute(Connector httpsConnector, String attributeName, String path) {
+        if (path.startsWith(ServletStaticResourceConfiguration.CLASSPATH_PREFIX)) {
+            String res = path.substring(ServletStaticResourceConfiguration.CLASSPATH_PREFIX.length());
+            URL resource = getEnvironment().getClassLoader().getResource(res);
+            if (resource != null) {
+                httpsConnector.setAttribute(attributeName, resource.toString());
+            }
+        } else if (path.startsWith(ServletStaticResourceConfiguration.FILE_PREFIX)) {
+            String res = path.substring(ServletStaticResourceConfiguration.FILE_PREFIX.length());
+            httpsConnector.setAttribute(attributeName, new File(res).getAbsolutePath());
+        } else {
+            httpsConnector.setAttribute(attributeName, new File(path).getAbsolutePath());
+        }
     }
 
 }
