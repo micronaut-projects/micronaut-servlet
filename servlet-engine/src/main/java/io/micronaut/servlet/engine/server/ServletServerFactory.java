@@ -2,6 +2,7 @@ package io.micronaut.servlet.engine.server;
 
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
+import io.micronaut.context.exceptions.ConfigurationException;
 import io.micronaut.core.io.ResourceResolver;
 import io.micronaut.core.io.socket.SocketUtils;
 import io.micronaut.http.server.HttpServerConfiguration;
@@ -9,12 +10,12 @@ import io.micronaut.http.server.exceptions.HttpServerException;
 import io.micronaut.http.server.exceptions.ServerStartupException;
 import io.micronaut.http.ssl.SslBuilder;
 import io.micronaut.http.ssl.SslConfiguration;
-import io.micronaut.web.router.resource.StaticResourceConfiguration;
 
 import javax.net.ssl.*;
 import java.security.SecureRandom;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Parent factory class for servlet-based servers.
@@ -45,7 +46,17 @@ public abstract class ServletServerFactory extends SslBuilder<SSLContext> {
         this.serverConfiguration = serverConfiguration;
         this.sslConfiguration = sslConfiguration;
         this.applicationContext = applicationContext;
-        this.staticResourceConfigurations = staticResourceConfigurations;
+        this.staticResourceConfigurations = staticResourceConfigurations.stream()
+                .filter(ServletStaticResourceConfiguration::isEnabled)
+                .peek(config -> {
+                    List<String> paths = config.getPaths();
+                    for (String path : paths) {
+                        if (ServletStaticResourceConfiguration.CLASSPATH_PREFIX.equals(path)) {
+                            throw new ConfigurationException("A path value of [" + ServletStaticResourceConfiguration.CLASSPATH_PREFIX + "] will allow access to class files!");
+                        }
+                    }
+                })
+                .collect(Collectors.toList());
     }
 
     /**

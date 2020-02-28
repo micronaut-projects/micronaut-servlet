@@ -39,7 +39,8 @@ class JettyStaticResourceResolutionSpec extends Specification implements TestPro
     Map<String, String> getProperties() {
         [
                 'micronaut.router.static-resources.default.paths': ['classpath:public', 'file:' + tempFile.parent],
-                'micronaut.router.static-resources.default.mapping':'/public'
+                'micronaut.router.static-resources.default.mapping':'/public',
+                'micronaut.server.jetty.init-parameters.cacheControl':'max-age=3600,public'
         ]
     }
 
@@ -74,16 +75,15 @@ class JettyStaticResourceResolutionSpec extends Specification implements TestPro
         response.status == HttpStatus.OK
         response.header(CONTENT_TYPE) == "text/html"
         Integer.parseInt(response.header(CONTENT_LENGTH)) > 0
-        response.headers.getDate(DATE) < response.headers.getDate(EXPIRES)
-        response.header(CACHE_CONTROL) == "private, max-age=60"
-        response.headers.getDate(LAST_MODIFIED) == ZonedDateTime.ofInstant(Instant.ofEpochMilli(tempFile.lastModified()), ZoneId.of("GMT")).truncatedTo(ChronoUnit.SECONDS)
+        response.headers.contains(CACHE_CONTROL)
+        response.header(CACHE_CONTROL) == "max-age=3600,public"
         response.body() == "<html><head></head><body>HTML Page from static file</body></html>"
     }
 
     void "test resources from the classpath are returned"() {
         when:
         def response = rxClient.exchange(
-                HttpRequest.GET('/index.html'), String
+                HttpRequest.GET('/public/index.html'), String
         ).blockingFirst()
 
         File file = Paths.get(JettyStaticResourceResolutionSpec.classLoader.getResource("public/index.html").toURI()).toFile()
@@ -93,16 +93,16 @@ class JettyStaticResourceResolutionSpec extends Specification implements TestPro
         response.status == HttpStatus.OK
         response.header(CONTENT_TYPE) == "text/html"
         Integer.parseInt(response.header(CONTENT_LENGTH)) > 0
-        response.headers.getDate(DATE) < response.headers.getDate(EXPIRES)
-        response.header(CACHE_CONTROL) == "private, max-age=60"
-        response.headers.getDate(LAST_MODIFIED) == ZonedDateTime.ofInstant(Instant.ofEpochMilli(file.lastModified()), ZoneId.of("GMT")).truncatedTo(ChronoUnit.SECONDS)
+        response.headers.contains(CACHE_CONTROL)
+        response.header(CACHE_CONTROL) == "max-age=3600,public"
+
         response.body() == "<html><head></head><body>HTML Page from resources</body></html>"
     }
 
     void "test index.html will be resolved"() {
         when:
         def response = rxClient.exchange(
-                HttpRequest.GET('/'), String
+                HttpRequest.GET('/public'), String
         ).blockingFirst()
 
         File file = Paths.get(JettyStaticResourceResolutionSpec.classLoader.getResource("public/index.html").toURI()).toFile()
@@ -112,9 +112,9 @@ class JettyStaticResourceResolutionSpec extends Specification implements TestPro
         response.status == HttpStatus.OK
         response.header(CONTENT_TYPE) == "text/html"
         Integer.parseInt(response.header(CONTENT_LENGTH)) > 0
-        response.headers.getDate(DATE) < response.headers.getDate(EXPIRES)
-        response.header(CACHE_CONTROL) == "private, max-age=60"
-        response.headers.getDate(LAST_MODIFIED) == ZonedDateTime.ofInstant(Instant.ofEpochMilli(file.lastModified()), ZoneId.of("GMT")).truncatedTo(ChronoUnit.SECONDS)
+        response.headers.contains(CACHE_CONTROL)
+        response.header(CACHE_CONTROL) == "max-age=3600,public"
+
         response.body() == "<html><head></head><body>HTML Page from resources</body></html>"
     }
 
@@ -137,12 +137,12 @@ class JettyStaticResourceResolutionSpec extends Specification implements TestPro
         response.code() == HttpStatus.OK.code
         response.header(CONTENT_TYPE) == "text/html"
         Integer.parseInt(response.header(CONTENT_LENGTH)) > 0
-        response.headers.getDate(DATE) < response.headers.getDate(EXPIRES)
-        response.header(CACHE_CONTROL) == "private, max-age=60"
-        response.headers.getDate(LAST_MODIFIED) == ZonedDateTime.ofInstant(Instant.ofEpochMilli(file.lastModified()), ZoneId.of("GMT")).truncatedTo(ChronoUnit.SECONDS)
+        !response.headers.contains(CACHE_CONTROL)
+
         response.body() == "<html><head></head><body>HTML Page from resources</body></html>"
 
         cleanup:
+        rxClient.close()
         embeddedServer.stop()
     }
 
@@ -169,9 +169,8 @@ class JettyStaticResourceResolutionSpec extends Specification implements TestPro
         response.code() == HttpStatus.OK.code
         response.header(CONTENT_TYPE) == "text/html"
         Integer.parseInt(response.header(CONTENT_LENGTH)) > 0
-        response.headers.getDate(DATE) < response.headers.getDate(EXPIRES)
-        response.header(CACHE_CONTROL) == "private, max-age=60"
-        response.headers.getDate(LAST_MODIFIED) == ZonedDateTime.ofInstant(Instant.ofEpochMilli(file.lastModified()), ZoneId.of("GMT")).truncatedTo(ChronoUnit.SECONDS)
+        !response.headers.contains(CACHE_CONTROL)
+
         response.body() == "<html><head></head><body>HTML Page from resources</body></html>"
 
         when:
@@ -183,9 +182,8 @@ class JettyStaticResourceResolutionSpec extends Specification implements TestPro
         response.status == HttpStatus.OK
         response.header(CONTENT_TYPE) == "text/html"
         Integer.parseInt(response.header(CONTENT_LENGTH)) > 0
-        response.headers.getDate(DATE) < response.headers.getDate(EXPIRES)
-        response.header(CACHE_CONTROL) == "private, max-age=60"
-        response.headers.getDate(LAST_MODIFIED) == ZonedDateTime.ofInstant(Instant.ofEpochMilli(tempFile.lastModified()), ZoneId.of("GMT")).truncatedTo(ChronoUnit.SECONDS)
+        !response.headers.contains(CACHE_CONTROL)
+
         response.body() == "<html><head></head><body>HTML Page from static file</body></html>"
 
         cleanup:
@@ -216,9 +214,9 @@ class JettyStaticResourceResolutionSpec extends Specification implements TestPro
         response.code() == HttpStatus.OK.code
         response.header(CONTENT_TYPE) == "text/html"
         Integer.parseInt(response.header(CONTENT_LENGTH)) > 0
-        response.headers.getDate(DATE) < response.headers.getDate(EXPIRES)
-        response.header(CACHE_CONTROL) == "private, max-age=60"
-        response.headers.getDate(LAST_MODIFIED) == ZonedDateTime.ofInstant(Instant.ofEpochMilli(file.lastModified()), ZoneId.of("GMT")).truncatedTo(ChronoUnit.SECONDS)
+        !response.headers.contains(CACHE_CONTROL)
+
+
         response.body() == "<html><head></head><body>HTML Page from resources</body></html>"
 
         when:
@@ -252,9 +250,7 @@ class JettyStaticResourceResolutionSpec extends Specification implements TestPro
         response.code() == HttpStatus.OK.code
         response.header(CONTENT_TYPE) == "text/html"
         Integer.parseInt(response.header(CONTENT_LENGTH)) > 0
-        response.headers.getDate(DATE) < response.headers.getDate(EXPIRES)
-        response.header(CACHE_CONTROL) == "private, max-age=60"
-        response.headers.getDate(LAST_MODIFIED) == ZonedDateTime.ofInstant(Instant.ofEpochMilli(file.lastModified()), ZoneId.of("GMT")).truncatedTo(ChronoUnit.SECONDS)
+        !response.headers.contains(CACHE_CONTROL)
         response.body() == "<html><head></head><body>HTML Page from resources</body></html>"
 
         cleanup:
@@ -281,9 +277,7 @@ class JettyStaticResourceResolutionSpec extends Specification implements TestPro
         response.code() == HttpStatus.OK.code
         response.header(CONTENT_TYPE) == "text/html"
         Integer.parseInt(response.header(CONTENT_LENGTH)) > 0
-        response.headers.getDate(DATE) < response.headers.getDate(EXPIRES)
-        response.header(CACHE_CONTROL) == "private, max-age=60"
-        response.headers.getDate(LAST_MODIFIED) == ZonedDateTime.ofInstant(Instant.ofEpochMilli(file.lastModified()), ZoneId.of("GMT")).truncatedTo(ChronoUnit.SECONDS)
+        !response.headers.contains(CACHE_CONTROL)
         response.body() == "<html><head></head><body>HTML Page from resources/foo</body></html>"
 
         cleanup:

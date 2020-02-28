@@ -14,7 +14,6 @@ import io.micronaut.servlet.engine.server.ServletServerFactory;
 import io.micronaut.servlet.engine.server.ServletStaticResourceConfiguration;
 import org.eclipse.jetty.http.HttpVersion;
 import org.eclipse.jetty.server.*;
-import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.servlet.*;
 import org.eclipse.jetty.util.resource.Resource;
 import org.eclipse.jetty.util.resource.ResourceCollection;
@@ -77,9 +76,65 @@ public class JettyFactory extends ServletServerFactory {
         final Integer port = getConfiguredPort();
         Server server = new Server();
         String contextPath = getContextPath();
-        final ServletContextHandler micronautHandler = newServletContextHandler(server, contextPath);
+
+        List<ServletStaticResourceConfiguration> src = getStaticResourceConfigurations();
+        ResourceCollection resourceCollection;
+
+        if (CollectionUtils.isNotEmpty(src)) {
+            List<String> mappings = src.stream().map(ServletStaticResourceConfiguration::getMapping)
+                    .map(path -> {
+                        if (path.endsWith("/**")) {
+                            return path.substring(0, path.length() - 3);
+                        }
+                        return path;
+                    })
+                    .collect(Collectors.toList());
+            resourceCollection = new ResourceCollection(src.stream()
+                    .flatMap((Function<ServletStaticResourceConfiguration, Stream<Resource>>) config -> {
+                        List<String> paths = config.getPaths();
+                        return paths.stream().map(path -> {
+                            if (path.startsWith(ServletStaticResourceConfiguration.CLASSPATH_PREFIX)) {
+                                String cp = path.substring(ServletStaticResourceConfiguration.CLASSPATH_PREFIX.length());
+                                return Resource.newClassPathResource(cp);
+                            } else {
+                                try {
+                                    return Resource.newResource(path);
+                                } catch (IOException e) {
+                                    throw new ConfigurationException("Static resource path doesn't exist: " + path, e);
+                                }
+                            }
+                        });
+                    }).toArray(Resource[]::new)) {
+                @Override
+                public Resource addPath(String path) throws IOException {
+                    for (String mapping : mappings) {
+                        if (path.startsWith(mapping)) {
+                            path = path.substring(mapping.length());
+                        }
+                    }
+                    return super.addPath(path);
+                }
+            };
+        } else {
+            resourceCollection = null;
+        }
+
+        final ServletContextHandler contextHandler = new ServletContextHandler(
+                server,
+                contextPath,
+                false,
+                false
+        ) {
+            @Override
+            public Resource newResource(String urlOrPath) throws IOException {
+                if (resourceCollection != null && RESOURCE_BASE.endsWith(urlOrPath)) {
+                    return resourceCollection;
+                }
+                return super.newResource(urlOrPath);
+            }
+        };
         final ServletHolder servletHolder = new ServletHolder(new DefaultMicronautServlet(applicationContext));
-        micronautHandler.addServlet(
+        contextHandler.addServlet(
                 servletHolder,
                 "/"
         );
@@ -89,11 +144,10 @@ public class JettyFactory extends ServletServerFactory {
                 servletHolder.getRegistration().setMultipartConfig(multipartConfiguration)
         );
 
-        List<ServletStaticResourceConfiguration> staticResourceConfigurations = getStaticResourceConfigurations();
-        if (CollectionUtils.isNotEmpty(staticResourceConfigurations)) {
+        if (CollectionUtils.isNotEmpty(src)) {
 
 
-            List<String> mappings = staticResourceConfigurations.stream()
+            List<String> mappings = src.stream()
                                         .map(config -> {
                                             String mapping = config.getMapping();
                                             if (mapping.endsWith("**")) {
@@ -107,47 +161,17 @@ public class JettyFactory extends ServletServerFactory {
 
             if (CollectionUtils.isNotEmpty(mappings)) {
 
-                ResourceCollection resourceCollection = new ResourceCollection(staticResourceConfigurations.stream()
-                        .flatMap((Function<ServletStaticResourceConfiguration, Stream<Resource>>) config -> {
-                            List<String> paths = config.getPaths();
-                            return paths.stream().map(path -> {
-                                if (path.startsWith(ServletStaticResourceConfiguration.CLASSPATH_PREFIX)) {
-                                    String cp = path.substring(ServletStaticResourceConfiguration.CLASSPATH_PREFIX.length());
-                                    return Resource.newClassPathResource(cp);
-                                } else {
-                                    try {
-                                        return Resource.newResource(path);
-                                    } catch (IOException e) {
-                                        throw new ConfigurationException("Static resource path doesn't exist: " + path, e);
-                                    }
-                                }
-                            });
-                        }).toArray(Resource[]::new));
-
-                ServletContextHandler staticResourceContextHandler = new ServletContextHandler(
-                        server,
-                        contextPath,
-                        false,
-                        false
-                ) {
-                    @Override
-                    public Resource newResource(String urlOrPath) throws IOException {
-                        if (RESOURCE_BASE.equals(urlOrPath)) {
-                            return resourceCollection;
-                        } else {
-                            return super.newResource(urlOrPath);
-                        }
-                    }
-                };
                 String servletName = DefaultServlet.class.getSimpleName();
                 ServletHolder defaultServletHolder = new ServletHolder(
                         servletName,
                         new DefaultServlet()
                 );
-                staticResourceContextHandler.addServlet(
+                defaultServletHolder.setInitParameters(jettyConfiguration.getInitParameters());
+                contextHandler.addServlet(
                         defaultServletHolder,
                         mappings.iterator().next()
                 );
+                contextHandler.setBaseResource(resourceCollection);
                 ServletHandler servletHandler = defaultServletHolder.getServletHandler();
                 if (mappings.size() > 1) {
                     ServletMapping m = new ServletMapping();
@@ -159,17 +183,10 @@ public class JettyFactory extends ServletServerFactory {
                 // going to be replaced
                 defaultServletHolder.setInitParameter(RESOURCE_BASE, RESOURCE_BASE);
 
-                ContextHandlerCollection contexts = new ContextHandlerCollection(
-                        staticResourceContextHandler, micronautHandler
-                );
-                server.setHandler(contexts);
-            } else {
-                server.setHandler(micronautHandler);
             }
 
-        } else {
-            server.setHandler(micronautHandler);
         }
+            server.setHandler(contextHandler);
 
         final SslConfiguration sslConfiguration = getSslConfiguration();
         if (sslConfiguration.isEnabled()) {
@@ -205,22 +222,6 @@ public class JettyFactory extends ServletServerFactory {
         );
 
         return server;
-    }
-
-    /**
-     * Creates a new servlet context handler.
-     *
-     * @param server      The server
-     * @param contextPath The context path
-     * @return The handler
-     */
-    protected ServletContextHandler newServletContextHandler(Server server, String contextPath) {
-        return new ServletContextHandler(
-                server,
-                contextPath,
-                false,
-                false
-        );
     }
 
 }

@@ -4,11 +4,15 @@ import io.micronaut.context.annotation.ConfigurationBuilder;
 import io.micronaut.context.annotation.ConfigurationInject;
 import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.core.bind.annotation.Bindable;
+import io.micronaut.core.convert.format.MapFormat;
+import io.micronaut.core.naming.conventions.StringConvention;
 import io.micronaut.http.server.HttpServerConfiguration;
 import org.eclipse.jetty.server.HttpConfiguration;
 
 import javax.annotation.Nullable;
 import javax.servlet.MultipartConfigElement;
+import java.util.Collections;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -24,6 +28,7 @@ public class JettyConfiguration extends HttpServerConfiguration {
     protected HttpConfiguration httpConfiguration = new HttpConfiguration();
 
     private final MultipartConfiguration multipartConfiguration;
+    private Map<String, String> initParameters;
 
     /**
      * Default constructor.
@@ -45,6 +50,29 @@ public class JettyConfiguration extends HttpServerConfiguration {
      */
     public Optional<MultipartConfiguration> getMultipartConfiguration() {
         return Optional.ofNullable(multipartConfiguration);
+    }
+
+    /**
+     * @return The servlet init parameters
+     */
+    public Map<String, String> getInitParameters() {
+        if (initParameters != null) {
+            return Collections.unmodifiableMap(initParameters);
+        } else {
+            return Collections.emptyMap();
+        }
+    }
+
+    /**
+     * Sets the servlet init parameters.
+     * @param initParameters The init parameters
+     */
+    public void setInitParameters(
+            @MapFormat(transformation = MapFormat.MapTransformation.FLAT,
+            keyFormat = StringConvention.RAW) Map<String, String> initParameters) {
+        if (initParameters != null) {
+            this.initParameters = initParameters;
+        }
     }
 
     /**

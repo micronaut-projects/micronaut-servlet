@@ -8,6 +8,7 @@ import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MutableHttpResponse;
 import io.micronaut.http.context.ServerRequestContext;
 import io.micronaut.http.server.exceptions.InternalServerException;
+import io.micronaut.http.simple.SimpleHttpResponseFactory;
 
 /**
  * An implementation of the {@link HttpResponseFactory} case that retrieves the
@@ -29,7 +30,11 @@ public class ServletResponseFactory implements HttpResponseFactory {
             }
         }
 
-        ALTERNATE = alternate;
+        if (alternate != null) {
+            ALTERNATE = alternate;
+        } else {
+            ALTERNATE = new SimpleHttpResponseFactory();
+        }
     }
 
     @SuppressWarnings("unchecked")
