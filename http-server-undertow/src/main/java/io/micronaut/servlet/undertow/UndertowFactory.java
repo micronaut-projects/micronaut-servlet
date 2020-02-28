@@ -9,6 +9,7 @@ import io.micronaut.http.server.exceptions.ServerStartupException;
 import io.micronaut.http.ssl.SslConfiguration;
 import io.micronaut.servlet.engine.DefaultMicronautServlet;
 import io.micronaut.servlet.engine.server.ServletServerFactory;
+import io.micronaut.servlet.engine.server.ServletStaticResourceConfiguration;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.server.handlers.PathHandler;
@@ -18,6 +19,7 @@ import io.undertow.servlet.api.*;
 import javax.inject.Singleton;
 import javax.servlet.Servlet;
 import javax.servlet.ServletException;
+import java.util.List;
 
 /**
  * Factory for the undertow server.
@@ -37,13 +39,15 @@ public class UndertowFactory extends ServletServerFactory {
      * @param configuration      The configuration
      * @param sslConfiguration   The SSL configuration
      * @param applicationContext The app context
+     * @param staticResourceConfigurations The static resource configs
      */
     public UndertowFactory(
             ResourceResolver resourceResolver,
             UndertowConfiguration configuration,
             SslConfiguration sslConfiguration,
-            ApplicationContext applicationContext) {
-        super(resourceResolver, configuration, sslConfiguration, applicationContext);
+            ApplicationContext applicationContext,
+            List<ServletStaticResourceConfiguration> staticResourceConfigurations) {
+        super(resourceResolver, configuration, sslConfiguration, applicationContext, staticResourceConfigurations);
         this.configuration = configuration;
     }
 

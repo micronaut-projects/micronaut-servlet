@@ -7,6 +7,7 @@ import io.micronaut.core.io.ResourceResolver;
 import io.micronaut.http.ssl.SslConfiguration;
 import io.micronaut.servlet.engine.DefaultMicronautServlet;
 import io.micronaut.servlet.engine.server.ServletServerFactory;
+import io.micronaut.servlet.engine.server.ServletStaticResourceConfiguration;
 import org.apache.catalina.Context;
 import org.apache.catalina.Wrapper;
 import org.apache.catalina.connector.Connector;
@@ -14,6 +15,7 @@ import org.apache.catalina.startup.Tomcat;
 
 import javax.inject.Singleton;
 import java.io.File;
+import java.util.List;
 
 /**
  * Factory for the {@link Tomcat} instance.
@@ -27,17 +29,19 @@ public class TomcatFactory extends ServletServerFactory {
     /**
      * Default constructor.
      *
-     * @param resourceResolver    The resource resolver
-     * @param serverConfiguration The server config
-     * @param sslConfiguration    The SSL config
-     * @param applicationContext  The app context
+     * @param resourceResolver             The resource resolver
+     * @param serverConfiguration          The server config
+     * @param sslConfiguration             The SSL config
+     * @param applicationContext           The app context
+     * @param staticResourceConfigurations The static resource configs
      */
     protected TomcatFactory(
             ResourceResolver resourceResolver,
             TomcatConfiguration serverConfiguration,
             SslConfiguration sslConfiguration,
-            ApplicationContext applicationContext) {
-        super(resourceResolver, serverConfiguration, sslConfiguration, applicationContext);
+            ApplicationContext applicationContext,
+            List<ServletStaticResourceConfiguration> staticResourceConfigurations) {
+        super(resourceResolver, serverConfiguration, sslConfiguration, applicationContext, staticResourceConfigurations);
     }
 
     @Override
@@ -48,7 +52,7 @@ public class TomcatFactory extends ServletServerFactory {
     /**
      * The Tomcat server bean.
      *
-     * @param connector          The connector
+     * @param connector The connector
      * @return The Tomcat server
      */
     @Singleton

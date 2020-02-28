@@ -9,9 +9,11 @@ import io.micronaut.http.server.exceptions.HttpServerException;
 import io.micronaut.http.server.exceptions.ServerStartupException;
 import io.micronaut.http.ssl.SslBuilder;
 import io.micronaut.http.ssl.SslConfiguration;
+import io.micronaut.web.router.resource.StaticResourceConfiguration;
 
 import javax.net.ssl.*;
 import java.security.SecureRandom;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -24,6 +26,7 @@ public abstract class ServletServerFactory extends SslBuilder<SSLContext> {
     private final HttpServerConfiguration serverConfiguration;
     private final SslConfiguration sslConfiguration;
     private final ApplicationContext applicationContext;
+    private final List<ServletStaticResourceConfiguration> staticResourceConfigurations;
 
     /**
      * Default constructor.
@@ -36,11 +39,20 @@ public abstract class ServletServerFactory extends SslBuilder<SSLContext> {
     protected ServletServerFactory(ResourceResolver resourceResolver,
                                    HttpServerConfiguration serverConfiguration,
                                    SslConfiguration sslConfiguration,
-                                   ApplicationContext applicationContext) {
+                                   ApplicationContext applicationContext,
+                                   List<ServletStaticResourceConfiguration> staticResourceConfigurations) {
         super(resourceResolver);
         this.serverConfiguration = serverConfiguration;
         this.sslConfiguration = sslConfiguration;
         this.applicationContext = applicationContext;
+        this.staticResourceConfigurations = staticResourceConfigurations;
+    }
+
+    /**
+     * @return The static resource configurations.
+     */
+    public List<ServletStaticResourceConfiguration> getStaticResourceConfigurations() {
+        return staticResourceConfigurations;
     }
 
     /**
