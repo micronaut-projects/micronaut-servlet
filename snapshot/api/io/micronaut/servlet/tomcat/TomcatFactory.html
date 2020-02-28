@@ -147,10 +147,11 @@ extends <a href="../../../../io/micronaut/servlet/engine/server/ServletServerFac
 </tr>
 <tr class="altColor">
 <td class="colFirst"><code>protected </code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/servlet/tomcat/TomcatFactory.html#TomcatFactory-io.micronaut.core.io.ResourceResolver-io.micronaut.servlet.tomcat.TomcatConfiguration-io.micronaut.http.ssl.SslConfiguration-io.micronaut.context.ApplicationContext-">TomcatFactory</a></span>(io.micronaut.core.io.ResourceResolver&nbsp;resourceResolver,
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/servlet/tomcat/TomcatFactory.html#TomcatFactory-io.micronaut.core.io.ResourceResolver-io.micronaut.servlet.tomcat.TomcatConfiguration-io.micronaut.http.ssl.SslConfiguration-io.micronaut.context.ApplicationContext-java.util.List-">TomcatFactory</a></span>(io.micronaut.core.io.ResourceResolver&nbsp;resourceResolver,
              <a href="../../../../io/micronaut/servlet/tomcat/TomcatConfiguration.html" title="class in io.micronaut.servlet.tomcat">TomcatConfiguration</a>&nbsp;serverConfiguration,
              io.micronaut.http.ssl.SslConfiguration&nbsp;sslConfiguration,
-             io.micronaut.context.ApplicationContext&nbsp;applicationContext)</code>
+             io.micronaut.context.ApplicationContext&nbsp;applicationContext,
+             java.util.List&lt;<a href="../../../../io/micronaut/servlet/engine/server/ServletStaticResourceConfiguration.html" title="interface in io.micronaut.servlet.engine.server">ServletStaticResourceConfiguration</a>&gt;&nbsp;staticResourceConfigurations)</code>
 <div class="block">Default constructor.</div>
 </td>
 </tr>
@@ -189,7 +190,7 @@ extends <a href="../../../../io/micronaut/servlet/engine/server/ServletServerFac
 <!--   -->
 </a>
 <h3>Methods inherited from class&nbsp;io.micronaut.servlet.engine.server.<a href="../../../../io/micronaut/servlet/engine/server/ServletServerFactory.html" title="class in io.micronaut.servlet.engine.server">ServletServerFactory</a></h3>
-<code><a href="../../../../io/micronaut/servlet/engine/server/ServletServerFactory.html#build-io.micronaut.http.ssl.SslConfiguration-">build</a>, <a href="../../../../io/micronaut/servlet/engine/server/ServletServerFactory.html#getApplicationContext--">getApplicationContext</a>, <a href="../../../../io/micronaut/servlet/engine/server/ServletServerFactory.html#getConfiguredHost--">getConfiguredHost</a>, <a href="../../../../io/micronaut/servlet/engine/server/ServletServerFactory.html#getConfiguredPort--">getConfiguredPort</a>, <a href="../../../../io/micronaut/servlet/engine/server/ServletServerFactory.html#getContextPath--">getContextPath</a>, <a href="../../../../io/micronaut/servlet/engine/server/ServletServerFactory.html#getEnvironment--">getEnvironment</a>, <a href="../../../../io/micronaut/servlet/engine/server/ServletServerFactory.html#getSslConfiguration--">getSslConfiguration</a></code></li>
+<code><a href="../../../../io/micronaut/servlet/engine/server/ServletServerFactory.html#build-io.micronaut.http.ssl.SslConfiguration-">build</a>, <a href="../../../../io/micronaut/servlet/engine/server/ServletServerFactory.html#getApplicationContext--">getApplicationContext</a>, <a href="../../../../io/micronaut/servlet/engine/server/ServletServerFactory.html#getConfiguredHost--">getConfiguredHost</a>, <a href="../../../../io/micronaut/servlet/engine/server/ServletServerFactory.html#getConfiguredPort--">getConfiguredPort</a>, <a href="../../../../io/micronaut/servlet/engine/server/ServletServerFactory.html#getContextPath--">getContextPath</a>, <a href="../../../../io/micronaut/servlet/engine/server/ServletServerFactory.html#getEnvironment--">getEnvironment</a>, <a href="../../../../io/micronaut/servlet/engine/server/ServletServerFactory.html#getSslConfiguration--">getSslConfiguration</a>, <a href="../../../../io/micronaut/servlet/engine/server/ServletServerFactory.html#getStaticResourceConfigurations--">getStaticResourceConfigurations</a></code></li>
 </ul>
 <ul class="blockList">
 <li class="blockList"><a name="methods.inherited.from.class.io.micronaut.http.ssl.SslBuilder">
@@ -219,7 +220,7 @@ extends <a href="../../../../io/micronaut/servlet/engine/server/ServletServerFac
 <!--   -->
 </a>
 <h3>Constructor Detail</h3>
-<a name="TomcatFactory-io.micronaut.core.io.ResourceResolver-io.micronaut.servlet.tomcat.TomcatConfiguration-io.micronaut.http.ssl.SslConfiguration-io.micronaut.context.ApplicationContext-">
+<a name="TomcatFactory-io.micronaut.core.io.ResourceResolver-io.micronaut.servlet.tomcat.TomcatConfiguration-io.micronaut.http.ssl.SslConfiguration-io.micronaut.context.ApplicationContext-java.util.List-">
 <!--   -->
 </a>
 <ul class="blockListLast">
@@ -228,7 +229,8 @@ extends <a href="../../../../io/micronaut/servlet/engine/server/ServletServerFac
 <pre>protected&nbsp;TomcatFactory(io.micronaut.core.io.ResourceResolver&nbsp;resourceResolver,
                         <a href="../../../../io/micronaut/servlet/tomcat/TomcatConfiguration.html" title="class in io.micronaut.servlet.tomcat">TomcatConfiguration</a>&nbsp;serverConfiguration,
                         io.micronaut.http.ssl.SslConfiguration&nbsp;sslConfiguration,
-                        io.micronaut.context.ApplicationContext&nbsp;applicationContext)</pre>
+                        io.micronaut.context.ApplicationContext&nbsp;applicationContext,
+                        java.util.List&lt;<a href="../../../../io/micronaut/servlet/engine/server/ServletStaticResourceConfiguration.html" title="interface in io.micronaut.servlet.engine.server">ServletStaticResourceConfiguration</a>&gt;&nbsp;staticResourceConfigurations)</pre>
 <div class="block">Default constructor.</div>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
@@ -236,6 +238,7 @@ extends <a href="../../../../io/micronaut/servlet/engine/server/ServletServerFac
 <dd><code>serverConfiguration</code> - The server config</dd>
 <dd><code>sslConfiguration</code> - The SSL config</dd>
 <dd><code>applicationContext</code> - The app context</dd>
+<dd><code>staticResourceConfigurations</code> - The static resource configs</dd>
 </dl>
 </li>
 </ul>

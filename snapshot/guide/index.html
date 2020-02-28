@@ -45,6 +45,14 @@
                                 
                                 <div class="toc-item" style="margin-left:0"><a href="#introduction"><strong>1</strong><span>Introduction</span></a></div>
                                 
+                                <div class="toc-item" style="margin-left:0"><a href="#servletApi"><strong>2</strong><span>Working with the Servlet API</span></a></div>
+                                
+                                <div class="toc-item" style="margin-left:0"><a href="#jetty"><strong>3</strong><span>Jetty Server</span></a></div>
+                                
+                                <div class="toc-item" style="margin-left:0"><a href="#undertow"><strong>4</strong><span>Undertow Server</span></a></div>
+                                
+                                <div class="toc-item" style="margin-left:0"><a href="#tomcat"><strong>5</strong><span>Tomcat Server</span></a></div>
+                                
                             </div>
                         </div>
                     </li>
@@ -76,6 +84,14 @@
         
         <div class="toc-item" style="margin-left:0px" id="toc-item-introduction"><a href="#introduction"><strong>1</strong><span>Introduction</span></a></div>
         
+        <div class="toc-item" style="margin-left:0px" id="toc-item-servletApi"><a href="#servletApi"><strong>2</strong><span>Working with the Servlet API</span></a></div>
+        
+        <div class="toc-item" style="margin-left:0px" id="toc-item-jetty"><a href="#jetty"><strong>3</strong><span>Jetty Server</span></a></div>
+        
+        <div class="toc-item" style="margin-left:0px" id="toc-item-undertow"><a href="#undertow"><strong>4</strong><span>Undertow Server</span></a></div>
+        
+        <div class="toc-item" style="margin-left:0px" id="toc-item-tomcat"><a href="#tomcat"><strong>5</strong><span>Tomcat Server</span></a></div>
+        
         </div>
     </div>
     
@@ -97,7 +113,186 @@
 
 
 <div class="paragraph">
-<p>Introduction docs</p>
+<p>This project implements a <a href="https://docs.micronaut.io/latest/guide/index.html#httpServer">Micronaut HTTP server</a> backed onto the Servlet API and includes various subprojects that allow running populate Servlet containers are servers.</p>
+</div>
+<div class="paragraph">
+<p>This project is for users who fall into one of the following categories:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Users who want to use Micronaut but target deployment environment is based on Servlets</p>
+</li>
+<li>
+<p>Users who prefer the thread per connection model of the Servlet API over the Event Loop model provided by the default Netty based HTTP server</p>
+</li>
+<li>
+<p>Users who have existing Servlets and/or Filters that they wish to combine with Micronaut.</p>
+</li>
+</ul>
+</div>
+
+<h1 id="servletApi"><a class="anchor" href="#servletApi"></a>2 Working with the Servlet API</h1>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/master/src/main/docs/guide/servletApi.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>In general you can follow the <a href="https://docs.micronaut.io/latest/guide/index.html#httpServer">documentation for the HTTP server</a> when building applications. All non-Netty specific features of the default HTTP server  should work the same for Servlet containers (<a href="https://github.com/micronaut-projects/micronaut-servlet/issues">Report an issue</a> if you find a difference).</p>
+</div>
+<div class="paragraph">
+<p>There are a couple of additional extensions within Micronaut Servlet that make it easier to work with the Servlet API which are detailed in the following sections.</p>
+</div>
+<div class="sect2">
+<h3 id="_injecting_the_servlet_request_and_response">Injecting the Servlet Request and Response</h3>
+<div class="paragraph">
+<p>TODO</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_simplified_i_o_code_with_readable_and_writable">Simplified I/O code with Readable and Writable</h3>
+<div class="paragraph">
+<p>TODO</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_multipart_support_with_code_part_code">Multipart support with <code>@Part</code></h3>
+<div class="paragraph">
+<p>TODO</p>
+</div>
+</div>
+
+<h1 id="jetty"><a class="anchor" href="#jetty"></a>3 Jetty Server</h1>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/master/src/main/docs/guide/jetty.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>To use <a href="https://www.eclipse.org/jetty/">Jetty</a> as a server add the following dependency:</p>
+</div>
+<div class="paragraph">
+<p>        <div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">implementation(<span class="hljs-string">"io.micronaut.servlet:micronaut-http-server-jetty:1.0.0.BUILD-SNAPSHOT")</span></code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
+    &lt;groupId&gt;io.micronaut.servlet&lt;/groupId&gt;
+    &lt;artifactId&gt;micronaut-http-server-jetty&lt;/artifactId&gt;
+    &lt;version&gt;1.0.0.BUILD-SNAPSHOT&lt;/version&gt;
+&lt;/dependency&gt;</code></pre>
+</div>
+</div>
+</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+If you plan to produce a WAR file then the dependency should be <code>developmentOnly</code>.
+</td>
+</tr>
+</table>
+</div>
+
+<h1 id="undertow"><a class="anchor" href="#undertow"></a>4 Undertow Server</h1>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/master/src/main/docs/guide/undertow.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>To use <a href="http://undertow.io/">Undertow</a> as a server add the following dependency:</p>
+</div>
+<div class="paragraph">
+<p>        <div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">implementation(<span class="hljs-string">"io.micronaut.servlet:micronaut-http-server-undertow:1.0.0.BUILD-SNAPSHOT")</span></code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
+    &lt;groupId&gt;io.micronaut.servlet&lt;/groupId&gt;
+    &lt;artifactId&gt;micronaut-http-server-undertow&lt;/artifactId&gt;
+    &lt;version&gt;1.0.0.BUILD-SNAPSHOT&lt;/version&gt;
+&lt;/dependency&gt;</code></pre>
+</div>
+</div>
+</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+If you plan to produce a WAR file then the dependency should be <code>developmentOnly</code>.
+</td>
+</tr>
+</table>
+</div>
+
+<h1 id="tomcat"><a class="anchor" href="#tomcat"></a>5 Tomcat Server</h1>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/master/src/main/docs/guide/tomcat.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>To use <a href="https://tomcat.apache.org/">Tomcat</a> as a server add the following dependency:</p>
+</div>
+<div class="paragraph">
+<p>        <div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">implementation(<span class="hljs-string">"io.micronaut.servlet:micronaut-http-server-tomcat:1.0.0.BUILD-SNAPSHOT")</span></code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
+    &lt;groupId&gt;io.micronaut.servlet&lt;/groupId&gt;
+    &lt;artifactId&gt;micronaut-http-server-tomcat&lt;/artifactId&gt;
+    &lt;version&gt;1.0.0.BUILD-SNAPSHOT&lt;/version&gt;
+&lt;/dependency&gt;</code></pre>
+</div>
+</div>
+</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+If you plan to produce a WAR file then the dependency should be <code>developmentOnly</code>.
+</td>
+</tr>
+</table>
 </div>
 
     </div>
