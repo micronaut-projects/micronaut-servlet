@@ -7,7 +7,7 @@ import io.micronaut.context.exceptions.ConfigurationException;
 import io.micronaut.core.io.ResourceResolver;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
-import io.micronaut.http.server.exceptions.HttpServerException;
+import io.micronaut.http.ssl.ClientAuthentication;
 import io.micronaut.http.ssl.SslConfiguration;
 import io.micronaut.servlet.engine.DefaultMicronautServlet;
 import io.micronaut.servlet.engine.server.ServletServerFactory;
@@ -182,6 +182,8 @@ public class JettyFactory extends ServletServerFactory {
 
                 // going to be replaced
                 defaultServletHolder.setInitParameter(RESOURCE_BASE, RESOURCE_BASE);
+                // some defaults
+                defaultServletHolder.setInitParameter("dirAllowed", StringUtils.FALSE);
 
             }
 
@@ -194,13 +196,45 @@ public class JettyFactory extends ServletServerFactory {
             final int securePort = sslConfiguration.getPort();
             httpConfig.setSecurePort(securePort);
 
-            SslContextFactory sslContextFactory = new SslContextFactory.Server();
+            SslContextFactory.Server sslContextFactory = new SslContextFactory.Server();
+
+            ClientAuthentication clientAuth = sslConfiguration.getClientAuthentication().orElse(ClientAuthentication.NEED);
+            switch (clientAuth) {
+                case WANT:
+                    sslContextFactory.setWantClientAuth(true);
+                break;
+                case NEED:
+                default:
+                    sslContextFactory.setNeedClientAuth(true);
+            }
+
+            sslConfiguration.getProtocol().ifPresent(sslContextFactory::setProtocol);
+            sslConfiguration.getProtocols().ifPresent(sslContextFactory::setIncludeProtocols);
+            sslConfiguration.getCiphers().ifPresent(sslConfiguration::setCiphers);
             final SslConfiguration.KeyStoreConfiguration keyStoreConfig = sslConfiguration.getKeyStore();
-            sslContextFactory.setKeyStorePath(keyStoreConfig.getPath()
-                    .orElseThrow(() -> new HttpServerException("Invalid SSL configuration: Missing key store path")));
-            sslContextFactory.setKeyStorePassword(keyStoreConfig.getPassword()
-                    .orElseThrow(() -> new HttpServerException("Invalid SSL configuration: Missing key store password")));
-            sslContextFactory.setKeyManagerPassword(sslConfiguration.getKey().getPassword().orElseThrow(() -> new HttpServerException("Invalid SSL configuration: Missing key manager password")));
+            keyStoreConfig.getPassword().ifPresent(sslContextFactory::setKeyStorePassword);
+            keyStoreConfig.getPath().ifPresent(path -> {
+                if (path.startsWith(ServletStaticResourceConfiguration.CLASSPATH_PREFIX)) {
+                    String cp = path.substring(ServletStaticResourceConfiguration.CLASSPATH_PREFIX.length());
+                    sslContextFactory.setKeyStorePath(Resource.newClassPathResource(cp).getURI().toString());
+                } else {
+                    sslContextFactory.setKeyStorePath(path);
+                }
+            });
+            keyStoreConfig.getProvider().ifPresent(sslContextFactory::setKeyStoreProvider);
+            keyStoreConfig.getType().ifPresent(sslContextFactory::setKeyStoreType);
+            SslConfiguration.TrustStoreConfiguration trustStore = sslConfiguration.getTrustStore();
+            trustStore.getPassword().ifPresent(sslContextFactory::setTrustStorePassword);
+            trustStore.getType().ifPresent(sslContextFactory::setTrustStoreType);
+            trustStore.getPath().ifPresent(path -> {
+                if (path.startsWith(ServletStaticResourceConfiguration.CLASSPATH_PREFIX)) {
+                    String cp = path.substring(ServletStaticResourceConfiguration.CLASSPATH_PREFIX.length());
+                    sslContextFactory.setTrustStorePath(Resource.newClassPathResource(cp).getURI().toString());
+                } else {
+                    sslContextFactory.setTrustStorePath(path);
+                }
+            });
+            trustStore.getProvider().ifPresent(sslContextFactory::setTrustStoreProvider);
 
             HttpConfiguration httpsConfig = new HttpConfiguration(httpConfig);
             httpsConfig.addCustomizer(new SecureRequestCustomizer());
