@@ -78,7 +78,7 @@ class JettyJsonBodyBindingSpec extends Specification {
 
         then:
         def e = thrown(HttpClientResponseException)
-        e.message == """Error decoding JSON stream for type [json]: Unrecognized token 'The': was expecting (JSON String, Number, Array, Object or token 'null', 'true' or 'false')
+        e.message == """Unable to decode request body: Error decoding JSON stream for type [json]: Unrecognized token 'The': was expecting (JSON String, Number, Array, Object or token 'null', 'true' or 'false')
  at [Source: (org.eclipse.jetty.server.HttpInputOverHTTP); line: 1, column: 14]"""
         e.response.status == HttpStatus.BAD_REQUEST
 
@@ -279,20 +279,22 @@ class JettyJsonBodyBindingSpec extends Specification {
         ).blockingFirst()
 
         then:
-        def ex = thrown(HttpClientResponseException)
-        ex.response.code() == HttpStatus.BAD_REQUEST.code
-        ex.message.contains("Required argument [HttpRequest request] not specified")
+        response.code() == HttpStatus.OK.code
+        response.body() == 'not found'
     }
 
     void "test request generic type conversion error"() {
         when:
         def json = '[1,2,3]'
-        def response = rxClient.exchange(
+        rxClient.exchange(
                 HttpRequest.POST('/json/request-generic', json), String
         ).blockingFirst()
 
         then:
-        response.body() == "not found"
+        def e = thrown(HttpClientResponseException)
+        def response = e.response
+        response.status() == HttpStatus.BAD_REQUEST
+        response.body().toString().contains("Error decoding JSON stream for type")
     }
 
     @Controller(value = "/json", produces = io.micronaut.http.MediaType.APPLICATION_JSON)

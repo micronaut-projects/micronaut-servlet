@@ -152,7 +152,7 @@ class JettyParameterBinding2Spec extends Specification {
         def e = thrown(HttpClientResponseException)
         def response = e.response
         response.status() == HttpStatus.BAD_REQUEST
-        response.body().toString().contains("Unable to decode request body")
+        response.body().toString().contains("Error decoding JSON stream for type")
 
     }
 
@@ -196,7 +196,7 @@ class JettyParameterBinding2Spec extends Specification {
         def e = thrown(HttpClientResponseException)
         def response = e.response
         response.status() == HttpStatus.BAD_REQUEST
-        response.body().toString().contains("Error decoding request body")
+        response.body().toString().contains("Error decoding JSON stream for type")
     }
 
     void "test multipart binding"() {

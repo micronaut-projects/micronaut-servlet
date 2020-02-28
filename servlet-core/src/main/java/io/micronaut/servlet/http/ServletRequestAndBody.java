@@ -1,11 +1,11 @@
 package io.micronaut.servlet.http;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequestWrapper;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.Objects;
 import java.util.Optional;
@@ -21,15 +21,15 @@ import java.util.Optional;
 @Internal
 final class ServletRequestAndBody<N, B> extends HttpRequestWrapper<B> implements ServletHttpRequest<N, B> {
 
-    private final B body;
+    private final Argument<B> bodyType;
 
     /**
      * @param delegate The Http Request
-     * @param body     The body, never null
+     * @param bodyType     The body, never null
      */
-    ServletRequestAndBody(ServletHttpRequest<N, B> delegate, B body) {
+    ServletRequestAndBody(ServletHttpRequest<N, B> delegate, Argument<B> bodyType) {
         super(delegate);
-        this.body = Objects.requireNonNull(body, "Body cannot be null");
+        this.bodyType = Objects.requireNonNull(bodyType, "Body type cannot be null");
     }
 
     @Override
@@ -39,27 +39,17 @@ final class ServletRequestAndBody<N, B> extends HttpRequestWrapper<B> implements
 
     @Override
     public Optional<B> getBody() {
-        return Optional.of(body);
+        return getBody(bodyType);
     }
 
     @Override
-    public <T> Optional<T> getBody(Class<T> type) {
-        return ConversionService.SHARED.convert(body, type);
+    public InputStream getInputStream() throws IOException {
+        return ((ServletHttpRequest<N, B>) getDelegate()).getInputStream();
     }
 
     @Override
-    public <T> Optional<T> getBody(Argument<T> type) {
-        return ConversionService.SHARED.convert(body, type);
-    }
-
-    @Override
-    public InputStream getInputStream() {
-        throw new IllegalStateException("Body already read");
-    }
-
-    @Override
-    public BufferedReader getReader() {
-        throw new IllegalStateException("Body already read");
+    public BufferedReader getReader() throws IOException {
+        return ((ServletHttpRequest<N, B>) getDelegate()).getReader();
     }
 
     @Override

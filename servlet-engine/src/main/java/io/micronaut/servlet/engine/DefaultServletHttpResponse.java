@@ -14,8 +14,6 @@ import io.micronaut.http.server.exceptions.InternalServerException;
 import io.micronaut.servlet.http.ServletHttpResponse;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
-import io.reactivex.FlowableEmitter;
-import io.reactivex.FlowableOnSubscribe;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
@@ -90,9 +88,10 @@ public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpSe
                         }
                     });
                 } catch (IOException e) {
-                    finished.set(true);
-                    emitter.onError(e);
-                    subscription.cancel();
+                    if (finished.compareAndSet(false, true)) {
+                        emitter.onError(e);
+                        subscription.cancel();
+                    }
                 }
             }
 
@@ -108,10 +107,15 @@ public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpSe
                             byte[] bytes = codec.encode(o);
                             outputStream.write(bytes);
                         }
+                        if (outputStream.isReady()) {
+                            subscription.request(1);
+                        }
                     }
                 } catch (IOException e) {
-                    finished.set(true);
-                    onError(e);
+                    if (finished.compareAndSet(false, true)) {
+                        onError(e);
+                        subscription.cancel();
+                    }
                 }
             }
 

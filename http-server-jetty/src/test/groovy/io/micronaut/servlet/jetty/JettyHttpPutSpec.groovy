@@ -175,7 +175,6 @@ class JettyHttpPutSpec extends Specification {
     }
 
     @Issue("https://github.com/micronaut-projects/micronaut-core/issues/2757")
-    @PendingFeature(reason = "Not yet implemented")
     void "test put with nullable header"() throws Exception {
         //This test verifies that the body is not read in an attempt to populate the header argument
         MutableHttpRequest<?> request = HttpRequest.PUT("/put/nullableHeader", "body".getBytes()).

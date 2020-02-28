@@ -13,18 +13,14 @@ import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.Part;
 import io.micronaut.http.bind.DefaultRequestBinderRegistry;
 import io.micronaut.http.bind.binders.RequestArgumentBinder;
-import io.micronaut.http.codec.CodecException;
 import io.micronaut.http.codec.MediaTypeCodec;
 import io.micronaut.http.codec.MediaTypeCodecRegistry;
 import io.micronaut.http.multipart.CompletedPart;
 import io.micronaut.jackson.codec.JsonMediaTypeCodec;
 import io.micronaut.jackson.parser.JacksonProcessor;
 import io.micronaut.servlet.http.ServletBodyBinder;
-import io.micronaut.servlet.http.ServletHttpRequest;
 import io.micronaut.servlet.http.StreamedServletMessage;
 import io.reactivex.Flowable;
-import io.reactivex.functions.BiConsumer;
-import io.reactivex.processors.UnicastProcessor;
 import org.reactivestreams.Subscriber;
 
 import javax.inject.Singleton;
@@ -75,6 +71,9 @@ class DefaultServletBinderRegistry extends io.micronaut.servlet.http.ServletBind
         return new DefaultServletBodyBinder(conversionService, mediaTypeCodecRegistry);
     }
 
+    /**
+     * Overridden body binder.
+     */
     private static class DefaultServletBodyBinder extends ServletBodyBinder {
         private final MediaTypeCodecRegistry mediaTypeCodecRegistry;
 

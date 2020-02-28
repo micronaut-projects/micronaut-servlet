@@ -8,7 +8,6 @@ import io.micronaut.core.io.IOUtils;
 import io.micronaut.core.io.Readable;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
-import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.Body;
 import io.micronaut.http.bind.binders.AnnotatedRequestArgumentBinder;
@@ -16,7 +15,6 @@ import io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder;
 import io.micronaut.http.codec.CodecException;
 import io.micronaut.http.codec.MediaTypeCodec;
 import io.micronaut.http.codec.MediaTypeCodecRegistry;
-import io.micronaut.http.exceptions.HttpStatusException;
 import io.reactivex.Flowable;
 import org.reactivestreams.Publisher;
 
@@ -147,8 +145,8 @@ public class ServletBodyBinder<T> extends DefaultBodyAnnotationBinder<T> impleme
                                     return () -> Optional.of(content);
                                 }
                             }
-                        } catch (IOException e) {
-                            throw new CodecException("Error decoding request body: " + e.getMessage(), e);
+                        } catch (CodecException | IOException e) {
+                            throw new CodecException("Unable to decode request body: " + e.getMessage(), e);
                         }
                     }
                 }

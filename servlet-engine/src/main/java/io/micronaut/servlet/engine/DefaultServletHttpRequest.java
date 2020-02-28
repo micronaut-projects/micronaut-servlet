@@ -6,6 +6,7 @@ import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.convert.value.ConvertibleValues;
 import io.micronaut.core.convert.value.MutableConvertibleValues;
+import io.micronaut.core.io.IOUtils;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.http.*;
@@ -45,8 +46,8 @@ import java.util.stream.Collectors;
 /**
  * Implementation of {@link io.micronaut.http.HttpRequest} ontop of the Servlet API.
  *
- * @author graemerocher
  * @param <B> The body type
+ * @author graemerocher
  * @since 1.0.0
  */
 @Internal
@@ -68,8 +69,9 @@ public class DefaultServletHttpRequest<B> implements
 
     /**
      * Default constructor.
-     * @param delegate The servlet request
-     * @param response The servlet response
+     *
+     * @param delegate      The servlet request
+     * @param response      The servlet response
      * @param codecRegistry The codec registry
      */
     protected DefaultServletHttpRequest(
@@ -132,6 +134,14 @@ public class DefaultServletHttpRequest<B> implements
                     } else {
                         return Optional.empty();
                     }
+                } else if (CharSequence.class.isAssignableFrom(type)) {
+                    try (BufferedReader reader = delegate.getReader()) {
+                        final T value = (T) IOUtils.readText(reader);
+                        body = value;
+                        return Optional.ofNullable(value);
+                    } catch (IOException e) {
+                        throw new CodecException("Error decoding request body: " + e.getMessage(), e);
+                    }
                 } else {
 
                     final MediaTypeCodec codec = codecRegistry.findCodec(contentType, type).orElse(null);
@@ -146,7 +156,7 @@ public class DefaultServletHttpRequest<B> implements
                                 body = value;
                                 return Optional.ofNullable(value);
                             }
-                        } catch (IOException e) {
+                        } catch (CodecException | IOException e) {
                             throw new CodecException("Error decoding request body: " + e.getMessage(), e);
                         }
 
@@ -182,7 +192,7 @@ public class DefaultServletHttpRequest<B> implements
     @Override
     public Optional<MediaType> getContentType() {
         return Optional.ofNullable(delegate.getContentType())
-                    .map(MediaType::new);
+                .map(MediaType::new);
     }
 
     @Override
@@ -390,6 +400,7 @@ public class DefaultServletHttpRequest<B> implements
             byte[] buffer = new byte[1024];
             inputStream.setReadListener(new ReadListener() {
                 boolean complete = false;
+
                 @Override
                 public void onDataAvailable() {
                     if (!complete) {

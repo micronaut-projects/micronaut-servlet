@@ -17,7 +17,6 @@ class JettyNotFoundSpec extends Specification {
 
     @Shared @AutoCleanup EmbeddedServer embeddedServer = ApplicationContext.run(EmbeddedServer)
 
-    @PendingFeature(reason = "text/event-stream support not yet implemented")
     void "test 404 handling with Flowable"() {
         given:
         InventoryClient client = embeddedServer.getApplicationContext().getBean(InventoryClient)
