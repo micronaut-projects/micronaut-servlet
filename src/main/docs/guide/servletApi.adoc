@@ -4,14 +4,44 @@ There are a couple of additional extensions within Micronaut Servlet that make i
 
 === Injecting the Servlet Request and Response
 
-TODO
+You can receive the `HttpServletRequest` and `HttpServletResponse` objects directly as parameters:
+
+.Using the Request and Response
+[source,java]
+----
+include::http-server-jetty/src/test/java/io/micronaut/servlet/jetty/docs/DocsController.java[tags=reqrep, indent=0]
+----
+
+<1> The request object
+<2> The response object
 
 === Simplified I/O code with Readable and Writable
 
-TODO
+Writing to the response and reading from the request can be simplified with Micronaut's `Readable` and `Writable` interfaces:
+
+.Using Readable and Writable
+[source,java]
+----
+include::http-server-jetty/src/test/java/io/micronaut/servlet/jetty/docs/DocsController.java[tags=imports, indent=0]
+
+include::http-server-jetty/src/test/java/io/micronaut/servlet/jetty/docs/DocsController.java[tags=writable, indent=0]
+----
 
 === Multipart support with `@Part`
 
-TODO
+Multipart support is improved with the ability to inject parts using the annotation `io.micronaut.http.annotation.Part`. For example:
 
+
+.Using `@Part`
+[source,java]
+----
+include::http-server-jetty/src/test/java/io/micronaut/servlet/jetty/docs/DocsController.java[tags=multipart, indent=0]
+----
+
+<1> You can receive attributes with just parameter names that match the attribute name
+<2> Parts that have a content type of `application/json` can be bound to POJOs
+<3> You can read parts as text
+<4> You can read parts as `byte[]`
+<5> You can receive the raw `javax.servlet.http.Part`
+<6> You can receive Micronaut's `CompletedPart` interface which works with Netty too
 

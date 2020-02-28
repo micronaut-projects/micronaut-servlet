@@ -5,3 +5,18 @@ dependency:io.micronaut.servlet:micronaut-http-server-undertow[version="{version
 
 NOTE: If you plan to produce a WAR file then the dependency should be `developmentOnly`.
 
+To customize the Undertow server you can use the following configuration properties:
+
+include::{includedir}configurationProperties/io.micronaut.servlet.undertow.UndertowConfiguration.adoc[]
+
+
+Or you can register a `BeanCreatedEventListener`:
+
+.Undertow Server Customization
+[source,java]
+----
+include::http-server-undertow/src/test/java/io/micronaut/servlet/undertow/docs/UndertowServerCustomizer.java[tags=imports, indent=0]
+
+include::http-server-undertow/src/test/java/io/micronaut/servlet/undertow/docs/UndertowServerCustomizer.java[tags=class, indent=0]
+----
+

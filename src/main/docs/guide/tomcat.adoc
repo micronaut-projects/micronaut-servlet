@@ -5,3 +5,18 @@ dependency:io.micronaut.servlet:micronaut-http-server-tomcat[version="{version}"
 
 NOTE: If you plan to produce a WAR file then the dependency should be `developmentOnly`.
 
+To customize the Tomcat server you can use the following configuration properties:
+
+include::{includedir}configurationProperties/io.micronaut.servlet.tomcat.TomcatConfiguration.adoc[]
+
+
+Or you can register a `BeanCreatedEventListener`:
+
+.Tomcat Server Customization
+[source,java]
+----
+include::http-server-tomcat/src/test/java/io/micronaut/servlet/tomcat/docs/TomcatServerCustomizer.java[tags=imports, indent=0]
+
+include::http-server-tomcat/src/test/java/io/micronaut/servlet/tomcat/docs/TomcatServerCustomizer.java[tags=class, indent=0]
+----
+
