@@ -103,11 +103,13 @@ public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpSe
                         if (o instanceof byte[]) {
                             raw = true;
                             outputStream.write((byte[]) o);
+                            flushIfReady();
                         } else if (o instanceof ByteBuffer) {
                             ByteBuffer buf = (ByteBuffer) o;
                             try {
                                 raw = true;
                                 outputStream.write(buf.toByteArray());
+                                flushIfReady();
                             } finally {
                                 if (buf instanceof ReferenceCounted) {
                                     ((ReferenceCounted) buf).release();
@@ -130,6 +132,7 @@ public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpSe
                                     byte[] bytes = codec.encode(o);
                                     outputStream.write(bytes);
                                 }
+                                flushIfReady();
                             }
                         }
 
@@ -142,6 +145,12 @@ public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpSe
                         onError(e);
                         subscription.cancel();
                     }
+                }
+            }
+
+            private void flushIfReady() throws IOException {
+                if (outputStream.isReady()) {
+                    outputStream.flush();
                 }
             }
 
@@ -159,6 +168,7 @@ public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpSe
                     try {
                         if (!raw && isJson && outputStream.isReady()) {
                             outputStream.write(']');
+                            flushIfReady();
                         }
                         emitter.onNext(DefaultServletHttpResponse.this);
                         emitter.onComplete();
