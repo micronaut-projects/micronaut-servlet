@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":10,"i1":10};
+var methods = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -222,8 +222,36 @@ extends io.micronaut.http.server.HttpServerConfiguration</pre>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/servlet/undertow/UndertowConfiguration.html#getMultipartConfiguration--">getMultipartConfiguration</a></span>()</code>&nbsp;</td>
 </tr>
 <tr id="i1" class="rowColor">
+<td class="colFirst"><code>java.util.Map&lt;java.lang.String,java.lang.String&gt;</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/servlet/undertow/UndertowConfiguration.html#getServerOptions--">getServerOptions</a></span>()</code>&nbsp;</td>
+</tr>
+<tr id="i2" class="altColor">
+<td class="colFirst"><code>java.util.Map&lt;java.lang.String,java.lang.String&gt;</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/servlet/undertow/UndertowConfiguration.html#getSocketOptions--">getSocketOptions</a></span>()</code>&nbsp;</td>
+</tr>
+<tr id="i3" class="rowColor">
 <td class="colFirst"><code>io.undertow.Undertow.Builder</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/servlet/undertow/UndertowConfiguration.html#getUndertowBuilder--">getUndertowBuilder</a></span>()</code>&nbsp;</td>
+</tr>
+<tr id="i4" class="altColor">
+<td class="colFirst"><code>java.util.Map&lt;java.lang.String,java.lang.String&gt;</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/servlet/undertow/UndertowConfiguration.html#getWorkerOptions--">getWorkerOptions</a></span>()</code>&nbsp;</td>
+</tr>
+<tr id="i5" class="rowColor">
+<td class="colFirst"><code>void</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/servlet/undertow/UndertowConfiguration.html#setServerOptions-java.util.Map-">setServerOptions</a></span>(java.util.Map&lt;java.lang.String,java.lang.String&gt;&nbsp;serverOptions)</code>&nbsp;</td>
+</tr>
+<tr id="i6" class="altColor">
+<td class="colFirst"><code>void</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/servlet/undertow/UndertowConfiguration.html#setSocketOptions-java.util.Map-">setSocketOptions</a></span>(java.util.Map&lt;java.lang.String,java.lang.String&gt;&nbsp;socketOptions)</code>
+<div class="block">Sets the socket options.</div>
+</td>
+</tr>
+<tr id="i7" class="rowColor">
+<td class="colFirst"><code>void</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/servlet/undertow/UndertowConfiguration.html#setWorkerOptions-java.util.Map-">setWorkerOptions</a></span>(java.util.Map&lt;java.lang.String,java.lang.String&gt;&nbsp;workerOptions)</code>
+<div class="block">Sets the worker options.</div>
+</td>
 </tr>
 </table>
 <ul class="blockList">
@@ -311,13 +339,96 @@ protected&nbsp;io.undertow.Undertow.Builder undertowBuilder</pre>
 <a name="getMultipartConfiguration--">
 <!--   -->
 </a>
-<ul class="blockListLast">
+<ul class="blockList">
 <li class="blockList">
 <h4>getMultipartConfiguration</h4>
 <pre>public&nbsp;java.util.Optional&lt;<a href="../../../../io/micronaut/servlet/undertow/UndertowConfiguration.MultipartConfiguration.html" title="class in io.micronaut.servlet.undertow">UndertowConfiguration.MultipartConfiguration</a>&gt;&nbsp;getMultipartConfiguration()</pre>
 <dl>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>The multipart configuration</dd>
+</dl>
+</li>
+</ul>
+<a name="getWorkerOptions--">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>getWorkerOptions</h4>
+<pre>public&nbsp;java.util.Map&lt;java.lang.String,java.lang.String&gt;&nbsp;getWorkerOptions()</pre>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The worker options</dd>
+</dl>
+</li>
+</ul>
+<a name="setWorkerOptions-java.util.Map-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>setWorkerOptions</h4>
+<pre>public&nbsp;void&nbsp;setWorkerOptions(@MapFormat(keyFormat=UNDER_SCORE_SEPARATED,transformation=FLAT)
+                             java.util.Map&lt;java.lang.String,java.lang.String&gt;&nbsp;workerOptions)</pre>
+<div class="block">Sets the worker options.</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>workerOptions</code> - The worker options</dd>
+</dl>
+</li>
+</ul>
+<a name="getSocketOptions--">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>getSocketOptions</h4>
+<pre>public&nbsp;java.util.Map&lt;java.lang.String,java.lang.String&gt;&nbsp;getSocketOptions()</pre>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The socket options.</dd>
+</dl>
+</li>
+</ul>
+<a name="setSocketOptions-java.util.Map-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>setSocketOptions</h4>
+<pre>public&nbsp;void&nbsp;setSocketOptions(@MapFormat(keyFormat=UNDER_SCORE_SEPARATED,transformation=FLAT)
+                             java.util.Map&lt;java.lang.String,java.lang.String&gt;&nbsp;socketOptions)</pre>
+<div class="block">Sets the socket options.</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>socketOptions</code> - The socket options</dd>
+</dl>
+</li>
+</ul>
+<a name="getServerOptions--">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>getServerOptions</h4>
+<pre>public&nbsp;java.util.Map&lt;java.lang.String,java.lang.String&gt;&nbsp;getServerOptions()</pre>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The server options.</dd>
+</dl>
+</li>
+</ul>
+<a name="setServerOptions-java.util.Map-">
+<!--   -->
+</a>
+<ul class="blockListLast">
+<li class="blockList">
+<h4>setServerOptions</h4>
+<pre>public&nbsp;void&nbsp;setServerOptions(@MapFormat(keyFormat=UNDER_SCORE_SEPARATED,transformation=FLAT)
+                             java.util.Map&lt;java.lang.String,java.lang.String&gt;&nbsp;serverOptions)</pre>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>serverOptions</code> - Sets the server options</dd>
 </dl>
 </li>
 </ul>

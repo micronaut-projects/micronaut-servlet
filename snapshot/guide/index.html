@@ -53,6 +53,8 @@
                                 
                                 <div class="toc-item" style="margin-left:0"><a href="#tomcat"><strong>5</strong><span>Tomcat Server</span></a></div>
                                 
+                                <div class="toc-item" style="margin-left:0"><a href="#repository"><strong>6</strong><span>Repository</span></a></div>
+                                
                             </div>
                         </div>
                     </li>
@@ -91,6 +93,8 @@
         <div class="toc-item" style="margin-left:0px" id="toc-item-undertow"><a href="#undertow"><strong>4</strong><span>Undertow Server</span></a></div>
         
         <div class="toc-item" style="margin-left:0px" id="toc-item-tomcat"><a href="#tomcat"><strong>5</strong><span>Tomcat Server</span></a></div>
+        
+        <div class="toc-item" style="margin-left:0px" id="toc-item-repository"><a href="#repository"><strong>6</strong><span>Repository</span></a></div>
         
         </div>
     </div>
@@ -551,6 +555,21 @@ If you plan to produce a WAR file then the dependency should be <code>developmen
 <td class="tableblock halign-left valign-top"><p class="tableblock">io.undertow.connector.ByteBufferPool</p></td>
 <td class="tableblock halign-left valign-top"></td>
 </tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.undertow.worker-options</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.util.Map</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Sets the worker options.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.undertow.socket-options</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.util.Map</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Sets the socket options.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.undertow.server-options</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.util.Map</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Sets the server options</p></td>
+</tr>
 </tbody>
 </table>
 <div class="paragraph">
@@ -785,6 +804,22 @@ public class TomcatServerCustomizer implements BeanCreatedEventListener&lt;Tomca
     }
 }</code></pre>
 </div>
+</div>
+
+<h1 id="repository"><a class="anchor" href="#repository"></a>6 Repository</h1>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/master/src/main/docs/guide/repository.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>You can find the source code of this project in this repository:</p>
+</div>
+<div class="paragraph">
+<p><a href="https://github.com/micronaut-projects/micronaut-servlet">https://github.com/micronaut-projects/micronaut-servlet</a></p>
 </div>
 
     </div>
