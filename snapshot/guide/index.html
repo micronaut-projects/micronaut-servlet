@@ -49,9 +49,9 @@
                                 
                                 <div class="toc-item" style="margin-left:0"><a href="#jetty"><strong>3</strong><span>Jetty Server</span></a></div>
                                 
-                                <div class="toc-item" style="margin-left:0"><a href="#undertow"><strong>4</strong><span>Undertow Server</span></a></div>
+                                <div class="toc-item" style="margin-left:0"><a href="#tomcat"><strong>4</strong><span>Tomcat Server</span></a></div>
                                 
-                                <div class="toc-item" style="margin-left:0"><a href="#tomcat"><strong>5</strong><span>Tomcat Server</span></a></div>
+                                <div class="toc-item" style="margin-left:0"><a href="#undertow"><strong>5</strong><span>Undertow Server</span></a></div>
                                 
                                 <div class="toc-item" style="margin-left:0"><a href="#repository"><strong>6</strong><span>Repository</span></a></div>
                                 
@@ -90,9 +90,9 @@
         
         <div class="toc-item" style="margin-left:0px" id="toc-item-jetty"><a href="#jetty"><strong>3</strong><span>Jetty Server</span></a></div>
         
-        <div class="toc-item" style="margin-left:0px" id="toc-item-undertow"><a href="#undertow"><strong>4</strong><span>Undertow Server</span></a></div>
+        <div class="toc-item" style="margin-left:0px" id="toc-item-tomcat"><a href="#tomcat"><strong>4</strong><span>Tomcat Server</span></a></div>
         
-        <div class="toc-item" style="margin-left:0px" id="toc-item-tomcat"><a href="#tomcat"><strong>5</strong><span>Tomcat Server</span></a></div>
+        <div class="toc-item" style="margin-left:0px" id="toc-item-undertow"><a href="#undertow"><strong>5</strong><span>Undertow Server</span></a></div>
         
         <div class="toc-item" style="margin-left:0px" id="toc-item-repository"><a href="#repository"><strong>6</strong><span>Repository</span></a></div>
         
@@ -471,155 +471,7 @@ public class JettyServerCustomizer implements BeanCreatedEventListener&lt;Server
 </div>
 </div>
 
-<h1 id="undertow"><a class="anchor" href="#undertow"></a>4 Undertow Server</h1>
-
-<div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/master/src/main/docs/guide/undertow.adoc"'>
-        <i class='fa fa-pencil-square-o'></i> Improve this doc
-    </button>
-</div>
-
-
-<div class="paragraph">
-<p>To use <a href="http://undertow.io/">Undertow</a> as a server add the following dependency:</p>
-</div>
-<div class="paragraph">
-<p>        <div class="listingblock multi-language-sample">
-<div class="title"></div>
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">implementation(<span class="hljs-string">"io.micronaut.servlet:micronaut-http-server-undertow:1.0.0.BUILD-SNAPSHOT")</span></code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
-    &lt;groupId&gt;io.micronaut.servlet&lt;/groupId&gt;
-    &lt;artifactId&gt;micronaut-http-server-undertow&lt;/artifactId&gt;
-    &lt;version&gt;1.0.0.BUILD-SNAPSHOT&lt;/version&gt;
-&lt;/dependency&gt;</code></pre>
-</div>
-</div>
-</p>
-</div>
-<div class="admonitionblock warning">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-warning" title="Warning"></i>
-</td>
-<td class="content">
-Undertow is not supported with GraalVM native image. Use <a href="#jetty">Jetty</a> or <a href="#tomcat">Tomcat</a> if native image support is required. See <a href="https://issues.redhat.com/projects/UNDERTOW/issues/UNDERTOW-1408">UNDERTOW-1408</a>.
-</td>
-</tr>
-</table>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-note" title="Note"></i>
-</td>
-<td class="content">
-If you plan to produce a WAR file then the dependency should be <code>developmentOnly</code>.
-</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
-<p>To customize the Undertow server you can use the following configuration properties:</p>
-</div>
-<a id="io.micronaut.servlet.undertow.UndertowConfiguration" href="#io.micronaut.servlet.undertow.UndertowConfiguration">&#128279;</a>
-<table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 1. Configuration Properties for <a href="../api/io/micronaut/servlet/undertow/UndertowConfiguration.html">UndertowConfiguration</a></caption>
-<colgroup>
-<col style="width: 33.3333%;">
-<col style="width: 33.3333%;">
-<col style="width: 33.3334%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Property</th>
-<th class="tableblock halign-left valign-top">Type</th>
-<th class="tableblock halign-left valign-top">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.undertow.buffer-size</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">int</p></td>
-<td class="tableblock halign-left valign-top"></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.undertow.io-threads</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">int</p></td>
-<td class="tableblock halign-left valign-top"></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.undertow.worker-threads</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">int</p></td>
-<td class="tableblock halign-left valign-top"></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.undertow.direct-buffers</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
-<td class="tableblock halign-left valign-top"></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.undertow.handler</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">io.undertow.server.HttpHandler</p></td>
-<td class="tableblock halign-left valign-top"></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.undertow.worker</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">org.xnio.XnioWorker</p></td>
-<td class="tableblock halign-left valign-top"></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.undertow.byte-buffer-pool</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">io.undertow.connector.ByteBufferPool</p></td>
-<td class="tableblock halign-left valign-top"></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.undertow.worker-options</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">java.util.Map</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Sets the worker options.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.undertow.socket-options</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">java.util.Map</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Sets the socket options.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.undertow.server-options</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">java.util.Map</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Sets the server options</p></td>
-</tr>
-</tbody>
-</table>
-<div class="paragraph">
-<p>Or you can register a <code>BeanCreatedEventListener</code>:</p>
-</div>
-<div class="listingblock">
-<div class="title">Undertow Server Customization</div>
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">import io.micronaut.context.event.BeanCreatedEvent;
-import io.micronaut.context.event.BeanCreatedEventListener;
-import io.undertow.Undertow;
-import javax.inject.Singleton;
-
-@Singleton
-public class UndertowServerCustomizer implements BeanCreatedEventListener&lt;Undertow.Builder&gt; {
-    @Override
-    public Undertow.Builder onCreated(BeanCreatedEvent&lt;Undertow.Builder&gt; event) {
-        Undertow.Builder undertowBuilder = event.getBean();
-        // perform customizations...
-        return undertowBuilder;
-    }
-}</code></pre>
-</div>
-</div>
-
-<h1 id="tomcat"><a class="anchor" href="#tomcat"></a>5 Tomcat Server</h1>
+<h1 id="tomcat"><a class="anchor" href="#tomcat"></a>4 Tomcat Server</h1>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/master/src/main/docs/guide/tomcat.adoc"'>
@@ -837,6 +689,154 @@ public class TomcatServerCustomizer implements BeanCreatedEventListener&lt;Tomca
         Tomcat tomcat = event.getBean();
         // perform customizations...
         return tomcat;
+    }
+}</code></pre>
+</div>
+</div>
+
+<h1 id="undertow"><a class="anchor" href="#undertow"></a>5 Undertow Server</h1>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/master/src/main/docs/guide/undertow.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>To use <a href="http://undertow.io/">Undertow</a> as a server add the following dependency:</p>
+</div>
+<div class="paragraph">
+<p>        <div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">implementation(<span class="hljs-string">"io.micronaut.servlet:micronaut-http-server-undertow:1.0.0.BUILD-SNAPSHOT")</span></code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
+    &lt;groupId&gt;io.micronaut.servlet&lt;/groupId&gt;
+    &lt;artifactId&gt;micronaut-http-server-undertow&lt;/artifactId&gt;
+    &lt;version&gt;1.0.0.BUILD-SNAPSHOT&lt;/version&gt;
+&lt;/dependency&gt;</code></pre>
+</div>
+</div>
+</p>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+Undertow is not supported with GraalVM native image. Use <a href="#jetty">Jetty</a> or <a href="#tomcat">Tomcat</a> if native image support is required. See <a href="https://issues.redhat.com/projects/UNDERTOW/issues/UNDERTOW-1408">UNDERTOW-1408</a>.
+</td>
+</tr>
+</table>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+If you plan to produce a WAR file then the dependency should be <code>developmentOnly</code>.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>To customize the Undertow server you can use the following configuration properties:</p>
+</div>
+<a id="io.micronaut.servlet.undertow.UndertowConfiguration" href="#io.micronaut.servlet.undertow.UndertowConfiguration">&#128279;</a>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 1. Configuration Properties for <a href="../api/io/micronaut/servlet/undertow/UndertowConfiguration.html">UndertowConfiguration</a></caption>
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 33.3333%;">
+<col style="width: 33.3334%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Property</th>
+<th class="tableblock halign-left valign-top">Type</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.undertow.buffer-size</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">int</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.undertow.io-threads</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">int</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.undertow.worker-threads</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">int</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.undertow.direct-buffers</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.undertow.handler</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">io.undertow.server.HttpHandler</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.undertow.worker</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">org.xnio.XnioWorker</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.undertow.byte-buffer-pool</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">io.undertow.connector.ByteBufferPool</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.undertow.worker-options</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.util.Map</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Sets the worker options.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.undertow.socket-options</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.util.Map</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Sets the socket options.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.undertow.server-options</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.util.Map</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Sets the server options</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>Or you can register a <code>BeanCreatedEventListener</code>:</p>
+</div>
+<div class="listingblock">
+<div class="title">Undertow Server Customization</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">import io.micronaut.context.event.BeanCreatedEvent;
+import io.micronaut.context.event.BeanCreatedEventListener;
+import io.undertow.Undertow;
+import javax.inject.Singleton;
+
+@Singleton
+public class UndertowServerCustomizer implements BeanCreatedEventListener&lt;Undertow.Builder&gt; {
+    @Override
+    public Undertow.Builder onCreated(BeanCreatedEvent&lt;Undertow.Builder&gt; event) {
+        Undertow.Builder undertowBuilder = event.getBean();
+        // perform customizations...
+        return undertowBuilder;
     }
 }</code></pre>
 </div>
