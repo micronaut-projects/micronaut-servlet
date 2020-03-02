@@ -1,5 +1,6 @@
 .gradle
 .idea
+.DS_Store
 
 # Ignore Gradle GUI config
 gradle-app.setting
@@ -22,3 +23,5 @@ src/main/docs/resources/css/*.css
 src/main/docs/resources/img/*.svg
 src/main/docs/resources/js/*.js
 src/main/docs/resources/style/*.html
+
+
