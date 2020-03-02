@@ -6,7 +6,6 @@ dependencies {
     api "io.micronaut:micronaut-http-server:$micronautVersion"
 
     implementation 'io.undertow:undertow-servlet:2.0.1.Final'
-
     testAnnotationProcessor "io.micronaut:micronaut-inject-java"
     testImplementation "io.micronaut:micronaut-inject-groovy"
     testImplementation "io.micronaut:micronaut-http-client"

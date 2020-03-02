@@ -2,6 +2,7 @@ To use https://www.eclipse.org/jetty/[Jetty] as a server add the following depen
 
 dependency:io.micronaut.servlet:micronaut-http-server-jetty[version="{version}"]
 
+NOTE: Jetty is supported with GraalVM native image
 
 NOTE: If you plan to produce a WAR file then the dependency should be `developmentOnly`.
 

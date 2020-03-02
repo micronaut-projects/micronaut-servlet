@@ -32,6 +32,7 @@ import java.util.Optional;
  */
 @ConfigurationProperties("tomcat")
 @TypeHint({
+        TomcatConfiguration.class,
         Http11NioProtocol.class,
         Http11Nio2Protocol.class,
         Http11AprProtocol.class,

@@ -73,8 +73,8 @@ public class UndertowConfiguration extends HttpServerConfiguration {
      * @param workerOptions The worker options
      */
     public void setWorkerOptions(
-            @MapFormat( keyFormat = StringConvention.UNDER_SCORE_SEPARATED,
-                        transformation = MapFormat.MapTransformation.FLAT)
+            @MapFormat(keyFormat = StringConvention.UNDER_SCORE_SEPARATED,
+                       transformation = MapFormat.MapTransformation.FLAT)
             Map<String, String> workerOptions) {
         if (workerOptions != null) {
             this.workerOptions.putAll(workerOptions);
@@ -93,8 +93,8 @@ public class UndertowConfiguration extends HttpServerConfiguration {
      * @param socketOptions The socket options
      */
     public void setSocketOptions(
-            @MapFormat( keyFormat = StringConvention.UNDER_SCORE_SEPARATED,
-                        transformation = MapFormat.MapTransformation.FLAT)
+            @MapFormat(keyFormat = StringConvention.UNDER_SCORE_SEPARATED,
+                       transformation = MapFormat.MapTransformation.FLAT)
             Map<String, String> socketOptions) {
         if (socketOptions != null) {
             this.socketOptions.putAll(socketOptions);
@@ -112,8 +112,8 @@ public class UndertowConfiguration extends HttpServerConfiguration {
      * @param serverOptions Sets the server options
      */
     public void setServerOptions(
-            @MapFormat( keyFormat = StringConvention.UNDER_SCORE_SEPARATED,
-                        transformation = MapFormat.MapTransformation.FLAT)
+            @MapFormat(keyFormat = StringConvention.UNDER_SCORE_SEPARATED,
+                       transformation = MapFormat.MapTransformation.FLAT)
             Map<String, String> serverOptions) {
         if (serverOptions != null) {
             this.serverOptions.putAll(serverOptions);

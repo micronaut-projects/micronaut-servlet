@@ -14,6 +14,7 @@ import org.apache.catalina.Context;
 import org.apache.catalina.Wrapper;
 import org.apache.catalina.connector.Connector;
 import org.apache.catalina.startup.Tomcat;
+import org.apache.catalina.webresources.TomcatURLStreamHandlerFactory;
 
 import javax.inject.Singleton;
 import java.io.File;
@@ -28,6 +29,10 @@ import java.util.List;
  */
 @Factory
 public class TomcatFactory extends ServletServerFactory {
+
+    static {
+        TomcatURLStreamHandlerFactory.disable();
+    }
 
     /**
      * Default constructor.

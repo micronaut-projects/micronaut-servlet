@@ -1,0 +1,12 @@
+[
+  { "name":"org.apache.catalina.loader.WebappClassLoaderBase", "methods" : [
+    {"name":"<init>","parameterTypes":[]},
+    {"name":"setClearReferencesRmiTargets","parameterTypes":["boolean"]},
+    {"name":"setClearReferencesStopThreads","parameterTypes":["boolean"]},
+    {"name":"setClearReferencesStopTimerThreads","parameterTypes":["boolean"]},
+    {"name":"setClearReferencesHttpClientKeepAliveThread","parameterTypes":["boolean"]},
+    {"name":"setClearReferencesObjectStreamClassCaches","parameterTypes":["boolean"]},
+    {"name":"setClearReferencesObjectStreamClassCaches","parameterTypes":["boolean"]},
+    {"name":"setClearReferencesThreadLocals","parameterTypes":["boolean"]}
+  ] }
+]
