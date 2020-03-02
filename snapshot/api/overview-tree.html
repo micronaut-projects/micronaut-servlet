@@ -75,6 +75,7 @@
 <li><a href="io/micronaut/servlet/engine/bind/package-tree.html">io.micronaut.servlet.engine.bind</a>, </li>
 <li><a href="io/micronaut/servlet/engine/server/package-tree.html">io.micronaut.servlet.engine.server</a>, </li>
 <li><a href="io/micronaut/servlet/http/package-tree.html">io.micronaut.servlet.http</a>, </li>
+<li><a href="io/micronaut/servlet/http/encoders/package-tree.html">io.micronaut.servlet.http.encoders</a>, </li>
 <li><a href="io/micronaut/servlet/jetty/package-tree.html">io.micronaut.servlet.jetty</a>, </li>
 <li><a href="io/micronaut/servlet/tomcat/package-tree.html">io.micronaut.servlet.tomcat</a>, </li>
 <li><a href="io/micronaut/servlet/undertow/package-tree.html">io.micronaut.servlet.undertow</a></li>
@@ -85,6 +86,12 @@
 <ul>
 <li type="circle">java.lang.Object
 <ul>
+<li type="circle">io.micronaut.servlet.http.encoders.<a href="io/micronaut/servlet/http/encoders/AbstractFileEncoder.html" title="class in io.micronaut.servlet.http.encoders"><span class="typeNameLink">AbstractFileEncoder</span></a>&lt;T&gt; (implements io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletResponseEncoder.html" title="interface in io.micronaut.servlet.http">ServletResponseEncoder</a>&lt;T&gt;)
+<ul>
+<li type="circle">io.micronaut.servlet.http.encoders.<a href="io/micronaut/servlet/http/encoders/StreamFileEncoder.html" title="class in io.micronaut.servlet.http.encoders"><span class="typeNameLink">StreamFileEncoder</span></a></li>
+<li type="circle">io.micronaut.servlet.http.encoders.<a href="io/micronaut/servlet/http/encoders/SystemFileEncoder.html" title="class in io.micronaut.servlet.http.encoders"><span class="typeNameLink">SystemFileEncoder</span></a></li>
+</ul>
+</li>
 <li type="circle">io.micronaut.servlet.engine.server.<a href="io/micronaut/servlet/engine/server/AbstractServletServer.html" title="class in io.micronaut.servlet.engine.server"><span class="typeNameLink">AbstractServletServer</span></a>&lt;T&gt; (implements io.micronaut.runtime.server.EmbeddedServer)
 <ul>
 <li type="circle">io.micronaut.servlet.jetty.<a href="io/micronaut/servlet/jetty/JettyServer.html" title="class in io.micronaut.servlet.jetty"><span class="typeNameLink">JettyServer</span></a></li>
@@ -101,6 +108,7 @@
 <li type="circle">io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/DefaultServletExchange.html" title="class in io.micronaut.servlet.http"><span class="typeNameLink">DefaultServletExchange</span></a>&lt;Req,Res&gt; (implements io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletExchange.html" title="interface in io.micronaut.servlet.http">ServletExchange</a>&lt;Req,Res&gt;)</li>
 <li type="circle">io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html" title="class in io.micronaut.servlet.engine"><span class="typeNameLink">DefaultServletHttpRequest</span></a>&lt;B&gt; (implements io.micronaut.core.convert.value.MutableConvertibleValues&lt;V&gt;, io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletExchange.html" title="interface in io.micronaut.servlet.http">ServletExchange</a>&lt;Req,Res&gt;, io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletHttpRequest.html" title="interface in io.micronaut.servlet.http">ServletHttpRequest</a>&lt;N,B&gt;, io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/StreamedServletMessage.html" title="interface in io.micronaut.servlet.http">StreamedServletMessage</a>&lt;B,BB&gt;)</li>
 <li type="circle">io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/DefaultServletHttpResponse.html" title="class in io.micronaut.servlet.engine"><span class="typeNameLink">DefaultServletHttpResponse</span></a>&lt;B&gt; (implements io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletHttpResponse.html" title="interface in io.micronaut.servlet.http">ServletHttpResponse</a>&lt;N,B&gt;)</li>
+<li type="circle">io.micronaut.servlet.http.encoders.<a href="io/micronaut/servlet/http/encoders/FileEncoder.html" title="class in io.micronaut.servlet.http.encoders"><span class="typeNameLink">FileEncoder</span></a> (implements io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletResponseEncoder.html" title="interface in io.micronaut.servlet.http">ServletResponseEncoder</a>&lt;T&gt;)</li>
 <li type="circle">javax.servlet.GenericServlet (implements java.io.Serializable, javax.servlet.Servlet, javax.servlet.ServletConfig)
 <ul>
 <li type="circle">javax.servlet.http.HttpServlet
@@ -195,6 +203,7 @@
 </ul>
 </li>
 <li type="circle">io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletExchange.html" title="interface in io.micronaut.servlet.http"><span class="typeNameLink">ServletExchange</span></a>&lt;Req,Res&gt;</li>
+<li type="circle">io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletResponseEncoder.html" title="interface in io.micronaut.servlet.http"><span class="typeNameLink">ServletResponseEncoder</span></a>&lt;T&gt;</li>
 <li type="circle">io.micronaut.core.util.Toggleable
 <ul>
 <li type="circle">io.micronaut.servlet.engine.server.<a href="io/micronaut/servlet/engine/server/ServletStaticResourceConfiguration.html" title="interface in io.micronaut.servlet.engine.server"><span class="typeNameLink">ServletStaticResourceConfiguration</span></a></li>

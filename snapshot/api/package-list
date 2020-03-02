@@ -2,6 +2,7 @@ io.micronaut.servlet.engine
 io.micronaut.servlet.engine.bind
 io.micronaut.servlet.engine.server
 io.micronaut.servlet.http
+io.micronaut.servlet.http.encoders
 io.micronaut.servlet.jetty
 io.micronaut.servlet.tomcat
 io.micronaut.servlet.undertow

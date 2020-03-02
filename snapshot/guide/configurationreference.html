@@ -227,9 +227,48 @@
 </div>
 <div class="sect2">
 <h3 id="_http_server_tomcat_config_properties">Http Server Tomcat Config Properties</h3>
+<a id="io.micronaut.servlet.tomcat.TomcatConfiguration$MultipartConfiguration" href="#io.micronaut.servlet.tomcat.TomcatConfiguration$MultipartConfiguration">&#128279;</a>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 3. Configuration Properties for <a href="../api/io/micronaut/servlet/tomcat/TomcatConfiguration.MultipartConfiguration.html">TomcatConfiguration$MultipartConfiguration</a></caption>
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 33.3333%;">
+<col style="width: 33.3334%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Property</th>
+<th class="tableblock halign-left valign-top">Type</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.tomcat.multipart.location</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.lang.String</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.tomcat.multipart.max-file-size</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">long</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.tomcat.multipart.max-request-size</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">long</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.tomcat.multipart.file-size-threshold</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">int</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+</tbody>
+</table>
+<div style="page-break-after: always;"></div>
 <a id="io.micronaut.servlet.tomcat.TomcatConfiguration" href="#io.micronaut.servlet.tomcat.TomcatConfiguration">&#128279;</a>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 3. Configuration Properties for <a href="../api/io/micronaut/servlet/tomcat/TomcatConfiguration.html">TomcatConfiguration</a></caption>
+<caption class="title">Table 4. Configuration Properties for <a href="../api/io/micronaut/servlet/tomcat/TomcatConfiguration.html">TomcatConfiguration</a></caption>
 <colgroup>
 <col style="width: 33.3333%;">
 <col style="width: 33.3333%;">
@@ -371,9 +410,12 @@
 </tbody>
 </table>
 <div style="page-break-after: always;"></div>
-<a id="io.micronaut.servlet.tomcat.TomcatConfiguration$MultipartConfiguration" href="#io.micronaut.servlet.tomcat.TomcatConfiguration$MultipartConfiguration">&#128279;</a>
+</div>
+<div class="sect2">
+<h3 id="_http_server_undertow_config_properties">Http Server Undertow Config Properties</h3>
+<a id="io.micronaut.servlet.undertow.UndertowConfiguration$MultipartConfiguration" href="#io.micronaut.servlet.undertow.UndertowConfiguration$MultipartConfiguration">&#128279;</a>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 4. Configuration Properties for <a href="../api/io/micronaut/servlet/tomcat/TomcatConfiguration.MultipartConfiguration.html">TomcatConfiguration$MultipartConfiguration</a></caption>
+<caption class="title">Table 5. Configuration Properties for <a href="../api/io/micronaut/servlet/undertow/UndertowConfiguration.MultipartConfiguration.html">UndertowConfiguration$MultipartConfiguration</a></caption>
 <colgroup>
 <col style="width: 33.3333%;">
 <col style="width: 33.3333%;">
@@ -388,34 +430,31 @@
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.tomcat.multipart.location</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.undertow.multipart.location</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">java.lang.String</p></td>
 <td class="tableblock halign-left valign-top"></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.tomcat.multipart.max-file-size</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.undertow.multipart.max-file-size</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">long</p></td>
 <td class="tableblock halign-left valign-top"></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.tomcat.multipart.max-request-size</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.undertow.multipart.max-request-size</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">long</p></td>
 <td class="tableblock halign-left valign-top"></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.tomcat.multipart.file-size-threshold</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.undertow.multipart.file-size-threshold</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">int</p></td>
 <td class="tableblock halign-left valign-top"></td>
 </tr>
 </tbody>
 </table>
 <div style="page-break-after: always;"></div>
-</div>
-<div class="sect2">
-<h3 id="_http_server_undertow_config_properties">Http Server Undertow Config Properties</h3>
 <a id="io.micronaut.servlet.undertow.UndertowConfiguration" href="#io.micronaut.servlet.undertow.UndertowConfiguration">&#128279;</a>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 5. Configuration Properties for <a href="../api/io/micronaut/servlet/undertow/UndertowConfiguration.html">UndertowConfiguration</a></caption>
+<caption class="title">Table 6. Configuration Properties for <a href="../api/io/micronaut/servlet/undertow/UndertowConfiguration.html">UndertowConfiguration</a></caption>
 <colgroup>
 <col style="width: 33.3333%;">
 <col style="width: 33.3333%;">
@@ -478,45 +517,6 @@
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.undertow.server-options</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">java.util.Map</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Sets the server options</p></td>
-</tr>
-</tbody>
-</table>
-<div style="page-break-after: always;"></div>
-<a id="io.micronaut.servlet.undertow.UndertowConfiguration$MultipartConfiguration" href="#io.micronaut.servlet.undertow.UndertowConfiguration$MultipartConfiguration">&#128279;</a>
-<table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 6. Configuration Properties for <a href="../api/io/micronaut/servlet/undertow/UndertowConfiguration.MultipartConfiguration.html">UndertowConfiguration$MultipartConfiguration</a></caption>
-<colgroup>
-<col style="width: 33.3333%;">
-<col style="width: 33.3333%;">
-<col style="width: 33.3334%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Property</th>
-<th class="tableblock halign-left valign-top">Type</th>
-<th class="tableblock halign-left valign-top">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.undertow.multipart.location</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">java.lang.String</p></td>
-<td class="tableblock halign-left valign-top"></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.undertow.multipart.max-file-size</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">long</p></td>
-<td class="tableblock halign-left valign-top"></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.undertow.multipart.max-request-size</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">long</p></td>
-<td class="tableblock halign-left valign-top"></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.undertow.multipart.file-size-threshold</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">int</p></td>
-<td class="tableblock halign-left valign-top"></td>
 </tr>
 </tbody>
 </table>
