@@ -6,6 +6,7 @@ import io.micronaut.context.annotation.Primary;
 import io.micronaut.context.env.Environment;
 import io.micronaut.core.io.ResourceResolver;
 import io.micronaut.core.io.socket.SocketUtils;
+import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.http.server.exceptions.ServerStartupException;
 import io.micronaut.http.ssl.SslConfiguration;
 import io.micronaut.servlet.engine.DefaultMicronautServlet;
@@ -13,14 +14,18 @@ import io.micronaut.servlet.engine.server.ServletServerFactory;
 import io.micronaut.servlet.engine.server.ServletStaticResourceConfiguration;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
+import io.undertow.UndertowOptions;
 import io.undertow.server.handlers.PathHandler;
 import io.undertow.servlet.Servlets;
 import io.undertow.servlet.api.*;
+import org.xnio.Option;
+import org.xnio.Options;
 
 import javax.inject.Singleton;
 import javax.servlet.Servlet;
 import javax.servlet.ServletException;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Factory for the undertow server.
@@ -96,7 +101,61 @@ public class UndertowFactory extends ServletServerFactory {
             ));
 
         }
+
+        Map<String, String> serverOptions = configuration.getServerOptions();
+        serverOptions.forEach((key, value) -> {
+            Object opt = ReflectionUtils.findDeclaredField(UndertowOptions.class, key)
+                    .map(field -> {
+                        field.setAccessible(true);
+                        try {
+                            return field.get(UndertowOptions.class);
+                        } catch (IllegalAccessException e) {
+                            return null;
+                        }
+                    }).orElse(null);
+
+            if (opt instanceof Option) {
+                //noinspection unchecked
+                builder.setServerOption((Option<Object>) opt, value);
+            } else {
+                builder.setServerOption(Option.simple(UndertowOptions.class, key, String.class), value);
+            }
+        });
+        Map<String, String> workerOptions = configuration.getWorkerOptions();
+        workerOptions.forEach((key, value) -> {
+            Object opt = getOptionValue(key);
+
+            if (opt instanceof Option) {
+                //noinspection unchecked
+                builder.setWorkerOption((Option<Object>) opt, value);
+            } else {
+                builder.setWorkerOption(Option.simple(Options.class, key, String.class), value);
+            }
+        });
+        Map<String, String> socketOptions = configuration.getSocketOptions();
+        socketOptions.forEach((key, value) -> {
+            Object opt = getOptionValue(key);
+
+            if (opt instanceof Option) {
+                //noinspection unchecked
+                builder.setSocketOption((Option<Object>) opt, value);
+            } else {
+                builder.setSocketOption(Option.simple(Options.class, key, String.class), value);
+            }
+        });
         return builder;
+    }
+
+    private Object getOptionValue(String key) {
+        return ReflectionUtils.findDeclaredField(Options.class, key)
+                .map(field -> {
+                    field.setAccessible(true);
+                    try {
+                        return field.get(Options.class);
+                    } catch (IllegalAccessException e) {
+                        return null;
+                    }
+                }).orElse(null);
     }
 
     /**
