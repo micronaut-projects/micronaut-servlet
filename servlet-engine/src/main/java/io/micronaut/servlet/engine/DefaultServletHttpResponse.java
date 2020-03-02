@@ -300,11 +300,7 @@ public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpSe
 
     @Override
     public MutableHttpResponse<B> body(@Nullable B body) {
-        if (body instanceof CharSequence) {
-            if (!getContentType().isPresent()) {
-                contentType(MediaType.TEXT_PLAIN_TYPE);
-            }
-        } else if (body != null) {
+        if (body != null) {
             getContentType().orElseGet(() -> {
                 final Produces ann = body.getClass().getAnnotation(Produces.class);
                 if (ann != null) {
@@ -315,12 +311,7 @@ public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpSe
                         return mediaType;
                     }
                 }
-                if (!(body instanceof Writable)) {
-                    contentType(MediaType.APPLICATION_JSON_TYPE);
-                    return MediaType.APPLICATION_JSON_TYPE;
-                } else {
-                    return null;
-                }
+                return null;
             });
         }
         this.body = body;
