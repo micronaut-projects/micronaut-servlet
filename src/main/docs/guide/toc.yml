@@ -3,3 +3,4 @@ servletApi: Working with the Servlet API
 jetty: Jetty Server
 undertow: Undertow Server
 tomcat: Tomcat Server
+repository: Repository
