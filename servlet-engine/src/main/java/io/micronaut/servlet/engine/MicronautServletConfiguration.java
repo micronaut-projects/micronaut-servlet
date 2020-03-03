@@ -25,6 +25,12 @@ public class MicronautServletConfiguration implements Named {
     private final MultipartConfigElement multipartConfigElement;
     private final String name;
 
+    /**
+     * Default constructor.
+     * @param name The name of the servlet
+     * @param mapping The servlet mapping
+     * @param serverConfiguration The http server configuration
+     */
     @ConfigurationInject
     public MicronautServletConfiguration(
             @Bindable(defaultValue = Environment.MICRONAUT) String name,

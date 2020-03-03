@@ -27,7 +27,6 @@ import io.micronaut.http.filter.ServerFilterChain;
 import io.micronaut.http.hateoas.JsonError;
 import io.micronaut.http.server.binding.RequestArgumentSatisfier;
 import io.micronaut.http.server.exceptions.ExceptionHandler;
-import io.micronaut.http.server.exceptions.InternalServerException;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.web.router.RouteMatch;
 import io.micronaut.web.router.Router;
@@ -38,8 +37,6 @@ import io.micronaut.web.router.exceptions.UnsatisfiedRouteException;
 import io.reactivex.*;
 import io.reactivex.functions.Function;
 import org.reactivestreams.Publisher;
-import org.reactivestreams.Subscriber;
-import org.reactivestreams.Subscription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -318,12 +315,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable {
                                 if (!isErrorRoute && status.getCode() >= 400) {
                                     final RouteMatch<Object> errorRoute = lookupStatusRoute(route, status);
                                     if (errorRoute != null) {
-                                        return buildResponsePublisher(
-                                                req,
-                                                (MutableHttpResponse<Object>) response,
-                                                errorRoute,
-                                                true
-                                        );
+                                        return buildErrorRouteHandler(exchange, req, (MutableHttpResponse<Object>) response, errorRoute);
                                     }
                                 }
                             }
@@ -336,6 +328,14 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable {
                                 return responseEncoder.encode(exchange, route.getAnnotationMetadata(), body);
                             }
                         }
+
+                        if (!isErrorRoute && status.getCode() >= 400) {
+                            final RouteMatch<Object> errorRoute = lookupStatusRoute(route, status);
+                            if (errorRoute != null) {
+                                return buildErrorRouteHandler(exchange, req, (MutableHttpResponse<Object>) response, errorRoute);
+                            }
+                        }
+
                         return Flowable.fromCallable(() -> {
                             encodeResponse(exchange, route.getAnnotationMetadata(), response);
                             return response;
@@ -375,6 +375,22 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable {
         } catch (Throwable e) {
             handleException(req, res, route, isErrorRoute, e, exchange);
         }
+    }
+
+    private Publisher<? extends MutableHttpResponse<?>> buildErrorRouteHandler(
+            ServletExchange<Req, Res> exchange,
+            HttpRequest<Object> request,
+            MutableHttpResponse<Object> response,
+            RouteMatch<Object> errorRoute) {
+        return Publishers.map(buildResponsePublisher(
+                request,
+                response,
+                errorRoute,
+                true
+        ), servletResponse -> {
+            encodeResponse(exchange, errorRoute.getAnnotationMetadata(), servletResponse);
+            return servletResponse;
+        });
     }
 
     private Publisher<? extends MutableHttpResponse<?>> buildResponsePublisher(
