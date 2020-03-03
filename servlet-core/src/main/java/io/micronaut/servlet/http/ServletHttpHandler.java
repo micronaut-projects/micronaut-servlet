@@ -87,6 +87,10 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable {
                         servletResponseEncoder -> servletResponseEncoder.getResponseType(),
                         (o) -> o
                 ));
+
+        // hack for bug fixed in Micronaut 1.3.3
+        applicationContext.getEnvironment()
+                .addConverter(HttpRequest.class, HttpRequest.class, httpRequest -> httpRequest);
     }
 
     /**
