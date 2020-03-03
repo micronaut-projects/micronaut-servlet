@@ -1,5 +1,6 @@
 introduction: Introduction
 servletApi: Working with the Servlet API
+warDeployment: WAR Deployment
 jetty: Jetty Server
 tomcat: Tomcat Server
 undertow: Undertow Server

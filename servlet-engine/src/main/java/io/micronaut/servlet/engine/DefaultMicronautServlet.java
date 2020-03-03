@@ -2,8 +2,10 @@ package io.micronaut.servlet.engine;
 
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.ApplicationContextBuilder;
+import io.micronaut.context.env.Environment;
 import io.micronaut.core.annotation.TypeHint;
 
+import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -17,6 +19,14 @@ import java.util.Objects;
  */
 @TypeHint(DefaultMicronautServlet.class)
 public class DefaultMicronautServlet extends HttpServlet {
+    /**
+     * The name of the servlet.
+     */
+    public static final String NAME = Environment.MICRONAUT;
+    /**
+     * Attribute used to store the application context.
+     */
+    public static final String CONTEXT_ATTRIBUTE = "io.micronaut.servlet.APPLICATION_CONTEXT";
 
     private ApplicationContext applicationContext;
     private DefaultServletHttpHandler handler;
@@ -55,6 +65,13 @@ public class DefaultMicronautServlet extends HttpServlet {
 
     @Override
     public void init() {
+        final ServletContext servletContext = getServletContext();
+        if (servletContext != null) {
+            final Object v = servletContext.getAttribute(CONTEXT_ATTRIBUTE);
+            if (v instanceof ApplicationContext) {
+                this.applicationContext = (ApplicationContext) v;
+            }
+        }
         if (this.applicationContext == null) {
 
             final ApplicationContextBuilder builder =
@@ -64,6 +81,9 @@ public class DefaultMicronautServlet extends HttpServlet {
 
         if (!this.applicationContext.isRunning()) {
             this.applicationContext.start();
+        }
+        if (servletContext != null) {
+            servletContext.setAttribute(CONTEXT_ATTRIBUTE, applicationContext);
         }
         this.handler = applicationContext.getBean(DefaultServletHttpHandler.class);
     }

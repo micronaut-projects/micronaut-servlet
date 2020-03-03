@@ -9,6 +9,7 @@ import io.micronaut.core.convert.value.MutableConvertibleValues;
 import io.micronaut.core.io.IOUtils;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.CollectionUtils;
+import io.micronaut.core.util.StringUtils;
 import io.micronaut.http.*;
 import io.micronaut.http.codec.CodecException;
 import io.micronaut.http.codec.MediaTypeCodec;
@@ -80,7 +81,13 @@ public class DefaultServletHttpRequest<B> implements
             MediaTypeCodecRegistry codecRegistry) {
         this.delegate = delegate;
         this.codecRegistry = codecRegistry;
-        this.uri = URI.create(delegate.getRequestURI());
+        final String contextPath = delegate.getContextPath();
+        String requestURI = delegate.getRequestURI();
+        if (StringUtils.isNotEmpty(contextPath) && requestURI.startsWith(contextPath)) {
+            requestURI = requestURI.substring(contextPath.length());
+        }
+
+        this.uri = URI.create(requestURI);
         HttpMethod method;
         try {
             method = HttpMethod.valueOf(delegate.getMethod());

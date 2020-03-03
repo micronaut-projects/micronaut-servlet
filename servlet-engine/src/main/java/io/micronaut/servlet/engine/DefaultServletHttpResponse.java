@@ -4,7 +4,6 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.convert.value.MutableConvertibleValues;
-import io.micronaut.core.io.Writable;
 import io.micronaut.core.io.buffer.ByteBuffer;
 import io.micronaut.core.io.buffer.ReferenceCounted;
 import io.micronaut.core.util.ArrayUtils;
