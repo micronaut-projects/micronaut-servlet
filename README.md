@@ -7,7 +7,7 @@ This project includes integration between [Micronaut](http://micronaut.io) and S
 
 ## Documentation
 
-See the [Documentation](https://micronaut-projects.github.io/micronaut-servlet/latest/guide) for more information. 
+See the [Documentation](https://micronaut-projects.github.io/micronaut-servlet/1.0.x/guide) for more information. 
 
 See the [Snapshot Documentation](https://micronaut-projects.github.io/micronaut-servlet/snapshot/guide) for the current development docs.
 
