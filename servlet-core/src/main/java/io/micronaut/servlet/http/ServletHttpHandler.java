@@ -27,6 +27,7 @@ import io.micronaut.http.filter.ServerFilterChain;
 import io.micronaut.http.hateoas.JsonError;
 import io.micronaut.http.server.binding.RequestArgumentSatisfier;
 import io.micronaut.http.server.exceptions.ExceptionHandler;
+import io.micronaut.http.server.exceptions.InternalServerException;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.web.router.RouteMatch;
 import io.micronaut.web.router.Router;
@@ -37,6 +38,8 @@ import io.micronaut.web.router.exceptions.UnsatisfiedRouteException;
 import io.reactivex.*;
 import io.reactivex.functions.Function;
 import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -260,7 +263,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable {
                         if (body != null) {
                             if (Publishers.isConvertibleToPublisher(body)) {
                                 boolean isSingle = Publishers.isSingle(body.getClass());
-                                if (isSingle || !isAsyncSupported) {
+                                if (isSingle) {
                                     Flowable<?> flowable = Publishers.convertPublisher(body, Flowable.class);
                                     return flowable.map((Function<Object, MutableHttpResponse<?>>) o -> {
                                         if (o instanceof HttpResponse) {
@@ -297,9 +300,18 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable {
                                 } else {
                                     // stream case
                                     Flowable<?> flowable = Publishers.convertPublisher(body, Flowable.class);
-                                    final ServletHttpResponse<Res, ? super Object> servletResponse = exchange.getResponse();
-                                    setHeadersFromMetadata(exchange.getResponse(), route.getAnnotationMetadata(), body);
-                                    return servletResponse.stream(flowable);
+                                    if (isAsyncSupported) {
+                                        final ServletHttpResponse<Res, ? super Object> servletResponse = exchange.getResponse();
+                                        setHeadersFromMetadata(exchange.getResponse(), route.getAnnotationMetadata(), body);
+                                        return servletResponse.stream(flowable);
+                                    } else {
+                                        // fallback to blocking
+                                        return flowable.toList().map(list -> {
+                                            final ServletHttpResponse<Res, ? super Object> servletHttpResponse = exchange.getResponse();
+                                            encodeResponse(exchange, route.getAnnotationMetadata(), servletHttpResponse.body(list));
+                                            return servletHttpResponse;
+                                        }).toFlowable();
+                                    }
                                 }
                             } else {
 
@@ -325,7 +337,6 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable {
                             }
                         }
                         return Flowable.fromCallable(() -> {
-
                             encodeResponse(exchange, route.getAnnotationMetadata(), response);
                             return response;
                         });
@@ -352,16 +363,14 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable {
             } else {
                 responseFlowable
                         .blockingSubscribe(response -> {
-                            final HttpStatus status = response.status();
-                            if (!isErrorRoute && status.getCode() >= 400) {
-                                final RouteMatch<Object> errorRoute = lookupStatusRoute(route, status);
-                                if (errorRoute != null) {
-                                    invokeRouteMatch(req, res, errorRoute, true, exchange);
-                                }
-                            } else {
-                                encodeResponse(exchange, route.getAnnotationMetadata(), response);
+                            if (LOG.isDebugEnabled()) {
+                                LOG.debug("Request [{} - {}] completed successfully", req.getMethodName(), req.getUri());
                             }
-                        }, error -> handleException(req, res, route, isErrorRoute, error, exchange));
+                        }, throwable -> {
+                            if (LOG.isDebugEnabled()) {
+                                LOG.debug("Request [" + req.getMethodName() + " - " + req.getUri() + "] completed with error: " + throwable.getMessage(), throwable);
+                            }
+                        });
             }
         } catch (Throwable e) {
             handleException(req, res, route, isErrorRoute, e, exchange);
