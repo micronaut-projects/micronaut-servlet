@@ -55,7 +55,7 @@
                                 
                                 <div class="toc-item" style="margin-left:0"><a href="#undertow"><strong>6</strong><span>Undertow Server</span></a></div>
                                 
-                                <div class="toc-item" style="margin-left:0"><a href="#repository"><strong>7</strong><span>Repository</span></a></div>
+                                <div class="toc-item" style="margin-left:0"><a href="#faq"><strong>7</strong><span>FAQ</span></a></div>
                                 
                             </div>
                         </div>
@@ -98,7 +98,7 @@
         
         <div class="toc-item" style="margin-left:0px" id="toc-item-undertow"><a href="#undertow"><strong>6</strong><span>Undertow Server</span></a></div>
         
-        <div class="toc-item" style="margin-left:0px" id="toc-item-repository"><a href="#repository"><strong>7</strong><span>Repository</span></a></div>
+        <div class="toc-item" style="margin-left:0px" id="toc-item-faq"><a href="#faq"><strong>7</strong><span>FAQ</span></a></div>
         
         </div>
     </div>
@@ -929,20 +929,41 @@ public class UndertowServerCustomizer implements BeanCreatedEventListener&lt;Und
 </div>
 </div>
 
-<h1 id="repository"><a class="anchor" href="#repository"></a>7 Repository</h1>
+<h1 id="faq"><a class="anchor" href="#faq"></a>7 FAQ</h1>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/master/src/main/docs/guide/repository.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/master/src/main/docs/guide/faq.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
 
 
+<div class="sect3">
+<h4 id="_where_can_i_found_the_source_code">Where can I found the source code?</h4>
 <div class="paragraph">
 <p>You can find the source code of this project in this repository:</p>
 </div>
 <div class="paragraph">
 <p><a href="https://github.com/micronaut-projects/micronaut-servlet">https://github.com/micronaut-projects/micronaut-servlet</a></p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_how_do_i_configure_multipart_handling">How do I configure Multipart handling?</h4>
+<div class="paragraph">
+<p>Multipart handling is disabled by default. You can enable it with the <a href="https://docs.micronaut.io/latest/guide/configurationreference.html#io.micronaut.http.server.HttpServerConfiguration$MultipartConfiguration">following configuration properties</a>.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_how_do_i_configure_static_resource_handling_for_the_embedded_server">How do I configure Static Resource handling for the embedded server?</h4>
+<div class="paragraph">
+<p>Static resources are not enabled by default. See <a href="https://docs.micronaut.io/latest/guide/index.html#staticResources">Serving Static Resources</a> for how to configure paths to static resources.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_how_do_i_enable_https_for_the_embedded_server">How do I enable HTTPS for the embedded server?</h4>
+<div class="paragraph">
+<p>See <a href="https://docs.micronaut.io/latest/guide/index.html#https">Securing the Server with HTTPS</a> and the <a href="https://docs.micronaut.io/latest/guide/configurationreference.html#io.micronaut.http.ssl.ServerSslConfiguration$DefaultKeyStoreConfiguration">configuration properties</a> for <a href="https://docs.micronaut.io/latest/api/io/micronaut/http/ssl/ServerSslConfiguration.html">ServerSslConfiguration</a>.</p>
+</div>
 </div>
 
     </div>

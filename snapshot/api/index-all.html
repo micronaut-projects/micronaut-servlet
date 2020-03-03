@@ -208,7 +208,7 @@
 <dd>
 <div class="block">Default constructor.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/servlet/undertow/UndertowFactory.html#deploymentInfo--">deploymentInfo()</a></span> - Method in class io.micronaut.servlet.undertow.<a href="io/micronaut/servlet/undertow/UndertowFactory.html" title="class in io.micronaut.servlet.undertow">UndertowFactory</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/servlet/undertow/UndertowFactory.html#deploymentInfo-io.micronaut.servlet.engine.MicronautServletConfiguration-">deploymentInfo(MicronautServletConfiguration)</a></span> - Method in class io.micronaut.servlet.undertow.<a href="io/micronaut/servlet/undertow/UndertowFactory.html" title="class in io.micronaut.servlet.undertow">UndertowFactory</a></dt>
 <dd>
 <div class="block">The deployment info bean.</div>
 </dd>
@@ -348,6 +348,8 @@
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html#getLocale--">getLocale()</a></span> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html" title="class in io.micronaut.servlet.engine">DefaultServletHttpRequest</a></dt>
 <dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/servlet/engine/MicronautServletConfiguration.html#getMapping--">getMapping()</a></span> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/MicronautServletConfiguration.html" title="class in io.micronaut.servlet.engine">MicronautServletConfiguration</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/servlet/engine/server/ServletStaticResourceConfiguration.html#getMapping--">getMapping()</a></span> - Method in interface io.micronaut.servlet.engine.server.<a href="io/micronaut/servlet/engine/server/ServletStaticResourceConfiguration.html" title="interface in io.micronaut.servlet.engine.server">ServletStaticResourceConfiguration</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/servlet/engine/ServletCookieAdapter.html#getMaxAge--">getMaxAge()</a></span> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/ServletCookieAdapter.html" title="class in io.micronaut.servlet.engine">ServletCookieAdapter</a></dt>
@@ -358,11 +360,15 @@
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html#getMethodName--">getMethodName()</a></span> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html" title="class in io.micronaut.servlet.engine">DefaultServletHttpRequest</a></dt>
 <dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/servlet/engine/MicronautServletConfiguration.html#getMultipartConfigElement--">getMultipartConfigElement()</a></span> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/MicronautServletConfiguration.html" title="class in io.micronaut.servlet.engine">MicronautServletConfiguration</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/servlet/jetty/JettyConfiguration.html#getMultipartConfiguration--">getMultipartConfiguration()</a></span> - Method in class io.micronaut.servlet.jetty.<a href="io/micronaut/servlet/jetty/JettyConfiguration.html" title="class in io.micronaut.servlet.jetty">JettyConfiguration</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/servlet/tomcat/TomcatConfiguration.html#getMultipartConfiguration--">getMultipartConfiguration()</a></span> - Method in class io.micronaut.servlet.tomcat.<a href="io/micronaut/servlet/tomcat/TomcatConfiguration.html" title="class in io.micronaut.servlet.tomcat">TomcatConfiguration</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/servlet/undertow/UndertowConfiguration.html#getMultipartConfiguration--">getMultipartConfiguration()</a></span> - Method in class io.micronaut.servlet.undertow.<a href="io/micronaut/servlet/undertow/UndertowConfiguration.html" title="class in io.micronaut.servlet.undertow">UndertowConfiguration</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/servlet/engine/MicronautServletConfiguration.html#getName--">getName()</a></span> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/MicronautServletConfiguration.html" title="class in io.micronaut.servlet.engine">MicronautServletConfiguration</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/servlet/engine/ServletCompletedFileUpload.html#getName--">getName()</a></span> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/ServletCompletedFileUpload.html" title="class in io.micronaut.servlet.engine">ServletCompletedFileUpload</a></dt>
 <dd>&nbsp;</dd>
@@ -556,13 +562,9 @@
 <dd>
 <div class="block">Configuration properties for Jetty.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/servlet/jetty/JettyConfiguration.html#JettyConfiguration-io.micronaut.servlet.jetty.JettyConfiguration.MultipartConfiguration-">JettyConfiguration(JettyConfiguration.MultipartConfiguration)</a></span> - Constructor for class io.micronaut.servlet.jetty.<a href="io/micronaut/servlet/jetty/JettyConfiguration.html" title="class in io.micronaut.servlet.jetty">JettyConfiguration</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/servlet/jetty/JettyConfiguration.html#JettyConfiguration-io.micronaut.http.server.HttpServerConfiguration.MultipartConfiguration-">JettyConfiguration(HttpServerConfiguration.MultipartConfiguration)</a></span> - Constructor for class io.micronaut.servlet.jetty.<a href="io/micronaut/servlet/jetty/JettyConfiguration.html" title="class in io.micronaut.servlet.jetty">JettyConfiguration</a></dt>
 <dd>
 <div class="block">Default constructor.</div>
-</dd>
-<dt><a href="io/micronaut/servlet/jetty/JettyConfiguration.MultipartConfiguration.html" title="class in io.micronaut.servlet.jetty"><span class="typeNameLink">JettyConfiguration.MultipartConfiguration</span></a> - Class in <a href="io/micronaut/servlet/jetty/package-summary.html">io.micronaut.servlet.jetty</a></dt>
-<dd>
-<div class="block">The multipart configuration.</div>
 </dd>
 <dt><a href="io/micronaut/servlet/jetty/JettyFactory.html" title="class in io.micronaut.servlet.jetty"><span class="typeNameLink">JettyFactory</span></a> - Class in <a href="io/micronaut/servlet/jetty/package-summary.html">io.micronaut.servlet.jetty</a></dt>
 <dd>
@@ -572,7 +574,7 @@
 <dd>
 <div class="block">Default constructor.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/servlet/jetty/JettyFactory.html#jettyServer-io.micronaut.context.ApplicationContext-">jettyServer(ApplicationContext)</a></span> - Method in class io.micronaut.servlet.jetty.<a href="io/micronaut/servlet/jetty/JettyFactory.html" title="class in io.micronaut.servlet.jetty">JettyFactory</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/servlet/jetty/JettyFactory.html#jettyServer-io.micronaut.context.ApplicationContext-io.micronaut.servlet.engine.MicronautServletConfiguration-">jettyServer(ApplicationContext, MicronautServletConfiguration)</a></span> - Method in class io.micronaut.servlet.jetty.<a href="io/micronaut/servlet/jetty/JettyFactory.html" title="class in io.micronaut.servlet.jetty">JettyFactory</a></dt>
 <dd>
 <div class="block">Builds the Jetty server bean.</div>
 </dd>
@@ -604,24 +606,18 @@
 <dl>
 <dt><span class="memberNameLink"><a href="io/micronaut/servlet/engine/ServletCookieAdapter.html#maxAge-long-">maxAge(long)</a></span> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/ServletCookieAdapter.html" title="class in io.micronaut.servlet.engine">ServletCookieAdapter</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/engine/MicronautServletConfiguration.html" title="class in io.micronaut.servlet.engine"><span class="typeNameLink">MicronautServletConfiguration</span></a> - Class in <a href="io/micronaut/servlet/engine/package-summary.html">io.micronaut.servlet.engine</a></dt>
+<dd>
+<div class="block">Configuration properties for the Micronaut servlet.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/servlet/engine/MicronautServletConfiguration.html#MicronautServletConfiguration-java.lang.String-java.lang.String-io.micronaut.http.server.HttpServerConfiguration-">MicronautServletConfiguration(String, String, HttpServerConfiguration)</a></span> - Constructor for class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/MicronautServletConfiguration.html" title="class in io.micronaut.servlet.engine">MicronautServletConfiguration</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/engine/initializer/MicronautServletInitializer.html" title="class in io.micronaut.servlet.engine.initializer"><span class="typeNameLink">MicronautServletInitializer</span></a> - Class in <a href="io/micronaut/servlet/engine/initializer/package-summary.html">io.micronaut.servlet.engine.initializer</a></dt>
 <dd>
 <div class="block">A servlet initializer for Micronaut for deployment as a WAR file.</div>
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/servlet/engine/initializer/MicronautServletInitializer.html#MicronautServletInitializer--">MicronautServletInitializer()</a></span> - Constructor for class io.micronaut.servlet.engine.initializer.<a href="io/micronaut/servlet/engine/initializer/MicronautServletInitializer.html" title="class in io.micronaut.servlet.engine.initializer">MicronautServletInitializer</a></dt>
 <dd>&nbsp;</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/servlet/jetty/JettyConfiguration.MultipartConfiguration.html#MultipartConfiguration-java.lang.String-long-long-int-">MultipartConfiguration(String, long, long, int)</a></span> - Constructor for class io.micronaut.servlet.jetty.<a href="io/micronaut/servlet/jetty/JettyConfiguration.MultipartConfiguration.html" title="class in io.micronaut.servlet.jetty">JettyConfiguration.MultipartConfiguration</a></dt>
-<dd>
-<div class="block">Default constructor.</div>
-</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/servlet/tomcat/TomcatConfiguration.MultipartConfiguration.html#MultipartConfiguration-java.lang.String-long-long-int-">MultipartConfiguration(String, long, long, int)</a></span> - Constructor for class io.micronaut.servlet.tomcat.<a href="io/micronaut/servlet/tomcat/TomcatConfiguration.MultipartConfiguration.html" title="class in io.micronaut.servlet.tomcat">TomcatConfiguration.MultipartConfiguration</a></dt>
-<dd>
-<div class="block">Default constructor.</div>
-</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/servlet/undertow/UndertowConfiguration.MultipartConfiguration.html#MultipartConfiguration-java.lang.String-long-long-int-">MultipartConfiguration(String, long, long, int)</a></span> - Constructor for class io.micronaut.servlet.undertow.<a href="io/micronaut/servlet/undertow/UndertowConfiguration.MultipartConfiguration.html" title="class in io.micronaut.servlet.undertow">UndertowConfiguration.MultipartConfiguration</a></dt>
-<dd>
-<div class="block">Default constructor.</div>
-</dd>
 </dl>
 <a name="I:N">
 <!--   -->
@@ -886,13 +882,9 @@
 <dd>
 <div class="block">Extends <code>HttpServerConfiguration</code> and allows configuring Tomcat.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/servlet/tomcat/TomcatConfiguration.html#TomcatConfiguration-io.micronaut.servlet.tomcat.TomcatConfiguration.MultipartConfiguration-java.lang.String-">TomcatConfiguration(TomcatConfiguration.MultipartConfiguration, String)</a></span> - Constructor for class io.micronaut.servlet.tomcat.<a href="io/micronaut/servlet/tomcat/TomcatConfiguration.html" title="class in io.micronaut.servlet.tomcat">TomcatConfiguration</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/servlet/tomcat/TomcatConfiguration.html#TomcatConfiguration-io.micronaut.http.server.HttpServerConfiguration.MultipartConfiguration-java.lang.String-">TomcatConfiguration(HttpServerConfiguration.MultipartConfiguration, String)</a></span> - Constructor for class io.micronaut.servlet.tomcat.<a href="io/micronaut/servlet/tomcat/TomcatConfiguration.html" title="class in io.micronaut.servlet.tomcat">TomcatConfiguration</a></dt>
 <dd>
 <div class="block">Default constructor.</div>
-</dd>
-<dt><a href="io/micronaut/servlet/tomcat/TomcatConfiguration.MultipartConfiguration.html" title="class in io.micronaut.servlet.tomcat"><span class="typeNameLink">TomcatConfiguration.MultipartConfiguration</span></a> - Class in <a href="io/micronaut/servlet/tomcat/package-summary.html">io.micronaut.servlet.tomcat</a></dt>
-<dd>
-<div class="block">The multipart configuration.</div>
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/servlet/tomcat/TomcatConfiguration.html#tomcatConnector">tomcatConnector</a></span> - Variable in class io.micronaut.servlet.tomcat.<a href="io/micronaut/servlet/tomcat/TomcatConfiguration.html" title="class in io.micronaut.servlet.tomcat">TomcatConfiguration</a></dt>
 <dd>&nbsp;</dd>
@@ -906,7 +898,7 @@
 <dd>
 <div class="block">Default constructor.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/servlet/tomcat/TomcatFactory.html#tomcatServer-org.apache.catalina.connector.Connector-">tomcatServer(Connector)</a></span> - Method in class io.micronaut.servlet.tomcat.<a href="io/micronaut/servlet/tomcat/TomcatFactory.html" title="class in io.micronaut.servlet.tomcat">TomcatFactory</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/servlet/tomcat/TomcatFactory.html#tomcatServer-org.apache.catalina.connector.Connector-io.micronaut.servlet.engine.MicronautServletConfiguration-">tomcatServer(Connector, MicronautServletConfiguration)</a></span> - Method in class io.micronaut.servlet.tomcat.<a href="io/micronaut/servlet/tomcat/TomcatFactory.html" title="class in io.micronaut.servlet.tomcat">TomcatFactory</a></dt>
 <dd>
 <div class="block">The Tomcat server bean.</div>
 </dd>
@@ -930,7 +922,7 @@
 <dl>
 <dt><span class="memberNameLink"><a href="io/micronaut/servlet/undertow/UndertowConfiguration.html#undertowBuilder">undertowBuilder</a></span> - Variable in class io.micronaut.servlet.undertow.<a href="io/micronaut/servlet/undertow/UndertowConfiguration.html" title="class in io.micronaut.servlet.undertow">UndertowConfiguration</a></dt>
 <dd>&nbsp;</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/servlet/undertow/UndertowFactory.html#undertowBuilder-io.undertow.servlet.api.DeploymentInfo-">undertowBuilder(DeploymentInfo)</a></span> - Method in class io.micronaut.servlet.undertow.<a href="io/micronaut/servlet/undertow/UndertowFactory.html" title="class in io.micronaut.servlet.undertow">UndertowFactory</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/servlet/undertow/UndertowFactory.html#undertowBuilder-io.undertow.servlet.api.DeploymentInfo-io.micronaut.servlet.engine.MicronautServletConfiguration-">undertowBuilder(DeploymentInfo, MicronautServletConfiguration)</a></span> - Method in class io.micronaut.servlet.undertow.<a href="io/micronaut/servlet/undertow/UndertowFactory.html" title="class in io.micronaut.servlet.undertow">UndertowFactory</a></dt>
 <dd>
 <div class="block">The undertow builder bean.</div>
 </dd>
@@ -938,13 +930,9 @@
 <dd>
 <div class="block">Configuration for the Undertow server.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/servlet/undertow/UndertowConfiguration.html#UndertowConfiguration-io.micronaut.servlet.undertow.UndertowConfiguration.MultipartConfiguration-">UndertowConfiguration(UndertowConfiguration.MultipartConfiguration)</a></span> - Constructor for class io.micronaut.servlet.undertow.<a href="io/micronaut/servlet/undertow/UndertowConfiguration.html" title="class in io.micronaut.servlet.undertow">UndertowConfiguration</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/servlet/undertow/UndertowConfiguration.html#UndertowConfiguration-io.micronaut.http.server.HttpServerConfiguration.MultipartConfiguration-">UndertowConfiguration(HttpServerConfiguration.MultipartConfiguration)</a></span> - Constructor for class io.micronaut.servlet.undertow.<a href="io/micronaut/servlet/undertow/UndertowConfiguration.html" title="class in io.micronaut.servlet.undertow">UndertowConfiguration</a></dt>
 <dd>
 <div class="block">Default constructor.</div>
-</dd>
-<dt><a href="io/micronaut/servlet/undertow/UndertowConfiguration.MultipartConfiguration.html" title="class in io.micronaut.servlet.undertow"><span class="typeNameLink">UndertowConfiguration.MultipartConfiguration</span></a> - Class in <a href="io/micronaut/servlet/undertow/package-summary.html">io.micronaut.servlet.undertow</a></dt>
-<dd>
-<div class="block">The multipart configuration.</div>
 </dd>
 <dt><a href="io/micronaut/servlet/undertow/UndertowFactory.html" title="class in io.micronaut.servlet.undertow"><span class="typeNameLink">UndertowFactory</span></a> - Class in <a href="io/micronaut/servlet/undertow/package-summary.html">io.micronaut.servlet.undertow</a></dt>
 <dd>

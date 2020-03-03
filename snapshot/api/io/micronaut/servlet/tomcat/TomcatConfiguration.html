@@ -48,7 +48,7 @@ var activeTableTab = "activeTableTab";
 <div class="subNav">
 <ul class="navList">
 <li>Prev&nbsp;Class</li>
-<li><a href="../../../../io/micronaut/servlet/tomcat/TomcatConfiguration.MultipartConfiguration.html" title="class in io.micronaut.servlet.tomcat"><span class="typeNameLink">Next&nbsp;Class</span></a></li>
+<li><a href="../../../../io/micronaut/servlet/tomcat/TomcatFactory.html" title="class in io.micronaut.servlet.tomcat"><span class="typeNameLink">Next&nbsp;Class</span></a></li>
 </ul>
 <ul class="navList">
 <li><a href="../../../../index.html?io/micronaut/servlet/tomcat/TomcatConfiguration.html" target="_top">Frames</a></li>
@@ -72,7 +72,7 @@ var activeTableTab = "activeTableTab";
 <div>
 <ul class="subNavList">
 <li>Summary:&nbsp;</li>
-<li><a href="#nested.class.summary">Nested</a>&nbsp;|&nbsp;</li>
+<li><a href="#nested.classes.inherited.from.class.io.micronaut.http.server.HttpServerConfiguration">Nested</a>&nbsp;|&nbsp;</li>
 <li><a href="#field.summary">Field</a>&nbsp;|&nbsp;</li>
 <li><a href="#constructor.summary">Constr</a>&nbsp;|&nbsp;</li>
 <li><a href="#method.summary">Method</a></li>
@@ -138,25 +138,12 @@ extends io.micronaut.http.server.HttpServerConfiguration</pre>
 <!--   -->
 </a>
 <h3>Nested Class Summary</h3>
-<table class="memberSummary" border="0" cellpadding="3" cellspacing="0" summary="Nested Class Summary table, listing nested classes, and an explanation">
-<caption><span>Nested Classes</span><span class="tabEnd">&nbsp;</span></caption>
-<tr>
-<th class="colFirst" scope="col">Modifier and Type</th>
-<th class="colLast" scope="col">Class and Description</th>
-</tr>
-<tr class="altColor">
-<td class="colFirst"><code>static class&nbsp;</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/servlet/tomcat/TomcatConfiguration.MultipartConfiguration.html" title="class in io.micronaut.servlet.tomcat">TomcatConfiguration.MultipartConfiguration</a></span></code>
-<div class="block">The multipart configuration.</div>
-</td>
-</tr>
-</table>
 <ul class="blockList">
 <li class="blockList"><a name="nested.classes.inherited.from.class.io.micronaut.http.server.HttpServerConfiguration">
 <!--   -->
 </a>
 <h3>Nested classes/interfaces inherited from class&nbsp;io.micronaut.http.server.HttpServerConfiguration</h3>
-<code>io.micronaut.http.server.HttpServerConfiguration.CorsConfiguration, io.micronaut.http.server.HttpServerConfiguration.HostResolutionConfiguration</code></li>
+<code>io.micronaut.http.server.HttpServerConfiguration.CorsConfiguration, io.micronaut.http.server.HttpServerConfiguration.HostResolutionConfiguration, io.micronaut.http.server.HttpServerConfiguration.MultipartConfiguration</code></li>
 </ul>
 </li>
 </ul>
@@ -198,7 +185,7 @@ extends io.micronaut.http.server.HttpServerConfiguration</pre>
 <th class="colOne" scope="col">Constructor and Description</th>
 </tr>
 <tr class="altColor">
-<td class="colOne"><code><span class="memberNameLink"><a href="../../../../io/micronaut/servlet/tomcat/TomcatConfiguration.html#TomcatConfiguration-io.micronaut.servlet.tomcat.TomcatConfiguration.MultipartConfiguration-java.lang.String-">TomcatConfiguration</a></span>(<a href="../../../../io/micronaut/servlet/tomcat/TomcatConfiguration.MultipartConfiguration.html" title="class in io.micronaut.servlet.tomcat">TomcatConfiguration.MultipartConfiguration</a>&nbsp;multipartConfiguration,
+<td class="colOne"><code><span class="memberNameLink"><a href="../../../../io/micronaut/servlet/tomcat/TomcatConfiguration.html#TomcatConfiguration-io.micronaut.http.server.HttpServerConfiguration.MultipartConfiguration-java.lang.String-">TomcatConfiguration</a></span>(io.micronaut.http.server.HttpServerConfiguration.MultipartConfiguration&nbsp;multipartConfiguration,
                    java.lang.String&nbsp;protocol)</code>
 <div class="block">Default constructor.</div>
 </td>
@@ -219,7 +206,7 @@ extends io.micronaut.http.server.HttpServerConfiguration</pre>
 <th class="colLast" scope="col">Method and Description</th>
 </tr>
 <tr id="i0" class="altColor">
-<td class="colFirst"><code>java.util.Optional&lt;<a href="../../../../io/micronaut/servlet/tomcat/TomcatConfiguration.MultipartConfiguration.html" title="class in io.micronaut.servlet.tomcat">TomcatConfiguration.MultipartConfiguration</a>&gt;</code></td>
+<td class="colFirst"><code>java.util.Optional&lt;io.micronaut.http.server.HttpServerConfiguration.MultipartConfiguration&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/servlet/tomcat/TomcatConfiguration.html#getMultipartConfiguration--">getMultipartConfiguration</a></span>()</code>&nbsp;</td>
 </tr>
 <tr id="i1" class="rowColor">
@@ -285,14 +272,14 @@ protected final&nbsp;org.apache.catalina.connector.Connector tomcatConnector</pr
 <!--   -->
 </a>
 <h3>Constructor Detail</h3>
-<a name="TomcatConfiguration-io.micronaut.servlet.tomcat.TomcatConfiguration.MultipartConfiguration-java.lang.String-">
+<a name="TomcatConfiguration-io.micronaut.http.server.HttpServerConfiguration.MultipartConfiguration-java.lang.String-">
 <!--   -->
 </a>
 <ul class="blockListLast">
 <li class="blockList">
 <h4>TomcatConfiguration</h4>
 <pre>public&nbsp;TomcatConfiguration(@Nullable
-                           <a href="../../../../io/micronaut/servlet/tomcat/TomcatConfiguration.MultipartConfiguration.html" title="class in io.micronaut.servlet.tomcat">TomcatConfiguration.MultipartConfiguration</a>&nbsp;multipartConfiguration,
+                           io.micronaut.http.server.HttpServerConfiguration.MultipartConfiguration&nbsp;multipartConfiguration,
                            @Property(name="micronaut.server.tomcat.protocol") @Nullable
                            java.lang.String&nbsp;protocol)</pre>
 <div class="block">Default constructor.</div>
@@ -371,7 +358,7 @@ protected final&nbsp;org.apache.catalina.connector.Connector tomcatConnector</pr
 <ul class="blockListLast">
 <li class="blockList">
 <h4>getMultipartConfiguration</h4>
-<pre>public&nbsp;java.util.Optional&lt;<a href="../../../../io/micronaut/servlet/tomcat/TomcatConfiguration.MultipartConfiguration.html" title="class in io.micronaut.servlet.tomcat">TomcatConfiguration.MultipartConfiguration</a>&gt;&nbsp;getMultipartConfiguration()</pre>
+<pre>public&nbsp;java.util.Optional&lt;io.micronaut.http.server.HttpServerConfiguration.MultipartConfiguration&gt;&nbsp;getMultipartConfiguration()</pre>
 <dl>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>The multipart configuration</dd>
@@ -406,7 +393,7 @@ protected final&nbsp;org.apache.catalina.connector.Connector tomcatConnector</pr
 <div class="subNav">
 <ul class="navList">
 <li>Prev&nbsp;Class</li>
-<li><a href="../../../../io/micronaut/servlet/tomcat/TomcatConfiguration.MultipartConfiguration.html" title="class in io.micronaut.servlet.tomcat"><span class="typeNameLink">Next&nbsp;Class</span></a></li>
+<li><a href="../../../../io/micronaut/servlet/tomcat/TomcatFactory.html" title="class in io.micronaut.servlet.tomcat"><span class="typeNameLink">Next&nbsp;Class</span></a></li>
 </ul>
 <ul class="navList">
 <li><a href="../../../../index.html?io/micronaut/servlet/tomcat/TomcatConfiguration.html" target="_top">Frames</a></li>
@@ -430,7 +417,7 @@ protected final&nbsp;org.apache.catalina.connector.Connector tomcatConnector</pr
 <div>
 <ul class="subNavList">
 <li>Summary:&nbsp;</li>
-<li><a href="#nested.class.summary">Nested</a>&nbsp;|&nbsp;</li>
+<li><a href="#nested.classes.inherited.from.class.io.micronaut.http.server.HttpServerConfiguration">Nested</a>&nbsp;|&nbsp;</li>
 <li><a href="#field.summary">Field</a>&nbsp;|&nbsp;</li>
 <li><a href="#constructor.summary">Constr</a>&nbsp;|&nbsp;</li>
 <li><a href="#method.summary">Method</a></li>

@@ -47,7 +47,7 @@ var activeTableTab = "activeTableTab";
 </div>
 <div class="subNav">
 <ul class="navList">
-<li><a href="../../../../io/micronaut/servlet/tomcat/TomcatConfiguration.MultipartConfiguration.html" title="class in io.micronaut.servlet.tomcat"><span class="typeNameLink">Prev&nbsp;Class</span></a></li>
+<li><a href="../../../../io/micronaut/servlet/tomcat/TomcatConfiguration.html" title="class in io.micronaut.servlet.tomcat"><span class="typeNameLink">Prev&nbsp;Class</span></a></li>
 <li><a href="../../../../io/micronaut/servlet/tomcat/TomcatServer.html" title="class in io.micronaut.servlet.tomcat"><span class="typeNameLink">Next&nbsp;Class</span></a></li>
 </ul>
 <ul class="navList">
@@ -180,7 +180,8 @@ extends <a href="../../../../io/micronaut/servlet/engine/server/ServletServerFac
 </tr>
 <tr id="i2" class="altColor">
 <td class="colFirst"><code>protected org.apache.catalina.startup.Tomcat</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/servlet/tomcat/TomcatFactory.html#tomcatServer-org.apache.catalina.connector.Connector-">tomcatServer</a></span>(org.apache.catalina.connector.Connector&nbsp;connector)</code>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/servlet/tomcat/TomcatFactory.html#tomcatServer-org.apache.catalina.connector.Connector-io.micronaut.servlet.engine.MicronautServletConfiguration-">tomcatServer</a></span>(org.apache.catalina.connector.Connector&nbsp;connector,
+            <a href="../../../../io/micronaut/servlet/engine/MicronautServletConfiguration.html" title="class in io.micronaut.servlet.engine">MicronautServletConfiguration</a>&nbsp;configuration)</code>
 <div class="block">The Tomcat server bean.</div>
 </td>
 </tr>
@@ -265,7 +266,7 @@ extends <a href="../../../../io/micronaut/servlet/engine/server/ServletServerFac
 </dl>
 </li>
 </ul>
-<a name="tomcatServer-org.apache.catalina.connector.Connector-">
+<a name="tomcatServer-org.apache.catalina.connector.Connector-io.micronaut.servlet.engine.MicronautServletConfiguration-">
 <!--   -->
 </a>
 <ul class="blockList">
@@ -273,11 +274,13 @@ extends <a href="../../../../io/micronaut/servlet/engine/server/ServletServerFac
 <h4>tomcatServer</h4>
 <pre>@Singleton
  @Primary
-protected&nbsp;org.apache.catalina.startup.Tomcat&nbsp;tomcatServer(org.apache.catalina.connector.Connector&nbsp;connector)</pre>
+protected&nbsp;org.apache.catalina.startup.Tomcat&nbsp;tomcatServer(org.apache.catalina.connector.Connector&nbsp;connector,
+                                                                               <a href="../../../../io/micronaut/servlet/engine/MicronautServletConfiguration.html" title="class in io.micronaut.servlet.engine">MicronautServletConfiguration</a>&nbsp;configuration)</pre>
 <div class="block">The Tomcat server bean.</div>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
 <dd><code>connector</code> - The connector</dd>
+<dd><code>configuration</code> - The servlet configuration</dd>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>The Tomcat server</dd>
 </dl>
@@ -325,7 +328,7 @@ protected&nbsp;org.apache.catalina.connector.Connector&nbsp;tomcatConnector()</p
 </div>
 <div class="subNav">
 <ul class="navList">
-<li><a href="../../../../io/micronaut/servlet/tomcat/TomcatConfiguration.MultipartConfiguration.html" title="class in io.micronaut.servlet.tomcat"><span class="typeNameLink">Prev&nbsp;Class</span></a></li>
+<li><a href="../../../../io/micronaut/servlet/tomcat/TomcatConfiguration.html" title="class in io.micronaut.servlet.tomcat"><span class="typeNameLink">Prev&nbsp;Class</span></a></li>
 <li><a href="../../../../io/micronaut/servlet/tomcat/TomcatServer.html" title="class in io.micronaut.servlet.tomcat"><span class="typeNameLink">Next&nbsp;Class</span></a></li>
 </ul>
 <ul class="navList">
