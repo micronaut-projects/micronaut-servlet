@@ -1,5 +1,6 @@
 io.micronaut.servlet.engine
 io.micronaut.servlet.engine.bind
+io.micronaut.servlet.engine.initializer
 io.micronaut.servlet.engine.server
 io.micronaut.servlet.http
 io.micronaut.servlet.http.encoders
