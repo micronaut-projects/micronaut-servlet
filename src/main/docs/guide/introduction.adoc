@@ -1,7 +1,7 @@
-This project implements a https://docs.micronaut.io/latest/guide/index.html#httpServer[Micronaut HTTP server] backed onto the Servlet API and includes various subprojects that allow running popular Servlet containers are servers.
+This project implements a https://docs.micronaut.io/latest/guide/index.html#httpServer[Micronaut HTTP server] backed onto the Servlet API and includes various subprojects that allow running popular Servlet containers as servers.
 
 This project is for users who fall into one of the following categories:
 
-* Users who want to use Micronaut but target deployment environment is based on Servlets
-* Users who prefer the thread per connection model of the Servlet API over the Event Loop model provided by the default Netty based HTTP server
+* Users who want to use Micronaut but the target deployment environment is based on Servlets
+* Users who prefer the thread per connection model of the Servlet API over the Event Loop model provided by the default Netty-based HTTP server
 * Users who have existing Servlets and/or Filters that they wish to combine with Micronaut.
