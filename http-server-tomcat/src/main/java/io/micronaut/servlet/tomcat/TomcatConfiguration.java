@@ -1,11 +1,9 @@
 package io.micronaut.servlet.tomcat;
 
 import io.micronaut.context.annotation.ConfigurationBuilder;
-import io.micronaut.context.annotation.ConfigurationInject;
 import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.core.annotation.TypeHint;
-import io.micronaut.core.bind.annotation.Bindable;
 import io.micronaut.core.convert.format.MapFormat;
 import io.micronaut.core.naming.conventions.StringConvention;
 import io.micronaut.core.util.CollectionUtils;
@@ -20,7 +18,6 @@ import org.apache.coyote.http11.Http11NioProtocol;
 import org.apache.coyote.http2.Http2Protocol;
 
 import javax.annotation.Nullable;
-import javax.servlet.MultipartConfigElement;
 import java.util.Map;
 import java.util.Optional;
 
@@ -102,26 +99,4 @@ public class TomcatConfiguration extends HttpServerConfiguration {
         return Optional.ofNullable(multipartConfiguration);
     }
 
-    /**
-     * The multipart configuration.
-     */
-    @ConfigurationProperties("multipart")
-    public static class MultipartConfiguration extends MultipartConfigElement {
-
-        /**
-         * Default constructor.
-         * @param location The location
-         * @param maxFileSize The file size
-         * @param maxRequestSize The max request size
-         * @param fileSizeThreshold The threshold
-         */
-        @ConfigurationInject
-        public MultipartConfiguration(
-                @Nullable String location,
-                @Bindable(defaultValue = "-1") long maxFileSize,
-                @Bindable(defaultValue = "-1") long maxRequestSize,
-                @Bindable(defaultValue = "0") int fileSizeThreshold) {
-            super(location, maxFileSize, maxRequestSize, fileSizeThreshold);
-        }
-    }
 }

@@ -1,6 +1,8 @@
 package io.micronaut.servlet.undertow
 
+import io.micronaut.context.annotation.Property
 import io.micronaut.core.type.Argument
+import io.micronaut.core.util.StringUtils
 import io.micronaut.http.HttpHeaders
 import io.micronaut.http.HttpRequest
 import io.micronaut.http.HttpStatus
@@ -15,6 +17,7 @@ import spock.lang.Specification
 import javax.inject.Inject
 
 @MicronautTest
+@Property(name = "micronaut.server.multipart.enabled", value = StringUtils.TRUE)
 class UndertowParameterBinding2Spec extends Specification {
 
     @Inject

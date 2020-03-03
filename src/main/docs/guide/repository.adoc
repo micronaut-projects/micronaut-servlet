@@ -1,3 +1,0 @@
-You can find the source code of this project in this repository:
-
-https://github.com/{githubSlug}[https://github.com/{githubSlug}]

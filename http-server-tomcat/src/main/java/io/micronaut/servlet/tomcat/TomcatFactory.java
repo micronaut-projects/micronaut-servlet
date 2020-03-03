@@ -8,6 +8,7 @@ import io.micronaut.core.io.ResourceResolver;
 import io.micronaut.core.io.socket.SocketUtils;
 import io.micronaut.http.ssl.SslConfiguration;
 import io.micronaut.servlet.engine.DefaultMicronautServlet;
+import io.micronaut.servlet.engine.MicronautServletConfiguration;
 import io.micronaut.servlet.engine.server.ServletServerFactory;
 import io.micronaut.servlet.engine.server.ServletStaticResourceConfiguration;
 import org.apache.catalina.Context;
@@ -61,11 +62,12 @@ public class TomcatFactory extends ServletServerFactory {
      * The Tomcat server bean.
      *
      * @param connector The connector
+     * @param configuration The servlet configuration
      * @return The Tomcat server
      */
     @Singleton
     @Primary
-    protected Tomcat tomcatServer(Connector connector) {
+    protected Tomcat tomcatServer(Connector connector, MicronautServletConfiguration configuration) {
         Tomcat tomcat = new Tomcat();
         tomcat.setHostname(getConfiguredHost());
         final String contextPath = getContextPath();
@@ -75,12 +77,11 @@ public class TomcatFactory extends ServletServerFactory {
         final Context context = tomcat.addContext(cp, "/");
         final Wrapper servlet = Tomcat.addServlet(
                 context,
-                "micronaut",
+                configuration.getName(),
                 new DefaultMicronautServlet(getApplicationContext())
         );
-        servlet.addMapping("/*");
-        getServerConfiguration()
-                .getMultipartConfiguration()
+        servlet.addMapping(configuration.getMapping());
+        configuration.getMultipartConfigElement()
                 .ifPresent(servlet::setMultipartConfigElement);
 
         SslConfiguration sslConfiguration = getSslConfiguration();

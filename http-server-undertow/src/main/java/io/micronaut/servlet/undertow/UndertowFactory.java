@@ -10,6 +10,7 @@ import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.http.server.exceptions.ServerStartupException;
 import io.micronaut.http.ssl.SslConfiguration;
 import io.micronaut.servlet.engine.DefaultMicronautServlet;
+import io.micronaut.servlet.engine.MicronautServletConfiguration;
 import io.micronaut.servlet.engine.server.ServletServerFactory;
 import io.micronaut.servlet.engine.server.ServletStaticResourceConfiguration;
 import io.undertow.Handlers;
@@ -41,10 +42,10 @@ public class UndertowFactory extends ServletServerFactory {
     /**
      * Default constructor.
      *
-     * @param resourceResolver   The resource resolver
-     * @param configuration      The configuration
-     * @param sslConfiguration   The SSL configuration
-     * @param applicationContext The app context
+     * @param resourceResolver             The resource resolver
+     * @param configuration                The configuration
+     * @param sslConfiguration             The SSL configuration
+     * @param applicationContext           The app context
      * @param staticResourceConfigurations The static resource configs
      */
     public UndertowFactory(
@@ -59,12 +60,14 @@ public class UndertowFactory extends ServletServerFactory {
 
     /**
      * The undertow builder bean.
-     * @param deploymentInfo The deployment info
+     *
+     * @param deploymentInfo       The deployment info
+     * @param servletConfiguration The servlet configuration
      * @return The builder
      */
     @Singleton
     @Primary
-    protected Undertow.Builder undertowBuilder(DeploymentInfo deploymentInfo) {
+    protected Undertow.Builder undertowBuilder(DeploymentInfo deploymentInfo, MicronautServletConfiguration servletConfiguration) {
         final Undertow.Builder builder = configuration.getUndertowBuilder();
         int port = getConfiguredPort();
         String host = getConfiguredHost();
@@ -96,9 +99,9 @@ public class UndertowFactory extends ServletServerFactory {
             build(sslConfiguration).ifPresent(sslContext ->
                     builder.addHttpsListener(
                             finalSslPort,
-                        host,
-                        sslContext
-            ));
+                            host,
+                            sslContext
+                    ));
 
         }
 
@@ -160,6 +163,7 @@ public class UndertowFactory extends ServletServerFactory {
 
     /**
      * The undertow bean.
+     *
      * @param builder The builder
      * @return The undertow bean
      */
@@ -171,15 +175,17 @@ public class UndertowFactory extends ServletServerFactory {
 
     /**
      * The deployment info bean.
+     *
+     * @param servletConfiguration The servlet configuration.
      * @return The deployment info
      */
     @Singleton
     @Primary
-    protected DeploymentInfo deploymentInfo() {
+    protected DeploymentInfo deploymentInfo(MicronautServletConfiguration servletConfiguration) {
         final String cp = getContextPath();
 
         ServletInfo servletInfo = Servlets.servlet(
-                Environment.MICRONAUT, DefaultMicronautServlet.class, () -> new InstanceHandle<Servlet>() {
+                servletConfiguration.getName(), DefaultMicronautServlet.class, () -> new InstanceHandle<Servlet>() {
 
                     private DefaultMicronautServlet instance;
 
@@ -199,11 +205,11 @@ public class UndertowFactory extends ServletServerFactory {
         );
         servletInfo.setAsyncSupported(true);
         final DeploymentInfo deploymentInfo = Servlets.deployment()
-                .setDeploymentName(Environment.MICRONAUT)
+                .setDeploymentName(servletConfiguration.getName())
                 .setClassLoader(getEnvironment().getClassLoader())
                 .setContextPath(cp)
-                .addServlet(servletInfo.addMapping("/*"));
-        configuration.getMultipartConfiguration().ifPresent(deploymentInfo::setDefaultMultipartConfig);
+                .addServlet(servletInfo.addMapping(servletConfiguration.getMapping()));
+        servletConfiguration.getMultipartConfigElement().ifPresent(deploymentInfo::setDefaultMultipartConfig);
         return deploymentInfo;
     }
 

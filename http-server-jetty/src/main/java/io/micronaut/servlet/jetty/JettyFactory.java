@@ -12,6 +12,7 @@ import io.micronaut.core.util.StringUtils;
 import io.micronaut.http.ssl.ClientAuthentication;
 import io.micronaut.http.ssl.SslConfiguration;
 import io.micronaut.servlet.engine.DefaultMicronautServlet;
+import io.micronaut.servlet.engine.MicronautServletConfiguration;
 import io.micronaut.servlet.engine.server.ServletServerFactory;
 import io.micronaut.servlet.engine.server.ServletStaticResourceConfiguration;
 import org.eclipse.jetty.http.HttpVersion;
@@ -69,11 +70,12 @@ public class JettyFactory extends ServletServerFactory {
      * Builds the Jetty server bean.
      *
      * @param applicationContext This application context
+     * @param configuration      The servlet configuration
      * @return The Jetty server bean
      */
     @Singleton
     @Primary
-    protected Server jettyServer(ApplicationContext applicationContext) {
+    protected Server jettyServer(ApplicationContext applicationContext, MicronautServletConfiguration configuration) {
         final String host = getConfiguredHost();
         final Integer port = getConfiguredPort();
         Server server = new Server();
@@ -138,11 +140,11 @@ public class JettyFactory extends ServletServerFactory {
         final ServletHolder servletHolder = new ServletHolder(new DefaultMicronautServlet(applicationContext));
         contextHandler.addServlet(
                 servletHolder,
-                "/"
+                configuration.getMapping()
         );
         servletHolder.setAsyncSupported(true);
 
-        jettyConfiguration.getMultipartConfiguration().ifPresent(multipartConfiguration ->
+        configuration.getMultipartConfigElement().ifPresent(multipartConfiguration ->
                 servletHolder.getRegistration().setMultipartConfig(multipartConfiguration)
         );
 
@@ -150,22 +152,21 @@ public class JettyFactory extends ServletServerFactory {
 
 
             List<String> mappings = src.stream()
-                                        .map(config -> {
-                                            String mapping = config.getMapping();
-                                            if (mapping.endsWith("**")) {
-                                                return mapping.substring(0, mapping.length() - 1);
-                                            } else if (!mapping.endsWith("/*")) {
-                                                return mapping + "/*";
-                                            }
-                                            return mapping;
-                                        })
-                                        .collect(Collectors.toList());
+                    .map(config -> {
+                        String mapping = config.getMapping();
+                        if (mapping.endsWith("**")) {
+                            return mapping.substring(0, mapping.length() - 1);
+                        } else if (!mapping.endsWith("/*")) {
+                            return mapping + "/*";
+                        }
+                        return mapping;
+                    })
+                    .collect(Collectors.toList());
 
             if (CollectionUtils.isNotEmpty(mappings)) {
 
-                String servletName = DefaultServlet.class.getSimpleName();
                 ServletHolder defaultServletHolder = new ServletHolder(
-                        servletName,
+                        configuration.getName(),
                         new DefaultServlet()
                 );
                 defaultServletHolder.setInitParameters(jettyConfiguration.getInitParameters());
@@ -177,7 +178,7 @@ public class JettyFactory extends ServletServerFactory {
                 ServletHandler servletHandler = defaultServletHolder.getServletHandler();
                 if (mappings.size() > 1) {
                     ServletMapping m = new ServletMapping();
-                    m.setServletName(servletName);
+                    m.setServletName(configuration.getName());
                     m.setPathSpecs(mappings.subList(1, mappings.size()).toArray(StringUtils.EMPTY_STRING_ARRAY));
                     servletHandler.addServletMapping(m);
                 }
@@ -190,7 +191,7 @@ public class JettyFactory extends ServletServerFactory {
             }
 
         }
-            server.setHandler(contextHandler);
+        server.setHandler(contextHandler);
 
         final SslConfiguration sslConfiguration = getSslConfiguration();
         if (sslConfiguration.isEnabled()) {
@@ -207,7 +208,7 @@ public class JettyFactory extends ServletServerFactory {
             switch (clientAuth) {
                 case WANT:
                     sslContextFactory.setWantClientAuth(true);
-                break;
+                    break;
                 case NEED:
                 default:
                     sslContextFactory.setNeedClientAuth(true);

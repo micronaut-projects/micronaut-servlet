@@ -4,4 +4,4 @@ warDeployment: WAR Deployment
 jetty: Jetty Server
 tomcat: Tomcat Server
 undertow: Undertow Server
-repository: Repository
+faq: FAQ

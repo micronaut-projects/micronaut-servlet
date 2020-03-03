@@ -1,6 +1,8 @@
 package io.micronaut.servlet.jetty
 
 import groovy.transform.EqualsAndHashCode
+import io.micronaut.context.annotation.Property
+import io.micronaut.core.util.StringUtils
 import io.micronaut.http.HttpRequest
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
@@ -24,6 +26,7 @@ import java.nio.charset.StandardCharsets
  * @since 1.0
  */
 @MicronautTest
+@Property(name = "micronaut.server.multipart.enabled", value = StringUtils.TRUE)
 class JettyHttpPostSpec extends Specification {
     @Inject
     @Client("/")

@@ -1,16 +1,13 @@
 package io.micronaut.servlet.jetty;
 
 import io.micronaut.context.annotation.ConfigurationBuilder;
-import io.micronaut.context.annotation.ConfigurationInject;
 import io.micronaut.context.annotation.ConfigurationProperties;
-import io.micronaut.core.bind.annotation.Bindable;
 import io.micronaut.core.convert.format.MapFormat;
 import io.micronaut.core.naming.conventions.StringConvention;
 import io.micronaut.http.server.HttpServerConfiguration;
 import org.eclipse.jetty.server.HttpConfiguration;
 
 import javax.annotation.Nullable;
-import javax.servlet.MultipartConfigElement;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
@@ -72,29 +69,6 @@ public class JettyConfiguration extends HttpServerConfiguration {
             keyFormat = StringConvention.RAW) Map<String, String> initParameters) {
         if (initParameters != null) {
             this.initParameters = initParameters;
-        }
-    }
-
-    /**
-     * The multipart configuration.
-     */
-    @ConfigurationProperties("multipart")
-    public static class MultipartConfiguration extends MultipartConfigElement {
-
-        /**
-         * Default constructor.
-         * @param location The location
-         * @param maxFileSize The file size
-         * @param maxRequestSize The max request size
-         * @param fileSizeThreshold The threshold
-         */
-        @ConfigurationInject
-        public MultipartConfiguration(
-                @Nullable String location,
-                @Bindable(defaultValue = "-1") long maxFileSize,
-                @Bindable(defaultValue = "-1") long maxRequestSize,
-                @Bindable(defaultValue = "0") int fileSizeThreshold) {
-            super(location, maxFileSize, maxRequestSize, fileSizeThreshold);
         }
     }
 }

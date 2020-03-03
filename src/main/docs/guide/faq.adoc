@@ -1,0 +1,17 @@
+==== Where can I found the source code?
+
+You can find the source code of this project in this repository:
+
+https://github.com/{githubSlug}[https://github.com/{githubSlug}]
+
+==== How do I configure Multipart handling?
+
+Multipart handling is disabled by default. You can enable it with the https://docs.micronaut.io/latest/guide/configurationreference.html#io.micronaut.http.server.HttpServerConfiguration$MultipartConfiguration[following configuration properties].
+
+==== How do I configure Static Resource handling for the embedded server?
+
+Static resources are not enabled by default. See https://docs.micronaut.io/latest/guide/index.html#staticResources[Serving Static Resources] for how to configure paths to static resources.
+
+==== How do I enable HTTPS for the embedded server?
+
+See https://docs.micronaut.io/latest/guide/index.html#https[Securing the Server with HTTPS] and the https://docs.micronaut.io/latest/guide/configurationreference.html#io.micronaut.http.ssl.ServerSslConfiguration$DefaultKeyStoreConfiguration[configuration properties] for https://docs.micronaut.io/latest/api/io/micronaut/http/ssl/ServerSslConfiguration.html[ServerSslConfiguration].

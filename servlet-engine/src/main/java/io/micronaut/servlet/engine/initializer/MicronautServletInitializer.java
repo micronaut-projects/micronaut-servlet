@@ -3,6 +3,7 @@ package io.micronaut.servlet.engine.initializer;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.ApplicationContextBuilder;
 import io.micronaut.servlet.engine.DefaultMicronautServlet;
+import io.micronaut.servlet.engine.MicronautServletConfiguration;
 
 import javax.servlet.*;
 import java.util.Set;
@@ -19,16 +20,16 @@ public class MicronautServletInitializer implements ServletContainerInitializer 
         final ApplicationContext applicationContext = buildApplicationContext(ctx)
                 .build()
                 .start();
+        final MicronautServletConfiguration configuration = applicationContext.getBean(MicronautServletConfiguration.class);
         final ServletRegistration.Dynamic registration =
-                ctx.addServlet(DefaultMicronautServlet.NAME, new DefaultMicronautServlet(applicationContext));
+                ctx.addServlet(configuration.getName(), new DefaultMicronautServlet(applicationContext));
 
-        applicationContext.findBean(MultipartConfigElement.class)
-                .ifPresent(registration::setMultipartConfig);
+        configuration.getMultipartConfigElement().ifPresent(registration::setMultipartConfig);
         applicationContext.findBean(ServletSecurityElement.class)
                 .ifPresent(registration::setServletSecurity);
         registration.setLoadOnStartup(1);
         registration.setAsyncSupported(true);
-        registration.addMapping("/*");
+        registration.addMapping(configuration.getMapping());
     }
 
     /**
