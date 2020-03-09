@@ -1,4 +1,4 @@
-==== Where can I found the source code?
+==== Where can I find the source code?
 
 You can find the source code of this project in this repository:
 
