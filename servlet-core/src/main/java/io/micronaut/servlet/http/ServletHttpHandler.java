@@ -125,6 +125,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
      *
      * @param request  The request
      * @param response The response
+     * @return The {@link ServletExchange} object
      */
     public ServletExchange<Req, Res> exchange(Req request, Res response) {
         ServletExchange<Req, Res> exchange = createExchange(request, response);
