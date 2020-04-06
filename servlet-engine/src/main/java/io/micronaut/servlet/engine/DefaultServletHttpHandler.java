@@ -37,4 +37,9 @@ public class DefaultServletHttpHandler extends ServletHttpHandler<HttpServletReq
         final ServletExchange<HttpServletRequest, HttpServletResponse> exchange = createExchange(request, response);
         service(exchange);
     }
+
+    @Override
+    public boolean isRunning() {
+        return getApplicationContext().isRunning();
+    }
 }
