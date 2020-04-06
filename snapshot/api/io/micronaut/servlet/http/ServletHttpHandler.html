@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":10,"i1":6,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10};
+var methods = {"i0":10,"i1":6,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -207,31 +207,37 @@ implements java.lang.AutoCloseable, io.micronaut.context.LifeCycle&lt;<a href=".
 </td>
 </tr>
 <tr id="i3" class="rowColor">
+<td class="colFirst"><code><a href="../../../../io/micronaut/servlet/http/ServletExchange.html" title="interface in io.micronaut.servlet.http">ServletExchange</a>&lt;<a href="../../../../io/micronaut/servlet/http/ServletHttpHandler.html" title="type parameter in ServletHttpHandler">Req</a>,<a href="../../../../io/micronaut/servlet/http/ServletHttpHandler.html" title="type parameter in ServletHttpHandler">Res</a>&gt;</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/servlet/http/ServletHttpHandler.html#exchange-io.micronaut.servlet.http.ServletExchange-">exchange</a></span>(<a href="../../../../io/micronaut/servlet/http/ServletExchange.html" title="interface in io.micronaut.servlet.http">ServletExchange</a>&lt;<a href="../../../../io/micronaut/servlet/http/ServletHttpHandler.html" title="type parameter in ServletHttpHandler">Req</a>,<a href="../../../../io/micronaut/servlet/http/ServletHttpHandler.html" title="type parameter in ServletHttpHandler">Res</a>&gt;&nbsp;exchange)</code>
+<div class="block">Handle the give native request and response and return the <a href="../../../../io/micronaut/servlet/http/ServletExchange.html" title="interface in io.micronaut.servlet.http"><code>ServletExchange</code></a> object.</div>
+</td>
+</tr>
+<tr id="i4" class="altColor">
 <td class="colFirst"><code>io.micronaut.context.ApplicationContext</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/servlet/http/ServletHttpHandler.html#getApplicationContext--">getApplicationContext</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i4" class="altColor">
+<tr id="i5" class="rowColor">
 <td class="colFirst"><code>io.micronaut.http.codec.MediaTypeCodecRegistry</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/servlet/http/ServletHttpHandler.html#getMediaTypeCodecRegistry--">getMediaTypeCodecRegistry</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i5" class="rowColor">
+<tr id="i6" class="altColor">
 <td class="colFirst"><code>void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/servlet/http/ServletHttpHandler.html#service-Req-Res-">service</a></span>(<a href="../../../../io/micronaut/servlet/http/ServletHttpHandler.html" title="type parameter in ServletHttpHandler">Req</a>&nbsp;request,
        <a href="../../../../io/micronaut/servlet/http/ServletHttpHandler.html" title="type parameter in ServletHttpHandler">Res</a>&nbsp;response)</code>
 <div class="block">Handle the give native request and response.</div>
 </td>
 </tr>
-<tr id="i6" class="altColor">
+<tr id="i7" class="rowColor">
 <td class="colFirst"><code>void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/servlet/http/ServletHttpHandler.html#service-io.micronaut.servlet.http.ServletExchange-">service</a></span>(<a href="../../../../io/micronaut/servlet/http/ServletExchange.html" title="interface in io.micronaut.servlet.http">ServletExchange</a>&lt;<a href="../../../../io/micronaut/servlet/http/ServletHttpHandler.html" title="type parameter in ServletHttpHandler">Req</a>,<a href="../../../../io/micronaut/servlet/http/ServletHttpHandler.html" title="type parameter in ServletHttpHandler">Res</a>&gt;&nbsp;exchange)</code>
 <div class="block">Handles a <a href="../../../../io/micronaut/servlet/http/DefaultServletExchange.html" title="class in io.micronaut.servlet.http"><code>DefaultServletExchange</code></a>.</div>
 </td>
 </tr>
-<tr id="i7" class="rowColor">
+<tr id="i8" class="altColor">
 <td class="colFirst"><code><a href="../../../../io/micronaut/servlet/http/ServletHttpHandler.html" title="class in io.micronaut.servlet.http">ServletHttpHandler</a>&lt;<a href="../../../../io/micronaut/servlet/http/ServletHttpHandler.html" title="type parameter in ServletHttpHandler">Req</a>,<a href="../../../../io/micronaut/servlet/http/ServletHttpHandler.html" title="type parameter in ServletHttpHandler">Res</a>&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/servlet/http/ServletHttpHandler.html#start--">start</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i8" class="altColor">
+<tr id="i9" class="rowColor">
 <td class="colFirst"><code><a href="../../../../io/micronaut/servlet/http/ServletHttpHandler.html" title="class in io.micronaut.servlet.http">ServletHttpHandler</a>&lt;<a href="../../../../io/micronaut/servlet/http/ServletHttpHandler.html" title="type parameter in ServletHttpHandler">Req</a>,<a href="../../../../io/micronaut/servlet/http/ServletHttpHandler.html" title="type parameter in ServletHttpHandler">Res</a>&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/servlet/http/ServletHttpHandler.html#stop--">stop</a></span>()</code>&nbsp;</td>
 </tr>
@@ -363,6 +369,22 @@ implements java.lang.AutoCloseable, io.micronaut.context.LifeCycle&lt;<a href=".
 <dt><span class="paramLabel">Parameters:</span></dt>
 <dd><code>request</code> - The request</dd>
 <dd><code>response</code> - The response</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The <a href="../../../../io/micronaut/servlet/http/ServletExchange.html" title="interface in io.micronaut.servlet.http"><code>ServletExchange</code></a> object</dd>
+</dl>
+</li>
+</ul>
+<a name="exchange-io.micronaut.servlet.http.ServletExchange-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>exchange</h4>
+<pre>public&nbsp;<a href="../../../../io/micronaut/servlet/http/ServletExchange.html" title="interface in io.micronaut.servlet.http">ServletExchange</a>&lt;<a href="../../../../io/micronaut/servlet/http/ServletHttpHandler.html" title="type parameter in ServletHttpHandler">Req</a>,<a href="../../../../io/micronaut/servlet/http/ServletHttpHandler.html" title="type parameter in ServletHttpHandler">Res</a>&gt;&nbsp;exchange(<a href="../../../../io/micronaut/servlet/http/ServletExchange.html" title="interface in io.micronaut.servlet.http">ServletExchange</a>&lt;<a href="../../../../io/micronaut/servlet/http/ServletHttpHandler.html" title="type parameter in ServletHttpHandler">Req</a>,<a href="../../../../io/micronaut/servlet/http/ServletHttpHandler.html" title="type parameter in ServletHttpHandler">Res</a>&gt;&nbsp;exchange)</pre>
+<div class="block">Handle the give native request and response and return the <a href="../../../../io/micronaut/servlet/http/ServletExchange.html" title="interface in io.micronaut.servlet.http"><code>ServletExchange</code></a> object.</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>exchange</code> - The exchange</dd>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>The <a href="../../../../io/micronaut/servlet/http/ServletExchange.html" title="interface in io.micronaut.servlet.http"><code>ServletExchange</code></a> object</dd>
 </dl>
