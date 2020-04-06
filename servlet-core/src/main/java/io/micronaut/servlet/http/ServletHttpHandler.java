@@ -128,8 +128,18 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
      * @return The {@link ServletExchange} object
      */
     public ServletExchange<Req, Res> exchange(Req request, Res response) {
-        ServletExchange<Req, Res> exchange = createExchange(request, response);
-        service(exchange);
+        ServletExchange<Req, Res> servletExchange = createExchange(request, response);
+        return exchange(servletExchange);
+    }
+
+    /**
+     * Handle the give native request and response and return the {@link ServletExchange} object.
+     *
+     * @param exchange The exchange
+     * @return The {@link ServletExchange} object
+     */
+    public ServletExchange<Req, Res> exchange(ServletExchange<Req, Res> exchange) {
+        service(Objects.requireNonNull(exchange, "The exchange cannot be null"));
         return exchange;
     }
 

@@ -18,9 +18,13 @@ import java.util.Optional;
  * @author graemerocher
  * @since 1.0
  */
-@ConfigurationProperties("micronaut.servlet")
+@ConfigurationProperties(MicronautServletConfiguration.PREFIX)
 public class MicronautServletConfiguration implements Named {
 
+    /**
+     * The prefix used for configuration.
+     */
+    public static final String PREFIX = "micronaut.servlet";
     private final String mapping;
     private final MultipartConfigElement multipartConfigElement;
     private final String name;
