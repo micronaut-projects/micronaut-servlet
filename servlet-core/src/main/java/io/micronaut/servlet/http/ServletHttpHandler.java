@@ -1,6 +1,7 @@
 package io.micronaut.servlet.http;
 
 import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.LifeCycle;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.async.publisher.Publishers;
@@ -40,6 +41,7 @@ import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -59,7 +61,7 @@ import java.util.stream.Collectors;
  * @author graemerocher
  * @since 1.2.0
  */
-public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable {
+public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, LifeCycle<ServletHttpHandler<Req, Res>> {
     /**
      * Logger to be used by subclasses for logging.
      */
@@ -114,13 +116,20 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable {
      * @param response The response
      */
     public void service(Req request, Res response) {
-        try {
+        ServletExchange<Req, Res> exchange = createExchange(request, response);
+        service(exchange);
+    }
 
-            ServletExchange<Req, Res> exchange = createExchange(request, response);
-            service(exchange);
-        } finally {
-            applicationContext.close();
-        }
+    /**
+     * Handle the give native request and response and return the {@link ServletExchange} object.
+     *
+     * @param request  The request
+     * @param response The response
+     */
+    public ServletExchange<Req, Res> exchange(Req request, Res response) {
+        ServletExchange<Req, Res> exchange = createExchange(request, response);
+        service(exchange);
+        return exchange;
     }
 
     /**
@@ -230,6 +239,22 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable {
         if (applicationContext.isRunning()) {
             applicationContext.close();
         }
+    }
+
+    @Nonnull
+    @Override
+    public ServletHttpHandler<Req, Res> start() {
+        if (!applicationContext.isRunning()) {
+            applicationContext.start();
+        }
+        return this;
+    }
+
+    @Nonnull
+    @Override
+    public ServletHttpHandler<Req, Res> stop() {
+        close();
+        return this;
     }
 
     /**
