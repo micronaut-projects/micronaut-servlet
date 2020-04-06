@@ -143,6 +143,11 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
         return exchange;
     }
 
+    @Override
+    public boolean isRunning() {
+        return getApplicationContext().isRunning();
+    }
+
     /**
      * Handles a {@link DefaultServletExchange}.
      *
