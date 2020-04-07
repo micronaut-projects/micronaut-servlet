@@ -17,6 +17,14 @@ import java.io.InputStream;
  * @since 2.0.0
  */
 public interface ServletHttpRequest<N, B> extends HttpRequest<B> {
+
+    /**
+     * @return The context path of the request.
+     */
+    default String getContextPath() {
+        return "";
+    }
+
     /**
      * Returns an {@link InputStream} that can be used to read the body of this HTTP request.
      * This method is typically used to read binary data. If the body is text, the

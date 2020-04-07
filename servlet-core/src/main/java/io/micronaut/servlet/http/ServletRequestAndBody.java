@@ -43,6 +43,11 @@ final class ServletRequestAndBody<N, B> extends HttpRequestWrapper<B> implements
     }
 
     @Override
+    public String getContextPath() {
+        return ((ServletHttpRequest<N, B>) getDelegate()).getContextPath();
+    }
+
+    @Override
     public InputStream getInputStream() throws IOException {
         return ((ServletHttpRequest<N, B>) getDelegate()).getInputStream();
     }

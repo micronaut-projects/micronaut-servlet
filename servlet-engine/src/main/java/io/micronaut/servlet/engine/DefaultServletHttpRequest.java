@@ -244,6 +244,11 @@ public class DefaultServletHttpRequest<B> implements
     }
 
     @Override
+    public String getContextPath() {
+        return delegate.getContextPath();
+    }
+
+    @Override
     public InputStream getInputStream() throws IOException {
         return delegate.getInputStream();
     }
