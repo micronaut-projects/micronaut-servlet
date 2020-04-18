@@ -8,6 +8,7 @@ import io.micronaut.core.convert.value.ConvertibleValues;
 import io.micronaut.core.convert.value.MutableConvertibleValues;
 import io.micronaut.core.io.IOUtils;
 import io.micronaut.core.type.Argument;
+import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.http.*;
@@ -546,16 +547,20 @@ public class DefaultServletHttpRequest<B> implements
             final String paramName = Objects.requireNonNull(name, "Parameter name should not be null").toString();
             if (isIterable) {
                 final String[] parameterValues = delegate.getParameterValues(paramName);
-                if (parameterValues.length == 1) {
-                    return ConversionService.SHARED.convert(parameterValues[0], conversionContext);
-                } else {
-                    if (isOptional) {
-                        return (Optional<T>) ConversionService.SHARED.convert(parameterValues, ConversionContext.of(
-                                argument.getFirstTypeVariable().orElse(argument)
-                        ));
+                if (ArrayUtils.isNotEmpty(parameterValues)) {
+                    if (parameterValues.length == 1) {
+                        return ConversionService.SHARED.convert(parameterValues[0], conversionContext);
                     } else {
-                        return ConversionService.SHARED.convert(parameterValues, conversionContext);
+                        if (isOptional) {
+                            return (Optional<T>) ConversionService.SHARED.convert(parameterValues, ConversionContext.of(
+                                    argument.getFirstTypeVariable().orElse(argument)
+                            ));
+                        } else {
+                            return ConversionService.SHARED.convert(parameterValues, conversionContext);
+                        }
                     }
+                } else {
+                    return ConversionService.SHARED.convert(Collections.emptyList(), conversionContext);
                 }
             } else {
                 final String v = get(name);
