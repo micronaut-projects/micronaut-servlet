@@ -5,6 +5,7 @@ import io.micronaut.context.env.Environment;
 import io.micronaut.context.exceptions.ConfigurationException;
 import io.micronaut.core.io.ResourceResolver;
 import io.micronaut.core.io.socket.SocketUtils;
+import io.micronaut.http.HttpVersion;
 import io.micronaut.http.server.HttpServerConfiguration;
 import io.micronaut.http.server.exceptions.HttpServerException;
 import io.micronaut.http.server.exceptions.ServerStartupException;
@@ -105,10 +106,15 @@ public abstract class ServletServerFactory extends SslBuilder<SSLContext> {
 
     @Override
     public Optional<SSLContext> build(SslConfiguration ssl) {
+        return build(ssl, HttpVersion.HTTP_1_1);
+    }
+
+    //TODO support HTTP/2
+    @Override
+    public Optional<SSLContext> build(SslConfiguration ssl, io.micronaut.http.HttpVersion httpVersion) {
         if (sslConfiguration.isEnabled()) {
             final String protocol = sslConfiguration
                     .getProtocol().orElseThrow(() -> new ServerStartupException("No SSL protocol specified"));
-
 
             try {
 
