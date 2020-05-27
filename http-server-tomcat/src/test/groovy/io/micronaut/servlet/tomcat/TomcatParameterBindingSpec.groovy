@@ -85,7 +85,8 @@ class TomcatParameterBindingSpec extends Specification {
 
         expect:
         response.status() == HttpStatus.BAD_REQUEST
-        response.body().contains('Failed to convert argument [age]')
+        response.body().contains('Failed to convert argument')
+        response.body().contains('Book[\\"age\\"])')
     }
 
     @Controller(value = "/parameter", produces = MediaType.TEXT_PLAIN)
