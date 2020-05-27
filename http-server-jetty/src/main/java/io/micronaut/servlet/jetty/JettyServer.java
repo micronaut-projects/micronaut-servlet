@@ -20,7 +20,6 @@ import java.net.URL;
 @Singleton
 public class JettyServer extends AbstractServletServer<Server> {
 
-
     /**
      * Default constructor.
      *

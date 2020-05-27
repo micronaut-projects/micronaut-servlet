@@ -532,7 +532,9 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
     private void encodeResponse(ServletExchange<Req, Res> exchange, AnnotationMetadata annotationMetadata, HttpResponse<?> response) {
         final Object body = response.getBody().orElse(null);
         setHeadersFromMetadata(exchange.getResponse(), annotationMetadata, body);
-        if (body instanceof CharSequence) {
+        if (body instanceof HttpStatus) {
+            exchange.getResponse().status((HttpStatus) body);
+        } else if (body instanceof CharSequence) {
             if (response instanceof MutableHttpResponse) {
                 if (!response.getContentType().isPresent()) {
                     ((MutableHttpResponse<?>) response).contentType(MediaType.TEXT_PLAIN_TYPE);
