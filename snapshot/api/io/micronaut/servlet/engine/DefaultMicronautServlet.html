@@ -207,17 +207,11 @@ extends javax.servlet.http.HttpServlet</pre>
 </tr>
 <tr id="i1" class="rowColor">
 <td class="colFirst"><code>void</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/servlet/engine/DefaultMicronautServlet.html#destroy--">destroy</a></span>()</code>
-<div class="block">Called by the servlet container to indicate to a servlet that the
- servlet is being taken out of service.</div>
-</td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/servlet/engine/DefaultMicronautServlet.html#destroy--">destroy</a></span>()</code>&nbsp;</td>
 </tr>
 <tr id="i2" class="altColor">
 <td class="colFirst"><code>void</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/servlet/engine/DefaultMicronautServlet.html#init--">init</a></span>()</code>
-<div class="block">A convenience method which can be overridden so that there's no need
- to call <code>super.init(config)</code>.</div>
-</td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/servlet/engine/DefaultMicronautServlet.html#init--">init</a></span>()</code>&nbsp;</td>
 </tr>
 <tr id="i3" class="rowColor">
 <td class="colFirst"><code>protected io.micronaut.context.ApplicationContextBuilder</code></td>
@@ -226,12 +220,7 @@ extends javax.servlet.http.HttpServlet</pre>
 <tr id="i4" class="altColor">
 <td class="colFirst"><code>protected void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/servlet/engine/DefaultMicronautServlet.html#service-javax.servlet.http.HttpServletRequest-javax.servlet.http.HttpServletResponse-">service</a></span>(javax.servlet.http.HttpServletRequest&nbsp;req,
-       javax.servlet.http.HttpServletResponse&nbsp;resp)</code>
-<div class="block">Receives standard HTTP requests from the public
- <code>service</code> method and dispatches
- them to the <code>do</code><i>XXX</i> methods defined in 
- this class.</div>
-</td>
+       javax.servlet.http.HttpServletResponse&nbsp;resp)</code>&nbsp;</td>
 </tr>
 </table>
 <ul class="blockList">
@@ -345,25 +334,9 @@ extends javax.servlet.http.HttpServlet</pre>
 <h4>service</h4>
 <pre>protected&nbsp;void&nbsp;service(javax.servlet.http.HttpServletRequest&nbsp;req,
                        javax.servlet.http.HttpServletResponse&nbsp;resp)</pre>
-<div class="block"><span class="descfrmTypeLabel">Description copied from class:&nbsp;<code>javax.servlet.http.HttpServlet</code></span></div>
-<div class="block">Receives standard HTTP requests from the public
- <code>service</code> method and dispatches
- them to the <code>do</code><i>XXX</i> methods defined in 
- this class. This method is an HTTP-specific version of the 
- <code>Servlet.service(javax.servlet.ServletRequest, javax.servlet.ServletResponse)</code> method. There's no
- need to override this method.</div>
 <dl>
 <dt><span class="overrideSpecifyLabel">Overrides:</span></dt>
 <dd><code>service</code>&nbsp;in class&nbsp;<code>javax.servlet.http.HttpServlet</code></dd>
-<dt><span class="paramLabel">Parameters:</span></dt>
-<dd><code>req</code> - the <code>HttpServletRequest</code> object that
-                  contains the request the client made of
-                  the servlet</dd>
-<dd><code>resp</code> - the <code>HttpServletResponse</code> object that
-                  contains the response the servlet returns
-                  to the client</dd>
-<dt><span class="seeLabel">See Also:</span></dt>
-<dd><code>Servlet.service(javax.servlet.ServletRequest, javax.servlet.ServletResponse)</code></dd>
 </dl>
 </li>
 </ul>
@@ -374,9 +347,6 @@ extends javax.servlet.http.HttpServlet</pre>
 <li class="blockList">
 <h4>destroy</h4>
 <pre>public&nbsp;void&nbsp;destroy()</pre>
-<div class="block"><span class="descfrmTypeLabel">Description copied from class:&nbsp;<code>javax.servlet.GenericServlet</code></span></div>
-<div class="block">Called by the servlet container to indicate to a servlet that the
- servlet is being taken out of service.  See <code>Servlet.destroy()</code>.</div>
 <dl>
 <dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
 <dd><code>destroy</code>&nbsp;in interface&nbsp;<code>javax.servlet.Servlet</code></dd>
@@ -392,14 +362,6 @@ extends javax.servlet.http.HttpServlet</pre>
 <li class="blockList">
 <h4>init</h4>
 <pre>public&nbsp;void&nbsp;init()</pre>
-<div class="block"><span class="descfrmTypeLabel">Description copied from class:&nbsp;<code>javax.servlet.GenericServlet</code></span></div>
-<div class="block">A convenience method which can be overridden so that there's no need
- to call <code>super.init(config)</code>.
-
- <p>Instead of overriding <code>GenericServlet.init(ServletConfig)</code>, simply override
- this method and it will be called by
- <code>GenericServlet.init(ServletConfig config)</code>.
- The <code>ServletConfig</code> object can still be retrieved via <code>GenericServlet.getServletConfig()</code>.</div>
 <dl>
 <dt><span class="overrideSpecifyLabel">Overrides:</span></dt>
 <dd><code>init</code>&nbsp;in class&nbsp;<code>javax.servlet.GenericServlet</code></dd>
