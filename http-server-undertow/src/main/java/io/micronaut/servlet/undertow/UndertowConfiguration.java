@@ -58,7 +58,6 @@ public class UndertowConfiguration extends HttpServerConfiguration {
         this.multipartConfiguration = multipartConfiguration;
     }
 
-
     /**
      * @return The undertow builder
      */
