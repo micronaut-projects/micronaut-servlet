@@ -3,6 +3,7 @@ package io.micronaut.servlet.jetty
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.http.MediaType
+import io.micronaut.http.annotation.Consumes
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Get
 import io.micronaut.http.client.annotation.Client
@@ -40,6 +41,7 @@ class JettyNotFoundSpec extends Specification {
 
     @Client('/not-found')
     static interface InventoryClient {
+        @Consumes(MediaType.TEXT_PLAIN)
         @Get('/maybe/{isbn}')
         Maybe<Boolean> maybe(String isbn)
 
