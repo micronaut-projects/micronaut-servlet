@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 original authors
+ * Copyright 2017-$YEAR original authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,3 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.servlet.http;
-
-import io.micronaut.http.HttpMessage;
-import org.reactivestreams.Publisher;
-
-/**
- * Represents a streamed HTTP message.
- * @author graemerocher
- * @since 1.0.0
- * @param <B> The body type
- * @param <BB> The byte buffer type
- */
-public interface StreamedServletMessage<B, BB> extends HttpMessage<B>, Publisher<BB> {
-}

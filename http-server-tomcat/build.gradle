@@ -6,10 +6,10 @@ dependencies {
     api "io.micronaut:micronaut-http-server:$micronautVersion"
 
     compileOnly "org.graalvm.nativeimage:svm"
-    implementation 'org.apache.tomcat.embed:tomcat-embed-core:9.0.31'
+    implementation 'org.apache.tomcat.embed:tomcat-embed-core:9.0.37'
     implementation 'org.slf4j:jul-to-slf4j:1.7.30'
     testAnnotationProcessor "io.micronaut:micronaut-inject-java"
     testImplementation "io.micronaut:micronaut-inject-groovy"
     testImplementation "io.micronaut:micronaut-http-client"
-    testImplementation "io.micronaut.test:micronaut-test-spock"
+    testImplementation "io.micronaut.test:micronaut-test-spock:$micronautTestVersion"
 }

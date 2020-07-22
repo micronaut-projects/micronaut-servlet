@@ -1,3 +1,18 @@
+/*
+ * Copyright 2017-2020 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.micronaut.servlet.tomcat;
 
 import io.micronaut.context.ApplicationContext;
@@ -95,18 +110,18 @@ public class TomcatFactory extends ServletServerFactory {
             httpsConnector.setPort(sslPort);
             httpsConnector.setSecure(true);
             httpsConnector.setScheme("https");
-            httpsConnector.setAttribute("clientAuth", "false");
-            httpsConnector.setAttribute("sslProtocol", protocol);
-            httpsConnector.setAttribute("SSLEnabled", true);
+            httpsConnector.setProperty("clientAuth", "false");
+            httpsConnector.setProperty("sslProtocol", protocol);
+            httpsConnector.setProperty("SSLEnabled", "true");
             sslConfiguration.getCiphers().ifPresent(cyphers -> httpsConnector.setAttribute("cyphers", cyphers));
             sslConfiguration.getClientAuthentication().ifPresent(ca -> {
                 switch (ca) {
                     case WANT:
-                        httpsConnector.setAttribute("clientAuth", "want");
+                        httpsConnector.setProperty("clientAuth", "want");
                         break;
                     default:
                     case NEED:
-                        httpsConnector.setAttribute("clientAuth", "true");
+                        httpsConnector.setProperty("clientAuth", "true");
                         break;
 
                 }
@@ -115,37 +130,37 @@ public class TomcatFactory extends ServletServerFactory {
 
             SslConfiguration.KeyStoreConfiguration keyStoreConfig = sslConfiguration.getKeyStore();
             keyStoreConfig.getPassword().ifPresent(s ->
-                    httpsConnector.setAttribute("keystorePass", s)
+                    httpsConnector.setProperty("keystorePass", s)
             );
             keyStoreConfig.getPath().ifPresent(path ->
                     setPathAttribute(httpsConnector, "keystoreFile", path)
             );
             keyStoreConfig.getProvider().ifPresent(provider ->
-                    httpsConnector.setAttribute("keystoreProvider", provider)
+                    httpsConnector.setProperty("keystoreProvider", provider)
             );
             keyStoreConfig.getType().ifPresent(type ->
-                    httpsConnector.setAttribute("keystoreType", type)
+                    httpsConnector.setProperty("keystoreType", type)
             );
 
             SslConfiguration.TrustStoreConfiguration trustStore = sslConfiguration.getTrustStore();
             trustStore.getPassword().ifPresent(s ->
-                    httpsConnector.setAttribute("truststorePass", s)
+                    httpsConnector.setProperty("truststorePass", s)
             );
             trustStore.getPath().ifPresent(path ->
                     setPathAttribute(httpsConnector, "truststoreFile", path)
             );
             trustStore.getProvider().ifPresent(provider ->
-                    httpsConnector.setAttribute("truststoreProvider", provider)
+                    httpsConnector.setProperty("truststoreProvider", provider)
             );
             trustStore.getType().ifPresent(type ->
-                    httpsConnector.setAttribute("truststoreType", type)
+                    httpsConnector.setProperty("truststoreType", type)
             );
 
 
             SslConfiguration.KeyConfiguration keyConfig = sslConfiguration.getKey();
 
-            keyConfig.getAlias().ifPresent(s -> httpsConnector.setAttribute("keyAlias", s));
-            keyConfig.getPassword().ifPresent(s -> httpsConnector.setAttribute("keyPass", s));
+            keyConfig.getAlias().ifPresent(s -> httpsConnector.setProperty("keyAlias", s));
+            keyConfig.getPassword().ifPresent(s -> httpsConnector.setProperty("keyPass", s));
 
             tomcat.getService().addConnector(httpsConnector);
         }
@@ -169,13 +184,13 @@ public class TomcatFactory extends ServletServerFactory {
             String res = path.substring(ServletStaticResourceConfiguration.CLASSPATH_PREFIX.length());
             URL resource = getEnvironment().getClassLoader().getResource(res);
             if (resource != null) {
-                httpsConnector.setAttribute(attributeName, resource.toString());
+                httpsConnector.setProperty(attributeName, resource.toString());
             }
         } else if (path.startsWith(ServletStaticResourceConfiguration.FILE_PREFIX)) {
             String res = path.substring(ServletStaticResourceConfiguration.FILE_PREFIX.length());
-            httpsConnector.setAttribute(attributeName, new File(res).getAbsolutePath());
+            httpsConnector.setProperty(attributeName, new File(res).getAbsolutePath());
         } else {
-            httpsConnector.setAttribute(attributeName, new File(path).getAbsolutePath());
+            httpsConnector.setProperty(attributeName, new File(path).getAbsolutePath());
         }
     }
 

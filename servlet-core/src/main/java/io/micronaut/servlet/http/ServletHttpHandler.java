@@ -1,3 +1,18 @@
+/*
+ * Copyright 2017-2020 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.micronaut.servlet.http;
 
 import io.micronaut.context.ApplicationContext;
@@ -532,7 +547,9 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
     private void encodeResponse(ServletExchange<Req, Res> exchange, AnnotationMetadata annotationMetadata, HttpResponse<?> response) {
         final Object body = response.getBody().orElse(null);
         setHeadersFromMetadata(exchange.getResponse(), annotationMetadata, body);
-        if (body instanceof CharSequence) {
+        if (body instanceof HttpStatus) {
+            exchange.getResponse().status((HttpStatus) body);
+        } else if (body instanceof CharSequence) {
             if (response instanceof MutableHttpResponse) {
                 if (!response.getContentType().isPresent()) {
                     ((MutableHttpResponse<?>) response).contentType(MediaType.TEXT_PLAIN_TYPE);
