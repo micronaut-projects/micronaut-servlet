@@ -101,7 +101,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
         //noinspection unchecked
         this.responseEncoders = applicationContext.streamOfType(ServletResponseEncoder.class)
                 .collect(Collectors.toMap(
-                        servletResponseEncoder -> servletResponseEncoder.getResponseType(),
+                        ServletResponseEncoder::getResponseType,
                         (o) -> o
                 ));
 
@@ -194,6 +194,12 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                 invokeRouteMatch(req, res, route, false, exchange);
 
             } else {
+
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("No matching routes found for {} - {}", req.getMethodName(), req.getPath());
+                    traceHeaders(req.getHeaders());
+                }
+
                 Set<String> existingRouteMethods = router
                         .findAny(req.getUri().toString(), req)
                         .map(UriRouteMatch::getRoute)
@@ -234,8 +240,6 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                 } else {
                     handlePageNotFound(exchange, res, req);
                 }
-
-
             }
         } finally {
             if (LOG.isTraceEnabled()) {
@@ -246,6 +250,14 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                         (System.currentTimeMillis() - time)
                 );
             }
+        }
+    }
+
+    private void traceHeaders(HttpHeaders httpHeaders) {
+        if (LOG.isTraceEnabled()) {
+            LOG.trace("-----");
+            httpHeaders.forEach((name, values) -> LOG.trace("{} : {}", name, values));
+            LOG.trace("-----");
         }
     }
 
@@ -260,7 +272,8 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
         if (notFoundRoute != null) {
             invokeRouteMatch(req, res, notFoundRoute, true, exchange);
         } else {
-            res.status(httpStatus).body(newJsonError(req, httpStatus.getReason()));
+            res.status(httpStatus)
+               .body(newJsonError(req, httpStatus.getReason()));
             encodeResponse(exchange, AnnotationMetadata.EMPTY_METADATA, res);
         }
     }
@@ -547,6 +560,10 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
     private void encodeResponse(ServletExchange<Req, Res> exchange, AnnotationMetadata annotationMetadata, HttpResponse<?> response) {
         final Object body = response.getBody().orElse(null);
         setHeadersFromMetadata(exchange.getResponse(), annotationMetadata, body);
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Sending response {}", response.status());
+            traceHeaders(response.getHeaders());
+        }
         if (body instanceof HttpStatus) {
             exchange.getResponse().status((HttpStatus) body);
         } else if (body instanceof CharSequence) {
@@ -621,7 +638,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
         }
 
         annotationMetadata.enumValue(Status.class, HttpStatus.class)
-                .ifPresent(httpStatus -> res.status(httpStatus));
+                .ifPresent(res::status);
         final List<AnnotationValue<Header>> headers = annotationMetadata.getAnnotationValuesByType(Header.class);
         for (AnnotationValue<Header> header : headers) {
             final String value = header.stringValue().orElse(null);
