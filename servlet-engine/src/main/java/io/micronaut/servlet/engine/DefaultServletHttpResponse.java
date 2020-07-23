@@ -81,7 +81,7 @@ public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpSe
         return Flowable.create(emitter -> dataPublisher.subscribe(new Subscriber<Object>() {
             ServletOutputStream outputStream;
             Subscription subscription;
-            AtomicBoolean finished = new AtomicBoolean();
+            final AtomicBoolean finished = new AtomicBoolean();
             boolean first = true;
             boolean raw = false;
             @Override
