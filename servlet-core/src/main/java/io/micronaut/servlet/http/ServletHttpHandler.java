@@ -66,6 +66,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -188,7 +189,8 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
 
 
                 if (LOG.isDebugEnabled()) {
-                    LOG.debug("Matched route {} - {} to controller {}", req.getMethodName(), req.getPath(), route.getDeclaringType());
+                    LOG.debug("{} - {} - routed to controller {}", req.getMethodName(), req.getPath(), route.getDeclaringType().getSimpleName());
+                    traceHeaders(req.getHeaders());
                 }
 
                 invokeRouteMatch(req, res, route, false, exchange);
@@ -196,7 +198,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
             } else {
 
                 if (LOG.isDebugEnabled()) {
-                    LOG.debug("No matching routes found for {} - {}", req.getMethodName(), req.getPath());
+                    LOG.debug("{} - {} - No matching routes found", req.getMethodName(), req.getPath());
                     traceHeaders(req.getHeaders());
                 }
 
@@ -229,12 +231,16 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                         if (notAllowedRoute != null) {
                             invokeRouteMatch(req, res, notAllowedRoute, true, exchange);
                         } else {
-                            res.getHeaders().allowGeneric(existingRouteMethods);
-                            res.status(HttpStatus.METHOD_NOT_ALLOWED)
-                                    .body(new JsonError(
-                                            "Method [" + req.getMethod() + "] not allowed for URI [" + req.getPath() + "]. Allowed methods: " + existingRouteMethods
-                                    ));
-                            encodeResponse(exchange, AnnotationMetadata.EMPTY_METADATA, res);
+                            emitError(exchange, res, req, emitter -> {
+                                res.getHeaders().allowGeneric(existingRouteMethods);
+                                res.status(HttpStatus.METHOD_NOT_ALLOWED)
+                                        .body(new JsonError(
+                                                "Method [" + req.getMethod() + "] not allowed for URI [" + req
+                                                        .getPath() + "]. Allowed methods: " + existingRouteMethods
+                                        ));
+                                emitter.onNext(res);
+                                emitter.onComplete();
+                            });
                         }
                     }
                 } else {
@@ -251,6 +257,25 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                 );
             }
         }
+    }
+
+    private void emitError(ServletExchange<Req, Res> exchange,
+                           MutableHttpResponse<Object> res,
+                           HttpRequest<Object> req,
+                           FlowableOnSubscribe<MutableHttpResponse<?>> errorEmitter) {
+        Publisher<? extends MutableHttpResponse<?>> responsePublisher = Flowable.create(
+                errorEmitter, BackpressureStrategy.LATEST);
+
+        responsePublisher = filterPublisher(new AtomicReference<>(req), responsePublisher, false);
+        subscribeToResponsePublisher(
+                req,
+                res,
+                null,
+                true,
+                exchange,
+                responsePublisher,
+                AnnotationMetadata.EMPTY_METADATA
+        );
     }
 
     private void traceHeaders(HttpHeaders httpHeaders) {
@@ -272,9 +297,12 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
         if (notFoundRoute != null) {
             invokeRouteMatch(req, res, notFoundRoute, true, exchange);
         } else {
-            res.status(httpStatus)
-               .body(newJsonError(req, httpStatus.getReason()));
-            encodeResponse(exchange, AnnotationMetadata.EMPTY_METADATA, res);
+            emitError(exchange, res, req, emitter -> {
+                res.status(httpStatus)
+                        .body(newJsonError(req, httpStatus.getReason()));
+                emitter.onNext(res);
+                emitter.onComplete();
+            });
         }
     }
 
@@ -320,129 +348,140 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
         try {
 
             Publisher<? extends MutableHttpResponse<?>> responsePublisher = buildResponsePublisher(req, res, route, isErrorRoute);
-            final ServletHttpRequest<Req, ? super Object> exchangeRequest = exchange.getRequest();
-            boolean isAsyncSupported = exchangeRequest.isAsyncSupported();
-            final Flowable<? extends MutableHttpResponse<?>> responseFlowable = Flowable.fromPublisher(responsePublisher)
-                    .flatMap(response -> {
-                        final HttpStatus status = response.status();
-                        Object body = response.body();
-                        if (body != null) {
-                            if (Publishers.isConvertibleToPublisher(body)) {
-                                boolean isSingle = Publishers.isSingle(body.getClass());
-                                if (isSingle) {
-                                    Flowable<?> flowable = Publishers.convertPublisher(body, Flowable.class);
-                                    return flowable.map((Function<Object, MutableHttpResponse<?>>) o -> {
-                                        if (o instanceof HttpResponse) {
-                                            encodeResponse(exchange, route.getAnnotationMetadata(), (HttpResponse<?>) o);
-                                            return res;
-                                        } else {
-                                            ServletHttpResponse<Res, ? super Object> res1 = exchange.getResponse();
-                                            res1.body(o);
-                                            encodeResponse(exchange, route.getAnnotationMetadata(), response);
-                                            return res1;
-                                        }
-                                    }).switchIfEmpty(Flowable.defer(() -> {
-                                        final RouteMatch<Object> errorRoute = lookupStatusRoute(route, HttpStatus.NOT_FOUND);
-                                        if (errorRoute != null) {
-                                            Flowable<MutableHttpResponse<?>> notFoundFlowable = Flowable.fromPublisher(buildResponsePublisher(
-                                                    req,
-                                                    (MutableHttpResponse<Object>) response,
-                                                    errorRoute,
-                                                    true
-                                            ));
-                                            return notFoundFlowable.onErrorReturn(throwable -> {
-
-                                                if (LOG.isErrorEnabled()) {
-                                                    LOG.error("Error occuring invoking 404 handler: " + throwable.getMessage());
-                                                }
-                                                MutableHttpResponse<Object> defaultNotFound = res.status(404).body(newJsonError(req, "Page Not Found"));
-                                                encodeResponse(exchange, route.getAnnotationMetadata(), defaultNotFound);
-                                                return defaultNotFound;
-                                            });
-                                        } else {
-                                            return Publishers.just(res.status(404).body(newJsonError(req, "Page Not Found")));
-                                        }
-                                    }));
-                                } else {
-                                    // stream case
-                                    Flowable<?> flowable = Publishers.convertPublisher(body, Flowable.class);
-                                    if (isAsyncSupported) {
-                                        final ServletHttpResponse<Res, ? super Object> servletResponse = exchange.getResponse();
-                                        setHeadersFromMetadata(exchange.getResponse(), route.getAnnotationMetadata(), body);
-                                        return servletResponse.stream(flowable);
-                                    } else {
-                                        // fallback to blocking
-                                        return flowable.toList().map(list -> {
-                                            final ServletHttpResponse<Res, ? super Object> servletHttpResponse = exchange.getResponse();
-                                            encodeResponse(exchange, route.getAnnotationMetadata(), servletHttpResponse.body(list));
-                                            return servletHttpResponse;
-                                        }).toFlowable();
-                                    }
-                                }
-                            } else {
-
-                                if (!isErrorRoute && status.getCode() >= 400) {
-                                    final RouteMatch<Object> errorRoute = lookupStatusRoute(route, status);
-                                    if (errorRoute != null) {
-                                        return buildErrorRouteHandler(exchange, req, (MutableHttpResponse<Object>) response, errorRoute);
-                                    }
-                                }
-                            }
-                        }
-
-                        if (body != null) {
-                            Class<?> bodyType = body.getClass();
-                            ServletResponseEncoder<Object> responseEncoder = (ServletResponseEncoder<Object>) responseEncoders.get(bodyType);
-                            if (responseEncoder != null) {
-                                return responseEncoder.encode(exchange, route.getAnnotationMetadata(), body);
-                            }
-                        }
-
-                        if (!isErrorRoute && status.getCode() >= 400) {
-                            final RouteMatch<Object> errorRoute = lookupStatusRoute(route, status);
-                            if (errorRoute != null) {
-                                return buildErrorRouteHandler(exchange, req, (MutableHttpResponse<Object>) response, errorRoute);
-                            }
-                        }
-
-                        return Flowable.fromCallable(() -> {
-                            encodeResponse(exchange, route.getAnnotationMetadata(), response);
-                            return response;
-                        });
-                    }).onErrorResumeNext(throwable -> {
-                        handleException(req, res, route, isErrorRoute, throwable, exchange);
-                        return Flowable.error(throwable);
-                    });
-
-
-            if (isAsyncSupported) {
-
-                //noinspection ResultOfMethodCallIgnored
-                Flowable.fromPublisher(exchangeRequest.subscribeOnExecutor(responseFlowable))
-                        .subscribe(response -> {
-                            if (LOG.isDebugEnabled()) {
-                                LOG.debug("Request [{} - {}] completed successfully", req.getMethodName(), req.getUri());
-                            }
-                        }, throwable -> {
-                            if (LOG.isDebugEnabled()) {
-                                LOG.debug("Request [" + req.getMethodName() + " - " + req.getUri() + "] completed with error: " + throwable.getMessage(), throwable);
-                            }
-                        });
-
-            } else {
-                responseFlowable
-                        .blockingSubscribe(response -> {
-                            if (LOG.isDebugEnabled()) {
-                                LOG.debug("Request [{} - {}] completed successfully", req.getMethodName(), req.getUri());
-                            }
-                        }, throwable -> {
-                            if (LOG.isDebugEnabled()) {
-                                LOG.debug("Request [" + req.getMethodName() + " - " + req.getUri() + "] completed with error: " + throwable.getMessage(), throwable);
-                            }
-                        });
-            }
+            final AnnotationMetadata annotationMetadata = route.getAnnotationMetadata();
+            subscribeToResponsePublisher(req, res, route, isErrorRoute, exchange, responsePublisher, annotationMetadata);
         } catch (Throwable e) {
             handleException(req, res, route, isErrorRoute, e, exchange);
+        }
+    }
+
+    private void subscribeToResponsePublisher(HttpRequest<Object> req,
+                                              MutableHttpResponse<Object> res,
+                                              RouteMatch<?> route,
+                                              boolean isErrorRoute,
+                                              ServletExchange<Req, Res> exchange,
+                                              Publisher<? extends MutableHttpResponse<?>> responsePublisher,
+                                              AnnotationMetadata annotationMetadata) {
+        final ServletHttpRequest<Req, ? super Object> exchangeRequest = exchange.getRequest();
+        boolean isAsyncSupported = exchangeRequest.isAsyncSupported();
+        final Flowable<? extends MutableHttpResponse<?>> responseFlowable = Flowable.fromPublisher(responsePublisher)
+                .flatMap(response -> {
+                    final HttpStatus status = response.status();
+                    Object body = response.body();
+
+                    if (body != null) {
+                        if (Publishers.isConvertibleToPublisher(body)) {
+                            boolean isSingle = Publishers.isSingle(body.getClass());
+                            if (isSingle) {
+                                Flowable<?> flowable = Publishers.convertPublisher(body, Flowable.class);
+                                return flowable.map((Function<Object, MutableHttpResponse<?>>) o -> {
+                                    if (o instanceof HttpResponse) {
+                                        encodeResponse(exchange, annotationMetadata, (HttpResponse<?>) o);
+                                        return res;
+                                    } else {
+                                        ServletHttpResponse<Res, ? super Object> res1 = exchange.getResponse();
+                                        res1.body(o);
+                                        encodeResponse(exchange, annotationMetadata, response);
+                                        return res1;
+                                    }
+                                }).switchIfEmpty(Flowable.defer(() -> {
+                                    final RouteMatch<Object> errorRoute = lookupStatusRoute(route, HttpStatus.NOT_FOUND);
+                                    if (errorRoute != null) {
+                                        Flowable<MutableHttpResponse<?>> notFoundFlowable = Flowable.fromPublisher(buildResponsePublisher(
+                                                req,
+                                                (MutableHttpResponse<Object>) response,
+                                                errorRoute,
+                                                true
+                                        ));
+                                        return notFoundFlowable.onErrorReturn(throwable -> {
+
+                                            if (LOG.isErrorEnabled()) {
+                                                LOG.error("Error occuring invoking 404 handler: " + throwable.getMessage());
+                                            }
+                                            MutableHttpResponse<Object> defaultNotFound = res.status(404).body(newJsonError(req, "Page Not Found"));
+                                            encodeResponse(exchange, annotationMetadata, defaultNotFound);
+                                            return defaultNotFound;
+                                        });
+                                    } else {
+                                        return Publishers.just(res.status(404).body(newJsonError(req, "Page Not Found")));
+                                    }
+                                }));
+                            } else {
+                                // stream case
+                                Flowable<?> flowable = Publishers.convertPublisher(body, Flowable.class);
+                                if (isAsyncSupported) {
+                                    final ServletHttpResponse<Res, ? super Object> servletResponse = exchange.getResponse();
+                                    setHeadersFromMetadata(exchange.getResponse(), annotationMetadata, body);
+                                    return servletResponse.stream(flowable);
+                                } else {
+                                    // fallback to blocking
+                                    return flowable.toList().map(list -> {
+                                        final ServletHttpResponse<Res, ? super Object> servletHttpResponse = exchange.getResponse();
+                                        encodeResponse(exchange, annotationMetadata, servletHttpResponse.body(list));
+                                        return servletHttpResponse;
+                                    }).toFlowable();
+                                }
+                            }
+                        } else {
+
+                            if (!isErrorRoute && status.getCode() >= 400) {
+                                final RouteMatch<Object> errorRoute = lookupStatusRoute(route, status);
+                                if (errorRoute != null) {
+                                    return buildErrorRouteHandler(exchange, req, (MutableHttpResponse<Object>) response, errorRoute);
+                                }
+                            }
+                        }
+                    }
+
+                    if (body != null) {
+                        Class<?> bodyType = body.getClass();
+                        ServletResponseEncoder<Object> responseEncoder = (ServletResponseEncoder<Object>) responseEncoders.get(bodyType);
+                        if (responseEncoder != null) {
+                            return responseEncoder.encode(exchange, annotationMetadata, body);
+                        }
+                    }
+
+                    if (!isErrorRoute && status.getCode() >= 400) {
+                        final RouteMatch<Object> errorRoute = lookupStatusRoute(route, status);
+                        if (errorRoute != null) {
+                            return buildErrorRouteHandler(exchange, req, (MutableHttpResponse<Object>) response, errorRoute);
+                        }
+                    }
+
+                    return Flowable.fromCallable(() -> {
+                        encodeResponse(exchange, annotationMetadata, response);
+                        return response;
+                    });
+                }).onErrorResumeNext(throwable -> {
+                    handleException(req, res, route, isErrorRoute, throwable, exchange);
+                    return Flowable.error(throwable);
+                });
+
+        if (isAsyncSupported) {
+
+            //noinspection ResultOfMethodCallIgnored
+            Flowable.fromPublisher(exchangeRequest.subscribeOnExecutor(responseFlowable))
+                    .subscribe(response -> {
+                        if (LOG.isDebugEnabled()) {
+                            LOG.debug("Request [{} - {}] completed successfully", req.getMethodName(), req.getUri());
+                        }
+                    }, throwable -> {
+                        if (LOG.isDebugEnabled()) {
+                            LOG.debug("Request [" + req.getMethodName() + " - " + req.getUri() + "] completed with error: " + throwable.getMessage(), throwable);
+                        }
+                    });
+
+        } else {
+            responseFlowable
+                    .blockingSubscribe(response -> {
+                        if (LOG.isDebugEnabled()) {
+                            LOG.debug("Request [{} - {}] completed successfully", req.getMethodName(), req.getUri());
+                        }
+                    }, throwable -> {
+                        if (LOG.isDebugEnabled()) {
+                            LOG.debug("Request [" + req.getMethodName() + " - " + req.getUri() + "] completed with error: " + throwable.getMessage(), throwable);
+                        }
+                    });
         }
     }
 
@@ -516,7 +555,10 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                 if (isVoid) {
                     return Publishers.just(httpResponse);
                 } else {
-                    return Publishers.just(HttpResponse.notFound());
+                    if (httpResponse.status() == HttpStatus.OK) {
+                        httpResponse.status(HttpStatus.NOT_FOUND);
+                    }
+                    return Publishers.just(httpResponse);
                 }
             }
 
@@ -549,12 +591,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                 );
             }
         });
-        final List<HttpFilter> filters = router.findFilters(req);
-        if (CollectionUtils.isNotEmpty(filters)) {
-            responsePublisher =
-                    filterPublisher(new AtomicReference<>(req), responsePublisher, isErrorRoute);
-        }
-        return responsePublisher;
+        return filterPublisher(new AtomicReference<>(req), responsePublisher, isErrorRoute);
     }
 
     private void encodeResponse(ServletExchange<Req, Res> exchange, AnnotationMetadata annotationMetadata, HttpResponse<?> response) {
@@ -689,14 +726,17 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                 if (statusRoute != null) {
                     invokeRouteMatch(req, res, statusRoute, true, exchange);
                 } else {
-                    res.status(code, statusException.getMessage());
-                    final Object body = statusException.getBody().orElse(null);
-                    if (body != null) {
-                        res.body(body);
-                    } else if (isErrorStatus) {
-                        res.body(newJsonError(req, statusException.getMessage()));
-                    }
-                    encodeResponse(exchange, AnnotationMetadata.EMPTY_METADATA, res);
+                    emitError(exchange, res, req, (emitter -> {
+                        res.status(code, statusException.getMessage());
+                        final Object body = statusException.getBody().orElse(null);
+                        if (body != null) {
+                            res.body(body);
+                        } else if (isErrorStatus) {
+                            res.body(newJsonError(req, statusException.getMessage()));
+                        }
+                        emitter.onNext(res);
+                        emitter.onComplete();
+                    }));
                 }
 
             } else {
@@ -751,7 +791,11 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                 if (LOG.isErrorEnabled()) {
                     LOG.error("Error occurred executing exception handler [" + exceptionHandler.getClass() + "]: " + e.getMessage(), e);
                 }
-                res.status(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+                emitError(exchange, res, req, (emitter) -> {
+                    res.status(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+                    emitter.onNext(res);
+                    emitter.onComplete();
+                });
             }
         } else {
             if (defaultStatus.getCode() >= 500) {
@@ -763,10 +807,12 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                     LOG.debug(defaultStatus.getReason() + ": " + e.getMessage(), e);
                 }
             }
-            res.status(defaultStatus)
-                    .body(newJsonError(req, e.getMessage()));
-
-            encodeResponse(exchange, AnnotationMetadata.EMPTY_METADATA, res);
+            emitError(exchange, res, req, (emitter) -> {
+                res.status(defaultStatus)
+                   .body(newJsonError(req, e.getMessage()));
+                emitter.onNext(res);
+                emitter.onComplete();
+            });
         }
     }
 
@@ -784,15 +830,23 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
     }
 
     private RouteMatch<Object> lookupErrorRoute(RouteMatch<?> route, Throwable e) {
-        return router.route(route.getDeclaringType(), e)
-                .orElseGet(() -> router.route(e).orElse(null));
+        if (route == null) {
+            return router.route(e).orElse(null);
+        } else {
+            return router.route(route.getDeclaringType(), e)
+                    .orElseGet(() -> router.route(e).orElse(null));
+        }
     }
 
     private RouteMatch<Object> lookupStatusRoute(RouteMatch<?> route, HttpStatus status) {
-        return router.route(route.getDeclaringType(), status)
-                .orElseGet(() ->
-                        router.route(status).orElse(null)
-                );
+        if (route == null) {
+            return router.route(status).orElse(null);
+        } else {
+            return router.route(route.getDeclaringType(), status)
+                    .orElseGet(() ->
+                                       router.route(status).orElse(null)
+                    );
+        }
     }
 
     private Publisher<? extends MutableHttpResponse<?>> filterPublisher(
@@ -801,6 +855,9 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
             boolean skipOncePerRequest) {
         Publisher<? extends io.micronaut.http.MutableHttpResponse<?>> finalPublisher;
         List<HttpFilter> filters = new ArrayList<>(router.findFilters(requestReference.get()));
+        if (filters.isEmpty()) {
+            return routePublisher;
+        }
         if (skipOncePerRequest) {
             filters.removeIf(filter -> filter instanceof OncePerRequestHttpServerFilter);
         }
@@ -824,7 +881,9 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                 }
             };
             HttpFilter httpFilter = filters.get(0);
-            Publisher<? extends io.micronaut.http.HttpResponse<?>> resultingPublisher = httpFilter.doFilter(requestReference.get(), filterChain);
+            final HttpRequest<?> req = requestReference.get();
+            Publisher<? extends io.micronaut.http.HttpResponse<?>> resultingPublisher = ServerRequestContext
+                        .with(req, (Supplier<Publisher<? extends HttpResponse<?>>>) () -> httpFilter.doFilter(req, filterChain));
             //noinspection unchecked
             finalPublisher = (Publisher<? extends MutableHttpResponse<?>>) resultingPublisher;
         } else {
