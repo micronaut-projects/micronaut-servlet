@@ -37,6 +37,7 @@ import io.micronaut.servlet.http.ServletHttpResponse;
 import io.micronaut.servlet.http.StreamedServletMessage;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
+import io.reactivex.Scheduler;
 import io.reactivex.schedulers.Schedulers;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
@@ -83,6 +84,7 @@ public class DefaultServletHttpRequest<B> implements
     private final MediaTypeCodecRegistry codecRegistry;
     private DefaultServletCookies cookies;
     private Object body;
+    private Scheduler scheduler;
 
     /**
      * Default constructor.
@@ -133,11 +135,16 @@ public class DefaultServletHttpRequest<B> implements
 
     @Override
     public Publisher<? extends MutableHttpResponse<?>> subscribeOnExecutor(Publisher<? extends MutableHttpResponse<?>> responsePublisher) {
-        final AsyncContext asyncContext = delegate.startAsync();
-        Executor executor = asyncContext::start;
-        return Flowable.fromPublisher(responsePublisher)
-                .subscribeOn(Schedulers.from(executor))
-                .doAfterTerminate(asyncContext::complete);
+        if (this.scheduler == null) {
+
+            final AsyncContext asyncContext = delegate.startAsync();
+            this.scheduler = Schedulers.from(asyncContext::start);
+            return Flowable.fromPublisher(responsePublisher)
+                    .subscribeOn(scheduler)
+                    .doAfterTerminate(asyncContext::complete);
+        } else {
+            return responsePublisher;
+        }
     }
 
     @Nonnull
