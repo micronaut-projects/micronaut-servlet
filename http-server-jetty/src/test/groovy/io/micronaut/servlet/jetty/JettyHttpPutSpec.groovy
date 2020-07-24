@@ -150,7 +150,7 @@ class JettyHttpPutSpec extends Specification {
         BlockingHttpClient blockingHttpClient = client.toBlocking()
         String result = blockingHttpClient.retrieve(
                 HttpRequest.PUT("/put/optionalJson", [enable: true])
-                        .accept(MediaType.APPLICATION_JSON_TYPE),
+                        .accept(MediaType.TEXT_PLAIN),
 
                 String
         )

@@ -312,8 +312,9 @@ public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpSe
         return Optional.ofNullable(body);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public MutableHttpResponse<B> body(@Nullable B body) {
+    public <T> MutableHttpResponse<T> body(@edu.umd.cs.findbugs.annotations.Nullable T body) {
         if (body != null) {
             getContentType().orElseGet(() -> {
                 final Produces ann = body.getClass().getAnnotation(Produces.class);
@@ -328,8 +329,8 @@ public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpSe
                 return null;
             });
         }
-        this.body = body;
-        return this;
+        this.body = (B) body;
+        return (MutableHttpResponse<T>) this;
     }
 
     @Override

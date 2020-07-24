@@ -9,12 +9,9 @@ import io.micronaut.http.annotation.Get
 import io.micronaut.http.client.RxHttpClient
 import io.micronaut.http.client.annotation.Client
 import io.micronaut.http.client.exceptions.HttpClientResponseException
-import io.micronaut.http.server.types.files.AttachedFile
 import io.micronaut.http.server.types.files.StreamedFile
 import io.micronaut.http.server.types.files.SystemFile
 import io.micronaut.test.annotation.MicronautTest
-import spock.lang.IgnoreIf
-import spock.lang.PendingFeature
 import spock.lang.Specification
 
 import javax.inject.Inject
@@ -232,13 +229,15 @@ class JettyFileTypeHandlerSpec extends Specification {
 
         @Get('/download')
         StreamedFile download() {
-            new StreamedFile(Files.newInputStream(tempFile.toPath()), "abc.html").attach("fileTypeHandlerSpec.html")
+            StreamedFile file = new StreamedFile(Files.newInputStream(tempFile.toPath()), MediaType.TEXT_HTML_TYPE)
+            file.attach("fileTypeHandlerSpec.html")
         }
 
         @Get('/custom-content-type')
         HttpResponse<StreamedFile> customContentType() {
-            HttpResponse.ok(new StreamedFile(Files.newInputStream(tempFile.toPath()), "abc.html").attach("temp.html"))
-                    .contentType(MediaType.TEXT_PLAIN_TYPE)
+            StreamedFile file = new StreamedFile(Files.newInputStream(tempFile.toPath()), MediaType.TEXT_PLAIN_TYPE)
+            file.attach("temp.html")
+            HttpResponse.ok(file).contentType(MediaType.TEXT_PLAIN_TYPE)
         }
 
         @Get('/piped-stream')
