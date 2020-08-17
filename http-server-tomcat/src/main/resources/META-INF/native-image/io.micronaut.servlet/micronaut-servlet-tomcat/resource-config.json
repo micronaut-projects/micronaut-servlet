@@ -47,6 +47,7 @@
     {"pattern":".*/mbeans-descriptors.xml$"},
     {"pattern":".*/*.properties$"},
     {"pattern":".*/*.dtd$"},
-    {"pattern":".*/*.xsd$"}
+    {"pattern":".*/*.xsd$"},
+    {"pattern":"\\Qorg/apache/catalina/loader/JdbcLeakPrevention.class\\E"}
   ]
 }

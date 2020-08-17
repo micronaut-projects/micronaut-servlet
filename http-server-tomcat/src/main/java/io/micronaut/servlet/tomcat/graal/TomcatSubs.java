@@ -34,9 +34,8 @@ import org.apache.coyote.http11.Http11Nio2Protocol;
 import org.apache.coyote.http11.Http11NioProtocol;
 import org.apache.coyote.http2.Http2Protocol;
 import org.apache.tomcat.util.compat.JreCompat;
-import org.apache.tomcat.util.modeler.NoDescriptorRegistry;
-import org.apache.tomcat.util.modeler.Registry;
 
+import java.rmi.registry.Registry;
 import java.security.ProtectionDomain;
 
 //CHECKSTYLE:OFF
@@ -86,7 +85,6 @@ import java.security.ProtectionDomain;
 })
 @Internal
 final class Constants {
-    static final NoDescriptorRegistry REGISTRY = new NoDescriptorRegistry();
 }
 
 /**
@@ -153,10 +151,6 @@ final class Org_apache_tomcat_util_compat_JreCompat {
 @Internal
 @TargetClass(Registry.class)
 final class Org_apache_tomcat_util_modeler_Registry {
-    @Substitute
-    public static synchronized Registry getRegistry(Object key, Object guard) {
-        return Constants.REGISTRY;
-    }
 }
 
 /**
