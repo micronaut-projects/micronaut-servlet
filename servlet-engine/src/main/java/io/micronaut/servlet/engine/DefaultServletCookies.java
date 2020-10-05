@@ -20,7 +20,11 @@ import io.micronaut.core.convert.ConversionService;
 import io.micronaut.http.cookie.Cookie;
 import io.micronaut.http.cookie.Cookies;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -31,6 +35,8 @@ import java.util.stream.Collectors;
  */
 public class DefaultServletCookies implements Cookies {
 
+    private static final javax.servlet.http.Cookie[] EMPTY_COOKIES = new javax.servlet.http.Cookie[0];
+
     private final javax.servlet.http.Cookie[] cookies;
 
     /**
@@ -38,7 +44,11 @@ public class DefaultServletCookies implements Cookies {
      * @param cookies The cookies
      */
     public DefaultServletCookies(javax.servlet.http.Cookie[] cookies) {
-        this.cookies = cookies;
+        if (cookies == null) {
+            this.cookies = EMPTY_COOKIES;
+        } else {
+            this.cookies = cookies;
+        }
     }
 
     @Override
