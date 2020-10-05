@@ -35,6 +35,8 @@ import java.util.stream.Collectors;
  */
 public class DefaultServletCookies implements Cookies {
 
+    private static final javax.servlet.http.Cookie[] EMPTY_COOKIES = new javax.servlet.http.Cookie[0];
+
     private final javax.servlet.http.Cookie[] cookies;
 
     /**
@@ -43,7 +45,7 @@ public class DefaultServletCookies implements Cookies {
      */
     public DefaultServletCookies(javax.servlet.http.Cookie[] cookies) {
         if (cookies == null) {
-            this.cookies = new javax.servlet.http.Cookie[]{};
+            this.cookies = EMPTY_COOKIES;
         } else {
             this.cookies = cookies;
         }
