@@ -55,6 +55,8 @@ import java.util.stream.Collectors;
 @Internal
 public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpServletResponse, B> {
 
+    private static final byte[] EMPTY_ARRAY = "[]".getBytes();
+
     private final HttpServletResponse delegate;
     private final DefaultServletHttpRequest<?> request;
     private final ServletResponseHeaders headers;
@@ -181,7 +183,11 @@ public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpSe
                 if (finished.compareAndSet(false, true)) {
                     try {
                         if (!raw && isJson && outputStream.isReady()) {
-                            outputStream.write(']');
+                            if (first) { //empty publisher
+                                outputStream.write(EMPTY_ARRAY);
+                            } else {
+                                outputStream.write(']');
+                            }
                             flushIfReady();
                         }
                         emitter.onNext(DefaultServletHttpResponse.this);

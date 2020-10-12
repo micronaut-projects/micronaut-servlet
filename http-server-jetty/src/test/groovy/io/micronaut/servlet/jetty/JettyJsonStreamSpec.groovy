@@ -182,6 +182,15 @@ class JettyJsonStreamSpec extends Specification {
         result.timeout(10, TimeUnit.SECONDS).blockingGet().bookCount == 7
     }
 
+    void "test returning an empty publisher"() {
+        when:
+        List<Book> books = Flowable.fromPublisher(bookClient.empty()).toList().blockingGet()
+
+        then:
+        noExceptionThrown()
+        books.isEmpty()
+    }
+
     @Client("/jsonstream/books")
     static interface BookClient {
         @Get(consumes = MediaType.APPLICATION_JSON_STREAM)
@@ -189,6 +198,9 @@ class JettyJsonStreamSpec extends Specification {
 
         @Post(uri = "/count", processes = MediaType.APPLICATION_JSON_STREAM)
         Single<LibraryStats> count(@Body Flowable<Book> theBooks)
+
+        @Get(uri = "/empty", consumes = MediaType.APPLICATION_JSON)
+        Publisher<Book> empty();
     }
 
     @Controller("/jsonstream/books")
@@ -218,6 +230,11 @@ class JettyJsonStreamSpec extends Specification {
                     .toList()
                     .map({ chunkList -> "\n" + chunkList.join("\n")})
                     .blockingGet()
+        }
+
+        @Get(uri = "/empty", produces = MediaType.APPLICATION_JSON)
+        Publisher<Book> empty() {
+            return Flowable.empty()
         }
     }
 
