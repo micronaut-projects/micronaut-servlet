@@ -1,6 +1,8 @@
 package io.micronaut.servlet.jetty
 
 import groovy.transform.InheritConstructors
+import io.micronaut.context.annotation.Property
+import io.micronaut.context.annotation.Requires
 import io.micronaut.http.HttpRequest
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
@@ -18,6 +20,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @MicronautTest
+@Property(name = "spec.name", value = "JettyExceptionHandlerSpec")
 class JettyExceptionHandlerSpec extends Specification {
 
     @Inject
@@ -65,6 +68,7 @@ class JettyExceptionHandlerSpec extends Specification {
     }
 
     @Singleton
+    @Requires(property = "spec.name", value = "JettyExceptionHandlerSpec")
     static class RuntimeExceptionHandler implements ExceptionHandler<RuntimeException, MutableHttpResponse<?>> {
         @Override
         MutableHttpResponse<?> handle(HttpRequest request, RuntimeException exception) {
