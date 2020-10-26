@@ -825,7 +825,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
     @SuppressWarnings("unchecked")
     private ExceptionHandler<Throwable, ?> lookupExceptionHandler(Throwable e) {
         final Class<? extends Throwable> type = e.getClass();
-        return applicationContext.findBean(ExceptionHandler.class, Qualifiers.byTypeArgumentsClosest(type, HttpResponse.class))
+        return applicationContext.findBean(ExceptionHandler.class, Qualifiers.byTypeArgumentsClosest(type, Object.class))
                 .orElse(null);
     }
 
