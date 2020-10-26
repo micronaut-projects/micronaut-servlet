@@ -6,7 +6,7 @@ import io.micronaut.http.MutableHttpRequest
 import io.micronaut.http.client.BlockingHttpClient
 import io.micronaut.http.client.HttpClient
 import io.micronaut.http.client.annotation.Client
-import io.micronaut.test.annotation.MicronautTest
+import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.reactivex.Flowable
 import io.micronaut.http.HttpRequest
 import io.micronaut.http.HttpResponse
