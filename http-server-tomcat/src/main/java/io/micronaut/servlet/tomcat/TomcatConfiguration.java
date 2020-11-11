@@ -27,9 +27,6 @@ import org.apache.catalina.connector.Connector;
 import org.apache.coyote.ajp.AjpAprProtocol;
 import org.apache.coyote.ajp.AjpNio2Protocol;
 import org.apache.coyote.ajp.AjpNioProtocol;
-import org.apache.coyote.http11.Http11AprProtocol;
-import org.apache.coyote.http11.Http11Nio2Protocol;
-import org.apache.coyote.http11.Http11NioProtocol;
 import org.apache.coyote.http2.Http2Protocol;
 
 import javax.annotation.Nullable;
@@ -45,9 +42,6 @@ import java.util.Optional;
 @ConfigurationProperties("tomcat")
 @TypeHint({
         TomcatConfiguration.class,
-        Http11NioProtocol.class,
-        Http11Nio2Protocol.class,
-        Http11AprProtocol.class,
         Http2Protocol.class,
         AjpAprProtocol.class,
         AjpNio2Protocol.class,
