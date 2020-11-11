@@ -1,6 +1,6 @@
 To deploy as a WAR file you need to make some adjustments to your dependencies.
 
-Firsts make the server you are using a `developmentOnly` dependency (or `provided` in Maven):
+First make the server you are using a `developmentOnly` dependency (or `provided` in Maven):
 
 dependency:io.micronaut.servlet:micronaut-http-server-jetty[version="{version}", scope="provided"]
 
