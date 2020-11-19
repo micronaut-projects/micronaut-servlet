@@ -16,6 +16,8 @@
 package io.micronaut.servlet.engine.server;
 
 import io.micronaut.context.ApplicationContext;
+import io.micronaut.discovery.ServiceInstance;
+import io.micronaut.discovery.event.ServiceReadyEvent;
 import io.micronaut.http.server.exceptions.HttpServerException;
 import io.micronaut.runtime.ApplicationConfiguration;
 import io.micronaut.runtime.server.EmbeddedServer;
@@ -76,6 +78,15 @@ public abstract class AbstractServletServer<T> implements EmbeddedServer {
             }
             startServer();
             applicationContext.publishEvent(new ServerStartupEvent(this));
+            applicationConfiguration.getName().ifPresent((name) -> {
+                ServiceInstance.Builder builder = ServiceInstance.builder(name, getURI());
+                ApplicationConfiguration.InstanceConfiguration instance = applicationConfiguration.getInstance();
+                instance.getGroup().ifPresent(builder::group);
+                instance.getZone().ifPresent(builder::zone);
+                builder.metadata(instance.getMetadata());
+                instance.getId().ifPresent(builder::instanceId);
+                applicationContext.publishEvent(new ServiceReadyEvent(builder.build()));
+            });
         } catch (Exception e) {
             throw new HttpServerException(
                     "Error starting HTTP server: " + e.getMessage(), e
