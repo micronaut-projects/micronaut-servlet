@@ -9,6 +9,7 @@ dependencies {
 
     testAnnotationProcessor "io.micronaut:micronaut-inject-java"
     testImplementation "io.micronaut:micronaut-inject-groovy"
+    testImplementation "io.micronaut:micronaut-management"
     testImplementation "io.micronaut:micronaut-http-client"
     testImplementation "io.micronaut.test:micronaut-test-spock:$micronautTestVersion"
     testImplementation("org.codehaus.groovy:groovy-json")
