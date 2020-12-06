@@ -35,6 +35,8 @@ import io.micronaut.http.codec.CodecException;
 import io.micronaut.http.codec.MediaTypeCodec;
 import io.micronaut.http.codec.MediaTypeCodecRegistry;
 import io.micronaut.http.context.ServerRequestContext;
+import io.micronaut.http.context.event.HttpRequestReceivedEvent;
+import io.micronaut.http.context.event.HttpRequestTerminatedEvent;
 import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.http.filter.HttpFilter;
 import io.micronaut.http.filter.HttpServerFilter;
@@ -174,6 +176,8 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
         try {
             final MutableHttpResponse<Object> res = exchange.getResponse();
             final HttpRequest<Object> req = exchange.getRequest();
+            applicationContext.publishEvent(new HttpRequestReceivedEvent(req));
+
             final List<UriRouteMatch<Object, Object>> matchingRoutes = router.findAllClosest(req);
             if (CollectionUtils.isNotEmpty(matchingRoutes)) {
                 RouteMatch<Object> route;
@@ -248,6 +252,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                 }
             }
         } finally {
+            applicationContext.publishEvent(new HttpRequestTerminatedEvent(exchange.getRequest()));
             if (LOG.isTraceEnabled()) {
                 final HttpRequest<? super Object> r = exchange.getRequest();
                 LOG.trace("Executed HTTP Request [{} {}] in: {}ms",
