@@ -50,7 +50,7 @@ public class MicronautServletInitializer implements ServletContainerInitializer 
     /**
      * Builds the application context.
      * @param ctx The context
-     * @return The applicaiton context builder
+     * @return The application context builder
      */
     protected ApplicationContextBuilder buildApplicationContext(ServletContext ctx) {
         return ApplicationContext
