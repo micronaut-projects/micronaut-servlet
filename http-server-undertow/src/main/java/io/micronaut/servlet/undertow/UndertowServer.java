@@ -113,7 +113,7 @@ public class UndertowServer extends AbstractServletServer<Undertow> {
     public URI getURI() {
         try {
             return new URI(getScheme(), null, getHost(), getPort(), null, null, null);
-        } catch(URISyntaxException e) {
+        } catch (URISyntaxException e) {
             throw new InternalServerException(e.getMessage(), e);
         }
     }
