@@ -111,7 +111,11 @@ public class UndertowServer extends AbstractServletServer<Undertow> {
 
     @Override
     public URI getURI() {
-        return URI.create(getScheme() + "://" + getHost() + ":" + getPort());
+        try {
+            return new URI(getScheme(), null, getHost(), getPort(), null, null, null);
+        } catch(URISyntaxException e) {
+            throw new InternalServerException(e.getMessage(), e);
+        }
     }
 
     @Override
