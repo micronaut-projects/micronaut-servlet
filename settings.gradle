@@ -5,3 +5,5 @@ include 'servlet-engine'
 include 'http-server-jetty'
 include 'http-server-undertow'
 include 'http-server-tomcat'
+
+include 'test-kotlin-jetty'
