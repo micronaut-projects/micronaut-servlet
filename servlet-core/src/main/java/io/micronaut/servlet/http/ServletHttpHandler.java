@@ -282,7 +282,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                 req,
                 res,
                 null,
-                true,
+                false,
                 exchange,
                 responsePublisher,
                 AnnotationMetadata.EMPTY_METADATA
@@ -791,9 +791,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                         emitter.onComplete();
                     }));
                 }
-
             } else {
-
                 RouteMatch<Object> errorRoute = lookupErrorRoute(route, e);
                 if (errorRoute == null) {
                     if (e instanceof CodecException) {
