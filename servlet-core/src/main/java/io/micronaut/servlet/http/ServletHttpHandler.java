@@ -31,6 +31,7 @@ import io.micronaut.http.*;
 import io.micronaut.http.annotation.Header;
 import io.micronaut.http.annotation.Produces;
 import io.micronaut.http.annotation.Status;
+import io.micronaut.http.bind.binders.ContinuationArgumentBinder;
 import io.micronaut.http.codec.CodecException;
 import io.micronaut.http.codec.MediaTypeCodec;
 import io.micronaut.http.codec.MediaTypeCodecRegistry;
@@ -46,6 +47,7 @@ import io.micronaut.http.hateoas.JsonError;
 import io.micronaut.http.server.binding.RequestArgumentSatisfier;
 import io.micronaut.http.server.exceptions.ExceptionHandler;
 import io.micronaut.inject.qualifiers.Qualifiers;
+import io.micronaut.web.router.MethodBasedRouteMatch;
 import io.micronaut.web.router.RouteMatch;
 import io.micronaut.web.router.Router;
 import io.micronaut.web.router.UriRoute;
@@ -64,12 +66,16 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.*;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+
+import static io.micronaut.core.util.KotlinUtils.isKotlinCoroutineSuspended;
+import static io.micronaut.inject.util.KotlinExecutableMethodUtils.isKotlinFunctionReturnTypeUnit;
 
 /**
  * An HTTP handler that can deal with Serverless requests.
@@ -544,14 +550,17 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
             if (result instanceof Optional) {
                 result = ((Optional<?>) result).orElse(null);
             }
-            MutableHttpResponse<Object> httpResponse = res;
+            MutableHttpResponse<Object> httpResponse;
             if (result instanceof MutableHttpResponse) {
                 httpResponse = (MutableHttpResponse<Object>) result;
                 result = httpResponse.body();
+            } else {
+                httpResponse = res;
             }
             final ReturnType<?> returnType = computedRoute.getReturnType();
             final Argument<?> genericReturnType = returnType.asArgument();
             final Class<?> javaReturnType = returnType.getType();
+            boolean isSuspended = route.isSuspended();
             if (result == null) {
                 boolean isVoid = javaReturnType == void.class ||
                         Completable.class.isAssignableFrom(javaReturnType) ||
@@ -591,9 +600,48 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                 //noinspection unchecked
                 return Publishers.convertPublisher(result, Flowable.class);
             } else {
-                return Publishers.just(
-                        httpResponse.body(result)
-                );
+                if (isSuspended) {
+                    boolean isKotlinFunctionReturnTypeUnit =
+                            route instanceof MethodBasedRouteMatch &&
+                                    isKotlinFunctionReturnTypeUnit(((MethodBasedRouteMatch) route).getExecutableMethod());
+                    final Supplier<CompletableFuture<?>> supplier = ContinuationArgumentBinder.extractContinuationCompletableFutureSupplier(req);
+                    if (isKotlinCoroutineSuspended(result)) {
+                        return Flowable.create(emitter -> {
+                            CompletableFuture<?> f = supplier.get();
+                            f.whenComplete((o, throwable) -> {
+                                if (throwable != null) {
+                                    emitter.onError(throwable);
+                                } else {
+                                    if (o == null) {
+                                        emitter.onNext(httpResponse.status(HttpStatus.NOT_FOUND));
+                                    } else {
+                                        if (!isKotlinFunctionReturnTypeUnit) {
+                                            httpResponse.body(o);
+                                        }
+                                        emitter.onNext(httpResponse);
+                                    }
+                                    emitter.onComplete();
+                                }
+                            });
+                        }, BackpressureStrategy.ERROR);
+                    } else {
+                        Object suspendedBody;
+                        if (isKotlinFunctionReturnTypeUnit) {
+                            suspendedBody = Completable.complete();
+                        } else {
+                            suspendedBody = result;
+                        }
+                        if (suspendedBody instanceof HttpResponse) {
+                            return Publishers.just(httpResponse);
+                        } else {
+                            return Publishers.just(httpResponse.body(suspendedBody));
+                        }
+                    }
+                } else {
+                    return Publishers.just(
+                            httpResponse.body(result)
+                    );
+                }
             }
         });
         return filterPublisher(new AtomicReference<>(req), responsePublisher, isErrorRoute);
