@@ -19,6 +19,7 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.LifeCycle;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.async.publisher.Publishers;
 import io.micronaut.core.convert.exceptions.ConversionErrorException;
 import io.micronaut.core.convert.value.ConvertibleValues;
@@ -61,7 +62,6 @@ import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.micronaut.core.annotation.Nonnull;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -325,7 +325,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
         }
     }
 
-    @Nonnull
+    @NonNull
     @Override
     public ServletHttpHandler<Req, Res> start() {
         if (!applicationContext.isRunning()) {
@@ -334,7 +334,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
         return this;
     }
 
-    @Nonnull
+    @NonNull
     @Override
     public ServletHttpHandler<Req, Res> stop() {
         close();

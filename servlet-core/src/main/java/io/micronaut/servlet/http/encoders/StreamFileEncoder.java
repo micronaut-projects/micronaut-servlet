@@ -16,6 +16,7 @@
 package io.micronaut.servlet.http.encoders;
 
 import io.micronaut.core.annotation.AnnotationMetadata;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.async.publisher.Publishers;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MutableHttpResponse;
@@ -27,7 +28,6 @@ import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
 import org.reactivestreams.Publisher;
 
-import io.micronaut.core.annotation.Nonnull;
 import javax.inject.Singleton;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -48,9 +48,9 @@ public class StreamFileEncoder extends AbstractFileEncoder<StreamedFile> {
 
     @Override
     public Publisher<MutableHttpResponse<?>> encode(
-            @Nonnull ServletExchange<?, ?> exchange,
+            @NonNull ServletExchange<?, ?> exchange,
             AnnotationMetadata annotationMetadata,
-            @Nonnull StreamedFile value) {
+            @NonNull StreamedFile value) {
         final ServletHttpRequest<?, ? super Object> request = exchange.getRequest();
         ServletHttpResponse<?, ? super Object> response = exchange.getResponse();
         if (ifNotModified(value, request, response)) {

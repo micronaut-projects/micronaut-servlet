@@ -15,6 +15,7 @@
  */
 package io.micronaut.servlet.http;
 
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.async.publisher.Publishers;
 import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.convert.ConversionError;
@@ -33,7 +34,7 @@ import io.micronaut.http.codec.MediaTypeCodecRegistry;
 import io.reactivex.Flowable;
 import org.reactivestreams.Publisher;
 
-import io.micronaut.core.annotation.Nonnull;
+
 import java.io.*;
 import java.lang.reflect.Array;
 import java.util.Collections;
@@ -81,7 +82,7 @@ public class ServletBodyBinder<T> extends DefaultBodyAnnotationBinder<T> impleme
                         return servletHttpRequest.getReader();
                     }
 
-                    @Nonnull
+                    @NonNull
                     @Override
                     public InputStream asInputStream() throws IOException {
                         return servletHttpRequest.getInputStream();
@@ -92,7 +93,7 @@ public class ServletBodyBinder<T> extends DefaultBodyAnnotationBinder<T> impleme
                         return true;
                     }
 
-                    @Nonnull
+                    @NonNull
                     @Override
                     public String getName() {
                         return servletHttpRequest.getPath();
