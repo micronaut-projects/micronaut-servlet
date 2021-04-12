@@ -20,7 +20,7 @@ import io.micronaut.core.annotation.Indexed;
 import io.micronaut.http.MutableHttpResponse;
 import org.reactivestreams.Publisher;
 
-import javax.annotation.Nonnull;
+import io.micronaut.core.annotation.Nonnull;
 
 /**
  * An interface for custom encoding of the HTTP response.

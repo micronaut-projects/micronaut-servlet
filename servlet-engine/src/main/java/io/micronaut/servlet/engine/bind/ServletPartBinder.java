@@ -32,7 +32,7 @@ import io.micronaut.http.server.exceptions.InternalServerException;
 import io.micronaut.servlet.engine.ServletCompletedFileUpload;
 import io.micronaut.servlet.http.ServletExchange;
 
-import javax.annotation.Nonnull;
+import io.micronaut.core.annotation.Nonnull;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import java.io.*;

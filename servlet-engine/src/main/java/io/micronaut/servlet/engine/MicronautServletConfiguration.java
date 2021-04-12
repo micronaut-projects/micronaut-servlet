@@ -22,7 +22,7 @@ import io.micronaut.core.bind.annotation.Bindable;
 import io.micronaut.core.naming.Named;
 import io.micronaut.http.server.HttpServerConfiguration;
 
-import javax.annotation.Nonnull;
+import io.micronaut.core.annotation.Nonnull;
 import javax.servlet.MultipartConfigElement;
 import java.io.File;
 import java.util.Optional;

@@ -33,7 +33,7 @@ import io.micronaut.http.codec.MediaTypeCodecRegistry;
 import io.reactivex.Flowable;
 import org.reactivestreams.Publisher;
 
-import javax.annotation.Nonnull;
+import io.micronaut.core.annotation.Nonnull;
 import java.io.*;
 import java.lang.reflect.Array;
 import java.util.Collections;

@@ -17,8 +17,8 @@ package io.micronaut.servlet.engine;
 
 import io.micronaut.http.cookie.Cookie;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import io.micronaut.core.annotation.Nonnull;
+import io.micronaut.core.annotation.Nullable;
 import java.util.Objects;
 
 /**

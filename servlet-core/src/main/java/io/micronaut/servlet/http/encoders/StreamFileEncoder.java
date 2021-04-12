@@ -27,7 +27,7 @@ import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
 import org.reactivestreams.Publisher;
 
-import javax.annotation.Nonnull;
+import io.micronaut.core.annotation.Nonnull;
 import javax.inject.Singleton;
 import java.io.InputStream;
 import java.io.OutputStream;

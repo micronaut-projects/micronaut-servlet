@@ -26,7 +26,7 @@ import io.micronaut.servlet.http.ServletResponseEncoder;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaderValues;
 
-import javax.annotation.Nonnull;
+import io.micronaut.core.annotation.Nonnull;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
