@@ -43,9 +43,10 @@ import io.micronaut.http.filter.HttpFilter;
 import io.micronaut.http.filter.HttpServerFilter;
 import io.micronaut.http.filter.OncePerRequestHttpServerFilter;
 import io.micronaut.http.filter.ServerFilterChain;
-import io.micronaut.http.hateoas.JsonError;
 import io.micronaut.http.server.binding.RequestArgumentSatisfier;
 import io.micronaut.http.server.exceptions.ExceptionHandler;
+import io.micronaut.http.server.exceptions.response.ErrorContext;
+import io.micronaut.http.server.exceptions.response.ErrorResponseProcessor;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.web.router.MethodBasedRouteMatch;
 import io.micronaut.web.router.RouteMatch;
@@ -96,6 +97,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
     private final MediaTypeCodecRegistry mediaTypeCodecRegistry;
     private final ApplicationContext applicationContext;
     private final Map<Class<?>, ServletResponseEncoder<?>> responseEncoders;
+    private final ErrorResponseProcessor errorResponseProcessor;
 
     /**
      * Default constructor.
@@ -113,6 +115,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                         ServletResponseEncoder::getResponseType,
                         (o) -> o
                 ));
+        this.errorResponseProcessor = applicationContext.getBean(ErrorResponseProcessor.class);
 
         // hack for bug fixed in Micronaut 1.3.3
         applicationContext.getEnvironment()
@@ -243,12 +246,11 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                         } else {
                             emitError(exchange, res, req, emitter -> {
                                 res.getHeaders().allowGeneric(existingRouteMethods);
-                                res.status(HttpStatus.METHOD_NOT_ALLOWED)
-                                        .body(new JsonError(
-                                                "Method [" + req.getMethod() + "] not allowed for URI [" + req
-                                                        .getPath() + "]. Allowed methods: " + existingRouteMethods
-                                        ));
-                                emitter.onNext(res);
+                                res.status(HttpStatus.METHOD_NOT_ALLOWED);
+                                emitter.onNext(errorResponseProcessor.processResponse(ErrorContext.builder(req)
+                                        .errorMessage("Method [" + req.getMethod() + "] not allowed for URI [" + req
+                                                .getPath() + "]. Allowed methods: " + existingRouteMethods)
+                                        .build(), res));
                                 emitter.onComplete();
                             });
                         }
@@ -309,9 +311,8 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
             invokeRouteMatch(req, res, notFoundRoute, true, exchange);
         } else {
             emitError(exchange, res, req, emitter -> {
-                res.status(httpStatus)
-                        .body(newJsonError(req, httpStatus.getReason()));
-                emitter.onNext(res);
+                res.status(httpStatus);
+                emitter.onNext(errorResponseProcessor.processResponse(ErrorContext.builder(req).build(), res));
                 emitter.onComplete();
             });
         }
@@ -405,16 +406,20 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                                                 true
                                         ));
                                         return notFoundFlowable.onErrorReturn(throwable -> {
-
                                             if (LOG.isErrorEnabled()) {
                                                 LOG.error("Error occuring invoking 404 handler: " + throwable.getMessage());
                                             }
-                                            MutableHttpResponse<Object> defaultNotFound = res.status(404).body(newJsonError(req, "Page Not Found"));
+                                            MutableHttpResponse<Object> defaultNotFound = errorResponseProcessor.processResponse(
+                                                    ErrorContext.builder(req).build(),
+                                                    res.status(404));
                                             encodeResponse(exchange, annotationMetadata, defaultNotFound);
                                             return defaultNotFound;
                                         });
                                     } else {
-                                        return Publishers.just(res.status(404).body(newJsonError(req, "Page Not Found")));
+                                        MutableHttpResponse<Object> defaultNotFound = errorResponseProcessor.processResponse(
+                                                ErrorContext.builder(req).build(),
+                                                res.status(404));
+                                        return Publishers.just(defaultNotFound);
                                     }
                                 }));
                             } else {
@@ -780,14 +785,16 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                     invokeRouteMatch(req, res, statusRoute, true, exchange);
                 } else {
                     emitError(exchange, res, req, (emitter -> {
-                        res.status(code, statusException.getMessage());
+                        MutableHttpResponse<Object> response = res.status(code, statusException.getMessage());
                         final Object body = statusException.getBody().orElse(null);
                         if (body != null) {
-                            res.body(body);
+                            response.body(body);
                         } else if (isErrorStatus) {
-                            res.body(newJsonError(req, statusException.getMessage()));
+                            response = errorResponseProcessor.processResponse(ErrorContext.builder(req)
+                                    .errorMessage(statusException.getMessage())
+                                    .build(), response);
                         }
-                        emitter.onNext(res);
+                        emitter.onNext(response);
                         emitter.onComplete();
                     }));
                 }
@@ -859,18 +866,12 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                 }
             }
             emitError(exchange, res, req, (emitter) -> {
-                res.status(defaultStatus)
-                   .body(newJsonError(req, e.getMessage()));
-                emitter.onNext(res);
+                emitter.onNext(errorResponseProcessor.processResponse(ErrorContext.builder(req)
+                        .errorMessage(e.getMessage())
+                        .build(), res.status(defaultStatus)));
                 emitter.onComplete();
             });
         }
-    }
-
-    private JsonError newJsonError(HttpRequest<Object> req, String message) {
-        JsonError jsonError = new JsonError(message);
-        jsonError.link("self", req.getPath());
-        return jsonError;
     }
 
     @SuppressWarnings("unchecked")
