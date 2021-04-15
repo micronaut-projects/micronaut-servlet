@@ -34,11 +34,10 @@ class JettySslSpec extends Specification implements TestPropertyProvider {
         response.body() == "true"
     }
 
-
     @Override
     Map<String, String> getProperties() {
-        return [
-                'micronaut.http.client.read-timeout': '20s',
+        [
+                'micronaut.http.client.read-timeout': '50s',
                 'micronaut.ssl.enabled': StringUtils.TRUE,
                 // Cannot be true!
                 'micronaut.ssl.buildSelfSigned': StringUtils.FALSE,
