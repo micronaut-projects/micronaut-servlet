@@ -1,6 +1,8 @@
-
 package io.micronaut.servlet.jetty
 
+import io.micronaut.context.annotation.Property
+import io.micronaut.context.annotation.Requires
+import io.micronaut.core.util.StringUtils
 import io.micronaut.http.HttpRequest
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.Controller
@@ -9,10 +11,12 @@ import io.micronaut.http.client.RxHttpClient
 import io.micronaut.http.client.annotation.Client
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.micronaut.test.support.TestPropertyProvider
+import spock.lang.IgnoreIf
 import spock.lang.Specification
-
 import javax.inject.Inject
 
+@IgnoreIf({env['GITHUB_RUN_ID']})
+@Property(name = 'spec.name', value = 'JettySslSpec')
 @MicronautTest
 class JettySslSpec extends Specification implements TestPropertyProvider {
 
@@ -33,10 +37,10 @@ class JettySslSpec extends Specification implements TestPropertyProvider {
 
     @Override
     Map<String, String> getProperties() {
-        return [
-                'micronaut.ssl.enabled': true,
+        [
+                'micronaut.ssl.enabled': StringUtils.TRUE,
                 // Cannot be true!
-                'micronaut.ssl.buildSelfSigned': false,
+                'micronaut.ssl.buildSelfSigned': StringUtils.FALSE,
                 'micronaut.ssl.clientAuthentication': "need",
                 'micronaut.ssl.key-store.path': 'classpath:KeyStore.pkcs12',
                 'micronaut.ssl.key-store.type': 'PKCS12',
@@ -47,12 +51,13 @@ class JettySslSpec extends Specification implements TestPropertyProvider {
         ]
     }
 
+    @Requires(property = 'spec.name', value = 'JettySslSpec')
     @Controller
     static class TestController {
 
         @Get('/ssl')
         String html(HttpRequest<?> request) {
-            return request.isSecure()
+            request.isSecure()
         }
     }
 }
