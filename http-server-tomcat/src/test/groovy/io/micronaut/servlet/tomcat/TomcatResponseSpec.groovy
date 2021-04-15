@@ -39,7 +39,6 @@ class TomcatResponseSpec extends Specification {
 
         @Post("/bar")
         public HttpResponse bar(@Body String json) {
-            System.out.println(json);
 
             return HttpResponse.ok();
         }
