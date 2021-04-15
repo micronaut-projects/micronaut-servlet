@@ -45,7 +45,7 @@ class JettyCookieSpec extends Specification {
     static class StatusController {
         @Get
         HttpStatus index() {
-            return HttpStatus.ACCEPTED
+            HttpStatus.ACCEPTED
         }
     }
 
