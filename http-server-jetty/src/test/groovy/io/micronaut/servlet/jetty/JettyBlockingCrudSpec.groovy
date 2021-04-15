@@ -2,6 +2,8 @@
 package io.micronaut.servlet.jetty
 
 import io.micronaut.context.ApplicationContext
+import io.micronaut.context.annotation.Property
+import io.micronaut.context.annotation.Requires
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.*
@@ -13,6 +15,7 @@ import spock.lang.Specification
 import javax.inject.Inject
 import java.util.concurrent.atomic.AtomicLong
 
+@Property(name = 'spec.name', value = 'JettyBlockingCrudSpec')
 @MicronautTest
 class JettyBlockingCrudSpec extends Specification {
 
@@ -246,6 +249,7 @@ class JettyBlockingCrudSpec extends Specification {
         String title
     }
 
+    @Requires(property = 'spec.name', value = 'JettyBlockingCrudSpec')
     @Client("/void/404")
     static interface VoidNotFoundClient {
 
