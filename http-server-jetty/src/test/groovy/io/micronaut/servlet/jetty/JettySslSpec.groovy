@@ -1,6 +1,8 @@
 
 package io.micronaut.servlet.jetty
 
+import io.micronaut.context.annotation.Property
+import io.micronaut.context.annotation.Requires
 import io.micronaut.http.HttpRequest
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.Controller
@@ -13,6 +15,7 @@ import spock.lang.Specification
 
 import javax.inject.Inject
 
+@Property(name = 'spec.name', value = 'JettySslSpec')
 @MicronautTest
 class JettySslSpec extends Specification implements TestPropertyProvider {
 
@@ -48,6 +51,7 @@ class JettySslSpec extends Specification implements TestPropertyProvider {
         ]
     }
 
+    @Requires(property = 'spec.name', value = 'JettySslSpec')
     @Controller
     static class TestController {
 
