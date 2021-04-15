@@ -58,7 +58,7 @@ class JettySslSpec extends Specification implements TestPropertyProvider {
 
         @Get('/ssl')
         String html(HttpRequest<?> request) {
-            return request.isSecure()
+            request.isSecure()
         }
     }
 }
