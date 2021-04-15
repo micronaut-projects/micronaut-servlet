@@ -38,9 +38,8 @@ class TomcatResponseSpec extends Specification {
     static class FooController {
 
         @Post("/bar")
-        public HttpResponse bar(@Body String json) {
-
-            return HttpResponse.ok();
+        HttpResponse bar(@Body String json) {
+            HttpResponse.ok()
         }
     }
 }
