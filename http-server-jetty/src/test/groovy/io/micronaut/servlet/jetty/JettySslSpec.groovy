@@ -12,10 +12,12 @@ import io.micronaut.http.client.RxHttpClient
 import io.micronaut.http.client.annotation.Client
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.micronaut.test.support.TestPropertyProvider
+import spock.lang.IgnoreIf
 import spock.lang.Specification
 
 import javax.inject.Inject
 
+@IgnoreIf({env['GITHUB_RUN_ID']})
 @Property(name = 'spec.name', value = 'JettySslSpec')
 @MicronautTest
 class JettySslSpec extends Specification implements TestPropertyProvider {
@@ -37,7 +39,6 @@ class JettySslSpec extends Specification implements TestPropertyProvider {
     @Override
     Map<String, String> getProperties() {
         [
-                'micronaut.http.client.read-timeout': '50s',
                 'micronaut.ssl.enabled': StringUtils.TRUE,
                 // Cannot be true!
                 'micronaut.ssl.buildSelfSigned': StringUtils.FALSE,
