@@ -11,6 +11,7 @@ import io.micronaut.http.annotation.Post
 import io.micronaut.http.client.RxHttpClient
 import io.micronaut.http.client.annotation.Client
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
+import spock.lang.Issue
 import spock.lang.Specification
 
 import javax.inject.Inject
@@ -22,7 +23,8 @@ class TomcatResponseSpec extends Specification {
     @Client("/")
     RxHttpClient client
 
-    void 'test response'() {
+    @Issue("https://github.com/micronaut-projects/micronaut-servlet/issues/177")
+    void 'verify controller with HttpResponse as returned type is handled correctly'() {
         when:
         def response = client.exchange(HttpRequest.POST("/response/test/bar", "content"), String).blockingFirst()
 
