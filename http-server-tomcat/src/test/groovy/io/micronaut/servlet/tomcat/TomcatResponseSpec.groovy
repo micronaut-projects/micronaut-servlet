@@ -1,5 +1,7 @@
 package io.micronaut.servlet.tomcat
 
+import io.micronaut.context.annotation.Property
+import io.micronaut.context.annotation.Requires
 import io.micronaut.http.HttpRequest
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
@@ -13,6 +15,7 @@ import spock.lang.Specification
 
 import javax.inject.Inject
 
+@Property(name = 'spec.name', value = 'TomcatResponseSpec')
 @MicronautTest
 class TomcatResponseSpec extends Specification {
     @Inject
@@ -28,6 +31,7 @@ class TomcatResponseSpec extends Specification {
         response.body() == null
     }
 
+    @Requires(property = 'spec.name', value = 'TomcatResponseSpec')
     @Controller("/response/test")
     static class FooController {
 
