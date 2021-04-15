@@ -320,7 +320,7 @@ public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpSe
 
     @SuppressWarnings("unchecked")
     @Override
-    public <T> MutableHttpResponse<T> body(@edu.umd.cs.findbugs.annotations.Nullable T body) {
+    public <T> MutableHttpResponse<T> body(@Nullable T body) {
         if (body != null) {
             getContentType().orElseGet(() -> {
                 final Produces ann = body.getClass().getAnnotation(Produces.class);
