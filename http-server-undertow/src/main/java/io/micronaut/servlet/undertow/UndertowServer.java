@@ -120,6 +120,6 @@ public class UndertowServer extends AbstractServletServer<Undertow> {
 
     @Override
     public boolean isRunning() {
-        return getApplicationContext().isRunning();
+        return getServer().getXnio() != null;
     }
 }
