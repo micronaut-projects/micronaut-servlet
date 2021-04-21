@@ -43,7 +43,7 @@ jobs:
         run: |
           [ -f ./setup.sh ] && ./setup.sh || true
       - name: Build with Gradle
-        run: ./gradlew dependencyUpdates check --no-daemon --parallel --continue
+        run: ./gradlew dependencyUpdates check --no-daemon --continue
         env:
            TESTCONTAINERS_RYUK_DISABLED: true        
       - name: Publish to Sonatype Snapshots
