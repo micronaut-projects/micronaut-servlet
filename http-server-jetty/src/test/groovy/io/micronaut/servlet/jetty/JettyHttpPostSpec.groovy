@@ -81,8 +81,6 @@ class JettyHttpPostSpec extends Specification {
         body.get() == book
     }
 
-
-
     void "test simple post request with URI template and JSON"() {
         given:
         def book = new Book(title: "The Stand",pages: 1000)

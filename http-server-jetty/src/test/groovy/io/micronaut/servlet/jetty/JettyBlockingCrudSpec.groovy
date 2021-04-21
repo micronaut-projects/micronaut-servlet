@@ -9,26 +9,20 @@ import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.*
 import io.micronaut.http.client.annotation.Client
 import io.micronaut.runtime.server.EmbeddedServer
-import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import spock.lang.Specification
-
-import javax.inject.Inject
 import java.util.concurrent.atomic.AtomicLong
 
-@Property(name = 'spec.name', value = 'JettyBlockingCrudSpec')
-@MicronautTest
 class JettyBlockingCrudSpec extends Specification {
-
-    @Inject
-    ApplicationContext context
-
-    @Inject
-    EmbeddedServer embeddedServer
 
     void "test configured client"() {
         given:
-        ApplicationContext anotherContext = ApplicationContext.run(
-                'book.service.uri':"${embeddedServer.URL}/blocking"
+        EmbeddedServer embeddedServer = ApplicationContext.run(EmbeddedServer, [
+                'spec.name': 'JettyBlockingCrudSpec',
+        ])
+        ApplicationContext anotherContext = ApplicationContext.run([
+                        'book.service.uri':"${embeddedServer.URL}/blocking",
+                        'spec.name': 'JettyBlockingCrudSpec',
+                ]
         )
         ConfiguredBookClient bookClient = anotherContext.getBean(ConfiguredBookClient)
 
@@ -37,10 +31,15 @@ class JettyBlockingCrudSpec extends Specification {
 
         cleanup:
         anotherContext.close()
+        embeddedServer.close()
     }
 
     void "test CRUD operations on generated client that returns blocking responses"() {
         given:
+        EmbeddedServer embeddedServer = ApplicationContext.run(EmbeddedServer, [
+                        'spec.name': 'JettyBlockingCrudSpec'
+                ])
+        ApplicationContext context = embeddedServer.applicationContext
         BookClient client = context.getBean(BookClient)
 
         when:
@@ -102,10 +101,18 @@ class JettyBlockingCrudSpec extends Specification {
 
         then:
         client.get(book.id) == null
+
+        cleanup:
+        context.close()
+        embeddedServer.close()
     }
 
     void "test DELETE operation with null values"() {
         given:
+        EmbeddedServer embeddedServer = ApplicationContext.run(EmbeddedServer, [
+                'spec.name': 'JettyBlockingCrudSpec'
+        ])
+        ApplicationContext context = embeddedServer.applicationContext
         BookClient client = context.getBean(BookClient)
 
         when:
@@ -113,10 +120,18 @@ class JettyBlockingCrudSpec extends Specification {
 
         then:
         thrown(IllegalArgumentException)
+
+        cleanup:
+        context.close()
+        embeddedServer.close()
     }
 
     void "test POST operation with null values"() {
         given:
+        EmbeddedServer embeddedServer = ApplicationContext.run(EmbeddedServer, [
+                'spec.name': 'JettyBlockingCrudSpec'
+        ])
+        ApplicationContext context = embeddedServer.applicationContext
         BookClient client = context.getBean(BookClient)
 
         when:
@@ -124,10 +139,18 @@ class JettyBlockingCrudSpec extends Specification {
 
         then:
         thrown(IllegalArgumentException)
+
+        cleanup:
+        context.close()
+        embeddedServer.close()
     }
 
     void "test PUT operation with null values"() {
         given:
+        EmbeddedServer embeddedServer = ApplicationContext.run(EmbeddedServer, [
+                'spec.name': 'JettyBlockingCrudSpec'
+        ])
+        ApplicationContext context = embeddedServer.applicationContext
         BookClient client = context.getBean(BookClient)
 
         when:
@@ -135,10 +158,18 @@ class JettyBlockingCrudSpec extends Specification {
 
         then:
         thrown(IllegalArgumentException)
+
+        cleanup:
+        context.close()
+        embeddedServer.close()
     }
 
     void "test GET operation with null values"() {
         given:
+        EmbeddedServer embeddedServer = ApplicationContext.run(EmbeddedServer, [
+                'spec.name': 'JettyBlockingCrudSpec'
+        ])
+        ApplicationContext context = embeddedServer.applicationContext
         BookClient client = context.getBean(BookClient)
 
         when:
@@ -146,10 +177,18 @@ class JettyBlockingCrudSpec extends Specification {
 
         then:
         thrown(IllegalArgumentException)
+
+        cleanup:
+        context.close()
+        embeddedServer.close()
     }
 
     void "test a declarative client void method and 404 response"() {
         given:
+        EmbeddedServer embeddedServer = ApplicationContext.run(EmbeddedServer, [
+                'spec.name': 'JettyBlockingCrudSpec'
+        ])
+        ApplicationContext context = embeddedServer.applicationContext
         VoidNotFoundClient client = context.getBean(VoidNotFoundClient)
 
         when:
@@ -157,16 +196,23 @@ class JettyBlockingCrudSpec extends Specification {
 
         then:
         noExceptionThrown()
+
+        cleanup:
+        context.close()
+        embeddedServer.close()
     }
 
+    @Requires(property = 'spec.name', value = 'JettyBlockingCrudSpec')
     @Client('/blocking/books')
     static interface BookClient extends BookApi {
     }
 
+    @Requires(property = 'spec.name', value = 'JettyBlockingCrudSpec')
     @Client('${book.service.uri}/books')
     static interface ConfiguredBookClient extends BookApi {
     }
 
+    @Requires(property = 'spec.name', value = 'JettyBlockingCrudSpec')
     @Controller("/blocking/books")
     static class BookController implements BookApi {
 
