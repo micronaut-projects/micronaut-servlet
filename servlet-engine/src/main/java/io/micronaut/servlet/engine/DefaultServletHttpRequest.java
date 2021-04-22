@@ -16,6 +16,8 @@
 package io.micronaut.servlet.engine;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.convert.ConversionService;
@@ -42,8 +44,6 @@ import io.reactivex.schedulers.Schedulers;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.servlet.AsyncContext;
 import javax.servlet.ReadListener;
 import javax.servlet.ServletInputStream;
@@ -146,9 +146,9 @@ public class DefaultServletHttpRequest<B> implements
         }
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public <T> Optional<T> getBody(@Nonnull Argument<T> arg) {
+    public <T> Optional<T> getBody(@NonNull Argument<T> arg) {
         if (arg != null) {
             final Class<T> type = arg.getType();
             final MediaType contentType = getContentType().orElse(MediaType.APPLICATION_JSON_TYPE);
@@ -206,7 +206,7 @@ public class DefaultServletHttpRequest<B> implements
         return Optional.empty();
     }
 
-    @Nonnull
+    @NonNull
     @Override
     public Optional<Principal> getUserPrincipal() {
         return Optional.ofNullable(delegate.getUserPrincipal());
@@ -217,7 +217,7 @@ public class DefaultServletHttpRequest<B> implements
         return delegate.isSecure();
     }
 
-    @Nonnull
+    @NonNull
     @Override
     public Optional<MediaType> getContentType() {
         return Optional.ofNullable(delegate.getContentType())
@@ -229,7 +229,7 @@ public class DefaultServletHttpRequest<B> implements
         return delegate.getContentLength();
     }
 
-    @Nonnull
+    @NonNull
     @Override
     public InetSocketAddress getRemoteAddress() {
         return new InetSocketAddress(
@@ -238,7 +238,7 @@ public class DefaultServletHttpRequest<B> implements
         );
     }
 
-    @Nonnull
+    @NonNull
     @Override
     public InetSocketAddress getServerAddress() {
         return new InetSocketAddress(
@@ -257,7 +257,7 @@ public class DefaultServletHttpRequest<B> implements
         return Optional.ofNullable(delegate.getLocale());
     }
 
-    @Nonnull
+    @NonNull
     @Override
     public Charset getCharacterEncoding() {
         return Optional.ofNullable(delegate.getCharacterEncoding())
@@ -285,7 +285,7 @@ public class DefaultServletHttpRequest<B> implements
         return delegate;
     }
 
-    @Nonnull
+    @NonNull
     @Override
     public Cookies getCookies() {
         DefaultServletCookies cookies = this.cookies;
@@ -301,43 +301,43 @@ public class DefaultServletHttpRequest<B> implements
         return cookies;
     }
 
-    @Nonnull
+    @NonNull
     @Override
     public HttpParameters getParameters() {
         return parameters;
     }
 
-    @Nonnull
+    @NonNull
     @Override
     public HttpMethod getMethod() {
         return method;
     }
 
-    @Nonnull
+    @NonNull
     @Override
     public String getMethodName() {
         return delegate.getMethod();
     }
 
-    @Nonnull
+    @NonNull
     @Override
     public URI getUri() {
         return uri;
     }
 
-    @Nonnull
+    @NonNull
     @Override
     public HttpHeaders getHeaders() {
         return headers;
     }
 
-    @Nonnull
+    @NonNull
     @Override
     public MutableConvertibleValues<Object> getAttributes() {
         return this;
     }
 
-    @Nonnull
+    @NonNull
     @Override
     public Optional<B> getBody() {
         return Optional.empty();

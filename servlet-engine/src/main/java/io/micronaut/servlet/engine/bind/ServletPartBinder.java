@@ -15,6 +15,7 @@
  */
 package io.micronaut.servlet.engine.bind;
 
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.io.IOUtils;
 import io.micronaut.core.io.Readable;
@@ -32,7 +33,6 @@ import io.micronaut.http.server.exceptions.InternalServerException;
 import io.micronaut.servlet.engine.ServletCompletedFileUpload;
 import io.micronaut.servlet.http.ServletExchange;
 
-import javax.annotation.Nonnull;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import java.io.*;
@@ -85,7 +85,7 @@ public class ServletPartBinder<T> implements AnnotatedRequestArgumentBinder<Part
                 } else if (Readable.class.isAssignableFrom(type)) {
                     //noinspection unchecked
                     return () -> (Optional<T>) Optional.of(new Readable() {
-                        @Nonnull
+                        @NonNull
                         @Override
                         public String getName() {
                             return part.getName();
@@ -98,7 +98,7 @@ public class ServletPartBinder<T> implements AnnotatedRequestArgumentBinder<Part
                             return new InputStreamReader(asInputStream(), charset);
                         }
 
-                        @Nonnull
+                        @NonNull
                         @Override
                         public InputStream asInputStream() throws IOException {
                             return part.getInputStream();

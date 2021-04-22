@@ -1,5 +1,7 @@
 package io.micronaut.servlet.jetty
 
+import io.micronaut.context.annotation.Property
+import io.micronaut.context.annotation.Requires
 import io.micronaut.http.HttpRequest
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
@@ -20,6 +22,7 @@ import spock.lang.Specification
 
 import javax.inject.Inject
 
+@Property(name = 'spec.name', value = 'JettyCookieSpec')
 @MicronautTest
 class JettyCookieSpec extends Specification {
 
@@ -40,6 +43,7 @@ class JettyCookieSpec extends Specification {
         response.status == HttpStatus.ACCEPTED
     }
 
+    @Requires(property = 'spec.name', value = 'JettyCookieSpec')
     @Controller('/cookie')
     @MockBean
     static class StatusController {
@@ -49,6 +53,7 @@ class JettyCookieSpec extends Specification {
         }
     }
 
+    @Requires(property = 'spec.name', value = 'JettyCookieSpec')
     @Filter('/cookie/**')
     @MockBean
     static class MyFilter implements HttpServerFilter {

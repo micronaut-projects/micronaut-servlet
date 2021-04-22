@@ -37,6 +37,7 @@ import java.util.Optional;
  * @since 1.0.0
  */
 class CompletedPartRequestArgumentBinder implements TypedRequestArgumentBinder<CompletedPart> {
+
     @Override
     public BindingResult<CompletedPart> bind(
             ArgumentConversionContext<CompletedPart> context,
@@ -47,9 +48,13 @@ class CompletedPartRequestArgumentBinder implements TypedRequestArgumentBinder<C
         final String partName = context.getAnnotationMetadata().stringValue(Part.class).orElse(argument.getName());
         try {
             javax.servlet.http.Part part = nativeRequest.getPart(partName);
+            if (part == null) {
+                return BindingResult.UNSATISFIED;
+            }
             return () -> Optional.of(new ServletCompletedFileUpload(part));
         } catch (IOException | ServletException e) {
-            throw new InternalServerException("Error reading part [" + partName + "]: " + e.getMessage(), e);
+            context.reject(new InternalServerException("Error reading part [" + partName + "]: " + e.getMessage(), e));
+            return BindingResult.EMPTY;
         }
     }
 

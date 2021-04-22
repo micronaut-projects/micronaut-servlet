@@ -2,6 +2,7 @@
 package io.micronaut.servlet.jetty
 
 import io.micronaut.context.ApplicationContext
+import io.micronaut.context.annotation.Requires
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Delete
 import io.micronaut.http.annotation.Get
@@ -13,22 +14,18 @@ import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
 
-import javax.annotation.Nullable
+import io.micronaut.core.annotation.Nullable
 import java.util.concurrent.atomic.AtomicLong
-
 
 class JettyNullableCrudSpec extends Specification {
 
     @Shared
     @AutoCleanup
-    ApplicationContext context = ApplicationContext.run()
-
-    @Shared
-    EmbeddedServer embeddedServer = context.getBean(EmbeddedServer).start()
+    EmbeddedServer embeddedServer = ApplicationContext.run(EmbeddedServer, ['spec.name': 'JettyNullableCrudSpec'])
 
     void "test CRUD operations on generated client that returns blocking responses"() {
         given:
-        NullableBookClient client = context.getBean(NullableBookClient)
+        NullableBookClient client = embeddedServer.applicationContext.getBean(NullableBookClient)
 
         when:
         NullableBook book = client.get(99)
@@ -71,7 +68,7 @@ class JettyNullableCrudSpec extends Specification {
 
     void "test DELETE operation with null values"() {
         given:
-        NullableBookClient client = context.getBean(NullableBookClient)
+        NullableBookClient client = embeddedServer.applicationContext.getBean(NullableBookClient)
 
         when:
         client.delete(null)
@@ -82,7 +79,7 @@ class JettyNullableCrudSpec extends Specification {
 
     void "test POST operation with null values"() {
         given:
-        NullableBookClient client = context.getBean(NullableBookClient)
+        NullableBookClient client = embeddedServer.applicationContext.getBean(NullableBookClient)
 
         when:
         NullableBook book = client.save(null)
@@ -94,7 +91,7 @@ class JettyNullableCrudSpec extends Specification {
 
     void "test PUT operation with null values"() {
         given:
-        NullableBookClient client = context.getBean(NullableBookClient)
+        NullableBookClient client = embeddedServer.applicationContext.getBean(NullableBookClient)
 
         when:
         NullableBook saved = client.save("Temporary")
@@ -107,7 +104,7 @@ class JettyNullableCrudSpec extends Specification {
 
     void "test GET operation with null values"() {
         given:
-        NullableBookClient client = context.getBean(NullableBookClient)
+        NullableBookClient client = embeddedServer.applicationContext.getBean(NullableBookClient)
 
         when:
         NullableBook book = client.get(null)
@@ -117,10 +114,12 @@ class JettyNullableCrudSpec extends Specification {
         noExceptionThrown()
     }
 
+    @Requires(property = 'spec.name', value = 'JettyNullableCrudSpec')
     @Client('/blocking/nullableBooks')
     static interface NullableBookClient extends NullableBookApi {
     }
 
+    @Requires(property = 'spec.name', value = 'JettyNullableCrudSpec')
     @Controller("/blocking/nullableBooks")
     static class NullableBookController implements NullableBookApi {
 

@@ -19,6 +19,7 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.LifeCycle;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.async.publisher.Publishers;
 import io.micronaut.core.convert.exceptions.ConversionErrorException;
 import io.micronaut.core.convert.value.ConvertibleValues;
@@ -31,6 +32,7 @@ import io.micronaut.http.*;
 import io.micronaut.http.annotation.Header;
 import io.micronaut.http.annotation.Produces;
 import io.micronaut.http.annotation.Status;
+import io.micronaut.http.bind.binders.ContinuationArgumentBinder;
 import io.micronaut.http.codec.CodecException;
 import io.micronaut.http.codec.MediaTypeCodec;
 import io.micronaut.http.codec.MediaTypeCodecRegistry;
@@ -42,10 +44,12 @@ import io.micronaut.http.filter.HttpFilter;
 import io.micronaut.http.filter.HttpServerFilter;
 import io.micronaut.http.filter.OncePerRequestHttpServerFilter;
 import io.micronaut.http.filter.ServerFilterChain;
-import io.micronaut.http.hateoas.JsonError;
 import io.micronaut.http.server.binding.RequestArgumentSatisfier;
 import io.micronaut.http.server.exceptions.ExceptionHandler;
+import io.micronaut.http.server.exceptions.response.ErrorContext;
+import io.micronaut.http.server.exceptions.response.ErrorResponseProcessor;
 import io.micronaut.inject.qualifiers.Qualifiers;
+import io.micronaut.web.router.MethodBasedRouteMatch;
 import io.micronaut.web.router.RouteMatch;
 import io.micronaut.web.router.Router;
 import io.micronaut.web.router.UriRoute;
@@ -58,18 +62,21 @@ import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.*;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+
+import static io.micronaut.core.util.KotlinUtils.isKotlinCoroutineSuspended;
+import static io.micronaut.inject.util.KotlinExecutableMethodUtils.isKotlinFunctionReturnTypeUnit;
 
 /**
  * An HTTP handler that can deal with Serverless requests.
@@ -90,6 +97,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
     private final MediaTypeCodecRegistry mediaTypeCodecRegistry;
     private final ApplicationContext applicationContext;
     private final Map<Class<?>, ServletResponseEncoder<?>> responseEncoders;
+    private final ErrorResponseProcessor errorResponseProcessor;
 
     /**
      * Default constructor.
@@ -107,6 +115,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                         ServletResponseEncoder::getResponseType,
                         (o) -> o
                 ));
+        this.errorResponseProcessor = applicationContext.getBean(ErrorResponseProcessor.class);
 
         // hack for bug fixed in Micronaut 1.3.3
         applicationContext.getEnvironment()
@@ -218,7 +227,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                         if (contentType != null) {
                             // must be invalid mime type
                             boolean invalidMediaType = router.findAny(req.getUri().toString(), req)
-                                    .anyMatch(rm -> rm.accept(contentType));
+                                    .anyMatch(rm -> rm.doesConsume(contentType));
                             if (!invalidMediaType) {
                                 handleStatusRoute(exchange, res, req, HttpStatus.UNSUPPORTED_MEDIA_TYPE);
                             } else {
@@ -237,12 +246,11 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                         } else {
                             emitError(exchange, res, req, emitter -> {
                                 res.getHeaders().allowGeneric(existingRouteMethods);
-                                res.status(HttpStatus.METHOD_NOT_ALLOWED)
-                                        .body(new JsonError(
-                                                "Method [" + req.getMethod() + "] not allowed for URI [" + req
-                                                        .getPath() + "]. Allowed methods: " + existingRouteMethods
-                                        ));
-                                emitter.onNext(res);
+                                res.status(HttpStatus.METHOD_NOT_ALLOWED);
+                                emitter.onNext(errorResponseProcessor.processResponse(ErrorContext.builder(req)
+                                        .errorMessage("Method [" + req.getMethod() + "] not allowed for URI [" + req
+                                                .getPath() + "]. Allowed methods: " + existingRouteMethods)
+                                        .build(), res));
                                 emitter.onComplete();
                             });
                         }
@@ -276,7 +284,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                 req,
                 res,
                 null,
-                true,
+                false,
                 exchange,
                 responsePublisher,
                 AnnotationMetadata.EMPTY_METADATA
@@ -303,9 +311,8 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
             invokeRouteMatch(req, res, notFoundRoute, true, exchange);
         } else {
             emitError(exchange, res, req, emitter -> {
-                res.status(httpStatus)
-                        .body(newJsonError(req, httpStatus.getReason()));
-                emitter.onNext(res);
+                res.status(httpStatus);
+                emitter.onNext(errorResponseProcessor.processResponse(ErrorContext.builder(req).build(), res));
                 emitter.onComplete();
             });
         }
@@ -318,7 +325,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
         }
     }
 
-    @Nonnull
+    @NonNull
     @Override
     public ServletHttpHandler<Req, Res> start() {
         if (!applicationContext.isRunning()) {
@@ -327,7 +334,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
         return this;
     }
 
-    @Nonnull
+    @NonNull
     @Override
     public ServletHttpHandler<Req, Res> stop() {
         close();
@@ -399,16 +406,20 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                                                 true
                                         ));
                                         return notFoundFlowable.onErrorReturn(throwable -> {
-
                                             if (LOG.isErrorEnabled()) {
                                                 LOG.error("Error occuring invoking 404 handler: " + throwable.getMessage());
                                             }
-                                            MutableHttpResponse<Object> defaultNotFound = res.status(404).body(newJsonError(req, "Page Not Found"));
+                                            MutableHttpResponse<Object> defaultNotFound = errorResponseProcessor.processResponse(
+                                                    ErrorContext.builder(req).build(),
+                                                    res.status(404));
                                             encodeResponse(exchange, annotationMetadata, defaultNotFound);
                                             return defaultNotFound;
                                         });
                                     } else {
-                                        return Publishers.just(res.status(404).body(newJsonError(req, "Page Not Found")));
+                                        MutableHttpResponse<Object> defaultNotFound = errorResponseProcessor.processResponse(
+                                                ErrorContext.builder(req).build(),
+                                                res.status(404));
+                                        return Publishers.just(defaultNotFound);
                                     }
                                 }));
                             } else {
@@ -544,14 +555,17 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
             if (result instanceof Optional) {
                 result = ((Optional<?>) result).orElse(null);
             }
-            MutableHttpResponse<Object> httpResponse = res;
+            MutableHttpResponse<Object> httpResponse;
             if (result instanceof MutableHttpResponse) {
                 httpResponse = (MutableHttpResponse<Object>) result;
                 result = httpResponse.body();
+            } else {
+                httpResponse = res;
             }
             final ReturnType<?> returnType = computedRoute.getReturnType();
             final Argument<?> genericReturnType = returnType.asArgument();
             final Class<?> javaReturnType = returnType.getType();
+            boolean isSuspended = route.isSuspended();
             if (result == null) {
                 boolean isVoid = javaReturnType == void.class ||
                         Completable.class.isAssignableFrom(javaReturnType) ||
@@ -560,7 +574,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                 if (isVoid) {
                     return Publishers.just(httpResponse);
                 } else {
-                    if (httpResponse.status() == HttpStatus.OK) {
+                    if (!HttpResponse.class.isAssignableFrom(javaReturnType) && httpResponse.status() == HttpStatus.OK) {
                         httpResponse.status(HttpStatus.NOT_FOUND);
                     }
                     return Publishers.just(httpResponse);
@@ -591,9 +605,48 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                 //noinspection unchecked
                 return Publishers.convertPublisher(result, Flowable.class);
             } else {
-                return Publishers.just(
-                        httpResponse.body(result)
-                );
+                if (isSuspended) {
+                    boolean isKotlinFunctionReturnTypeUnit =
+                            route instanceof MethodBasedRouteMatch &&
+                                    isKotlinFunctionReturnTypeUnit(((MethodBasedRouteMatch) route).getExecutableMethod());
+                    final Supplier<CompletableFuture<?>> supplier = ContinuationArgumentBinder.extractContinuationCompletableFutureSupplier(req);
+                    if (isKotlinCoroutineSuspended(result)) {
+                        return Flowable.create(emitter -> {
+                            CompletableFuture<?> f = supplier.get();
+                            f.whenComplete((o, throwable) -> {
+                                if (throwable != null) {
+                                    emitter.onError(throwable);
+                                } else {
+                                    if (o == null) {
+                                        emitter.onNext(httpResponse.status(HttpStatus.NOT_FOUND));
+                                    } else {
+                                        if (!isKotlinFunctionReturnTypeUnit) {
+                                            httpResponse.body(o);
+                                        }
+                                        emitter.onNext(httpResponse);
+                                    }
+                                    emitter.onComplete();
+                                }
+                            });
+                        }, BackpressureStrategy.ERROR);
+                    } else {
+                        Object suspendedBody;
+                        if (isKotlinFunctionReturnTypeUnit) {
+                            suspendedBody = Completable.complete();
+                        } else {
+                            suspendedBody = result;
+                        }
+                        if (suspendedBody instanceof HttpResponse) {
+                            return Publishers.just(httpResponse);
+                        } else {
+                            return Publishers.just(httpResponse.body(suspendedBody));
+                        }
+                    }
+                } else {
+                    return Publishers.just(
+                            httpResponse.body(result)
+                    );
+                }
             }
         });
         return filterPublisher(new AtomicReference<>(req), responsePublisher, isErrorRoute);
@@ -732,20 +785,20 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                     invokeRouteMatch(req, res, statusRoute, true, exchange);
                 } else {
                     emitError(exchange, res, req, (emitter -> {
-                        res.status(code, statusException.getMessage());
+                        MutableHttpResponse<Object> response = res.status(code, statusException.getMessage());
                         final Object body = statusException.getBody().orElse(null);
                         if (body != null) {
-                            res.body(body);
+                            response.body(body);
                         } else if (isErrorStatus) {
-                            res.body(newJsonError(req, statusException.getMessage()));
+                            response = errorResponseProcessor.processResponse(ErrorContext.builder(req)
+                                    .errorMessage(statusException.getMessage())
+                                    .build(), response);
                         }
-                        emitter.onNext(res);
+                        emitter.onNext(response);
                         emitter.onComplete();
                     }));
                 }
-
             } else {
-
                 RouteMatch<Object> errorRoute = lookupErrorRoute(route, e);
                 if (errorRoute == null) {
                     if (e instanceof CodecException) {
@@ -813,18 +866,12 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                 }
             }
             emitError(exchange, res, req, (emitter) -> {
-                res.status(defaultStatus)
-                   .body(newJsonError(req, e.getMessage()));
-                emitter.onNext(res);
+                emitter.onNext(errorResponseProcessor.processResponse(ErrorContext.builder(req)
+                        .errorMessage(e.getMessage())
+                        .build(), res.status(defaultStatus)));
                 emitter.onComplete();
             });
         }
-    }
-
-    private JsonError newJsonError(HttpRequest<Object> req, String message) {
-        JsonError jsonError = new JsonError(message);
-        jsonError.link("self", req.getPath());
-        return jsonError;
     }
 
     @SuppressWarnings("unchecked")

@@ -1,6 +1,8 @@
 
 package io.micronaut.servlet.undertow
 
+import io.micronaut.context.annotation.Property
+import io.micronaut.context.annotation.Requires
 import io.micronaut.core.annotation.Introspected
 import io.micronaut.http.*
 import io.micronaut.core.convert.format.Format
@@ -14,13 +16,14 @@ import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import spock.lang.Specification
 import spock.lang.Unroll
 
-import javax.annotation.Nullable
+import io.micronaut.core.annotation.Nullable
 import javax.inject.Inject
 
 /**
  * Created by graemerocher on 25/08/2017.
  */
 @MicronautTest
+@Property(name = 'spec.name', value = 'UndertowParameterBindingSpec')
 class UndertowParameterBindingSpec extends Specification {
 
     @Inject
@@ -90,6 +93,7 @@ class UndertowParameterBindingSpec extends Specification {
         response.body().contains('Book[\\"age\\"])')
     }
 
+    @Requires(property = 'spec.name', value = 'UndertowParameterBindingSpec')
     @Controller(value = "/parameter", produces = MediaType.TEXT_PLAIN)
     static class ParameterController {
         @Get

@@ -24,7 +24,7 @@ import io.micronaut.http.server.HttpServerConfiguration;
 import io.undertow.Undertow;
 import io.undertow.UndertowOptions;
 
-import javax.annotation.Nullable;
+import io.micronaut.core.annotation.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
