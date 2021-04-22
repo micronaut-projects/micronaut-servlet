@@ -227,7 +227,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                         if (contentType != null) {
                             // must be invalid mime type
                             boolean invalidMediaType = router.findAny(req.getUri().toString(), req)
-                                    .anyMatch(rm -> rm.accept(contentType));
+                                    .anyMatch(rm -> rm.doesConsume(contentType));
                             if (!invalidMediaType) {
                                 handleStatusRoute(exchange, res, req, HttpStatus.UNSUPPORTED_MEDIA_TYPE);
                             } else {
@@ -574,7 +574,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                 if (isVoid) {
                     return Publishers.just(httpResponse);
                 } else {
-                    if (httpResponse.status() == HttpStatus.OK) {
+                    if (!HttpResponse.class.isAssignableFrom(javaReturnType) && httpResponse.status() == HttpStatus.OK) {
                         httpResponse.status(HttpStatus.NOT_FOUND);
                     }
                     return Publishers.just(httpResponse);

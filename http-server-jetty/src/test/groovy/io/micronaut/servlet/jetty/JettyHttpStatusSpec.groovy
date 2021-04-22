@@ -1,6 +1,8 @@
 
 package io.micronaut.servlet.jetty
 
+import io.micronaut.context.annotation.Property
+import io.micronaut.context.annotation.Requires
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Get
@@ -13,6 +15,7 @@ import spock.lang.Specification
 import javax.inject.Inject
 
 @MicronautTest
+@Property(name = 'spec.name', value = 'JettyHttpStatusSpec')
 class JettyHttpStatusSpec extends Specification {
 
     @Inject
@@ -25,6 +28,7 @@ class JettyHttpStatusSpec extends Specification {
             .status() == HttpStatus.ACCEPTED
     }
 
+    @Requires(property = 'spec.name', value = 'JettyHttpStatusSpec')
     @Controller('/status-test')
     @MockBean
     static class StatusController {

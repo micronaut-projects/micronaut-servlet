@@ -2,6 +2,7 @@
 package io.micronaut.servlet.jetty
 
 import io.micronaut.context.ApplicationContext
+import io.micronaut.context.annotation.Requires
 import io.micronaut.core.bind.BeanPropertyBinder
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Controller
@@ -24,7 +25,7 @@ class JettyBlockingPojoCrudSpec extends Specification {
 
     @Shared
     @AutoCleanup
-    ApplicationContext context = ApplicationContext.run()
+    ApplicationContext context = ApplicationContext.run(['spec.name': 'JettyBlockingPojoCrudSpec'])
 
     @Shared
     @AutoCleanup
@@ -73,11 +74,12 @@ class JettyBlockingPojoCrudSpec extends Specification {
         client.get(book.id) == null
     }
 
-
+    @Requires(property = 'spec.name', value = 'JettyBlockingPojoCrudSpec')
     @Client('/blocking/pojo/books')
     static interface BookClient extends BookApi {
     }
 
+    @Requires(property = 'spec.name', value = 'JettyBlockingPojoCrudSpec')
     @Controller("/blocking/pojo/books")
     static class BookController implements BookApi {
 
