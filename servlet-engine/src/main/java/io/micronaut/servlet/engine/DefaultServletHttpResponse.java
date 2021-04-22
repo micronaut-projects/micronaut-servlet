@@ -16,6 +16,8 @@
 package io.micronaut.servlet.engine;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.convert.value.MutableConvertibleValues;
@@ -34,8 +36,6 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.WriteListener;
 import javax.servlet.http.HttpServletResponse;
@@ -306,13 +306,13 @@ public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpSe
         return headers;
     }
 
-    @Nonnull
+    @NonNull
     @Override
     public MutableConvertibleValues<Object> getAttributes() {
         return request;
     }
 
-    @Nonnull
+    @NonNull
     @Override
     public Optional<B> getBody() {
         return Optional.ofNullable(body);

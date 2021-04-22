@@ -3,6 +3,8 @@ package io.micronaut.servlet.jetty
 
 import com.fasterxml.jackson.core.JsonParseException
 import groovy.json.JsonSlurper
+import io.micronaut.context.annotation.Property
+import io.micronaut.context.annotation.Requires
 import io.micronaut.http.client.RxHttpClient
 import io.micronaut.http.client.annotation.Client
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
@@ -27,6 +29,7 @@ import javax.inject.Inject
 import java.util.concurrent.CompletableFuture
 
 @MicronautTest
+@Property(name = 'spec.name', value = 'JettyJsonBodyBindingSpec')
 class JettyJsonBodyBindingSpec extends Specification {
 
     @Inject
@@ -298,6 +301,7 @@ class JettyJsonBodyBindingSpec extends Specification {
         response.body().toString().contains("Error decoding JSON stream for type")
     }
 
+    @Requires(property = 'spec.name', value = 'JettyJsonBodyBindingSpec')
     @Controller(value = "/json", produces = io.micronaut.http.MediaType.APPLICATION_JSON)
     static class JsonController {
 

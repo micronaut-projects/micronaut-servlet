@@ -1,3 +1,7 @@
+plugins {
+    id "com.gradle.enterprise" version "3.6.1"
+}
+
 rootProject.name = 'servlet'
 
 include 'servlet-core'
@@ -5,3 +9,14 @@ include 'servlet-engine'
 include 'http-server-jetty'
 include 'http-server-undertow'
 include 'http-server-tomcat'
+
+include 'test-kotlin-jetty'
+
+gradleEnterprise {
+    buildScan {
+        termsOfServiceUrl = "https://gradle.com/terms-of-service"
+        termsOfServiceAgree = "yes"
+        publishAlways()
+    }
+}
+

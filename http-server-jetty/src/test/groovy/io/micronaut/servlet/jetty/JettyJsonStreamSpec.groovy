@@ -2,6 +2,7 @@
 package io.micronaut.servlet.jetty
 
 import io.micronaut.context.ApplicationContext
+import io.micronaut.context.annotation.Requires
 import io.micronaut.http.HttpRequest
 import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.Body
@@ -32,7 +33,9 @@ class JettyJsonStreamSpec extends Specification {
 
     @Shared
     @AutoCleanup
-    ApplicationContext context = ApplicationContext.run()
+    ApplicationContext context = ApplicationContext.run([
+            'spec.name': 'JettyJsonStreamSpec'
+    ])
 
     @Shared
     EmbeddedServer embeddedServer = context.getBean(EmbeddedServer).start()
@@ -191,6 +194,7 @@ class JettyJsonStreamSpec extends Specification {
         books.isEmpty()
     }
 
+    @Requires(property = 'spec.name', value = 'JettyJsonStreamSpec')
     @Client("/jsonstream/books")
     static interface BookClient {
         @Get(consumes = MediaType.APPLICATION_JSON_STREAM)
@@ -203,6 +207,7 @@ class JettyJsonStreamSpec extends Specification {
         Publisher<Book> empty();
     }
 
+    @Requires(property = 'spec.name', value = 'JettyJsonStreamSpec')
     @Controller("/jsonstream/books")
     static class BookController {
 
