@@ -5,6 +5,7 @@ buildscript {
     dependencies {
         classpath "io.micronaut.build.internal:micronaut-gradle-plugins:3.0.3"
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
+        classpath "org.gradle:test-retry-gradle-plugin:1.2.1"
     }
 }
 
@@ -16,6 +17,18 @@ subprojects { Project subproject ->
     if (!subproject.name.startsWith('test-')) {
         apply plugin: "io.micronaut.build.internal.dependency-updates"
         apply plugin: "io.micronaut.build.internal.publishing"
+    }
+
+    apply plugin: "org.gradle.test-retry"
+    boolean isCiServer = System.getenv().containsKey("GITHUB_RUN_ID")
+    test {
+        if (isCiServer) {
+            retry {
+                maxRetries = 3
+                maxFailures = 20
+                failOnPassedAfterRetry = false
+            }
+        }
     }
 }
 

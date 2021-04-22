@@ -18,11 +18,11 @@ package io.micronaut.servlet.engine;
 import io.micronaut.context.annotation.ConfigurationInject;
 import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.context.env.Environment;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.bind.annotation.Bindable;
 import io.micronaut.core.naming.Named;
 import io.micronaut.http.server.HttpServerConfiguration;
 
-import javax.annotation.Nonnull;
 import javax.servlet.MultipartConfigElement;
 import java.io.File;
 import java.util.Optional;
@@ -84,7 +84,7 @@ public class MicronautServletConfiguration implements Named {
         return Optional.ofNullable(multipartConfigElement);
     }
 
-    @Nonnull
+    @NonNull
     @Override
     public String getName() {
         return name;

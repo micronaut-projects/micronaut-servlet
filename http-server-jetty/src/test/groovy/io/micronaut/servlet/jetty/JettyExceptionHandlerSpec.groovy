@@ -60,6 +60,7 @@ class JettyExceptionHandlerSpec extends Specification {
         ex.response.status() == HttpStatus.UNAUTHORIZED
     }
 
+    @Requires(property = "spec.name", value = "JettyExceptionHandlerSpec")
     @Controller("/exception")
     static class ExceptionController {
 
@@ -74,6 +75,7 @@ class JettyExceptionHandlerSpec extends Specification {
         }
     }
 
+    @Requires(property = "spec.name", value = "JettyExceptionHandlerSpec")
     @Singleton
     static class MyExceptionHandler implements ExceptionHandler<MyException, String> {
         @Override

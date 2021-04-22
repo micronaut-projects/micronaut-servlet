@@ -18,14 +18,17 @@ import io.netty.buffer.ByteBuf
 import io.netty.buffer.Unpooled
 import io.reactivex.Flowable
 import io.reactivex.Single
+import org.reactivestreams.Subscriber
+import org.reactivestreams.Subscription
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll
 
-import javax.annotation.Nullable
+import io.micronaut.core.annotation.Nullable
 import javax.inject.Inject
 import java.nio.charset.StandardCharsets
+import java.util.concurrent.CountDownLatch
 
 /**
  * @author Jesper Steen Møller
@@ -78,11 +81,34 @@ class JettyStreamSpec extends Specification {
         when:
         Flowable<ByteBuffer> responseFlowable = myClient.echoAsByteBuffers(n, "Hello, World!")
         int sum = 0
-        // using blockingForEach for variations sake
-        responseFlowable.blockingForEach { ByteBuffer bytes ->
-            sum += bytes.toByteArray().count('!')
-            ((ReferenceCounted)bytes).release()
-        }
+        CountDownLatch latch = new CountDownLatch(1)
+        responseFlowable.subscribe(new Subscriber<ByteBuffer<?>>() {
+            private Subscription s
+
+            @Override
+            void onSubscribe(Subscription s) {
+                this.s = s
+                s.request(1)
+            }
+
+            @Override
+            void onNext(ByteBuffer<?> byteBuffer) {
+                sum += byteBuffer.toByteArray().count('!')
+                s.request(1)
+            }
+
+            @Override
+            void onError(Throwable t) {
+                latch.countDown()
+            }
+
+            @Override
+            void onComplete() {
+                latch.countDown()
+            }
+        })
+        latch.await()
+
         then:
         sum == n
     }

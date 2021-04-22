@@ -15,6 +15,7 @@
  */
 package io.micronaut.servlet.http.encoders;
 
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.MutableHttpHeaders;
@@ -26,7 +27,6 @@ import io.micronaut.servlet.http.ServletResponseEncoder;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaderValues;
 
-import javax.annotation.Nonnull;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
@@ -84,7 +84,7 @@ public abstract class AbstractFileEncoder<T extends FileCustomizableResponseType
      * @param response The response
      * @return True if a not modified response should be returned
      */
-    protected boolean ifNotModified(@Nonnull T value,
+    protected boolean ifNotModified(@NonNull T value,
                                     ServletHttpRequest<?, ? super Object> request,
                                     ServletHttpResponse<?, ? super Object> response) {
         long lastModified = value.getLastModified();

@@ -97,17 +97,20 @@ public abstract class AbstractServletServer<T> implements EmbeddedServer {
 
     @Override
     public final EmbeddedServer stop() {
-        try {
-            stopServer();
-            if (applicationContext.isRunning()) {
-                applicationContext.stop();
+        if (isRunning()) {
+            try {
+                stopServer();
+                if (applicationContext.isRunning()) {
+                    applicationContext.stop();
+                }
+                applicationContext.publishEvent(new ServerShutdownEvent(this));
+            } catch (Exception e) {
+                throw new HttpServerException(
+                        "Error stopping HTTP server: " + e.getMessage(), e
+                );
             }
-            applicationContext.publishEvent(new ServerShutdownEvent(this));
-        } catch (Exception e) {
-            throw new HttpServerException(
-                    "Error stopping HTTP server: " + e.getMessage(), e
-            );
         }
+
         return this;
     }
 

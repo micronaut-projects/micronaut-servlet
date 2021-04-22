@@ -115,7 +115,6 @@ class UndertowParameterBinding2Spec extends Specification {
         response.body() == 'Hello Foo'
     }
 
-
     void "test writable"() {
 
         given:
@@ -129,7 +128,6 @@ class UndertowParameterBinding2Spec extends Specification {
         response.body() == 'Hello Foo'
         response.header("Foo") == 'Bar'
     }
-
 
     void "test JSON POJO body"() {
 
@@ -160,7 +158,6 @@ class UndertowParameterBinding2Spec extends Specification {
 
     }
 
-
     void "test JSON POJO body with no @Body binds to arguments"() {
         given:
         def json = '{"name":"bar","age":30}'
@@ -187,7 +184,6 @@ class UndertowParameterBinding2Spec extends Specification {
         response.body() == json
         response.header("Foo") == "Bar"
     }
-
 
     void "full Micronaut request and response - invalid JSON"() {
         when:

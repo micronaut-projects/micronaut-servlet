@@ -15,10 +15,10 @@
  */
 package io.micronaut.servlet.engine;
 
+import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.cookie.Cookie;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.util.Objects;
 
 /**
@@ -45,13 +45,13 @@ public final class ServletCookieAdapter implements Cookie {
         return cookie;
     }
 
-    @Nonnull
+    @NonNull
     @Override
     public String getName() {
         return cookie.getName();
     }
 
-    @Nonnull
+    @NonNull
     @Override
     public String getValue() {
         return cookie.getValue();
@@ -84,21 +84,21 @@ public final class ServletCookieAdapter implements Cookie {
         return cookie.getMaxAge();
     }
 
-    @Nonnull
+    @NonNull
     @Override
     public Cookie maxAge(long maxAge) {
         cookie.setMaxAge((int) maxAge);
         return this;
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public Cookie value(@Nonnull String value) {
+    public Cookie value(@NonNull String value) {
         cookie.setValue(Objects.requireNonNull(value, "Value cannot be null"));
         return this;
     }
 
-    @Nonnull
+    @NonNull
     @Override
     public Cookie domain(@Nullable String domain) {
         if (domain != null) {
@@ -107,7 +107,7 @@ public final class ServletCookieAdapter implements Cookie {
         return this;
     }
 
-    @Nonnull
+    @NonNull
     @Override
     public Cookie path(@Nullable String path) {
         if (path != null) {
@@ -116,14 +116,14 @@ public final class ServletCookieAdapter implements Cookie {
         return this;
     }
 
-    @Nonnull
+    @NonNull
     @Override
     public Cookie secure(boolean secure) {
         cookie.setSecure(secure);
         return this;
     }
 
-    @Nonnull
+    @NonNull
     @Override
     public Cookie httpOnly(boolean httpOnly) {
         cookie.setHttpOnly(httpOnly);

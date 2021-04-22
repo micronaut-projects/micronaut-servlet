@@ -2,6 +2,7 @@
 package io.micronaut.servlet.jetty
 
 import io.micronaut.context.ApplicationContext
+import io.micronaut.context.annotation.Requires
 import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.Consumes
 import io.micronaut.http.annotation.Controller
@@ -17,7 +18,9 @@ import spock.lang.Specification
 
 class JettyNotFoundSpec extends Specification {
 
-    @Shared @AutoCleanup EmbeddedServer embeddedServer = ApplicationContext.run(EmbeddedServer)
+    @Shared @AutoCleanup EmbeddedServer embeddedServer = ApplicationContext.run(EmbeddedServer, [
+            'spec.name': 'JettyNotFoundSpec'
+    ])
 
     void "test 404 handling with Flowable"() {
         given:
@@ -39,6 +42,7 @@ class JettyNotFoundSpec extends Specification {
 
     }
 
+    @Requires(property = 'spec.name', value = 'JettyNotFoundSpec')
     @Client('/not-found')
     static interface InventoryClient {
         @Consumes(MediaType.TEXT_PLAIN)
@@ -49,6 +53,7 @@ class JettyNotFoundSpec extends Specification {
         Flowable<Boolean> flowable(String isbn)
     }
 
+    @Requires(property = 'spec.name', value = 'JettyNotFoundSpec')
     @Controller(value = "/not-found", produces = MediaType.TEXT_PLAIN)
     static class InventoryController {
         Map<String, Boolean> stock = [

@@ -22,7 +22,7 @@ import io.micronaut.core.naming.conventions.StringConvention;
 import io.micronaut.http.server.HttpServerConfiguration;
 import org.eclipse.jetty.server.HttpConfiguration;
 
-import javax.annotation.Nullable;
+import io.micronaut.core.annotation.Nullable;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
