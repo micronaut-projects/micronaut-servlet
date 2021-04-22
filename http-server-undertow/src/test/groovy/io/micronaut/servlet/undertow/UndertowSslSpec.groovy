@@ -1,6 +1,9 @@
 
 package io.micronaut.servlet.undertow
 
+import io.micronaut.context.annotation.Property
+import io.micronaut.context.annotation.Requires
+import io.micronaut.core.util.StringUtils
 import io.micronaut.http.HttpRequest
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.Controller
@@ -13,6 +16,7 @@ import spock.lang.Specification
 
 import javax.inject.Inject
 
+@Property(name = 'spec.name', value = 'UndertowSslSpec')
 @MicronautTest
 class UndertowSslSpec extends Specification implements TestPropertyProvider {
 
@@ -30,13 +34,12 @@ class UndertowSslSpec extends Specification implements TestPropertyProvider {
         response.body() == "true"
     }
 
-
     @Override
     Map<String, String> getProperties() {
-        return [
-                'micronaut.ssl.enabled': true,
+        [
+                'micronaut.ssl.enabled': StringUtils.TRUE,
                 // Cannot be true!
-                'micronaut.ssl.buildSelfSigned': false,
+                'micronaut.ssl.buildSelfSigned': StringUtils.FALSE,
                 'micronaut.ssl.clientAuthentication': "need",
                 'micronaut.ssl.key-store.path': 'classpath:KeyStore.pkcs12',
                 'micronaut.ssl.key-store.type': 'PKCS12',
@@ -47,6 +50,7 @@ class UndertowSslSpec extends Specification implements TestPropertyProvider {
         ]
     }
 
+    @Requires(property = 'spec.name', value = 'UndertowSslSpec')
     @Controller
     static class TestController {
 
