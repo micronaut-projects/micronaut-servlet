@@ -1,6 +1,7 @@
 
 package io.micronaut.servlet.jetty
 
+import io.micronaut.context.annotation.Requires
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import io.reactivex.Maybe
@@ -27,14 +28,11 @@ class JettyRxJavaCrudSpec extends Specification {
 
     @Shared
     @AutoCleanup
-    ApplicationContext context = ApplicationContext.run()
-
-    @Shared
-    EmbeddedServer embeddedServer = context.getBean(EmbeddedServer).start()
+    EmbeddedServer embeddedServer = ApplicationContext.run(EmbeddedServer, ['spec.name': 'JettyRxJavaCrudSpec'])
 
     void "test it is possible to implement CRUD operations with RxJava"() {
         given:
-        BookClient client = context.getBean(BookClient)
+        BookClient client = embeddedServer.applicationContext.getBean(BookClient)
 
         when:
         Book book = client.get(99)
@@ -90,11 +88,12 @@ class JettyRxJavaCrudSpec extends Specification {
         book == null
     }
 
-
+    @Requires(property = 'spec.name', value = 'JettyRxJavaCrudSpec')
     @Client('/rxjava/books')
     static interface BookClient extends BookApi {
     }
 
+    @Requires(property = 'spec.name', value = 'JettyRxJavaCrudSpec')
     @Controller("/rxjava/books")
     static class BookController implements BookApi {
 

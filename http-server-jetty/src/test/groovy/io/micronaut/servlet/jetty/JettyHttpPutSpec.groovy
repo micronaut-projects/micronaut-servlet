@@ -2,6 +2,8 @@
 package io.micronaut.servlet.jetty
 
 import groovy.transform.EqualsAndHashCode
+import io.micronaut.context.annotation.Property
+import io.micronaut.context.annotation.Requires
 import io.micronaut.http.MutableHttpRequest
 import io.micronaut.http.client.BlockingHttpClient
 import io.micronaut.http.client.HttpClient
@@ -29,6 +31,7 @@ import javax.inject.Inject
  * @since 1.0
  */
 @MicronautTest
+@Property(name = 'spec.name', value = 'JettyHttpPutSpec')
 class JettyHttpPutSpec extends Specification {
 
     @Inject
@@ -187,6 +190,7 @@ class JettyHttpPutSpec extends Specification {
         body == "put done"
     }
 
+    @Requires(property = 'spec.name', value = 'JettyHttpPutSpec')
     @Controller('/put')
     static class PostController {
 
@@ -249,6 +253,7 @@ class JettyHttpPutSpec extends Specification {
         Integer pages
     }
 
+    @Requires(property = 'spec.name', value = 'JettyHttpPutSpec')
     @Client("/put")
     static interface MyPutClient {
 

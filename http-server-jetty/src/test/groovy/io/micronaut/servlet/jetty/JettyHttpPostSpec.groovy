@@ -3,6 +3,7 @@ package io.micronaut.servlet.jetty
 
 import groovy.transform.EqualsAndHashCode
 import io.micronaut.context.annotation.Property
+import io.micronaut.context.annotation.Requires
 import io.micronaut.core.util.StringUtils
 import io.micronaut.http.HttpRequest
 import io.micronaut.http.HttpResponse
@@ -27,6 +28,7 @@ import java.nio.charset.StandardCharsets
  * @since 1.0
  */
 @MicronautTest
+@Property(name = 'spec.name', value = 'JettyHttpPostSpec')
 @Property(name = "micronaut.server.multipart.enabled", value = StringUtils.TRUE)
 class JettyHttpPostSpec extends Specification {
     @Inject
@@ -78,8 +80,6 @@ class JettyHttpPostSpec extends Specification {
         body.get() instanceof Book
         body.get() == book
     }
-
-
 
     void "test simple post request with URI template and JSON"() {
         given:
@@ -355,6 +355,7 @@ class JettyHttpPostSpec extends Specification {
         val == "multiple mappings"
     }
 
+    @Requires(property = 'spec.name', value = 'JettyHttpPostSpec')
     @Controller('/post')
     static class PostController {
 
@@ -465,6 +466,7 @@ class JettyHttpPostSpec extends Specification {
         List<String> param
     }
 
+    @Requires(property = 'spec.name', value = 'JettyHttpPostSpec')
     @Client("/post")
     static interface PostClient {
 

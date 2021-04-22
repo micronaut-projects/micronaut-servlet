@@ -51,7 +51,6 @@ class JettyParameterBinding2Spec extends Specification {
     }
 
     void "test query value"() {
-
         given:
         def request = HttpRequest.GET("/parameters/query")
         request.parameters.add("q", "Foo")
@@ -78,7 +77,6 @@ class JettyParameterBinding2Spec extends Specification {
     }
 
     void "test header value"() {
-
         given:
         def request = HttpRequest.GET("/parameters/header")
         request.header(HttpHeaders.CONTENT_TYPE, "text/plain;q=1.0")
@@ -91,7 +89,6 @@ class JettyParameterBinding2Spec extends Specification {
     }
 
     void "test request and response"() {
-
         given:
         def request = HttpRequest.GET("/parameters/reqAndRes")
         def response = client.toBlocking().exchange(request, String)
@@ -103,7 +100,6 @@ class JettyParameterBinding2Spec extends Specification {
     }
 
     void "test string body"() {
-
         given:
         def request = HttpRequest.POST("/parameters/stringBody", "Foo")
         request.header(HttpHeaders.CONTENT_TYPE, "text/plain")
@@ -115,9 +111,7 @@ class JettyParameterBinding2Spec extends Specification {
         response.body() == 'Hello Foo'
     }
 
-
     void "test writable"() {
-
         given:
         def request = HttpRequest.POST("/parameters/writable", "Foo")
         request.header(HttpHeaders.CONTENT_TYPE, "text/plain")
@@ -130,9 +124,7 @@ class JettyParameterBinding2Spec extends Specification {
         response.header("Foo") == 'Bar'
     }
 
-
     void "test JSON POJO body"() {
-
         given:
         def json = '{"name":"bar","age":30}'
         def request = HttpRequest.POST("/parameters/jsonBody", json)
@@ -157,9 +149,7 @@ class JettyParameterBinding2Spec extends Specification {
         def response = e.response
         response.status() == HttpStatus.BAD_REQUEST
         response.body().toString().contains("Error decoding JSON stream for type")
-
     }
-
 
     void "test JSON POJO body with no @Body binds to arguments"() {
         given:
@@ -187,7 +177,6 @@ class JettyParameterBinding2Spec extends Specification {
         response.body() == json
         response.header("Foo") == "Bar"
     }
-
 
     void "full Micronaut request and response - invalid JSON"() {
         when:

@@ -267,7 +267,7 @@ class JettyCorsSpec extends Specification implements TestPropertyProvider {
     }
 
     @Override
-    Map<String, String> getProperties() {
+    Map<String, Object> getProperties() {
         ['micronaut.server.cors.enabled': true,
          'micronaut.server.cors.configurations.foo.allowedOrigins': ['foo.com'],
          'micronaut.server.cors.configurations.foo.allowedMethods': ['GET'],

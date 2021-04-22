@@ -2,6 +2,7 @@
 package io.micronaut.servlet.jetty
 
 import io.micronaut.context.ApplicationContext
+import io.micronaut.context.annotation.Requires
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Delete
 import io.micronaut.http.annotation.Get
@@ -25,7 +26,7 @@ class JettyCompletableFutureCrudSpec extends Specification {
 
     @Shared
     @AutoCleanup
-    ApplicationContext context = ApplicationContext.run()
+    ApplicationContext context = ApplicationContext.run(['spec.name': 'JettyCompletableFutureCrudSpec'])
 
     @Shared
     EmbeddedServer embeddedServer = context.getBean(EmbeddedServer).start()
@@ -80,11 +81,12 @@ class JettyCompletableFutureCrudSpec extends Specification {
         book == null
     }
 
-
+    @Requires(property = 'spec.name', value = 'JettyCompletableFutureCrudSpec')
     @Client('/future/books')
     static interface BookClient extends BookApi {
     }
 
+    @Requires(property = 'spec.name', value = 'JettyCompletableFutureCrudSpec')
     @Controller("/future/books")
     static class BookController implements BookApi {
 

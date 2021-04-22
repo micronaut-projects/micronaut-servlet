@@ -1,6 +1,8 @@
 
 package io.micronaut.servlet.jetty
 
+import io.micronaut.context.annotation.Property
+import io.micronaut.context.annotation.Requires
 import io.micronaut.core.annotation.Introspected
 import io.micronaut.http.*
 import io.micronaut.core.convert.format.Format
@@ -21,6 +23,7 @@ import javax.inject.Inject
  * Created by graemerocher on 25/08/2017.
  */
 @MicronautTest
+@Property(name = 'spec.name', value = 'JettyParameterBindingSpec')
 class JettyParameterBindingSpec extends Specification {
 
     @Inject
@@ -94,6 +97,7 @@ class JettyParameterBindingSpec extends Specification {
         response.body().contains('Book[\\"age\\"])')
     }
 
+    @Requires(property = 'spec.name', value = 'JettyParameterBindingSpec')
     @Controller(value = "/parameter", produces = MediaType.TEXT_PLAIN)
     static class ParameterController {
         @Get
