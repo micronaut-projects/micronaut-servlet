@@ -43,6 +43,7 @@ class JettyCookieSpec extends Specification {
         response.status == HttpStatus.ACCEPTED
     }
 
+    @Requires(property = 'spec.name', value = 'JettyCookieSpec')
     @Controller('/cookie')
     @MockBean
     static class StatusController {
