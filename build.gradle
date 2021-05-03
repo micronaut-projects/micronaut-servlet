@@ -3,7 +3,7 @@ buildscript {
         maven { url "https://repo.grails.org/grails/core" }
     }
     dependencies {
-        classpath "io.micronaut.build.internal:micronaut-gradle-plugins:3.0.3"
+        classpath "io.micronaut.build.internal:micronaut-gradle-plugins:3.0.4"
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
         classpath "org.gradle:test-retry-gradle-plugin:1.2.1"
     }
