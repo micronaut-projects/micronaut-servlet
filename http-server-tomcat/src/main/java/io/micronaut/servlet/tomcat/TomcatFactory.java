@@ -90,6 +90,14 @@ public class TomcatFactory extends ServletServerFactory {
         tomcat.setConnector(connector);
         final String cp = contextPath != null && !contextPath.equals("/") ? contextPath : "";
         final Context context = tomcat.addContext(cp, "/");
+
+        // add required folder
+        File docBaseFile = new File(context.getDocBase());
+        if (!docBaseFile.isAbsolute()) {
+            docBaseFile = new File(((org.apache.catalina.Host) context.getParent()).getAppBaseFile(), docBaseFile.getPath());
+        }
+        docBaseFile.mkdirs();
+
         final Wrapper servlet = Tomcat.addServlet(
                 context,
                 configuration.getName(),
