@@ -206,12 +206,6 @@ public class DefaultServletHttpRequest<B> implements
         return Optional.empty();
     }
 
-    @NonNull
-    @Override
-    public Optional<Principal> getUserPrincipal() {
-        return Optional.ofNullable(delegate.getUserPrincipal());
-    }
-
     @Override
     public boolean isSecure() {
         return delegate.isSecure();
