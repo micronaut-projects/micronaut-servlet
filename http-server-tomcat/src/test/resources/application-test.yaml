@@ -1,0 +1,6 @@
+# Globally Disable micronaut-security for test environment (so most tests can ignore security concerns).
+# Individual tests that require @Secured, etc. should annotate the test with:
+#     @Property(name = 'micronaut.security.enabled', value = 'true')
+micronaut:
+  security:
+    enabled: false
