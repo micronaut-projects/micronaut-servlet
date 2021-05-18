@@ -22,12 +22,14 @@ import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.reactivex.BackpressureStrategy
 import io.reactivex.Flowable
 import org.reactivestreams.Publisher
+import spock.lang.Issue
 import spock.lang.Specification
 
 import javax.inject.Inject
 import javax.inject.Singleton
 import java.security.Principal
 
+@Issue('https://github.com/micronaut-projects/micronaut-core/issues/5395')
 @MicronautTest
 @Property(name = 'micronaut.security.enabled', value = 'true')
 @Property(name = 'spec.name', value = 'UndertowPrincipalBindingSpec')
