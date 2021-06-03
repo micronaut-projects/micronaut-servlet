@@ -727,8 +727,6 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                     .orElse(getDefaultMediaType(result));
             if (contentType != null) {
                 res.contentType(contentType);
-            } else if (result instanceof CharSequence) {
-                res.contentType(MediaType.TEXT_PLAIN);
             }
         }
 
