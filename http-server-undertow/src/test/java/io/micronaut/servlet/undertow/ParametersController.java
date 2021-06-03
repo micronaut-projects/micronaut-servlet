@@ -14,26 +14,22 @@ import java.io.*;
 @Controller("/parameters")
 public class ParametersController {
 
-    @Get("/uri/{name}")
-    @Produces(MediaType.TEXT_PLAIN)
+    @Get(value = "/uri/{name}", produces = MediaType.TEXT_PLAIN)
     String uriParam(String name) {
         return "Hello " + name;
     }
 
-    @Get("/query")
-    @Produces(MediaType.TEXT_PLAIN)
+    @Get(value = "/query", produces = MediaType.TEXT_PLAIN)
     String queryValue(@QueryValue("q") String name) {
         return "Hello " + name;
     }
 
-    @Get("/allParams")
-    @Produces(MediaType.TEXT_PLAIN)
+    @Get(value = "/allParams", produces = MediaType.TEXT_PLAIN)
     String allParams(HttpParameters parameters) {
         return "Hello " + parameters.get("name") + " " + parameters.get("age", int.class).orElse(null);
     }
 
-    @Get("/header")
-    @Produces(MediaType.TEXT_PLAIN)
+    @Get(value = "/header", produces = MediaType.TEXT_PLAIN)
     String headerValue(@Header(HttpHeaders.CONTENT_TYPE) String contentType) {
         return "Hello " + contentType;
     }
@@ -54,30 +50,27 @@ public class ParametersController {
         }
     }
 
-    @Post("/stringBody")
-    @Consumes("text/plain")
-    @Produces(MediaType.TEXT_PLAIN)
+    @Post(value = "/stringBody", processes = MediaType.TEXT_PLAIN)
     String stringBody(@Body String body) {
         return "Hello " + body;
     }
 
-    @Post("/bytesBody")
-    @Consumes("text/plain")
+    @Post(value = "/bytesBody", processes = MediaType.TEXT_PLAIN)
     String bytesBody(@Body byte[] body) {
         return "Hello " + new String(body);
     }
 
-    @Post(value = "/jsonBody", processes = "application/json")
+    @Post(value = "/jsonBody", processes = MediaType.APPLICATION_JSON)
     Person jsonBody(@Body Person body) {
         return body;
     }
 
-    @Post(value = "/jsonBodySpread", processes = "application/json")
+    @Post(value = "/jsonBodySpread", processes = MediaType.APPLICATION_JSON)
     Person jsonBody(String name, int age) {
         return new Person(name, age);
     }
 
-    @Post(value = "/fullRequest", processes = "application/json")
+    @Post(value = "/fullRequest", processes = MediaType.APPLICATION_JSON)
     io.micronaut.http.HttpResponse<Person> fullReq(io.micronaut.http.HttpRequest<Person> request) {
         final Person person = request.getBody().orElseThrow(() -> new RuntimeException("No body"));
         final MutableHttpResponse<Person> response = io.micronaut.http.HttpResponse.ok(person);
@@ -85,15 +78,14 @@ public class ParametersController {
         return response;
     }
 
-    @Post(value = "/writable", processes = "text/plain")
+    @Post(value = "/writable", processes = MediaType.TEXT_PLAIN)
     @Header(name = "Foo", value = "Bar")
     @Status(HttpStatus.CREATED)
     Writable fullReq(@Body String text) {
         return out -> out.append("Hello ").append(text);
     }
 
-
-    @Post(value = "/multipart", consumes = MediaType.MULTIPART_FORM_DATA, produces = "text/plain")
+    @Post(value = "/multipart", consumes = MediaType.MULTIPART_FORM_DATA, produces = MediaType.TEXT_PLAIN)
     String multipart(
             String foo,
             @Part("one") Person person,
