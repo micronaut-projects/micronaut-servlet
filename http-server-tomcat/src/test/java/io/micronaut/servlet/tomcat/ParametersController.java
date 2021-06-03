@@ -16,21 +16,25 @@ import java.io.*;
 public class ParametersController {
 
     @Get("/uri/{name}")
+    @Produces(MediaType.TEXT_PLAIN)
     String uriParam(String name) {
         return "Hello " + name;
     }
 
     @Get("/query")
+    @Produces(MediaType.TEXT_PLAIN)
     String queryValue(@QueryValue("q") String name) {
         return "Hello " + name;
     }
 
     @Get("/allParams")
+    @Produces(MediaType.TEXT_PLAIN)
     String allParams(HttpParameters parameters) {
         return "Hello " + parameters.get("name") + " " + parameters.get("age", int.class).orElse(null);
     }
 
     @Get("/header")
+    @Produces(MediaType.TEXT_PLAIN)
     String headerValue(@Header(HttpHeaders.CONTENT_TYPE) String contentType) {
         return "Hello " + contentType;
     }
@@ -53,6 +57,7 @@ public class ParametersController {
 
     @Post("/stringBody")
     @Consumes("text/plain")
+    @Produces(MediaType.TEXT_PLAIN)
     String stringBody(@Body String body) {
         return "Hello " + body;
     }
