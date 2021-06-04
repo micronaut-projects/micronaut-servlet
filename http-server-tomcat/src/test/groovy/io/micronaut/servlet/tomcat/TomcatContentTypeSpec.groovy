@@ -7,12 +7,14 @@ import io.micronaut.http.HttpResponse
 import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Controller
+import io.micronaut.http.annotation.Get
 import io.micronaut.http.annotation.Post
 import io.micronaut.http.annotation.Produces
 import io.micronaut.http.client.RxHttpClient
 import io.micronaut.http.client.annotation.Client
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.reactivex.Single
+import spock.lang.Issue
 import spock.lang.Specification
 
 import javax.inject.Inject
@@ -25,6 +27,17 @@ class TomcatContentTypeSpec extends Specification {
     @Client('/contentType')
     RxHttpClient client
 
+    @Issue('https://github.com/micronaut-projects/micronaut-servlet/issues/157')
+    void 'test that expected content-type is received'() {
+        when:
+        def response = client.exchange(HttpRequest.GET('/about')).blockingFirst()
+
+        then:
+        response.contentType.isPresent()
+        response.contentType.get() == MediaType.APPLICATION_JSON_TYPE
+    }
+
+    @Issue('https://github.com/micronaut-projects/micronaut-servlet/issues/206')
     void 'test that method returning String without @Produces will have JSON response content-type'() {
         when:
         def response = client.exchange(
@@ -37,6 +50,7 @@ class TomcatContentTypeSpec extends Specification {
         response.body() == 'Body: foobar'
     }
 
+    @Issue('https://github.com/micronaut-projects/micronaut-servlet/issues/206')
     void 'test that method returning HttpResponse without @Produces will have JSON response content-type'() {
         when:
         def response = client.exchange(
@@ -49,6 +63,7 @@ class TomcatContentTypeSpec extends Specification {
         response.body() == 'Body: foobar'
     }
 
+    @Issue('https://github.com/micronaut-projects/micronaut-servlet/issues/206')
     void 'test that method returning Single without @Produces will have JSON response content-type'() {
         when:
         def response = client.exchange(
@@ -61,6 +76,7 @@ class TomcatContentTypeSpec extends Specification {
         response.body() == 'Body: foobar'
     }
 
+    @Issue('https://github.com/micronaut-projects/micronaut-servlet/issues/206')
     void 'test that method returning String with @Produces TEXT_PLAIN will have text response content-type'() {
         when:
         def response = client.exchange(
@@ -73,6 +89,7 @@ class TomcatContentTypeSpec extends Specification {
         response.body() == 'Body: foobar'
     }
 
+    @Issue('https://github.com/micronaut-projects/micronaut-servlet/issues/206')
     void 'test that method returning HttpResponse with @Produces TEXT_PLAIN will have text response content-type'() {
         when:
         def response = client.exchange(
@@ -85,6 +102,7 @@ class TomcatContentTypeSpec extends Specification {
         response.body() == 'Body: foobar'
     }
 
+    @Issue('https://github.com/micronaut-projects/micronaut-servlet/issues/206')
     void 'test that method returning Single with @Produces TEXT_PLAIN will have text response content-type'() {
         when:
         def response = client.exchange(
@@ -95,6 +113,16 @@ class TomcatContentTypeSpec extends Specification {
         response.contentType.isPresent()
         response.contentType.get() == MediaType.TEXT_PLAIN_TYPE
         response.body() == 'Body: foobar'
+    }
+
+    @Requires(property = 'spec.name', value = 'TomcatContentTypeSpec')
+    @Controller("/contentType/about")
+    static class AboutController {
+        @Get
+        @Produces(MediaType.APPLICATION_JSON)
+        HttpResponse<String> index() {
+            HttpResponse.ok().body("OK")
+        }
     }
 
     @Requires(property = 'spec.name', value = 'TomcatContentTypeSpec')
