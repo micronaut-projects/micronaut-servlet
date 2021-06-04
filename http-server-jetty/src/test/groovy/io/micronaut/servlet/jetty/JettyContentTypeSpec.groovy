@@ -13,12 +13,14 @@ import io.micronaut.http.client.RxHttpClient
 import io.micronaut.http.client.annotation.Client
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.reactivex.Single
+import spock.lang.Issue
 import spock.lang.Specification
 
 import javax.inject.Inject
 
 @MicronautTest
 @Property(name = 'spec.name', value = 'JettyContentTypeSpec')
+@Issue('https://github.com/micronaut-projects/micronaut-servlet/issues/206')
 class JettyContentTypeSpec extends Specification {
 
     @Inject

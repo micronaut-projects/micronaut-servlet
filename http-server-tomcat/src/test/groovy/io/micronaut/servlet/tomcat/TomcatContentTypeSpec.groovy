@@ -21,6 +21,7 @@ import javax.inject.Inject
 
 @MicronautTest
 @Property(name = 'spec.name', value = 'TomcatContentTypeSpec')
+@Issue('https://github.com/micronaut-projects/micronaut-servlet/issues/206')
 class TomcatContentTypeSpec extends Specification {
 
     @Inject
@@ -37,7 +38,6 @@ class TomcatContentTypeSpec extends Specification {
         response.contentType.get() == MediaType.APPLICATION_JSON_TYPE
     }
 
-    @Issue('https://github.com/micronaut-projects/micronaut-servlet/issues/206')
     void 'test that method returning String without @Produces will have JSON response content-type'() {
         when:
         def response = client.exchange(
@@ -50,7 +50,6 @@ class TomcatContentTypeSpec extends Specification {
         response.body() == 'Body: foobar'
     }
 
-    @Issue('https://github.com/micronaut-projects/micronaut-servlet/issues/206')
     void 'test that method returning HttpResponse without @Produces will have JSON response content-type'() {
         when:
         def response = client.exchange(
@@ -63,7 +62,6 @@ class TomcatContentTypeSpec extends Specification {
         response.body() == 'Body: foobar'
     }
 
-    @Issue('https://github.com/micronaut-projects/micronaut-servlet/issues/206')
     void 'test that method returning Single without @Produces will have JSON response content-type'() {
         when:
         def response = client.exchange(
@@ -76,7 +74,6 @@ class TomcatContentTypeSpec extends Specification {
         response.body() == 'Body: foobar'
     }
 
-    @Issue('https://github.com/micronaut-projects/micronaut-servlet/issues/206')
     void 'test that method returning String with @Produces TEXT_PLAIN will have text response content-type'() {
         when:
         def response = client.exchange(
@@ -89,7 +86,6 @@ class TomcatContentTypeSpec extends Specification {
         response.body() == 'Body: foobar'
     }
 
-    @Issue('https://github.com/micronaut-projects/micronaut-servlet/issues/206')
     void 'test that method returning HttpResponse with @Produces TEXT_PLAIN will have text response content-type'() {
         when:
         def response = client.exchange(
@@ -102,7 +98,6 @@ class TomcatContentTypeSpec extends Specification {
         response.body() == 'Body: foobar'
     }
 
-    @Issue('https://github.com/micronaut-projects/micronaut-servlet/issues/206')
     void 'test that method returning Single with @Produces TEXT_PLAIN will have text response content-type'() {
         when:
         def response = client.exchange(
