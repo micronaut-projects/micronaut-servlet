@@ -664,7 +664,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
         } else if (body instanceof CharSequence) {
             if (response instanceof MutableHttpResponse) {
                 if (!response.getContentType().isPresent()) {
-                    ((MutableHttpResponse<?>) response).contentType(MediaType.TEXT_PLAIN_TYPE);
+                    ((MutableHttpResponse<?>) response).contentType(MediaType.APPLICATION_JSON);
                 }
             }
             try (BufferedWriter writer = exchange.getResponse().getWriter()) {
@@ -727,8 +727,6 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                     .orElse(getDefaultMediaType(result));
             if (contentType != null) {
                 res.contentType(contentType);
-            } else if (result instanceof CharSequence) {
-                res.contentType(MediaType.TEXT_PLAIN);
             }
         }
 
@@ -745,9 +743,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
     }
 
     private String getDefaultMediaType(Object result) {
-        if (result instanceof CharSequence) {
-            return MediaType.TEXT_PLAIN;
-        } else if (result != null) {
+        if (result != null) {
             return MediaType.APPLICATION_JSON;
         }
         return null;

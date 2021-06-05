@@ -23,6 +23,7 @@ import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.convert.value.MutableConvertibleValues;
 import io.micronaut.core.io.buffer.ByteBuffer;
 import io.micronaut.core.io.buffer.ReferenceCounted;
+import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.http.*;
 import io.micronaut.http.annotation.Produces;
@@ -198,6 +199,11 @@ public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpSe
                 }
             }
         }), BackpressureStrategy.ERROR);
+    }
+
+    @Override
+    public Optional<MediaType> getContentType() {
+        return ConversionService.SHARED.convert(delegate.getContentType(), Argument.of(MediaType.class));
     }
 
     @Override
