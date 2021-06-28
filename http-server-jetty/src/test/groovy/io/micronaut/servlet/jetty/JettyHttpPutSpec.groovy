@@ -4,6 +4,7 @@ package io.micronaut.servlet.jetty
 import groovy.transform.EqualsAndHashCode
 import io.micronaut.context.annotation.Property
 import io.micronaut.context.annotation.Requires
+import io.micronaut.core.annotation.Introspected
 import io.micronaut.http.MutableHttpRequest
 import io.micronaut.http.client.BlockingHttpClient
 import io.micronaut.http.client.HttpClient
@@ -247,6 +248,7 @@ class JettyHttpPutSpec extends Specification {
         }
     }
 
+    @Introspected
     @EqualsAndHashCode
     static class Book {
         String title
