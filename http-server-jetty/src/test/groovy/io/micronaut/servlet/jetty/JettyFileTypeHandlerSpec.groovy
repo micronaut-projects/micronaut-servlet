@@ -14,8 +14,8 @@ import io.micronaut.http.server.types.files.SystemFile
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import spock.lang.Specification
 
-import javax.inject.Inject
-import javax.inject.Named
+import jakarta.inject.Inject
+import jakarta.inject.Named
 import java.nio.file.Files
 import java.time.Instant
 import java.time.ZoneId

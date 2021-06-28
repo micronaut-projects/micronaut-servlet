@@ -17,7 +17,7 @@ import io.micronaut.test.support.TestPropertyProvider
 import io.micronaut.web.router.resource.StaticResourceConfiguration
 import spock.lang.Specification
 
-import javax.inject.Inject
+import jakarta.inject.Inject
 import java.nio.file.Paths
 import java.time.Instant
 import java.time.ZoneId

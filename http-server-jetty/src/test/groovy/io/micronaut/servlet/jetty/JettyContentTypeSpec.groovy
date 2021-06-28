@@ -16,7 +16,7 @@ import io.reactivex.Single
 import spock.lang.Issue
 import spock.lang.Specification
 
-import javax.inject.Inject
+import jakarta.inject.Inject
 
 @MicronautTest
 @Property(name = 'spec.name', value = 'JettyContentTypeSpec')

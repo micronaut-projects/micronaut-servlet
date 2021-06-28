@@ -9,7 +9,7 @@ import io.micronaut.management.health.indicator.HealthResult
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import spock.lang.Specification
 
-import javax.inject.Inject
+import jakarta.inject.Inject
 
 @MicronautTest
 @Property(name = "endpoints.all.enabled", value = "true")

@@ -28,7 +28,7 @@ import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
 import org.reactivestreams.Publisher;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;

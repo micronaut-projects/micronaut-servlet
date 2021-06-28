@@ -37,7 +37,7 @@ import io.undertow.servlet.api.*;
 import org.xnio.Option;
 import org.xnio.Options;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 import javax.servlet.Servlet;
 import javax.servlet.ServletException;
 import java.util.List;

@@ -5,7 +5,7 @@ package io.micronaut.servlet.jetty.docs;
 import io.micronaut.context.event.BeanCreatedEvent;
 import io.micronaut.context.event.BeanCreatedEventListener;
 import org.eclipse.jetty.server.Server;
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 // end::imports[]
 
 // tag::class[]

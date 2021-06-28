@@ -22,7 +22,7 @@ import io.micronaut.servlet.engine.server.AbstractServletServer;
 import org.apache.catalina.connector.Connector;
 import org.apache.catalina.startup.Tomcat;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;

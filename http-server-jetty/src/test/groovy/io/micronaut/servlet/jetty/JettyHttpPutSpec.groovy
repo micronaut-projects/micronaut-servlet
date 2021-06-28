@@ -24,7 +24,7 @@ import spock.lang.PendingFeature
 import spock.lang.Specification
 
 import io.micronaut.core.annotation.Nullable
-import javax.inject.Inject
+import jakarta.inject.Inject
 
 /**
  * @author Graeme Rocher

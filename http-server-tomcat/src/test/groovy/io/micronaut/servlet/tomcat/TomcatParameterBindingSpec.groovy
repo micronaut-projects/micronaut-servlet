@@ -15,7 +15,7 @@ import spock.lang.Specification
 import spock.lang.Unroll
 
 import io.micronaut.core.annotation.Nullable
-import javax.inject.Inject
+import jakarta.inject.Inject
 
 /**
  * Created by graemerocher on 25/08/2017.

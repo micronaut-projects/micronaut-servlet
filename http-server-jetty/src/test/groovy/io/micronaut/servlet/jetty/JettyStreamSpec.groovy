@@ -26,7 +26,7 @@ import spock.lang.Specification
 import spock.lang.Unroll
 
 import io.micronaut.core.annotation.Nullable
-import javax.inject.Inject
+import jakarta.inject.Inject
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.CountDownLatch
 

@@ -25,7 +25,7 @@ import io.micronaut.http.annotation.Post
 import org.reactivestreams.Publisher
 import spock.lang.Specification
 
-import javax.inject.Inject
+import jakarta.inject.Inject
 import java.util.concurrent.CompletableFuture
 
 @MicronautTest

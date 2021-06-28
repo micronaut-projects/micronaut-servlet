@@ -12,7 +12,7 @@ import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.micronaut.test.annotation.MockBean
 import spock.lang.Specification
 
-import javax.inject.Inject
+import jakarta.inject.Inject
 
 @MicronautTest
 @Property(name = 'spec.name', value = 'JettyHttpStatusSpec')

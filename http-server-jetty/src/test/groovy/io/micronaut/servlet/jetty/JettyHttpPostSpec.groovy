@@ -20,7 +20,7 @@ import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.reactivex.Flowable
 import spock.lang.Specification
 import io.micronaut.http.client.multipart.MultipartBody
-import javax.inject.Inject
+import jakarta.inject.Inject
 import java.nio.charset.StandardCharsets
 
 /**

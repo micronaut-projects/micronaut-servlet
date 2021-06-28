@@ -20,7 +20,7 @@ import org.reactivestreams.Publisher
 import spock.lang.Issue
 import spock.lang.Specification
 
-import javax.inject.Inject
+import jakarta.inject.Inject
 
 @Property(name = 'spec.name', value = 'JettyCookieSpec')
 @MicronautTest

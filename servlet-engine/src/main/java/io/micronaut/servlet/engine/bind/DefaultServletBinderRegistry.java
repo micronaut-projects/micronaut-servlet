@@ -38,7 +38,7 @@ import io.micronaut.servlet.http.StreamedServletMessage;
 import io.reactivex.Flowable;
 import org.reactivestreams.Subscriber;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayOutputStream;
