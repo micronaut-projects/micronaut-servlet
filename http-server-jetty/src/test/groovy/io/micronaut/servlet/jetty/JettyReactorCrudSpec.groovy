@@ -29,8 +29,10 @@ class JettyReactorCrudSpec extends Specification {
         given:
         BookClient client = embeddedServer.applicationContext.getBean(BookClient)
 
-        // TODO[moss]: See comment in JettyNotFoundSpec
         when:
+        // TODO: Supporting 404 returning null (as per documentation) requires a reactor version of
+        //       RxReactiveClientResultTransformer in http-client-core. Then we should be okay to expect null from:
+        //       client.get(99).block()
         Book book = client.get(99).onErrorResume(t -> Mono.empty()).block()
         List<Book> books = client.list().block()
 
@@ -76,12 +78,12 @@ class JettyReactorCrudSpec extends Specification {
         then:
         book != null
 
-        // TODO[moss]: returning null is throwing not found ... see above
-//        when:
-//        book = client.get(book.id).block()
-//
-//        then:
-//        book == null
+        when:
+        // TODO: See above.
+        book = client.get(book.id).onErrorResume(t -> Mono.empty()).block()
+
+        then:
+        book == null
     }
 
     @Requires(property = 'spec.name', value = 'JettyReactorCrudSpec')

@@ -28,9 +28,11 @@ class JettyNotFoundSpec extends Specification {
 
     void "test 404 handling with Mono"() {
 
-        // TODO[moss]: Why must I `onErrorResume` on second expectation here?
         expect:
         client.maybe('1234').block()
+        // TODO: Supporting 404 returning null (as per documentation) requires a reactor version of
+        //       RxReactiveClientResultTransformer in http-client-core. Then we should be okay to do:
+        //       client.maybe('notthere').block() == null
         client.maybe('notthere').onErrorResume(t -> Mono.empty()).block() == null
     }
 
@@ -58,7 +60,6 @@ class JettyNotFoundSpec extends Specification {
             if (value != null) {
                 return Mono.just(value)
             }
-            // TODO[moss]: Maybe try Mono.just(null) ?
             return Mono.empty()
         }
 
