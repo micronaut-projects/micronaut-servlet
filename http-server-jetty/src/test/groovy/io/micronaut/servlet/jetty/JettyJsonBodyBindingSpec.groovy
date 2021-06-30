@@ -5,27 +5,27 @@ import com.fasterxml.jackson.core.JsonParseException
 import groovy.json.JsonSlurper
 import io.micronaut.context.annotation.Property
 import io.micronaut.context.annotation.Requires
-import io.micronaut.http.client.RxHttpClient
-import io.micronaut.http.client.annotation.Client
-import io.micronaut.test.extensions.spock.annotation.MicronautTest
-import io.reactivex.Flowable
-import io.reactivex.Single
-import io.reactivex.schedulers.Schedulers
 import io.micronaut.http.HttpHeaders
 import io.micronaut.http.HttpRequest
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.Body
-import io.micronaut.http.annotation.Error
-import io.micronaut.http.client.exceptions.HttpClientResponseException
-import io.micronaut.http.hateoas.Link
-import io.micronaut.http.hateoas.JsonError
 import io.micronaut.http.annotation.Controller
+import io.micronaut.http.annotation.Error
 import io.micronaut.http.annotation.Post
+import io.micronaut.http.client.RxHttpClient
+import io.micronaut.http.client.annotation.Client
+import io.micronaut.http.client.exceptions.HttpClientResponseException
+import io.micronaut.http.hateoas.JsonError
+import io.micronaut.http.hateoas.Link
+import io.micronaut.test.extensions.spock.annotation.MicronautTest
+import jakarta.inject.Inject
 import org.reactivestreams.Publisher
+import reactor.core.publisher.Flux
+import reactor.core.publisher.Mono
+import reactor.core.scheduler.Schedulers
 import spock.lang.Specification
 
-import jakarta.inject.Inject
 import java.util.concurrent.CompletableFuture
 
 @MicronautTest
@@ -358,7 +358,7 @@ class JettyJsonBodyBindingSpec extends Specification {
         }
 
         @Post("/single")
-        Single<String> single(@Body Single<String> message) {
+        Mono<String> single(@Body Mono<String> message) {
             message
 
         }
@@ -386,9 +386,9 @@ class JettyJsonBodyBindingSpec extends Specification {
         }
 
         @Post("/publisher-object")
-        Publisher<String> publisherObject(@Body Flowable<Foo> publisher) {
+        Publisher<String> publisherObject(@Body Flux<Foo> publisher) {
             return publisher
-                    .subscribeOn(Schedulers.io())
+                    .subscribeOn(Schedulers.boundedElastic())
                     .map({ Foo foo ->
                         foo.toString()
                     })

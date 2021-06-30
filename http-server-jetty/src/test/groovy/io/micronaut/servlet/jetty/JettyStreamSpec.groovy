@@ -3,9 +3,9 @@ package io.micronaut.servlet.jetty
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.context.exceptions.ConfigurationException
+import io.micronaut.core.annotation.Nullable
 import io.micronaut.core.io.buffer.ByteBuffer
 import io.micronaut.core.io.buffer.ByteBufferFactory
-import io.micronaut.core.io.buffer.ReferenceCounted
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.MediaType
@@ -14,19 +14,16 @@ import io.micronaut.http.annotation.Get
 import io.micronaut.http.annotation.QueryValue
 import io.micronaut.http.client.annotation.Client
 import io.micronaut.runtime.server.EmbeddedServer
-import io.netty.buffer.ByteBuf
-import io.netty.buffer.Unpooled
-import io.reactivex.Flowable
-import io.reactivex.Single
+import jakarta.inject.Inject
 import org.reactivestreams.Subscriber
 import org.reactivestreams.Subscription
+import reactor.core.publisher.Flux
+import reactor.core.publisher.Mono
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll
 
-import io.micronaut.core.annotation.Nullable
-import jakarta.inject.Inject
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.CountDownLatch
 
@@ -79,10 +76,10 @@ class JettyStreamSpec extends Specification {
         int n = 42376 // This may be higher than 806596, but the test takes forever, then.
         StreamEchoClient myClient = context.getBean(StreamEchoClient)
         when:
-        Flowable<ByteBuffer> responseFlowable = myClient.echoAsByteBuffers(n, "Hello, World!")
+        Flux<ByteBuffer> responseFlux = myClient.echoAsByteBuffers(n, "Hello, World!")
         int sum = 0
         CountDownLatch latch = new CountDownLatch(1)
-        responseFlowable.subscribe(new Subscriber<ByteBuffer<?>>() {
+        responseFlux.subscribe(new Subscriber<ByteBuffer<?>>() {
             private Subscription s
 
             @Override
@@ -118,7 +115,7 @@ class JettyStreamSpec extends Specification {
         given:
         StreamEchoClient myClient = context.getBean(StreamEchoClient)
         when:
-        Elephant _ = myClient.echoAsElephant(42, "Hello, big grey animal!").blockingFirst()
+        Elephant _ = myClient.echoAsElephant(42, "Hello, big grey animal!").blockFirst()
         then:
         def ex = thrown(ConfigurationException)
         ex.message == 'Cannot create the generated HTTP client\'s required return type, since no TypeConverter from ByteBuffer to class io.micronaut.servlet.jetty.JettyStreamSpec$Elephant is registered'
@@ -135,7 +132,7 @@ class JettyStreamSpec extends Specification {
     }
 
     @Unroll
-    void "JSON can still be streamed using Flowable as container"() {
+    void "JSON can still be streamed using Flux as container"() {
         given:
         StreamEchoClient myClient = context.getBean(StreamEchoClient)
         expect:
@@ -148,10 +145,10 @@ class JettyStreamSpec extends Specification {
         String echoAsString(@QueryValue @Nullable int n, @QueryValue @Nullable String data);
 
         @Get(value = "/echo{?n,data}", consumes = MediaType.TEXT_PLAIN)
-        Flowable<ByteBuffer<?>> echoAsByteBuffers(@QueryValue @Nullable int n, @QueryValue @Nullable String data);
+        Flux<ByteBuffer<?>> echoAsByteBuffers(@QueryValue @Nullable int n, @QueryValue @Nullable String data);
 
         @Get(value = "/echo{?n,data}", consumes = MediaType.TEXT_PLAIN)
-        Flowable<Elephant> echoAsElephant(@QueryValue @Nullable int n, @QueryValue @Nullable String data);
+        Flux<Elephant> echoAsElephant(@QueryValue @Nullable int n, @QueryValue @Nullable String data);
 
         @Get(value = "/echoWithHeaders{?n,data}", consumes = MediaType.TEXT_PLAIN)
         HttpResponse<String> echoWithHeaders(@QueryValue @Nullable int n, @QueryValue @Nullable String data);
@@ -177,38 +174,38 @@ class JettyStreamSpec extends Specification {
         @Inject ByteBufferFactory<?, ?> bufferFactory
 
         @Get(value = "/echo{?n,data}", produces = MediaType.TEXT_PLAIN)
-        Flowable<byte[]> postStream(@QueryValue @Nullable int n,  @QueryValue @Nullable String data) {
-            return Flowable.just(data.getBytes(StandardCharsets.UTF_8)).repeat(n)
+        Flux<byte[]> postStream(@QueryValue @Nullable int n,  @QueryValue @Nullable String data) {
+            return Flux.just(data.getBytes(StandardCharsets.UTF_8)).repeat(n - 1)
         }
 
         @Get(value = "/echoWithHeaders{?n,data}", produces = MediaType.TEXT_PLAIN)
-        HttpResponse<Flowable<byte[]>> echoWithHeaders(@QueryValue @Nullable int n, @QueryValue @Nullable String data) {
-            return HttpResponse.ok(Flowable.just(data.getBytes(StandardCharsets.UTF_8)).repeat(n)).header("X-MyHeader", "42")
+        HttpResponse<Flux<byte[]>> echoWithHeaders(@QueryValue @Nullable int n, @QueryValue @Nullable String data) {
+            return HttpResponse.ok(Flux.just(data.getBytes(StandardCharsets.UTF_8)).repeat(n - 1)).header("X-MyHeader", "42")
         }
 
         @Get(value = "/echoWithHeadersSingle{?data}", produces = MediaType.TEXT_PLAIN)
-        HttpResponse<Single<byte[]>> echoWithHeadersSingle(@QueryValue @Nullable String data) {
-            return HttpResponse.ok(Single.just(data.getBytes(StandardCharsets.UTF_8))).header("X-MyHeader", "42")
+        HttpResponse<Mono<byte[]>> echoWithHeadersSingle(@QueryValue @Nullable String data) {
+            return HttpResponse.ok(Mono.just(data.getBytes(StandardCharsets.UTF_8))).header("X-MyHeader", "42")
         }
 
         @Get(value = "/someJson1", produces = MediaType.APPLICATION_JSON)
-        Flowable<byte[]> someJson1() {
-            return Flowable.just('{"key":"value"}'.getBytes(StandardCharsets.UTF_8))
+        Flux<byte[]> someJson1() {
+            return Flux.just('{"key":"value"}'.getBytes(StandardCharsets.UTF_8))
         }
 
         @Get(value = "/someJson2", produces = MediaType.APPLICATION_JSON)
-        HttpResponse<Flowable<byte[]>> someJson2() {
-            return HttpResponse.ok(Flowable.just('{"key":"value"}'.getBytes(StandardCharsets.UTF_8)))
+        HttpResponse<Flux<byte[]>> someJson2() {
+            return HttpResponse.ok(Flux.just('{"key":"value"}'.getBytes(StandardCharsets.UTF_8)))
         }
 
         @Get(value = "/someJson3", produces = MediaType.APPLICATION_JSON)
-        Flowable<ByteBuffer> someJson3() {
-            return Flowable.just(byteBuf('{"key":'), byteBuf('"value"}'))
+        Flux<ByteBuffer> someJson3() {
+            return Flux.just(byteBuf('{"key":'), byteBuf('"value"}'))
         }
 
         @Get(value = "/someJsonCollection", produces = MediaType.APPLICATION_JSON)
-        HttpResponse<Flowable<String>> someJsonCollection() {
-            return HttpResponse.ok(Flowable.just('{"x":1}','{"x":2}'))
+        HttpResponse<Flux<String>> someJsonCollection() {
+            return HttpResponse.ok(Flux.just('{"x":1}','{"x":2}'))
         }
 
         private ByteBuffer byteBuf(String s) {

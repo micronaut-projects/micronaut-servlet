@@ -28,7 +28,11 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
-import io.micronaut.http.*;
+import io.micronaut.http.HttpHeaders;
+import io.micronaut.http.HttpMethod;
+import io.micronaut.http.HttpParameters;
+import io.micronaut.http.MediaType;
+import io.micronaut.http.MutableHttpResponse;
 import io.micronaut.http.codec.CodecException;
 import io.micronaut.http.codec.MediaTypeCodec;
 import io.micronaut.http.codec.MediaTypeCodecRegistry;
@@ -37,12 +41,12 @@ import io.micronaut.servlet.http.ServletExchange;
 import io.micronaut.servlet.http.ServletHttpRequest;
 import io.micronaut.servlet.http.ServletHttpResponse;
 import io.micronaut.servlet.http.StreamedServletMessage;
-import io.reactivex.BackpressureStrategy;
-import io.reactivex.Flowable;
-import io.reactivex.Scheduler;
-import io.reactivex.schedulers.Schedulers;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.FluxSink;
+import reactor.core.scheduler.Scheduler;
+import reactor.core.scheduler.Schedulers;
 
 import javax.servlet.AsyncContext;
 import javax.servlet.ReadListener;
@@ -137,8 +141,8 @@ public class DefaultServletHttpRequest<B> implements
         if (this.scheduler == null) {
 
             final AsyncContext asyncContext = delegate.startAsync();
-            this.scheduler = Schedulers.from(asyncContext::start);
-            return Flowable.fromPublisher(responsePublisher)
+            this.scheduler = Schedulers.fromExecutor(asyncContext::start);
+            return Flux.from(responsePublisher)
                     .subscribeOn(scheduler)
                     .doAfterTerminate(asyncContext::complete);
         } else {
@@ -426,12 +430,12 @@ public class DefaultServletHttpRequest<B> implements
 
     @Override
     public void subscribe(Subscriber<? super byte[]> s) {
-        Flowable.<byte[]>create(emitter -> {
+        Flux.<byte[]>create(emitter -> {
             ServletInputStream inputStream;
             try {
                 inputStream = delegate.getInputStream();
             } catch (IOException e) {
-                emitter.onError(e);
+                emitter.error(e);
                 return;
             }
             byte[] buffer = new byte[1024];
@@ -446,19 +450,19 @@ public class DefaultServletHttpRequest<B> implements
                                 int length = inputStream.read(buffer);
                                 if (length == -1) {
                                     complete = true;
-                                    emitter.onComplete();
+                                    emitter.complete();
                                     break;
                                 } else {
                                     if (buffer.length == length) {
-                                        emitter.onNext(buffer);
+                                        emitter.next(buffer);
                                     } else {
-                                        emitter.onNext(Arrays.copyOf(buffer, length));
+                                        emitter.next(Arrays.copyOf(buffer, length));
                                     }
                                 }
                             } while (inputStream.isReady());
                         } catch (IOException e) {
                             complete = true;
-                            emitter.onError(e);
+                            emitter.error(e);
                         }
                     }
                 }
@@ -467,7 +471,7 @@ public class DefaultServletHttpRequest<B> implements
                 public void onAllDataRead() {
                     if (!complete) {
                         complete = true;
-                        emitter.onComplete();
+                        emitter.complete();
                     }
                 }
 
@@ -475,11 +479,11 @@ public class DefaultServletHttpRequest<B> implements
                 public void onError(Throwable t) {
                     if (!complete) {
                         complete = true;
-                        emitter.onError(t);
+                        emitter.error(t);
                     }
                 }
             });
-        }, BackpressureStrategy.BUFFER).subscribe(s);
+        }, FluxSink.OverflowStrategy.BUFFER).subscribe(s);
     }
 
 

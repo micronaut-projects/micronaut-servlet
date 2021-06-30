@@ -13,11 +13,10 @@ import io.micronaut.http.annotation.Produces
 import io.micronaut.http.client.RxHttpClient
 import io.micronaut.http.client.annotation.Client
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
-import io.reactivex.Single
+import jakarta.inject.Inject
+import reactor.core.publisher.Mono
 import spock.lang.Issue
 import spock.lang.Specification
-
-import jakarta.inject.Inject
 
 @MicronautTest
 @Property(name = 'spec.name', value = 'TomcatContentTypeSpec')
@@ -62,7 +61,7 @@ class TomcatContentTypeSpec extends Specification {
         response.body() == 'Body: foobar'
     }
 
-    void 'test that method returning Single without @Produces will have JSON response content-type'() {
+    void 'test that method returning Mono without @Produces will have JSON response content-type'() {
         when:
         def response = client.exchange(
                 HttpRequest.POST('/default/reactive', 'foobar'), String
@@ -98,7 +97,7 @@ class TomcatContentTypeSpec extends Specification {
         response.body() == 'Body: foobar'
     }
 
-    void 'test that method returning Single with @Produces TEXT_PLAIN will have text response content-type'() {
+    void 'test that method returning Mono with @Produces TEXT_PLAIN will have text response content-type'() {
         when:
         def response = client.exchange(
                 HttpRequest.POST('/plainText/reactive', 'foobar'), String
@@ -132,8 +131,8 @@ class TomcatContentTypeSpec extends Specification {
             HttpResponse<String>.ok(result(text))
         }
         @Post('/reactive')
-        Single<String> reactive(@Body String text) {
-            Single<String>.just(result(text))
+        Mono<String> reactive(@Body String text) {
+            Mono<String>.just(result(text))
         }
     }
 
@@ -150,8 +149,8 @@ class TomcatContentTypeSpec extends Specification {
             HttpResponse<String>.ok(result(text))
         }
         @Post('/reactive')
-        Single<String> reactive(@Body String text) {
-            Single<String>.just(result(text))
+        Mono<String> reactive(@Body String text) {
+            Mono<String>.just(result(text))
         }
     }
 

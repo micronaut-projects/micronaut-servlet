@@ -5,27 +5,21 @@ import groovy.transform.EqualsAndHashCode
 import io.micronaut.context.annotation.Property
 import io.micronaut.context.annotation.Requires
 import io.micronaut.core.annotation.Introspected
-import io.micronaut.http.MutableHttpRequest
-import io.micronaut.http.client.BlockingHttpClient
-import io.micronaut.http.client.HttpClient
-import io.micronaut.http.client.annotation.Client
-import io.micronaut.test.extensions.spock.annotation.MicronautTest
-import io.reactivex.Flowable
-import io.micronaut.http.HttpRequest
-import io.micronaut.http.HttpResponse
-import io.micronaut.http.HttpStatus
-import io.micronaut.http.MediaType
+import io.micronaut.core.annotation.Nullable
+import io.micronaut.http.*
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Header
-import io.micronaut.http.client.exceptions.HttpClientException
 import io.micronaut.http.annotation.Put
-import spock.lang.Issue
-import spock.lang.PendingFeature
-import spock.lang.Specification
-
-import io.micronaut.core.annotation.Nullable
+import io.micronaut.http.client.BlockingHttpClient
+import io.micronaut.http.client.HttpClient
+import io.micronaut.http.client.annotation.Client
+import io.micronaut.http.client.exceptions.HttpClientException
+import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
+import reactor.core.publisher.Flux
+import spock.lang.Issue
+import spock.lang.Specification
 
 /**
  * @author Graeme Rocher
@@ -47,14 +41,14 @@ class JettyHttpPutSpec extends Specification {
         def book = new Book(title: "The Stand", pages: 1000)
 
         when:
-        Flowable<HttpResponse<Book>> flowable = Flowable.fromPublisher(client.exchange(
+        Flux<HttpResponse<Book>> flux = Flux.from(client.exchange(
                 HttpRequest.PATCH("/put/simple", book)
                         .accept(MediaType.APPLICATION_JSON_TYPE)
                         .header("X-My-Header", "Foo"),
 
                 Book
         ))
-        flowable.blockingFirst()
+        flux.blockFirst()
 
         then:
         def e = thrown(HttpClientException)
@@ -65,14 +59,14 @@ class JettyHttpPutSpec extends Specification {
         def book = new Book(title: "The Stand", pages: 1000)
 
         when:
-        Flowable<HttpResponse<Book>> flowable = Flowable.fromPublisher(client.exchange(
+        Flux<HttpResponse<Book>> flux = Flux.from(client.exchange(
                 HttpRequest.PUT("/put/simple", book)
                         .accept(MediaType.APPLICATION_JSON_TYPE)
                         .header("X-My-Header", "Foo"),
 
                 Book
         ))
-        HttpResponse<Book> response = flowable.blockingFirst()
+        HttpResponse<Book> response = flux.blockFirst()
         Optional<Book> body = response.getBody()
 
         then:
@@ -88,14 +82,14 @@ class JettyHttpPutSpec extends Specification {
         given:
         def book = new Book(title: "The Stand",pages: 1000)
         when:
-        Flowable<HttpResponse<Book>> flowable = Flowable.fromPublisher(client.exchange(
+        Flux<HttpResponse<Book>> flux = Flux.from(client.exchange(
                 HttpRequest.PUT("/put/title/{title}", book)
                         .accept(MediaType.APPLICATION_JSON_TYPE)
                         .header("X-My-Header", "Foo"),
 
                 Book
         ))
-        HttpResponse<Book> response = flowable.blockingFirst()
+        HttpResponse<Book> response = flux.blockFirst()
         Optional<Book> body = response.getBody()
 
         then:
@@ -112,7 +106,7 @@ class JettyHttpPutSpec extends Specification {
         given:
         def book = new Book(title: "The Stand", pages: 1000)
         when:
-        Flowable<HttpResponse<Book>> flowable = Flowable.fromPublisher(client.exchange(
+        Flux<HttpResponse<Book>> flux = Flux.from(client.exchange(
                 HttpRequest.PUT("/put/form", book)
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED_TYPE)
                         .accept(MediaType.APPLICATION_JSON_TYPE)
@@ -120,7 +114,7 @@ class JettyHttpPutSpec extends Specification {
 
                 Book
         ))
-        HttpResponse<Book> response = flowable.blockingFirst()
+        HttpResponse<Book> response = flux.blockFirst()
         Optional<Book> body = response.getBody()
 
         then:
@@ -241,7 +235,7 @@ class JettyHttpPutSpec extends Specification {
         }
 
         @Put(value = "/nullableHeader", consumes = MediaType.ALL, produces = MediaType.TEXT_PLAIN)
-        String putNullableHeader(@Body final Flowable<byte[]> contents,
+        String putNullableHeader(@Body final Flux<byte[]> contents,
                                  @Nullable @Header("foo") final String auth) {
 
             return "put done"

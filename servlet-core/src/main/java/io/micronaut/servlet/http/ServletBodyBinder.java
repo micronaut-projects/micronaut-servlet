@@ -31,11 +31,14 @@ import io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder;
 import io.micronaut.http.codec.CodecException;
 import io.micronaut.http.codec.MediaTypeCodec;
 import io.micronaut.http.codec.MediaTypeCodecRegistry;
-import io.reactivex.Flowable;
 import org.reactivestreams.Publisher;
+import reactor.core.publisher.Flux;
 
-
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.lang.reflect.Array;
 import java.util.Collections;
 import java.util.List;
@@ -146,8 +149,8 @@ public class ServletBodyBinder<T> extends DefaultBodyAnnotationBinder<T> impleme
                                 } else {
                                     final Argument<? extends List<?>> containerType = Argument.listOf(typeArg.getType());
                                     T content = (T) codec.decode(containerType, inputStream);
-                                    final Flowable flowable = Flowable.fromIterable((Iterable) content);
-                                    final T converted = conversionService.convertRequired(flowable, type);
+                                    final Flux flux = Flux.fromIterable((Iterable) content);
+                                    final T converted = conversionService.convertRequired(flux, type);
                                     return () -> Optional.of(converted);
                                 }
                             } else {
