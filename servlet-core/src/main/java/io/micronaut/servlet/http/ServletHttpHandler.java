@@ -434,12 +434,8 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                                         });
                                     } else {
                                         MutableHttpResponse<Object> defaultNotFound = errorResponseProcessor.processResponse(
-                                                ErrorContext.builder(req)
-                                                        .errorMessage("Page Not Found")                     // TODO[moss]: Parity with netty?
-                                                        .build(),
-                                                res.status(404)
-                                        );
-                                        defaultNotFound.setAttribute(HttpAttributes.ROUTE_MATCH, route);    // TODO[moss]: Parity with netty?
+                                                ErrorContext.builder(req).build(),
+                                                res.status(404));
                                         encodeResponse(exchange, annotationMetadata, defaultNotFound);
                                         return Publishers.just(defaultNotFound);
                                     }
