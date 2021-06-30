@@ -715,14 +715,6 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
             } catch (IOException e) {
                 throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
             }
-        }
-        // TODO[moss]: This???
-        else if (body == Mono.empty()) {
-            if (!response.getContentType().isPresent()) {
-                if (response instanceof MutableHttpResponse) {
-                    ((MutableHttpResponse<?>) response).contentType(MediaType.APPLICATION_JSON_TYPE);
-                }
-            }
         } else if (body != null) {
             Class<?> bodyType = body.getClass();
             final MediaType ct = response.getContentType().orElseGet(() -> {
