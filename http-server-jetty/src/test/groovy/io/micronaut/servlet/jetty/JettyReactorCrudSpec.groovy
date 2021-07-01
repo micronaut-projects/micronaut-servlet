@@ -30,8 +30,8 @@ class JettyReactorCrudSpec extends Specification {
         BookClient client = embeddedServer.applicationContext.getBean(BookClient)
 
         when:
-        // TODO: Supporting 404 returning null (as per documentation) requires a reactor version of
-        //       RxReactiveClientResultTransformer in http-client-core. Then we should be okay to expect null from:
+        // TODO: Supporting 404 returning null (as per documentation) needs  ReactorReactiveClientResultTransformer
+        //       from micronaut-reactor, but currently not visible??? Then we should be okay to do:
         //       client.get(99).block()
         Book book = client.get(99).onErrorResume(t -> Mono.empty()).block()
         List<Book> books = client.list().block()
