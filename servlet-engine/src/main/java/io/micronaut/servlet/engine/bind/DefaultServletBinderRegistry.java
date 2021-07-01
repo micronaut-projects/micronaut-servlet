@@ -43,6 +43,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Optional;
@@ -116,10 +117,9 @@ class DefaultServletBinderRegistry extends io.micronaut.servlet.http.ServletBind
                             future::completeExceptionally
                     );
                 } else if (BYTE_ARRAY.getType().isAssignableFrom(type)) {
-                    // TODO[moss]: Can't pass OutputStream::write directly as it throws a checked exception. Better way?
                     BiConsumer<ByteArrayOutputStream, byte[]> uncheckedOutputStreamWrite = (stream, bytes) -> {
                         try { stream.write(bytes); }
-                        catch (IOException ex) { throw new RuntimeException(ex); }
+                        catch (IOException ex) { throw new UncheckedIOException(ex); }
                     };
                     Flux.from(servletHttpRequest).collect(ByteArrayOutputStream::new, uncheckedOutputStreamWrite)
                             .subscribe(
