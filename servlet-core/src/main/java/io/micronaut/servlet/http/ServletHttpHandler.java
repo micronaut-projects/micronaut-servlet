@@ -670,7 +670,9 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
     }
 
     private static Flux convertFluxPublisher(Object obj) {
-        // TODO[moss]: What about updating/replacing RxJavaConverterRegistrar?
+        // TODO[moss]: ReactorConverterRegistrar should be available from micronaut-reactor, so we don't
+        //             need to do this manually, but it isn't visible???  When available, then replace this with just:
+        //             Publishers.convertPublisher(obj, Flux.class)
         return Flux.from(Publishers.convertPublisher(obj, Publisher.class));
     }
 
