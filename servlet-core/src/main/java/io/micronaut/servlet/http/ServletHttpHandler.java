@@ -615,8 +615,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                         }
                     }));
                 } else {
-                    // TODO[moss]: What if it isn't CompletableFuture???
-                    result = Mono.fromFuture((CompletableFuture<?>) result);
+                    result = Mono.fromCallable(((Future<?>) result)::get);
                 }
             }
 
