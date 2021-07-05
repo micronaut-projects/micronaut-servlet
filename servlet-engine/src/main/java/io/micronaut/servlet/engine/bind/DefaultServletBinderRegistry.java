@@ -118,8 +118,11 @@ class DefaultServletBinderRegistry extends io.micronaut.servlet.http.ServletBind
                     );
                 } else if (BYTE_ARRAY.getType().isAssignableFrom(type)) {
                     BiConsumer<ByteArrayOutputStream, byte[]> uncheckedOutputStreamWrite = (stream, bytes) -> {
-                        try { stream.write(bytes); }
-                        catch (IOException ex) { throw new UncheckedIOException(ex); }
+                        try {
+                            stream.write(bytes);
+                        } catch (IOException ex) {
+                            throw new UncheckedIOException(ex);
+                        }
                     };
                     Flux.from(servletHttpRequest).collect(ByteArrayOutputStream::new, uncheckedOutputStreamWrite)
                             .subscribe(
