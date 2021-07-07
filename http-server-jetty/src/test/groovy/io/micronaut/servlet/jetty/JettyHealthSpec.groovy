@@ -3,13 +3,12 @@ package io.micronaut.servlet.jetty
 import io.micronaut.context.annotation.Property
 import io.micronaut.health.HealthStatus
 import io.micronaut.http.HttpStatus
-import io.micronaut.http.client.RxHttpClient
 import io.micronaut.http.client.annotation.Client
 import io.micronaut.management.health.indicator.HealthResult
+import io.micronaut.reactor.http.client.ReactorHttpClient
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
-import spock.lang.Specification
-
 import jakarta.inject.Inject
+import spock.lang.Specification
 
 @MicronautTest
 @Property(name = "endpoints.all.enabled", value = "true")
@@ -18,13 +17,13 @@ class JettyHealthSpec extends Specification {
 
     @Client("/")
     @Inject
-    RxHttpClient client
+    ReactorHttpClient client
 
     void 'test healthy'() {
         given:
-        def liveness = client.exchange("/health/liveness", HealthResult).blockingFirst()
-        def readiness = client.exchange("/health/readiness", HealthResult).blockingFirst()
-        def overall = client.exchange("/health", HealthResult).blockingFirst()
+        def liveness = client.exchange("/health/liveness", HealthResult).blockFirst()
+        def readiness = client.exchange("/health/readiness", HealthResult).blockFirst()
+        def overall = client.exchange("/health", HealthResult).blockFirst()
 
         expect:
         liveness.status() == HttpStatus.OK

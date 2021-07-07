@@ -402,7 +402,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                         if (Publishers.isConvertibleToPublisher(body)) {
                             boolean isSingle = Publishers.isSingle(body.getClass());
                             if (isSingle) {
-                                Flux<?> flux = convertFluxPublisher(body);
+                                Flux<?> flux = Flux.from(Publishers.convertPublisher(body, Publisher.class));
                                 return flux.map((Function<Object, MutableHttpResponse<?>>) o -> {
                                     if (o instanceof HttpResponse) {
                                         encodeResponse(exchange, annotationMetadata, (HttpResponse<?>) o);
@@ -442,7 +442,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                                 }));
                             } else {
                                 // stream case
-                                Flux<?> flux = convertFluxPublisher(body);
+                                Flux<?> flux = Publishers.convertPublisher(body, Flux.class);
                                 if (isAsyncSupported) {
                                     final ServletHttpResponse<Res, ? super Object> servletResponse = exchange.getResponse();
                                     setHeadersFromMetadata(exchange.getResponse(), annotationMetadata, body);
@@ -622,7 +622,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
             Argument<?> firstArg = genericReturnType.getFirstTypeVariable().orElse(null);
             if (firstArg != null && HttpResponse.class.isAssignableFrom(firstArg.getType()) && Publishers.isConvertibleToPublisher(result)) {
                 //noinspection unchecked
-                return convertFluxPublisher(result);
+                return Publishers.convertPublisher(result, Flux.class);
             } else {
                 if (isSuspended) {
                     boolean isKotlinFunctionReturnTypeUnit =
@@ -667,13 +667,6 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
             }
         });
         return filterPublisher(new AtomicReference<>(req), responsePublisher, isErrorRoute);
-    }
-
-    private static Flux convertFluxPublisher(Object obj) {
-        // TODO[moss]: ReactorConverterRegistrar should be available from micronaut-reactor, so we don't
-        //             need to do this manually, but it isn't visible???  When available, then replace this with just:
-        //             Publishers.convertPublisher(obj, Flux.class)
-        return Flux.from(Publishers.convertPublisher(obj, Publisher.class));
     }
 
     private void encodeResponse(ServletExchange<Req, Res> exchange, AnnotationMetadata annotationMetadata, HttpResponse<?> response) {
