@@ -213,6 +213,7 @@ public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpSe
     }
 
     @Override
+    @NonNull
     public Optional<MediaType> getContentType() {
         return ConversionService.SHARED.convert(delegate.getContentType(), Argument.of(MediaType.class));
     }
@@ -319,6 +320,7 @@ public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpSe
     }
 
     @Override
+    @NonNull
     public MutableHttpHeaders getHeaders() {
         return headers;
     }

@@ -260,6 +260,7 @@ public class DefaultServletHttpRequest<B> implements
     }
 
     @Override
+    @NonNull
     public Optional<Locale> getLocale() {
         return Optional.ofNullable(delegate.getLocale());
     }
