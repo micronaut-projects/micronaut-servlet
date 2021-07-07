@@ -30,10 +30,7 @@ class JettyNotFoundSpec extends Specification {
 
         expect:
         client.maybe('1234').block()
-        // TODO: Supporting 404 returning null (as per documentation) needs  ReactorReactiveClientResultTransformer
-        //       from micronaut-reactor, but currently not visible??? Then we should be okay to do:
-        //       client.maybe('notthere').block() == null
-        client.maybe('notthere').onErrorResume(t -> Mono.empty()).block() == null
+        client.maybe('notthere').block() == null
     }
 
     @Requires(property = 'spec.name', value = 'JettyNotFoundSpec')

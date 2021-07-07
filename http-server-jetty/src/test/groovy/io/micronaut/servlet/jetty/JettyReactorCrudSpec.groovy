@@ -30,10 +30,7 @@ class JettyReactorCrudSpec extends Specification {
         BookClient client = embeddedServer.applicationContext.getBean(BookClient)
 
         when:
-        // TODO: Supporting 404 returning null (as per documentation) needs  ReactorReactiveClientResultTransformer
-        //       from micronaut-reactor, but currently not visible??? Then we should be okay to do:
-        //       client.get(99).block()
-        Book book = client.get(99).onErrorResume(t -> Mono.empty()).block()
+        Book book = client.get(99).block()
         List<Book> books = client.list().block()
 
         then:
@@ -79,8 +76,7 @@ class JettyReactorCrudSpec extends Specification {
         book != null
 
         when:
-        // TODO: See above.
-        book = client.get(book.id).onErrorResume(t -> Mono.empty()).block()
+        book = client.get(book.id).block()
 
         then:
         book == null
