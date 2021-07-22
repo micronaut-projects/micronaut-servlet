@@ -47,7 +47,7 @@ var activeTableTab = "activeTableTab";
 </div>
 <div class="subNav">
 <ul class="navList">
-<li><a href="../../../../io/micronaut/servlet/jetty/JettyConfiguration.html" title="class in io.micronaut.servlet.jetty"><span class="typeNameLink">Prev&nbsp;Class</span></a></li>
+<li><a href="../../../../io/micronaut/servlet/jetty/JettyConfiguration.JettySslConfiguration.html" title="class in io.micronaut.servlet.jetty"><span class="typeNameLink">Prev&nbsp;Class</span></a></li>
 <li><a href="../../../../io/micronaut/servlet/jetty/JettyServer.html" title="class in io.micronaut.servlet.jetty"><span class="typeNameLink">Next&nbsp;Class</span></a></li>
 </ul>
 <ul class="navList">
@@ -189,8 +189,9 @@ extends <a href="../../../../io/micronaut/servlet/engine/server/ServletServerFac
 </tr>
 <tr id="i0" class="altColor">
 <td class="colFirst"><code>protected org.eclipse.jetty.server.Server</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/servlet/jetty/JettyFactory.html#jettyServer-io.micronaut.context.ApplicationContext-io.micronaut.servlet.engine.MicronautServletConfiguration-">jettyServer</a></span>(io.micronaut.context.ApplicationContext&nbsp;applicationContext,
-           <a href="../../../../io/micronaut/servlet/engine/MicronautServletConfiguration.html" title="class in io.micronaut.servlet.engine">MicronautServletConfiguration</a>&nbsp;configuration)</code>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/servlet/jetty/JettyFactory.html#jettyServer-io.micronaut.context.ApplicationContext-io.micronaut.servlet.engine.MicronautServletConfiguration-io.micronaut.servlet.jetty.JettyConfiguration.JettySslConfiguration-">jettyServer</a></span>(io.micronaut.context.ApplicationContext&nbsp;applicationContext,
+           <a href="../../../../io/micronaut/servlet/engine/MicronautServletConfiguration.html" title="class in io.micronaut.servlet.engine">MicronautServletConfiguration</a>&nbsp;configuration,
+           <a href="../../../../io/micronaut/servlet/jetty/JettyConfiguration.JettySslConfiguration.html" title="class in io.micronaut.servlet.jetty">JettyConfiguration.JettySslConfiguration</a>&nbsp;jettySslConfiguration)</code>
 <div class="block">Builds the Jetty server bean.</div>
 </td>
 </tr>
@@ -281,7 +282,7 @@ extends <a href="../../../../io/micronaut/servlet/engine/server/ServletServerFac
 <!--   -->
 </a>
 <h3>Method Detail</h3>
-<a name="jettyServer-io.micronaut.context.ApplicationContext-io.micronaut.servlet.engine.MicronautServletConfiguration-">
+<a name="jettyServer-io.micronaut.context.ApplicationContext-io.micronaut.servlet.engine.MicronautServletConfiguration-io.micronaut.servlet.jetty.JettyConfiguration.JettySslConfiguration-">
 <!--   -->
 </a>
 <ul class="blockListLast">
@@ -290,12 +291,14 @@ extends <a href="../../../../io/micronaut/servlet/engine/server/ServletServerFac
 <pre>@Singleton
  @Primary
 protected&nbsp;org.eclipse.jetty.server.Server&nbsp;jettyServer(io.micronaut.context.ApplicationContext&nbsp;applicationContext,
-                                                                           <a href="../../../../io/micronaut/servlet/engine/MicronautServletConfiguration.html" title="class in io.micronaut.servlet.engine">MicronautServletConfiguration</a>&nbsp;configuration)</pre>
+                                                                           <a href="../../../../io/micronaut/servlet/engine/MicronautServletConfiguration.html" title="class in io.micronaut.servlet.engine">MicronautServletConfiguration</a>&nbsp;configuration,
+                                                                           <a href="../../../../io/micronaut/servlet/jetty/JettyConfiguration.JettySslConfiguration.html" title="class in io.micronaut.servlet.jetty">JettyConfiguration.JettySslConfiguration</a>&nbsp;jettySslConfiguration)</pre>
 <div class="block">Builds the Jetty server bean.</div>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
 <dd><code>applicationContext</code> - This application context</dd>
 <dd><code>configuration</code> - The servlet configuration</dd>
+<dd><code>jettySslConfiguration</code> - The Jetty SSL config</dd>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>The Jetty server bean</dd>
 </dl>
@@ -328,7 +331,7 @@ protected&nbsp;org.eclipse.jetty.server.Server&nbsp;jettyServer(io.micronaut.con
 </div>
 <div class="subNav">
 <ul class="navList">
-<li><a href="../../../../io/micronaut/servlet/jetty/JettyConfiguration.html" title="class in io.micronaut.servlet.jetty"><span class="typeNameLink">Prev&nbsp;Class</span></a></li>
+<li><a href="../../../../io/micronaut/servlet/jetty/JettyConfiguration.JettySslConfiguration.html" title="class in io.micronaut.servlet.jetty"><span class="typeNameLink">Prev&nbsp;Class</span></a></li>
 <li><a href="../../../../io/micronaut/servlet/jetty/JettyServer.html" title="class in io.micronaut.servlet.jetty"><span class="typeNameLink">Next&nbsp;Class</span></a></li>
 </ul>
 <ul class="navList">

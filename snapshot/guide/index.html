@@ -573,7 +573,7 @@ If you plan to produce a WAR file then the dependency should be <code>developmen
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">import io.micronaut.context.event.BeanCreatedEvent;
 import io.micronaut.context.event.BeanCreatedEventListener;
 import org.eclipse.jetty.server.Server;
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 
 @Singleton
 public class JettyServerCustomizer implements BeanCreatedEventListener&lt;Server&gt; {
@@ -801,7 +801,7 @@ If you plan to produce a WAR file then the dependency should be <code>developmen
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">import io.micronaut.context.event.BeanCreatedEvent;
 import io.micronaut.context.event.BeanCreatedEventListener;
 import org.apache.catalina.startup.Tomcat;
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 
 @Singleton
 public class TomcatServerCustomizer implements BeanCreatedEventListener&lt;Tomcat&gt; {
@@ -954,7 +954,7 @@ If you plan to produce a WAR file then the dependency should be <code>developmen
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">import io.micronaut.context.event.BeanCreatedEvent;
 import io.micronaut.context.event.BeanCreatedEventListener;
 import io.undertow.Undertow;
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 
 @Singleton
 public class UndertowServerCustomizer implements BeanCreatedEventListener&lt;Undertow.Builder&gt; {
