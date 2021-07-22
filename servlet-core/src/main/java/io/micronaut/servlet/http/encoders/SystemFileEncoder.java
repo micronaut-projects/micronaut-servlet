@@ -24,12 +24,17 @@ import io.micronaut.http.server.types.files.SystemFile;
 import io.micronaut.servlet.http.ServletExchange;
 import io.micronaut.servlet.http.ServletHttpRequest;
 import io.micronaut.servlet.http.ServletHttpResponse;
-import io.reactivex.BackpressureStrategy;
-import io.reactivex.Flowable;
+import jakarta.inject.Singleton;
 import org.reactivestreams.Publisher;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.FluxSink;
+import reactor.core.publisher.Mono;
 
-import javax.inject.Singleton;
-import java.io.*;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.Arrays;
@@ -67,30 +72,30 @@ public class SystemFileEncoder extends AbstractFileEncoder<SystemFile> {
             final RandomAccessFile randomAccessFile;
             try {
                 randomAccessFile = new RandomAccessFile(value.getFile(), "r");
-                return response.stream(Flowable.create(emitter -> {
+                return response.stream(Flux.create(emitter -> {
                     ByteBuffer buf = ByteBuffer.allocate(1024);
                     try (FileChannel channel = randomAccessFile.getChannel()) {
                         while (channel.read(buf) > 0) {
                             final byte[] bytes = buf.array();
                             final int p = buf.position();
                             if (p == 1024) {
-                                emitter.onNext(buf.array());
+                                emitter.next(buf.array());
                             } else {
-                                emitter.onNext(Arrays.copyOf(bytes, p));
+                                emitter.next(Arrays.copyOf(bytes, p));
                             }
                             buf.clear();
                         }
                     } catch (Throwable e) {
-                        emitter.onError(e);
+                        emitter.error(e);
                     }
-                }, BackpressureStrategy.BUFFER));
+                }, FluxSink.OverflowStrategy.BUFFER));
             } catch (FileNotFoundException e) {
                 return Publishers.just(
                         response.status(HttpStatus.NOT_FOUND)
                 );
             }
         } else {
-            return Flowable.fromCallable(() -> {
+            return Mono.fromCallable(() -> {
                 try (InputStream in = new FileInputStream(value.getFile())) {
                     try (OutputStream out = response.getOutputStream()) {
                         byte[] buffer = new byte[1024];

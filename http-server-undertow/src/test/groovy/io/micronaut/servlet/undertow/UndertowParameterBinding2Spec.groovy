@@ -8,14 +8,14 @@ import io.micronaut.http.HttpHeaders
 import io.micronaut.http.HttpRequest
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.MediaType
-import io.micronaut.http.client.RxHttpClient
+import io.micronaut.http.client.HttpClient
 import io.micronaut.http.client.annotation.Client
 import io.micronaut.http.client.exceptions.HttpClientResponseException
 import io.micronaut.http.client.multipart.MultipartBody
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import spock.lang.Specification
 
-import javax.inject.Inject
+import jakarta.inject.Inject
 
 @MicronautTest
 @Property(name = "micronaut.server.multipart.enabled", value = StringUtils.TRUE)
@@ -23,7 +23,7 @@ class UndertowParameterBinding2Spec extends Specification {
 
     @Inject
     @Client("/")
-    RxHttpClient client
+    HttpClient client
 
     void "test URI parameters"() {
 

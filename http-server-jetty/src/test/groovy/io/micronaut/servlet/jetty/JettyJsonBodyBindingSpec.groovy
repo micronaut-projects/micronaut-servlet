@@ -5,27 +5,27 @@ import com.fasterxml.jackson.core.JsonParseException
 import groovy.json.JsonSlurper
 import io.micronaut.context.annotation.Property
 import io.micronaut.context.annotation.Requires
-import io.micronaut.http.client.RxHttpClient
-import io.micronaut.http.client.annotation.Client
-import io.micronaut.test.extensions.spock.annotation.MicronautTest
-import io.reactivex.Flowable
-import io.reactivex.Single
-import io.reactivex.schedulers.Schedulers
 import io.micronaut.http.HttpHeaders
 import io.micronaut.http.HttpRequest
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.Body
-import io.micronaut.http.annotation.Error
-import io.micronaut.http.client.exceptions.HttpClientResponseException
-import io.micronaut.http.hateoas.Link
-import io.micronaut.http.hateoas.JsonError
 import io.micronaut.http.annotation.Controller
+import io.micronaut.http.annotation.Error
 import io.micronaut.http.annotation.Post
+import io.micronaut.http.client.HttpClient
+import io.micronaut.http.client.annotation.Client
+import io.micronaut.http.client.exceptions.HttpClientResponseException
+import io.micronaut.http.hateoas.JsonError
+import io.micronaut.http.hateoas.Link
+import io.micronaut.test.extensions.spock.annotation.MicronautTest
+import jakarta.inject.Inject
 import org.reactivestreams.Publisher
+import reactor.core.publisher.Flux
+import reactor.core.publisher.Mono
+import reactor.core.scheduler.Schedulers
 import spock.lang.Specification
 
-import javax.inject.Inject
 import java.util.concurrent.CompletableFuture
 
 @MicronautTest
@@ -34,14 +34,14 @@ class JettyJsonBodyBindingSpec extends Specification {
 
     @Inject
     @Client("/")
-    RxHttpClient rxClient
+    HttpClient rxClient
 
     void "test JSON is not parsed when the body is a raw body type"() {
         when:
         def json = '{"title":"The Stand"'
-        def response = rxClient.exchange(
+        def response = rxClient.toBlocking().exchange(
                 HttpRequest.POST('/json/string', json), String
-        ).blockingFirst()
+        )
 
         then:
         response.code() == HttpStatus.OK.code
@@ -51,9 +51,9 @@ class JettyJsonBodyBindingSpec extends Specification {
     void "test JSON is not parsed when the body is a raw body type in a request argument"() {
         when:
         def json = '{"title":"The Stand"'
-        def response = rxClient.exchange(
+        def response = rxClient.toBlocking().exchange(
                 HttpRequest.POST('/json/request-string', json), String
-        ).blockingFirst()
+        )
 
         then:
         response.code() == HttpStatus.OK.code
@@ -63,9 +63,9 @@ class JettyJsonBodyBindingSpec extends Specification {
     void "test parse body into parameters if no @Body specified"() {
         when:
         def json = '{"name":"Fred", "age":10}'
-        def response = rxClient.exchange(
+        def response = rxClient.toBlocking().exchange(
                 HttpRequest.POST('/json/params', json), String
-        ).blockingFirst()
+        )
 
         then:
         response.code() == HttpStatus.OK.code
@@ -76,14 +76,13 @@ class JettyJsonBodyBindingSpec extends Specification {
 
         when:
         def json = '{"title":The Stand}'
-        rxClient.exchange(
+        rxClient.toBlocking().exchange(
                 HttpRequest.POST('/json/map', json), String
-        ).blockingFirst()
+        )
 
         then:
         def e = thrown(HttpClientResponseException)
-        e.message == """Unable to decode request body: Error decoding JSON stream for type [json]: Unrecognized token 'The': was expecting (JSON String, Number, Array, Object or token 'null', 'true' or 'false')
- at [Source: (org.eclipse.jetty.server.HttpInputOverHTTP); line: 1, column: 14]"""
+        e.message.contains """Unable to decode request body: Error decoding JSON stream for type [json]: Unrecognized token 'The'"""
         e.response.status == HttpStatus.BAD_REQUEST
 
         when:
@@ -101,9 +100,9 @@ class JettyJsonBodyBindingSpec extends Specification {
     void "test simple map body parsing"() {
         when:
         def json = '{"title":"The Stand"}'
-        def response = rxClient.exchange(
+        def response = rxClient.toBlocking().exchange(
                 HttpRequest.POST('/json/map', json), String
-        ).blockingFirst()
+        )
 
         then:
         response.body() == "Body: [title:The Stand]"
@@ -112,9 +111,9 @@ class JettyJsonBodyBindingSpec extends Specification {
     void "test simple string-based body parsing"() {
         when:
         def json = '{"title":"The Stand"}'
-        def response = rxClient.exchange(
+        def response = rxClient.toBlocking().exchange(
                 HttpRequest.POST('/json/string', json), String
-        ).blockingFirst()
+        )
 
         then:
         response.body() == "Body: $json"
@@ -123,9 +122,9 @@ class JettyJsonBodyBindingSpec extends Specification {
     void "test binding to part of body with @Body(name)"() {
         when:
         def json = '{"title":"The Stand"}'
-        def response = rxClient.exchange(
+        def response = rxClient.toBlocking().exchange(
                 HttpRequest.POST('/json/body-title', json), String
-        ).blockingFirst()
+        )
 
         then:
         response.body() == "Body Title: The Stand"
@@ -134,9 +133,9 @@ class JettyJsonBodyBindingSpec extends Specification {
     void  "test simple string-based body parsing with request argument"() {
         when:
         def json = '{"title":"The Stand"}'
-        def response = rxClient.exchange(
+        def response = rxClient.toBlocking().exchange(
                 HttpRequest.POST('/json/request-string', json), String
-        ).blockingFirst()
+        )
 
         then:
         response.body() == "Body: $json"
@@ -145,9 +144,9 @@ class JettyJsonBodyBindingSpec extends Specification {
     void "test simple string-based body parsing with invalid mime type"() {
         when:
         def json = '{"title":"The Stand"}'
-        rxClient.exchange(
+        rxClient.toBlocking().exchange(
                 HttpRequest.POST('/json/map', json).contentType(io.micronaut.http.MediaType.APPLICATION_ATOM_XML_TYPE), String
-        ).blockingFirst()
+        )
 
         then:
         def e = thrown(HttpClientResponseException)
@@ -157,9 +156,9 @@ class JettyJsonBodyBindingSpec extends Specification {
     void "test simple POGO body parsing"() {
         when:
         def json = '{"name":"Fred", "age":10}'
-        def response = rxClient.exchange(
+        def response = rxClient.toBlocking().exchange(
                 HttpRequest.POST('/json/object', json), String
-        ).blockingFirst()
+        )
 
         then:
         response.body() == "Body: Foo(Fred, 10)"
@@ -168,9 +167,9 @@ class JettyJsonBodyBindingSpec extends Specification {
     void "test simple POGO body parse and return"() {
         when:
         def json = '{"name":"Fred","age":10}'
-        def response = rxClient.exchange(
+        def response = rxClient.toBlocking().exchange(
                 HttpRequest.POST('/json/object-to-object', json), String
-        ).blockingFirst()
+        )
 
         then:
         response.body() == json
@@ -179,9 +178,9 @@ class JettyJsonBodyBindingSpec extends Specification {
     void "test array POGO body parsing"() {
         when:
         def json = '[{"name":"Fred", "age":10},{"name":"Barney", "age":11}]'
-        def response = rxClient.exchange(
+        def response = rxClient.toBlocking().exchange(
                 HttpRequest.POST('/json/array', json), String
-        ).blockingFirst()
+        )
 
         then:
         response.body() == "Body: Foo(Fred, 10),Foo(Barney, 11)"
@@ -190,9 +189,9 @@ class JettyJsonBodyBindingSpec extends Specification {
     void "test array POGO body parsing and return"() {
         when:
         def json = '[{"name":"Fred","age":10},{"name":"Barney","age":11}]'
-        def response = rxClient.exchange(
+        def response = rxClient.toBlocking().exchange(
                 HttpRequest.POST('/json/array-to-array', json), String
-        ).blockingFirst()
+        )
 
         then:
         response.body() == json
@@ -201,9 +200,9 @@ class JettyJsonBodyBindingSpec extends Specification {
     void "test list POGO body parsing"() {
         when:
         def json = '[{"name":"Fred", "age":10},{"name":"Barney", "age":11}]'
-        def response = rxClient.exchange(
+        def response = rxClient.toBlocking().exchange(
                 HttpRequest.POST('/json/list', json), String
-        ).blockingFirst()
+        )
 
         then:
         response.body() == "Body: Foo(Fred, 10),Foo(Barney, 11)"
@@ -212,9 +211,9 @@ class JettyJsonBodyBindingSpec extends Specification {
     void "test future argument handling with string"() {
         when:
         def json = '{"name":"Fred","age":10}'
-        def response = rxClient.exchange(
+        def response = rxClient.toBlocking().exchange(
                 HttpRequest.POST('/json/future', json), String
-        ).blockingFirst()
+        )
 
         then:
         response.body() == "Body: $json".toString()
@@ -223,9 +222,9 @@ class JettyJsonBodyBindingSpec extends Specification {
     void "test future argument handling with map"() {
         when:
         def json = '{"name":"Fred","age":10}'
-        def response = rxClient.exchange(
+        def response = rxClient.toBlocking().exchange(
                 HttpRequest.POST('/json/future-map', json), String
-        ).blockingFirst()
+        )
 
         then:
         response.body() == "Body: [name:Fred, age:10]".toString()
@@ -234,9 +233,9 @@ class JettyJsonBodyBindingSpec extends Specification {
     void "test future argument handling with POGO"() {
         when:
         def json = '{"name":"Fred","age":10}'
-        def response = rxClient.exchange(
+        def response = rxClient.toBlocking().exchange(
                 HttpRequest.POST('/json/future-object', json), String
-        ).blockingFirst()
+        )
 
         then:
         response.body() == "Body: Foo(Fred, 10)".toString()
@@ -245,9 +244,9 @@ class JettyJsonBodyBindingSpec extends Specification {
     void "test publisher argument handling with POGO"() {
         when:
         def json = '{"name":"Fred","age":10}'
-        def response = rxClient.exchange(
+        def response = rxClient.toBlocking().exchange(
                 HttpRequest.POST('/json/publisher-object', json), String
-        ).blockingFirst()
+        )
 
         then:
         response.body() == "[Foo(Fred, 10)]".toString()
@@ -256,9 +255,9 @@ class JettyJsonBodyBindingSpec extends Specification {
     void "test singe argument handling"() {
         when:
         def json = '{"message":"foo"}'
-        def response = rxClient.exchange(
+        def response = rxClient.toBlocking().exchange(
                 HttpRequest.POST('/json/single', json), String
-        ).blockingFirst()
+        )
 
         then:
         response.body() == "$json".toString()
@@ -267,9 +266,9 @@ class JettyJsonBodyBindingSpec extends Specification {
     void "test request generic type binding"() {
         when:
         def json = '{"name":"Fred","age":10}'
-        def response = rxClient.exchange(
+        def response = rxClient.toBlocking().exchange(
                 HttpRequest.POST('/json/request-generic', json), String
-        ).blockingFirst()
+        )
 
         then:
         response.body() == "Foo(Fred, 10)".toString()
@@ -278,9 +277,9 @@ class JettyJsonBodyBindingSpec extends Specification {
     void "test request generic type no body"() {
         when:
         def json = ''
-        def response = rxClient.exchange(
+        def response = rxClient.toBlocking().exchange(
                 HttpRequest.POST('/json/request-generic', json), String
-        ).blockingFirst()
+        )
 
         then:
         response.code() == HttpStatus.OK.code
@@ -290,9 +289,9 @@ class JettyJsonBodyBindingSpec extends Specification {
     void "test request generic type conversion error"() {
         when:
         def json = '[1,2,3]'
-        rxClient.exchange(
+        rxClient.toBlocking().exchange(
                 HttpRequest.POST('/json/request-generic', json), String
-        ).blockingFirst()
+        )
 
         then:
         def e = thrown(HttpClientResponseException)
@@ -358,7 +357,7 @@ class JettyJsonBodyBindingSpec extends Specification {
         }
 
         @Post("/single")
-        Single<String> single(@Body Single<String> message) {
+        Mono<String> single(@Body Mono<String> message) {
             message
 
         }
@@ -386,9 +385,9 @@ class JettyJsonBodyBindingSpec extends Specification {
         }
 
         @Post("/publisher-object")
-        Publisher<String> publisherObject(@Body Flowable<Foo> publisher) {
+        Publisher<String> publisherObject(@Body Flux<Foo> publisher) {
             return publisher
-                    .subscribeOn(Schedulers.io())
+                    .subscribeOn(Schedulers.boundedElastic())
                     .map({ Foo foo ->
                         foo.toString()
                     })

@@ -37,7 +37,7 @@ import org.eclipse.jetty.util.resource.Resource;
 import org.eclipse.jetty.util.resource.ResourceCollection;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 import java.io.IOException;
 import java.util.List;
 import java.util.function.Function;
@@ -86,11 +86,12 @@ public class JettyFactory extends ServletServerFactory {
      *
      * @param applicationContext This application context
      * @param configuration      The servlet configuration
+     * @param jettySslConfiguration The Jetty SSL config
      * @return The Jetty server bean
      */
     @Singleton
     @Primary
-    protected Server jettyServer(ApplicationContext applicationContext, MicronautServletConfiguration configuration) {
+    protected Server jettyServer(ApplicationContext applicationContext, MicronautServletConfiguration configuration, JettyConfiguration.JettySslConfiguration jettySslConfiguration) {
         final String host = getConfiguredHost();
         final Integer port = getConfiguredPort();
         Server server = new Server();
@@ -258,7 +259,7 @@ public class JettyFactory extends ServletServerFactory {
             trustStore.getProvider().ifPresent(sslContextFactory::setTrustStoreProvider);
 
             HttpConfiguration httpsConfig = new HttpConfiguration(httpConfig);
-            httpsConfig.addCustomizer(new SecureRequestCustomizer());
+            httpsConfig.addCustomizer(jettySslConfiguration);
             ServerConnector https = new ServerConnector(server,
                     new SslConnectionFactory(sslContextFactory, HttpVersion.HTTP_1_1.asString()),
                     new HttpConnectionFactory(httpsConfig));

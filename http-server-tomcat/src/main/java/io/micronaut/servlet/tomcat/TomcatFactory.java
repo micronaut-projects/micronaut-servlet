@@ -32,7 +32,7 @@ import org.apache.catalina.connector.Connector;
 import org.apache.catalina.startup.Tomcat;
 import org.apache.catalina.webresources.TomcatURLStreamHandlerFactory;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 import java.io.File;
 import java.net.URL;
 import java.util.List;

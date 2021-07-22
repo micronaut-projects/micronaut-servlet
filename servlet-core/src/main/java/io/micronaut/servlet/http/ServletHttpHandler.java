@@ -28,7 +28,14 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.core.type.ReturnType;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
-import io.micronaut.http.*;
+import io.micronaut.http.HttpAttributes;
+import io.micronaut.http.HttpHeaders;
+import io.micronaut.http.HttpMethod;
+import io.micronaut.http.HttpRequest;
+import io.micronaut.http.HttpResponse;
+import io.micronaut.http.HttpStatus;
+import io.micronaut.http.MediaType;
+import io.micronaut.http.MutableHttpResponse;
 import io.micronaut.http.annotation.Header;
 import io.micronaut.http.annotation.Produces;
 import io.micronaut.http.annotation.Status;
@@ -56,22 +63,33 @@ import io.micronaut.web.router.UriRoute;
 import io.micronaut.web.router.UriRouteMatch;
 import io.micronaut.web.router.exceptions.DuplicateRouteException;
 import io.micronaut.web.router.exceptions.UnsatisfiedRouteException;
-import io.reactivex.*;
-import io.reactivex.functions.Function;
 import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.FluxSink;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -247,11 +265,11 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                             emitError(exchange, res, req, emitter -> {
                                 res.getHeaders().allowGeneric(existingRouteMethods);
                                 res.status(HttpStatus.METHOD_NOT_ALLOWED);
-                                emitter.onNext(errorResponseProcessor.processResponse(ErrorContext.builder(req)
+                                emitter.next(errorResponseProcessor.processResponse(ErrorContext.builder(req)
                                         .errorMessage("Method [" + req.getMethod() + "] not allowed for URI [" + req
                                                 .getPath() + "]. Allowed methods: " + existingRouteMethods)
                                         .build(), res));
-                                emitter.onComplete();
+                                emitter.complete();
                             });
                         }
                     }
@@ -275,9 +293,8 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
     private void emitError(ServletExchange<Req, Res> exchange,
                            MutableHttpResponse<Object> res,
                            HttpRequest<Object> req,
-                           FlowableOnSubscribe<MutableHttpResponse<?>> errorEmitter) {
-        Publisher<? extends MutableHttpResponse<?>> responsePublisher = Flowable.create(
-                errorEmitter, BackpressureStrategy.LATEST);
+                           Consumer<FluxSink<MutableHttpResponse<?>>> errorEmitter) {
+        Publisher<? extends MutableHttpResponse<?>> responsePublisher = Flux.create(errorEmitter, FluxSink.OverflowStrategy.LATEST);
 
         responsePublisher = filterPublisher(new AtomicReference<>(req), responsePublisher, false);
         subscribeToResponsePublisher(
@@ -312,8 +329,8 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
         } else {
             emitError(exchange, res, req, emitter -> {
                 res.status(httpStatus);
-                emitter.onNext(errorResponseProcessor.processResponse(ErrorContext.builder(req).build(), res));
-                emitter.onComplete();
+                emitter.next(errorResponseProcessor.processResponse(ErrorContext.builder(req).build(), res));
+                emitter.complete();
             });
         }
     }
@@ -376,7 +393,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                                               AnnotationMetadata annotationMetadata) {
         final ServletHttpRequest<Req, ? super Object> exchangeRequest = exchange.getRequest();
         boolean isAsyncSupported = exchangeRequest.isAsyncSupported();
-        final Flowable<? extends MutableHttpResponse<?>> responseFlowable = Flowable.fromPublisher(responsePublisher)
+        final Flux<? extends MutableHttpResponse<?>> responseFlux = Flux.from(responsePublisher)
                 .flatMap(response -> {
                     final HttpStatus status = response.status();
                     Object body = response.body();
@@ -385,8 +402,8 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                         if (Publishers.isConvertibleToPublisher(body)) {
                             boolean isSingle = Publishers.isSingle(body.getClass());
                             if (isSingle) {
-                                Flowable<?> flowable = Publishers.convertPublisher(body, Flowable.class);
-                                return flowable.map((Function<Object, MutableHttpResponse<?>>) o -> {
+                                Flux<?> flux = Flux.from(Publishers.convertPublisher(body, Publisher.class));
+                                return flux.map((Function<Object, MutableHttpResponse<?>>) o -> {
                                     if (o instanceof HttpResponse) {
                                         encodeResponse(exchange, annotationMetadata, (HttpResponse<?>) o);
                                         return res;
@@ -396,24 +413,24 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                                         encodeResponse(exchange, annotationMetadata, response);
                                         return res1;
                                     }
-                                }).switchIfEmpty(Flowable.defer(() -> {
+                                }).switchIfEmpty(Flux.defer(() -> {
                                     final RouteMatch<Object> errorRoute = lookupStatusRoute(route, HttpStatus.NOT_FOUND);
                                     if (errorRoute != null) {
-                                        Flowable<MutableHttpResponse<?>> notFoundFlowable = Flowable.fromPublisher(buildResponsePublisher(
+                                        Flux<MutableHttpResponse<?>> notFoundFlux = Flux.from(buildResponsePublisher(
                                                 req,
                                                 (MutableHttpResponse<Object>) response,
                                                 errorRoute,
                                                 true
                                         ));
-                                        return notFoundFlowable.onErrorReturn(throwable -> {
+                                        return notFoundFlux.onErrorResume(throwable -> {
                                             if (LOG.isErrorEnabled()) {
-                                                LOG.error("Error occuring invoking 404 handler: " + throwable.getMessage());
+                                                LOG.error("Error occurring invoking 404 handler: {}", throwable.getMessage());
                                             }
                                             MutableHttpResponse<Object> defaultNotFound = errorResponseProcessor.processResponse(
                                                     ErrorContext.builder(req).build(),
                                                     res.status(404));
                                             encodeResponse(exchange, annotationMetadata, defaultNotFound);
-                                            return defaultNotFound;
+                                            return Publishers.just(defaultNotFound);
                                         });
                                     } else {
                                         MutableHttpResponse<Object> defaultNotFound = errorResponseProcessor.processResponse(
@@ -425,22 +442,21 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                                 }));
                             } else {
                                 // stream case
-                                Flowable<?> flowable = Publishers.convertPublisher(body, Flowable.class);
+                                Flux<?> flux = Publishers.convertPublisher(body, Flux.class);
                                 if (isAsyncSupported) {
                                     final ServletHttpResponse<Res, ? super Object> servletResponse = exchange.getResponse();
                                     setHeadersFromMetadata(exchange.getResponse(), annotationMetadata, body);
-                                    return servletResponse.stream(flowable);
+                                    return servletResponse.stream(flux);
                                 } else {
                                     // fallback to blocking
-                                    return flowable.toList().map(list -> {
+                                    return Flux.from(flux.collectList().map(list -> {
                                         final ServletHttpResponse<Res, ? super Object> servletHttpResponse = exchange.getResponse();
                                         encodeResponse(exchange, annotationMetadata, servletHttpResponse.body(list));
                                         return servletHttpResponse;
-                                    }).toFlowable();
+                                    }));
                                 }
                             }
                         } else {
-
                             if (!isErrorRoute && status.getCode() >= 400) {
                                 final RouteMatch<Object> errorRoute = lookupStatusRoute(route, status);
                                 if (errorRoute != null) {
@@ -465,19 +481,18 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                         }
                     }
 
-                    return Flowable.fromCallable(() -> {
+                    return Mono.fromCallable(() -> {
                         encodeResponse(exchange, annotationMetadata, response);
                         return response;
                     });
-                }).onErrorResumeNext(throwable -> {
+                }).onErrorResume(throwable -> {
                     handleException(req, res, route, isErrorRoute, throwable, exchange);
-                    return Flowable.error(throwable);
+                    return Flux.error(throwable);
                 });
 
         if (isAsyncSupported) {
-
             //noinspection ResultOfMethodCallIgnored
-            Flowable.fromPublisher(exchangeRequest.subscribeOnExecutor(responseFlowable))
+            Flux.from(exchangeRequest.subscribeOnExecutor(responseFlux))
                     .subscribe(response -> {
                         if (LOG.isDebugEnabled()) {
                             LOG.debug("Request [{} - {}] completed successfully", req.getMethodName(), req.getUri());
@@ -487,10 +502,10 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                             LOG.debug("Request [" + req.getMethodName() + " - " + req.getUri() + "] completed with error: " + throwable.getMessage(), throwable);
                         }
                     });
-
         } else {
-            responseFlowable
-                    .blockingSubscribe(response -> {
+            responseFlux
+                    .subscribeOn(Schedulers.immediate())
+                    .subscribe(response -> {
                         if (LOG.isDebugEnabled()) {
                             LOG.debug("Request [{} - {}] completed successfully", req.getMethodName(), req.getUri());
                         }
@@ -523,8 +538,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
             MutableHttpResponse<Object> res,
             RouteMatch<?> route,
             boolean isErrorRoute) {
-        Publisher<? extends MutableHttpResponse<?>> responsePublisher
-                = Flowable.<MutableHttpResponse<?>>defer(() -> {
+        Publisher<? extends MutableHttpResponse<?>> responsePublisher = Flux.defer(() -> {
             RouteMatch<?> computedRoute = route;
             if (!computedRoute.isExecutable()) {
                 computedRoute = requestArgumentSatisfier.fulfillArgumentRequirements(
@@ -552,7 +566,12 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
             }
 
             RouteMatch<?> finalComputedRoute = computedRoute;
-            Object result = ServerRequestContext.with(req, (Callable<Object>) finalComputedRoute::execute);
+            Object result = null;
+            try {
+                result = ServerRequestContext.with(req, (Callable<Object>) finalComputedRoute::execute);
+            } catch (Throwable t) {
+                return Publishers.just(t);
+            }
             if (result instanceof Optional) {
                 result = ((Optional<?>) result).orElse(null);
             }
@@ -569,7 +588,6 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
             boolean isSuspended = route.isSuspended();
             if (result == null) {
                 boolean isVoid = javaReturnType == void.class ||
-                        Completable.class.isAssignableFrom(javaReturnType) ||
                         (genericReturnType.getFirstTypeVariable()
                                 .map(arg -> arg.getType() == Void.class).orElse(false));
                 if (isVoid) {
@@ -582,29 +600,29 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                 }
             }
 
-            Argument<?> firstArg = genericReturnType.getFirstTypeVariable().orElse(null);
             if (result instanceof Future) {
                 if (result instanceof CompletionStage) {
                     CompletionStage<?> cs = (CompletionStage<?>) result;
-                    result = Maybe.create(emitter -> cs.whenComplete((o, throwable) -> {
+                    result = Mono.create(emitter -> cs.whenComplete((o, throwable) -> {
                         if (throwable != null) {
-                            emitter.onError(throwable);
+                            emitter.error(throwable);
                         } else {
                             if (o != null) {
-                                emitter.onSuccess(o);
+                                emitter.success(o);
                             } else {
-                                emitter.onComplete();
+                                emitter.success();
                             }
                         }
                     }));
                 } else {
-                    result = Single.fromFuture((Future<?>) result);
+                    result = Mono.fromCallable(((Future<?>) result)::get);
                 }
             }
 
+            Argument<?> firstArg = genericReturnType.getFirstTypeVariable().orElse(null);
             if (firstArg != null && HttpResponse.class.isAssignableFrom(firstArg.getType()) && Publishers.isConvertibleToPublisher(result)) {
                 //noinspection unchecked
-                return Publishers.convertPublisher(result, Flowable.class);
+                return Publishers.convertPublisher(result, Flux.class);
             } else {
                 if (isSuspended) {
                     boolean isKotlinFunctionReturnTypeUnit =
@@ -612,28 +630,28 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                                     isKotlinFunctionReturnTypeUnit(((MethodBasedRouteMatch) route).getExecutableMethod());
                     final Supplier<CompletableFuture<?>> supplier = ContinuationArgumentBinder.extractContinuationCompletableFutureSupplier(req);
                     if (isKotlinCoroutineSuspended(result)) {
-                        return Flowable.create(emitter -> {
+                        return Flux.create((FluxSink<MutableHttpResponse<?>> emitter) -> {
                             CompletableFuture<?> f = supplier.get();
                             f.whenComplete((o, throwable) -> {
                                 if (throwable != null) {
-                                    emitter.onError(throwable);
+                                    emitter.error(throwable);
                                 } else {
                                     if (o == null) {
-                                        emitter.onNext(httpResponse.status(HttpStatus.NOT_FOUND));
+                                        emitter.next(httpResponse.status(HttpStatus.NOT_FOUND));
                                     } else {
                                         if (!isKotlinFunctionReturnTypeUnit) {
                                             httpResponse.body(o);
                                         }
-                                        emitter.onNext(httpResponse);
+                                        emitter.next(httpResponse);
                                     }
-                                    emitter.onComplete();
+                                    emitter.complete();
                                 }
                             });
-                        }, BackpressureStrategy.ERROR);
+                        }, FluxSink.OverflowStrategy.ERROR);
                     } else {
-                        Object suspendedBody;
+                        Object suspendedBody = null;
                         if (isKotlinFunctionReturnTypeUnit) {
-                            suspendedBody = Completable.complete();
+                            suspendedBody = Mono.empty().then();    // then() returns Mono<Void>, comparable to Completable
                         } else {
                             suspendedBody = result;
                         }
@@ -781,7 +799,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                 if (statusRoute != null) {
                     invokeRouteMatch(req, res, statusRoute, true, exchange);
                 } else {
-                    emitError(exchange, res, req, (emitter -> {
+                    emitError(exchange, res, req, emitter -> {
                         MutableHttpResponse<Object> response = res.status(code, statusException.getMessage());
                         final Object body = statusException.getBody().orElse(null);
                         if (body != null) {
@@ -791,9 +809,9 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                                     .errorMessage(statusException.getMessage())
                                     .build(), response);
                         }
-                        emitter.onNext(response);
-                        emitter.onComplete();
-                    }));
+                        emitter.next(response);
+                        emitter.complete();
+                    });
                 }
             } else {
                 RouteMatch<Object> errorRoute = lookupErrorRoute(route, e);
@@ -848,8 +866,8 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                 }
                 emitError(exchange, res, req, (emitter) -> {
                     res.status(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-                    emitter.onNext(res);
-                    emitter.onComplete();
+                    emitter.next(res);
+                    emitter.complete();
                 });
             }
         } else {
@@ -863,10 +881,10 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                 }
             }
             emitError(exchange, res, req, (emitter) -> {
-                emitter.onNext(errorResponseProcessor.processResponse(ErrorContext.builder(req)
+                emitter.next(errorResponseProcessor.processResponse(ErrorContext.builder(req)
                         .errorMessage(e.getMessage())
                         .build(), res.status(defaultStatus)));
-                emitter.onComplete();
+                emitter.complete();
             });
         }
     }

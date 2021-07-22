@@ -8,14 +8,15 @@ import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Get
 import io.micronaut.http.annotation.Post
 import io.micronaut.http.annotation.QueryValue
-import io.micronaut.http.client.RxHttpClient
+import io.micronaut.http.client.HttpClient
 import io.micronaut.http.client.annotation.Client
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
+import reactor.core.publisher.Mono
 import spock.lang.Specification
 import spock.lang.Unroll
 
 import io.micronaut.core.annotation.Nullable
-import javax.inject.Inject
+import jakarta.inject.Inject
 
 /**
  * Created by graemerocher on 25/08/2017.
@@ -25,14 +26,14 @@ class TomcatParameterBindingSpec extends Specification {
 
     @Inject
     @Client("/")
-    RxHttpClient rxClient
+    HttpClient rxClient
 
     @Unroll
     void "test bind HTTP parameters for URI #httpMethod #uri"() {
         given:
         def req = httpMethod == HttpMethod.GET ? HttpRequest.GET(uri) : HttpRequest.POST(uri, '{}')
-        def exchange = rxClient.exchange(req, String)
-        def response = exchange.onErrorReturn({ t -> t.response }).blockingFirst()
+        def exchange = Mono.from(rxClient.exchange(req, String))
+        def response = exchange.onErrorResume({ t -> Mono.just(t.response) }).block()
         def status = response.status
         def body = null
         if (status == HttpStatus.OK) {
@@ -81,8 +82,8 @@ class TomcatParameterBindingSpec extends Specification {
     void "test list to single error"() {
         given:
         def req = HttpRequest.GET('/parameter/exploded?title=The%20Stand&age=20&age=30')
-        def exchange = rxClient.exchange(req, String)
-        def response = exchange.onErrorReturn({ t -> t.response }).blockingFirst()
+        def exchange = Mono.from(rxClient.exchange(req, String))
+        def response = exchange.onErrorResume({ t -> Mono.just(t.response) }).block()
 
         expect:
         response.status() == HttpStatus.BAD_REQUEST
