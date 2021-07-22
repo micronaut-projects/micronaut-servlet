@@ -424,7 +424,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                                         ));
                                         return notFoundFlux.onErrorResume(throwable -> {
                                             if (LOG.isErrorEnabled()) {
-                                                LOG.error("Error occurring invoking 404 handler: " + throwable.getMessage());
+                                                LOG.error("Error occurring invoking 404 handler: {}", throwable.getMessage());
                                             }
                                             MutableHttpResponse<Object> defaultNotFound = errorResponseProcessor.processResponse(
                                                     ErrorContext.builder(req).build(),
