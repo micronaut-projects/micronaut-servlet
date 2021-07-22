@@ -8,7 +8,7 @@ import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Get
 import io.micronaut.http.annotation.Produces
-import io.micronaut.http.client.RxHttpClient
+import io.micronaut.http.client.HttpClient
 import io.micronaut.http.client.annotation.Client
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.authentication.AuthenticationException
@@ -19,14 +19,14 @@ import io.micronaut.security.authentication.AuthenticationResponse
 import io.micronaut.security.authentication.UserDetails
 import io.micronaut.security.rules.SecurityRule
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
-import io.reactivex.BackpressureStrategy
-import io.reactivex.Flowable
+import jakarta.inject.Inject
+import jakarta.inject.Singleton
 import org.reactivestreams.Publisher
+import reactor.core.publisher.Mono
+import reactor.core.publisher.MonoSink
 import spock.lang.Issue
 import spock.lang.Specification
 
-import javax.inject.Inject
-import javax.inject.Singleton
 import java.security.Principal
 
 @Issue('https://github.com/micronaut-projects/micronaut-core/issues/5395')
@@ -37,7 +37,7 @@ class UndertowPrincipalBindingSpec extends Specification {
 
     @Inject
     @Client('/')
-    RxHttpClient client;
+    HttpClient client;
 
     void 'test that Principal binds in a secured method'() {
         when:
@@ -66,16 +66,15 @@ class UndertowPrincipalBindingSpec extends Specification {
     static class AuthenticationProviderUserPassword implements AuthenticationProvider {
         @Override
         Publisher<AuthenticationResponse> authenticate(HttpRequest<?> httpRequest, AuthenticationRequest<?, ?> authenticationRequest) {
-            Flowable.create({ emitter ->
+            Mono.create({ MonoSink emitter ->
                 String identity = authenticationRequest.identity
                 if (identity == 'sherlock' && authenticationRequest.secret == 'password') {
-                    emitter.onNext(new UserDetails(identity, []))
-                    emitter.onComplete()
+                    emitter.success(new UserDetails(identity, []))
                 } else {
-                    emitter.onError(new AuthenticationException(new AuthenticationFailed()))
+                    emitter.error(new AuthenticationException(new AuthenticationFailed()))
                 }
 
-            }, BackpressureStrategy.ERROR) as Publisher<AuthenticationResponse>
+            }) as Publisher<AuthenticationResponse>
         }
     }
 }
