@@ -149,8 +149,8 @@ public class ServletBodyBinder<T> extends DefaultBodyAnnotationBinder<T> impleme
                                 } else {
                                     final Argument<? extends List<?>> containerType = Argument.listOf(typeArg.getType());
                                     T content = (T) codec.decode(containerType, inputStream);
-                                    final Flux flux = Flux.fromIterable((Iterable) content);
-                                    final T converted = conversionService.convertRequired(flux, type);
+                                    final Publisher<T> publisher = Flux.fromIterable((Iterable) content);
+                                    final T converted = conversionService.convertRequired(publisher, type);
                                     return () -> Optional.of(converted);
                                 }
                             } else {
