@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 original authors
+ * Copyright 2017-2021 original authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -209,7 +209,10 @@ public class DefaultServletHttpRequest<B> implements
     @NonNull
     @Override
     public Optional<Principal> getUserPrincipal() {
-        return Optional.ofNullable(delegate.getUserPrincipal());
+        return Optional.ofNullable(
+                ServletHttpRequest.super.getUserPrincipal()
+                        .orElse(delegate.getUserPrincipal())
+        );
     }
 
     @Override
