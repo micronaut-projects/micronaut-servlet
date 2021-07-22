@@ -419,6 +419,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                                         MutableHttpResponse<Object> defaultNotFound = errorResponseProcessor.processResponse(
                                                 ErrorContext.builder(req).build(),
                                                 res.status(404));
+                                        encodeResponse(exchange, annotationMetadata, defaultNotFound);
                                         return Publishers.just(defaultNotFound);
                                     }
                                 }));
