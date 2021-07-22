@@ -6,12 +6,15 @@ import io.micronaut.context.annotation.Property
 import io.micronaut.context.annotation.Requires
 import io.micronaut.core.annotation.Introspected
 import io.micronaut.core.annotation.Nullable
-import io.micronaut.http.*
+import io.micronaut.http.HttpRequest
+import io.micronaut.http.HttpResponse
+import io.micronaut.http.HttpStatus
+import io.micronaut.http.MediaType
+import io.micronaut.http.MutableHttpRequest
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Header
 import io.micronaut.http.annotation.Put
-import io.micronaut.http.client.BlockingHttpClient
 import io.micronaut.http.client.HttpClient
 import io.micronaut.http.client.annotation.Client
 import io.micronaut.http.client.exceptions.HttpClientException
@@ -41,32 +44,30 @@ class JettyHttpPutSpec extends Specification {
         def book = new Book(title: "The Stand", pages: 1000)
 
         when:
-        Flux<HttpResponse<Book>> flux = Flux.from(client.exchange(
+        client.toBlocking().exchange(
                 HttpRequest.PATCH("/put/simple", book)
                         .accept(MediaType.APPLICATION_JSON_TYPE)
                         .header("X-My-Header", "Foo"),
-
                 Book
-        ))
-        flux.blockFirst()
+        )
 
         then:
         def e = thrown(HttpClientException)
         e.message == "Method [PATCH] not allowed for URI [/put/simple]. Allowed methods: [PUT]"
     }
+
     void "test simple post request with JSON"() {
         given:
         def book = new Book(title: "The Stand", pages: 1000)
 
         when:
-        Flux<HttpResponse<Book>> flux = Flux.from(client.exchange(
+        HttpResponse<Book> response = client.toBlocking().exchange(
                 HttpRequest.PUT("/put/simple", book)
                         .accept(MediaType.APPLICATION_JSON_TYPE)
                         .header("X-My-Header", "Foo"),
 
                 Book
-        ))
-        HttpResponse<Book> response = flux.blockFirst()
+        )
         Optional<Book> body = response.getBody()
 
         then:
@@ -80,16 +81,15 @@ class JettyHttpPutSpec extends Specification {
 
     void "test simple post request with URI template and JSON"() {
         given:
-        def book = new Book(title: "The Stand",pages: 1000)
+        def book = new Book(title: "The Stand", pages: 1000)
+
         when:
-        Flux<HttpResponse<Book>> flux = Flux.from(client.exchange(
+        HttpResponse<Book> response = client.toBlocking().exchange(
                 HttpRequest.PUT("/put/title/{title}", book)
                         .accept(MediaType.APPLICATION_JSON_TYPE)
                         .header("X-My-Header", "Foo"),
-
                 Book
-        ))
-        HttpResponse<Book> response = flux.blockFirst()
+        )
         Optional<Book> body = response.getBody()
 
         then:
@@ -105,16 +105,15 @@ class JettyHttpPutSpec extends Specification {
     void "test simple post request with Form data"() {
         given:
         def book = new Book(title: "The Stand", pages: 1000)
+
         when:
-        Flux<HttpResponse<Book>> flux = Flux.from(client.exchange(
+        HttpResponse<Book> response = client.toBlocking().exchange(
                 HttpRequest.PUT("/put/form", book)
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED_TYPE)
                         .accept(MediaType.APPLICATION_JSON_TYPE)
                         .header("X-My-Header", "Foo"),
-
                 Book
-        ))
-        HttpResponse<Book> response = flux.blockFirst()
+        )
         Optional<Book> body = response.getBody()
 
         then:
@@ -128,14 +127,13 @@ class JettyHttpPutSpec extends Specification {
 
     void "test simple post retrieve blocking request with JSON"() {
         given:
-        def toSend = new Book(title: "The Stand",pages: 1000)
+        def toSend = new Book(title: "The Stand", pages: 1000)
+
         when:
-        BlockingHttpClient blockingHttpClient = client.toBlocking()
-        Book book = blockingHttpClient.retrieve(
+        Book book = client.toBlocking().retrieve(
                 HttpRequest.PUT("/put/simple", toSend)
                         .accept(MediaType.APPLICATION_JSON_TYPE)
                         .header("X-My-Header", "Foo"),
-
                 Book
         )
 
@@ -145,11 +143,9 @@ class JettyHttpPutSpec extends Specification {
 
     void "test binding multiple options to a json body"() {
         when:
-        BlockingHttpClient blockingHttpClient = client.toBlocking()
-        String result = blockingHttpClient.retrieve(
+        String result = client.toBlocking().retrieve(
                 HttpRequest.PUT("/put/optionalJson", [enable: true])
                         .accept(MediaType.TEXT_PLAIN),
-
                 String
         )
 
@@ -187,7 +183,7 @@ class JettyHttpPutSpec extends Specification {
 
     @Requires(property = 'spec.name', value = 'JettyHttpPutSpec')
     @Controller('/put')
-    static class PostController {
+    static class PutController {
 
         @Put('/simple')
         Book simple(@Body Book book, @Header String contentType, @Header long contentLength, @Header accept, @Header('X-My-Header') custom) {
@@ -220,7 +216,7 @@ class JettyHttpPutSpec extends Specification {
         @Put(value = '/optionalJson', produces = MediaType.TEXT_PLAIN)
         String optionalJson(Optional<Boolean> enable, Optional<Integer> multiFactorCode) {
             StringBuilder sb = new StringBuilder()
-            enable.ifPresent( { val ->
+            enable.ifPresent({ val ->
                 sb.append("enable=").append(val)
             })
             multiFactorCode.ifPresent({ code ->
@@ -260,4 +256,5 @@ class JettyHttpPutSpec extends Specification {
         String multipleMappings()
 
     }
+
 }

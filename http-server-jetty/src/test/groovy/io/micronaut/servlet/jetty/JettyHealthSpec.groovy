@@ -3,9 +3,9 @@ package io.micronaut.servlet.jetty
 import io.micronaut.context.annotation.Property
 import io.micronaut.health.HealthStatus
 import io.micronaut.http.HttpStatus
+import io.micronaut.http.client.HttpClient
 import io.micronaut.http.client.annotation.Client
 import io.micronaut.management.health.indicator.HealthResult
-import io.micronaut.reactor.http.client.ReactorHttpClient
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import spock.lang.Specification
@@ -17,13 +17,13 @@ class JettyHealthSpec extends Specification {
 
     @Client("/")
     @Inject
-    ReactorHttpClient client
+    HttpClient client
 
     void 'test healthy'() {
         given:
-        def liveness = client.exchange("/health/liveness", HealthResult).blockFirst()
-        def readiness = client.exchange("/health/readiness", HealthResult).blockFirst()
-        def overall = client.exchange("/health", HealthResult).blockFirst()
+        def liveness = client.toBlocking().exchange("/health/liveness", HealthResult)
+        def readiness = client.toBlocking().exchange("/health/readiness", HealthResult)
+        def overall = client.toBlocking().exchange("/health", HealthResult)
 
         expect:
         liveness.status() == HttpStatus.OK

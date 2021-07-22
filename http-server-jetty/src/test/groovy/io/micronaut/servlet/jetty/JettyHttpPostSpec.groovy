@@ -12,7 +12,6 @@ import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.*
-import io.micronaut.http.client.BlockingHttpClient
 import io.micronaut.http.client.HttpClient
 import io.micronaut.http.client.annotation.Client
 import io.micronaut.http.client.exceptions.HttpClientException
@@ -20,7 +19,6 @@ import io.micronaut.http.client.multipart.MultipartBody
 import io.micronaut.http.multipart.CompletedFileUpload
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
-import reactor.core.publisher.Flux
 import spock.lang.Specification
 
 import java.nio.charset.StandardCharsets
@@ -45,14 +43,12 @@ class JettyHttpPostSpec extends Specification {
         def book = new Book(title: "The Stand", pages: 1000)
 
         when:
-        Flux<HttpResponse<Book>> flux = Flux.from(client.exchange(
+        client.toBlocking().exchange(
                 HttpRequest.PATCH("/post/simple", book)
                         .accept(MediaType.APPLICATION_JSON_TYPE)
                         .header("X-My-Header", "Foo"),
-
                 Book
-        ))
-        flux.blockFirst()
+        )
 
         then:
         def e = thrown(HttpClientException)
@@ -64,14 +60,12 @@ class JettyHttpPostSpec extends Specification {
         def book = new Book(title: "The Stand", pages: 1000)
 
         when:
-        Flux<HttpResponse<Book>> flux = Flux.from(client.exchange(
+        HttpResponse<Book> response = client.toBlocking().exchange(
                 HttpRequest.POST("/post/simple", book)
                         .accept(MediaType.APPLICATION_JSON_TYPE)
                         .header("X-My-Header", "Foo"),
-
                 Book
-        ))
-        HttpResponse<Book> response = flux.blockFirst()
+        )
         Optional<Book> body = response.getBody()
 
         then:
@@ -85,16 +79,15 @@ class JettyHttpPostSpec extends Specification {
 
     void "test simple post request with URI template and JSON"() {
         given:
-        def book = new Book(title: "The Stand",pages: 1000)
+        def book = new Book(title: "The Stand", pages: 1000)
+
         when:
-        Flux<HttpResponse<Book>> flux = Flux.from(client.exchange(
+        HttpResponse<Book> response = client.toBlocking().exchange(
                 HttpRequest.POST("/post/title/{title}", book)
                         .accept(MediaType.APPLICATION_JSON_TYPE)
                         .header("X-My-Header", "Foo"),
-
                 Book
-        ))
-        HttpResponse<Book> response = flux.blockFirst()
+        )
         Optional<Book> body = response.getBody()
 
         then:
@@ -108,16 +101,15 @@ class JettyHttpPostSpec extends Specification {
 
     void "test simple post request with URI template and JSON Map"() {
         given:
-        def book = [title: "The Stand",pages: 1000]
+        def book = [title: "The Stand", pages: 1000]
+
         when:
-        Flux<HttpResponse<Map>> flux = Flux.from(client.exchange(
+        HttpResponse<Map> response = client.toBlocking().exchange(
                 HttpRequest.POST("/post/title/{title}", book)
                         .accept(MediaType.APPLICATION_JSON_TYPE)
                         .header("X-My-Header", "Foo"),
-
                 Map
-        ))
-        HttpResponse<Map> response = flux.blockFirst()
+        )
         Optional<Map> body = response.getBody()
 
         then:
@@ -133,15 +125,13 @@ class JettyHttpPostSpec extends Specification {
         given:
         def book = new Book(title: "The Stand", pages: 1000)
         when:
-        Flux<HttpResponse<Book>> flux = Flux.from(client.exchange(
+        HttpResponse<Book> response = client.toBlocking().exchange(
                 HttpRequest.POST("/post/form", book)
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED_TYPE)
                         .accept(MediaType.APPLICATION_JSON_TYPE)
                         .header("X-My-Header", "Foo"),
-
                 Book
-        ))
-        HttpResponse<Book> response = flux.blockFirst()
+        )
         Optional<Book> body = response.getBody()
 
         then:
@@ -155,14 +145,13 @@ class JettyHttpPostSpec extends Specification {
 
     void "test simple post retrieve blocking request with JSON"() {
         given:
-        def toSend = new Book(title: "The Stand",pages: 1000)
+        def toSend = new Book(title: "The Stand", pages: 1000)
+
         when:
-        BlockingHttpClient blockingHttpClient = client.toBlocking()
-        Book book = blockingHttpClient.retrieve(
+        Book book = client.toBlocking().retrieve(
                 HttpRequest.POST("/post/simple", toSend)
                         .accept(MediaType.APPLICATION_JSON_TYPE)
                         .header("X-My-Header", "Foo"),
-
                 Book
         )
 
@@ -172,14 +161,13 @@ class JettyHttpPostSpec extends Specification {
 
     void "test simple post request with a queryValue "() {
         given:
-        def toSend = new Book(title: "The Stand",pages: 1000)
+        def toSend = new Book(title: "The Stand", pages: 1000)
+
         when:
-        BlockingHttpClient blockingHttpClient = client.toBlocking()
-        Book book = blockingHttpClient.retrieve(
+        Book book = client.toBlocking().retrieve(
                 HttpRequest.POST("/post/query?title=The%20Stand", toSend)
                         .accept(MediaType.APPLICATION_JSON_TYPE)
                         .header("X-My-Header", "Foo"),
-
                 Book
         )
 
@@ -189,12 +177,10 @@ class JettyHttpPostSpec extends Specification {
 
     void "test simple post request with a queryValue and no body"() {
         when:
-        BlockingHttpClient blockingHttpClient = client.toBlocking()
-        Book book = blockingHttpClient.retrieve(
+        Book book = client.toBlocking().retrieve(
                 HttpRequest.POST("/post/queryNoBody?title=The%20Stand", "")
                         .accept(MediaType.APPLICATION_JSON_TYPE)
                         .header("X-My-Header", "Foo"),
-
                 Book
         )
 
@@ -205,8 +191,7 @@ class JettyHttpPostSpec extends Specification {
 
     void "test url encoded request with a list of params"() {
         when:
-        BlockingHttpClient blockingHttpClient = client.toBlocking()
-        String body = blockingHttpClient.retrieve(
+        String body = client.toBlocking().retrieve(
                 HttpRequest.POST("/post/multipleParams", [param: ["a", "b"]])
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                         .accept(MediaType.TEXT_PLAIN_TYPE),
@@ -219,8 +204,7 @@ class JettyHttpPostSpec extends Specification {
 
     void "test url encoded request with a list of params bound to a POJO"() {
         when:
-        BlockingHttpClient blockingHttpClient = client.toBlocking()
-        String body = blockingHttpClient.retrieve(
+        String body = client.toBlocking().retrieve(
                 HttpRequest.POST("/post/multipleParamsBody", [param: ["a", "b"]])
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                         .accept(MediaType.TEXT_PLAIN_TYPE),
@@ -233,8 +217,7 @@ class JettyHttpPostSpec extends Specification {
 
     void "test multipart request with a list of params"() {
         when:
-        BlockingHttpClient blockingHttpClient = client.toBlocking()
-        String body = blockingHttpClient.retrieve(
+        String body = client.toBlocking().retrieve(
                 HttpRequest.POST("/post/multipleParams", MultipartBody.builder()
                         .addPart("param", "a")
                         .addPart("param", "b")
@@ -251,8 +234,7 @@ class JettyHttpPostSpec extends Specification {
 
     void "test multipart request with custom charset for part"() {
         when:
-        BlockingHttpClient blockingHttpClient = client.toBlocking()
-        String body = blockingHttpClient.retrieve(
+        String body = client.toBlocking().retrieve(
                 HttpRequest.POST("/post/multipartCharset", MultipartBody.builder()
                         .addPart("file", "test.csv", new MediaType("text/csv; charset=ISO-8859-1"), "micronaut,rocks".getBytes(StandardCharsets.ISO_8859_1))
                         .build()
@@ -268,8 +250,7 @@ class JettyHttpPostSpec extends Specification {
 
     void "test url encoded request with a string body"() {
         when:
-        BlockingHttpClient blockingHttpClient = client.toBlocking()
-        String body = blockingHttpClient.retrieve(
+        String body = client.toBlocking().retrieve(
                 HttpRequest.POST("/post/multipleParams", "param=a&param=b")
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                         .accept(MediaType.TEXT_PLAIN_TYPE),
@@ -288,13 +269,12 @@ class JettyHttpPostSpec extends Specification {
     void "test simple post request url encoded"() {
         given:
         def toSend = new Book(title: "The Stand", pages: 1000)
+
         when:
-        BlockingHttpClient blockingHttpClient = client.toBlocking()
-        Book book = blockingHttpClient.retrieve(
+        Book book = client.toBlocking().retrieve(
                 HttpRequest.POST("/post/query/url-encoded", toSend)
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED_TYPE)
                         .accept(MediaType.APPLICATION_JSON_TYPE),
-
                 Book
         )
 
@@ -303,10 +283,8 @@ class JettyHttpPostSpec extends Specification {
     }
 
     void "test posting an array of simple types"() {
-        BlockingHttpClient blockingHttpClient = client.toBlocking()
-        List<Boolean> booleans = blockingHttpClient.retrieve(
+        List<Boolean> booleans = client.toBlocking().retrieve(
                 HttpRequest.POST("/post/booleans", "[true, true, false]"),
-
                 Argument.of(List.class, Boolean.class)
         )
 
@@ -327,12 +305,10 @@ class JettyHttpPostSpec extends Specification {
     }
 
     void "test multiple params single body"() {
-        BlockingHttpClient blockingHttpClient = client.toBlocking()
-        String data = blockingHttpClient.retrieve(
+        String data = client.toBlocking().retrieve(
                 HttpRequest.POST("/post/bodyParts", '{"id":5,"name":"Sally"}')
                         .contentType(MediaType.APPLICATION_JSON_TYPE)
                         .accept(MediaType.TEXT_PLAIN_TYPE),
-
                 String
         )
 
@@ -381,7 +357,6 @@ class JettyHttpPostSpec extends Specification {
             assert title == book.title
             return book
         }
-
 
         @Post('/queryNoBody')
         Book simple(@QueryValue("title") String title) {

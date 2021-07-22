@@ -3,6 +3,7 @@ package io.micronaut.servlet.jetty
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.context.annotation.Requires
+import io.micronaut.core.async.annotation.SingleResult
 import io.micronaut.http.HttpRequest
 import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.Body
@@ -146,6 +147,7 @@ class JettyJsonStreamSpec extends Specification {
         given:
         RxStreamingHttpClient client = context.createBean(RxStreamingHttpClient, embeddedServer.getURL())
         signal = new Semaphore(1)
+
         when:
         // Funny request flow which required the server to relase the semaphore so we can keep sending stuff
         def stream = client.jsonStream(HttpRequest.POST(
@@ -164,6 +166,7 @@ class JettyJsonStreamSpec extends Specification {
     void "we can stream data from the server through the generated client"() {
         when:
         List<Book> books = Flux.from(bookClient.list()).collectList().block()
+
         then:
         books.size() == 2
         books*.title == ['The Stand', 'The Shining']
@@ -172,15 +175,16 @@ class JettyJsonStreamSpec extends Specification {
     void "we can use a generated client to stream books to the server"() {
         given:
         signal = new Semaphore(1)
+
         when:
-        Mono<LibraryStats> result = bookClient.count(
+        Publisher<LibraryStats> result = bookClient.count(
                 Mono.fromCallable {
                     JettyJsonStreamSpec.signal.acquire()
                     new Book(title: "Micronaut for dummies, volume 2")
                 }
                         .repeat(6))
         then:
-        result.timeout(Duration.ofSeconds(10)).block().bookCount == 7
+        Mono.from(result).timeout(Duration.ofSeconds(10)).block().bookCount == 7
     }
 
     void "test returning an empty publisher"() {
@@ -199,7 +203,8 @@ class JettyJsonStreamSpec extends Specification {
         Publisher<Book> list();
 
         @Post(uri = "/count", processes = MediaType.APPLICATION_JSON_STREAM)
-        Mono<LibraryStats> count(@Body Flux<Book> theBooks)
+        @SingleResult
+        Publisher<LibraryStats> count(@Body Publisher<Book> theBooks)
 
         @Get(uri = "/empty", consumes = MediaType.APPLICATION_JSON)
         Publisher<Book> empty();
@@ -216,7 +221,8 @@ class JettyJsonStreamSpec extends Specification {
 
         // Funny controller which signals the semaphone, causing the the client to send more
         @Post(uri = "/count", processes = MediaType.APPLICATION_JSON_STREAM)
-        Mono<LibraryStats> count(@Body Flux<Book> theBooks) {
+        @SingleResult
+        Publisher<LibraryStats> count(@Body Publisher<Book> theBooks) {
             theBooks.map {
                 Book b ->
                     JettyJsonStreamSpec.signal.release()

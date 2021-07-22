@@ -2,6 +2,7 @@ package io.micronaut.servlet.jetty
 
 import io.micronaut.context.annotation.Property
 import io.micronaut.context.annotation.Requires
+import io.micronaut.core.async.annotation.SingleResult
 import io.micronaut.http.HttpRequest
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.MediaType
@@ -13,6 +14,7 @@ import io.micronaut.http.client.RxHttpClient
 import io.micronaut.http.client.annotation.Client
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
+import org.reactivestreams.Publisher
 import reactor.core.publisher.Mono
 import spock.lang.Issue
 import spock.lang.Specification
@@ -110,7 +112,8 @@ class JettyContentTypeSpec extends Specification {
             HttpResponse<String>.ok(result(text))
         }
         @Post('/reactive')
-        Mono<String> reactive(@Body String text) {
+        @SingleResult
+        Publisher<String> reactive(@Body String text) {
             Mono<String>.just(result(text))
         }
     }
@@ -128,7 +131,8 @@ class JettyContentTypeSpec extends Specification {
             HttpResponse<String>.ok(result(text))
         }
         @Post('/reactive')
-        Mono<String> reactive(@Body String text) {
+        @SingleResult
+        Publisher<String> reactive(@Body String text) {
             Mono<String>.just(result(text))
         }
     }

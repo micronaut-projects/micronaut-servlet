@@ -15,6 +15,7 @@ import io.micronaut.http.annotation.QueryValue
 import io.micronaut.http.client.annotation.Client
 import io.micronaut.runtime.server.EmbeddedServer
 import jakarta.inject.Inject
+import org.reactivestreams.Publisher
 import org.reactivestreams.Subscriber
 import org.reactivestreams.Subscription
 import reactor.core.publisher.Flux
@@ -76,7 +77,7 @@ class JettyStreamSpec extends Specification {
         int n = 42376 // This may be higher than 806596, but the test takes forever, then.
         StreamEchoClient myClient = context.getBean(StreamEchoClient)
         when:
-        Flux<ByteBuffer> responseFlux = myClient.echoAsByteBuffers(n, "Hello, World!")
+        Publisher<ByteBuffer> responseFlux = myClient.echoAsByteBuffers(n, "Hello, World!")
         int sum = 0
         CountDownLatch latch = new CountDownLatch(1)
         responseFlux.subscribe(new Subscriber<ByteBuffer<?>>() {
@@ -110,15 +111,45 @@ class JettyStreamSpec extends Specification {
         sum == n
     }
 
-
     void "test that the client is unable to convert bytes to elephants"() {
         given:
         StreamEchoClient myClient = context.getBean(StreamEchoClient)
         when:
-        Elephant _ = myClient.echoAsElephant(42, "Hello, big grey animal!").blockFirst()
+        int elephantsConverted = 0
+        Throwable exThrown
+        CountDownLatch latch = new CountDownLatch(1)
+        myClient.echoAsElephant(42, "Hello, big grey animal!").subscribe(new Subscriber<Elephant>() {
+            private Subscription s;
+
+            @Override
+            void onSubscribe(Subscription s) {
+                this.s = s
+                s.request(1)
+            }
+
+            @Override
+            void onNext(Elephant elephant) {
+                elephantsConverted += 1
+                s.request(1)
+            }
+
+            @Override
+            void onError(Throwable t) {
+                exThrown = t
+                latch.countDown()
+            }
+
+            @Override
+            void onComplete() {
+                latch.countDown()
+            }
+        })
+        latch.await()
+
         then:
-        def ex = thrown(ConfigurationException)
-        ex.message == 'Cannot create the generated HTTP client\'s required return type, since no TypeConverter from ByteBuffer to class io.micronaut.servlet.jetty.JettyStreamSpec$Elephant is registered'
+        elephantsConverted == 0
+        exThrown instanceof ConfigurationException
+        exThrown.message == 'Cannot create the generated HTTP client\'s required return type, since no TypeConverter from ByteBuffer to class io.micronaut.servlet.jetty.JettyStreamSpec$Elephant is registered'
     }
 
     @Unroll
@@ -145,10 +176,10 @@ class JettyStreamSpec extends Specification {
         String echoAsString(@QueryValue @Nullable int n, @QueryValue @Nullable String data);
 
         @Get(value = "/echo{?n,data}", consumes = MediaType.TEXT_PLAIN)
-        Flux<ByteBuffer<?>> echoAsByteBuffers(@QueryValue @Nullable int n, @QueryValue @Nullable String data);
+        Publisher<ByteBuffer<?>> echoAsByteBuffers(@QueryValue @Nullable int n, @QueryValue @Nullable String data);
 
         @Get(value = "/echo{?n,data}", consumes = MediaType.TEXT_PLAIN)
-        Flux<Elephant> echoAsElephant(@QueryValue @Nullable int n, @QueryValue @Nullable String data);
+        Publisher<Elephant> echoAsElephant(@QueryValue @Nullable int n, @QueryValue @Nullable String data);
 
         @Get(value = "/echoWithHeaders{?n,data}", consumes = MediaType.TEXT_PLAIN)
         HttpResponse<String> echoWithHeaders(@QueryValue @Nullable int n, @QueryValue @Nullable String data);
@@ -174,37 +205,37 @@ class JettyStreamSpec extends Specification {
         @Inject ByteBufferFactory<?, ?> bufferFactory
 
         @Get(value = "/echo{?n,data}", produces = MediaType.TEXT_PLAIN)
-        Flux<byte[]> postStream(@QueryValue @Nullable int n,  @QueryValue @Nullable String data) {
+        Publisher<byte[]> postStream(@QueryValue @Nullable int n,  @QueryValue @Nullable String data) {
             return Flux.just(data.getBytes(StandardCharsets.UTF_8)).repeat(n - 1)
         }
 
         @Get(value = "/echoWithHeaders{?n,data}", produces = MediaType.TEXT_PLAIN)
-        HttpResponse<Flux<byte[]>> echoWithHeaders(@QueryValue @Nullable int n, @QueryValue @Nullable String data) {
+        HttpResponse<Publisher<byte[]>> echoWithHeaders(@QueryValue @Nullable int n, @QueryValue @Nullable String data) {
             return HttpResponse.ok(Flux.just(data.getBytes(StandardCharsets.UTF_8)).repeat(n - 1)).header("X-MyHeader", "42")
         }
 
         @Get(value = "/echoWithHeadersSingle{?data}", produces = MediaType.TEXT_PLAIN)
-        HttpResponse<Mono<byte[]>> echoWithHeadersSingle(@QueryValue @Nullable String data) {
+        HttpResponse<Publisher<byte[]>> echoWithHeadersSingle(@QueryValue @Nullable String data) {
             return HttpResponse.ok(Mono.just(data.getBytes(StandardCharsets.UTF_8))).header("X-MyHeader", "42")
         }
 
         @Get(value = "/someJson1", produces = MediaType.APPLICATION_JSON)
-        Flux<byte[]> someJson1() {
+        Publisher<byte[]> someJson1() {
             return Flux.just('{"key":"value"}'.getBytes(StandardCharsets.UTF_8))
         }
 
         @Get(value = "/someJson2", produces = MediaType.APPLICATION_JSON)
-        HttpResponse<Flux<byte[]>> someJson2() {
+        HttpResponse<Publisher<byte[]>> someJson2() {
             return HttpResponse.ok(Flux.just('{"key":"value"}'.getBytes(StandardCharsets.UTF_8)))
         }
 
         @Get(value = "/someJson3", produces = MediaType.APPLICATION_JSON)
-        Flux<ByteBuffer> someJson3() {
+        Publisher<ByteBuffer> someJson3() {
             return Flux.just(byteBuf('{"key":'), byteBuf('"value"}'))
         }
 
         @Get(value = "/someJsonCollection", produces = MediaType.APPLICATION_JSON)
-        HttpResponse<Flux<String>> someJsonCollection() {
+        HttpResponse<Publisher<String>> someJsonCollection() {
             return HttpResponse.ok(Flux.just('{"x":1}','{"x":2}'))
         }
 
