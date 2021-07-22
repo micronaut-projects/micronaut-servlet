@@ -3,6 +3,15 @@ plugins {
     id "org.jetbrains.kotlin.kapt"
 }
 
+configurations.all {
+    resolutionStrategy {
+        eachDependency { DependencyResolveDetails details ->
+            if (details.requested.group == 'org.jetbrains.kotlin') {
+                details.useVersion '1.5.0'
+            }
+        }
+    }
+}
 dependencies {
     kaptTest "io.micronaut:micronaut-inject-java:$micronautVersion"
     testImplementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"

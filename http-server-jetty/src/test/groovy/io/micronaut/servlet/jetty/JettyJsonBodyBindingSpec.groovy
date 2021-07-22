@@ -82,8 +82,7 @@ class JettyJsonBodyBindingSpec extends Specification {
 
         then:
         def e = thrown(HttpClientResponseException)
-        e.message == """Unable to decode request body: Error decoding JSON stream for type [json]: Unrecognized token 'The': was expecting (JSON String, Number, Array, Object or token 'null', 'true' or 'false')
- at [Source: (org.eclipse.jetty.server.HttpInput); line: 1, column: 14]"""
+        e.message.contains """Unable to decode request body: Error decoding JSON stream for type [json]: Unrecognized token 'The'"""
         e.response.status == HttpStatus.BAD_REQUEST
 
         when:
