@@ -650,7 +650,9 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                         }, FluxSink.OverflowStrategy.ERROR);
                     } else {
                         Object suspendedBody = null;
-                        if (!isKotlinFunctionReturnTypeUnit) {
+                        if (isKotlinFunctionReturnTypeUnit) {
+                            suspendedBody = Mono.empty().then();    // then() returns Mono<Void>, comparable to Completable
+                        } else {
                             suspendedBody = result;
                         }
                         if (suspendedBody instanceof HttpResponse) {
