@@ -11,7 +11,7 @@ import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Get
 import io.micronaut.http.annotation.Post
 import io.micronaut.http.annotation.Produces
-import io.micronaut.http.client.RxHttpClient
+import io.micronaut.http.client.HttpClient
 import io.micronaut.http.client.annotation.Client
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
@@ -27,12 +27,12 @@ class TomcatContentTypeSpec extends Specification {
 
     @Inject
     @Client('/contentType')
-    RxHttpClient client
+    HttpClient client
 
     @Issue('https://github.com/micronaut-projects/micronaut-servlet/issues/157')
     void 'test that expected content-type is received'() {
         when:
-        def response = client.exchange(HttpRequest.GET('/about')).blockingFirst()
+        def response = client.toBlocking().exchange(HttpRequest.GET('/about'))
 
         then:
         response.contentType.isPresent()
@@ -41,9 +41,9 @@ class TomcatContentTypeSpec extends Specification {
 
     void 'test that method returning String without @Produces will have JSON response content-type'() {
         when:
-        def response = client.exchange(
+        def response = client.toBlocking().exchange(
                 HttpRequest.POST('/default/simple', 'foobar'), String
-        ).blockingFirst()
+        )
 
         then:
         response.contentType.isPresent()
@@ -53,9 +53,9 @@ class TomcatContentTypeSpec extends Specification {
 
     void 'test that method returning HttpResponse without @Produces will have JSON response content-type'() {
         when:
-        def response = client.exchange(
+        def response = client.toBlocking().exchange(
                 HttpRequest.POST('/default/response', 'foobar'), String
-        ).blockingFirst()
+        )
 
         then:
         response.contentType.isPresent()
@@ -65,9 +65,9 @@ class TomcatContentTypeSpec extends Specification {
 
     void 'test that method returning Mono without @Produces will have JSON response content-type'() {
         when:
-        def response = client.exchange(
+        def response = client.toBlocking().exchange(
                 HttpRequest.POST('/default/reactive', 'foobar'), String
-        ).blockingFirst()
+        )
 
         then:
         response.contentType.isPresent()
@@ -77,9 +77,9 @@ class TomcatContentTypeSpec extends Specification {
 
     void 'test that method returning String with @Produces TEXT_PLAIN will have text response content-type'() {
         when:
-        def response = client.exchange(
+        def response = client.toBlocking().exchange(
                 HttpRequest.POST('/plainText/simple', 'foobar'), String
-        ).blockingFirst()
+        )
 
         then:
         response.contentType.isPresent()
@@ -89,9 +89,9 @@ class TomcatContentTypeSpec extends Specification {
 
     void 'test that method returning HttpResponse with @Produces TEXT_PLAIN will have text response content-type'() {
         when:
-        def response = client.exchange(
+        def response = client.toBlocking().exchange(
                 HttpRequest.POST('/plainText/response', 'foobar'), String
-        ).blockingFirst()
+        )
 
         then:
         response.contentType.isPresent()
@@ -101,9 +101,9 @@ class TomcatContentTypeSpec extends Specification {
 
     void 'test that method returning Mono with @Produces TEXT_PLAIN will have text response content-type'() {
         when:
-        def response = client.exchange(
+        def response = client.toBlocking().exchange(
                 HttpRequest.POST('/plainText/reactive', 'foobar'), String
-        ).blockingFirst()
+        )
 
         then:
         response.contentType.isPresent()

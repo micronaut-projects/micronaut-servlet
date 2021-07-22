@@ -23,6 +23,8 @@ import io.micronaut.http.server.HttpServerConfiguration;
 import org.eclipse.jetty.server.HttpConfiguration;
 
 import io.micronaut.core.annotation.Nullable;
+import org.eclipse.jetty.server.SecureRequestCustomizer;
+
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
@@ -86,4 +88,9 @@ public class JettyConfiguration extends HttpServerConfiguration {
             this.initParameters = initParameters;
         }
     }
+
+    @ConfigurationProperties("ssl")
+    public static class JettySslConfiguration extends SecureRequestCustomizer {
+    }
+
 }

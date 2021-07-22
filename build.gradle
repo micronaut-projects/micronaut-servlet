@@ -25,8 +25,8 @@ subprojects { Project subproject ->
 
     dependencies {
         // TODO: Remove after micronaut-reactor is merged into micronaut-core.
-        api "io.micronaut.reactor:micronaut-reactor"
-        api "io.micronaut.reactor:micronaut-reactor-http-client:1.1.0"
+        api "io.micronaut.reactor:micronaut-reactor:2.0.0-M1"
+        api "io.micronaut.reactor:micronaut-reactor-http-client:2.0.0-M1"
     }
 
     boolean isCiServer = System.getenv().containsKey("GITHUB_RUN_ID")

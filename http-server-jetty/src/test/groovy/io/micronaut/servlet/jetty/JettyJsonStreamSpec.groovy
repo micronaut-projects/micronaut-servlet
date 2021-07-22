@@ -10,7 +10,7 @@ import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Get
 import io.micronaut.http.annotation.Post
-import io.micronaut.http.client.RxStreamingHttpClient
+import io.micronaut.http.client.StreamingHttpClient
 import io.micronaut.http.client.annotation.Client
 import io.micronaut.runtime.server.EmbeddedServer
 import org.reactivestreams.Publisher
@@ -25,6 +25,8 @@ import spock.lang.Specification
 import spock.util.concurrent.PollingConditions
 
 import java.time.Duration
+import java.time.temporal.ChronoUnit
+import java.time.temporal.TemporalUnit
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
 
@@ -49,12 +51,12 @@ class JettyJsonStreamSpec extends Specification {
 
     void "test read JSON stream demand all"() {
         given:
-        RxStreamingHttpClient client = context.createBean(RxStreamingHttpClient, embeddedServer.getURL())
+        StreamingHttpClient client = context.createBean(StreamingHttpClient, embeddedServer.getURL())
 
         when:
-        List<Map> jsonObjects = client.jsonStream(HttpRequest.GET(
+        List<Map> jsonObjects = Flux.from(client.jsonStream(HttpRequest.GET(
                 '/jsonstream/books'
-        )).toList().blockingGet()
+        ))).collectList().block()
 
         then:
         jsonObjects.size() == 2
@@ -68,17 +70,17 @@ class JettyJsonStreamSpec extends Specification {
     @Issue('https://github.com/micronaut-projects/micronaut-core/issues/1864')
     void "test read JSON stream raw data and demand all"() {
         given:
-        RxStreamingHttpClient client = context.createBean(RxStreamingHttpClient, embeddedServer.getURL())
+        StreamingHttpClient client = context.createBean(StreamingHttpClient, embeddedServer.getURL())
 
         when:
-        List<Chunk> jsonObjects = client.jsonStream(
+        List<Chunk> jsonObjects = Flux.from(client.jsonStream(
                 HttpRequest.POST('/jsonstream/books/raw', '''
 {"type":"ADDED"}
 {"type":"ADDED"}
 {"type":"ADDED"}
 {"type":"ADDED"}
 ''').contentType(MediaType.APPLICATION_JSON_STREAM_TYPE)
-                        .accept(MediaType.APPLICATION_JSON_STREAM_TYPE), Chunk).toList().blockingGet()
+                        .accept(MediaType.APPLICATION_JSON_STREAM_TYPE), Chunk)).collectList().block()
 
         then:
         jsonObjects.size() == 4
@@ -89,12 +91,12 @@ class JettyJsonStreamSpec extends Specification {
 
     void "test read JSON stream demand all POJO"() {
         given:
-        RxStreamingHttpClient client = context.createBean(RxStreamingHttpClient, embeddedServer.getURL())
+        StreamingHttpClient client = context.createBean(StreamingHttpClient, embeddedServer.getURL())
 
         when:
-        List<Book> jsonObjects = client.jsonStream(HttpRequest.GET(
+        List<Book> jsonObjects = Flux.from(client.jsonStream(HttpRequest.GET(
                 '/jsonstream/books'
-        ), Book).toList().blockingGet()
+        ), Book)).collectList().block()
 
         then:
         jsonObjects.size() == 2
@@ -105,7 +107,7 @@ class JettyJsonStreamSpec extends Specification {
 
     void "test read JSON stream demand one"() {
         given:
-        RxStreamingHttpClient client = context.createBean(RxStreamingHttpClient, embeddedServer.getURL())
+        StreamingHttpClient client = context.createBean(StreamingHttpClient, embeddedServer.getURL())
 
         when:
         def stream = client.jsonStream(HttpRequest.GET(
@@ -145,22 +147,22 @@ class JettyJsonStreamSpec extends Specification {
 
     void "we can stream books to the server"() {
         given:
-        RxStreamingHttpClient client = context.createBean(RxStreamingHttpClient, embeddedServer.getURL())
+        StreamingHttpClient client = context.createBean(StreamingHttpClient, embeddedServer.getURL())
         signal = new Semaphore(1)
 
         when:
         // Funny request flow which required the server to relase the semaphore so we can keep sending stuff
-        def stream = client.jsonStream(HttpRequest.POST(
+        def stream = Flux.from(client.jsonStream(HttpRequest.POST(
                 '/jsonstream/books/count',
                 Mono.fromCallable {
                     JettyJsonStreamSpec.signal.acquire()
                     new Book(title: "Micronaut for dummies")
                 }
                         .repeat(9)
-        ).contentType(MediaType.APPLICATION_JSON_STREAM_TYPE).accept(MediaType.APPLICATION_JSON_STREAM_TYPE))
+        ).contentType(MediaType.APPLICATION_JSON_STREAM_TYPE).accept(MediaType.APPLICATION_JSON_STREAM_TYPE)))
 
         then:
-        stream.timeout(5, TimeUnit.SECONDS).blockingSingle().bookCount == 10
+        stream.timeout(Duration.of(5, ChronoUnit.SECONDS)).blockFirst().bookCount == 10
     }
 
     void "we can stream data from the server through the generated client"() {

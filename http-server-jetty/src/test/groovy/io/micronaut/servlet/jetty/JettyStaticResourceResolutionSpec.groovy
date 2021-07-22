@@ -8,7 +8,7 @@ import io.micronaut.http.HttpRequest
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.MediaType
-import io.micronaut.http.client.RxHttpClient
+import io.micronaut.http.client.HttpClient
 import io.micronaut.http.client.annotation.Client
 import io.micronaut.http.client.exceptions.HttpClientResponseException
 import io.micronaut.runtime.server.EmbeddedServer
@@ -52,7 +52,7 @@ class JettyStaticResourceResolutionSpec extends Specification implements TestPro
 
     @Inject
     @Client("/")
-    RxHttpClient rxClient
+    HttpClient rxClient
 
     // tests that normal requests work when static resources enabled
     void "test URI parameters"() {
@@ -68,9 +68,9 @@ class JettyStaticResourceResolutionSpec extends Specification implements TestPro
 
     void "test resources from the file system are returned"() {
         when:
-        def response = rxClient.exchange(
+        def response = rxClient.toBlocking().exchange(
                 HttpRequest.GET('/public/'+tempFile.getName()), String
-        ).blockingFirst()
+        )
 
         then:
         response.status == HttpStatus.OK
@@ -83,9 +83,9 @@ class JettyStaticResourceResolutionSpec extends Specification implements TestPro
 
     void "test resources from the classpath are returned"() {
         when:
-        HttpResponse<String> response = rxClient.exchange(
+        HttpResponse<String> response = rxClient.toBlocking().exchange(
                 HttpRequest.GET('/public/index.html'), String
-        ).blockingFirst()
+        )
 
         File file = Paths.get(JettyStaticResourceResolutionSpec.classLoader.getResource("public/index.html").toURI()).toFile()
 
@@ -102,9 +102,9 @@ class JettyStaticResourceResolutionSpec extends Specification implements TestPro
 
     void "test index.html will be resolved"() {
         when:
-        HttpResponse<String> response = rxClient.exchange(
+        HttpResponse<String> response = rxClient.toBlocking().exchange(
                 HttpRequest.GET('/public'), String
-        ).blockingFirst()
+        )
 
         File file = Paths.get(JettyStaticResourceResolutionSpec.classLoader.getResource("public/index.html").toURI()).toFile()
 
@@ -124,13 +124,13 @@ class JettyStaticResourceResolutionSpec extends Specification implements TestPro
         EmbeddedServer embeddedServer = ApplicationContext.run(EmbeddedServer, [
                 'micronaut.router.static-resources.default.paths': ['classpath:public', 'file:' + tempFile.parent],
                 'micronaut.router.static-resources.default.mapping': '/static/**'])
-        RxHttpClient rxClient = embeddedServer.applicationContext.createBean(RxHttpClient, embeddedServer.getURL())
+        HttpClient rxClient = embeddedServer.applicationContext.createBean(HttpClient, embeddedServer.getURL())
 
 
         when:
-        HttpResponse<String> response = rxClient.exchange(
+        HttpResponse<String> response = rxClient.toBlocking().exchange(
                 HttpRequest.GET("/static/index.html"), String
-        ).blockingFirst()
+        )
         File file = Paths.get(JettyStaticResourceResolutionSpec.classLoader.getResource("public/index.html").toURI()).toFile()
 
         then:
@@ -155,15 +155,15 @@ class JettyStaticResourceResolutionSpec extends Specification implements TestPro
                 'micronaut.router.static-resources.file.paths': ['file:' + tempFile.parent],
                 'micronaut.router.static-resources.file.enabled': false,
                 'micronaut.router.static-resources.file.mapping': '/file/**'], Environment.TEST)
-        RxHttpClient rxClient = embeddedServer.applicationContext.createBean(RxHttpClient, embeddedServer.getURL())
+        HttpClient rxClient = embeddedServer.applicationContext.createBean(HttpClient, embeddedServer.getURL())
 
         expect:
         embeddedServer.applicationContext.getBeansOfType(StaticResourceConfiguration).size() == 2
 
         when:
-        HttpResponse<String> response = rxClient.exchange(
+        HttpResponse<String> response = rxClient.toBlocking().exchange(
                 HttpRequest.GET("/static/index.html"), String
-        ).blockingFirst()
+        )
         File file = Paths.get(JettyStaticResourceResolutionSpec.classLoader.getResource("public/index.html").toURI()).toFile()
 
         then:
@@ -176,9 +176,9 @@ class JettyStaticResourceResolutionSpec extends Specification implements TestPro
         response.body() == "<html><head></head><body>HTML Page from resources</body></html>"
 
         when:
-        response = rxClient.exchange(
+        response = rxClient.toBlocking().exchange(
                 HttpRequest.GET('/file/'+tempFile.getName()), String
-        ).blockingFirst()
+        )
 
         then:
         thrown(HttpClientResponseException)
@@ -192,12 +192,12 @@ class JettyStaticResourceResolutionSpec extends Specification implements TestPro
         EmbeddedServer embeddedServer = ApplicationContext.run(EmbeddedServer, [
                 'micronaut.router.static-resources.default.paths': ['classpath:public', 'file:' + tempFile.parent],
                 'micronaut.router.static-resources.default.mapping': '/static/**'])
-        RxHttpClient rxClient = embeddedServer.applicationContext.createBean(RxHttpClient, embeddedServer.getURL())
+        HttpClient rxClient = embeddedServer.applicationContext.createBean(HttpClient, embeddedServer.getURL())
 
         when:
-        def response = rxClient.exchange(
+        def response = rxClient.toBlocking().exchange(
                 HttpRequest.GET("/static"), String
-        ).blockingFirst()
+        )
         File file = Paths.get(JettyStaticResourceResolutionSpec.classLoader.getResource("public/index.html").toURI()).toFile()
 
         then:
@@ -218,13 +218,13 @@ class JettyStaticResourceResolutionSpec extends Specification implements TestPro
         EmbeddedServer embeddedServer = ApplicationContext.run(EmbeddedServer, [
                 'micronaut.router.static-resources.default.paths': ['classpath:public'],
                 'micronaut.router.static-resources.default.mapping': '/static/**'])
-        RxHttpClient rxClient = embeddedServer.applicationContext.createBean(RxHttpClient, embeddedServer.getURL())
+        HttpClient rxClient = embeddedServer.applicationContext.createBean(HttpClient, embeddedServer.getURL())
 
 
         when:
-        def response = rxClient.exchange(
+        def response = rxClient.toBlocking().exchange(
                 HttpRequest.GET("/static/foo"), String
-        ).blockingFirst()
+        )
         File file = Paths.get(JettyStaticResourceResolutionSpec.classLoader.getResource("public/foo/index.html").toURI()).toFile()
 
         then:
