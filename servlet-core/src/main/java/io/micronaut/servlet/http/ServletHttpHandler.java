@@ -100,6 +100,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static io.micronaut.core.util.KotlinUtils.isKotlinCoroutineSuspended;
@@ -118,6 +119,9 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
      * Logger to be used by subclasses for logging.
      */
     protected static final Logger LOG = LoggerFactory.getLogger(ServletHttpHandler.class);
+
+    private static final Pattern IGNORABLE_ERROR_MESSAGE = Pattern.compile(
+            "^.*(?:connection.*(?:reset|closed|abort|broken)|broken.*pipe).*$", Pattern.CASE_INSENSITIVE);
 
     private final Router router;
     private final RequestArgumentSatisfier requestArgumentSatisfier;
@@ -385,16 +389,12 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
             boolean executeFilters,
             ServletExchange<Req, Res> exchange) {
 
-//        try {
-            Publisher<MutableHttpResponse<?>> responsePublisher = buildResponsePublisher(exchange, req, route);
-            if (executeFilters) {
-                responsePublisher = filterPublisher(exchange, new AtomicReference<>(req), responsePublisher, route);
-            }
-            final AnnotationMetadata annotationMetadata = route.getAnnotationMetadata();
-            subscribeToResponsePublisher(req, res, route, isErrorRoute, exchange, responsePublisher, annotationMetadata);
-//        } catch (Throwable e) {
-//            handleException(req, res, route, isErrorRoute, e, exchange);
-//        }
+        Publisher<MutableHttpResponse<?>> responsePublisher = buildResponsePublisher(exchange, req, route);
+        if (executeFilters) {
+            responsePublisher = filterPublisher(exchange, new AtomicReference<>(req), responsePublisher, route);
+        }
+        final AnnotationMetadata annotationMetadata = route.getAnnotationMetadata();
+        subscribeToResponsePublisher(req, res, route, isErrorRoute, exchange, responsePublisher, annotationMetadata);
     }
 
     private void subscribeToResponsePublisher(HttpRequest<Object> req,
@@ -825,6 +825,28 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
         return null;
     }
 
+    private void logException(Throwable cause) {
+        //handling connection reset by peer exceptions
+        if (isIgnorable(cause)) {
+            logIgnoredException(cause);
+        } else {
+            if (LOG.isErrorEnabled()) {
+                LOG.error("Unexpected error occurred: " + cause.getMessage(), cause);
+            }
+        }
+    }
+
+    private boolean isIgnorable(Throwable cause) {
+        String message = cause.getMessage();
+        return cause instanceof IOException && message != null && IGNORABLE_ERROR_MESSAGE.matcher(message).matches();
+    }
+
+    private void logIgnoredException(Throwable cause) {
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Swallowed an IOException caused by client connectivity: " + cause.getMessage(), cause);
+        }
+    }
+
     private Publisher<MutableHttpResponse<?>> handleException(
             HttpRequest<Object> req,
             MutableHttpResponse<Object> res,
@@ -919,7 +941,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                                                               HttpRequest<?> request,
                                                               Throwable cause,
                                                               HttpStatus defaultStatus) {
-//TODO        logException(cause);
+        logException(cause);
         HttpStatus status = defaultStatus != null ? defaultStatus : HttpStatus.INTERNAL_SERVER_ERROR;
         final MutableHttpResponse<Object> response = exchange.getResponse().status(status);
         response.setAttribute(HttpAttributes.EXCEPTION, cause);
