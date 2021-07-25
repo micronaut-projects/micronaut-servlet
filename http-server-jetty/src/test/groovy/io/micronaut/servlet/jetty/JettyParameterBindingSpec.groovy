@@ -49,41 +49,41 @@ class JettyParameterBindingSpec extends Specification {
 
         where:
         httpMethod      | uri                                                   | result                          | httpStatus
-//        HttpMethod.GET  | '/parameter/optional-list?values=10&values=20'        | "Parameter Value: [10, 20]"     | HttpStatus.OK
-//        HttpMethod.GET  | '/parameter/set?values=10,20'                         | "Parameter Value: [10, 20]"     | HttpStatus.OK
-//        HttpMethod.GET  | '/parameter/list?values=10&values=20'                 | "Parameter Value: [10, 20]"     | HttpStatus.OK
-//        // you can't populate post request data from query parameters without explicit @QueryValue
+        HttpMethod.GET  | '/parameter/optional-list?values=10&values=20'        | "Parameter Value: [10, 20]"     | HttpStatus.OK
+        HttpMethod.GET  | '/parameter/set?values=10,20'                         | "Parameter Value: [10, 20]"     | HttpStatus.OK
+        HttpMethod.GET  | '/parameter/list?values=10&values=20'                 | "Parameter Value: [10, 20]"     | HttpStatus.OK
+        // you can't populate post request data from query parameters without explicit @QueryValue
         HttpMethod.POST | '/parameter/save?max=30'                              | null                            | HttpStatus.BAD_REQUEST
-//        HttpMethod.GET  | '/parameter/path/20/foo/10'                           | "Parameter Values: 20 10"       | HttpStatus.OK
-//        HttpMethod.GET  | '/parameter/path/20/bar/10'                           | "Parameter Values: 20 10"       | HttpStatus.OK
-//        HttpMethod.GET  | '/parameter/path/20/bar'                              | "Parameter Values: 20 "         | HttpStatus.OK
-//        HttpMethod.GET  | '/parameter/named?maximum=20'                         | "Parameter Value: 20"           | HttpStatus.OK
-//        HttpMethod.POST | '/parameter/save-again?max=30'                        | "Parameter Value: 30"           | HttpStatus.OK
-//        HttpMethod.GET  | '/parameter/path/20'                                  | "Parameter Value: 20"           | HttpStatus.OK
-//        HttpMethod.GET  | '/parameter/simple'                                   | null                            | HttpStatus.BAD_REQUEST
-//        HttpMethod.GET  | '/parameter/named'                                    | null                            | HttpStatus.BAD_REQUEST
-//        HttpMethod.GET  | '/parameter/overlap/30'                               | "Parameter Value: 30"           | HttpStatus.OK
-//        HttpMethod.GET  | '/parameter/overlap/30?max=50'                        | "Parameter Value: 30"           | HttpStatus.OK
-//        HttpMethod.GET  | '/parameter/optional?max=20'                          | "Parameter Value: 20"           | HttpStatus.OK
-//
-//
-//        HttpMethod.GET  | '/parameter/list?values=10,20'                        | "Parameter Value: [10, 20]"     | HttpStatus.OK
-//        HttpMethod.GET  | '/parameter/list'                                     | "Parameter Value: []"     | HttpStatus.OK
-//        HttpMethod.GET  | '/parameter/set?values=10&values=20'                  | "Parameter Value: [10, 20]"     | HttpStatus.OK
-//        HttpMethod.GET  | '/parameter/optional-date?date=1941-01-05'            | "Parameter Value: 1941"         | HttpStatus.OK
-//        HttpMethod.GET  | '/parameter?max=20'                                   | "Parameter Value: 20"           | HttpStatus.OK
-//        HttpMethod.GET  | '/parameter/simple?max=20'                            | "Parameter Value: 20"           | HttpStatus.OK
-//
-//        HttpMethod.GET  | '/parameter/optional'                                 | "Parameter Value: 10"           | HttpStatus.OK
-//        HttpMethod.GET  | '/parameter/nullable'                                 | "Parameter Value: 10"           | HttpStatus.OK
-//        HttpMethod.GET  | '/parameter/nullable?max=20'                          | "Parameter Value: 20"           | HttpStatus.OK
-//        HttpMethod.GET  | '/parameter/all'                                      | "Parameter Value: 10"           | HttpStatus.OK
-//        HttpMethod.GET  | '/parameter/all?max=20'                               | "Parameter Value: 20"           | HttpStatus.OK
-//
-//        HttpMethod.GET  | '/parameter/exploded?title=The%20Stand&age=20'        | "Parameter Value: The Stand 20" | HttpStatus.OK
-//        HttpMethod.GET  | '/parameter/queryName/Fr%20ed'                        | "Parameter Value: Fr ed"        | HttpStatus.OK
-//        HttpMethod.POST | '/parameter/query?name=Fr%20ed'                       | "Parameter Value: Fr ed"        | HttpStatus.OK
-//        HttpMethod.GET  | '/parameter/arrayStyle?param[]=a&param[]=b&param[]=c' | "Parameter Value: [a, b, c]"    | HttpStatus.OK
+        HttpMethod.GET  | '/parameter/path/20/foo/10'                           | "Parameter Values: 20 10"       | HttpStatus.OK
+        HttpMethod.GET  | '/parameter/path/20/bar/10'                           | "Parameter Values: 20 10"       | HttpStatus.OK
+        HttpMethod.GET  | '/parameter/path/20/bar'                              | "Parameter Values: 20 "         | HttpStatus.OK
+        HttpMethod.GET  | '/parameter/named?maximum=20'                         | "Parameter Value: 20"           | HttpStatus.OK
+        HttpMethod.POST | '/parameter/save-again?max=30'                        | "Parameter Value: 30"           | HttpStatus.OK
+        HttpMethod.GET  | '/parameter/path/20'                                  | "Parameter Value: 20"           | HttpStatus.OK
+        HttpMethod.GET  | '/parameter/simple'                                   | null                            | HttpStatus.BAD_REQUEST
+        HttpMethod.GET  | '/parameter/named'                                    | null                            | HttpStatus.BAD_REQUEST
+        HttpMethod.GET  | '/parameter/overlap/30'                               | "Parameter Value: 30"           | HttpStatus.OK
+        HttpMethod.GET  | '/parameter/overlap/30?max=50'                        | "Parameter Value: 30"           | HttpStatus.OK
+        HttpMethod.GET  | '/parameter/optional?max=20'                          | "Parameter Value: 20"           | HttpStatus.OK
+
+
+        HttpMethod.GET  | '/parameter/list?values=10,20'                        | "Parameter Value: [10, 20]"     | HttpStatus.OK
+        HttpMethod.GET  | '/parameter/list'                                     | "Parameter Value: []"     | HttpStatus.OK
+        HttpMethod.GET  | '/parameter/set?values=10&values=20'                  | "Parameter Value: [10, 20]"     | HttpStatus.OK
+        HttpMethod.GET  | '/parameter/optional-date?date=1941-01-05'            | "Parameter Value: 1941"         | HttpStatus.OK
+        HttpMethod.GET  | '/parameter?max=20'                                   | "Parameter Value: 20"           | HttpStatus.OK
+        HttpMethod.GET  | '/parameter/simple?max=20'                            | "Parameter Value: 20"           | HttpStatus.OK
+
+        HttpMethod.GET  | '/parameter/optional'                                 | "Parameter Value: 10"           | HttpStatus.OK
+        HttpMethod.GET  | '/parameter/nullable'                                 | "Parameter Value: 10"           | HttpStatus.OK
+        HttpMethod.GET  | '/parameter/nullable?max=20'                          | "Parameter Value: 20"           | HttpStatus.OK
+        HttpMethod.GET  | '/parameter/all'                                      | "Parameter Value: 10"           | HttpStatus.OK
+        HttpMethod.GET  | '/parameter/all?max=20'                               | "Parameter Value: 20"           | HttpStatus.OK
+
+        HttpMethod.GET  | '/parameter/exploded?title=The%20Stand&age=20'        | "Parameter Value: The Stand 20" | HttpStatus.OK
+        HttpMethod.GET  | '/parameter/queryName/Fr%20ed'                        | "Parameter Value: Fr ed"        | HttpStatus.OK
+        HttpMethod.POST | '/parameter/query?name=Fr%20ed'                       | "Parameter Value: Fr ed"        | HttpStatus.OK
+        HttpMethod.GET  | '/parameter/arrayStyle?param[]=a&param[]=b&param[]=c' | "Parameter Value: [a, b, c]"    | HttpStatus.OK
     }
 
     void "test list to single error"() {
