@@ -115,6 +115,6 @@ public class DefaultMicronautServlet extends HttpServlet {
      * @return A new {@link ApplicationContext} builder
      */
     protected ApplicationContextBuilder newApplicationContextBuilder() {
-        return ApplicationContext.build();
+        return ApplicationContext.builder();
     }
 }
