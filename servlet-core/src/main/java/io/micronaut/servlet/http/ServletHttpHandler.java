@@ -718,7 +718,11 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
             Class<?> bodyType = body.getClass();
             ServletResponseEncoder<Object> responseEncoder = (ServletResponseEncoder<Object>) responseEncoders.get(bodyType);
             if (responseEncoder != null) {
-                Flux.from(responseEncoder.encode(exchange, annotationMetadata, body)).subscribe();
+                // NOTE[moss]: blockLast() here *was* subscribe(), but that returns immediately, which was
+                // sometimes allowing the main response publisher to complete before this responseEncoder
+                // could fill out the response! Blocking here will ensure that the response is filled out
+                // before the main response publisher completes. This will be improved later to avoid the block.
+                Flux.from(responseEncoder.encode(exchange, annotationMetadata, body)).blockLast();
                 return;
             }
 
