@@ -31,12 +31,8 @@ import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
 
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.RandomAccessFile;
-import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
 import java.util.Arrays;
 
 /**
@@ -47,6 +43,8 @@ import java.util.Arrays;
  */
 @Singleton
 public class SystemFileEncoder extends AbstractFileEncoder<SystemFile> {
+    private static final int BUFFER_SIZE = 1024;
+
     @Override
     public Class<SystemFile> getResponseType() {
         return SystemFile.class;
@@ -64,41 +62,39 @@ public class SystemFileEncoder extends AbstractFileEncoder<SystemFile> {
                     setDateHeader(
                             response.status(HttpStatus.NOT_MODIFIED)
                     )
-
             );
         }
-        boolean asyncSupported = exchange.getRequest().isAsyncSupported();
+
+        if (!value.getFile().exists()) {
+            return Publishers.just(
+                    response.status(HttpStatus.NOT_FOUND)
+            );
+        }
+
+        boolean asyncSupported = request.isAsyncSupported();
         if (asyncSupported) {
-            final RandomAccessFile randomAccessFile;
-            try {
-                randomAccessFile = new RandomAccessFile(value.getFile(), "r");
-                return response.stream(Flux.create(emitter -> {
-                    ByteBuffer buf = ByteBuffer.allocate(1024);
-                    try (FileChannel channel = randomAccessFile.getChannel()) {
-                        while (channel.read(buf) > 0) {
-                            final byte[] bytes = buf.array();
-                            final int p = buf.position();
-                            if (p == 1024) {
-                                emitter.next(buf.array());
-                            } else {
-                                emitter.next(Arrays.copyOf(bytes, p));
-                            }
-                            buf.clear();
+            return response.stream(Flux.create(emitter -> {
+                try (InputStream in = new FileInputStream(value.getFile())) {
+                    byte[] buffer = new byte[BUFFER_SIZE];
+                    int len;
+                    while ((len = in.read(buffer)) != -1) {
+                        if (buffer.length == len) {
+                            emitter.next(buffer);
+                            buffer = new byte[BUFFER_SIZE];
+                        } else {
+                            emitter.next(Arrays.copyOf(buffer, len));
                         }
-                    } catch (Throwable e) {
-                        emitter.error(e);
                     }
-                }, FluxSink.OverflowStrategy.BUFFER));
-            } catch (FileNotFoundException e) {
-                return Publishers.just(
-                        response.status(HttpStatus.NOT_FOUND)
-                );
-            }
+                    emitter.complete();
+                } catch (Throwable e) {
+                    emitter.error(e);
+                }
+            }, FluxSink.OverflowStrategy.BUFFER));
         } else {
             return Mono.fromCallable(() -> {
                 try (InputStream in = new FileInputStream(value.getFile())) {
                     try (OutputStream out = response.getOutputStream()) {
-                        byte[] buffer = new byte[1024];
+                        byte[] buffer = new byte[BUFFER_SIZE];
                         int len;
                         while ((len = in.read(buffer)) != -1) {
                             out.write(buffer, 0, len);
