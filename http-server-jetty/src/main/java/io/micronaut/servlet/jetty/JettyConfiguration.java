@@ -89,6 +89,9 @@ public class JettyConfiguration extends HttpServerConfiguration {
         }
     }
 
+    /**
+     * The default connection pool configuration.
+     */
     @ConfigurationProperties("ssl")
     public static class JettySslConfiguration extends SecureRequestCustomizer {
     }

@@ -42,6 +42,8 @@ import java.util.Arrays;
  */
 @Singleton
 public class StreamFileEncoder extends AbstractFileEncoder<StreamedFile> {
+    private static final int BUFFER_SIZE = 1024;
+
     @Override
     public Class<StreamedFile> getResponseType() {
         return StreamedFile.class;
@@ -66,11 +68,12 @@ public class StreamFileEncoder extends AbstractFileEncoder<StreamedFile> {
         if (asyncSupported) {
             return response.stream(Flux.create(emitter -> {
                 try (InputStream in = value.getInputStream()) {
-                    byte[] buffer = new byte[1024];
+                    byte[] buffer = new byte[BUFFER_SIZE];
                     int len;
                     while ((len = in.read(buffer)) != -1) {
                         if (buffer.length == len) {
                             emitter.next(buffer);
+                            buffer = new byte[BUFFER_SIZE];
                         } else {
                             emitter.next(Arrays.copyOf(buffer, len));
                         }
@@ -84,7 +87,7 @@ public class StreamFileEncoder extends AbstractFileEncoder<StreamedFile> {
             return Mono.fromCallable(() -> {
                 try (InputStream in = value.getInputStream()) {
                     try (OutputStream out = response.getOutputStream()) {
-                        byte[] buffer = new byte[1024];
+                        byte[] buffer = new byte[BUFFER_SIZE];
                         int len;
                         while ((len = in.read(buffer)) != -1) {
                             out.write(buffer, 0, len);
