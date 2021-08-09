@@ -339,6 +339,27 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
         }
     }
 
+    private Publisher<MutableHttpResponse<?>> handleStatusException(ServletExchange<Req, Res> exchange,
+                                                                    MutableHttpResponse<?> response,
+                                                                    AtomicReference<HttpRequest<?>> requestReference) {
+        HttpStatus status = response.status();
+        Optional<RouteMatch> route = response.getAttribute(HttpAttributes.ROUTE_MATCH, RouteMatch.class);
+        if (route.isPresent()) {
+            boolean isErrorRoute = route.filter(RouteMatch::isErrorRoute).isPresent();
+            if (!isErrorRoute && status.getCode() >= 400) {
+                final RouteMatch<Object> errorRoute = lookupStatusRoute(route.get(), status);
+                if (errorRoute != null) {
+                    return buildResponsePublisher(
+                            exchange,
+                            requestReference.get(),
+                            errorRoute
+                    );
+                }
+            }
+        }
+        return Flux.just(response);
+    }
+
     @Override
     public void close() {
         if (applicationContext.isRunning()) {
@@ -379,7 +400,16 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
             boolean executeFilters,
             ServletExchange<Req, Res> exchange) {
 
-        Publisher<MutableHttpResponse<?>> responsePublisher = buildResponsePublisher(exchange, req, route);
+        AtomicReference<HttpRequest<?>> requestReference = new AtomicReference<>(req);
+        Publisher<MutableHttpResponse<?>> responsePublisher = buildResponsePublisher(exchange, req, route)
+                .flatMap(response -> {
+                    return handleStatusException(exchange, response, requestReference);
+                })
+                .onErrorResume(t -> {
+                    final HttpRequest httpRequest = requestReference.get();
+                    return handleException(httpRequest, exchange.getResponse(), route, false, t, exchange);
+                });
+
         if (executeFilters) {
             responsePublisher = filterPublisher(exchange, new AtomicReference<>(req), responsePublisher, route);
         }
@@ -398,7 +428,6 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
         boolean isAsyncSupported = exchangeRequest.isAsyncSupported();
         final Flux<? extends MutableHttpResponse<?>> responseFlux = Flux.from(responsePublisher)
                 .flatMap(response -> {
-                    final HttpStatus status = response.status();
                     Object body = response.body();
 
                     if (body != null) {
@@ -408,46 +437,37 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                                 Flux<?> flux = Flux.from(Publishers.convertPublisher(body, Publisher.class));
                                 return flux.map((Function<Object, MutableHttpResponse<?>>) o -> {
                                     if (o instanceof HttpResponse) {
-                                        encodeResponse(exchange, annotationMetadata, (HttpResponse<?>) o);
                                         return res;
                                     } else {
                                         ServletHttpResponse<Res, ? super Object> res1 = exchange.getResponse();
                                         res1.body(o);
-                                        encodeResponse(exchange, annotationMetadata, response);
                                         return res1;
                                     }
                                 });
                             } else {
                                 // stream case
                                 Flux<?> flux = Publishers.convertPublisher(body, Flux.class);
+                                final ServletHttpResponse<Res, ? super Object> servletResponse = exchange.getResponse();
                                 if (isAsyncSupported) {
-                                    final ServletHttpResponse<Res, ? super Object> servletResponse = exchange.getResponse();
-                                    setHeadersFromMetadata(exchange.getResponse(), annotationMetadata, body);
-                                    return servletResponse.stream(flux);
+                                    servletResponse.body(servletResponse.stream(flux));
                                 } else {
                                     // fallback to blocking
-                                    return Flux.from(flux.collectList().map(list -> {
-                                        final ServletHttpResponse<Res, ? super Object> servletHttpResponse = exchange.getResponse();
-                                        encodeResponse(exchange, annotationMetadata, servletHttpResponse.body(list));
-                                        return servletHttpResponse;
-                                    }));
+                                    servletResponse.body(flux.collectList().block());
                                 }
+                                return Flux.just(servletResponse);
                             }
                         }
                     }
 
-                    return Mono.fromCallable(() -> {
-                        encodeResponse(exchange, annotationMetadata, response);
-                        return response;
-                    });
-                }).onErrorResume(throwable -> {
-                    return handleException(req, res, route, isErrorRoute, throwable, exchange);
-                });
+                    return Mono.just(response);
+                }).onErrorResume(throwable ->
+                        handleException(req, res, route, isErrorRoute, throwable, exchange));
 
         if (isAsyncSupported) {
             //noinspection ResultOfMethodCallIgnored
             Flux.from(exchangeRequest.subscribeOnExecutor(responseFlux))
                     .subscribe(response -> {
+                        encodeResponse(exchange, annotationMetadata, response);
                         if (LOG.isDebugEnabled()) {
                             LOG.debug("Request [{} - {}] completed successfully", req.getMethodName(), req.getUri());
                         }
@@ -460,6 +480,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
             responseFlux
                     .subscribeOn(Schedulers.immediate())
                     .subscribe(response -> {
+                        encodeResponse(exchange, annotationMetadata, response);
                         if (LOG.isDebugEnabled()) {
                             LOG.debug("Request [{} - {}] completed successfully", req.getMethodName(), req.getUri());
                         }
@@ -500,7 +521,14 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
 
     private MutableHttpResponse<Object> forStatus(ServletExchange<Req, Res> exchange, RouteMatch routeMatch, HttpStatus defaultStatus) {
         HttpStatus status = routeMatch.findStatus(defaultStatus);
-        return exchange.getResponse().status(status);
+        final ServletHttpResponse<Res, ? super Object> response = exchange.getResponse();
+        // Unfortunately it's impossible to tell if the status is OK because its the
+        // default or because it was explicitly set
+        if (response.status() == null || response.status() == HttpStatus.OK) {
+            return response.status(status);
+        } else {
+            return response;
+        }
     }
 
     private MutableHttpResponse<?> newNotFoundError(ServletExchange<Req, Res> exchange, HttpRequest<?> request) {
@@ -510,7 +538,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                         .build(), exchange.getResponse().status(HttpStatus.NOT_FOUND));
     }
 
-    private Publisher<MutableHttpResponse<?>> buildResponsePublisher(
+    private Flux<MutableHttpResponse<?>> buildResponsePublisher(
             ServletExchange<Req, Res> exchange,
             HttpRequest<?> req,
             RouteMatch<?> route
@@ -548,6 +576,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                 result = ServerRequestContext.with(req, (Callable<Object>) finalRoute::execute);
             } catch (Throwable t) {
                 subscriber.error(t);
+                return;
             }
             if (result instanceof Optional) {
                 result = ((Optional<?>) result).orElse(null);
@@ -706,7 +735,9 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
         });
     }
 
-    private void encodeResponse(ServletExchange<Req, Res> exchange, AnnotationMetadata annotationMetadata, HttpResponse<?> response) {
+    private void encodeResponse(ServletExchange<Req, Res> exchange,
+                                AnnotationMetadata annotationMetadata,
+                                HttpResponse<?> response) {
         final Object body = response.getBody().orElse(null);
 
         if (LOG.isDebugEnabled()) {
@@ -722,13 +753,16 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                 // sometimes allowing the main response publisher to complete before this responseEncoder
                 // could fill out the response! Blocking here will ensure that the response is filled out
                 // before the main response publisher completes. This will be improved later to avoid the block.
+
                 Flux.from(responseEncoder.encode(exchange, annotationMetadata, body)).blockLast();
                 return;
             }
 
             setHeadersFromMetadata(exchange.getResponse(), annotationMetadata, body);
 
-            if (body instanceof HttpStatus) {
+            if (body instanceof Publisher) {
+                Flux.from((Publisher<?>) body).blockLast();
+            } else if (body instanceof HttpStatus) {
                 exchange.getResponse().status((HttpStatus) body);
             } else if (body instanceof CharSequence) {
                 if (response instanceof MutableHttpResponse) {
@@ -1014,33 +1048,14 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
             return routePublisher;
         }
 
-        final Function<MutableHttpResponse<?>, Publisher<MutableHttpResponse<?>>> handleStatusException = (response) -> {
-            HttpStatus status = response.status();
-            Optional<RouteMatch> route = response.getAttribute(HttpAttributes.ROUTE_MATCH, RouteMatch.class);
-            if (route.isPresent()) {
-                boolean isErrorRoute = route.filter(RouteMatch::isErrorRoute).isPresent();
-                if (!isErrorRoute && status.getCode() >= 400) {
-                    final RouteMatch<Object> errorRoute = lookupStatusRoute(route.get(), status);
-                    if (errorRoute != null) {
-                        return buildResponsePublisher(
-                                exchange,
-                                requestReference.get(),
-                                errorRoute
-                        );
-                    }
-                }
-            }
-            return Flux.just(response);
+        final Function<MutableHttpResponse<?>, Publisher<MutableHttpResponse<?>>> checkForStatus = (response) -> {
+            return handleStatusException(exchange, exchange.getResponse(), requestReference);
         };
 
         final Function<Throwable, Publisher<MutableHttpResponse<?>>> onError = (t) -> {
             final HttpRequest httpRequest = requestReference.get();
             return handleException(httpRequest, exchange.getResponse(), routeMatch, false, t, exchange);
         };
-
-        // make the action executor the last filter in the chain
-        //noinspection unchecked
-        filters.add((HttpServerFilter) (req, chain) -> (Publisher<MutableHttpResponse<?>>) routePublisher);
 
         AtomicInteger integer = new AtomicInteger();
         int len = filters.size();
@@ -1052,9 +1067,12 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                 if (pos > len) {
                     throw new IllegalStateException("The FilterChain.proceed(..) method should be invoked exactly once per filter execution. The method has instead been invoked multiple times by an erroneous filter definition.");
                 }
+                if (pos == len) {
+                    return routePublisher;
+                }
                 HttpFilter httpFilter = filters.get(pos);
                 return Flux.from((Publisher<MutableHttpResponse<?>>) httpFilter.doFilter(requestReference.getAndSet(request), this))
-                        .flatMap(handleStatusException)
+                        .flatMap(checkForStatus)
                         .onErrorResume(onError);
             }
         };
@@ -1065,7 +1083,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                         req,
                         (Supplier<Publisher<MutableHttpResponse<?>>>) () ->
                                 Flux.from((Publisher<MutableHttpResponse<?>>) httpFilter.doFilter(req, filterChain))
-                                        .flatMap(handleStatusException)
+                                        .flatMap(checkForStatus)
                                         .onErrorResume(onError)
                 );
 

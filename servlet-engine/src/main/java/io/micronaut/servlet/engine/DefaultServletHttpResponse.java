@@ -89,13 +89,13 @@ public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpSe
 
     @Override
     public Publisher<MutableHttpResponse<?>> stream(Publisher<?> dataPublisher) {
-        MediaType contentType = getContentType().orElse(MediaType.APPLICATION_JSON_TYPE);
-        MediaTypeCodec codec = request.getCodecRegistry().findCodec(contentType).orElse(null);
-        boolean isJson = contentType.getSubtype().equals("json");
         return Flux.create(emitter -> dataPublisher.subscribe(new Subscriber<Object>() {
             ServletOutputStream outputStream;
             Subscription subscription;
             final AtomicBoolean finished = new AtomicBoolean();
+            MediaType contentType = getContentType().orElse(MediaType.APPLICATION_JSON_TYPE);
+            MediaTypeCodec codec = request.getCodecRegistry().findCodec(contentType).orElse(null);
+            boolean isJson = contentType.getSubtype().equals("json");
             boolean first = true;
             boolean raw = false;
             @Override
