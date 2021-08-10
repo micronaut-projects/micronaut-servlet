@@ -155,20 +155,20 @@ class FilterErrorSpec extends Specification {
         HttpClient client = ctx.createBean(HttpClient, server.getURL())
         ExceptionRoute filter = ctx.getBean(ExceptionRoute)
 
+//        when:
+//        HttpResponse<String> response = Flux.from(client.exchange("/filter-error-spec-4/exception", String))
+//                .blockFirst()
+//        def match = filter.routeMatch.getAndSet(null)
+//
+//        then:
+//        response.status() == HttpStatus.OK
+//        match instanceof MethodBasedRouteMatch
+//        ((MethodBasedRouteMatch) match).getName() == "testException"
+
         when:
-        HttpResponse<String> response = Flux.from(client.exchange("/filter-error-spec-4/exception", String))
+        HttpResponse<String> response = Flux.from(client.exchange("/filter-error-spec-4/status", String))
                 .blockFirst()
         def match = filter.routeMatch.getAndSet(null)
-
-        then:
-        response.status() == HttpStatus.OK
-        match instanceof MethodBasedRouteMatch
-        ((MethodBasedRouteMatch) match).getName() == "testException"
-
-        when:
-        response = Flux.from(client.exchange("/filter-error-spec-4/status", String))
-                .blockFirst()
-        match = filter.routeMatch.getAndSet(null)
 
         then:
         response.status() == HttpStatus.OK

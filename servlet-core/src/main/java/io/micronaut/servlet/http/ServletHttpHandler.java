@@ -26,6 +26,7 @@ import io.micronaut.core.convert.exceptions.ConversionErrorException;
 import io.micronaut.core.convert.value.ConvertibleValues;
 import io.micronaut.core.io.Writable;
 import io.micronaut.core.type.Argument;
+import io.micronaut.core.type.ReturnType;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.http.HttpAttributes;
@@ -54,8 +55,11 @@ import io.micronaut.http.server.binding.RequestArgumentSatisfier;
 import io.micronaut.http.server.exceptions.ExceptionHandler;
 import io.micronaut.http.server.exceptions.response.ErrorContext;
 import io.micronaut.http.server.exceptions.response.ErrorResponseProcessor;
+import io.micronaut.inject.BeanDefinition;
+import io.micronaut.inject.ExecutableMethod;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.web.router.MethodBasedRouteMatch;
+import io.micronaut.web.router.RouteInfo;
 import io.micronaut.web.router.RouteMatch;
 import io.micronaut.web.router.Router;
 import io.micronaut.web.router.UriRoute;
@@ -77,6 +81,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -85,6 +90,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -292,22 +298,6 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
         }
     }
 
-    private void emitError(ServletExchange<Req, Res> exchange,
-                           MutableHttpResponse<Object> res,
-                           HttpRequest<Object> req,
-                           Consumer<FluxSink<MutableHttpResponse<?>>> errorEmitter) {
-        Publisher<MutableHttpResponse<?>> responsePublisher = Flux.create(errorEmitter, FluxSink.OverflowStrategy.LATEST);
-        subscribeToResponsePublisher(
-                req,
-                res,
-                null,
-                false,
-                exchange,
-                responsePublisher,
-                AnnotationMetadata.EMPTY_METADATA
-        );
-    }
-
     private void traceHeaders(HttpHeaders httpHeaders) {
         if (LOG.isTraceEnabled()) {
             LOG.trace("-----");
@@ -347,8 +337,11 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
         if (route.isPresent()) {
             boolean isErrorRoute = route.filter(RouteMatch::isErrorRoute).isPresent();
             if (!isErrorRoute && status.getCode() >= 400) {
+                //overwrite any previously set status so the route `@Status` can apply
+
                 final RouteMatch<Object> errorRoute = lookupStatusRoute(route.get(), status);
                 if (errorRoute != null) {
+                    exchange.getResponse().status(HttpStatus.OK);
                     return buildResponsePublisher(
                             exchange,
                             requestReference.get(),
@@ -882,6 +875,8 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
             Throwable e,
             ServletExchange<Req, Res> exchange) {
         req.setAttribute(HttpAttributes.ERROR, e);
+        //overwrite any previously set status so the route `@Status` can apply
+        exchange.getResponse().status(HttpStatus.OK);
         if (isErrorRoute) {
             // handle error default
             if (LOG.isErrorEnabled()) {
@@ -943,7 +938,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
         }
     }
 
-    private MutableHttpResponse<?> errorResultToResponse(ServletExchange<Req, Res> exchange, Object result) {
+    private MutableHttpResponse<?> errorResultToResponse(ServletExchange<Req, Res> exchange, Object result, HttpStatus defaultStatus) {
         MutableHttpResponse<?> response;
         if (result instanceof HttpResponse) {
             return toMutableResponse(exchange, (HttpResponse<?>) result);
@@ -951,7 +946,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
             if (result instanceof HttpStatus) {
                 response = exchange.getResponse().status((HttpStatus) result);
             } else {
-                response = exchange.getResponse().status(HttpStatus.INTERNAL_SERVER_ERROR).body(result);
+                response = exchange.getResponse().status(defaultStatus).body(result);
             }
         }
         return response;
@@ -983,7 +978,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
             HttpRequest<Object> req,
             Throwable e,
             ServletExchange<Req, Res> exchange) {
-        return invokeExceptionHandlerIfPossible(req, e, exchange, null);
+        return invokeExceptionHandlerIfPossible(req, e, exchange, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     private Publisher<MutableHttpResponse<?>> invokeExceptionHandlerIfPossible(
@@ -991,12 +986,17 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
             Throwable e,
             ServletExchange<Req, Res> exchange,
             HttpStatus defaultStatus) {
-        final ExceptionHandler<Throwable, ?> exceptionHandler = lookupExceptionHandler(e);
+
+        final Class<? extends Throwable> type = e.getClass();
+        final ExceptionHandler<Throwable, ?> exceptionHandler = applicationContext.findBean(ExceptionHandler.class, Qualifiers.byTypeArgumentsClosest(type, Object.class))
+                .orElse(null);
+
         if (exceptionHandler != null) {
             try {
                 return ServerRequestContext.with(req, (Supplier<? extends Publisher<MutableHttpResponse<?>>>) () -> {
                     final Object result = exceptionHandler.handle(req, e);
-                    MutableHttpResponse<?> resp = errorResultToResponse(exchange, result);
+                    MutableHttpResponse<?> resp = errorResultToResponse(exchange, result, defaultStatus);
+                    resp.setAttribute(HttpAttributes.ROUTE_MATCH, null);
                     return Flux.just(resp);
                 });
             } catch (Throwable ex) {
@@ -1008,13 +1008,6 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
         } else {
             return createDefaultErrorResponsePublisher(exchange, req, e, defaultStatus);
         }
-    }
-
-    @SuppressWarnings("unchecked")
-    private ExceptionHandler<Throwable, ?> lookupExceptionHandler(Throwable e) {
-        final Class<? extends Throwable> type = e.getClass();
-        return applicationContext.findBean(ExceptionHandler.class, Qualifiers.byTypeArgumentsClosest(type, Object.class))
-                .orElse(null);
     }
 
     private RouteMatch<Object> lookupErrorRoute(RouteMatch<?> route, Throwable e) {
