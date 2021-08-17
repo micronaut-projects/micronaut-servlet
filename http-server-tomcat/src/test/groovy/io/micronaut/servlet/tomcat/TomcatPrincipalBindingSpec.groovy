@@ -69,7 +69,7 @@ class TomcatPrincipalBindingSpec extends Specification {
             Mono.create({ MonoSink emitter ->
                 String identity = authenticationRequest.identity
                 if (identity == 'sherlock' && authenticationRequest.secret == 'password') {
-                    emitter.success(Authentication.build(identity))
+                    emitter.success(AuthenticationResponse.success(identity))
                 } else {
                     emitter.error(new AuthenticationException(new AuthenticationFailed()))
                 }

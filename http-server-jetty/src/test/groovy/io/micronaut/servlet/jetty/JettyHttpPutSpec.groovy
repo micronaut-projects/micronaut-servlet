@@ -18,6 +18,7 @@ import io.micronaut.http.annotation.Put
 import io.micronaut.http.client.HttpClient
 import io.micronaut.http.client.annotation.Client
 import io.micronaut.http.client.exceptions.HttpClientException
+import io.micronaut.http.client.exceptions.HttpClientResponseException
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import reactor.core.publisher.Flux
@@ -52,8 +53,8 @@ class JettyHttpPutSpec extends Specification {
         )
 
         then:
-        def e = thrown(HttpClientException)
-        e.message == "Method [PATCH] not allowed for URI [/put/simple]. Allowed methods: [PUT]"
+        def e = thrown(HttpClientResponseException)
+        e.response.getBody(Map).get()._embedded.errors[0].message == "Method [PATCH] not allowed for URI [/put/simple]. Allowed methods: [PUT]"
     }
 
     void "test simple post request with JSON"() {
