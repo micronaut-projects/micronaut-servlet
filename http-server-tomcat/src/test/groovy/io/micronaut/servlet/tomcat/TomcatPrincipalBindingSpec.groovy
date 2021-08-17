@@ -11,12 +11,12 @@ import io.micronaut.http.annotation.Produces
 import io.micronaut.http.client.HttpClient
 import io.micronaut.http.client.annotation.Client
 import io.micronaut.security.annotation.Secured
+import io.micronaut.security.authentication.Authentication
 import io.micronaut.security.authentication.AuthenticationException
 import io.micronaut.security.authentication.AuthenticationFailed
 import io.micronaut.security.authentication.AuthenticationProvider
 import io.micronaut.security.authentication.AuthenticationRequest
 import io.micronaut.security.authentication.AuthenticationResponse
-import io.micronaut.security.authentication.UserDetails
 import io.micronaut.security.rules.SecurityRule
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
@@ -26,6 +26,7 @@ import reactor.core.publisher.Mono
 import reactor.core.publisher.MonoSink
 import spock.lang.Issue
 import spock.lang.Specification
+
 import java.security.Principal
 
 @Issue('https://github.com/micronaut-projects/micronaut-core/issues/5395')
@@ -68,7 +69,7 @@ class TomcatPrincipalBindingSpec extends Specification {
             Mono.create({ MonoSink emitter ->
                 String identity = authenticationRequest.identity
                 if (identity == 'sherlock' && authenticationRequest.secret == 'password') {
-                    emitter.success(new UserDetails(identity, []))
+                    emitter.success(AuthenticationResponse.success(identity))
                 } else {
                     emitter.error(new AuthenticationException(new AuthenticationFailed()))
                 }

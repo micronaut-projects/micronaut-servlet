@@ -15,6 +15,7 @@ import io.micronaut.http.annotation.*
 import io.micronaut.http.client.HttpClient
 import io.micronaut.http.client.annotation.Client
 import io.micronaut.http.client.exceptions.HttpClientException
+import io.micronaut.http.client.exceptions.HttpClientResponseException
 import io.micronaut.http.client.multipart.MultipartBody
 import io.micronaut.http.multipart.CompletedFileUpload
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
@@ -51,8 +52,8 @@ class JettyHttpPostSpec extends Specification {
         )
 
         then:
-        def e = thrown(HttpClientException)
-        e.message == "Method [PATCH] not allowed for URI [/post/simple]. Allowed methods: [POST]"
+        def e = thrown(HttpClientResponseException)
+        e.response.getBody(Map).get()._embedded.errors[0].message == "Method [PATCH] not allowed for URI [/post/simple]. Allowed methods: [POST]"
     }
 
     void "test simple post request with JSON"() {
