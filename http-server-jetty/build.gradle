@@ -14,5 +14,5 @@ dependencies {
     testImplementation "io.micronaut.test:micronaut-test-spock:$micronautTestVersion"
     testImplementation("org.codehaus.groovy:groovy-json")
 
-    testImplementation "io.micronaut.security:micronaut-security:3.0.0-M2"
+    testImplementation "io.micronaut.security:micronaut-security:3.0.1"
 }
