@@ -11,5 +11,5 @@ dependencies {
     testImplementation "io.micronaut:micronaut-http-client"
     testImplementation "io.micronaut.test:micronaut-test-spock:$micronautTestVersion"
 
-    testImplementation "io.micronaut.security:micronaut-security:3.0.0-M2"
+    testImplementation "io.micronaut.security:micronaut-security:3.0.2"
 }
