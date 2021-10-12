@@ -22,8 +22,8 @@ import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import org.reactivestreams.Publisher
 import spock.lang.Specification
 
-import javax.inject.Inject
-import javax.inject.Singleton
+import jakarta.inject.Inject
+import jakarta.inject.Singleton
 
 @MicronautTest
 @Property(name = "spec.name", value = "JettyExceptionHandlerSpec")

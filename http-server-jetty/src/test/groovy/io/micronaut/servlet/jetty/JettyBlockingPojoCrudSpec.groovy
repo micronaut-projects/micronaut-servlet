@@ -3,6 +3,7 @@ package io.micronaut.servlet.jetty
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.context.annotation.Requires
+import io.micronaut.core.annotation.Introspected
 import io.micronaut.core.bind.BeanPropertyBinder
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Controller
@@ -142,7 +143,7 @@ class JettyBlockingPojoCrudSpec extends Specification {
         Book update(@Body Book book)
     }
 
-
+    @Introspected
     static class Book {
         Long id
         String title

@@ -23,18 +23,23 @@ import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.convert.value.MutableConvertibleValues;
 import io.micronaut.core.io.buffer.ByteBuffer;
 import io.micronaut.core.io.buffer.ReferenceCounted;
+import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArrayUtils;
-import io.micronaut.http.*;
+import io.micronaut.http.HttpHeaders;
+import io.micronaut.http.HttpStatus;
+import io.micronaut.http.MediaType;
+import io.micronaut.http.MutableHttpHeaders;
+import io.micronaut.http.MutableHttpResponse;
 import io.micronaut.http.annotation.Produces;
 import io.micronaut.http.codec.MediaTypeCodec;
 import io.micronaut.http.cookie.Cookie;
 import io.micronaut.http.server.exceptions.InternalServerException;
 import io.micronaut.servlet.http.ServletHttpResponse;
-import io.reactivex.BackpressureStrategy;
-import io.reactivex.Flowable;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.FluxSink;
 
 import javax.servlet.ServletOutputStream;
 import javax.servlet.WriteListener;
@@ -42,7 +47,14 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
@@ -77,13 +89,13 @@ public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpSe
 
     @Override
     public Publisher<MutableHttpResponse<?>> stream(Publisher<?> dataPublisher) {
-        MediaType contentType = getContentType().orElse(MediaType.APPLICATION_JSON_TYPE);
-        MediaTypeCodec codec = request.getCodecRegistry().findCodec(contentType).orElse(null);
-        boolean isJson = contentType.getSubtype().equals("json");
-        return Flowable.create(emitter -> dataPublisher.subscribe(new Subscriber<Object>() {
+        return Flux.create(emitter -> dataPublisher.subscribe(new Subscriber<Object>() {
             ServletOutputStream outputStream;
             Subscription subscription;
             final AtomicBoolean finished = new AtomicBoolean();
+            MediaType contentType = getContentType().orElse(MediaType.APPLICATION_JSON_TYPE);
+            MediaTypeCodec codec = request.getCodecRegistry().findCodec(contentType).orElse(null);
+            boolean isJson = contentType.getSubtype().equals("json");
             boolean first = true;
             boolean raw = false;
             @Override
@@ -100,12 +112,12 @@ public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpSe
 
                         @Override
                         public void onError(Throwable t) {
-                            emitter.onError(t);
+                            emitter.error(t);
                         }
                     });
                 } catch (IOException e) {
                     if (finished.compareAndSet(false, true)) {
-                        emitter.onError(e);
+                        emitter.error(e);
                         subscription.cancel();
                     }
                 }
@@ -173,7 +185,7 @@ public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpSe
             @Override
             public void onError(Throwable t) {
                 if (finished.compareAndSet(false, true)) {
-                    emitter.onError(t);
+                    emitter.error(t);
                     subscription.cancel();
                 }
             }
@@ -190,14 +202,20 @@ public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpSe
                             }
                             flushIfReady();
                         }
-                        emitter.onNext(DefaultServletHttpResponse.this);
-                        emitter.onComplete();
+                        emitter.next(DefaultServletHttpResponse.this);
+                        emitter.complete();
                     } catch (IOException e) {
-                        emitter.onError(e);
+                        emitter.error(e);
                     }
                 }
             }
-        }), BackpressureStrategy.ERROR);
+        }), FluxSink.OverflowStrategy.ERROR);
+    }
+
+    @Override
+    @NonNull
+    public Optional<MediaType> getContentType() {
+        return ConversionService.SHARED.convert(delegate.getContentType(), Argument.of(MediaType.class));
     }
 
     @Override
@@ -302,6 +320,7 @@ public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpSe
     }
 
     @Override
+    @NonNull
     public MutableHttpHeaders getHeaders() {
         return headers;
     }
@@ -320,7 +339,7 @@ public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpSe
 
     @SuppressWarnings("unchecked")
     @Override
-    public <T> MutableHttpResponse<T> body(@edu.umd.cs.findbugs.annotations.Nullable T body) {
+    public <T> MutableHttpResponse<T> body(@Nullable T body) {
         if (body != null) {
             getContentType().orElseGet(() -> {
                 final Produces ann = body.getClass().getAnnotation(Produces.class);

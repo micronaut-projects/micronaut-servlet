@@ -5,7 +5,7 @@ dependencies {
     api project(":servlet-engine")
     api "io.micronaut:micronaut-http-server:$micronautVersion"
 
-    implementation 'org.eclipse.jetty:jetty-servlet:9.4.35.v20201120'
+    implementation 'org.eclipse.jetty:jetty-servlet:9.4.43.v20210629'
 
     testAnnotationProcessor "io.micronaut:micronaut-inject-java"
     testImplementation "io.micronaut:micronaut-inject-groovy"
@@ -13,4 +13,6 @@ dependencies {
     testImplementation "io.micronaut:micronaut-http-client"
     testImplementation "io.micronaut.test:micronaut-test-spock:$micronautTestVersion"
     testImplementation("org.codehaus.groovy:groovy-json")
+
+    testImplementation "io.micronaut.security:micronaut-security:3.0.0-M2"
 }

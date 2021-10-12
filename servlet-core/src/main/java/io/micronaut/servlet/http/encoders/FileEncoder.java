@@ -23,7 +23,7 @@ import io.micronaut.servlet.http.ServletExchange;
 import io.micronaut.servlet.http.ServletResponseEncoder;
 import org.reactivestreams.Publisher;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 import java.io.File;
 
 /**

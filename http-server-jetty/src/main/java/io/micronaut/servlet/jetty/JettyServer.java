@@ -21,7 +21,7 @@ import io.micronaut.runtime.ApplicationConfiguration;
 import io.micronaut.servlet.engine.server.AbstractServletServer;
 import org.eclipse.jetty.server.Server;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;

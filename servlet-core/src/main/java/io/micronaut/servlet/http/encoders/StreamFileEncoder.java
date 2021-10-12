@@ -24,11 +24,12 @@ import io.micronaut.http.server.types.files.StreamedFile;
 import io.micronaut.servlet.http.ServletExchange;
 import io.micronaut.servlet.http.ServletHttpRequest;
 import io.micronaut.servlet.http.ServletHttpResponse;
-import io.reactivex.BackpressureStrategy;
-import io.reactivex.Flowable;
+import jakarta.inject.Singleton;
 import org.reactivestreams.Publisher;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.FluxSink;
+import reactor.core.publisher.Mono;
 
-import javax.inject.Singleton;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
@@ -41,6 +42,8 @@ import java.util.Arrays;
  */
 @Singleton
 public class StreamFileEncoder extends AbstractFileEncoder<StreamedFile> {
+    private static final int BUFFER_SIZE = 1024;
+
     @Override
     public Class<StreamedFile> getResponseType() {
         return StreamedFile.class;
@@ -58,33 +61,33 @@ public class StreamFileEncoder extends AbstractFileEncoder<StreamedFile> {
                     setDateHeader(
                             response.status(HttpStatus.NOT_MODIFIED)
                     )
-
             );
         }
 
         boolean asyncSupported = request.isAsyncSupported();
         if (asyncSupported) {
-            return response.stream(Flowable.create(emitter -> {
+            return response.stream(Flux.create(emitter -> {
                 try (InputStream in = value.getInputStream()) {
-                    byte[] buffer = new byte[1024];
+                    byte[] buffer = new byte[BUFFER_SIZE];
                     int len;
                     while ((len = in.read(buffer)) != -1) {
                         if (buffer.length == len) {
-                            emitter.onNext(buffer);
+                            emitter.next(buffer);
+                            buffer = new byte[BUFFER_SIZE];
                         } else {
-                            emitter.onNext(Arrays.copyOf(buffer, len));
+                            emitter.next(Arrays.copyOf(buffer, len));
                         }
                     }
-                    emitter.onComplete();
+                    emitter.complete();
                 } catch (Throwable e) {
-                    emitter.onError(e);
+                    emitter.error(e);
                 }
-            }, BackpressureStrategy.BUFFER));
+            }, FluxSink.OverflowStrategy.BUFFER));
         } else {
-            return Flowable.fromCallable(() -> {
+            return Mono.fromCallable(() -> {
                 try (InputStream in = value.getInputStream()) {
                     try (OutputStream out = response.getOutputStream()) {
-                        byte[] buffer = new byte[1024];
+                        byte[] buffer = new byte[BUFFER_SIZE];
                         int len;
                         while ((len = in.read(buffer)) != -1) {
                             out.write(buffer, 0, len);

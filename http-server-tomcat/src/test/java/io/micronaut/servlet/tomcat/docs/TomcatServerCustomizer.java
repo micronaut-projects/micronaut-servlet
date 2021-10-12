@@ -5,7 +5,7 @@ package io.micronaut.servlet.tomcat.docs;
 import io.micronaut.context.event.BeanCreatedEvent;
 import io.micronaut.context.event.BeanCreatedEventListener;
 import org.apache.catalina.startup.Tomcat;
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 // end::imports[]
 
 // tag::class[]

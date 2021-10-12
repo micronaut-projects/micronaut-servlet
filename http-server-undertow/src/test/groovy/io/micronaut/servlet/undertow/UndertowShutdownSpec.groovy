@@ -7,7 +7,7 @@ import io.micronaut.runtime.server.EmbeddedServer
 import io.micronaut.runtime.server.event.ServerShutdownEvent
 import spock.lang.Specification
 
-import javax.inject.Singleton
+import jakarta.inject.Singleton
 import java.util.concurrent.atomic.AtomicInteger
 
 class UndertowShutdownSpec extends Specification {

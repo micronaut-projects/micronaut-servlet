@@ -9,7 +9,7 @@ import io.micronaut.http.MutableHttpResponse
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Filter
 import io.micronaut.http.annotation.Get
-import io.micronaut.http.client.RxHttpClient
+import io.micronaut.http.client.HttpClient
 import io.micronaut.http.client.annotation.Client
 import io.micronaut.http.cookie.Cookies
 import io.micronaut.http.filter.HttpServerFilter
@@ -20,7 +20,7 @@ import org.reactivestreams.Publisher
 import spock.lang.Issue
 import spock.lang.Specification
 
-import javax.inject.Inject
+import jakarta.inject.Inject
 
 @Property(name = 'spec.name', value = 'JettyCookieSpec')
 @MicronautTest
@@ -28,7 +28,7 @@ class JettyCookieSpec extends Specification {
 
     @Inject
     @Client("/")
-    RxHttpClient client
+    HttpClient client
 
     @Issue('https://github.com/micronaut-projects/micronaut-servlet/issues/52')
     void 'test cookies are not null when no cookie is set on request'() {
@@ -36,7 +36,7 @@ class JettyCookieSpec extends Specification {
         HttpRequest request = HttpRequest.GET('/cookie')
 
         when:
-        HttpResponse response = client.exchange(request).blockingFirst()
+        HttpResponse response = client.toBlocking().exchange(request)
 
         then:
         noExceptionThrown()

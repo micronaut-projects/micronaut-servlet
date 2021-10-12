@@ -54,7 +54,7 @@ public class MicronautServletInitializer implements ServletContainerInitializer 
      */
     protected ApplicationContextBuilder buildApplicationContext(ServletContext ctx) {
         return ApplicationContext
-                .build()
+                .builder()
                 .classLoader(ctx.getClassLoader())
                 .singletons(ctx);
     }

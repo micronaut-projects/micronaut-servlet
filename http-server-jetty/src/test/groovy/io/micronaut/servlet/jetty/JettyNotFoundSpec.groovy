@@ -1,54 +1,46 @@
 
 package io.micronaut.servlet.jetty
 
-
 import io.micronaut.context.annotation.Property
 import io.micronaut.context.annotation.Requires
+import io.micronaut.core.async.annotation.SingleResult
+import io.micronaut.http.HttpStatus
 import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.Consumes
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Get
-import io.micronaut.http.client.RxHttpClient
 import io.micronaut.http.client.annotation.Client
-import io.micronaut.http.client.exceptions.HttpClientResponseException
-import io.micronaut.http.hateoas.JsonError
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
-import io.reactivex.Flowable
-import io.reactivex.Maybe
+import io.micronaut.http.client.exceptions.HttpClientResponseException
+import org.reactivestreams.Publisher
+import reactor.core.publisher.Flux
+import reactor.core.publisher.Mono
 import spock.lang.Specification
-
-import javax.inject.Inject
 
 @MicronautTest
 @Property(name = 'spec.name', value = 'JettyNotFoundSpec')
 class JettyNotFoundSpec extends Specification {
 
-    @Inject
+    @jakarta.inject.Inject
     InventoryClient client
 
-    @Inject
-    @Client('/not-found')
-    RxHttpClient rxClient
-
-    void "test 404 handling with Flowable"() {
+    void "test 404 handling with Flux"() {
         expect:
-        client.flowable('1234').blockingFirst()
-        client.flowable('notthere').toList().blockingGet() == []
+        Flux.from(client.stream('1234')).blockFirst()
+        Flux.from(client.stream('notthere')).collectList().block() == []
     }
 
-    void "test 404 handling with Maybe"() {
-        expect:
-        client.maybe('1234').blockingGet()
-        client.maybe('notthere').blockingGet() == null
-    }
+    void "test 404 handling with Mono"() {
 
-    void "test 404 handling with Maybe and JsonError"() {
+        expect:
+        Mono.from(client.single('1234')).block()
+
         when:
-        rxClient.exchange('/maybe/notthere').blockingFirst()
+        Mono.from(client.single('notthere')).block()
 
         then:
         def t = thrown(HttpClientResponseException)
-        t.response.getBody(JsonError).get().message.contains 'Not Found'
+        t.status == HttpStatus.NOT_FOUND
     }
 
     @Requires(property = 'spec.name', value = 'JettyNotFoundSpec')
@@ -56,10 +48,11 @@ class JettyNotFoundSpec extends Specification {
     static interface InventoryClient {
         @Consumes(MediaType.TEXT_PLAIN)
         @Get('/maybe/{isbn}')
-        Maybe<Boolean> maybe(String isbn)
+        @SingleResult
+        Publisher<Boolean> single(String isbn)
 
-        @Get(value = '/flowable/{isbn}', processes = MediaType.TEXT_EVENT_STREAM)
-        Flowable<Boolean> flowable(String isbn)
+        @Get(value = '/flux/{isbn}', processes = MediaType.TEXT_EVENT_STREAM)
+        Publisher<Boolean> stream(String isbn)
     }
 
     @Requires(property = 'spec.name', value = 'JettyNotFoundSpec')
@@ -70,21 +63,22 @@ class JettyNotFoundSpec extends Specification {
         ]
 
         @Get('/maybe/{isbn}')
-        Maybe<Boolean> maybe(String isbn) {
+        @SingleResult
+        Publisher<Boolean> maybe(String isbn) {
             Boolean value = stock[isbn]
             if (value != null) {
-                return Maybe.just(value)
+                return Mono.just(value)
             }
-            return Maybe.empty()
+            return Mono.empty()
         }
 
-        @Get(value = '/flowable/{isbn}', processes = MediaType.TEXT_EVENT_STREAM)
-        Flowable<Boolean> flowable(String isbn) {
+        @Get(value = '/flux/{isbn}', processes = MediaType.TEXT_EVENT_STREAM)
+        Publisher<Boolean> flux(String isbn) {
             Boolean value = stock[isbn]
             if (value != null) {
-                return Flowable.just(value)
+                return Flux.just(value)
             }
-            return Flowable.empty()
+            return Flux.empty()
         }
     }
 }

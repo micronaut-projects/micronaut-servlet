@@ -8,13 +8,13 @@ import io.micronaut.http.HttpRequest
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Get
-import io.micronaut.http.client.RxHttpClient
+import io.micronaut.http.client.HttpClient
 import io.micronaut.http.client.annotation.Client
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.micronaut.test.support.TestPropertyProvider
 import spock.lang.Specification
 
-import javax.inject.Inject
+import jakarta.inject.Inject
 
 @Property(name = 'spec.name', value = 'UndertowSslSpec')
 @MicronautTest
@@ -22,13 +22,13 @@ class UndertowSslSpec extends Specification implements TestPropertyProvider {
 
     @Inject
     @Client("/")
-    RxHttpClient rxClient
+    HttpClient rxClient
 
     void "test certificate extraction"() {
         when:
-        def response = rxClient
+        def response = rxClient.toBlocking()
                 .exchange('/ssl', String)
-                .blockingFirst()
+                
         then:
         response.code() == HttpStatus.OK.code
         response.body() == "true"

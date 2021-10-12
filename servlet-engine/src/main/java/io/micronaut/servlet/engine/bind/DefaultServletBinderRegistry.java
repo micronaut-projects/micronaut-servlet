@@ -35,19 +35,21 @@ import io.micronaut.jackson.codec.JsonMediaTypeCodec;
 import io.micronaut.jackson.parser.JacksonProcessor;
 import io.micronaut.servlet.http.ServletBodyBinder;
 import io.micronaut.servlet.http.StreamedServletMessage;
-import io.reactivex.Flowable;
+import jakarta.inject.Singleton;
 import org.reactivestreams.Subscriber;
+import reactor.core.publisher.Flux;
 
-import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayOutputStream;
-import java.io.OutputStream;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.function.BiConsumer;
 
 /**
  * Replaces the {@link DefaultRequestBinderRegistry} with one capable of binding from servlet requests.
@@ -108,24 +110,25 @@ class DefaultServletBinderRegistry extends io.micronaut.servlet.http.ServletBind
                 Class<?> javaArgument = typeArgument.getType();
                 Charset characterEncoding = servletHttpRequest.getCharacterEncoding();
                 if (CharSequence.class.isAssignableFrom(javaArgument)) {
-                    Flowable.fromPublisher(servletHttpRequest).collect(StringBuilder::new, (stringBuilder, bytes) ->
+                    Flux.from(servletHttpRequest).collect(StringBuilder::new, (stringBuilder, bytes) ->
                             stringBuilder.append(new String(bytes, characterEncoding))
-                    ).subscribe((stringBuilder, throwable) -> {
-                            if (throwable != null) {
-                                future.completeExceptionally(throwable);
-                            } else {
-                                future.complete(stringBuilder.toString());
-                            }
-                    });
+                    ).subscribe(
+                            stringBuilder -> future.complete(stringBuilder.toString()),
+                            future::completeExceptionally
+                    );
                 } else if (BYTE_ARRAY.getType().isAssignableFrom(type)) {
-                    Flowable.fromPublisher(servletHttpRequest).collect(ByteArrayOutputStream::new, OutputStream::write)
-                            .subscribe((stream, throwable) -> {
-                                if (throwable != null) {
-                                    future.completeExceptionally(throwable);
-                                } else {
-                                    future.complete(stream.toByteArray());
-                                }
-                            });
+                    BiConsumer<ByteArrayOutputStream, byte[]> uncheckedOutputStreamWrite = (stream, bytes) -> {
+                        try {
+                            stream.write(bytes);
+                        } catch (IOException ex) {
+                            throw new UncheckedIOException(ex);
+                        }
+                    };
+                    Flux.from(servletHttpRequest).collect(ByteArrayOutputStream::new, uncheckedOutputStreamWrite)
+                            .subscribe(
+                                    stream -> future.complete(stream.toByteArray()),
+                                    future::completeExceptionally
+                            );
                 } else {
                     MediaType mediaType = servletHttpRequest.getContentType().orElse(MediaType.APPLICATION_JSON_TYPE);
                     MediaTypeCodec codec = mediaTypeCodecRegistry.findCodec(mediaType, javaArgument).orElse(null);
@@ -137,10 +140,10 @@ class DefaultServletBinderRegistry extends io.micronaut.servlet.http.ServletBind
                                 false,
                                 objectMapper.getDeserializationConfig()
                         );
-                        Flowable.fromPublisher(servletHttpRequest)
+                        Flux.from(servletHttpRequest)
                                 .subscribe(jacksonProcessor);
-                        Flowable.fromPublisher(jacksonProcessor)
-                                .firstElement()
+                        Flux.from(jacksonProcessor)
+                                .next()
                                 .subscribe((jsonNode) -> {
                                     try {
                                         future.complete(jsonCodec.decode(typeArgument, jsonNode));
@@ -163,16 +166,16 @@ class DefaultServletBinderRegistry extends io.micronaut.servlet.http.ServletBind
                     StreamedServletMessage<?, byte[]> servletHttpRequest = (StreamedServletMessage<?, byte[]>) source;
                     Charset characterEncoding = servletHttpRequest.getCharacterEncoding();
                     if (CharSequence.class.isAssignableFrom(javaArgument)) {
-                        Flowable<String> stringFlowable = Flowable.fromPublisher(servletHttpRequest)
+                        Flux<String> stringFlux = Flux.from(servletHttpRequest)
                                 .map(bytes -> new String(bytes, characterEncoding));
-                        if (type.isInstance(stringFlowable)) {
-                            return () -> Optional.of(stringFlowable);
+                        if (type.isInstance(stringFlux)) {
+                            return () -> Optional.of(stringFlux);
                         } else {
-                            Object converted = Publishers.convertPublisher(stringFlowable, type);
+                            Object converted = Publishers.convertPublisher(stringFlux, type);
                             return () -> Optional.of(converted);
                         }
                     } else if (byte[].class.isAssignableFrom(javaArgument)) {
-                        return () -> Optional.of(Flowable.fromPublisher(servletHttpRequest));
+                        return () -> Optional.of(Flux.from(servletHttpRequest));
                     } else {
                         MediaType mediaType = servletHttpRequest.getContentType().orElse(MediaType.APPLICATION_JSON_TYPE);
                         MediaTypeCodec codec = mediaTypeCodecRegistry.findCodec(mediaType, javaArgument).orElse(null);
@@ -190,7 +193,7 @@ class DefaultServletBinderRegistry extends io.micronaut.servlet.http.ServletBind
                                     super.subscribe(downstreamSubscriber);
                                 }
                             };
-                            Flowable<?> jsonDecoder = Flowable.fromPublisher(jacksonProcessor)
+                            Flux<?> jsonDecoder = Flux.from(jacksonProcessor)
                                     .map((jsonNode -> jsonCodec.decode(typeArgument, jsonNode)));
 
                             Object converted = Publishers.convertPublisher(jsonDecoder, type);

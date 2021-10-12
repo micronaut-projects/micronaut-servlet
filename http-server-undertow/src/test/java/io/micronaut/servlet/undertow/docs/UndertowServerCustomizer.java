@@ -5,7 +5,7 @@ package io.micronaut.servlet.undertow.docs;
 import io.micronaut.context.event.BeanCreatedEvent;
 import io.micronaut.context.event.BeanCreatedEventListener;
 import io.undertow.Undertow;
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 // end::imports[]
 
 // tag::class[]

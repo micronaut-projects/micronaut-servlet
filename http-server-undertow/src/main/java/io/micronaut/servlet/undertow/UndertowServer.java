@@ -21,7 +21,7 @@ import io.micronaut.runtime.ApplicationConfiguration;
 import io.micronaut.servlet.engine.server.AbstractServletServer;
 import io.undertow.Undertow;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 import java.net.*;
 import java.util.Map;
 import java.util.stream.Collectors;

@@ -9,14 +9,15 @@ import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Error
 import io.micronaut.http.annotation.Get
-import io.micronaut.http.client.RxHttpClient
+import io.micronaut.http.client.HttpClient
 import io.micronaut.http.client.annotation.Client
 import io.micronaut.http.client.exceptions.HttpClientResponseException
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.micronaut.test.support.TestPropertyProvider
+import reactor.core.publisher.Mono
 import spock.lang.Specification
 
-import javax.inject.Inject
+import jakarta.inject.Inject
 
 import static io.micronaut.http.HttpHeaders.*
 
@@ -26,11 +27,11 @@ class JettyCorsSpec extends Specification implements TestPropertyProvider {
 
     @Inject
     @Client("/")
-    RxHttpClient rxClient
+    HttpClient rxClient
 
     void "test non cors request"() {
         when:
-        def response = rxClient.exchange('/test').blockingFirst()
+        def response = rxClient.toBlocking().exchange('/test')
         Set<String> headerNames = response.getHeaders().names()
 
         then:
@@ -42,10 +43,10 @@ class JettyCorsSpec extends Specification implements TestPropertyProvider {
 
     void "test cors request without configuration"() {
         given:
-        def response = rxClient.exchange(
+        def response = rxClient.toBlocking().exchange(
                 HttpRequest.GET('/test')
                         .header(ORIGIN, 'fooBar.com')
-        ).blockingFirst()
+        )
 
         when:
         Set<String> headerNames = response.headers.names()
@@ -58,10 +59,10 @@ class JettyCorsSpec extends Specification implements TestPropertyProvider {
 
     void "test cors request with a controller that returns map"() {
         given:
-        def response = rxClient.exchange(
+        def response = rxClient.toBlocking().exchange(
                 HttpRequest.GET('/test/arbitrary')
                         .header(ORIGIN, 'foo.com')
-        ).blockingFirst()
+        )
 
         when:
         Set<String> headerNames = response.headers.names()
@@ -79,10 +80,10 @@ class JettyCorsSpec extends Specification implements TestPropertyProvider {
 
     void "test cors request with controlled method"() {
         given:
-        def response = rxClient.exchange(
+        def response = rxClient.toBlocking().exchange(
                 HttpRequest.GET('/test')
                         .header(ORIGIN, 'foo.com')
-        ).blockingFirst()
+        )
 
         when:
         Set<String> headerNames = response.headers.names()
@@ -100,12 +101,12 @@ class JettyCorsSpec extends Specification implements TestPropertyProvider {
 
     void "test cors request with controlled headers"() {
         given:
-        def response = rxClient.exchange(
+        def response = rxClient.toBlocking().exchange(
                 HttpRequest.GET('/test')
                         .header(ORIGIN, 'bar.com')
                         .header(ACCEPT, 'application/json')
 
-        ).blockingFirst()
+        )
 
         when:
         Set<String> headerNames = response.headers.names()
@@ -122,12 +123,16 @@ class JettyCorsSpec extends Specification implements TestPropertyProvider {
     }
 
     void "test cors request with invalid method"() {
-        given:
-        def response = rxClient.exchange(
+        when:
+        rxClient.toBlocking().exchange(
                 HttpRequest.POST('/test', [:])
                         .header(ORIGIN, 'foo.com')
 
-        ).onErrorReturn({ t -> t.response} ).blockingFirst()
+        )
+
+        then:
+        def e = thrown(HttpClientResponseException)
+        def response = e.response
 
         when:
         Set<String> headerNames = response.headers.names()
@@ -139,53 +144,55 @@ class JettyCorsSpec extends Specification implements TestPropertyProvider {
 
     void "test cors request with invalid header"() {
         given:
-        def response = rxClient.exchange(
+        def response = rxClient.toBlocking().exchange(
                 HttpRequest.GET('/test')
                         .header(ORIGIN, 'bar.com')
                         .header(ACCESS_CONTROL_REQUEST_HEADERS, 'Foo, Accept')
 
-        ).blockingFirst()
+        )
 
         expect: "it passes through because only preflight requests check allowed headers"
         response.code() == HttpStatus.NO_CONTENT.code
     }
 
     void "test preflight request with invalid header"() {
-        given:
-        def response = rxClient.exchange(
+        when:
+        rxClient.toBlocking().exchange(
                 HttpRequest.OPTIONS('/test')
                         .header(ACCESS_CONTROL_REQUEST_METHOD, 'GET')
                         .header(ORIGIN, 'bar.com')
                         .header(ACCESS_CONTROL_REQUEST_HEADERS, 'Foo, Accept')
 
-        ).onErrorReturn({ t -> t.response} ).blockingFirst()
+        )
 
-        expect: "it fails because preflight requests check allowed headers"
-        response.code() == HttpStatus.FORBIDDEN.code
+        then: "it fails because preflight requests check allowed headers"
+        def e = thrown(HttpClientResponseException)
+        e.response.code() == HttpStatus.FORBIDDEN.code
     }
 
     void "test preflight request with invalid method"() {
-        given:
-        def response = rxClient.exchange(
+        when:
+        rxClient.toBlocking().exchange(
                 HttpRequest.OPTIONS('/test')
                         .header(ACCESS_CONTROL_REQUEST_METHOD, 'POST')
                         .header(ORIGIN, 'foo.com')
 
-        ).onErrorReturn({ t -> t.response} ).blockingFirst()
+        )
 
-        expect:
-        response.code() == HttpStatus.FORBIDDEN.code
+        then:
+        def e = thrown(HttpClientResponseException)
+        e.response.code() == HttpStatus.FORBIDDEN.code
     }
 
     void "test preflight request with controlled method"() {
         given:
-        def response = rxClient.exchange(
+        def response = rxClient.toBlocking().exchange(
                 HttpRequest.OPTIONS('/test')
                         .header(ACCESS_CONTROL_REQUEST_METHOD, 'GET')
                         .header(ORIGIN, 'foo.com')
                         .header(ACCESS_CONTROL_REQUEST_HEADERS, 'Foo, Bar')
 
-        ).blockingFirst()
+        )
 
         def headerNames = response.headers.names()
 
@@ -203,12 +210,12 @@ class JettyCorsSpec extends Specification implements TestPropertyProvider {
     void "test preflight request with controlled headers"() {
 
         given:
-        def response = rxClient.exchange(
+        def response = rxClient.toBlocking().exchange(
                 HttpRequest.OPTIONS('/test')
                         .header(ACCESS_CONTROL_REQUEST_METHOD, 'POST')
                         .header(ORIGIN, 'bar.com')
                         .header(ACCESS_CONTROL_REQUEST_HEADERS, 'Accept')
-        ).blockingFirst()
+        )
 
         def headerNames = response.headers.names()
 
@@ -225,10 +232,10 @@ class JettyCorsSpec extends Specification implements TestPropertyProvider {
 
     void "test control headers are applied to error response routes"() {
         when:
-        rxClient.exchange(
+        rxClient.toBlocking().exchange(
                 HttpRequest.GET('/test/error')
                         .header(ORIGIN, 'foo.com')
-        ).blockingFirst()
+        )
 
         then:
         def ex = thrown(HttpClientResponseException)
@@ -239,10 +246,10 @@ class JettyCorsSpec extends Specification implements TestPropertyProvider {
 
     void "test control headers are applied to error responses with no handler"() {
         when:
-        rxClient.exchange(
+        rxClient.toBlocking().exchange(
                 HttpRequest.GET('/test/error-checked')
                         .header(ORIGIN, 'foo.com')
-        ).blockingFirst()
+        )
 
         then:
         def ex = thrown(HttpClientResponseException)
@@ -253,10 +260,10 @@ class JettyCorsSpec extends Specification implements TestPropertyProvider {
 
     void "test control headers are applied to http error responses"() {
         when:
-        rxClient.exchange(
+        rxClient.toBlocking().exchange(
                 HttpRequest.GET('/test/error-response')
                         .header(ORIGIN, 'foo.com')
-        ).blockingFirst()
+        )
 
         then:
         def ex = thrown(HttpClientResponseException)
