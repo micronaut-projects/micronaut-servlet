@@ -817,8 +817,6 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
             }
         }
 
-        annotationMetadata.enumValue(Status.class, HttpStatus.class)
-                .ifPresent(res::status);
         final List<AnnotationValue<Header>> headers = annotationMetadata.getAnnotationValuesByType(Header.class);
         for (AnnotationValue<Header> header : headers) {
             final String value = header.stringValue().orElse(null);
