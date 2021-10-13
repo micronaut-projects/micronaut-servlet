@@ -1,4 +1,4 @@
-package io.micronaut.servlet.tomcat
+package io.micronaut.servlet.undertow
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.context.env.Environment
@@ -19,12 +19,10 @@ import spock.lang.Specification
 
 import java.nio.file.Paths
 
-import static io.micronaut.http.HttpHeaders.CACHE_CONTROL
-import static io.micronaut.http.HttpHeaders.CONTENT_LENGTH
-import static io.micronaut.http.HttpHeaders.CONTENT_TYPE
+import static io.micronaut.http.HttpHeaders.*
 
 @MicronautTest
-class TomcatStaticResourceResolutionSpec extends Specification implements TestPropertyProvider {
+class UndertowStaticResourceResolutionSpec extends Specification implements TestPropertyProvider {
 
     private static File tempFile
     private static String DEFAULT_CACHE_CONTROL = "private, max-age=60"
@@ -84,7 +82,7 @@ class TomcatStaticResourceResolutionSpec extends Specification implements TestPr
                 HttpRequest.GET('/public/index.html'), String
         )
 
-        File file = Paths.get(TomcatStaticResourceResolutionSpec.classLoader.getResource("public/index.html").toURI()).toFile()
+        File file = Paths.get(UndertowStaticResourceResolutionSpec.classLoader.getResource("public/index.html").toURI()).toFile()
 
         then:
         file.exists()
@@ -103,7 +101,7 @@ class TomcatStaticResourceResolutionSpec extends Specification implements TestPr
                 HttpRequest.GET('/public'), String
         )
 
-        File file = Paths.get(TomcatStaticResourceResolutionSpec.classLoader.getResource("public/index.html").toURI()).toFile()
+        File file = Paths.get(UndertowStaticResourceResolutionSpec.classLoader.getResource("public/index.html").toURI()).toFile()
 
         then:
         file.exists()
@@ -128,7 +126,7 @@ class TomcatStaticResourceResolutionSpec extends Specification implements TestPr
         HttpResponse<String> response = rxClient.toBlocking().exchange(
                 HttpRequest.GET("/static/index.html"), String
         )
-        File file = Paths.get(TomcatStaticResourceResolutionSpec.classLoader.getResource("public/index.html").toURI()).toFile()
+        File file = Paths.get(UndertowStaticResourceResolutionSpec.classLoader.getResource("public/index.html").toURI()).toFile()
 
         then:
         file.exists()
@@ -161,7 +159,7 @@ class TomcatStaticResourceResolutionSpec extends Specification implements TestPr
         HttpResponse<String> response = rxClient.toBlocking().exchange(
                 HttpRequest.GET("/static/index.html"), String
         )
-        File file = Paths.get(TomcatStaticResourceResolutionSpec.classLoader.getResource("public/index.html").toURI()).toFile()
+        File file = Paths.get(UndertowStaticResourceResolutionSpec.classLoader.getResource("public/index.html").toURI()).toFile()
 
         then:
         file.exists()
@@ -195,7 +193,7 @@ class TomcatStaticResourceResolutionSpec extends Specification implements TestPr
         def response = rxClient.toBlocking().exchange(
                 HttpRequest.GET("/static"), String
         )
-        File file = Paths.get(TomcatStaticResourceResolutionSpec.classLoader.getResource("public/index.html").toURI()).toFile()
+        File file = Paths.get(UndertowStaticResourceResolutionSpec.classLoader.getResource("public/index.html").toURI()).toFile()
 
         then:
         file.exists()
@@ -222,7 +220,7 @@ class TomcatStaticResourceResolutionSpec extends Specification implements TestPr
         def response = rxClient.toBlocking().exchange(
                 HttpRequest.GET("/static/foo"), String
         )
-        File file = Paths.get(TomcatStaticResourceResolutionSpec.classLoader.getResource("public/foo/index.html").toURI()).toFile()
+        File file = Paths.get(UndertowStaticResourceResolutionSpec.classLoader.getResource("public/foo/index.html").toURI()).toFile()
 
         then:
         file.exists()
