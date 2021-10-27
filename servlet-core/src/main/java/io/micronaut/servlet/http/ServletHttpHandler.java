@@ -492,13 +492,13 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                                 });
                             } else {
                                 // stream case
-                                Flux<?> flux = Publishers.convertPublisher(body, Flux.class);
+                                Publisher<?> bodyPublisher = Publishers.convertPublisher(body, Publisher.class);
                                 final ServletHttpResponse<Res, ? super Object> servletResponse = exchange.getResponse();
                                 if (isAsyncSupported) {
-                                    servletResponse.body(servletResponse.stream(flux));
+                                    servletResponse.body(servletResponse.stream(bodyPublisher));
                                 } else {
                                     // fallback to blocking
-                                    servletResponse.body(flux.collectList().block());
+                                    servletResponse.body(Flux.from(bodyPublisher).collectList().block());
                                 }
                                 return Flux.just(servletResponse);
                             }

@@ -12,6 +12,7 @@ import io.micronaut.http.annotation.Get
 import io.micronaut.http.client.annotation.Client
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.micronaut.http.client.exceptions.HttpClientResponseException
+import jakarta.inject.Inject
 import org.reactivestreams.Publisher
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
@@ -21,7 +22,7 @@ import spock.lang.Specification
 @Property(name = 'spec.name', value = 'JettyNotFoundSpec')
 class JettyNotFoundSpec extends Specification {
 
-    @jakarta.inject.Inject
+    @Inject
     InventoryClient client
 
     void "test 404 handling with Flux"() {
@@ -31,7 +32,6 @@ class JettyNotFoundSpec extends Specification {
     }
 
     void "test 404 handling with Mono"() {
-
         expect:
         Mono.from(client.single('1234')).block()
 
@@ -39,13 +39,13 @@ class JettyNotFoundSpec extends Specification {
         Mono.from(client.single('notthere')).block()
 
         then:
-        def t = thrown(HttpClientResponseException)
-        t.status == HttpStatus.NOT_FOUND
+        noExceptionThrown()
     }
 
     @Requires(property = 'spec.name', value = 'JettyNotFoundSpec')
     @Client('/not-found')
     static interface InventoryClient {
+
         @Consumes(MediaType.TEXT_PLAIN)
         @Get('/maybe/{isbn}')
         @SingleResult

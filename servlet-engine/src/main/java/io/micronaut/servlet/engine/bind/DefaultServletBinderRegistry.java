@@ -17,6 +17,7 @@ package io.micronaut.servlet.engine.bind;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.micronaut.context.BeanProvider;
 import io.micronaut.context.annotation.Replaces;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.async.publisher.Publishers;
@@ -31,11 +32,15 @@ import io.micronaut.http.bind.binders.RequestArgumentBinder;
 import io.micronaut.http.codec.MediaTypeCodec;
 import io.micronaut.http.codec.MediaTypeCodecRegistry;
 import io.micronaut.http.multipart.CompletedPart;
-import io.micronaut.jackson.codec.JsonMediaTypeCodec;
 import io.micronaut.jackson.parser.JacksonProcessor;
+import io.micronaut.json.codec.JsonMediaTypeCodec;
+import io.micronaut.json.codec.MapperMediaTypeCodec;
 import io.micronaut.servlet.http.ServletBodyBinder;
 import io.micronaut.servlet.http.StreamedServletMessage;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufUtil;
 import jakarta.inject.Singleton;
+import org.reactivestreams.Processor;
 import org.reactivestreams.Subscriber;
 import reactor.core.publisher.Flux;
 
@@ -131,28 +136,22 @@ class DefaultServletBinderRegistry extends io.micronaut.servlet.http.ServletBind
                             );
                 } else {
                     MediaType mediaType = servletHttpRequest.getContentType().orElse(MediaType.APPLICATION_JSON_TYPE);
-                    MediaTypeCodec codec = mediaTypeCodecRegistry.findCodec(mediaType, javaArgument).orElse(null);
-                    if (codec instanceof JsonMediaTypeCodec) {
-                        JsonMediaTypeCodec jsonCodec = (JsonMediaTypeCodec) codec;
-                        ObjectMapper objectMapper = jsonCodec.getObjectMapper();
-                        JacksonProcessor jacksonProcessor = new JacksonProcessor(
-                                objectMapper.getFactory(),
-                                false,
-                                objectMapper.getDeserializationConfig()
-                        );
-                        Flux.from(servletHttpRequest)
-                                .subscribe(jacksonProcessor);
-                        Flux.from(jacksonProcessor)
+                    MapperMediaTypeCodec codec = (MapperMediaTypeCodec) mediaTypeCodecRegistry.findCodec(mediaType, javaArgument).orElse(null);
+
+                    if (codec == null) {
+                        return super.bind(context, source);
+                    } else {
+                        Processor<byte[], io.micronaut.json.tree.JsonNode> jsonProcessor = codec.getJsonMapper().createReactiveParser(servletHttpRequest::subscribe, false);
+                        Flux.from(jsonProcessor)
                                 .next()
                                 .subscribe((jsonNode) -> {
                                     try {
-                                        future.complete(jsonCodec.decode(typeArgument, jsonNode));
+                                        future.complete(codec.decode(typeArgument, jsonNode));
                                     } catch (Exception e) {
                                         future.completeExceptionally(e);
                                     }
                                 }, (future::completeExceptionally));
-                    } else {
-                        return super.bind(context, source);
+
                     }
                 }
                 return () -> Optional.of(future);
@@ -178,34 +177,18 @@ class DefaultServletBinderRegistry extends io.micronaut.servlet.http.ServletBind
                         return () -> Optional.of(Flux.from(servletHttpRequest));
                     } else {
                         MediaType mediaType = servletHttpRequest.getContentType().orElse(MediaType.APPLICATION_JSON_TYPE);
-                        MediaTypeCodec codec = mediaTypeCodecRegistry.findCodec(mediaType, javaArgument).orElse(null);
-                        if (codec instanceof JsonMediaTypeCodec) {
-                            JsonMediaTypeCodec jsonCodec = (JsonMediaTypeCodec) codec;
-                            ObjectMapper objectMapper = jsonCodec.getObjectMapper();
-                            JacksonProcessor jacksonProcessor = new JacksonProcessor(
-                                    objectMapper.getFactory(),
-                                    false,
-                                    objectMapper.getDeserializationConfig()
-                            ) {
-                                @Override
-                                public void subscribe(Subscriber<? super JsonNode> downstreamSubscriber) {
-                                    servletHttpRequest.subscribe(this);
-                                    super.subscribe(downstreamSubscriber);
-                                }
-                            };
-                            Flux<?> jsonDecoder = Flux.from(jacksonProcessor)
-                                    .map((jsonNode -> jsonCodec.decode(typeArgument, jsonNode)));
-
-                            Object converted = Publishers.convertPublisher(jsonDecoder, type);
+                        MapperMediaTypeCodec codec = (MapperMediaTypeCodec) mediaTypeCodecRegistry.findCodec(mediaType, javaArgument).orElse(null);
+                        if (codec != null) {
+                            Processor<byte[], io.micronaut.json.tree.JsonNode> jsonProcessor = codec.getJsonMapper().createReactiveParser(servletHttpRequest::subscribe, false);
+                            Object converted = Publishers.convertPublisher(
+                                    Flux.from(jsonProcessor)
+                                        .map(jsonNode -> codec.decode(typeArgument, jsonNode)), type);
                             return () -> Optional.of(converted);
-                        } else {
-                            return super.bind(context, source);
                         }
                     }
-                } else {
-                    return super.bind(context, source);
                 }
             }
+            return super.bind(context, source);
         }
     }
 }
