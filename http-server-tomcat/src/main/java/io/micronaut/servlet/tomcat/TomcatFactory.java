@@ -91,6 +91,7 @@ public class TomcatFactory extends ServletServerFactory {
         final String cp = contextPath != null && !contextPath.equals("/") ? contextPath : "";
         final Context context = tomcat.addContext(cp, "/");
 
+
         // add required folder
         File docBaseFile = new File(context.getDocBase());
         if (!docBaseFile.isAbsolute()) {
@@ -104,6 +105,9 @@ public class TomcatFactory extends ServletServerFactory {
                 new DefaultMicronautServlet(getApplicationContext())
         );
         servlet.addMapping(configuration.getMapping());
+        getStaticResourceConfigurations().forEach(config -> {
+            servlet.addMapping(config.getMapping());
+        });
         configuration.getMultipartConfigElement()
                 .ifPresent(servlet::setMultipartConfigElement);
 

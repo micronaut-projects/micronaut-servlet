@@ -219,11 +219,15 @@ public class UndertowFactory extends ServletServerFactory {
                 }
         );
         servletInfo.setAsyncSupported(true);
+        servletInfo.addMapping(servletConfiguration.getMapping());
+        getStaticResourceConfigurations().forEach(config -> {
+            servletInfo.addMapping(config.getMapping());
+        });
         final DeploymentInfo deploymentInfo = Servlets.deployment()
                 .setDeploymentName(servletConfiguration.getName())
                 .setClassLoader(getEnvironment().getClassLoader())
                 .setContextPath(cp)
-                .addServlet(servletInfo.addMapping(servletConfiguration.getMapping()));
+                .addServlet(servletInfo);
         servletConfiguration.getMultipartConfigElement().ifPresent(deploymentInfo::setDefaultMultipartConfig);
         return deploymentInfo;
     }

@@ -53,6 +53,9 @@ import io.micronaut.http.server.binding.RequestArgumentSatisfier;
 import io.micronaut.http.server.exceptions.ExceptionHandler;
 import io.micronaut.http.server.exceptions.response.ErrorContext;
 import io.micronaut.http.server.exceptions.response.ErrorResponseProcessor;
+import io.micronaut.http.server.types.files.FileCustomizableResponseType;
+import io.micronaut.http.server.types.files.StreamedFile;
+import io.micronaut.http.server.types.files.SystemFile;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.web.router.MethodBasedRouteMatch;
 import io.micronaut.web.router.RouteMatch;
@@ -61,6 +64,7 @@ import io.micronaut.web.router.UriRoute;
 import io.micronaut.web.router.UriRouteMatch;
 import io.micronaut.web.router.exceptions.DuplicateRouteException;
 import io.micronaut.web.router.exceptions.UnsatisfiedRouteException;
+import io.micronaut.web.router.resource.StaticResourceResolver;
 import io.netty.handler.codec.http.HttpHeaderValues;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscription;
@@ -71,8 +75,12 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -116,6 +124,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
     private final ApplicationContext applicationContext;
     private final Map<Class<?>, ServletResponseEncoder<?>> responseEncoders;
     private final ErrorResponseProcessor errorResponseProcessor;
+    private final StaticResourceResolver staticResourceResolver;
 
     /**
      * Default constructor.
@@ -134,6 +143,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                         (o) -> o
                 ));
         this.errorResponseProcessor = applicationContext.getBean(ErrorResponseProcessor.class);
+        this.staticResourceResolver = applicationContext.getBean(StaticResourceResolver.class);
 
         // hack for bug fixed in Micronaut 1.3.3
         applicationContext.getEnvironment()
@@ -273,7 +283,37 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                         }
                     }
                 } else {
-                    handlePageNotFound(exchange, res, req);
+                    final Optional<FileCustomizableResponseType> fileMatch = matchFile(req.getPath());
+
+                    if (fileMatch.isPresent()) {
+                        res.body(fileMatch.get());
+                        if (exchange.getRequest().isAsyncSupported()) {
+                            Flux.from(exchange.getRequest().subscribeOnExecutor(Mono.just(res)))
+                                    .subscribe(response -> {
+                                        encodeResponse(exchange, AnnotationMetadata.EMPTY_METADATA, response);
+                                        if (LOG.isDebugEnabled()) {
+                                            LOG.debug("Request [{} - {}] completed successfully", req.getMethodName(), req.getUri());
+                                        }
+                                    }, throwable -> {
+                                        if (LOG.isDebugEnabled()) {
+                                            LOG.debug("Request [" + req.getMethodName() + " - " + req.getUri() + "] completed with error: " + throwable.getMessage(), throwable);
+                                        }
+                                    });
+                        } else {
+                            try {
+                                encodeResponse(exchange, AnnotationMetadata.EMPTY_METADATA, res);
+                                if (LOG.isDebugEnabled()) {
+                                    LOG.debug("Request [{} - {}] completed successfully", req.getMethodName(), req.getUri());
+                                }
+                            } catch (Exception e) {
+                                if (LOG.isDebugEnabled()) {
+                                    LOG.debug("Request [" + req.getMethodName() + " - " + req.getUri() + "] completed with error: " + e.getMessage(), e);
+                                }
+                            }
+                        }
+                    } else {
+                        handlePageNotFound(exchange, res, req);
+                    }
                 }
             }
         } finally {
@@ -287,6 +327,28 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                 );
             }
         }
+    }
+
+    private Optional<FileCustomizableResponseType> matchFile(String path) {
+        Optional<URL> optionalUrl = staticResourceResolver.resolve(path);
+
+        if (optionalUrl.isPresent()) {
+            try {
+                URL url = optionalUrl.get();
+                if (url.getProtocol().equals("file")) {
+                    File file = Paths.get(url.toURI()).toFile();
+                    if (file.exists() && !file.isDirectory() && file.canRead()) {
+                        return Optional.of(new SystemFile(file));
+                    }
+                }
+
+                return Optional.of(new StreamedFile(url));
+            } catch (URISyntaxException e) {
+                //no-op
+            }
+        }
+
+        return Optional.empty();
     }
 
     private void traceHeaders(HttpHeaders httpHeaders) {
