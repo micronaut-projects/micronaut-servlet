@@ -13,6 +13,8 @@ dependencies {
     testImplementation "io.micronaut:micronaut-http-client"
     testImplementation "io.micronaut.test:micronaut-test-spock:$micronautTestVersion"
     testImplementation("org.codehaus.groovy:groovy-json")
+    testImplementation "io.micronaut.reactor:micronaut-reactor"
+    testImplementation "io.micronaut.reactor:micronaut-reactor-http-client"
 
     testImplementation "io.micronaut.security:micronaut-security:3.0.0-M2"
 }

@@ -7,7 +7,6 @@ buildscript {
         classpath "io.micronaut.build.internal:micronaut-gradle-plugins:4.0.0"
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
         classpath "org.gradle:test-retry-gradle-plugin:1.2.1"
-
     }
 }
 
@@ -22,12 +21,6 @@ subprojects { Project subproject ->
     }
 
     apply plugin: "org.gradle.test-retry"
-
-    dependencies {
-        // TODO: Remove after micronaut-reactor is merged into micronaut-core.
-        api "io.micronaut.reactor:micronaut-reactor:2.0.0-M1"
-        api "io.micronaut.reactor:micronaut-reactor-http-client:2.0.0-M1"
-    }
 
     boolean isCiServer = System.getenv().containsKey("GITHUB_RUN_ID")
     test {

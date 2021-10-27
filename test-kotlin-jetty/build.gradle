@@ -20,6 +20,7 @@ dependencies {
     testImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:$kotlinCoroutinesVersion"
     testImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-rx2:$kotlinCoroutinesVersion"
     testImplementation "io.micronaut:micronaut-http-client"
+    testImplementation "io.projectreactor:reactor-core"
     testImplementation "io.micronaut.test:micronaut-test-kotest:$micronautTestVersion"
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine"
     testImplementation 'io.kotest:kotest-runner-junit5:4.6.0'

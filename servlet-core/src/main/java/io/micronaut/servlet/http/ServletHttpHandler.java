@@ -589,195 +589,200 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
             HttpRequest<?> req,
             RouteMatch<?> route
     ) {
-        return Flux.create((subscriber) -> {
-            RouteMatch<?> computedRoute = route;
-            if (!computedRoute.isExecutable()) {
-                computedRoute = requestArgumentSatisfier.fulfillArgumentRequirements(
-                        computedRoute,
-                        req,
-                        false
-                );
-            }
-            if (!computedRoute.isExecutable() && HttpMethod.permitsRequestBody(req.getMethod()) && !computedRoute.getBodyArgument().isPresent()) {
-                final ConvertibleValues<?> convertibleValues = req.getBody(ConvertibleValues.class).orElse(null);
-                if (convertibleValues != null) {
+        return Flux.deferContextual(contextView -> {
+            return Flux.create((subscriber) -> {
+                RouteMatch<?> computedRoute = route;
+                if (!computedRoute.isExecutable()) {
+                    computedRoute = requestArgumentSatisfier.fulfillArgumentRequirements(
+                            computedRoute,
+                            req,
+                            false
+                    );
+                }
+                if (!computedRoute.isExecutable() && HttpMethod.permitsRequestBody(req.getMethod()) && !computedRoute.getBodyArgument().isPresent()) {
+                    final ConvertibleValues<?> convertibleValues = req.getBody(ConvertibleValues.class).orElse(null);
+                    if (convertibleValues != null) {
 
-                    final Collection<Argument> requiredArguments = route.getRequiredArguments();
-                    Map<String, Object> newValues = new HashMap<>(requiredArguments.size());
-                    for (Argument<?> requiredArgument : requiredArguments) {
-                        final String name = requiredArgument.getName();
-                        convertibleValues.get(name, requiredArgument).ifPresent(v -> newValues.put(name, v));
-                    }
-                    if (CollectionUtils.isNotEmpty(newValues)) {
-                        computedRoute = computedRoute.fulfill(
-                                newValues
-                        );
+                        final Collection<Argument> requiredArguments = route.getRequiredArguments();
+                        Map<String, Object> newValues = new HashMap<>(requiredArguments.size());
+                        for (Argument<?> requiredArgument : requiredArguments) {
+                            final String name = requiredArgument.getName();
+                            convertibleValues.get(name, requiredArgument).ifPresent(v -> newValues.put(name, v));
+                        }
+                        if (CollectionUtils.isNotEmpty(newValues)) {
+                            computedRoute = computedRoute.fulfill(
+                                    newValues
+                            );
+                        }
                     }
                 }
-            }
 
-            RouteMatch<?> finalRoute = computedRoute;
-            Object result = null;
-            try {
-                result = ServerRequestContext.with(req, (Callable<Object>) finalRoute::execute);
-            } catch (Throwable t) {
-                subscriber.error(t);
-                return;
-            }
-            if (result instanceof Optional) {
-                result = ((Optional<?>) result).orElse(null);
-            }
-            MutableHttpResponse<?> outgoingResponse;
+                RouteMatch<?> finalRoute = computedRoute;
+                if (finalRoute.isSuspended()) {
+                    ContinuationArgumentBinder.setupCoroutineContext(req, contextView);
+                }
+                Object result = null;
+                try {
+                    result = ServerRequestContext.with(req, (Callable<Object>) finalRoute::execute);
+                } catch (Throwable t) {
+                    subscriber.error(t);
+                    return;
+                }
+                if (result instanceof Optional) {
+                    result = ((Optional<?>) result).orElse(null);
+                }
+                MutableHttpResponse<?> outgoingResponse;
 
-            if (result == null) {
-                if (finalRoute.isVoid()) {
-                    outgoingResponse = forStatus(exchange, finalRoute);
-                    if (HttpMethod.permitsRequestBody(req.getMethod())) {
-                        outgoingResponse.header(HttpHeaders.CONTENT_LENGTH, HttpHeaderValues.ZERO);
+                if (result == null) {
+                    if (finalRoute.isVoid()) {
+                        outgoingResponse = forStatus(exchange, finalRoute);
+                        if (HttpMethod.permitsRequestBody(req.getMethod())) {
+                            outgoingResponse.header(HttpHeaders.CONTENT_LENGTH, HttpHeaderValues.ZERO);
+                        }
+                    } else {
+                        outgoingResponse = newNotFoundError(exchange, req);
                     }
                 } else {
-                    outgoingResponse = newNotFoundError(exchange, req);
-                }
-            } else {
-                HttpStatus defaultHttpStatus = finalRoute.isErrorRoute() ? HttpStatus.INTERNAL_SERVER_ERROR : HttpStatus.OK;
-                boolean isReactive = finalRoute.isAsyncOrReactive() || Publishers.isConvertibleToPublisher(result);
-                if (isReactive) {
-                    Class<?> bodyClass = result.getClass();
-                    boolean isSingle = isSingle(finalRoute, bodyClass);
-                    boolean isCompletable = !isSingle && finalRoute.isVoid() && Publishers.isCompletable(bodyClass);
-                    if (isSingle || isCompletable) {
-                        // full response case
-                        Publisher<Object> publisher = Publishers.convertPublisher(result, Publisher.class);
-                        Publishers.mapOrSupplyEmpty(publisher, new Publishers.MapOrSupplyEmpty<Object, MutableHttpResponse<?>>() {
-                            @Override
-                            public MutableHttpResponse<?>  map(Object o) {
-                                MutableHttpResponse<?> singleResponse;
-                                if (o instanceof Optional) {
-                                    Optional optional = (Optional) o;
-                                    if (optional.isPresent()) {
-                                        o = ((Optional<?>) o).get();
-                                    } else {
-                                        return supplyEmpty();
-                                    }
-                                }
-                                if (o instanceof HttpResponse) {
-                                    singleResponse = toMutableResponse(exchange, (HttpResponse<?>) o);
-                                } else if (o instanceof HttpStatus) {
-                                    singleResponse = forStatus(exchange, finalRoute, (HttpStatus) o);
-                                } else {
-                                    singleResponse = forStatus(exchange, finalRoute, defaultHttpStatus)
-                                            .body(o);
-                                }
-                                singleResponse.setAttribute(HttpAttributes.ROUTE_MATCH, finalRoute);
-                                return singleResponse;
-                            }
-
-                            @Override
-                            public MutableHttpResponse<?> supplyEmpty() {
-                                MutableHttpResponse<?> singleResponse;
-                                if (isCompletable || finalRoute.isVoid()) {
-                                    singleResponse = forStatus(exchange, finalRoute, HttpStatus.OK)
-                                            .header(HttpHeaders.CONTENT_LENGTH, HttpHeaderValues.ZERO);
-                                } else {
-                                    singleResponse = newNotFoundError(exchange, req);
-                                }
-                                singleResponse.setAttribute(HttpAttributes.ROUTE_MATCH, finalRoute);
-                                return singleResponse;
-                            }
-
-                        }).subscribe(new CompletionAwareSubscriber<MutableHttpResponse<?>>() {
-
-                            @Override
-                            public void doOnSubscribe(Subscription s) {
-                                s.request(1);
-                            }
-
-                            @Override
-                            public void doOnNext(MutableHttpResponse<?> mutableHttpResponse) {
-                                subscriber.next(mutableHttpResponse);
-                            }
-
-                            @Override
-                            public void doOnError(Throwable t) {
-                                subscriber.error(t);
-                            }
-
-                            @Override
-                            public void doOnComplete() {
-                                subscriber.complete();
-                            }
-                        });
-                        return;
-                    }
-                }
-                // now we have the raw result, transform it as necessary
-                if (result instanceof HttpStatus) {
-                    outgoingResponse = exchange.getResponse().status((HttpStatus) result);
-                } else {
-                    boolean isSuspended = finalRoute.isSuspended();
-                    if (isSuspended) {
-                        boolean isKotlinFunctionReturnTypeUnit =
-                                finalRoute instanceof MethodBasedRouteMatch &&
-                                        isKotlinFunctionReturnTypeUnit(((MethodBasedRouteMatch) finalRoute).getExecutableMethod());
-                        final Supplier<CompletableFuture<?>> supplier = ContinuationArgumentBinder.extractContinuationCompletableFutureSupplier(req);
-                        if (isKotlinCoroutineSuspended(result)) {
-                            CompletableFuture<?> f = supplier.get();
-                            f.whenComplete((o, throwable) -> {
-                                if (throwable != null) {
-                                    subscriber.error(throwable);
-                                } else {
-                                    if (o == null) {
-                                        subscriber.next(newNotFoundError(exchange, req));
-                                    } else {
-                                        MutableHttpResponse<?> response;
-                                        if (o instanceof HttpResponse) {
-                                            response = toMutableResponse(exchange, (HttpResponse<?>) o);
+                    HttpStatus defaultHttpStatus = finalRoute.isErrorRoute() ? HttpStatus.INTERNAL_SERVER_ERROR : HttpStatus.OK;
+                    boolean isReactive = finalRoute.isAsyncOrReactive() || Publishers.isConvertibleToPublisher(result);
+                    if (isReactive) {
+                        Class<?> bodyClass = result.getClass();
+                        boolean isSingle = isSingle(finalRoute, bodyClass);
+                        boolean isCompletable = !isSingle && finalRoute.isVoid() && Publishers.isCompletable(bodyClass);
+                        if (isSingle || isCompletable) {
+                            // full response case
+                            Publisher<Object> publisher = Publishers.convertPublisher(result, Publisher.class);
+                            Publishers.mapOrSupplyEmpty(publisher, new Publishers.MapOrSupplyEmpty<Object, MutableHttpResponse<?>>() {
+                                @Override
+                                public MutableHttpResponse<?>  map(Object o) {
+                                    MutableHttpResponse<?> singleResponse;
+                                    if (o instanceof Optional) {
+                                        Optional optional = (Optional) o;
+                                        if (optional.isPresent()) {
+                                            o = ((Optional<?>) o).get();
                                         } else {
-                                            response = forStatus(exchange, finalRoute, defaultHttpStatus);
-                                            if (!isKotlinFunctionReturnTypeUnit) {
-                                                response = response.body(o);
-                                            }
+                                            return supplyEmpty();
                                         }
-                                        response.setAttribute(HttpAttributes.ROUTE_MATCH, finalRoute);
-                                        subscriber.next(response);
                                     }
+                                    if (o instanceof HttpResponse) {
+                                        singleResponse = toMutableResponse(exchange, (HttpResponse<?>) o);
+                                    } else if (o instanceof HttpStatus) {
+                                        singleResponse = forStatus(exchange, finalRoute, (HttpStatus) o);
+                                    } else {
+                                        singleResponse = forStatus(exchange, finalRoute, defaultHttpStatus)
+                                                .body(o);
+                                    }
+                                    singleResponse.setAttribute(HttpAttributes.ROUTE_MATCH, finalRoute);
+                                    return singleResponse;
+                                }
+
+                                @Override
+                                public MutableHttpResponse<?> supplyEmpty() {
+                                    MutableHttpResponse<?> singleResponse;
+                                    if (isCompletable || finalRoute.isVoid()) {
+                                        singleResponse = forStatus(exchange, finalRoute, HttpStatus.OK)
+                                                .header(HttpHeaders.CONTENT_LENGTH, HttpHeaderValues.ZERO);
+                                    } else {
+                                        singleResponse = newNotFoundError(exchange, req);
+                                    }
+                                    singleResponse.setAttribute(HttpAttributes.ROUTE_MATCH, finalRoute);
+                                    return singleResponse;
+                                }
+
+                            }).subscribe(new CompletionAwareSubscriber<MutableHttpResponse<?>>() {
+
+                                @Override
+                                public void doOnSubscribe(Subscription s) {
+                                    s.request(1);
+                                }
+
+                                @Override
+                                public void doOnNext(MutableHttpResponse<?> mutableHttpResponse) {
+                                    subscriber.next(mutableHttpResponse);
+                                }
+
+                                @Override
+                                public void doOnError(Throwable t) {
+                                    subscriber.error(t);
+                                }
+
+                                @Override
+                                public void doOnComplete() {
                                     subscriber.complete();
                                 }
                             });
                             return;
-                        } else {
-                            Object suspendedBody;
-                            if (isKotlinFunctionReturnTypeUnit) {
-                                suspendedBody = Mono.empty();
-                            } else {
-                                suspendedBody = result;
-                            }
-                            if (suspendedBody instanceof HttpResponse) {
-                                outgoingResponse = toMutableResponse(exchange, (HttpResponse<?>) suspendedBody);
-                            } else {
-                                outgoingResponse = forStatus(exchange, finalRoute, defaultHttpStatus)
-                                        .body(suspendedBody);
-                            }
-                        }
-
-                    } else {
-                        if (result instanceof HttpResponse) {
-                            outgoingResponse = toMutableResponse(exchange, (HttpResponse<?>) result);
-                        } else {
-                            outgoingResponse = forStatus(exchange, finalRoute, defaultHttpStatus)
-                                    .body(result);
                         }
                     }
-                }
+                    // now we have the raw result, transform it as necessary
+                    if (result instanceof HttpStatus) {
+                        outgoingResponse = exchange.getResponse().status((HttpStatus) result);
+                    } else {
+                        boolean isSuspended = finalRoute.isSuspended();
+                        if (isSuspended) {
+                            boolean isKotlinFunctionReturnTypeUnit =
+                                    finalRoute instanceof MethodBasedRouteMatch &&
+                                            isKotlinFunctionReturnTypeUnit(((MethodBasedRouteMatch) finalRoute).getExecutableMethod());
+                            final Supplier<CompletableFuture<?>> supplier = ContinuationArgumentBinder.extractContinuationCompletableFutureSupplier(req);
+                            if (isKotlinCoroutineSuspended(result)) {
+                                CompletableFuture<?> f = supplier.get();
+                                f.whenComplete((o, throwable) -> {
+                                    if (throwable != null) {
+                                        subscriber.error(throwable);
+                                    } else {
+                                        if (o == null) {
+                                            subscriber.next(newNotFoundError(exchange, req));
+                                        } else {
+                                            MutableHttpResponse<?> response;
+                                            if (o instanceof HttpResponse) {
+                                                response = toMutableResponse(exchange, (HttpResponse<?>) o);
+                                            } else {
+                                                response = forStatus(exchange, finalRoute, defaultHttpStatus);
+                                                if (!isKotlinFunctionReturnTypeUnit) {
+                                                    response = response.body(o);
+                                                }
+                                            }
+                                            response.setAttribute(HttpAttributes.ROUTE_MATCH, finalRoute);
+                                            subscriber.next(response);
+                                        }
+                                        subscriber.complete();
+                                    }
+                                });
+                                return;
+                            } else {
+                                Object suspendedBody;
+                                if (isKotlinFunctionReturnTypeUnit) {
+                                    suspendedBody = Mono.empty();
+                                } else {
+                                    suspendedBody = result;
+                                }
+                                if (suspendedBody instanceof HttpResponse) {
+                                    outgoingResponse = toMutableResponse(exchange, (HttpResponse<?>) suspendedBody);
+                                } else {
+                                    outgoingResponse = forStatus(exchange, finalRoute, defaultHttpStatus)
+                                            .body(suspendedBody);
+                                }
+                            }
 
-                // for head request we never emit the body
-                if (req != null && req.getMethod().equals(HttpMethod.HEAD)) {
-                    outgoingResponse.body(null);
+                        } else {
+                            if (result instanceof HttpResponse) {
+                                outgoingResponse = toMutableResponse(exchange, (HttpResponse<?>) result);
+                            } else {
+                                outgoingResponse = forStatus(exchange, finalRoute, defaultHttpStatus)
+                                        .body(result);
+                            }
+                        }
+                    }
+
+                    // for head request we never emit the body
+                    if (req != null && req.getMethod().equals(HttpMethod.HEAD)) {
+                        outgoingResponse.body(null);
+                    }
                 }
-            }
-            outgoingResponse.setAttribute(HttpAttributes.ROUTE_MATCH, finalRoute);
-            subscriber.next(outgoingResponse);
-            subscriber.complete();
+                outgoingResponse.setAttribute(HttpAttributes.ROUTE_MATCH, finalRoute);
+                subscriber.next(outgoingResponse);
+                subscriber.complete();
+            });
         });
     }
 

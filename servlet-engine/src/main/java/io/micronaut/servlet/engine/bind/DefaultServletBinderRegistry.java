@@ -15,9 +15,6 @@
  */
 package io.micronaut.servlet.engine.bind;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.micronaut.context.BeanProvider;
 import io.micronaut.context.annotation.Replaces;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.async.publisher.Publishers;
@@ -29,19 +26,13 @@ import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.Part;
 import io.micronaut.http.bind.DefaultRequestBinderRegistry;
 import io.micronaut.http.bind.binders.RequestArgumentBinder;
-import io.micronaut.http.codec.MediaTypeCodec;
 import io.micronaut.http.codec.MediaTypeCodecRegistry;
 import io.micronaut.http.multipart.CompletedPart;
-import io.micronaut.jackson.parser.JacksonProcessor;
-import io.micronaut.json.codec.JsonMediaTypeCodec;
 import io.micronaut.json.codec.MapperMediaTypeCodec;
 import io.micronaut.servlet.http.ServletBodyBinder;
 import io.micronaut.servlet.http.StreamedServletMessage;
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufUtil;
 import jakarta.inject.Singleton;
 import org.reactivestreams.Processor;
-import org.reactivestreams.Subscriber;
 import reactor.core.publisher.Flux;
 
 import javax.servlet.http.HttpServletRequest;
