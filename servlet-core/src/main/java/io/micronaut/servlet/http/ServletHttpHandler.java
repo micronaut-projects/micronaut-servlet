@@ -234,7 +234,9 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                     traceHeaders(req.getHeaders());
                 }
 
-                invokeRouteMatch(req, res, route, false, true, exchange);
+                ServerRequestContext.with(req, () ->
+                    invokeRouteMatch(req, res, route, false, true, exchange)
+                );
 
             } else {
 
@@ -523,18 +525,19 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                         }
                     });
         } else {
-            responseFlux
-                    .subscribeOn(Schedulers.immediate())
-                    .subscribe(response -> {
-                        encodeResponse(exchange, annotationMetadata, response);
-                        if (LOG.isDebugEnabled()) {
-                            LOG.debug("Request [{} - {}] completed successfully", req.getMethodName(), req.getUri());
-                        }
-                    }, throwable -> {
-                        if (LOG.isDebugEnabled()) {
-                            LOG.debug("Request [" + req.getMethodName() + " - " + req.getUri() + "] completed with error: " + throwable.getMessage(), throwable);
-                        }
-                    });
+            try {
+                // We need to block here and finish with request/response objects before (synchronous) servlet engines reuse them.
+                HttpResponse<?> response = Objects.requireNonNull(responseFlux.blockFirst());
+                encodeResponse(exchange, annotationMetadata, response);
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Request [{} - {}] completed successfully", req.getMethodName(), req.getUri());
+                }
+            } catch (Throwable throwable) {
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Request [" + req.getMethodName() + " - " + req.getUri() + "] completed with error: " + throwable.getMessage(), throwable);
+                }
+                throw throwable;
+            }
         }
     }
 

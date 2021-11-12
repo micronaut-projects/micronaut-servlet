@@ -176,18 +176,22 @@ public class DefaultServletHttpRequest<B> implements
                         throw new CodecException("Error decoding request body: " + e.getMessage(), e);
                     }
                 } else {
-
                     final MediaTypeCodec codec = codecRegistry.findCodec(contentType, type).orElse(null);
                     if (codec != null) {
                         try (InputStream inputStream = delegate.getInputStream()) {
-                            if (isConvertibleValues) {
-                                final Map map = codec.decode(Map.class, inputStream);
-                                body = ConvertibleValues.of(map);
-                                return (Optional<T>) Optional.of(body);
+                            if (inputStream.available() > 0) {
+                                if (isConvertibleValues) {
+                                    final Map map = codec.decode(Map.class, inputStream);
+                                    body = ConvertibleValues.of(map);
+                                    return (Optional<T>) Optional.of(body);
+                                } else {
+                                    final T value = codec.decode(arg, inputStream);
+                                    body = value;
+                                    return Optional.ofNullable(value);
+                                }
                             } else {
-                                final T value = codec.decode(arg, inputStream);
-                                body = value;
-                                return Optional.ofNullable(value);
+                                // body is null and input stream is empty
+                                return Optional.empty();
                             }
                         } catch (CodecException | IOException e) {
                             throw new CodecException("Error decoding request body: " + e.getMessage(), e);
