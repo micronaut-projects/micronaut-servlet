@@ -16,5 +16,5 @@ dependencies {
     testImplementation "io.micronaut.reactor:micronaut-reactor"
     testImplementation "io.micronaut.reactor:micronaut-reactor-http-client"
 
-    testImplementation "io.micronaut.security:micronaut-security:3.0.0-M2"
+    testImplementation "io.micronaut.security:micronaut-security:3.2.0"
 }
