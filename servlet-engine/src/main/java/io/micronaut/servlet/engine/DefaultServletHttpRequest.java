@@ -178,7 +178,8 @@ public class DefaultServletHttpRequest<B> implements
                 } else {
                     final MediaTypeCodec codec = codecRegistry.findCodec(contentType, type).orElse(null);
                     if (codec != null) {
-                        try (InputStream inputStream = delegate.getInputStream()) {
+                        try {
+                            InputStream inputStream = delegate.getInputStream();
                             if (inputStream.available() > 0) {
                                 if (isConvertibleValues) {
                                     final Map map = codec.decode(Map.class, inputStream);
@@ -196,7 +197,6 @@ public class DefaultServletHttpRequest<B> implements
                         } catch (CodecException | IOException e) {
                             throw new CodecException("Error decoding request body: " + e.getMessage(), e);
                         }
-
                     }
                 }
             } else {
