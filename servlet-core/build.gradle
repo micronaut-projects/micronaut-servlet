@@ -1,8 +1,14 @@
+plugins {
+    id 'io.micronaut.build.internal.module'
+}
+
 dependencies {
     annotationProcessor "io.micronaut:micronaut-inject-java"
     annotationProcessor "io.micronaut.docs:micronaut-docs-asciidoc-config-props:$micronautDocsVersion"
+
     api "io.micronaut:micronaut-inject:$micronautVersion"
     api "io.micronaut:micronaut-http-server:$micronautVersion"
+
     implementation "io.micronaut:micronaut-http-netty:$micronautVersion"
     implementation "io.micronaut:micronaut-router:$micronautVersion"
     implementation "io.projectreactor:reactor-core"

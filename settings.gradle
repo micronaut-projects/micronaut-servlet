@@ -1,9 +1,17 @@
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        mavenCentral()
+    }
+}
+
 plugins {
-    id "com.gradle.enterprise" version "3.6.1"
+    id 'io.micronaut.build.shared.settings' version '5.1.2'
 }
 
 rootProject.name = 'servlet'
 
+include 'servlet-bom'
 include 'servlet-core'
 include 'servlet-engine'
 include 'http-server-jetty'
@@ -11,12 +19,4 @@ include 'http-server-undertow'
 include 'http-server-tomcat'
 
 include 'test-kotlin-jetty'
-
-gradleEnterprise {
-    buildScan {
-        termsOfServiceUrl = "https://gradle.com/terms-of-service"
-        termsOfServiceAgree = "yes"
-        publishAlways()
-    }
-}
 
