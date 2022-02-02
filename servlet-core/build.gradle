@@ -3,8 +3,6 @@ plugins {
 }
 
 dependencies {
-    annotationProcessor "io.micronaut.docs:micronaut-docs-asciidoc-config-props:$micronautDocsVersion"
-
     api "io.micronaut:micronaut-inject:$micronautVersion"
     api "io.micronaut:micronaut-http-server:$micronautVersion"
 
