@@ -13,6 +13,7 @@ dependencies {
     implementation "org.apache.tomcat.embed:tomcat-embed-core:$tomcatVersion"
 
     testAnnotationProcessor "io.micronaut:micronaut-inject-java"
+    testImplementation "io.micronaut:micronaut-session"
     testImplementation "io.micronaut:micronaut-http-client"
     testImplementation "io.projectreactor:reactor-core"
     testImplementation "io.micronaut.security:micronaut-security"
