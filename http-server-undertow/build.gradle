@@ -11,7 +11,7 @@ dependencies {
     implementation "io.undertow:undertow-servlet:$undertowVersion"
     testAnnotationProcessor "io.micronaut:micronaut-inject-java"
     testImplementation "io.micronaut:micronaut-http-client"
-
+    testImplementation "io.micronaut:micronaut-session"
     testImplementation "io.projectreactor:reactor-core"
     testImplementation "io.micronaut.security:micronaut-security"
 }

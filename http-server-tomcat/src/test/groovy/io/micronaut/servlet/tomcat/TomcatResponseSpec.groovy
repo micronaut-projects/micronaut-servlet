@@ -11,6 +11,7 @@ import io.micronaut.http.annotation.Post
 import io.micronaut.http.client.HttpClient
 import io.micronaut.http.client.annotation.Client
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
+import spock.lang.IgnoreIf
 import spock.lang.Issue
 import spock.lang.Specification
 
@@ -18,6 +19,7 @@ import jakarta.inject.Inject
 
 @Property(name = 'spec.name', value = 'TomcatResponseSpec')
 @MicronautTest
+@IgnoreIf({ jvm.javaSpecificationVersion == '17' })
 class TomcatResponseSpec extends Specification {
     @Inject
     @Client("/")

@@ -75,10 +75,20 @@ public class DefaultServletCookies implements Cookies {
         return getAll();
     }
 
+
+    @Override
+    public <T> Optional<T> get(CharSequence name, Class<T> requiredType) {
+        if (requiredType == Cookie.class || requiredType == Object.class) {
+            //noinspection unchecked
+            return (Optional<T>) findCookie(name);
+        } else {
+            return findCookie(name).flatMap((cookie -> ConversionService.SHARED.convert(cookie.getValue(), requiredType)));
+        }
+    }
+
     @Override
     public <T> Optional<T> get(CharSequence name, ArgumentConversionContext<T> conversionContext) {
-        return findCookie(name)
-                .flatMap(cookie -> ConversionService.SHARED.convert(cookie.getValue(), conversionContext));
+        return findCookie(name).flatMap((cookie -> ConversionService.SHARED.convert(cookie.getValue(), conversionContext)));
     }
 
 }
