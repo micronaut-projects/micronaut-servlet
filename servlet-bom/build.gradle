@@ -1,0 +1,9 @@
+plugins {
+    id "io.micronaut.build.internal.bom"
+}
+
+dependencies {
+    constraints {
+        api("javax.servlet:javax.servlet-api:$servletApiVersion")
+    }
+}

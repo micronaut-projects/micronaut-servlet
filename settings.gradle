@@ -11,6 +11,7 @@ plugins {
 
 rootProject.name = 'servlet'
 
+include 'servlet-bom'
 include 'servlet-core'
 include 'servlet-engine'
 include 'http-server-jetty'
