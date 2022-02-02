@@ -19,6 +19,6 @@ dependencies {
     testImplementation "io.micronaut:micronaut-http-client"
     testImplementation "io.projectreactor:reactor-core"
     testImplementation "io.micronaut.test:micronaut-test-spock:$micronautTestVersion"
-    testImplementation "io.micronaut.security:micronaut-security:$micronautSecurityVersion"
+    testImplementation "io.micronaut.security:micronaut-security"
 }
 
