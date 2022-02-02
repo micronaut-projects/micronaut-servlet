@@ -9,7 +9,6 @@ dependencies {
 
     implementation "io.projectreactor:reactor-core"
 
-    testImplementation "io.micronaut:micronaut-inject-groovy"
     testAnnotationProcessor "io.micronaut:micronaut-inject-java"
     testImplementation "com.google.cloud.functions:functions-framework-api:$googleCloudFunctionsVersion"
 }
