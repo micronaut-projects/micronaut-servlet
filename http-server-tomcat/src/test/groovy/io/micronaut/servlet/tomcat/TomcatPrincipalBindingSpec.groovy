@@ -24,7 +24,6 @@ import jakarta.inject.Singleton
 import org.reactivestreams.Publisher
 import reactor.core.publisher.Mono
 import reactor.core.publisher.MonoSink
-import spock.lang.IgnoreIf
 import spock.lang.Issue
 import spock.lang.Specification
 
@@ -34,7 +33,6 @@ import java.security.Principal
 @MicronautTest
 @Property(name = 'micronaut.security.enabled', value = 'true')
 @Property(name = 'spec.name', value = 'TomcatPrincipalBindingSpec')
-@IgnoreIf({ jvm.javaSpecificationVersion == '17' })
 class TomcatPrincipalBindingSpec extends Specification {
 
     @Inject
