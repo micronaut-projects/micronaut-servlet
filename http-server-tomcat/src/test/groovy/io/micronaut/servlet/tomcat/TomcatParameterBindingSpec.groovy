@@ -12,7 +12,6 @@ import io.micronaut.http.client.HttpClient
 import io.micronaut.http.client.annotation.Client
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import reactor.core.publisher.Mono
-import spock.lang.IgnoreIf
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -23,7 +22,6 @@ import jakarta.inject.Inject
  * Created by graemerocher on 25/08/2017.
  */
 @MicronautTest
-@IgnoreIf({ jvm.javaSpecificationVersion == '17' })
 class TomcatParameterBindingSpec extends Specification {
 
     @Inject

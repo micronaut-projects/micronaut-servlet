@@ -12,11 +12,9 @@ import io.micronaut.http.cookie.Cookie
 import io.micronaut.runtime.server.EmbeddedServer
 import io.micronaut.session.Session
 import spock.lang.AutoCleanup
-import spock.lang.IgnoreIf
 import spock.lang.Shared
 import spock.lang.Specification
 
-@IgnoreIf({ jvm.javaSpecificationVersion == '17' })
 class TomcatSessionSpec extends Specification {
 
     @Shared

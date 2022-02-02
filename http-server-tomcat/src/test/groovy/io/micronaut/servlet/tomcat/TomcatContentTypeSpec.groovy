@@ -17,14 +17,12 @@ import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import org.reactivestreams.Publisher
 import reactor.core.publisher.Mono
-import spock.lang.IgnoreIf
 import spock.lang.Issue
 import spock.lang.Specification
 
 @MicronautTest
 @Property(name = 'spec.name', value = 'TomcatContentTypeSpec')
 @Issue('https://github.com/micronaut-projects/micronaut-servlet/issues/206')
-@IgnoreIf({ jvm.javaSpecificationVersion == '17' })
 class TomcatContentTypeSpec extends Specification {
 
     @Inject

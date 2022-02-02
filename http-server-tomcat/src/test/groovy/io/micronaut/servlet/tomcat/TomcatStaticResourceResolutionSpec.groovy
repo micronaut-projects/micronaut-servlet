@@ -15,7 +15,6 @@ import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.micronaut.test.support.TestPropertyProvider
 import io.micronaut.web.router.resource.StaticResourceConfiguration
 import jakarta.inject.Inject
-import spock.lang.IgnoreIf
 import spock.lang.Specification
 
 import java.nio.file.Paths
@@ -24,7 +23,6 @@ import static io.micronaut.http.HttpHeaders.CACHE_CONTROL
 import static io.micronaut.http.HttpHeaders.CONTENT_LENGTH
 import static io.micronaut.http.HttpHeaders.CONTENT_TYPE
 
-@IgnoreIf({ jvm.javaSpecificationVersion == '17' })
 @MicronautTest
 class TomcatStaticResourceResolutionSpec extends Specification implements TestPropertyProvider {
 
