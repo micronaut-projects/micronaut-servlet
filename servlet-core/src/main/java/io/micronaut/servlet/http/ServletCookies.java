@@ -30,7 +30,9 @@ import java.util.*;
  *
  * @author graemerocher
  * @since 2.0
+ * @deprecated Not used
  */
+@Deprecated
 public class ServletCookies implements Cookies {
 
     private final ConversionService<?> conversionService;

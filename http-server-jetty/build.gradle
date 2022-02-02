@@ -13,6 +13,7 @@ dependencies {
     testAnnotationProcessor "io.micronaut:micronaut-inject-java"
     testImplementation "io.micronaut:micronaut-management"
     testImplementation "io.micronaut:micronaut-http-client"
+    testImplementation "io.micronaut:micronaut-session"
     testImplementation("org.codehaus.groovy:groovy-json")
     testImplementation "io.micronaut.reactor:micronaut-reactor"
     testImplementation "io.micronaut.reactor:micronaut-reactor-http-client"
