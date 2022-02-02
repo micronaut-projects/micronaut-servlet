@@ -9,10 +9,12 @@ import io.micronaut.http.client.HttpClient
 import io.micronaut.http.client.annotation.Client
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.micronaut.test.support.TestPropertyProvider
+import spock.lang.IgnoreIf
 import spock.lang.Specification
 
 import jakarta.inject.Inject
 
+@IgnoreIf({ jvm.javaSpecificationVersion == '17' })
 @MicronautTest
 class TomcatSslSpec extends Specification implements TestPropertyProvider {
 

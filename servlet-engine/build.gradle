@@ -1,12 +1,14 @@
+plugins {
+    id 'io.micronaut.build.internal.module'
+}
+
 dependencies {
-    annotationProcessor "io.micronaut:micronaut-inject-java"
     annotationProcessor "io.micronaut:micronaut-graal"
-    annotationProcessor "io.micronaut.docs:micronaut-docs-asciidoc-config-props:$micronautDocsVersion"
     api project(":servlet-core")
-    api 'javax.servlet:javax.servlet-api:4.0.1'
+    api "javax.servlet:javax.servlet-api:$servletApiVersion"
+
     implementation "io.projectreactor:reactor-core"
 
-    testImplementation "io.micronaut:micronaut-inject-groovy"
     testAnnotationProcessor "io.micronaut:micronaut-inject-java"
-    testImplementation 'com.google.cloud.functions:functions-framework-api:1.0.4'
+    testImplementation "com.google.cloud.functions:functions-framework-api:$googleCloudFunctionsVersion"
 }

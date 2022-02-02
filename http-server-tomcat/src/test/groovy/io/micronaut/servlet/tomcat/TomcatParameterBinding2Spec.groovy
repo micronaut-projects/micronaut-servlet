@@ -13,12 +13,14 @@ import io.micronaut.http.client.annotation.Client
 import io.micronaut.http.client.exceptions.HttpClientResponseException
 import io.micronaut.http.client.multipart.MultipartBody
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
+import spock.lang.IgnoreIf
 import spock.lang.Specification
 
 import jakarta.inject.Inject
 
 @MicronautTest
 @Property(name = "micronaut.server.multipart.enabled", value = StringUtils.TRUE)
+@IgnoreIf({ jvm.javaSpecificationVersion == '17' })
 class TomcatParameterBinding2Spec extends Specification {
 
     @Inject

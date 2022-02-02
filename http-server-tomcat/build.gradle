@@ -1,24 +1,20 @@
+plugins {
+    id 'io.micronaut.build.internal.module'
+}
+
 dependencies {
-    annotationProcessor "io.micronaut:micronaut-inject-java"
-    annotationProcessor "io.micronaut.docs:micronaut-docs-asciidoc-config-props:$micronautDocsVersion"
     annotationProcessor "io.micronaut:micronaut-graal"
+
     api project(":servlet-engine")
     api "io.micronaut:micronaut-http-server:$micronautVersion"
 
     compileOnly "org.graalvm.nativeimage:svm"
-    implementation 'org.apache.tomcat.embed:tomcat-embed-core:10.0.8'
-    implementation 'org.slf4j:jul-to-slf4j:1.7.30'
+
+    implementation "org.apache.tomcat.embed:tomcat-embed-core:$tomcatVersion"
+
     testAnnotationProcessor "io.micronaut:micronaut-inject-java"
-    testImplementation "io.micronaut:micronaut-inject-groovy"
     testImplementation "io.micronaut:micronaut-http-client"
-    testImplementation "io.micronaut.test:micronaut-test-spock:$micronautTestVersion"
     testImplementation "io.projectreactor:reactor-core"
-    testImplementation "io.micronaut.security:micronaut-security:3.0.0-M2"
+    testImplementation "io.micronaut.security:micronaut-security"
 }
 
-micronautBuild {
-    resolutionStrategy {
-        // Because of an issue with GraalVM
-        force 'org.apache.tomcat.embed:tomcat-embed-core:9.0.38'
-    }
-}
