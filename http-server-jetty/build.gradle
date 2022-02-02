@@ -3,8 +3,6 @@ plugins {
 }
 
 dependencies {
-    annotationProcessor "io.micronaut:micronaut-inject-java"
-    annotationProcessor "io.micronaut.docs:micronaut-docs-asciidoc-config-props:$micronautDocsVersion"
     annotationProcessor "io.micronaut:micronaut-graal"
 
     api project(":servlet-engine")
@@ -13,7 +11,6 @@ dependencies {
     implementation("org.eclipse.jetty:jetty-servlet:$jettyVersion")
 
     testAnnotationProcessor "io.micronaut:micronaut-inject-java"
-    testImplementation "io.micronaut:micronaut-inject-groovy"
     testImplementation "io.micronaut:micronaut-management"
     testImplementation "io.micronaut:micronaut-http-client"
     testImplementation("org.codehaus.groovy:groovy-json")
