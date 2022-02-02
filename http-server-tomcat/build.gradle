@@ -18,7 +18,6 @@ dependencies {
     testImplementation "io.micronaut:micronaut-inject-groovy"
     testImplementation "io.micronaut:micronaut-http-client"
     testImplementation "io.projectreactor:reactor-core"
-    testImplementation "io.micronaut.test:micronaut-test-spock:$micronautTestVersion"
     testImplementation "io.micronaut.security:micronaut-security"
 }
 
