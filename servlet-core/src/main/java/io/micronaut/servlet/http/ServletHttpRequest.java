@@ -85,8 +85,8 @@ public interface ServletHttpRequest<N, B> extends HttpRequest<B> {
 
     /**
      * Causes the container to dispatch a thread, possibly from a managed
-     * thread pool, to run the specified <tt>Runnable</tt>. The container may
-     * propagate appropriate contextual information to the <tt>Runnable</tt>.
+     * thread pool, to run the specified {@link Runnable}. The container may
+     * propagate appropriate contextual information to the {@link Runnable}.
      *
      * @param responsePublisher The response publisher
      * @return A publisher that emits the response

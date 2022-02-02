@@ -18,6 +18,7 @@ import io.micronaut.http.client.exceptions.HttpClientResponseException
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.micronaut.validation.Validated
 import jakarta.inject.Inject
+import spock.lang.IgnoreIf
 import spock.lang.Issue
 import spock.lang.Specification
 
@@ -25,6 +26,7 @@ import javax.validation.Valid
 import javax.validation.constraints.NotBlank
 import javax.validation.constraints.NotNull
 
+@IgnoreIf({ jvm.javaSpecificationVersion == '17' })
 @MicronautTest
 @Property(name = 'spec.name', value = 'TomcatValidationStatusSpec')
 class TomcatValidationStatusSpec extends Specification {
