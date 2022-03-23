@@ -3,11 +3,12 @@ plugins {
 }
 
 dependencies {
-    api "io.micronaut:micronaut-inject:$micronautVersion"
-    api "io.micronaut:micronaut-http-server:$micronautVersion"
+    api libs.micronaut.inject
+    api libs.micronaut.http.server
 
-    implementation "io.micronaut:micronaut-http-netty:$micronautVersion"
-    implementation "io.micronaut:micronaut-router:$micronautVersion"
-    implementation "io.projectreactor:reactor-core"
-    testAnnotationProcessor "io.micronaut:micronaut-inject-java"
+    implementation libs.micronaut.http.netty
+    implementation libs.micronaut.router
+    implementation libs.projectreactor
+
+    testAnnotationProcessor libs.micronaut.inject.java
 }
