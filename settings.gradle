@@ -6,7 +6,7 @@ pluginManagement {
 }
 
 plugins {
-    id 'io.micronaut.build.shared.settings' version '5.2.3'
+    id 'io.micronaut.build.shared.settings' version '5.3.0'
 }
 
 rootProject.name = 'servlet-parent'
@@ -18,5 +18,5 @@ include 'http-server-jetty'
 include 'http-server-undertow'
 include 'http-server-tomcat'
 
-include 'test-kotlin-jetty'
+include 'test-suite-kotlin-jetty'
 

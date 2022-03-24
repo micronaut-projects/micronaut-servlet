@@ -3,19 +3,19 @@ plugins {
 }
 
 dependencies {
-    annotationProcessor "io.micronaut:micronaut-graal"
+    annotationProcessor libs.micronaut.graal
 
     api project(":servlet-engine")
-    api "io.micronaut:micronaut-http-server:$micronautVersion"
+    api libs.micronaut.http.server
 
-    compileOnly "org.graalvm.nativeimage:svm"
+    compileOnly libs.graal
 
-    implementation "org.apache.tomcat.embed:tomcat-embed-core:$tomcatVersion"
+    implementation libs.tomcat.embed.core
 
-    testAnnotationProcessor "io.micronaut:micronaut-inject-java"
-    testImplementation "io.micronaut:micronaut-session"
-    testImplementation "io.micronaut:micronaut-http-client"
-    testImplementation "io.projectreactor:reactor-core"
-    testImplementation "io.micronaut.security:micronaut-security"
+    testAnnotationProcessor libs.micronaut.inject.java
+    testImplementation libs.micronaut.session
+    testImplementation libs.micronaut.http.client
+    testImplementation libs.projectreactor
+    testImplementation libs.micronaut.security
 }
 

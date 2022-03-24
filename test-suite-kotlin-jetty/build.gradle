@@ -1,0 +1,45 @@
+plugins {
+    id "org.jetbrains.kotlin.jvm" version "$kotlinVersion"
+    id("org.jetbrains.kotlin.kapt") version "$kotlinVersion"
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    kaptTest platform("io.micronaut:micronaut-bom:$micronautVersion")
+    testImplementation platform("io.micronaut:micronaut-bom:$micronautVersion")
+    kaptTest libs.micronaut.inject.java
+
+    testRuntimeOnly libs.junit.jupiter.engine
+
+    testImplementation libs.kotlin.stdlib.jdk8
+    testImplementation libs.kotlin.reflect
+    testImplementation libs.kotlinx.coroutines.core
+    testImplementation libs.kotlinx.coroutines.jdk8
+    testImplementation libs.kotlinx.coroutines.rx2
+
+    testImplementation libs.micronaut.http.client
+    testImplementation libs.projectreactor
+    testImplementation libs.micronaut.kotest
+    testImplementation libs.kotest.runner
+
+    testImplementation project(":http-server-jetty")
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+compileTestKotlin {
+    kotlinOptions {
+        jvmTarget = '1.8'
+        javaParameters = true
+    }
+}
+
+java {
+    sourceCompatibility = JavaVersion.toVersion("1.8")
+    targetCompatibility = JavaVersion.toVersion("1.8")
+}
