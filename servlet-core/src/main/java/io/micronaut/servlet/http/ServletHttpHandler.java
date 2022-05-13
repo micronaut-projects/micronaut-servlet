@@ -294,11 +294,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                                         if (LOG.isDebugEnabled()) {
                                             LOG.debug("Request [{} - {}] completed successfully", req.getMethodName(), req.getUri());
                                         }
-                                    }, throwable -> {
-                                        if (LOG.isDebugEnabled()) {
-                                            LOG.debug("Request [" + req.getMethodName() + " - " + req.getUri() + "] completed with error: " + throwable.getMessage(), throwable);
-                                        }
-                                    });
+                                    }, throwable -> LOG.error("Request [" + req.getMethodName() + " - " + req.getUri() + "] completed with error: " + throwable.getMessage(), throwable));
                         } else {
                             try {
                                 encodeResponse(exchange, AnnotationMetadata.EMPTY_METADATA, res);
@@ -306,9 +302,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                                     LOG.debug("Request [{} - {}] completed successfully", req.getMethodName(), req.getUri());
                                 }
                             } catch (Exception e) {
-                                if (LOG.isDebugEnabled()) {
-                                    LOG.debug("Request [" + req.getMethodName() + " - " + req.getUri() + "] completed with error: " + e.getMessage(), e);
-                                }
+                                LOG.error("Request [" + req.getMethodName() + " - " + req.getUri() + "] completed with error: " + e.getMessage(), e);
                             }
                         }
                     } else {
@@ -517,11 +511,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                         if (LOG.isDebugEnabled()) {
                             LOG.debug("Request [{} - {}] completed successfully", req.getMethodName(), req.getUri());
                         }
-                    }, throwable -> {
-                        if (LOG.isDebugEnabled()) {
-                            LOG.debug("Request [" + req.getMethodName() + " - " + req.getUri() + "] completed with error: " + throwable.getMessage(), throwable);
-                        }
-                    });
+                    }, throwable -> LOG.error("Request [" + req.getMethodName() + " - " + req.getUri() + "] completed with error: " + throwable.getMessage(), throwable));
         } else {
             responseFlux
                     .subscribeOn(Schedulers.immediate())
@@ -530,11 +520,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                         if (LOG.isDebugEnabled()) {
                             LOG.debug("Request [{} - {}] completed successfully", req.getMethodName(), req.getUri());
                         }
-                    }, throwable -> {
-                        if (LOG.isDebugEnabled()) {
-                            LOG.debug("Request [" + req.getMethodName() + " - " + req.getUri() + "] completed with error: " + throwable.getMessage(), throwable);
-                        }
-                    });
+                    }, throwable -> LOG.error("Request [" + req.getMethodName() + " - " + req.getUri() + "] completed with error: " + throwable.getMessage(), throwable));
         }
     }
 
