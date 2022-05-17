@@ -109,7 +109,7 @@ public class DefaultServletHttpRequest<B> implements
         }
 
         String queryString = delegate.getQueryString();
-        if (StringUtils.isNotEmpty(queryString) && !requestURI.contains(queryString)) {
+        if (StringUtils.isNotEmpty(queryString)) {
             requestURI = requestURI + "?" + queryString;
         }
 
