@@ -108,6 +108,11 @@ public class DefaultServletHttpRequest<B> implements
             requestURI = requestURI.substring(contextPath.length());
         }
 
+        String queryString = delegate.getQueryString();
+        if (StringUtils.isNotEmpty(queryString) && !requestURI.contains(queryString)) {
+            requestURI = requestURI + "?" + queryString;
+        }
+
         this.uri = URI.create(requestURI);
         HttpMethod method;
         try {
