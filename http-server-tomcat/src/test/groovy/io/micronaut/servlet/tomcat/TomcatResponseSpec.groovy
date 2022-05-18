@@ -7,6 +7,7 @@ import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Controller
+import io.micronaut.http.annotation.Get
 import io.micronaut.http.annotation.Post
 import io.micronaut.http.client.HttpClient
 import io.micronaut.http.client.annotation.Client
@@ -33,6 +34,16 @@ class TomcatResponseSpec extends Specification {
         response.body() == null
     }
 
+    @Issue("https://github.com/micronaut-projects/micronaut-servlet/issues/298")
+    void 'verify that controller\'s HttpRequest object contains valid URI'() {
+        when:
+        def response = client.toBlocking().exchange(HttpRequest.GET("/response/test/hello?a=1&b=2"), String)
+
+        then:
+        response.status() == HttpStatus.OK
+        response.body() == "/response/test/hello?a=1&b=2"
+    }
+
     @Requires(property = 'spec.name', value = 'TomcatResponseSpec')
     @Controller("/response/test")
     static class FooController {
@@ -40,6 +51,11 @@ class TomcatResponseSpec extends Specification {
         @Post("/bar")
         HttpResponse bar(@Body String json) {
             HttpResponse.ok()
+        }
+
+        @Get("/hello")
+        String hello(HttpRequest<?> httpRequest) {
+            return httpRequest.getUri().toString();
         }
     }
 }
