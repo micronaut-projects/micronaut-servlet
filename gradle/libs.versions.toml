@@ -5,7 +5,7 @@ kotlin-coroutines = '1.6.0'
 
 kotest-runner = '5.1.0'
 undertow = '2.2.14.Final'
-jetty = '9.4.43.v20210629'
+jetty = '9.4.48.v20220622'
 tomcat = '9.0.63'
 google-cloud-functions = '1.0.4'
 
