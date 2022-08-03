@@ -9,6 +9,7 @@ import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Error
 import io.micronaut.http.annotation.Get
+import io.micronaut.http.annotation.Post
 import io.micronaut.http.client.HttpClient
 import io.micronaut.http.client.annotation.Client
 import io.micronaut.http.client.exceptions.HttpClientResponseException
@@ -293,6 +294,11 @@ class JettyCorsSpec extends Specification implements TestPropertyProvider {
 
         @Get
         HttpResponse index() {
+            HttpResponse.noContent()
+        }
+
+        @Post
+        HttpResponse post() {
             HttpResponse.noContent()
         }
 
