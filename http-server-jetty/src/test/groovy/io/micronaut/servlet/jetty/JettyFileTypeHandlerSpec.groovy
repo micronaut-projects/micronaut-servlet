@@ -129,7 +129,7 @@ class JettyFileTypeHandlerSpec extends Specification {
         then: "the content type is still based on the file extension"
         response.code() == HttpStatus.OK.code
         response.header(CONTENT_TYPE) == "text/html"
-        response.header(CONTENT_DISPOSITION) == "attachment; filename=\"abc.xyz\""
+        response.header(CONTENT_DISPOSITION) == "attachment; filename=\"abc.xyz\"; filename*=utf-8''abc.xyz"
         Integer.parseInt(response.header(CONTENT_LENGTH)) > 0
         response.headers.getDate(DATE) < response.headers.getDate(EXPIRES)
         response.header(CACHE_CONTROL) == "private, max-age=60"
@@ -144,7 +144,7 @@ class JettyFileTypeHandlerSpec extends Specification {
         then:
         response.code() == HttpStatus.OK.code
         response.header(CONTENT_TYPE) == "text/plain"
-        response.header(CONTENT_DISPOSITION) == "attachment; filename=\"temp.html\""
+        response.header(CONTENT_DISPOSITION) == "attachment; filename=\"temp.html\"; filename*=utf-8''temp.html"
         Integer.parseInt(response.header(CONTENT_LENGTH)) > 0
         response.headers.getDate(DATE) < response.headers.getDate(EXPIRES)
         response.header(CACHE_CONTROL) == "private, max-age=60"
@@ -159,7 +159,7 @@ class JettyFileTypeHandlerSpec extends Specification {
         then:
         response.code() == HttpStatus.OK.code
         response.header(CONTENT_TYPE) == "text/plain"
-        response.header(CONTENT_DISPOSITION) == "attachment; filename=\"temp.html\""
+        response.header(CONTENT_DISPOSITION) == "attachment; filename=\"temp.html\"; filename*=utf-8''temp.html"
         Integer.parseInt(response.header(CONTENT_LENGTH)) > 0
         response.headers.getDate(DATE) < response.headers.getDate(EXPIRES)
         response.header(CACHE_CONTROL) == "private, max-age=60"
