@@ -1111,7 +1111,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
         }
 
         final Function<MutableHttpResponse<?>, Publisher<MutableHttpResponse<?>>> checkForStatus = (response) -> {
-            return handleStatusException(exchange, exchange.getResponse(), requestReference);
+            return handleStatusException(exchange, response, requestReference);
         };
 
         final Function<Throwable, Publisher<MutableHttpResponse<?>>> onError = (t) -> {
