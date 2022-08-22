@@ -8,6 +8,7 @@ import io.micronaut.runtime.server.event.ServerShutdownEvent
 import spock.lang.Specification
 
 import jakarta.inject.Singleton
+
 import java.util.concurrent.atomic.AtomicInteger
 
 class TomcatShutdownSpec extends Specification {
@@ -21,14 +22,14 @@ class TomcatShutdownSpec extends Specification {
         embeddedServer.stop()
 
         then:
-        listener.count.get() == 1
+        ShutdownListener.count.get() == 1
     }
 
     @Requires(property = 'spec.name', value = 'TomcatShutdownSpec')
     @Singleton
     static class ShutdownListener implements ApplicationEventListener<ServerShutdownEvent> {
 
-        AtomicInteger count = new AtomicInteger()
+        static AtomicInteger count = new AtomicInteger()
 
         @Override
         void onApplicationEvent(ServerShutdownEvent event) {

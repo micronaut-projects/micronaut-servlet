@@ -99,6 +99,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static io.micronaut.core.util.KotlinUtils.isKotlinCoroutineSuspended;
+import static io.micronaut.http.HttpAttributes.AVAILABLE_HTTP_METHODS;
+import static io.micronaut.http.HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD;
 import static io.micronaut.inject.util.KotlinExecutableMethodUtils.isKotlinFunctionReturnTypeUnit;
 
 /**
@@ -203,6 +205,12 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
         return getApplicationContext().isRunning();
     }
 
+    static boolean isPreflightRequest(HttpRequest<?> request) {
+        HttpHeaders headers = request.getHeaders();
+        Optional<String> origin = headers.getOrigin();
+        return origin.isPresent() && headers.contains(ACCESS_CONTROL_REQUEST_METHOD) && HttpMethod.OPTIONS == request.getMethod();
+    }
+
     /**
      * Handles a {@link DefaultServletExchange}.
      *
@@ -216,7 +224,26 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
             applicationContext.publishEvent(new HttpRequestReceivedEvent(req));
 
             final List<UriRouteMatch<Object, Object>> matchingRoutes = router.findAllClosest(req);
-            if (CollectionUtils.isNotEmpty(matchingRoutes)) {
+
+            boolean preflightRequest = isPreflightRequest(req);
+
+            if (CollectionUtils.isEmpty(matchingRoutes) && preflightRequest) {
+
+                List<UriRouteMatch<Object, Object>> anyUriRoutes = router.findAny(req.getUri().getPath(), req)
+                    .collect(Collectors.toList());
+                req.setAttribute(AVAILABLE_HTTP_METHODS, anyUriRoutes.stream().map(UriRouteMatch::getHttpMethod).collect(Collectors.toList()));
+                if (anyUriRoutes.isEmpty()) {
+                    handlePageNotFound(exchange, res, req);
+                } else {
+                    UriRouteMatch<Object, Object> establishedRoute = anyUriRoutes.get(0);
+                    req.setAttribute(HttpAttributes.ROUTE, establishedRoute.getRoute());
+                    req.setAttribute(HttpAttributes.ROUTE_MATCH, establishedRoute);
+                    req.setAttribute(HttpAttributes.URI_TEMPLATE, establishedRoute.getRoute().getUriMatchTemplate().toString());
+                    invokeRouteMatch(req, res, establishedRoute, false, true, exchange);
+                }
+
+            } else if (CollectionUtils.isNotEmpty(matchingRoutes)) {
+
                 RouteMatch<Object> route;
                 if (matchingRoutes.size() > 1) {
                     throw new DuplicateRouteException(req.getPath(), matchingRoutes);
@@ -1084,7 +1111,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
         }
 
         final Function<MutableHttpResponse<?>, Publisher<MutableHttpResponse<?>>> checkForStatus = (response) -> {
-            return handleStatusException(exchange, exchange.getResponse(), requestReference);
+            return handleStatusException(exchange, response, requestReference);
         };
 
         final Function<Throwable, Publisher<MutableHttpResponse<?>>> onError = (t) -> {
