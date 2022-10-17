@@ -16,10 +16,13 @@
 package io.micronaut.servlet.engine.server;
 
 import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.event.ApplicationEvent;
+import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.discovery.ServiceInstance;
 import io.micronaut.discovery.event.ServiceReadyEvent;
 import io.micronaut.http.server.exceptions.HttpServerException;
 import io.micronaut.runtime.ApplicationConfiguration;
+import io.micronaut.runtime.event.ApplicationStartupEvent;
 import io.micronaut.runtime.server.EmbeddedServer;
 import io.micronaut.runtime.server.event.ServerShutdownEvent;
 import io.micronaut.runtime.server.event.ServerStartupEvent;
@@ -35,6 +38,7 @@ public abstract class AbstractServletServer<T> implements EmbeddedServer {
 
     private final ApplicationContext applicationContext;
     private final ApplicationConfiguration applicationConfiguration;
+    private final ApplicationEventPublisher<ApplicationEvent> applicationEventPublisher;
     private final T server;
 
     /**
@@ -51,6 +55,7 @@ public abstract class AbstractServletServer<T> implements EmbeddedServer {
         this.applicationContext = applicationContext;
         this.applicationConfiguration = applicationConfiguration;
         this.server = server;
+        this.applicationEventPublisher = applicationContext.getEventPublisher(ApplicationEvent.class);
     }
 
     /**
@@ -77,7 +82,7 @@ public abstract class AbstractServletServer<T> implements EmbeddedServer {
                 applicationContext.start();
             }
             startServer();
-            applicationContext.publishEvent(new ServerStartupEvent(this));
+            applicationEventPublisher.publishEvent(new ServerStartupEvent(this));
             applicationConfiguration.getName().ifPresent((name) -> {
                 ServiceInstance.Builder builder = ServiceInstance.builder(name, getURI());
                 ApplicationConfiguration.InstanceConfiguration instance = applicationConfiguration.getInstance();
@@ -85,7 +90,7 @@ public abstract class AbstractServletServer<T> implements EmbeddedServer {
                 instance.getZone().ifPresent(builder::zone);
                 builder.metadata(instance.getMetadata());
                 instance.getId().ifPresent(builder::instanceId);
-                applicationContext.publishEvent(new ServiceReadyEvent(builder.build()));
+                applicationEventPublisher.publishEvent(new ServiceReadyEvent(builder.build()));
             });
         } catch (Exception e) {
             throw new HttpServerException(
@@ -100,10 +105,10 @@ public abstract class AbstractServletServer<T> implements EmbeddedServer {
         if (isRunning()) {
             try {
                 stopServer();
+                applicationEventPublisher.publishEvent(new ServerShutdownEvent(this));
                 if (applicationContext.isRunning()) {
                     applicationContext.stop();
                 }
-                applicationContext.publishEvent(new ServerShutdownEvent(this));
             } catch (Exception e) {
                 throw new HttpServerException(
                         "Error stopping HTTP server: " + e.getMessage(), e
