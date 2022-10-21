@@ -75,7 +75,6 @@ public class DefaultServletCookies implements Cookies {
         return getAll();
     }
 
-
     @Override
     public <T> Optional<T> get(CharSequence name, Class<T> requiredType) {
         if (requiredType == Cookie.class || requiredType == Object.class) {

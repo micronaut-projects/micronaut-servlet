@@ -73,6 +73,8 @@ public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpSe
     private final DefaultServletHttpRequest<?> request;
     private final ServletResponseHeaders headers;
     private B body;
+    private int status = HttpStatus.OK.getCode();
+    private String reason = HttpStatus.OK.getReason();
 
     /**
      * Default constructor.
@@ -257,14 +259,18 @@ public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpSe
 
     @Override
     public MutableHttpResponse<B> status(int status) {
+        this.status = status;
         delegate.setStatus(status);
         return this;
     }
 
     @Override
     public MutableHttpResponse<B> status(int status, CharSequence message) {
+        this.status = status;
         if (message == null) {
-            return status(status);
+            this.reason = HttpStatus.getDefaultReason(status);
+        } else {
+            this.reason = message.toString();
         }
         delegate.setStatus(status);
         return this;
@@ -378,6 +384,16 @@ public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpSe
         return HttpStatus.valueOf(
                 delegate.getStatus()
         );
+    }
+
+    @Override
+    public int code() {
+        return status;
+    }
+
+    @Override
+    public String reason() {
+        return reason;
     }
 
     /**

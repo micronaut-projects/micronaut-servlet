@@ -7,7 +7,7 @@ plugins {
 dependencies {
     kaptTest platform("io.micronaut:micronaut-bom:$micronautVersion")
     testImplementation platform("io.micronaut:micronaut-bom:$micronautVersion")
-    kaptTest libs.micronaut.inject.java
+    kaptTest mn.micronaut.inject.java
 
     testRuntimeOnly libs.junit.jupiter.engine
 
@@ -17,12 +17,13 @@ dependencies {
     testImplementation libs.kotlinx.coroutines.jdk8
     testImplementation libs.kotlinx.coroutines.rx2
 
-    testImplementation libs.micronaut.http.client
-    testImplementation libs.projectreactor
-    testImplementation libs.micronaut.kotest
+    testImplementation mn.micronaut.http.client
+    testImplementation mn.reactor
+    testImplementation mn.micronaut.test.kotest5
     testImplementation libs.kotest.runner
 
-    testImplementation project(":http-server-jetty")
+    testImplementation projects.httpServerJetty
+
 }
 
 tasks.named('test') {
@@ -31,12 +32,7 @@ tasks.named('test') {
 
 compileTestKotlin {
     kotlinOptions {
-        jvmTarget = '1.8'
+        jvmTarget = '17'
         javaParameters = true
     }
-}
-
-java {
-    sourceCompatibility = JavaVersion.toVersion("1.8")
-    targetCompatibility = JavaVersion.toVersion("1.8")
 }

@@ -3,20 +3,20 @@ plugins {
 }
 
 dependencies {
-    annotationProcessor libs.micronaut.graal
+    annotationProcessor mn.micronaut.graal
 
-    api project(":servlet-engine")
-    api libs.micronaut.http.server
+    api projects.servletEngine
+    api mn.micronaut.http.server
 
     implementation(libs.jetty)
 
-    testAnnotationProcessor libs.micronaut.inject.java
-    testImplementation libs.micronaut.management
-    testImplementation libs.micronaut.http.client
-    testImplementation libs.micronaut.session
-    testImplementation(libs.groovy.json)
-    testImplementation libs.micronaut.reactor
-    testImplementation libs.micronaut.reactor.http.client
+    testAnnotationProcessor mn.micronaut.inject.java
+    testImplementation mn.micronaut.management
+    testImplementation mn.micronaut.http.client
+    testImplementation mn.micronaut.session
+    testImplementation(mn.groovy.json)
+    testImplementation mn.micronaut.reactor
+    testImplementation mn.micronaut.reactor.http.client
 
-    testImplementation(libs.micronaut.security)
+    testImplementation(mn.micronaut.security)
 }

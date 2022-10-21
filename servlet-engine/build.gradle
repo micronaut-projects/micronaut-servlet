@@ -3,13 +3,13 @@ plugins {
 }
 
 dependencies {
-    annotationProcessor libs.micronaut.graal
+    annotationProcessor mn.micronaut.graal
 
-    api project(":servlet-core")
+    api projects.servletCore
     api libs.managed.servlet.api
 
-    implementation libs.projectreactor
+    implementation mn.reactor
 
-    testAnnotationProcessor libs.micronaut.inject.java
-    testImplementation libs.google.cloud.functions
+    testAnnotationProcessor mn.micronaut.inject.java
+    testImplementation mn.google.function.framework
 }
