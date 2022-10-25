@@ -100,10 +100,10 @@ public abstract class AbstractServletServer<T> implements EmbeddedServer {
         if (isRunning()) {
             try {
                 stopServer();
+                applicationContext.publishEvent(new ServerShutdownEvent(this));
                 if (applicationContext.isRunning()) {
                     applicationContext.stop();
                 }
-                applicationContext.publishEvent(new ServerShutdownEvent(this));
             } catch (Exception e) {
                 throw new HttpServerException(
                         "Error stopping HTTP server: " + e.getMessage(), e
