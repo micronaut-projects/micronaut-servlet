@@ -7,28 +7,10 @@ kotest-runner = '5.4.1'
 undertow = '2.2.18.Final'
 jetty = '9.4.48.v20220622'
 tomcat = '9.0.65'
-google-cloud-functions = '1.0.4'
 
 [libraries]
 managed-servlet-api = { module = 'javax.servlet:javax.servlet-api', version.ref = 'managed-servlet-api' }
 
-micronaut-graal = { module = 'io.micronaut:micronaut-graal' }
-micronaut-http-server = { module = 'io.micronaut:micronaut-http-server' }
-micronaut-http-netty = { module = 'io.micronaut:micronaut-http-netty' }
-micronaut-inject = { module = 'io.micronaut:micronaut-inject' }
-micronaut-inject-java = { module = 'io.micronaut:micronaut-inject-java' }
-micronaut-management = { module = 'io.micronaut:micronaut-management' }
-micronaut-kotest = { module = 'io.micronaut.test:micronaut-test-kotest' }
-micronaut-session = { module = 'io.micronaut:micronaut-session' }
-micronaut-http-client = { module = 'io.micronaut:micronaut-http-client' }
-micronaut-reactor = { module = 'io.micronaut.reactor:micronaut-reactor' }
-micronaut-router = { module = 'io.micronaut:micronaut-router' }
-micronaut-security = { module = 'io.micronaut.security:micronaut-security' }
-micronaut-reactor-http-client = { module = 'io.micronaut.reactor:micronaut-reactor-http-client' }
-
-groovy-json = { module = 'org.codehaus.groovy:groovy-json' }
-graal = { module = "org.graalvm.nativeimage:svm" }
-projectreactor = { module = 'io.projectreactor:reactor-core' }
 junit-jupiter-engine = { module = 'org.junit.jupiter:junit-jupiter-engine' }
 kotlin-stdlib-jdk8 = { module = 'org.jetbrains.kotlin:kotlin-stdlib-jdk8' }
 kotlin-reflect = { module = 'org.jetbrains.kotlin:kotlin-reflect' }
@@ -40,5 +22,4 @@ kotlinx-coroutines-rx2 = { module = 'org.jetbrains.kotlinx:kotlinx-coroutines-rx
 tomcat-embed-core = { module = 'org.apache.tomcat.embed:tomcat-embed-core', version.ref = 'tomcat' }
 undertow-servlet = { module = 'io.undertow:undertow-servlet', version.ref = 'undertow' }
 jetty = { module = 'org.eclipse.jetty:jetty-servlet', version.ref = 'jetty' }
-google-cloud-functions = { module = 'com.google.cloud.functions:functions-framework-api', version.ref = 'google-cloud-functions' }
 kotest-runner = { module = 'io.kotest:kotest-runner-junit5', version.ref = 'kotest-runner' }
