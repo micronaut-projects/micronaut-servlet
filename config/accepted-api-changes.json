@@ -33,6 +33,26 @@
     "type": "io.micronaut.servlet.http.ServletCookies",
     "member": "Constructor io.micronaut.servlet.http.ServletCookies(java.lang.String,io.micronaut.http.HttpHeaders,io.micronaut.core.convert.ConversionService)",
     "reason": "removed deprecated class for Micronaut 4.0.x"
+  },
+  {
+    "type": "io.micronaut.servlet.http.ServletCookies",
+    "member": "Implemented interface io.micronaut.core.convert.value.ConvertibleValues",
+    "reason": "removed deprecated class for Micronaut 4.0.x"
+  },
+  {
+    "type": "io.micronaut.servlet.http.ServletCookies",
+    "member": "Implemented interface io.micronaut.core.value.ValueResolver",
+    "reason": "removed deprecated class for Micronaut 4.0.x"
+  },
+  {
+    "type": "io.micronaut.servlet.http.ServletCookies",
+    "member": "Implemented interface java.lang.Iterable",
+    "reason": "removed deprecated class for Micronaut 4.0.x"
+  },
+  {
+    "type": "io.micronaut.servlet.http.ServletCookies",
+    "member": "Implemented interface io.micronaut.http.cookie.Cookies",
+    "reason": "removed deprecated class for Micronaut 4.0.x"
   }
 ]
 
