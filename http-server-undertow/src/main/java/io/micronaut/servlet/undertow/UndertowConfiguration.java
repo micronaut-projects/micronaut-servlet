@@ -17,6 +17,7 @@ package io.micronaut.servlet.undertow;
 
 import io.micronaut.context.annotation.ConfigurationBuilder;
 import io.micronaut.context.annotation.ConfigurationProperties;
+import io.micronaut.context.annotation.Primary;
 import io.micronaut.core.annotation.TypeHint;
 import io.micronaut.core.convert.format.MapFormat;
 import io.micronaut.core.naming.conventions.StringConvention;
@@ -40,6 +41,7 @@ import java.util.Optional;
         value = {UndertowOptions.class, org.xnio.Option.class},
         accessType = TypeHint.AccessType.ALL_DECLARED_FIELDS
 )
+@Primary
 public class UndertowConfiguration extends HttpServerConfiguration {
 
     @ConfigurationBuilder
