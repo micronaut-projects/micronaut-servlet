@@ -1,0 +1,38 @@
+[
+  {
+    "type": "io.micronaut.servlet.http.ServletCookies",
+    "member": "Class io.micronaut.servlet.http.ServletCookies",
+    "reason": "removed deprecated class for Micronaut 4.0.x"
+  },
+  {
+    "type": "io.micronaut.servlet.http.ServletCookies",
+    "member": "Method io.micronaut.servlet.http.ServletCookies.findCookie(java.lang.CharSequence)",
+    "reason": "removed deprecated class for Micronaut 4.0.x"
+  },
+  {
+    "type": "io.micronaut.servlet.http.ServletCookies",
+    "member": "Method io.micronaut.servlet.http.ServletCookies.get(java.lang.CharSequence,java.lang.Class)",
+    "reason": "removed deprecated class for Micronaut 4.0.x"
+  },
+  {
+    "type": "io.micronaut.servlet.http.ServletCookies",
+    "member": "Method io.micronaut.servlet.http.ServletCookies.get(java.lang.CharSequence,io.micronaut.core.convert.ArgumentConversionContext)",
+    "reason": "removed deprecated class for Micronaut 4.0.x"
+  },
+  {
+    "type": "io.micronaut.servlet.http.ServletCookies",
+    "member": "Method io.micronaut.servlet.http.ServletCookies.getAll()",
+    "reason": "removed deprecated class for Micronaut 4.0.x"
+  },
+  {
+    "type": "io.micronaut.servlet.http.ServletCookies",
+    "member": "Method io.micronaut.servlet.http.ServletCookies.values()",
+    "reason": "removed deprecated class for Micronaut 4.0.x"
+  },
+  {
+    "type": "io.micronaut.servlet.http.ServletCookies",
+    "member": "Constructor io.micronaut.servlet.http.ServletCookies(java.lang.String,io.micronaut.http.HttpHeaders,io.micronaut.core.convert.ConversionService)",
+    "reason": "removed deprecated class for Micronaut 4.0.x"
+  }
+]
+

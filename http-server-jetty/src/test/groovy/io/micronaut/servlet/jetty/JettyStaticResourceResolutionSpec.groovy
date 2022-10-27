@@ -15,26 +15,28 @@ import io.micronaut.runtime.server.EmbeddedServer
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.micronaut.test.support.TestPropertyProvider
 import io.micronaut.web.router.resource.StaticResourceConfiguration
+import jakarta.inject.Inject
 import spock.lang.Specification
 
-import jakarta.inject.Inject
+import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.Paths
-import java.time.Instant
-import java.time.ZoneId
-import java.time.ZonedDateTime
-import java.time.temporal.ChronoUnit
 
-import static io.micronaut.http.HttpHeaders.*
+import static io.micronaut.http.HttpHeaders.CACHE_CONTROL
+import static io.micronaut.http.HttpHeaders.CONTENT_LENGTH
+import static io.micronaut.http.HttpHeaders.CONTENT_TYPE
 
 @MicronautTest
 class JettyStaticResourceResolutionSpec extends Specification implements TestPropertyProvider {
 
+    private static Path tempDir
     private static File tempFile
 
     static {
-        tempFile = File.createTempFile("staticResourceResolutionSpec", ".html")
+        tempDir = Files.createTempDirectory(Paths.get(System.getProperty("user.dir")+"/build"),"tmp")
+        tempFile = Files.createTempFile(tempDir,"staticResourceResolutionSpec", ".html").toFile()
         tempFile.write("<html><head></head><body>HTML Page from static file</body></html>")
-        tempFile
+        tempDir.toFile().deleteOnExit()
     }
 
     @Override
