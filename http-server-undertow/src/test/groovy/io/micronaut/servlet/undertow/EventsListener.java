@@ -1,5 +1,6 @@
 package io.micronaut.servlet.undertow;
 
+import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.env.Environment;
 import io.micronaut.context.event.ApplicationEventListener;
 import io.micronaut.context.event.ShutdownEvent;
@@ -8,6 +9,7 @@ import io.micronaut.runtime.server.event.ServerShutdownEvent;
 import io.micronaut.runtime.server.event.ServerStartupEvent;
 import jakarta.inject.Singleton;
 
+@Requires(property = "spec.name", value = "UndertowStartStopSpec")
 @Singleton
 public class EventsListener implements ApplicationEventListener<Object>  {
 
