@@ -3,6 +3,7 @@ package io.micronaut.servlet.jetty
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.context.annotation.Requires
+import io.micronaut.core.annotation.Introspected
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Delete
 import io.micronaut.http.annotation.Get
@@ -176,7 +177,7 @@ class JettyNullableCrudSpec extends Specification {
         NullableBook update(Long id, @Nullable String title)
     }
 
-
+    @Introspected
     static class NullableBook {
         Long id
         String title

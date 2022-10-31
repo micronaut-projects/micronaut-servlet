@@ -49,19 +49,16 @@ public class ServletResponseFactory implements HttpResponseFactory {
         ALTERNATE = Objects.requireNonNullElseGet(alternate, SimpleHttpResponseFactory::new);
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public <T> MutableHttpResponse<T> ok(T body) {
         final HttpRequest<Object> req = ServerRequestContext.currentRequest().orElse(null);
-        if (req instanceof ServletExchange) {
-            final MutableHttpResponse response = ((ServletExchange) req).getResponse();
-            return response.status(HttpStatus.OK).body(body);
+        if (req instanceof ServletExchange<?, ?> servletExchange) {
+            return servletExchange.getResponse().status(HttpStatus.OK).body(body);
         } else {
             return ALTERNATE.ok(body);
         }
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public <T> MutableHttpResponse<T> status(HttpStatus status, String reason) {
         return status(status.getCode(), reason);
@@ -70,21 +67,18 @@ public class ServletResponseFactory implements HttpResponseFactory {
     @Override
     public <T> MutableHttpResponse<T> status(int status, String reason) {
         final HttpRequest<Object> req = ServerRequestContext.currentRequest().orElse(null);
-        if (req instanceof ServletExchange) {
-            final MutableHttpResponse<T> response = ((ServletExchange) req).getResponse();
-            return response.status(status, reason);
+        if (req instanceof ServletExchange<?, ?> servletExchange) {
+            return (MutableHttpResponse<T>) servletExchange.getResponse().status(status, reason);
         } else {
             return ALTERNATE.status(status, reason);
         }
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public <T> MutableHttpResponse<T> status(HttpStatus status, T body) {
         final HttpRequest<Object> req = ServerRequestContext.currentRequest().orElse(null);
-        if (req instanceof ServletExchange) {
-            final MutableHttpResponse<T> response = ((ServletExchange) req).getResponse();
-            return response.status(status).body(body);
+        if (req instanceof ServletExchange<?, ?> servletExchange) {
+            return servletExchange.getResponse().status(status).body(body);
         } else {
             return ALTERNATE.status(status, body);
         }

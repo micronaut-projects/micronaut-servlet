@@ -441,6 +441,7 @@ class JettyHttpPostSpec extends Specification {
         Integer pages
     }
 
+    @Introspected
     static class Params {
         List<String> param
     }

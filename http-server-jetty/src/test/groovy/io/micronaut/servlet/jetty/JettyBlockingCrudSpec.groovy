@@ -4,6 +4,7 @@ package io.micronaut.servlet.jetty
 import io.micronaut.context.ApplicationContext
 import io.micronaut.context.annotation.Property
 import io.micronaut.context.annotation.Requires
+import io.micronaut.core.annotation.Introspected
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.*
@@ -290,6 +291,7 @@ class JettyBlockingCrudSpec extends Specification {
     }
 
 
+    @Introspected
     static class Book {
         Long id
         String title

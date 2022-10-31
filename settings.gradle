@@ -9,9 +9,18 @@ plugins {
     id 'io.micronaut.build.shared.settings' version '6.0.1'
 }
 
-enableFeaturePreview 'TYPESAFE_PROJECT_ACCESSORS'
+dependencyResolutionManagement {
+    repositories {
+        mavenCentral()
+        maven { url "https://s01.oss.sonatype.org/content/repositories/snapshots/" }
+    }
+}
 
 rootProject.name = 'servlet-parent'
+
+micronautBuild {
+    importMicronautCatalog()
+}
 
 include 'servlet-bom'
 include 'servlet-core'
@@ -21,16 +30,4 @@ include 'http-server-undertow'
 include 'http-server-tomcat'
 
 include 'test-suite-kotlin-jetty'
-
-dependencyResolutionManagement {
-    repositories {
-        mavenCentral()
-        maven { url "https://s01.oss.sonatype.org/content/repositories/snapshots/" }
-    }
-}
-
-micronautBuild {
-    importMicronautCatalog()
-}
-
 

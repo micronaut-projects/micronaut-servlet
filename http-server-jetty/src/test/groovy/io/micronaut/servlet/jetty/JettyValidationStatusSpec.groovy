@@ -16,7 +16,6 @@ import io.micronaut.http.client.HttpClient
 import io.micronaut.http.client.annotation.Client
 import io.micronaut.http.client.exceptions.HttpClientResponseException
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
-import io.micronaut.validation.Validated
 import jakarta.inject.Inject
 import spock.lang.Issue
 import spock.lang.Specification
@@ -68,7 +67,6 @@ class JettyValidationStatusSpec extends Specification {
     }
 
     @Requires(property = 'spec.name', value = 'JettyValidationStatusSpec')
-    @Validated
     @Controller('/validation-status-test')
     static class StatusController {
         Map<String, Book> books = [:]

@@ -1,10 +1,10 @@
 
 package io.micronaut.servlet.jetty
 
-import com.fasterxml.jackson.core.JsonParseException
 import groovy.json.JsonSlurper
 import io.micronaut.context.annotation.Property
 import io.micronaut.context.annotation.Requires
+import io.micronaut.core.annotation.Introspected
 import io.micronaut.http.HttpHeaders
 import io.micronaut.http.HttpRequest
 import io.micronaut.http.HttpResponse
@@ -398,8 +398,8 @@ class JettyJsonBodyBindingSpec extends Specification {
             return request.getBody().map({ foo -> foo.toString()}).orElse("not found")
         }
 
-        @Error(JsonParseException)
-        HttpResponse jsonError(HttpRequest request, JsonParseException jsonParseException) {
+        @Error(Exception)
+        HttpResponse jsonError(HttpRequest request, Exception jsonParseException) {
             def response = HttpResponse.status(HttpStatus.BAD_REQUEST, "No!! Invalid JSON")
             def error = new JsonError("Invalid JSON: ${jsonParseException.message}")
             error.link(Link.SELF, Link.of(request.getUri()))
@@ -408,6 +408,7 @@ class JettyJsonBodyBindingSpec extends Specification {
         }
     }
 
+    @Introspected
     static class Foo {
         String name
         Integer age

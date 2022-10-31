@@ -33,5 +33,5 @@ public interface ServletExchange<Req, Res> {
     /**
      * @return The response object
      */
-    ServletHttpResponse<Res, ? super Object> getResponse();
+    ServletHttpResponse<Res, ?> getResponse();
 }

@@ -56,7 +56,7 @@ public class SystemFileEncoder extends AbstractFileEncoder<SystemFile> {
             AnnotationMetadata annotationMetadata,
             @NonNull SystemFile value) {
         final ServletHttpRequest<?, ? super Object> request = exchange.getRequest();
-        ServletHttpResponse<?, ? super Object> response = exchange.getResponse();
+        ServletHttpResponse<?, ?> response = exchange.getResponse();
         if (ifNotModified(value, request, response)) {
             return Publishers.just(
                     setDateHeader(

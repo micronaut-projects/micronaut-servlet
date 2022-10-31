@@ -56,12 +56,12 @@ public class ServletBodyBinder<T> extends DefaultBodyAnnotationBinder<T> impleme
 
     /**
      * Default constructor.
-     * @param conversionService The conversion service
+     *
+     * @param conversionService      The conversion service
      * @param mediaTypeCodecRegistry The codec registry
      */
-    protected ServletBodyBinder(
-            ConversionService<?> conversionService,
-            MediaTypeCodecRegistry mediaTypeCodecRegistry) {
+    protected ServletBodyBinder(ConversionService conversionService,
+                                MediaTypeCodecRegistry mediaTypeCodecRegistry) {
         super(conversionService);
         this.mediaTypeCodeRegistry = mediaTypeCodecRegistry;
     }

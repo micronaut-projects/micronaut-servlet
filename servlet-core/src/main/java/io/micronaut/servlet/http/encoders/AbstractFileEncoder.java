@@ -86,7 +86,7 @@ public abstract class AbstractFileEncoder<T extends FileCustomizableResponseType
      */
     protected boolean ifNotModified(@NonNull T value,
                                     ServletHttpRequest<?, ? super Object> request,
-                                    ServletHttpResponse<?, ? super Object> response) {
+                                    ServletHttpResponse<?, ?> response) {
         long lastModified = value.getLastModified();
 
         // Cache Validation

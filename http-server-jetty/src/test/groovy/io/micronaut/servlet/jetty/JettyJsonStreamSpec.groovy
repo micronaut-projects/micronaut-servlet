@@ -3,6 +3,7 @@ package io.micronaut.servlet.jetty
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.context.annotation.Requires
+import io.micronaut.core.annotation.Introspected
 import io.micronaut.core.async.annotation.SingleResult
 import io.micronaut.http.HttpRequest
 import io.micronaut.http.MediaType
@@ -249,14 +250,17 @@ class JettyJsonStreamSpec extends Specification {
         }
     }
 
+    @Introspected
     static class Book {
         String title
     }
 
+    @Introspected
     static class LibraryStats {
         Integer bookCount
     }
 
+    @Introspected
     static class Chunk {
         String type
     }

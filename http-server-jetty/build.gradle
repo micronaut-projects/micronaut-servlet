@@ -1,22 +1,7 @@
 plugins {
-    id "io.micronaut.build.internal.servlet-module"
+    id 'io.micronaut.build.internal.servlet.implementation'
 }
 
 dependencies {
-    annotationProcessor mn.micronaut.graal
-
-    api projects.servletEngine
-    api mn.micronaut.http.server
-
-    implementation(libs.jetty)
-
-    testAnnotationProcessor mn.micronaut.inject.java
-    testImplementation mn.micronaut.management
-    testImplementation mn.micronaut.http.client
-    testImplementation mn.micronaut.session
-    testImplementation(mn.groovy.json)
-    testImplementation mn.micronaut.reactor
-    testImplementation mn.micronaut.reactor.http.client
-
-    testImplementation(mn.micronaut.security)
+    implementation libs.jetty
 }
