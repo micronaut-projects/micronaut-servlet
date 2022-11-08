@@ -76,8 +76,7 @@ public class ServletBodyBinder<T> extends DefaultBodyAnnotationBinder<T> impleme
         final Argument<T> argument = context.getArgument();
         final Class<T> type = argument.getType();
         String name = argument.getAnnotationMetadata().stringValue(Body.class).orElse(null);
-        if (source instanceof ServletHttpRequest) {
-            ServletHttpRequest<?, ?> servletHttpRequest = (ServletHttpRequest<?, ?>) source;
+        if (source instanceof ServletHttpRequest<?, ?> servletHttpRequest) {
             if (Readable.class.isAssignableFrom(type)) {
                 Readable readable = new Readable() {
                     @Override
@@ -103,7 +102,8 @@ public class ServletBodyBinder<T> extends DefaultBodyAnnotationBinder<T> impleme
                     }
                 };
                 return () -> (Optional<T>) Optional.of(readable);
-            } else if (CharSequence.class.isAssignableFrom(type) && name == null) {
+            }
+            if (CharSequence.class.isAssignableFrom(type) && name == null) {
                 try (InputStream inputStream = servletHttpRequest.getInputStream()) {
                     final String content = IOUtils.readText(new BufferedReader(new InputStreamReader(inputStream, source.getCharacterEncoding())));
                     return () -> (Optional<T>) Optional.of(content);
@@ -122,55 +122,49 @@ public class ServletBodyBinder<T> extends DefaultBodyAnnotationBinder<T> impleme
                         }
                     };
                 }
-            } else {
-                final MediaType mediaType = source.getContentType().orElse(MediaType.APPLICATION_JSON_TYPE);
-                if (isFormSubmission(mediaType)) {
-                    if (name != null) {
-                        return () -> servletHttpRequest.getParameters().get(name, context);
-                    } else {
-                        Optional<T> result = conversionService.convert(servletHttpRequest.getParameters().asMap(), context);
-                        return () -> result;
-                    }
-                } else {
-                    final MediaTypeCodec codec = mediaTypeCodeRegistry
-                            .findCodec(mediaType, type)
-                            .orElse(null);
-
-                    if (codec != null) {
-
-                        try (InputStream inputStream = servletHttpRequest.getInputStream()) {
-                            if (Publishers.isConvertibleToPublisher(type)) {
-                                final Argument<?> typeArg = argument.getFirstTypeVariable().orElse(Argument.OBJECT_ARGUMENT);
-                                if (Publishers.isSingle(type)) {
-                                    T content = (T) codec.decode(typeArg, inputStream);
-                                    final Publisher<T> publisher = Publishers.just(content);
-                                    final T converted = conversionService.convertRequired(publisher, type);
-                                    return () -> Optional.of(converted);
-                                } else {
-                                    final Argument<? extends List<?>> containerType = Argument.listOf(typeArg.getType());
-                                    T content = (T) codec.decode(containerType, inputStream);
-                                    final Publisher<T> publisher = Flux.fromIterable((Iterable) content);
-                                    final T converted = conversionService.convertRequired(publisher, type);
-                                    return () -> Optional.of(converted);
-                                }
-                            } else {
-                                if (type.isArray()) {
-                                    Class<?> componentType = type.getComponentType();
-                                    List<T> content = (List<T>) codec.decode(Argument.listOf(componentType), inputStream);
-                                    Object[] array = content.toArray((Object[]) Array.newInstance(componentType, 0));
-                                    return () -> Optional.of((T) array);
-                                } else {
-                                    T content = codec.decode(argument, inputStream);
-                                    return () -> Optional.of(content);
-                                }
-                            }
-                        } catch (CodecException | IOException e) {
-                            throw new CodecException("Unable to decode request body: " + e.getMessage(), e);
-                        }
-                    }
-                }
-
             }
+            final MediaType mediaType = source.getContentType().orElse(MediaType.APPLICATION_JSON_TYPE);
+            if (isFormSubmission(mediaType)) {
+                if (name != null) {
+                    return () -> servletHttpRequest.getParameters().get(name, context);
+                } else {
+                    Optional<T> result = conversionService.convert(servletHttpRequest.getParameters().asMap(), context);
+                    return () -> result;
+                }
+            }
+            final MediaTypeCodec codec = mediaTypeCodeRegistry
+                    .findCodec(mediaType, type)
+                    .orElse(null);
+
+            if (codec != null) {
+                try (InputStream inputStream = servletHttpRequest.getInputStream()) {
+                    if (Publishers.isConvertibleToPublisher(type)) {
+                        final Argument<?> typeArg = argument.getFirstTypeVariable().orElse(Argument.OBJECT_ARGUMENT);
+                        if (Publishers.isSingle(type)) {
+                            T content = (T) codec.decode(typeArg, inputStream);
+                            final Publisher<T> publisher = Publishers.just(content);
+                            final T converted = conversionService.convertRequired(publisher, type);
+                            return () -> Optional.of(converted);
+                        }
+                        final Argument<? extends List<?>> containerType = Argument.listOf(typeArg.getType());
+                        T content = (T) codec.decode(containerType, inputStream);
+                        final Publisher<T> publisher = Flux.fromIterable((Iterable) content);
+                        final T converted = conversionService.convertRequired(publisher, type);
+                        return () -> Optional.of(converted);
+                    }
+                    if (type.isArray()) {
+                        Class<?> componentType = type.getComponentType();
+                        List<T> content = (List<T>) codec.decode(Argument.listOf(componentType), inputStream);
+                        Object[] array = content.toArray((Object[]) Array.newInstance(componentType, 0));
+                        return () -> Optional.of((T) array);
+                    }
+                    T content = codec.decode(argument, inputStream);
+                    return () -> Optional.of(content);
+                } catch (CodecException | IOException e) {
+                    throw new CodecException("Unable to decode request body: " + e.getMessage(), e);
+                }
+            }
+
         }
         return super.bind(context, source);
     }

@@ -364,15 +364,7 @@ public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpSe
         } else {
             this.reason = message.toString();
         }
-        if (message != null) {
-            try {
-                delegate.sendError(status, reason);
-            } catch (IOException e) {
-                throw new InternalServerException("Error sending error code: " + e.getMessage(), e);
-            }
-        } else {
-            delegate.setStatus(status);
-        }
+        delegate.setStatus(status);
         return this;
     }
 
@@ -383,10 +375,11 @@ public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpSe
 
     @Override
     public String reason() {
+        if (reason != null) {
+            return reason;
+        }
         try {
-            return HttpStatus.valueOf(
-                delegate.getStatus()
-            ).getReason();
+            return HttpStatus.valueOf(delegate.getStatus()).getReason();
         } catch (Exception e) {
             return "";
         }

@@ -87,9 +87,6 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable,
      */
     protected static final Logger LOG = LoggerFactory.getLogger(ServletHttpHandler.class);
 
-    private static final Pattern IGNORABLE_ERROR_MESSAGE = Pattern.compile(
-        "^.*(?:connection.*(?:reset|closed|abort|broken)|broken.*pipe).*$", Pattern.CASE_INSENSITIVE);
-
     protected final ApplicationContext applicationContext;
     private final RequestArgumentSatisfier requestArgumentSatisfier;
     private final RouteExecutor routeExecutor;
@@ -241,7 +238,13 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable,
                 encodeResponse(exchange, req, response, responsePublisherCallback);
             } catch (Throwable e) {
                 response = routeExecutor.createDefaultErrorResponse(req, e);
-                encodeResponse(exchange, req, response, responsePublisherCallback);
+                try {
+                    encodeResponse(exchange, req, response, responsePublisherCallback);
+                } catch (Throwable e2) {
+                    LOG.error("Request [{} - {}] completed with error: {}", req.getMethodName(), req.getUri(), e2.getMessage(), e2);
+                    responsePublisherCallback.accept(null);
+                    return;
+                }
             }
             if (throwable != null) {
                 LOG.error("Request [{} - {}] completed with error: {}", req.getMethodName(), req.getUri(), throwable.getMessage(), throwable);
@@ -249,7 +252,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable,
                 LOG.debug("Request [{} - {}] completed successfully", req.getMethodName(), req.getUri());
             }
         } else {
-            responsePublisherCallback.accept(response);
+            responsePublisherCallback.accept(null);
         }
     }
 
@@ -365,7 +368,9 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable,
                 response.contentType(mediaType);
             }
 
-            setHeadersFromMetadata(exchange.getResponse(), routeAnnotationMetadata, body);
+            ServletHttpResponse<Res, ?> servletResponse = exchange.getResponse();
+
+            setHeadersFromMetadata(servletResponse, routeAnnotationMetadata, body);
 
             if (Publishers.isConvertibleToPublisher(body)) {
                 boolean isSingle = Publishers.isSingle(body.getClass());
@@ -390,7 +395,6 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable,
                     }
                 } else {
                     // stream case
-                    final ServletHttpResponse<Res, ?> servletResponse = exchange.getResponse();
                     if (exchange.getRequest().isAsyncSupported()) {
                         Mono.from(servletResponse.stream(publisher)).subscribe(responsePublisherCallback);
                         return;
@@ -401,26 +405,26 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable,
                 }
             }
             if (body instanceof HttpStatus) {
-                exchange.getResponse().status((HttpStatus) body);
+                servletResponse.status((HttpStatus) body);
             } else if (body instanceof CharSequence) {
                 if (response.getContentType().isEmpty()) {
                     response.contentType(MediaType.APPLICATION_JSON);
                 }
-                try (BufferedWriter writer = exchange.getResponse().getWriter()) {
+                try (BufferedWriter writer = servletResponse.getWriter()) {
                     writer.write(body.toString());
                     writer.flush();
                 } catch (IOException e) {
                     throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
                 }
             } else if (body instanceof byte[] byteArray) {
-                try (OutputStream outputStream = exchange.getResponse().getOutputStream()) {
+                try (OutputStream outputStream = servletResponse.getOutputStream()) {
                     outputStream.write(byteArray);
                     outputStream.flush();
                 } catch (IOException e) {
                     throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
                 }
             } else if (body instanceof Writable writable) {
-                try (OutputStream outputStream = exchange.getResponse().getOutputStream()) {
+                try (OutputStream outputStream = servletResponse.getOutputStream()) {
                     writable.writeTo(outputStream, response.getCharacterEncoding());
                     outputStream.flush();
                 } catch (IOException e) {
@@ -429,17 +433,17 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable,
             } else {
                 final MediaTypeCodec codec = mediaTypeCodecRegistry.findCodec(mediaType, bodyType).orElse(null);
                 if (codec != null) {
-                    try (OutputStream outputStream = exchange.getResponse().getOutputStream()) {
+                    try (OutputStream outputStream = servletResponse.getOutputStream()) {
                         codec.encode(body, outputStream);
                         outputStream.flush();
                     } catch (Throwable e) {
+                        e.printStackTrace();
                         throw new CodecException("Failed to encode object [" + body + "] to content type [" + mediaType + "]: " + e.getMessage(), e);
                     }
                 } else {
                     throw new CodecException("No codec present capable of encoding object [" + body + "] to content type [" + mediaType + "]");
                 }
             }
-
         }
         responsePublisherCallback.accept(response);
     }

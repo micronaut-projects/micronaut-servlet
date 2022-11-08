@@ -95,7 +95,6 @@ public class DefaultServletHttpRequest<B> implements
     private final MediaTypeCodecRegistry codecRegistry;
     private DefaultServletCookies cookies;
     private Object body;
-    private Scheduler scheduler;
     private boolean bodyIsReadAsync;
 
     /**

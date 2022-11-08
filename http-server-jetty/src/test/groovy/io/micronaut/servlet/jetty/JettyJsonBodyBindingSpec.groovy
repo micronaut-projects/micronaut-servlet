@@ -16,6 +16,7 @@ import io.micronaut.http.annotation.Post
 import io.micronaut.http.client.HttpClient
 import io.micronaut.http.client.annotation.Client
 import io.micronaut.http.client.exceptions.HttpClientResponseException
+import io.micronaut.http.codec.CodecException
 import io.micronaut.http.hateoas.JsonError
 import io.micronaut.http.hateoas.Link
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
@@ -93,8 +94,8 @@ class JettyJsonBodyBindingSpec extends Specification {
         then:
         response.code() == HttpStatus.BAD_REQUEST.code
         response.headers.get(HttpHeaders.CONTENT_TYPE) == io.micronaut.http.MediaType.APPLICATION_JSON
-        result['_links'].self.href == '/json/map'
-//        result.message.startsWith('Invalid JSON')
+        result['_links'].self.href == ['/json/map']
+        result['_embedded'].errors[0].message.contains "Unrecognized token 'The'"
     }
 
     void "test simple map body parsing"() {
@@ -396,15 +397,6 @@ class JettyJsonBodyBindingSpec extends Specification {
         @Post("/request-generic")
         String requestGeneric(HttpRequest<Foo> request) {
             return request.getBody().map({ foo -> foo.toString()}).orElse("not found")
-        }
-
-        @Error(Exception)
-        HttpResponse jsonError(HttpRequest request, Exception jsonParseException) {
-            def response = HttpResponse.status(HttpStatus.BAD_REQUEST, "No!! Invalid JSON")
-            def error = new JsonError("Invalid JSON: ${jsonParseException.message}")
-            error.link(Link.SELF, Link.of(request.getUri()))
-            response.body(error)
-            return response
         }
     }
 
