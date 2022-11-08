@@ -322,6 +322,11 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable,
         AnnotationMetadata routeAnnotationMetadata = response.getAttribute(HttpAttributes.ROUTE_INFO, RouteInfo.class)
             .map(AnnotationMetadataProvider::getAnnotationMetadata)
             .orElse(AnnotationMetadata.EMPTY_METADATA);
+
+
+        ServletHttpResponse<Res, ?> servletResponse = exchange.getResponse();
+        servletResponse.status(response.status(), response.reason());
+
         if (body != null) {
             Class<?> bodyType = body.getClass();
             ServletResponseEncoder<Object> responseEncoder = (ServletResponseEncoder<Object>) responseEncoders.get(bodyType);
@@ -358,19 +363,40 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable,
                 response.contentType(mediaType);
             }
 
-            ServletHttpResponse<Res, ?> servletResponse = exchange.getResponse();
-
             setHeadersFromMetadata(servletResponse, routeAnnotationMetadata, body);
-
             if (Publishers.isConvertibleToPublisher(body)) {
-                // This must be a streaming case, the route executor should eliminate single result publishers
+                boolean isSingle = Publishers.isSingle(body.getClass());
                 Publisher<?> publisher = Publishers.convertPublisher(body, Publisher.class);
-                if (exchange.getRequest().isAsyncSupported()) {
-                    Mono.from(servletResponse.stream(publisher)).subscribe(responsePublisherCallback);
-                    return;
+                if (isSingle) {
+                    if (exchange.getRequest().isAsyncSupported()) {
+                        Flux<Object> flux = Flux.from(publisher);
+                        flux.next().switchIfEmpty(Mono.just(response)).subscribe(bodyValue -> {
+                            MutableHttpResponse<?> nextResponse;
+                            if (bodyValue instanceof MutableHttpResponse) {
+                                nextResponse = ((MutableHttpResponse<?>) bodyValue);
+                                if (response == nextResponse) {
+                                    nextResponse.body(null);
+                                }
+                            } else {
+                                nextResponse = response.body(bodyValue);
+                            }
+                            // Call encoding again, the body might need to be encoded
+                            encodeResponse(exchange, request, nextResponse, responsePublisherCallback);
+                        });
+                        return;
+                    } else {
+                        // fallback to blocking
+                        response.body(Mono.from(publisher).block());
+                    }
                 } else {
-                    // fallback to blocking
-                    servletResponse.body(Flux.from(publisher).collectList().block());
+                    // stream case
+                    if (exchange.getRequest().isAsyncSupported()) {
+                        Mono.from(servletResponse.stream(publisher)).subscribe(responsePublisherCallback);
+                        return;
+                    } else {
+                        // fallback to blocking
+                        servletResponse.body(Flux.from(publisher).collectList().block());
+                    }
                 }
             }
             if (body instanceof HttpStatus) {
@@ -406,7 +432,6 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable,
                         codec.encode(body, outputStream);
                         outputStream.flush();
                     } catch (Throwable e) {
-                        e.printStackTrace();
                         throw new CodecException("Failed to encode object [" + body + "] to content type [" + mediaType + "]: " + e.getMessage(), e);
                     }
                 } else {
