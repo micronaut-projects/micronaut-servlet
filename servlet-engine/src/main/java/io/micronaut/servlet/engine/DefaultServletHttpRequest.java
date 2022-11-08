@@ -43,7 +43,6 @@ import io.micronaut.servlet.http.StreamedServletMessage;
 import org.reactivestreams.Subscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
-import reactor.core.scheduler.Scheduler;
 
 import javax.servlet.AsyncContext;
 import javax.servlet.ReadListener;

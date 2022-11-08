@@ -33,7 +33,6 @@ import io.micronaut.http.MutableHttpResponse;
 import io.micronaut.http.annotation.Produces;
 import io.micronaut.http.codec.MediaTypeCodec;
 import io.micronaut.http.cookie.Cookie;
-import io.micronaut.http.server.exceptions.InternalServerException;
 import io.micronaut.servlet.http.ServletHttpResponse;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
