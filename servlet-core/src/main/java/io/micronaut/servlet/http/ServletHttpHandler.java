@@ -27,7 +27,6 @@ import io.micronaut.core.io.Writable;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.http.HttpAttributes;
 import io.micronaut.http.HttpHeaders;
-import io.micronaut.http.HttpMethod;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
@@ -68,8 +67,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
-
-import static io.micronaut.http.HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD;
 
 /**
  * An HTTP handler that can deal with Serverless requests.
@@ -167,12 +164,6 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable,
     @Override
     public boolean isRunning() {
         return getApplicationContext().isRunning();
-    }
-
-    static boolean isPreflightRequest(HttpRequest<?> request) {
-        HttpHeaders headers = request.getHeaders();
-        Optional<String> origin = headers.getOrigin();
-        return origin.isPresent() && headers.contains(ACCESS_CONTROL_REQUEST_METHOD) && HttpMethod.OPTIONS == request.getMethod();
     }
 
     @Override
@@ -372,35 +363,14 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable,
             setHeadersFromMetadata(servletResponse, routeAnnotationMetadata, body);
 
             if (Publishers.isConvertibleToPublisher(body)) {
-                boolean isSingle = Publishers.isSingle(body.getClass());
+                // This must be a streaming case, the route executor should eliminate single result publishers
                 Publisher<?> publisher = Publishers.convertPublisher(body, Publisher.class);
-                if (isSingle) {
-                    if (exchange.getRequest().isAsyncSupported()) {
-                        Flux<?> flux = Flux.from(publisher);
-                        flux.next().subscribe(bodyValue -> {
-                            MutableHttpResponse<?> nextResponse;
-                            if (bodyValue instanceof MutableHttpResponse) {
-                                nextResponse = ((MutableHttpResponse<?>) bodyValue);
-                            } else {
-                                nextResponse = response.body(bodyValue);
-                            }
-                            // Call encoding again, the body might need to be encoded
-                            encodeResponse(exchange, request, nextResponse, responsePublisherCallback);
-                        });
-                        return;
-                    } else {
-                        // fallback to blocking
-                        response.body(Mono.from(publisher).block());
-                    }
+                if (exchange.getRequest().isAsyncSupported()) {
+                    Mono.from(servletResponse.stream(publisher)).subscribe(responsePublisherCallback);
+                    return;
                 } else {
-                    // stream case
-                    if (exchange.getRequest().isAsyncSupported()) {
-                        Mono.from(servletResponse.stream(publisher)).subscribe(responsePublisherCallback);
-                        return;
-                    } else {
-                        // fallback to blocking
-                        servletResponse.body(Flux.from(publisher).collectList().block());
-                    }
+                    // fallback to blocking
+                    servletResponse.body(Flux.from(publisher).collectList().block());
                 }
             }
             if (body instanceof HttpStatus) {

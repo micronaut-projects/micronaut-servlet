@@ -21,19 +21,19 @@ class JettyHealthSpec extends Specification {
 
     void 'test healthy'() {
         given:
-        def liveness = client.toBlocking().exchange("/health/liveness", HealthResult)
-        def readiness = client.toBlocking().exchange("/health/readiness", HealthResult)
-        def overall = client.toBlocking().exchange("/health", HealthResult)
+        def liveness = client.toBlocking().exchange("/health/liveness", Map)
+        def readiness = client.toBlocking().exchange("/health/readiness", Map)
+        def overall = client.toBlocking().exchange("/health", Map)
 
         expect:
-        liveness.status() == HttpStatus.OK
-        readiness.status() == HttpStatus.OK
-        overall.status() == HttpStatus.OK
+        liveness.status == HttpStatus.OK
+        readiness.status == HttpStatus.OK
+        overall.status == HttpStatus.OK
         and:"there are no liveness indicators so unknown"
-        liveness.body().status == HealthStatus.UNKNOWN
+        liveness.body.get().status == HealthStatus.UNKNOWN as String
         and:"readiness indicates up"
-        readiness.body().status == HealthStatus.UP
+        readiness.body.get().status == HealthStatus.UP as String
         and:'so does overall status'
-        overall.body().status == HealthStatus.UP
+        overall.body.get().status == HealthStatus.UP as String
     }
 }
