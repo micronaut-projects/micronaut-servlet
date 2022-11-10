@@ -55,7 +55,7 @@ public class StreamFileEncoder extends AbstractFileEncoder<StreamedFile> {
             AnnotationMetadata annotationMetadata,
             @NonNull StreamedFile value) {
         final ServletHttpRequest<?, ? super Object> request = exchange.getRequest();
-        ServletHttpResponse<?, ? super Object> response = exchange.getResponse();
+        ServletHttpResponse<?, ?> response = exchange.getResponse();
         if (ifNotModified(value, request, response)) {
             return Publishers.just(
                     setDateHeader(

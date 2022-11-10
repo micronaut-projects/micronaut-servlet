@@ -38,8 +38,11 @@ class JettyCorsSpec extends Specification implements TestPropertyProvider {
         then:
         response.status == HttpStatus.NO_CONTENT
         response.contentLength == -1
-        headerNames.size() == 3
-        headerNames.contains(CONNECTION)
+        headerNames.size() == 2
+        // Client is now keep-alive so we don't get the connection header
+        !headerNames.contains(CONNECTION)
+        headerNames.contains(DATE)
+        headerNames.contains(SERVER)
     }
 
     void "test cors request without configuration"() {
@@ -54,8 +57,11 @@ class JettyCorsSpec extends Specification implements TestPropertyProvider {
 
         then:
         response.status == HttpStatus.NO_CONTENT
-        headerNames.size() == 3
-        headerNames.contains(CONNECTION)
+        headerNames.size() == 2
+        // Client is now keep-alive so we don't get the connection header
+        !headerNames.contains(CONNECTION)
+        headerNames.contains(DATE)
+        headerNames.contains(SERVER)
     }
 
     void "test cors request with a controller that returns map"() {
@@ -140,7 +146,10 @@ class JettyCorsSpec extends Specification implements TestPropertyProvider {
 
         then:
         response.code() == HttpStatus.FORBIDDEN.code
-        headerNames == [CONNECTION, DATE, SERVER] as Set
+        // Client is now keep-alive so we don't get the connection header
+        !headerNames.contains(CONNECTION)
+        headerNames.contains(DATE)
+        headerNames.contains(SERVER)
     }
 
     void "test cors request with invalid header"() {

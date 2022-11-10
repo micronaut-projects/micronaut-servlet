@@ -32,7 +32,6 @@ import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpMethod;
 import io.micronaut.http.HttpParameters;
 import io.micronaut.http.MediaType;
-import io.micronaut.http.MutableHttpResponse;
 import io.micronaut.http.codec.CodecException;
 import io.micronaut.http.codec.MediaTypeCodec;
 import io.micronaut.http.codec.MediaTypeCodecRegistry;
@@ -41,12 +40,9 @@ import io.micronaut.servlet.http.ServletExchange;
 import io.micronaut.servlet.http.ServletHttpRequest;
 import io.micronaut.servlet.http.ServletHttpResponse;
 import io.micronaut.servlet.http.StreamedServletMessage;
-import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.FluxSink;
-import reactor.core.scheduler.Scheduler;
-import reactor.core.scheduler.Schedulers;
+import reactor.core.publisher.Sinks;
 
 import javax.servlet.AsyncContext;
 import javax.servlet.ReadListener;
@@ -61,7 +57,17 @@ import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.Principal;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -73,33 +79,36 @@ import java.util.stream.Collectors;
  */
 @Internal
 public class DefaultServletHttpRequest<B> implements
-        ServletHttpRequest<HttpServletRequest, B>,
-        MutableConvertibleValues<Object>,
-        ServletExchange<HttpServletRequest, HttpServletResponse>,
-        StreamedServletMessage<B, byte[]> {
+    ServletHttpRequest<HttpServletRequest, B>,
+    MutableConvertibleValues<Object>,
+    ServletExchange<HttpServletRequest, HttpServletResponse>,
+    StreamedServletMessage<B, byte[]> {
 
+    private final ConversionService conversionService;
     private final HttpServletRequest delegate;
     private final URI uri;
     private final HttpMethod method;
     private final ServletRequestHeaders headers;
     private final ServletParameters parameters;
-    private final DefaultServletHttpResponse<Object> response;
+    private final DefaultServletHttpResponse<B> response;
     private final MediaTypeCodecRegistry codecRegistry;
     private DefaultServletCookies cookies;
     private Object body;
-    private Scheduler scheduler;
+    private boolean bodyIsReadAsync;
 
     /**
      * Default constructor.
      *
-     * @param delegate      The servlet request
-     * @param response      The servlet response
-     * @param codecRegistry The codec registry
+     * @param conversionService The servlet request
+     * @param delegate          The servlet request
+     * @param response          The servlet response
+     * @param codecRegistry     The codec registry
      */
-    protected DefaultServletHttpRequest(
-            HttpServletRequest delegate,
-            HttpServletResponse response,
-            MediaTypeCodecRegistry codecRegistry) {
+    protected DefaultServletHttpRequest(ConversionService conversionService,
+                                        HttpServletRequest delegate,
+                                        HttpServletResponse response,
+                                        MediaTypeCodecRegistry codecRegistry) {
+        this.conversionService = conversionService;
         this.delegate = delegate;
         this.codecRegistry = codecRegistry;
         final String contextPath = delegate.getContextPath();
@@ -123,10 +132,7 @@ public class DefaultServletHttpRequest<B> implements
         this.method = method;
         this.headers = new ServletRequestHeaders();
         this.parameters = new ServletParameters();
-        this.response = new DefaultServletHttpResponse<>(
-                this,
-                response
-        );
+        this.response = new DefaultServletHttpResponse<>(conversionService, this, response);
     }
 
     /**
@@ -142,75 +148,64 @@ public class DefaultServletHttpRequest<B> implements
     }
 
     @Override
-    public Publisher<? extends MutableHttpResponse<?>> subscribeOnExecutor(Publisher<? extends MutableHttpResponse<?>> responsePublisher) {
-        if (this.scheduler == null) {
-
-            final AsyncContext asyncContext = delegate.startAsync();
-            this.scheduler = Schedulers.fromExecutor(asyncContext::start);
-            return Flux.from(responsePublisher)
-                    .subscribeOn(scheduler)
-                    .doAfterTerminate(asyncContext::complete);
-        } else {
-            return responsePublisher;
-        }
+    public void executeAsync(AsyncExecutionCallback asyncExecutionCallback) {
+        AsyncContext asyncContext = delegate.startAsync();
+        asyncContext.start(() -> asyncExecutionCallback.run(asyncContext::complete));
     }
 
     @NonNull
     @Override
     public <T> Optional<T> getBody(@NonNull Argument<T> arg) {
-        if (arg != null) {
-            final Class<T> type = arg.getType();
-            final MediaType contentType = getContentType().orElse(MediaType.APPLICATION_JSON_TYPE);
-            long contentLength = getContentLength();
-            if (body == null && contentLength != 0) {
+        Objects.requireNonNull(arg);
+        if (bodyIsReadAsync) {
+            throw new IllegalStateException("Body is being read asynchronously!");
+        }
+        final Class<T> type = arg.getType();
+        final MediaType contentType = getContentType().orElse(MediaType.APPLICATION_JSON_TYPE);
+        long contentLength = getContentLength();
+        if (body == null && contentLength != 0) {
 
-                boolean isConvertibleValues = ConvertibleValues.class == type;
-                if (isFormSubmission(contentType)) {
-                    body = getParameters();
-                    if (isConvertibleValues) {
-                        return (Optional<T>) Optional.of(body);
-                    } else {
-                        return Optional.empty();
-                    }
-                } else if (CharSequence.class.isAssignableFrom(type)) {
-                    try (BufferedReader reader = delegate.getReader()) {
-                        final T value = (T) IOUtils.readText(reader);
-                        body = value;
-                        return Optional.ofNullable(value);
-                    } catch (IOException e) {
-                        throw new CodecException("Error decoding request body: " + e.getMessage(), e);
-                    }
-                } else {
-
-                    final MediaTypeCodec codec = codecRegistry.findCodec(contentType, type).orElse(null);
-                    if (codec != null) {
-                        try (InputStream inputStream = delegate.getInputStream()) {
-                            if (isConvertibleValues) {
-                                final Map map = codec.decode(Map.class, inputStream);
-                                body = ConvertibleValues.of(map);
-                                return (Optional<T>) Optional.of(body);
-                            } else {
-                                final T value = codec.decode(arg, inputStream);
-                                body = value;
-                                return Optional.ofNullable(value);
-                            }
-                        } catch (CodecException | IOException e) {
-                            throw new CodecException("Error decoding request body: " + e.getMessage(), e);
-                        }
-
-                    }
-                }
-            } else {
-                if (type.isInstance(body)) {
+            boolean isConvertibleValues = ConvertibleValues.class == type;
+            if (isFormSubmission(contentType)) {
+                body = getParameters();
+                if (isConvertibleValues) {
                     return (Optional<T>) Optional.of(body);
-                } else {
-                    if (body != null && body != parameters) {
-                        final T result = ConversionService.SHARED.convertRequired(body, arg);
-                        return Optional.ofNullable(result);
-                    }
                 }
-
+                return Optional.empty();
             }
+            if (CharSequence.class.isAssignableFrom(type)) {
+                try (BufferedReader reader = delegate.getReader()) {
+                    final T value = (T) IOUtils.readText(reader);
+                    body = value;
+                    return Optional.ofNullable(value);
+                } catch (IOException e) {
+                    throw new CodecException("Error decoding request body: " + e.getMessage(), e);
+                }
+            }
+            final MediaTypeCodec codec = codecRegistry.findCodec(contentType, type).orElse(null);
+            if (codec != null) {
+                try (InputStream inputStream = delegate.getInputStream()) {
+                    if (isConvertibleValues) {
+                        final Map map = codec.decode(Map.class, inputStream);
+                        body = ConvertibleValues.of(map);
+                        return (Optional<T>) Optional.of(body);
+                    }
+                    final T value = codec.decode(arg, inputStream);
+                    body = value;
+                    return Optional.ofNullable(value);
+                } catch (CodecException | IOException e) {
+                    throw new CodecException("Error decoding request body: " + e.getMessage(), e);
+                }
+            }
+        } else {
+            if (type.isInstance(body)) {
+                return (Optional<T>) Optional.of(body);
+            }
+            if (body != null && body != parameters) {
+                final T result = (T) conversionService.convertRequired(body, arg);
+                return Optional.ofNullable(result);
+            }
+
         }
         return Optional.empty();
     }
@@ -219,8 +214,8 @@ public class DefaultServletHttpRequest<B> implements
     @Override
     public Optional<Principal> getUserPrincipal() {
         return Optional.ofNullable(
-                ServletHttpRequest.super.getUserPrincipal()
-                        .orElse(delegate.getUserPrincipal())
+            ServletHttpRequest.super.getUserPrincipal()
+                .orElse(delegate.getUserPrincipal())
         );
     }
 
@@ -233,7 +228,7 @@ public class DefaultServletHttpRequest<B> implements
     @Override
     public Optional<MediaType> getContentType() {
         return Optional.ofNullable(delegate.getContentType())
-                .map(MediaType::new);
+            .map(MediaType::new);
     }
 
     @Override
@@ -245,8 +240,8 @@ public class DefaultServletHttpRequest<B> implements
     @Override
     public InetSocketAddress getRemoteAddress() {
         return new InetSocketAddress(
-                delegate.getRemoteHost(),
-                delegate.getRemotePort()
+            delegate.getRemoteHost(),
+            delegate.getRemotePort()
         );
     }
 
@@ -254,7 +249,7 @@ public class DefaultServletHttpRequest<B> implements
     @Override
     public InetSocketAddress getServerAddress() {
         return new InetSocketAddress(
-                delegate.getServerPort()
+            delegate.getServerPort()
         );
     }
 
@@ -274,8 +269,8 @@ public class DefaultServletHttpRequest<B> implements
     @Override
     public Charset getCharacterEncoding() {
         return Optional.ofNullable(delegate.getCharacterEncoding())
-                .map(Charset::forName)
-                .orElse(StandardCharsets.UTF_8);
+            .map(Charset::forName)
+            .orElse(StandardCharsets.UTF_8);
     }
 
     @Override
@@ -329,7 +324,7 @@ public class DefaultServletHttpRequest<B> implements
     @NonNull
     @Override
     public String getMethodName() {
-        return delegate.getMethod();
+        return Objects.requireNonNullElseGet(delegate.getMethod(), getMethod()::name);
     }
 
     @NonNull
@@ -391,9 +386,9 @@ public class DefaultServletHttpRequest<B> implements
     @Override
     public Collection<Object> values() {
         return names()
-                .stream()
-                .map(delegate::getAttribute)
-                .collect(Collectors.toList());
+            .stream()
+            .map(delegate::getAttribute)
+            .collect(Collectors.toList());
     }
 
     @Override
@@ -405,7 +400,7 @@ public class DefaultServletHttpRequest<B> implements
                 //noinspection unchecked
                 return (Optional<T>) Optional.of(v);
             } else {
-                return ConversionService.SHARED.convert(v, conversionContext);
+                return conversionService.convert(v, conversionContext);
             }
         }
         return Optional.empty();
@@ -418,7 +413,7 @@ public class DefaultServletHttpRequest<B> implements
     }
 
     @Override
-    public ServletHttpResponse<HttpServletResponse, ? super Object> getResponse() {
+    public ServletHttpResponse<HttpServletResponse, ?> getResponse() {
         return response;
     }
 
@@ -436,15 +431,11 @@ public class DefaultServletHttpRequest<B> implements
 
     @Override
     public void subscribe(Subscriber<? super byte[]> s) {
-        Flux.<byte[]>create(emitter -> {
-            ServletInputStream inputStream;
-            try {
-                inputStream = delegate.getInputStream();
-            } catch (IOException e) {
-                emitter.error(e);
-                return;
-            }
-            byte[] buffer = new byte[1024];
+        bodyIsReadAsync = true;
+        Sinks.Many<byte[]> emitter = Sinks.many().replay().all();
+        byte[] buffer = new byte[1024];
+        try {
+            ServletInputStream inputStream = delegate.getInputStream();
             inputStream.setReadListener(new ReadListener() {
                 boolean complete = false;
 
@@ -456,19 +447,19 @@ public class DefaultServletHttpRequest<B> implements
                                 int length = inputStream.read(buffer);
                                 if (length == -1) {
                                     complete = true;
-                                    emitter.complete();
+                                    emitter.emitComplete(Sinks.EmitFailureHandler.FAIL_FAST);
                                     break;
                                 } else {
                                     if (buffer.length == length) {
-                                        emitter.next(buffer);
+                                        emitter.emitNext(buffer, Sinks.EmitFailureHandler.FAIL_FAST);
                                     } else {
-                                        emitter.next(Arrays.copyOf(buffer, length));
+                                        emitter.emitNext(Arrays.copyOf(buffer, length), Sinks.EmitFailureHandler.FAIL_FAST);
                                     }
                                 }
                             } while (inputStream.isReady());
                         } catch (IOException e) {
                             complete = true;
-                            emitter.error(e);
+                            emitter.emitError(e, Sinks.EmitFailureHandler.FAIL_FAST);
                         }
                     }
                 }
@@ -477,7 +468,7 @@ public class DefaultServletHttpRequest<B> implements
                 public void onAllDataRead() {
                     if (!complete) {
                         complete = true;
-                        emitter.complete();
+                        emitter.emitComplete(Sinks.EmitFailureHandler.FAIL_FAST);
                     }
                 }
 
@@ -485,13 +476,16 @@ public class DefaultServletHttpRequest<B> implements
                 public void onError(Throwable t) {
                     if (!complete) {
                         complete = true;
-                        emitter.error(t);
+                        emitter.emitError(t, Sinks.EmitFailureHandler.FAIL_FAST);
                     }
                 }
             });
-        }, FluxSink.OverflowStrategy.BUFFER).subscribe(s);
+        } catch (Exception e) {
+            emitter.emitError(e, Sinks.EmitFailureHandler.FAIL_FAST);
+        }
+        Flux<byte[]> bodyContent = emitter.asFlux();
+        bodyContent.subscribe(s);
     }
-
 
     /**
      * The servlet request headers.
@@ -501,7 +495,7 @@ public class DefaultServletHttpRequest<B> implements
         @Override
         public List<String> getAll(CharSequence name) {
             final Enumeration<String> e =
-                    delegate.getHeaders(Objects.requireNonNull(name, "Header name should not be null").toString());
+                delegate.getHeaders(Objects.requireNonNull(name, "Header name should not be null").toString());
 
             return enumerationToList(e);
         }
@@ -520,16 +514,16 @@ public class DefaultServletHttpRequest<B> implements
         @Override
         public Collection<List<String>> values() {
             return names()
-                    .stream()
-                    .map(this::getAll)
-                    .collect(Collectors.toList());
+                .stream()
+                .map(this::getAll)
+                .collect(Collectors.toList());
         }
 
         @Override
         public <T> Optional<T> get(CharSequence name, ArgumentConversionContext<T> conversionContext) {
             final String v = get(name);
             if (v != null) {
-                return ConversionService.SHARED.convert(v, conversionContext);
+                return conversionService.convert(v, conversionContext);
             }
             return Optional.empty();
         }
@@ -543,7 +537,7 @@ public class DefaultServletHttpRequest<B> implements
         @Override
         public List<String> getAll(CharSequence name) {
             final String[] values = delegate.getParameterValues(
-                    Objects.requireNonNull(name, "Parameter name cannot be null").toString()
+                Objects.requireNonNull(name, "Parameter name cannot be null").toString()
             );
             return Arrays.asList(values);
         }
@@ -552,7 +546,7 @@ public class DefaultServletHttpRequest<B> implements
         @Override
         public String get(CharSequence name) {
             return delegate.getParameter(
-                    Objects.requireNonNull(name, "Parameter name cannot be null").toString()
+                Objects.requireNonNull(name, "Parameter name cannot be null").toString()
             );
         }
 
@@ -564,9 +558,9 @@ public class DefaultServletHttpRequest<B> implements
         @Override
         public Collection<List<String>> values() {
             return names()
-                    .stream()
-                    .map(this::getAll)
-                    .collect(Collectors.toList());
+                .stream()
+                .map(this::getAll)
+                .collect(Collectors.toList());
         }
 
         @Override
@@ -583,18 +577,18 @@ public class DefaultServletHttpRequest<B> implements
                 final String[] parameterValues = delegate.getParameterValues(paramName);
                 if (ArrayUtils.isNotEmpty(parameterValues)) {
                     if (parameterValues.length == 1) {
-                        return ConversionService.SHARED.convert(parameterValues[0], conversionContext);
+                        return conversionService.convert(parameterValues[0], conversionContext);
                     } else {
                         if (isOptional) {
-                            return (Optional<T>) ConversionService.SHARED.convert(parameterValues, ConversionContext.of(
-                                    argument.getFirstTypeVariable().orElse(argument)
+                            return (Optional<T>) conversionService.convert(parameterValues, ConversionContext.of(
+                                argument.getFirstTypeVariable().orElse(argument)
                             ));
                         } else {
-                            return ConversionService.SHARED.convert(parameterValues, conversionContext);
+                            return conversionService.convert(parameterValues, conversionContext);
                         }
                     }
                 } else {
-                    return ConversionService.SHARED.convert(Collections.emptyList(), conversionContext);
+                    return conversionService.convert(Collections.emptyList(), conversionContext);
                 }
             } else {
                 final String v = get(name);
@@ -603,7 +597,7 @@ public class DefaultServletHttpRequest<B> implements
                         //noinspection unchecked
                         return (Optional<T>) Optional.of(v);
                     } else {
-                        return ConversionService.SHARED.convert(v, conversionContext);
+                        return conversionService.convert(v, conversionContext);
                     }
                 }
             }

@@ -3,6 +3,7 @@ package io.micronaut.servlet.jetty
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.context.annotation.Requires
+import io.micronaut.core.annotation.Introspected
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.Controller
@@ -11,6 +12,7 @@ import io.micronaut.http.annotation.Get
 import io.micronaut.http.annotation.Patch
 import io.micronaut.http.annotation.Post
 import io.micronaut.http.client.annotation.Client
+import io.micronaut.http.client.exceptions.HttpClientResponseException
 import io.micronaut.runtime.server.EmbeddedServer
 import reactor.core.publisher.Mono
 import spock.lang.AutoCleanup
@@ -34,15 +36,20 @@ class JettyReactorCrudSpec extends Specification {
         BookClient client = embeddedServer.applicationContext.getBean(BookClient)
 
         when:
-        Book book = client.get(99).block()
+        client.get(99).block()
+
+        then:
+        def e = thrown(HttpClientResponseException)
+        e.response.status == HttpStatus.NOT_FOUND
+
+        when:
         List<Book> books = client.list().block()
 
         then:
-        book == null
         books.size() == 0
 
         when:
-        book = client.save("The Stand").block()
+        Book book = client.save("The Stand").block()
 
         then:
         book != null
@@ -80,10 +87,11 @@ class JettyReactorCrudSpec extends Specification {
         book != null
 
         when:
-        book = client.get(book.id).block()
+        client.get(book.id).block()
 
         then:
-        book == null
+        def e2 = thrown(HttpClientResponseException)
+        e2.response.status == HttpStatus.NOT_FOUND
     }
 
     @Requires(property = 'spec.name', value = 'JettyReactorCrudSpec')
@@ -169,6 +177,7 @@ class JettyReactorCrudSpec extends Specification {
         Mono<Book> update(Long id, String title)
     }
 
+    @Introspected
     static class Book {
         Long id
         String title

@@ -1,14 +1,15 @@
 plugins {
-    id "io.micronaut.build.internal.servlet-module"
+    id 'io.micronaut.build.internal.servlet.module'
 }
 
 dependencies {
     annotationProcessor mn.micronaut.graal
 
-    api projects.servletCore
+    api project(":servlet-core")
     api libs.managed.servlet.api
 
     implementation mn.reactor
+    implementation mn.micronaut.discovery
 
     testAnnotationProcessor mn.micronaut.inject.java
     testImplementation mn.google.function.framework

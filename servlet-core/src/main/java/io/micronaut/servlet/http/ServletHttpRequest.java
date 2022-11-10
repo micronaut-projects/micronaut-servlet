@@ -16,8 +16,6 @@
 package io.micronaut.servlet.http;
 
 import io.micronaut.http.HttpRequest;
-import io.micronaut.http.MutableHttpResponse;
-import org.reactivestreams.Publisher;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -76,7 +74,6 @@ public interface ServletHttpRequest<N, B> extends HttpRequest<B> {
      *
      * @return true if this request supports asynchronous operation, false
      * otherwise
-     *
      * @since Servlet 3.0
      */
     default boolean isAsyncSupported() {
@@ -85,14 +82,46 @@ public interface ServletHttpRequest<N, B> extends HttpRequest<B> {
 
     /**
      * Causes the container to dispatch a thread, possibly from a managed
-     * thread pool, to run the specified {@link Runnable}. The container may
-     * propagate appropriate contextual information to the {@link Runnable}.
+     * thread pool, to run the specified {@link AsyncExecutionCallback}.
+     * After the execution is complete {@link AsyncExecution#complete()} should be called.
      *
-     * @param responsePublisher The response publisher
-     * @return A publisher that emits the response
+     * @param asyncExecutionCallback The response publisher
      */
-    default Publisher<? extends MutableHttpResponse<?>> subscribeOnExecutor(Publisher<? extends MutableHttpResponse<?>> responsePublisher) {
+    default void executeAsync(AsyncExecutionCallback asyncExecutionCallback) {
         throw new UnsupportedOperationException("Asynchronous processing is not supported");
+    }
+
+    /**
+     * Async execution callback.
+     *
+     * @author Denis Stepanov
+     * @since 4.0.0
+     */
+    interface AsyncExecutionCallback {
+
+        /**
+         * Do job in the asynchronous way.
+         * After the completion {@link AsyncExecution#complete()} should be called.
+         *
+         * @param asyncExecution The async execution
+         */
+        void run(AsyncExecution asyncExecution);
+
+    }
+
+    /**
+     * Async execution.
+     *
+     * @author Denis Stepanov
+     * @since 4.0.0
+     */
+    interface AsyncExecution {
+
+        /**
+         * Method should be called after the async processing is completed.
+         */
+        void complete();
+
     }
 
 }

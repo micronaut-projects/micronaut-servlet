@@ -44,6 +44,7 @@ public class DefaultMicronautServlet extends HttpServlet {
     public static final String CONTEXT_ATTRIBUTE = "io.micronaut.servlet.APPLICATION_CONTEXT";
 
     private ApplicationContext applicationContext;
+    private boolean isContextOwner;
     private DefaultServletHttpHandler handler;
 
     /**
@@ -63,16 +64,13 @@ public class DefaultMicronautServlet extends HttpServlet {
     @Override
     protected void service(HttpServletRequest req, HttpServletResponse resp) {
         if (handler != null) {
-            handler.service(
-                    req,
-                    resp
-            );
+            handler.service(req, resp);
         }
     }
 
     @Override
     public void destroy() {
-        if (applicationContext != null && applicationContext.isRunning()) {
+        if (isContextOwner && applicationContext != null && applicationContext.isRunning()) {
             applicationContext.stop();
             applicationContext = null;
         }
@@ -88,14 +86,13 @@ public class DefaultMicronautServlet extends HttpServlet {
             }
         }
         if (this.applicationContext == null) {
-
             final ApplicationContextBuilder builder =
-                    Objects.requireNonNull(newApplicationContextBuilder(), "builder cannot be null");
+                Objects.requireNonNull(newApplicationContextBuilder(), "builder cannot be null");
             this.applicationContext = Objects.requireNonNull(buildApplicationContext(builder), "Context cannot be null");
-        }
-
-        if (!this.applicationContext.isRunning()) {
-            this.applicationContext.start();
+            if (!this.applicationContext.isRunning()) {
+                this.applicationContext.start();
+            }
+            isContextOwner = true;
         }
         if (servletContext != null) {
             servletContext.setAttribute(CONTEXT_ATTRIBUTE, applicationContext);

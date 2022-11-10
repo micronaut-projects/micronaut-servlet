@@ -55,7 +55,7 @@ public class DefaultServletExchange<Req, Res> implements ServletExchange<Req, Re
     /**
      * @return The response object
      */
-    public ServletHttpResponse<Res, ? super Object> getResponse() {
+    public ServletHttpResponse<Res, ?> getResponse() {
         return response;
     }
 }

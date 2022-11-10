@@ -25,34 +25,53 @@ class JettyNotFoundSpec extends Specification {
     @Inject
     InventoryClient client
 
-    void "test 404 handling with Flux"() {
+    void "test 404 handling with streaming publisher"() {
         expect:
-        Flux.from(client.stream('1234')).blockFirst()
-        Flux.from(client.stream('notthere')).collectList().block() == []
+        Flux.from(client.streaming('1234')).blockFirst()
+        Flux.from(client.streaming('notthere')).collectList().block() == []
     }
 
-    void "test 404 handling with Mono"() {
-        expect:
-        Mono.from(client.single('1234')).block()
-
+    void "test 404 handling with not streaming publisher"() {
         when:
-        Mono.from(client.single('notthere')).block()
+        def exists = Mono.from(client.mono('1234')).block()
 
         then:
-        noExceptionThrown()
+        exists
+
+        when:
+        Mono.from(client.mono('notthere')).block()
+
+        then:
+        def e = thrown(HttpClientResponseException)
+        e.status == HttpStatus.NOT_FOUND
+
+        when:exists = Mono.from(client.flux('1234')).block()
+
+        then:
+        exists
+
+        when:
+        Mono.from(client.flux('notthere')).block()
+
+        then:
+        e = thrown(HttpClientResponseException)
+        e.status == HttpStatus.NOT_FOUND
     }
 
     @Requires(property = 'spec.name', value = 'JettyNotFoundSpec')
     @Client('/not-found')
     static interface InventoryClient {
 
-        @Consumes(MediaType.TEXT_PLAIN)
-        @Get('/maybe/{isbn}')
+        @Get(value = '/mono/{isbn}', processes = MediaType.TEXT_PLAIN)
         @SingleResult
-        Publisher<Boolean> single(String isbn)
+        Publisher<Boolean> mono(String isbn)
 
-        @Get(value = '/flux/{isbn}', processes = MediaType.TEXT_EVENT_STREAM)
-        Publisher<Boolean> stream(String isbn)
+        @Get(value = '/flux/{isbn}', processes = MediaType.TEXT_PLAIN)
+        @SingleResult
+        Publisher<Boolean> flux(String isbn)
+
+        @Get(value = '/streaming/{isbn}', processes = MediaType.TEXT_EVENT_STREAM)
+        Publisher<Boolean> streaming(String isbn)
     }
 
     @Requires(property = 'spec.name', value = 'JettyNotFoundSpec')
@@ -62,7 +81,7 @@ class JettyNotFoundSpec extends Specification {
                 '1234': true
         ]
 
-        @Get('/maybe/{isbn}')
+        @Get('/mono/{isbn}')
         @SingleResult
         Publisher<Boolean> maybe(String isbn) {
             Boolean value = stock[isbn]
@@ -72,7 +91,8 @@ class JettyNotFoundSpec extends Specification {
             return Mono.empty()
         }
 
-        @Get(value = '/flux/{isbn}', processes = MediaType.TEXT_EVENT_STREAM)
+        @Get(value = '/flux/{isbn}')
+        @SingleResult
         Publisher<Boolean> flux(String isbn) {
             Boolean value = stock[isbn]
             if (value != null) {
@@ -80,5 +100,15 @@ class JettyNotFoundSpec extends Specification {
             }
             return Flux.empty()
         }
+
+        @Get(value = '/streaming/{isbn}', processes = MediaType.TEXT_EVENT_STREAM)
+        Publisher<Boolean> streaming(String isbn) {
+            Boolean value = stock[isbn]
+            if (value != null) {
+                return Flux.just(value)
+            }
+            return Flux.empty()
+        }
+
     }
 }

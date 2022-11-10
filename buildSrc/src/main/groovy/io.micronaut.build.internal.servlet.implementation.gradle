@@ -1,0 +1,26 @@
+plugins {
+    id 'io.micronaut.build.internal.servlet.module'
+}
+
+dependencies {
+    annotationProcessor mn.micronaut.graal
+
+    api project(":servlet-engine")
+    api mn.micronaut.http.server
+
+    compileOnly mn.graal
+
+    testAnnotationProcessor mn.micronaut.inject.java
+
+    testImplementation mn.snakeyaml
+    testImplementation mn.micronaut.http.client
+    testImplementation mn.micronaut.session
+    testImplementation mn.micronaut.reactor
+    testImplementation (mn.micronaut.security) {
+        version {
+            strictly '4.0.0-SNAPSHOT'
+        }
+    }
+    testImplementation mn.micronaut.management
+    testImplementation mn.groovy.json
+}

@@ -1,12 +1,10 @@
 plugins {
+    id 'io.micronaut.build.internal.servlet.base'
     id "org.jetbrains.kotlin.jvm" version "$kotlinVersion"
-    id("org.jetbrains.kotlin.kapt") version "$kotlinVersion"
-    id "io.micronaut.build.internal.servlet-tests"
+    id "org.jetbrains.kotlin.kapt" version "$kotlinVersion"
 }
 
 dependencies {
-    kaptTest platform("io.micronaut:micronaut-bom:$micronautVersion")
-    testImplementation platform("io.micronaut:micronaut-bom:$micronautVersion")
     kaptTest mn.micronaut.inject.java
 
     testRuntimeOnly libs.junit.jupiter.engine
@@ -17,13 +15,14 @@ dependencies {
     testImplementation libs.kotlinx.coroutines.jdk8
     testImplementation libs.kotlinx.coroutines.rx2
 
+    testImplementation mn.micronaut.jackson.databind
+    testImplementation mn.snakeyaml
     testImplementation mn.micronaut.http.client
     testImplementation mn.reactor
-    testImplementation mn.micronaut.test.kotest5
+    testImplementation mn.micronaut.test.kotest
     testImplementation libs.kotest.runner
 
-    testImplementation projects.httpServerJetty
-
+    testImplementation project(":http-server-jetty")
 }
 
 tasks.named('test') {
@@ -35,4 +34,9 @@ compileTestKotlin {
         jvmTarget = '17'
         javaParameters = true
     }
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
 }

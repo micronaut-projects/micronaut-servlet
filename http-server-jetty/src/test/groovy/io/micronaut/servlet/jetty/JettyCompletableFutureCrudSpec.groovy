@@ -3,6 +3,7 @@ package io.micronaut.servlet.jetty
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.context.annotation.Requires
+import io.micronaut.core.annotation.Introspected
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Delete
 import io.micronaut.http.annotation.Get
@@ -146,6 +147,7 @@ class JettyCompletableFutureCrudSpec extends Specification {
     }
 
 
+    @Introspected
     static class Book {
         Long id
         String title

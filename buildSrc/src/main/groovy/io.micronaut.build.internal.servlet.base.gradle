@@ -13,8 +13,3 @@ configurations.all {
                 .using(module("org.apache.groovy:groovy:4.0.6"))
     }
 }
-
-dependencies {
-    testRuntimeOnly mn.snakeyaml
-}
-

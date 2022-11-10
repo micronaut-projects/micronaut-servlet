@@ -33,7 +33,6 @@ import io.micronaut.http.MutableHttpResponse;
 import io.micronaut.http.annotation.Produces;
 import io.micronaut.http.codec.MediaTypeCodec;
 import io.micronaut.http.cookie.Cookie;
-import io.micronaut.http.server.exceptions.InternalServerException;
 import io.micronaut.servlet.http.ServletHttpResponse;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
@@ -69,6 +68,7 @@ public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpSe
 
     private static final byte[] EMPTY_ARRAY = "[]".getBytes();
 
+    private final ConversionService conversionService;
     private final HttpServletResponse delegate;
     private final DefaultServletHttpRequest<?> request;
     private final ServletResponseHeaders headers;
@@ -78,12 +78,15 @@ public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpSe
 
     /**
      * Default constructor.
-     * @param request The servlet request
-     * @param delegate The servlet response
+     *
+     * @param conversionService The conversion service
+     * @param request           The servlet request
+     * @param delegate          The servlet response
      */
-    protected DefaultServletHttpResponse(
-            DefaultServletHttpRequest request,
-            HttpServletResponse delegate) {
+    protected DefaultServletHttpResponse(ConversionService conversionService,
+                                         DefaultServletHttpRequest<B> request,
+                                         HttpServletResponse delegate) {
+        this.conversionService = conversionService;
         this.delegate = delegate;
         this.request = request;
         this.headers = new ServletResponseHeaders();
@@ -217,7 +220,7 @@ public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpSe
     @Override
     @NonNull
     public Optional<MediaType> getContentType() {
-        return ConversionService.SHARED.convert(delegate.getContentType(), Argument.of(MediaType.class));
+        return conversionService.convert(delegate.getContentType(), Argument.of(MediaType.class));
     }
 
     @Override
@@ -360,27 +363,25 @@ public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpSe
         } else {
             this.reason = message.toString();
         }
-        if (message != null) {
-            try {
-                delegate.sendError(status, reason);
-            } catch (IOException e) {
-                throw new InternalServerException("Error sending error code: " + e.getMessage(), e);
-            }
-        } else {
-            delegate.setStatus(status);
-        }
+        delegate.setStatus(status);
         return this;
     }
 
-
     @Override
     public int code() {
-        return status;
+        return delegate.getStatus();
     }
 
     @Override
     public String reason() {
-        return reason;
+        if (reason != null) {
+            return reason;
+        }
+        try {
+            return HttpStatus.valueOf(delegate.getStatus()).getReason();
+        } catch (Exception e) {
+            return "";
+        }
     }
 
     /**
@@ -453,9 +454,13 @@ public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpSe
         public <T> Optional<T> get(CharSequence name, ArgumentConversionContext<T> conversionContext) {
             final String v = get(name);
             if (v != null) {
-                return ConversionService.SHARED.convert(v, conversionContext);
+                return conversionService.convert(v, conversionContext);
             }
             return Optional.empty();
+        }
+
+        @Override
+        public void setConversionService(ConversionService conversionService) {
         }
     }
 }
