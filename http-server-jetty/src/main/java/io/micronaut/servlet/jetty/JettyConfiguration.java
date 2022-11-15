@@ -17,6 +17,7 @@ package io.micronaut.servlet.jetty;
 
 import io.micronaut.context.annotation.ConfigurationBuilder;
 import io.micronaut.context.annotation.ConfigurationProperties;
+import io.micronaut.context.annotation.Replaces;
 import io.micronaut.core.convert.format.MapFormat;
 import io.micronaut.core.naming.conventions.StringConvention;
 import io.micronaut.http.server.HttpServerConfiguration;
@@ -36,6 +37,7 @@ import java.util.Optional;
  * @since 1.0.0
  */
 @ConfigurationProperties("jetty")
+@Replaces(HttpServerConfiguration.class)
 public class JettyConfiguration extends HttpServerConfiguration {
 
     @ConfigurationBuilder
