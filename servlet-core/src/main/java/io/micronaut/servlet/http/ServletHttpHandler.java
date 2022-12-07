@@ -40,6 +40,7 @@ import io.micronaut.http.codec.MediaTypeCodecRegistry;
 import io.micronaut.http.context.event.HttpRequestReceivedEvent;
 import io.micronaut.http.context.event.HttpRequestTerminatedEvent;
 import io.micronaut.http.exceptions.HttpStatusException;
+import io.micronaut.http.server.RequestLifecycle;
 import io.micronaut.http.server.RouteExecutor;
 import io.micronaut.http.server.binding.RequestArgumentSatisfier;
 import io.micronaut.http.server.types.files.FileCustomizableResponseType;
@@ -76,8 +77,7 @@ import java.util.stream.Collectors;
  * @author graemerocher
  * @since 1.2.0
  */
-public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable,
-    LifeCycle<ServletHttpHandler<Req, Res>>, RouteExecutor.StaticResourceResponseFinder {
+public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, LifeCycle<ServletHttpHandler<Req, Res>> {
     /**
      * Logger to be used by subclasses for logging.
      */
@@ -166,8 +166,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable,
         return getApplicationContext().isRunning();
     }
 
-    @Override
-    public FileCustomizableResponseType find(HttpRequest<?> httpRequest) {
+    private FileCustomizableResponseType find(HttpRequest<?> httpRequest) {
         return matchFile(httpRequest.getPath()).orElse(null);
     }
 
@@ -193,22 +192,29 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable,
         final HttpRequest<Object> req = exchange.getRequest();
         applicationContext.publishEvent(new HttpRequestReceivedEvent(req));
 
-        RouteExecutor.RequestBodyReader requestBodyReader = (routeMatch, httpRequest) -> {
-            RouteMatch<?> route = requestArgumentSatisfier.fulfillArgumentRequirements(routeMatch, httpRequest, false);
-            return ExecutionFlow.just(route);
-        };
+        ServletRequestLifecycle lc = new ServletRequestLifecycle(routeExecutor, req);
 
         if (exchange.getRequest().isAsyncSupported()) {
             exchange.getRequest().executeAsync(asyncExecution -> {
-                routeExecutor.executeRoute(requestBodyReader, req, true, this)
+                lc.handleNormal()
                     .onComplete((response, throwable) -> onComplete(exchange, req, response, throwable, httpResponse -> {
                         asyncExecution.complete();
                         requestTerminated.accept(httpResponse);
                     }));
             });
         } else {
-            routeExecutor.executeRoute(requestBodyReader, req, true, this)
+            lc.handleNormal()
                 .onComplete((response, throwable) -> onComplete(exchange, req, response, throwable, requestTerminated));
+        }
+    }
+
+    private static final class ServletRequestLifecycle extends RequestLifecycle {
+        ServletRequestLifecycle(RouteExecutor routeExecutor, HttpRequest<?> request) {
+            super(routeExecutor, request);
+        }
+
+        ExecutionFlow<MutableHttpResponse<?>> handleNormal() {
+            return normalFlow();
         }
     }
 
