@@ -8,10 +8,8 @@ import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Get
 import io.micronaut.http.client.HttpClient
-import io.micronaut.http.client.annotation.Client
 import io.micronaut.runtime.server.EmbeddedServer
 import io.netty.handler.ssl.util.SelfSignedCertificate
-import jakarta.inject.Inject
 import spock.lang.Specification
 
 import java.nio.file.Files
@@ -20,10 +18,6 @@ import java.security.KeyStore
 import java.security.cert.Certificate
 
 class JettySslSpec extends Specification {
-
-    @Inject
-    @Client("/")
-    HttpClient rxClient
 
     void "test certificate extraction"() {
         given:
