@@ -8,8 +8,13 @@ undertow = '2.2.18.Final'
 jetty = '9.4.49.v20220914'
 tomcat = '9.0.65'
 
+micronaut-session = "1.0.0-SNAPSHOT"
+micronaut-reactor = "3.0.0-SNAPSHOT"
+
 [libraries]
 managed-servlet-api = { module = 'javax.servlet:javax.servlet-api', version.ref = 'managed-servlet-api' }
+micronaut-session = { module = "io.micronaut.session:micronaut-session-bom", version.ref = "micronaut-session" }
+micronaut-reactor = { module = "io.micronaut.reactor:micronaut-reactor-bom", version.ref = "micronaut-reactor" }
 
 junit-jupiter-engine = { module = 'org.junit.jupiter:junit-jupiter-engine' }
 kotlin-stdlib-jdk8 = { module = 'org.jetbrains.kotlin:kotlin-stdlib-jdk8' }

@@ -14,8 +14,8 @@ dependencies {
 
     testImplementation mn.snakeyaml
     testImplementation mn.micronaut.http.client
-    testImplementation mn.micronaut.session
-    testImplementation mn.micronaut.reactor
+    testImplementation(mnSession.micronaut.session)
+    testImplementation(mnReactor.micronaut.reactor)
     testImplementation (mn.micronaut.security) {
         version {
             strictly '4.0.0-SNAPSHOT'

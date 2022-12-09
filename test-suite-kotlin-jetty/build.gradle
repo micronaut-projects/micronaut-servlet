@@ -18,7 +18,7 @@ dependencies {
     testImplementation mn.micronaut.jackson.databind
     testImplementation mn.snakeyaml
     testImplementation mn.micronaut.http.client
-    testImplementation mn.reactor
+    testImplementation(mnReactor.micronaut.reactor)
     testImplementation mn.micronaut.test.kotest
     testImplementation libs.kotest.runner
 

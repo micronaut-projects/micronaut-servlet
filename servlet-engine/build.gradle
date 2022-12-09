@@ -8,7 +8,7 @@ dependencies {
     api project(":servlet-core")
     api libs.managed.servlet.api
 
-    implementation mn.reactor
+    implementation(mnReactor.micronaut.reactor)
     implementation mn.micronaut.discovery
 
     testAnnotationProcessor mn.micronaut.inject.java
