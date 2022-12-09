@@ -7,14 +7,21 @@ kotest-runner = '5.4.1'
 undertow = '2.2.18.Final'
 jetty = '9.4.49.v20220914'
 tomcat = '9.0.65'
+graal-svm = "22.0.0.2"
 
-micronaut-session = "1.0.0-SNAPSHOT"
 micronaut-reactor = "3.0.0-SNAPSHOT"
+micronaut-security = "4.0.0-SNAPSHOT"
+micronaut-serde = "2.0.0-SNAPSHOT"
+micronaut-session = "1.0.0-SNAPSHOT"
 
 [libraries]
+graal-svm = { module = "org.graalvm.nativeimage:svm", version.ref = "graal-svm" }
+
 managed-servlet-api = { module = 'javax.servlet:javax.servlet-api', version.ref = 'managed-servlet-api' }
-micronaut-session = { module = "io.micronaut.session:micronaut-session-bom", version.ref = "micronaut-session" }
 micronaut-reactor = { module = "io.micronaut.reactor:micronaut-reactor-bom", version.ref = "micronaut-reactor" }
+micronaut-security = { module = "io.micronaut.security:micronaut-security-bom", version.ref = "micronaut-security" }
+micronaut-serde = { module = "io.micronaut.serde:micronaut-serde-bom", version.ref = "micronaut-serde" }
+micronaut-session = { module = "io.micronaut.session:micronaut-session-bom", version.ref = "micronaut-session" }
 
 junit-jupiter-engine = { module = 'org.junit.jupiter:junit-jupiter-engine' }
 kotlin-stdlib-jdk8 = { module = 'org.jetbrains.kotlin:kotlin-stdlib-jdk8' }

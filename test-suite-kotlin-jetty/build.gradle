@@ -19,7 +19,7 @@ dependencies {
     testImplementation mn.snakeyaml
     testImplementation mn.micronaut.http.client
     testImplementation(mnReactor.micronaut.reactor)
-    testImplementation mn.micronaut.test.kotest
+    testImplementation mnTest.micronaut.test.kotest5
     testImplementation libs.kotest.runner
 
     testImplementation project(":http-server-jetty")
