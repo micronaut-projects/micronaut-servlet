@@ -4,5 +4,6 @@ plugins {
 
 dependencies {
     implementation libs.tomcat.embed.core
+    testImplementation libs.bcpkix
 }
 

@@ -9,17 +9,14 @@ plugins {
     id 'io.micronaut.build.shared.settings' version '6.1.1'
 }
 
-dependencyResolutionManagement {
-    repositories {
-        mavenCentral()
-        maven { url "https://s01.oss.sonatype.org/content/repositories/snapshots/" }
-    }
-}
-
 rootProject.name = 'servlet-parent'
 
 micronautBuild {
+    addSnapshotRepository()
     importMicronautCatalog()
+    importMicronautCatalog("micronaut-reactor")
+    importMicronautCatalog("micronaut-security")
+    importMicronautCatalog("micronaut-session")
 }
 
 include 'servlet-bom'

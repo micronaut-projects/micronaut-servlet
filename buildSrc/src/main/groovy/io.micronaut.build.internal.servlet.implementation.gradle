@@ -8,19 +8,15 @@ dependencies {
     api project(":servlet-engine")
     api mn.micronaut.http.server
 
-    compileOnly mn.graal
+    compileOnly libs.graal.svm
 
     testAnnotationProcessor mn.micronaut.inject.java
 
     testImplementation mn.snakeyaml
     testImplementation mn.micronaut.http.client
-    testImplementation mn.micronaut.session
-    testImplementation mn.micronaut.reactor
-    testImplementation (mn.micronaut.security) {
-        version {
-            strictly '4.0.0-SNAPSHOT'
-        }
-    }
+    testImplementation(mnSession.micronaut.session)
+    testImplementation(mnReactor.micronaut.reactor)
+    testImplementation (mnSecurity.micronaut.security)
     testImplementation mn.micronaut.management
     testImplementation mn.groovy.json
 }
