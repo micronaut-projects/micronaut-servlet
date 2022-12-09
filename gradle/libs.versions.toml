@@ -8,6 +8,7 @@ undertow = '2.2.18.Final'
 jetty = '9.4.49.v20220914'
 tomcat = '9.0.65'
 graal-svm = "22.0.0.2"
+bcpkix = "1.70"
 
 micronaut-reactor = "3.0.0-SNAPSHOT"
 micronaut-security = "4.0.0-SNAPSHOT"
@@ -35,3 +36,4 @@ tomcat-embed-core = { module = 'org.apache.tomcat.embed:tomcat-embed-core', vers
 undertow-servlet = { module = 'io.undertow:undertow-servlet', version.ref = 'undertow' }
 jetty = { module = 'org.eclipse.jetty:jetty-servlet', version.ref = 'jetty' }
 kotest-runner = { module = 'io.kotest:kotest-runner-junit5', version.ref = 'kotest-runner' }
+bcpkix = { module = "org.bouncycastle:bcpkix-jdk15on", version.ref = "bcpkix" }
