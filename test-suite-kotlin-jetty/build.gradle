@@ -20,6 +20,7 @@ dependencies {
     testImplementation mn.micronaut.http.client
     testImplementation(mnReactor.micronaut.reactor)
     testImplementation mnTest.micronaut.test.kotest5
+    testImplementation mn.micronaut.retry
     testImplementation libs.kotest.runner
 
     testImplementation project(":http-server-jetty")
