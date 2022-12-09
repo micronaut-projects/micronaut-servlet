@@ -44,7 +44,6 @@ class TomcatSslSpec extends Specification {
                 'spec.name'                             : 'TomcatSslSpec',
                 'micronaut.ssl.enabled'                 : true,
                 // Cannot be true!
-                'micronaut.server.ssl.port'             : 443,
                 'micronaut.server.ssl.build-self-signed': false,
                 'micronaut.ssl.clientAuthentication'    : "need",
                 'micronaut.ssl.key-store.path'          : "file://${keyStorePath.toString()}",
