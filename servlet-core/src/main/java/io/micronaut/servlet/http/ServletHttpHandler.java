@@ -42,12 +42,10 @@ import io.micronaut.http.context.event.HttpRequestTerminatedEvent;
 import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.http.server.RequestLifecycle;
 import io.micronaut.http.server.RouteExecutor;
-import io.micronaut.http.server.binding.RequestArgumentSatisfier;
 import io.micronaut.http.server.types.files.FileCustomizableResponseType;
 import io.micronaut.http.server.types.files.StreamedFile;
 import io.micronaut.http.server.types.files.SystemFile;
 import io.micronaut.web.router.RouteInfo;
-import io.micronaut.web.router.RouteMatch;
 import io.micronaut.web.router.resource.StaticResourceResolver;
 import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
@@ -72,19 +70,18 @@ import java.util.stream.Collectors;
 /**
  * An HTTP handler that can deal with Serverless requests.
  *
- * @param <Req> The request object
- * @param <Res> The response object
+ * @param <REQ> The request object
+ * @param <RES> The response object
  * @author graemerocher
  * @since 1.2.0
  */
-public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, LifeCycle<ServletHttpHandler<Req, Res>> {
+public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, LifeCycle<ServletHttpHandler<REQ, RES>> {
     /**
      * Logger to be used by subclasses for logging.
      */
     protected static final Logger LOG = LoggerFactory.getLogger(ServletHttpHandler.class);
 
     protected final ApplicationContext applicationContext;
-    private final RequestArgumentSatisfier requestArgumentSatisfier;
     private final RouteExecutor routeExecutor;
     private final MediaTypeCodecRegistry mediaTypeCodecRegistry;
     private final Map<Class<?>, ServletResponseEncoder<?>> responseEncoders;
@@ -97,7 +94,6 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
      */
     public ServletHttpHandler(ApplicationContext applicationContext) {
         this.applicationContext = Objects.requireNonNull(applicationContext, "The application context cannot be null");
-        this.requestArgumentSatisfier = applicationContext.getBean(RequestArgumentSatisfier.class);
         this.mediaTypeCodecRegistry = applicationContext.getBean(MediaTypeCodecRegistry.class);
         //noinspection unchecked
         this.responseEncoders = applicationContext.streamOfType(ServletResponseEncoder.class)
@@ -133,8 +129,8 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
      * @param request  The request
      * @param response The response
      */
-    public void service(Req request, Res response) {
-        ServletExchange<Req, Res> exchange = createExchange(request, response);
+    public void service(REQ request, RES response) {
+        ServletExchange<REQ, RES> exchange = createExchange(request, response);
         service(exchange);
     }
 
@@ -145,8 +141,8 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
      * @param response The response
      * @return The {@link ServletExchange} object
      */
-    public ServletExchange<Req, Res> exchange(Req request, Res response) {
-        ServletExchange<Req, Res> servletExchange = createExchange(request, response);
+    public ServletExchange<REQ, RES> exchange(REQ request, RES response) {
+        ServletExchange<REQ, RES> servletExchange = createExchange(request, response);
         return exchange(servletExchange);
     }
 
@@ -156,7 +152,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
      * @param exchange The exchange
      * @return The {@link ServletExchange} object
      */
-    public ServletExchange<Req, Res> exchange(ServletExchange<Req, Res> exchange) {
+    public ServletExchange<REQ, RES> exchange(ServletExchange<REQ, RES> exchange) {
         service(Objects.requireNonNull(exchange, "The exchange cannot be null"));
         return exchange;
     }
@@ -166,16 +162,12 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
         return getApplicationContext().isRunning();
     }
 
-    private FileCustomizableResponseType find(HttpRequest<?> httpRequest) {
-        return matchFile(httpRequest.getPath()).orElse(null);
-    }
-
     /**
      * Handles a {@link DefaultServletExchange}.
      *
      * @param exchange The exchange
      */
-    public void service(ServletExchange<Req, Res> exchange) {
+    public void service(ServletExchange<REQ, RES> exchange) {
         final long time = System.currentTimeMillis();
         Consumer<HttpResponse<?>> requestTerminated = ignore -> {
             applicationContext.publishEvent(new HttpRequestTerminatedEvent(exchange.getRequest()));
@@ -208,7 +200,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
         }
     }
 
-    private void onComplete(ServletExchange<Req, Res> exchange,
+    private void onComplete(ServletExchange<REQ, RES> exchange,
                             HttpRequest<Object> req,
                             MutableHttpResponse<?> response,
                             Throwable throwable,
@@ -281,7 +273,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
 
     @NonNull
     @Override
-    public ServletHttpHandler<Req, Res> start() {
+    public ServletHttpHandler<REQ, RES> start() {
         if (!applicationContext.isRunning()) {
             applicationContext.start();
         }
@@ -290,7 +282,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
 
     @NonNull
     @Override
-    public ServletHttpHandler<Req, Res> stop() {
+    public ServletHttpHandler<REQ, RES> stop() {
         close();
         return this;
     }
@@ -302,9 +294,9 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
      * @param response The response
      * @return The exchange object
      */
-    protected abstract ServletExchange<Req, Res> createExchange(Req request, Res response);
+    protected abstract ServletExchange<REQ, RES> createExchange(REQ request, RES response);
 
-    private void encodeResponse(ServletExchange<Req, Res> exchange,
+    private void encodeResponse(ServletExchange<REQ, RES> exchange,
                                 HttpRequest<?> request,
                                 MutableHttpResponse<?> response,
                                 Consumer<HttpResponse<?>> responsePublisherCallback) {
@@ -320,7 +312,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
             .orElse(AnnotationMetadata.EMPTY_METADATA);
 
 
-        ServletHttpResponse<Res, ?> servletResponse = exchange.getResponse();
+        ServletHttpResponse<RES, ?> servletResponse = exchange.getResponse();
         servletResponse.status(response.status(), response.reason());
 
         if (body != null) {
@@ -475,7 +467,7 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
 
         @Override
         protected FileCustomizableResponseType findFile() {
-            return find(request());
+            return matchFile(request().getPath()).orElse(null);
         }
     }
 }
