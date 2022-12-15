@@ -4,4 +4,5 @@ plugins {
 
 dependencies {
     implementation libs.jetty
+    testImplementation libs.bcpkix
 }

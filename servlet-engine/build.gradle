@@ -8,9 +8,9 @@ dependencies {
     api project(":servlet-core")
     api libs.managed.servlet.api
 
-    implementation mn.reactor
-    implementation mn.micronaut.discovery
+    implementation(mnReactor.micronaut.reactor)
+    implementation mn.micronaut.discovery.core
+    implementation mn.micronaut.jackson.core
 
     testAnnotationProcessor mn.micronaut.inject.java
-    testImplementation mn.google.function.framework
 }
