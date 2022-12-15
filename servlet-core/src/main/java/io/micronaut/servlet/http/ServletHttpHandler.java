@@ -208,16 +208,6 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
         }
     }
 
-    private static final class ServletRequestLifecycle extends RequestLifecycle {
-        ServletRequestLifecycle(RouteExecutor routeExecutor, HttpRequest<?> request) {
-            super(routeExecutor, request);
-        }
-
-        ExecutionFlow<MutableHttpResponse<?>> handleNormal() {
-            return normalFlow();
-        }
-    }
-
     private void onComplete(ServletExchange<Req, Res> exchange,
                             HttpRequest<Object> req,
                             MutableHttpResponse<?> response,
@@ -474,4 +464,18 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
         return null;
     }
 
+    private final class ServletRequestLifecycle extends RequestLifecycle {
+        ServletRequestLifecycle(RouteExecutor routeExecutor, HttpRequest<?> request) {
+            super(routeExecutor, request);
+        }
+
+        ExecutionFlow<MutableHttpResponse<?>> handleNormal() {
+            return normalFlow();
+        }
+
+        @Override
+        protected FileCustomizableResponseType findFile() {
+            return find(request());
+        }
+    }
 }
