@@ -68,29 +68,29 @@ loadScripts(document, 'script');</script>
 <!-- ======== START OF CLASS DATA ======== -->
 <div class="header">
 <div class="sub-title"><span class="package-label-in-type">Package</span>&nbsp;<a href="package-summary.html">io.micronaut.servlet.http</a></div>
-<h1 title="Class ServletHttpHandler" class="title">Class ServletHttpHandler&lt;Req,<wbr>Res&gt;</h1>
+<h1 title="Class ServletHttpHandler" class="title">Class ServletHttpHandler&lt;REQ,<wbr>RES&gt;</h1>
 </div>
 <div class="inheritance" title="Inheritance Tree"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">java.lang.Object</a>
-<div class="inheritance">io.micronaut.servlet.http.ServletHttpHandler&lt;Req,<wbr>Res&gt;</div>
+<div class="inheritance">io.micronaut.servlet.http.ServletHttpHandler&lt;REQ,<wbr>RES&gt;</div>
 </div>
 <section class="class-description" id="class-description">
 <dl class="notes">
 <dt>Type Parameters:</dt>
-<dd><code>Req</code> - The request object</dd>
-<dd><code>Res</code> - The response object</dd>
+<dd><code>REQ</code> - The request object</dd>
+<dd><code>RES</code> - The response object</dd>
 </dl>
 <dl class="notes">
 <dt>All Implemented Interfaces:</dt>
-<dd><code>io.micronaut.context.LifeCycle&lt;<a href="ServletHttpHandler.html" title="class in io.micronaut.servlet.http">ServletHttpHandler</a>&lt;Req,<wbr>Res&gt;&gt;</code>, <code>io.micronaut.http.server.RouteExecutor.StaticResourceResponseFinder</code>, <code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/Closeable.html" title="class or interface in java.io" class="external-link">Closeable</a></code>, <code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/AutoCloseable.html" title="class or interface in java.lang" class="external-link">AutoCloseable</a></code></dd>
+<dd><code>io.micronaut.context.LifeCycle&lt;<a href="ServletHttpHandler.html" title="class in io.micronaut.servlet.http">ServletHttpHandler</a>&lt;REQ,<wbr>RES&gt;&gt;</code>, <code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/Closeable.html" title="class or interface in java.io" class="external-link">Closeable</a></code>, <code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/AutoCloseable.html" title="class or interface in java.lang" class="external-link">AutoCloseable</a></code></dd>
 </dl>
 <dl class="notes">
 <dt>Direct Known Subclasses:</dt>
 <dd><code><a href="../engine/DefaultServletHttpHandler.html" title="class in io.micronaut.servlet.engine">DefaultServletHttpHandler</a></code></dd>
 </dl>
 <hr>
-<div class="type-signature"><span class="modifiers">public abstract class </span><span class="element-name type-name-label">ServletHttpHandler&lt;Req,<wbr>Res&gt;</span>
+<div class="type-signature"><span class="modifiers">public abstract class </span><span class="element-name type-name-label">ServletHttpHandler&lt;REQ,<wbr>RES&gt;</span>
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>
-implements <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/AutoCloseable.html" title="class or interface in java.lang" class="external-link">AutoCloseable</a>, io.micronaut.context.LifeCycle&lt;<a href="ServletHttpHandler.html" title="class in io.micronaut.servlet.http">ServletHttpHandler</a>&lt;Req,<wbr>Res&gt;&gt;, io.micronaut.http.server.RouteExecutor.StaticResourceResponseFinder</span></div>
+implements <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/AutoCloseable.html" title="class or interface in java.lang" class="external-link">AutoCloseable</a>, io.micronaut.context.LifeCycle&lt;<a href="ServletHttpHandler.html" title="class in io.micronaut.servlet.http">ServletHttpHandler</a>&lt;REQ,<wbr>RES&gt;&gt;</span></div>
 <div class="block">An HTTP handler that can deal with Serverless requests.</div>
 <dl class="notes">
 <dt>Since:</dt>
@@ -150,52 +150,49 @@ implements <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#close()" class="member-name-link">close</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>protected abstract <a href="ServletExchange.html" title="interface in io.micronaut.servlet.http">ServletExchange</a>&lt;<a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">Req</a>,<wbr><a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">Res</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#createExchange(Req,Res)" class="member-name-link">createExchange</a><wbr>(<a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">Req</a>&nbsp;request,
- <a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">Res</a>&nbsp;response)</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>protected abstract <a href="ServletExchange.html" title="interface in io.micronaut.servlet.http">ServletExchange</a>&lt;<a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">REQ</a>,<wbr><a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">RES</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#createExchange(REQ,RES)" class="member-name-link">createExchange</a><wbr>(<a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">REQ</a>&nbsp;request,
+ <a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">RES</a>&nbsp;response)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Creates the <a href="DefaultServletExchange.html" title="class in io.micronaut.servlet.http"><code>DefaultServletExchange</code></a> object.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="ServletExchange.html" title="interface in io.micronaut.servlet.http">ServletExchange</a>&lt;<a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">Req</a>,<wbr><a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">Res</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#exchange(io.micronaut.servlet.http.ServletExchange)" class="member-name-link">exchange</a><wbr>(<a href="ServletExchange.html" title="interface in io.micronaut.servlet.http">ServletExchange</a>&lt;<a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">Req</a>,<wbr><a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">Res</a>&gt;&nbsp;exchange)</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="ServletExchange.html" title="interface in io.micronaut.servlet.http">ServletExchange</a>&lt;<a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">REQ</a>,<wbr><a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">RES</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#exchange(io.micronaut.servlet.http.ServletExchange)" class="member-name-link">exchange</a><wbr>(<a href="ServletExchange.html" title="interface in io.micronaut.servlet.http">ServletExchange</a>&lt;<a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">REQ</a>,<wbr><a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">RES</a>&gt;&nbsp;exchange)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Handle the give native request and response and return the <a href="ServletExchange.html" title="interface in io.micronaut.servlet.http"><code>ServletExchange</code></a> object.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="ServletExchange.html" title="interface in io.micronaut.servlet.http">ServletExchange</a>&lt;<a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">Req</a>,<wbr><a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">Res</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#exchange(Req,Res)" class="member-name-link">exchange</a><wbr>(<a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">Req</a>&nbsp;request,
- <a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">Res</a>&nbsp;response)</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="ServletExchange.html" title="interface in io.micronaut.servlet.http">ServletExchange</a>&lt;<a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">REQ</a>,<wbr><a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">RES</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#exchange(REQ,RES)" class="member-name-link">exchange</a><wbr>(<a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">REQ</a>&nbsp;request,
+ <a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">RES</a>&nbsp;response)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Handle the give native request and response and return the <a href="ServletExchange.html" title="interface in io.micronaut.servlet.http"><code>ServletExchange</code></a> object.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>io.micronaut.http.server.types.files.FileCustomizableResponseType</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#find(io.micronaut.http.HttpRequest)" class="member-name-link">find</a><wbr>(io.micronaut.http.HttpRequest&lt;?&gt;&nbsp;httpRequest)</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>io.micronaut.context.ApplicationContext</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getApplicationContext()" class="member-name-link">getApplicationContext</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>io.micronaut.context.ApplicationContext</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getApplicationContext()" class="member-name-link">getApplicationContext</a>()</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>io.micronaut.http.codec.MediaTypeCodecRegistry</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getMediaTypeCodecRegistry()" class="member-name-link">getMediaTypeCodecRegistry</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>io.micronaut.http.codec.MediaTypeCodecRegistry</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getMediaTypeCodecRegistry()" class="member-name-link">getMediaTypeCodecRegistry</a>()</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isRunning()" class="member-name-link">isRunning</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isRunning()" class="member-name-link">isRunning</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#service(io.micronaut.servlet.http.ServletExchange)" class="member-name-link">service</a><wbr>(<a href="ServletExchange.html" title="interface in io.micronaut.servlet.http">ServletExchange</a>&lt;<a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">Req</a>,<wbr><a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">Res</a>&gt;&nbsp;exchange)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#service(io.micronaut.servlet.http.ServletExchange)" class="member-name-link">service</a><wbr>(<a href="ServletExchange.html" title="interface in io.micronaut.servlet.http">ServletExchange</a>&lt;<a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">REQ</a>,<wbr><a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">RES</a>&gt;&nbsp;exchange)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Handles a <a href="DefaultServletExchange.html" title="class in io.micronaut.servlet.http"><code>DefaultServletExchange</code></a>.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#service(Req,Res)" class="member-name-link">service</a><wbr>(<a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">Req</a>&nbsp;request,
- <a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">Res</a>&nbsp;response)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#service(REQ,RES)" class="member-name-link">service</a><wbr>(<a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">REQ</a>&nbsp;request,
+ <a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">RES</a>&nbsp;response)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Handle the give native request and response.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="ServletHttpHandler.html" title="class in io.micronaut.servlet.http">ServletHttpHandler</a>&lt;<a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">Req</a>,<wbr><a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">Res</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#start()" class="member-name-link">start</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="ServletHttpHandler.html" title="class in io.micronaut.servlet.http">ServletHttpHandler</a>&lt;<a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">Req</a>,<wbr><a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">Res</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#stop()" class="member-name-link">stop</a>()</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="ServletHttpHandler.html" title="class in io.micronaut.servlet.http">ServletHttpHandler</a>&lt;<a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">REQ</a>,<wbr><a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">RES</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#start()" class="member-name-link">start</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="ServletHttpHandler.html" title="class in io.micronaut.servlet.http">ServletHttpHandler</a>&lt;<a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">REQ</a>,<wbr><a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">RES</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#stop()" class="member-name-link">stop</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 </div>
 </div>
 </div>
@@ -277,10 +274,10 @@ implements <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base
 </section>
 </li>
 <li>
-<section class="detail" id="service(Req,Res)">
+<section class="detail" id="service(REQ,RES)">
 <h3 id="service(java.lang.Object,java.lang.Object)">service</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">service</span><wbr><span class="parameters">(<a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">Req</a>&nbsp;request,
- <a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">Res</a>&nbsp;response)</span></div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">service</span><wbr><span class="parameters">(<a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">REQ</a>&nbsp;request,
+ <a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">RES</a>&nbsp;response)</span></div>
 <div class="block">Handle the give native request and response.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -290,10 +287,10 @@ implements <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base
 </section>
 </li>
 <li>
-<section class="detail" id="exchange(Req,Res)">
+<section class="detail" id="exchange(REQ,RES)">
 <h3 id="exchange(java.lang.Object,java.lang.Object)">exchange</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="ServletExchange.html" title="interface in io.micronaut.servlet.http">ServletExchange</a>&lt;<a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">Req</a>,<wbr><a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">Res</a>&gt;</span>&nbsp;<span class="element-name">exchange</span><wbr><span class="parameters">(<a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">Req</a>&nbsp;request,
- <a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">Res</a>&nbsp;response)</span></div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="ServletExchange.html" title="interface in io.micronaut.servlet.http">ServletExchange</a>&lt;<a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">REQ</a>,<wbr><a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">RES</a>&gt;</span>&nbsp;<span class="element-name">exchange</span><wbr><span class="parameters">(<a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">REQ</a>&nbsp;request,
+ <a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">RES</a>&nbsp;response)</span></div>
 <div class="block">Handle the give native request and response and return the <a href="ServletExchange.html" title="interface in io.micronaut.servlet.http"><code>ServletExchange</code></a> object.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -307,7 +304,7 @@ implements <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base
 <li>
 <section class="detail" id="exchange(io.micronaut.servlet.http.ServletExchange)">
 <h3>exchange</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="ServletExchange.html" title="interface in io.micronaut.servlet.http">ServletExchange</a>&lt;<a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">Req</a>,<wbr><a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">Res</a>&gt;</span>&nbsp;<span class="element-name">exchange</span><wbr><span class="parameters">(<a href="ServletExchange.html" title="interface in io.micronaut.servlet.http">ServletExchange</a>&lt;<a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">Req</a>,<wbr><a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">Res</a>&gt;&nbsp;exchange)</span></div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="ServletExchange.html" title="interface in io.micronaut.servlet.http">ServletExchange</a>&lt;<a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">REQ</a>,<wbr><a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">RES</a>&gt;</span>&nbsp;<span class="element-name">exchange</span><wbr><span class="parameters">(<a href="ServletExchange.html" title="interface in io.micronaut.servlet.http">ServletExchange</a>&lt;<a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">REQ</a>,<wbr><a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">RES</a>&gt;&nbsp;exchange)</span></div>
 <div class="block">Handle the give native request and response and return the <a href="ServletExchange.html" title="interface in io.micronaut.servlet.http"><code>ServletExchange</code></a> object.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -323,24 +320,14 @@ implements <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">isRunning</span>()</div>
 <dl class="notes">
 <dt>Specified by:</dt>
-<dd><code>isRunning</code>&nbsp;in interface&nbsp;<code>io.micronaut.context.LifeCycle&lt;<a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">Req</a>&gt;</code></dd>
-</dl>
-</section>
-</li>
-<li>
-<section class="detail" id="find(io.micronaut.http.HttpRequest)">
-<h3>find</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">io.micronaut.http.server.types.files.FileCustomizableResponseType</span>&nbsp;<span class="element-name">find</span><wbr><span class="parameters">(io.micronaut.http.HttpRequest&lt;?&gt;&nbsp;httpRequest)</span></div>
-<dl class="notes">
-<dt>Specified by:</dt>
-<dd><code>find</code>&nbsp;in interface&nbsp;<code>io.micronaut.http.server.RouteExecutor.StaticResourceResponseFinder</code></dd>
+<dd><code>isRunning</code>&nbsp;in interface&nbsp;<code>io.micronaut.context.LifeCycle&lt;<a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">REQ</a>&gt;</code></dd>
 </dl>
 </section>
 </li>
 <li>
 <section class="detail" id="service(io.micronaut.servlet.http.ServletExchange)">
 <h3>service</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">service</span><wbr><span class="parameters">(<a href="ServletExchange.html" title="interface in io.micronaut.servlet.http">ServletExchange</a>&lt;<a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">Req</a>,<wbr><a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">Res</a>&gt;&nbsp;exchange)</span></div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">service</span><wbr><span class="parameters">(<a href="ServletExchange.html" title="interface in io.micronaut.servlet.http">ServletExchange</a>&lt;<a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">REQ</a>,<wbr><a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">RES</a>&gt;&nbsp;exchange)</span></div>
 <div class="block">Handles a <a href="DefaultServletExchange.html" title="class in io.micronaut.servlet.http"><code>DefaultServletExchange</code></a>.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -358,7 +345,7 @@ implements <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base
 <dt>Specified by:</dt>
 <dd><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/Closeable.html#close()" title="class or interface in java.io" class="external-link">close</a></code>&nbsp;in interface&nbsp;<code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/Closeable.html" title="class or interface in java.io" class="external-link">Closeable</a></code></dd>
 <dt>Specified by:</dt>
-<dd><code>close</code>&nbsp;in interface&nbsp;<code>io.micronaut.context.LifeCycle&lt;<a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">Req</a>&gt;</code></dd>
+<dd><code>close</code>&nbsp;in interface&nbsp;<code>io.micronaut.context.LifeCycle&lt;<a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">REQ</a>&gt;</code></dd>
 </dl>
 </section>
 </li>
@@ -366,10 +353,10 @@ implements <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base
 <section class="detail" id="start()">
 <h3>start</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="ServletHttpHandler.html" title="class in io.micronaut.servlet.http">ServletHttpHandler</a>&lt;<a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">Req</a>,<wbr><a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">Res</a>&gt;</span>&nbsp;<span class="element-name">start</span>()</div>
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="ServletHttpHandler.html" title="class in io.micronaut.servlet.http">ServletHttpHandler</a>&lt;<a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">REQ</a>,<wbr><a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">RES</a>&gt;</span>&nbsp;<span class="element-name">start</span>()</div>
 <dl class="notes">
 <dt>Specified by:</dt>
-<dd><code>start</code>&nbsp;in interface&nbsp;<code>io.micronaut.context.LifeCycle&lt;<a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">Req</a>&gt;</code></dd>
+<dd><code>start</code>&nbsp;in interface&nbsp;<code>io.micronaut.context.LifeCycle&lt;<a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">REQ</a>&gt;</code></dd>
 </dl>
 </section>
 </li>
@@ -377,18 +364,18 @@ implements <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base
 <section class="detail" id="stop()">
 <h3>stop</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="ServletHttpHandler.html" title="class in io.micronaut.servlet.http">ServletHttpHandler</a>&lt;<a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">Req</a>,<wbr><a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">Res</a>&gt;</span>&nbsp;<span class="element-name">stop</span>()</div>
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="ServletHttpHandler.html" title="class in io.micronaut.servlet.http">ServletHttpHandler</a>&lt;<a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">REQ</a>,<wbr><a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">RES</a>&gt;</span>&nbsp;<span class="element-name">stop</span>()</div>
 <dl class="notes">
 <dt>Specified by:</dt>
-<dd><code>stop</code>&nbsp;in interface&nbsp;<code>io.micronaut.context.LifeCycle&lt;<a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">Req</a>&gt;</code></dd>
+<dd><code>stop</code>&nbsp;in interface&nbsp;<code>io.micronaut.context.LifeCycle&lt;<a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">REQ</a>&gt;</code></dd>
 </dl>
 </section>
 </li>
 <li>
-<section class="detail" id="createExchange(Req,Res)">
+<section class="detail" id="createExchange(REQ,RES)">
 <h3 id="createExchange(java.lang.Object,java.lang.Object)">createExchange</h3>
-<div class="member-signature"><span class="modifiers">protected abstract</span>&nbsp;<span class="return-type"><a href="ServletExchange.html" title="interface in io.micronaut.servlet.http">ServletExchange</a>&lt;<a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">Req</a>,<wbr><a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">Res</a>&gt;</span>&nbsp;<span class="element-name">createExchange</span><wbr><span class="parameters">(<a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">Req</a>&nbsp;request,
- <a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">Res</a>&nbsp;response)</span></div>
+<div class="member-signature"><span class="modifiers">protected abstract</span>&nbsp;<span class="return-type"><a href="ServletExchange.html" title="interface in io.micronaut.servlet.http">ServletExchange</a>&lt;<a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">REQ</a>,<wbr><a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">RES</a>&gt;</span>&nbsp;<span class="element-name">createExchange</span><wbr><span class="parameters">(<a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">REQ</a>&nbsp;request,
+ <a href="ServletHttpHandler.html" title="type parameter in ServletHttpHandler">RES</a>&nbsp;response)</span></div>
 <div class="block">Creates the <a href="DefaultServletExchange.html" title="class in io.micronaut.servlet.http"><code>DefaultServletExchange</code></a> object.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
