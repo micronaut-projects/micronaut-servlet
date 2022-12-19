@@ -1,0 +1,33 @@
+plugins {
+    id("java-library")
+}
+repositories {
+    mavenCentral()
+}
+
+
+dependencies {
+    testAnnotationProcessor(platform("io.micronaut:micronaut-bom:$micronautVersion"))
+    testAnnotationProcessor "io.micronaut:micronaut-inject-java"
+
+    testImplementation(platform("io.micronaut:micronaut-bom:$micronautVersion"))
+    testImplementation "io.micronaut:micronaut-inject-java"
+    testImplementation("io.micronaut.test:micronaut-test-junit5")
+    testImplementation("org.mockito:mockito-core")
+    testImplementation("org.junit.jupiter:junit-jupiter-params")
+    testImplementation("org.junit.jupiter:junit-jupiter-api")
+    testImplementation("org.junit.jupiter:junit-jupiter-engine")
+    testImplementation("org.testcontainers:junit-jupiter")
+    testImplementation("org.testcontainers:testcontainers")
+
+    testRuntimeOnly("ch.qos.logback:logback-classic")
+}
+
+java {
+    sourceCompatibility = JavaVersion.toVersion("11")
+    targetCompatibility = JavaVersion.toVersion("11")
+}
+
+tasks.named("test") {
+    useJUnitPlatform()
+}
