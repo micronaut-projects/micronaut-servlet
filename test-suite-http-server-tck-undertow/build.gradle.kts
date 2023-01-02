@@ -8,5 +8,6 @@ val micronautVersion: String by project
 dependencies {
     testImplementation(mn.micronaut.http.client)
     testImplementation(projects.httpServerUndertow)
-    testImplementation(projects.httpServerTck)
+    testImplementation(mn.micronaut.http.server.tck)
+    testImplementation(libs.junit.platform.engine)
 }

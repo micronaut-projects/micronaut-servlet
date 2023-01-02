@@ -35,6 +35,7 @@ groovy-json = { module = 'org.codehaus.groovy:groovy-json' }
 graal = { module = "org.graalvm.nativeimage:svm" }
 projectreactor = { module = 'io.projectreactor:reactor-core' }
 junit-jupiter-engine = { module = 'org.junit.jupiter:junit-jupiter-engine' }
+junit-platform-engine = { module = "org.junit.platform:junit-platform-suite-engine" }
 kotlin-stdlib-jdk8 = { module = 'org.jetbrains.kotlin:kotlin-stdlib-jdk8' }
 kotlin-reflect = { module = 'org.jetbrains.kotlin:kotlin-reflect' }
 
