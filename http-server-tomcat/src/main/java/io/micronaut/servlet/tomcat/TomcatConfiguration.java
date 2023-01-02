@@ -17,6 +17,7 @@ package io.micronaut.servlet.tomcat;
 
 import io.micronaut.context.annotation.ConfigurationBuilder;
 import io.micronaut.context.annotation.ConfigurationProperties;
+import io.micronaut.context.annotation.Primary;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.core.annotation.TypeHint;
 import io.micronaut.core.convert.format.MapFormat;
@@ -53,6 +54,7 @@ import java.util.Optional;
         AjpNio2Protocol.class,
         AjpNioProtocol.class
 })
+@Primary
 public class TomcatConfiguration extends HttpServerConfiguration {
 
     @ConfigurationBuilder
