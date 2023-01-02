@@ -19,4 +19,5 @@ dependencies {
     testImplementation libs.micronaut.reactor.http.client
 
     testImplementation(libs.micronaut.security)
+    testImplementation(libs.bcpkix)
 }
