@@ -12,7 +12,7 @@ google-cloud-functions = '1.0.4'
 kotlin = "1.7.21"
 
 # Micronaut
-micronaut-gradle-plugin = "3.6.6"
+micronaut-gradle-plugin = "3.6.7"
 
 [libraries]
 managed-servlet-api = { module = 'javax.servlet:javax.servlet-api', version.ref = 'managed-servlet-api' }
