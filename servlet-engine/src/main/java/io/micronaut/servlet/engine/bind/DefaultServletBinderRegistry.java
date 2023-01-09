@@ -161,7 +161,7 @@ class DefaultServletBinderRegistry extends io.micronaut.servlet.http.ServletBind
                         if (type.isInstance(stringFlux)) {
                             return () -> Optional.of(stringFlux);
                         } else {
-                            Object converted = Publishers.convertPublisher(stringFlux, type);
+                            Object converted = Publishers.convertPublisher(conversionService, stringFlux, type);
                             return () -> Optional.of(converted);
                         }
                     } else if (byte[].class.isAssignableFrom(javaArgument)) {
@@ -170,8 +170,9 @@ class DefaultServletBinderRegistry extends io.micronaut.servlet.http.ServletBind
                         MediaType mediaType = servletHttpRequest.getContentType().orElse(MediaType.APPLICATION_JSON_TYPE);
                         MapperMediaTypeCodec codec = (MapperMediaTypeCodec) mediaTypeCodecRegistry.findCodec(mediaType, javaArgument).orElse(null);
                         if (codec != null) {
-                            Processor<byte[], io.micronaut.json.tree.JsonNode> jsonProcessor = codec.getJsonMapper().createReactiveParser(servletHttpRequest::subscribe, false);
+                            Processor<byte[], io.micronaut.json.tree.JsonNode> jsonProcessor = codec.getJsonMapper().createReactiveParser(servletHttpRequest::subscribe, true);
                             Object converted = Publishers.convertPublisher(
+                                    conversionService,
                                     Flux.from(jsonProcessor)
                                         .map(jsonNode -> codec.decode(typeArgument, jsonNode)), type);
                             return () -> Optional.of(converted);

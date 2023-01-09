@@ -22,6 +22,7 @@ import io.micronaut.core.annotation.AnnotationMetadataProvider;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.async.publisher.Publishers;
+import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.execution.ExecutionFlow;
 import io.micronaut.core.io.Writable;
 import io.micronaut.core.util.ArrayUtils;
@@ -83,6 +84,7 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
 
     protected final ApplicationContext applicationContext;
     private final RouteExecutor routeExecutor;
+    private final ConversionService conversionService;
     private final MediaTypeCodecRegistry mediaTypeCodecRegistry;
     private final Map<Class<?>, ServletResponseEncoder<?>> responseEncoders;
     private final StaticResourceResolver staticResourceResolver;
@@ -92,7 +94,7 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
      *
      * @param applicationContext The application context
      */
-    public ServletHttpHandler(ApplicationContext applicationContext) {
+    public ServletHttpHandler(ApplicationContext applicationContext, ConversionService conversionService) {
         this.applicationContext = Objects.requireNonNull(applicationContext, "The application context cannot be null");
         this.mediaTypeCodecRegistry = applicationContext.getBean(MediaTypeCodecRegistry.class);
         //noinspection unchecked
@@ -103,6 +105,7 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
             ));
         this.staticResourceResolver = applicationContext.getBean(StaticResourceResolver.class);
         this.routeExecutor = applicationContext.getBean(RouteExecutor.class);
+        this.conversionService = conversionService;
 
         // hack for bug fixed in Micronaut 1.3.3
         applicationContext.getEnvironment()
@@ -311,7 +314,6 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
             .map(AnnotationMetadataProvider::getAnnotationMetadata)
             .orElse(AnnotationMetadata.EMPTY_METADATA);
 
-
         ServletHttpResponse<RES, ?> servletResponse = exchange.getResponse();
         servletResponse.status(response.status(), response.reason());
 
@@ -354,7 +356,7 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
             setHeadersFromMetadata(servletResponse, routeAnnotationMetadata, body);
             if (Publishers.isConvertibleToPublisher(body)) {
                 boolean isSingle = Publishers.isSingle(body.getClass());
-                Publisher<?> publisher = Publishers.convertPublisher(body, Publisher.class);
+                Publisher<?> publisher = Publishers.convertPublisher(conversionService, body, Publisher.class);
                 if (isSingle) {
                     if (exchange.getRequest().isAsyncSupported()) {
                         Flux<Object> flux = Flux.from(publisher);

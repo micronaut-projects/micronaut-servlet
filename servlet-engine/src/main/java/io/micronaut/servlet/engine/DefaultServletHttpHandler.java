@@ -16,6 +16,7 @@
 package io.micronaut.servlet.engine;
 
 import io.micronaut.context.ApplicationContext;
+import io.micronaut.core.convert.ConversionService;
 import io.micronaut.servlet.http.ServletExchange;
 import io.micronaut.servlet.http.ServletHttpHandler;
 
@@ -36,8 +37,8 @@ public class DefaultServletHttpHandler extends ServletHttpHandler<HttpServletReq
      *
      * @param applicationContext The application context
      */
-    public DefaultServletHttpHandler(ApplicationContext applicationContext) {
-        super(applicationContext);
+    public DefaultServletHttpHandler(ApplicationContext applicationContext, ConversionService conversionService) {
+        super(applicationContext, conversionService);
     }
 
     @Override
