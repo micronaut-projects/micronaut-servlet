@@ -36,6 +36,7 @@ public class DefaultServletHttpHandler extends ServletHttpHandler<HttpServletReq
      * Default constructor.
      *
      * @param applicationContext The application context
+     * @param conversionService  The conversion service
      */
     public DefaultServletHttpHandler(ApplicationContext applicationContext, ConversionService conversionService) {
         super(applicationContext, conversionService);

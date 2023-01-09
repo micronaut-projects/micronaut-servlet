@@ -93,8 +93,9 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
      * Default constructor.
      *
      * @param applicationContext The application context
+     * @param conversionService  The conversion service
      */
-    public ServletHttpHandler(ApplicationContext applicationContext, ConversionService conversionService) {
+    protected ServletHttpHandler(ApplicationContext applicationContext, ConversionService conversionService) {
         this.applicationContext = Objects.requireNonNull(applicationContext, "The application context cannot be null");
         this.mediaTypeCodecRegistry = applicationContext.getBean(MediaTypeCodecRegistry.class);
         //noinspection unchecked
