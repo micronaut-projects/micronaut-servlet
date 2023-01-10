@@ -5,6 +5,7 @@ import groovy.transform.EqualsAndHashCode
 import io.micronaut.context.annotation.Property
 import io.micronaut.context.annotation.Requires
 import io.micronaut.core.annotation.Introspected
+import io.micronaut.core.async.annotation.SingleResult
 import io.micronaut.core.type.Argument
 import io.micronaut.core.util.StringUtils
 import io.micronaut.http.HttpRequest
@@ -20,6 +21,7 @@ import io.micronaut.http.client.multipart.MultipartBody
 import io.micronaut.http.multipart.CompletedFileUpload
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
+import org.reactivestreams.Publisher
 import spock.lang.Specification
 
 import java.nio.charset.StandardCharsets
@@ -334,6 +336,38 @@ class JettyHttpPostSpec extends Specification {
         val == "multiple mappings"
     }
 
+    void 'test posting publisher with #desc'() {
+        when:
+        String data = client.toBlocking().retrieve(
+                HttpRequest.POST("/post/publisher", body),
+                String
+        )
+
+        then:
+        data == expected
+
+        where:
+        body                                                                     | expected                                                                 | desc
+        '[{"title":"some book","pages":1},{"title":"necronomicon","pages":666}]' | '[{"title":"some book","pages":1},{"title":"necronomicon","pages":666}]' | 'multiple entries'
+        '{"title":"some book","pages":1}'                                        | '[{"title":"some book","pages":1}]'                                      | 'single entry'
+    }
+
+    void 'test @SingleResult publisher with #desc'() {
+        when:
+        String data = client.toBlocking().retrieve(
+                HttpRequest.POST("/post/single-publisher", body),
+                String
+        )
+
+        then:
+        data == expected
+
+        where:
+        body                                                                     | expected                          | desc
+        '[{"title":"some book","pages":1},{"title":"necronomicon","pages":666}]' | '{"title":"some book","pages":1}' | 'multiple entries'
+        '{"title":"some book","pages":1}'                                        | '{"title":"some book","pages":1}' | 'single entry'
+    }
+
     @Requires(property = 'spec.name', value = 'JettyHttpPostSpec')
     @Controller('/post')
     static class PostController {
@@ -367,6 +401,17 @@ class JettyHttpPostSpec extends Specification {
         @Post('/noBody')
         String noBody(@Header("Content-Length") String contentLength) {
             return contentLength
+        }
+
+        @Post('/publisher')
+        Publisher<Book> publisher(@Body Publisher<Book> bookPublisher) {
+            return bookPublisher
+        }
+
+        @Post('/single-publisher')
+        @SingleResult
+        Publisher<Book> singlePublisher(@Body Publisher<Book> bookPublisher) {
+            return bookPublisher
         }
 
         @Post('/title/{title}')
