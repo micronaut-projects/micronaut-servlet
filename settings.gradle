@@ -9,6 +9,8 @@ plugins {
     id 'io.micronaut.build.shared.settings' version '5.3.15'
 }
 
+enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
+
 rootProject.name = 'servlet-parent'
 
 include 'servlet-bom'
@@ -17,6 +19,11 @@ include 'servlet-engine'
 include 'http-server-jetty'
 include 'http-server-undertow'
 include 'http-server-tomcat'
-
+include 'test-suite-http-server-tck-tomcat'
+include 'test-suite-http-server-tck-undertow'
+include 'test-suite-http-server-tck-jetty'
 include 'test-suite-kotlin-jetty'
 
+micronautBuild {
+    importMicronautCatalog()
+}

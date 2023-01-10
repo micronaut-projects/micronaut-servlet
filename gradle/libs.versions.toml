@@ -9,6 +9,10 @@ jetty = '9.4.49.v20220914'
 tomcat = '9.0.65'
 google-cloud-functions = '1.0.4'
 bcpkix = "1.70"
+kotlin = "1.7.21"
+
+# Micronaut
+micronaut-gradle-plugin = "3.6.7"
 
 [libraries]
 managed-servlet-api = { module = 'javax.servlet:javax.servlet-api', version.ref = 'managed-servlet-api' }
@@ -31,6 +35,8 @@ groovy-json = { module = 'org.codehaus.groovy:groovy-json' }
 graal = { module = "org.graalvm.nativeimage:svm" }
 projectreactor = { module = 'io.projectreactor:reactor-core' }
 junit-jupiter-engine = { module = 'org.junit.jupiter:junit-jupiter-engine' }
+junit-platform-engine = { module = "org.junit.platform:junit-platform-suite-engine" }
+logback-classic = { module = "ch.qos.logback:logback-classic" }
 kotlin-stdlib-jdk8 = { module = 'org.jetbrains.kotlin:kotlin-stdlib-jdk8' }
 kotlin-reflect = { module = 'org.jetbrains.kotlin:kotlin-reflect' }
 
@@ -44,4 +50,7 @@ jetty = { module = 'org.eclipse.jetty:jetty-servlet', version.ref = 'jetty' }
 google-cloud-functions = { module = 'com.google.cloud.functions:functions-framework-api', version.ref = 'google-cloud-functions' }
 kotest-runner = { module = 'io.kotest:kotest-runner-junit5', version.ref = 'kotest-runner' }
 bcpkix = { module = "org.bouncycastle:bcpkix-jdk15on", version.ref = "bcpkix" }
+# Gradle
 
+gradle-micronaut = { module = "io.micronaut.gradle:micronaut-gradle-plugin", version.ref = "micronaut-gradle-plugin" }
+gradle-kotlin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
