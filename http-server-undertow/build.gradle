@@ -15,4 +15,5 @@ dependencies {
     testImplementation libs.micronaut.session
     testImplementation libs.projectreactor
     testImplementation libs.micronaut.security
+    testImplementation(libs.bcpkix)
 }
