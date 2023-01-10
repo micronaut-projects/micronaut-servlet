@@ -170,7 +170,7 @@ class DefaultServletBinderRegistry extends io.micronaut.servlet.http.ServletBind
                         MediaType mediaType = servletHttpRequest.getContentType().orElse(MediaType.APPLICATION_JSON_TYPE);
                         MapperMediaTypeCodec codec = (MapperMediaTypeCodec) mediaTypeCodecRegistry.findCodec(mediaType, javaArgument).orElse(null);
                         if (codec != null) {
-                            Processor<byte[], io.micronaut.json.tree.JsonNode> jsonProcessor = codec.getJsonMapper().createReactiveParser(servletHttpRequest::subscribe, false);
+                            Processor<byte[], io.micronaut.json.tree.JsonNode> jsonProcessor = codec.getJsonMapper().createReactiveParser(servletHttpRequest::subscribe, true);
                             Object converted = Publishers.convertPublisher(
                                     Flux.from(jsonProcessor)
                                         .map(jsonNode -> codec.decode(typeArgument, jsonNode)), type);
