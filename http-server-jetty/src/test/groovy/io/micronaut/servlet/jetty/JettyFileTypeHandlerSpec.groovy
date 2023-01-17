@@ -27,7 +27,6 @@ import static io.micronaut.http.HttpHeaders.*
 
 @MicronautTest
 @Property(name = "spec.name", value = "FileTypeHandlerSpec")
-@Property(name = "micronaut.http.client.read-timeout", value = "P30M")
 class JettyFileTypeHandlerSpec extends Specification {
 
     private static File tempFile
