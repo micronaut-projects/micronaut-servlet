@@ -38,7 +38,6 @@ import io.micronaut.http.MediaType;
 import io.micronaut.http.MutableHttpResponse;
 import io.micronaut.http.annotation.Header;
 import io.micronaut.http.annotation.Produces;
-import io.micronaut.http.annotation.Status;
 import io.micronaut.http.bind.binders.ContinuationArgumentBinder;
 import io.micronaut.http.codec.CodecException;
 import io.micronaut.http.codec.MediaTypeCodec;
@@ -58,6 +57,7 @@ import io.micronaut.http.server.types.files.StreamedFile;
 import io.micronaut.http.server.types.files.SystemFile;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.web.router.MethodBasedRouteMatch;
+import io.micronaut.web.router.RouteInfo;
 import io.micronaut.web.router.RouteMatch;
 import io.micronaut.web.router.Router;
 import io.micronaut.web.router.UriRoute;
@@ -793,10 +793,16 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                     }
                 }
                 outgoingResponse.setAttribute(HttpAttributes.ROUTE_MATCH, finalRoute);
+                resolveRouteSpecificMediaType(finalRoute).ifPresent(outgoingResponse::contentType);
+
                 subscriber.next(outgoingResponse);
                 subscriber.complete();
             });
         });
+    }
+
+    private Optional<MediaType> resolveRouteSpecificMediaType(RouteInfo<?> finalRoute) {
+        return finalRoute.getProduces().stream().filter(m -> !m.equals(MediaType.APPLICATION_JSON_TYPE)).findFirst();
     }
 
     private void encodeResponse(ServletExchange<Req, Res> exchange,
