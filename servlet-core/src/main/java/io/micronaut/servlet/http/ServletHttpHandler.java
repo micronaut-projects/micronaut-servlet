@@ -793,7 +793,6 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                     }
                 }
                 outgoingResponse.setAttribute(HttpAttributes.ROUTE_MATCH, finalRoute);
-
                 subscriber.next(outgoingResponse);
                 subscriber.complete();
             });
