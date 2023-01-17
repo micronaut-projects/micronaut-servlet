@@ -793,16 +793,11 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                     }
                 }
                 outgoingResponse.setAttribute(HttpAttributes.ROUTE_MATCH, finalRoute);
-                resolveRouteSpecificMediaType(finalRoute).ifPresent(outgoingResponse::contentType);
 
                 subscriber.next(outgoingResponse);
                 subscriber.complete();
             });
         });
-    }
-
-    private Optional<MediaType> resolveRouteSpecificMediaType(RouteInfo<?> finalRoute) {
-        return finalRoute.getProduces().stream().filter(m -> !m.equals(MediaType.APPLICATION_JSON_TYPE)).findFirst();
     }
 
     private void encodeResponse(ServletExchange<Req, Res> exchange,
@@ -896,8 +891,17 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
 
     private void setHeadersFromMetadata(MutableHttpResponse<Object> res, AnnotationMetadata annotationMetadata, Object result) {
         if (!res.getContentType().isPresent()) {
-            final String contentType = annotationMetadata.stringValue(Produces.class)
-                    .orElse(getDefaultMediaType(result));
+            // If this was from an error route, check the content type of that route
+            Optional<MediaType> routeContentType = res.getAttribute(HttpAttributes.ROUTE_MATCH)
+                .flatMap(route -> {
+                    if (route instanceof RouteInfo && ((RouteInfo<?>) route).isErrorRoute()) {
+                        return resolveRouteSpecificMediaType((RouteInfo<?>) route);
+                    }
+                    return Optional.empty();
+                });
+            final String contentType = routeContentType.map(MediaType::toString).orElseGet(() ->
+                annotationMetadata.stringValue(Produces.class).orElse(getDefaultMediaType(result))
+            );
             if (contentType != null) {
                 res.contentType(contentType);
             }
@@ -911,6 +915,10 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                 res.header(name, value);
             }
         }
+    }
+
+    private Optional<MediaType> resolveRouteSpecificMediaType(RouteInfo<?> finalRoute) {
+        return finalRoute.getProduces().stream().filter(m -> !m.equals(MediaType.APPLICATION_JSON_TYPE)).findFirst();
     }
 
     private String getDefaultMediaType(Object result) {
