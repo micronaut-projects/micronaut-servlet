@@ -7,7 +7,7 @@ kotest-runner = '5.4.1'
 undertow = '2.2.18.Final'
 jetty = '9.4.49.v20220914'
 tomcat = '9.0.65'
-graal-svm = "22.0.0.2"
+graal-svm = "22.3.1"
 bcpkix = "1.70"
 
 micronaut-reactor = "3.0.0-SNAPSHOT"
