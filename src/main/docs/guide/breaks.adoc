@@ -1,0 +1,8 @@
+This section documents breaking changes between versions.
+
+== 4.0.0
+
+=== Binding interface
+
+Servlet Engine will bind to `localhost` by default instead of `0.0.0.0`.
+To restoring the previous functionality can be achieved by setting the property `micronaut.server.host`, or the `HOST` environment variable.
