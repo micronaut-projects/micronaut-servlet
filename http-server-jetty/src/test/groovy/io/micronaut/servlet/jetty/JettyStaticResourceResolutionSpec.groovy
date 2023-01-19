@@ -15,39 +15,38 @@ import io.micronaut.runtime.server.EmbeddedServer
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.micronaut.test.support.TestPropertyProvider
 import io.micronaut.web.router.resource.StaticResourceConfiguration
+import spock.lang.Shared
 import spock.lang.Specification
 
 import jakarta.inject.Inject
+import spock.lang.TempDir
+
 import java.nio.file.Paths
-import java.time.Instant
-import java.time.ZoneId
-import java.time.ZonedDateTime
-import java.time.temporal.ChronoUnit
 
 import static io.micronaut.http.HttpHeaders.*
 
 @MicronautTest
 class JettyStaticResourceResolutionSpec extends Specification implements TestPropertyProvider {
 
-    private static File tempFile
+    @TempDir
+    @Shared
+    File tempDir
 
-    static {
-        tempFile = File.createTempFile("staticResourceResolutionSpec", ".html")
-        tempFile.write("<html><head></head><body>HTML Page from static file</body></html>")
-        tempFile
+    @Shared
+    File tempFile
+
+    def setupSpec() {
+        tempFile = File.createTempFile("staticResourceResolutionSpec", ".html", tempDir)
+        tempFile << "<html><head></head><body>HTML Page from static file</body></html>"
     }
 
     @Override
     Map<String, Object> getProperties() {
         [
-                'micronaut.router.static-resources.default.paths': ['classpath:public', 'file:' + tempFile.parent],
+                'micronaut.router.static-resources.default.paths': ['classpath:public', "file:${tempDir.canonicalPath}"],
                 'micronaut.router.static-resources.default.mapping':'/public',
                 'micronaut.server.jetty.init-parameters.cacheControl':'max-age=3600,public'
         ]
-    }
-
-    void cleanupSpec() {
-        tempFile.delete()
     }
 
     @Inject
