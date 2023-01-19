@@ -9,7 +9,7 @@ class UndertowStartStopSpec extends Specification {
 
     void "test the bean context is not used after shutdown"() {
         when:
-            def ctx = ApplicationContext.builder().build()
+            def ctx = ApplicationContext.run(['spec.name': 'UndertowStartStopSpec'])
             ctx.start()
             def eventsListener = ctx.getBean(EventsListener)
             def embeddedApplication = ctx.getBean(EmbeddedApplication)

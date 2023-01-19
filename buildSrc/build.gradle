@@ -6,3 +6,8 @@ repositories {
     gradlePluginPortal()
     mavenCentral()
 }
+
+dependencies {
+    implementation libs.gradle.micronaut
+    implementation libs.gradle.kotlin
+}
