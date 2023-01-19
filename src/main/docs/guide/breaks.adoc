@@ -1,0 +1,10 @@
+This section documents breaking changes between versions.
+
+== 3.3.4
+
+=== Binding network interface
+
+Previously, the default servlet engine will bind to all network interfaces.
+This is a security risk.
+Now, the default servlet engine will bind to `localhost` only.
+To restore the original functionality, you need to configure `micronaut.server.host`, or set the `HOST` environment variable.

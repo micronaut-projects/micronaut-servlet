@@ -6,4 +6,5 @@ jetty: Jetty Server
 tomcat: Tomcat Server
 undertow: Undertow Server
 faq: FAQ
+breaks: Breaking Changes
 repository: Repository
