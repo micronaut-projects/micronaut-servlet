@@ -38,7 +38,6 @@ import io.micronaut.http.MediaType;
 import io.micronaut.http.MutableHttpResponse;
 import io.micronaut.http.annotation.Header;
 import io.micronaut.http.annotation.Produces;
-import io.micronaut.http.annotation.Status;
 import io.micronaut.http.bind.binders.ContinuationArgumentBinder;
 import io.micronaut.http.codec.CodecException;
 import io.micronaut.http.codec.MediaTypeCodec;
@@ -58,6 +57,7 @@ import io.micronaut.http.server.types.files.StreamedFile;
 import io.micronaut.http.server.types.files.SystemFile;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.web.router.MethodBasedRouteMatch;
+import io.micronaut.web.router.RouteInfo;
 import io.micronaut.web.router.RouteMatch;
 import io.micronaut.web.router.Router;
 import io.micronaut.web.router.UriRoute;
@@ -890,8 +890,17 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
 
     private void setHeadersFromMetadata(MutableHttpResponse<Object> res, AnnotationMetadata annotationMetadata, Object result) {
         if (!res.getContentType().isPresent()) {
-            final String contentType = annotationMetadata.stringValue(Produces.class)
-                    .orElse(getDefaultMediaType(result));
+            // If this was from an error route, check the content type of that route
+            Optional<MediaType> routeContentType = res.getAttribute(HttpAttributes.ROUTE_MATCH)
+                .flatMap(route -> {
+                    if (route instanceof RouteInfo && ((RouteInfo<?>) route).isErrorRoute()) {
+                        return resolveRouteSpecificMediaType((RouteInfo<?>) route);
+                    }
+                    return Optional.empty();
+                });
+            final String contentType = routeContentType.map(MediaType::toString).orElseGet(() ->
+                annotationMetadata.stringValue(Produces.class).orElse(getDefaultMediaType(result))
+            );
             if (contentType != null) {
                 res.contentType(contentType);
             }
@@ -905,6 +914,10 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                 res.header(name, value);
             }
         }
+    }
+
+    private Optional<MediaType> resolveRouteSpecificMediaType(RouteInfo<?> finalRoute) {
+        return finalRoute.getProduces().stream().filter(m -> !m.equals(MediaType.APPLICATION_JSON_TYPE)).findFirst();
     }
 
     private String getDefaultMediaType(Object result) {
