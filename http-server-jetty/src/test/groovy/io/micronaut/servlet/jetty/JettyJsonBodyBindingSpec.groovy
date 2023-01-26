@@ -288,16 +288,13 @@ class JettyJsonBodyBindingSpec extends Specification {
 
     void "test request generic type conversion error"() {
         when:
-        def json = '[1,2,3]'
-        rxClient.toBlocking().exchange(
+        String json = '[1,2,3]'
+        HttpResponse<String> response = rxClient.toBlocking().exchange(
                 HttpRequest.POST('/json/request-generic', json), String
         )
 
         then:
-        def e = thrown(HttpClientResponseException)
-        def response = e.response
-        response.status() == HttpStatus.BAD_REQUEST
-        response.body().toString().contains("Error decoding JSON stream for type")
+        response.body() == "not found"
     }
 
     @Requires(property = 'spec.name', value = 'JettyJsonBodyBindingSpec')

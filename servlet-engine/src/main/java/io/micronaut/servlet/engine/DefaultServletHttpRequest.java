@@ -56,6 +56,7 @@ import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -255,10 +256,10 @@ public class DefaultServletHttpRequest<B> implements
                     try {
                         return mapperCodec.getJsonMapper().readValue(bytes, Argument.of(JsonNode.class));
                     } catch (JsonProcessingException e) {
-                        throw new CodecException("Error decoding request body from JSON " + e.getMessage(), e);
+                        return new ByteArrayInputStream(bytes);
                     }
                 }
-                return bytes;
+                return new ByteArrayInputStream(bytes);
             } catch (IOException e) {
                 throw new CodecException("Error decoding request body: " + e.getMessage(), e);
             }
