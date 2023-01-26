@@ -243,19 +243,21 @@ public class DefaultServletHttpRequest<B> implements
             return getParameters().asMap();
         } else {
             try {
-                Object result = readAll(delegate.getInputStream());
-
+                byte[] bytes = readAll(delegate.getInputStream());
+                if (bytes.length == 0) {
+                    return null;
+                }
                 final MediaTypeCodec codec = codecRegistry.findCodec(contentType).orElse(null);
                 if (codec instanceof MapperMediaTypeCodec) {
                     final MapperMediaTypeCodec mapperCodec = (MapperMediaTypeCodec) codec;
 
                     try {
-                        result = mapperCodec.getJsonMapper().readValue((byte[]) result, Argument.of(JsonNode.class));
+                        return mapperCodec.getJsonMapper().readValue((byte[]) bytes, Argument.of(JsonNode.class));
                     } catch (JsonProcessingException e) {
+                        throw new CodecException("Error decoding JSON stream for type: " + e.getMessage(), e);
                     }
                 }
-                System.out.println("result = " + (result instanceof byte[] ? "B[" + new String((byte[]) result) : result));
-                return result;
+                return bytes;
             } catch (IOException e) {
                 throw new CodecException("Error decoding request body: " + e.getMessage(), e);
             }
