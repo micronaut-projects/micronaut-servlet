@@ -45,6 +45,8 @@ import io.micronaut.servlet.http.ServletHttpResponse;
 import io.micronaut.servlet.http.StreamedServletMessage;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 import reactor.core.scheduler.Scheduler;
@@ -91,6 +93,8 @@ public class DefaultServletHttpRequest<B> implements
         MutableConvertibleValues<Object>,
         ServletExchange<HttpServletRequest, HttpServletResponse>,
         StreamedServletMessage<B, byte[]> {
+
+    private static final Logger LOG = LoggerFactory.getLogger(DefaultServletHttpRequest.class);
 
     private final HttpServletRequest delegate;
     private final URI uri;
@@ -256,6 +260,9 @@ public class DefaultServletHttpRequest<B> implements
                     try {
                         return mapperCodec.getJsonMapper().readValue(bytes, Argument.of(JsonNode.class));
                     } catch (JsonProcessingException e) {
+                        if (LOG.isErrorEnabled()) {
+                            LOG.error("Error decoding request body as JSON. Attempting to decode as raw bytes", e);
+                        }
                         return new ByteArrayInputStream(bytes);
                     }
                 }
