@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 original authors
+ * Copyright 2017-2023 original authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,7 +63,16 @@ import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.Principal;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -91,9 +100,25 @@ public class DefaultServletHttpRequest<B> implements
     private final ConversionService<?> conversionService;
     private DefaultServletCookies cookies;
     private Scheduler scheduler;
-    private B bodyUnwrapped;
     private Supplier<Optional<B>> body;
     private final BodyConvertor bodyConvertor = newBodyConvertor();
+
+    /**
+     * Default constructor.
+     *
+     * @param delegate      The servlet request
+     * @param response      The servlet response
+     * @param codecRegistry The codec registry
+     *
+     * @deprecated Use {@link #DefaultServletHttpRequest(HttpServletRequest, HttpServletResponse, MediaTypeCodecRegistry, ConversionService)} instead
+     */
+    @Deprecated
+    protected DefaultServletHttpRequest(
+        HttpServletRequest delegate,
+        HttpServletResponse response,
+        MediaTypeCodecRegistry codecRegistry) {
+        this(delegate, response, codecRegistry, ConversionService.SHARED);
+    }
 
     /**
      * Default constructor.
@@ -138,7 +163,6 @@ public class DefaultServletHttpRequest<B> implements
         );
         this.body = SupplierUtil.memoizedNonEmpty(() -> {
             B built = (B) buildBody();
-            this.bodyUnwrapped = built;
             return Optional.ofNullable(built);
         });
     }
