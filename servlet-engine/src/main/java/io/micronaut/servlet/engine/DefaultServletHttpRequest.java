@@ -15,19 +15,19 @@
  */
 package io.micronaut.servlet.engine;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.convert.ConversionService;
-import io.micronaut.core.convert.value.ConvertibleValues;
 import io.micronaut.core.convert.value.MutableConvertibleValues;
-import io.micronaut.core.io.IOUtils;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
+import io.micronaut.core.util.SupplierUtil;
 import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpMethod;
 import io.micronaut.http.HttpParameters;
@@ -37,6 +37,8 @@ import io.micronaut.http.codec.CodecException;
 import io.micronaut.http.codec.MediaTypeCodec;
 import io.micronaut.http.codec.MediaTypeCodecRegistry;
 import io.micronaut.http.cookie.Cookies;
+import io.micronaut.json.codec.MapperMediaTypeCodec;
+import io.micronaut.json.tree.JsonNode;
 import io.micronaut.servlet.http.ServletExchange;
 import io.micronaut.servlet.http.ServletHttpRequest;
 import io.micronaut.servlet.http.ServletHttpResponse;
@@ -62,6 +64,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.Principal;
 import java.util.*;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -85,9 +88,12 @@ public class DefaultServletHttpRequest<B> implements
     private final ServletParameters parameters;
     private final DefaultServletHttpResponse<Object> response;
     private final MediaTypeCodecRegistry codecRegistry;
+    private final ConversionService<?> conversionService;
     private DefaultServletCookies cookies;
-    private Object body;
     private Scheduler scheduler;
+    private B bodyUnwrapped;
+    private Supplier<Optional<B>> body;
+    private final BodyConvertor bodyConvertor = newBodyConvertor();
 
     /**
      * Default constructor.
@@ -95,13 +101,16 @@ public class DefaultServletHttpRequest<B> implements
      * @param delegate      The servlet request
      * @param response      The servlet response
      * @param codecRegistry The codec registry
+     * @param conversionService The conversion service
      */
     protected DefaultServletHttpRequest(
             HttpServletRequest delegate,
             HttpServletResponse response,
-            MediaTypeCodecRegistry codecRegistry) {
+            MediaTypeCodecRegistry codecRegistry,
+            ConversionService<?> conversionService) {
         this.delegate = delegate;
         this.codecRegistry = codecRegistry;
+        this.conversionService = conversionService;
         final String contextPath = delegate.getContextPath();
         String requestURI = delegate.getRequestURI();
         if (StringUtils.isNotEmpty(contextPath) && requestURI.startsWith(contextPath)) {
@@ -127,6 +136,28 @@ public class DefaultServletHttpRequest<B> implements
                 this,
                 response
         );
+        this.body = SupplierUtil.memoizedNonEmpty(() -> {
+            B built = (B) buildBody();
+            this.bodyUnwrapped = built;
+            return Optional.ofNullable(built);
+        });
+    }
+
+    private BodyConvertor newBodyConvertor() {
+        return new BodyConvertor() {
+
+            @Override
+            public Optional convert(Argument valueType, Object value) {
+                if (value == null) {
+                    return Optional.empty();
+                }
+                if (Argument.OBJECT_ARGUMENT.equalsType(valueType)) {
+                    return Optional.of(value);
+                }
+                return convertFromNext(conversionService, valueType, value);
+            }
+
+        };
     }
 
     /**
@@ -158,61 +189,40 @@ public class DefaultServletHttpRequest<B> implements
     @NonNull
     @Override
     public <T> Optional<T> getBody(@NonNull Argument<T> arg) {
-        if (arg != null) {
-            final Class<T> type = arg.getType();
-            final MediaType contentType = getContentType().orElse(MediaType.APPLICATION_JSON_TYPE);
-            long contentLength = getContentLength();
-            if (body == null && contentLength != 0) {
+        return getBody().flatMap(t -> bodyConvertor.convert(arg, t));
+    }
 
-                boolean isConvertibleValues = ConvertibleValues.class == type;
-                if (isFormSubmission(contentType)) {
-                    body = getParameters();
-                    if (isConvertibleValues) {
-                        return (Optional<T>) Optional.of(body);
-                    } else {
-                        return Optional.empty();
-                    }
-                } else if (CharSequence.class.isAssignableFrom(type)) {
-                    try (BufferedReader reader = delegate.getReader()) {
-                        final T value = (T) IOUtils.readText(reader);
-                        body = value;
-                        return Optional.ofNullable(value);
-                    } catch (IOException e) {
-                        throw new CodecException("Error decoding request body: " + e.getMessage(), e);
-                    }
-                } else {
+    @NonNull
+    @Override
+    public Optional<B> getBody() {
+        return this.body.get();
+    }
 
-                    final MediaTypeCodec codec = codecRegistry.findCodec(contentType, type).orElse(null);
-                    if (codec != null) {
-                        try (InputStream inputStream = delegate.getInputStream()) {
-                            if (isConvertibleValues) {
-                                final Map map = codec.decode(Map.class, inputStream);
-                                body = ConvertibleValues.of(map);
-                                return (Optional<T>) Optional.of(body);
-                            } else {
-                                final T value = codec.decode(arg, inputStream);
-                                body = value;
-                                return Optional.ofNullable(value);
-                            }
-                        } catch (CodecException | IOException e) {
-                            throw new CodecException("Error decoding request body: " + e.getMessage(), e);
-                        }
+    protected Object buildBody() {
+        final MediaType contentType = getContentType().orElse(MediaType.APPLICATION_JSON_TYPE);
+        if (isFormSubmission(contentType)) {
+            return getParameters().asMap();
+        } else {
+            try {
+                ServletInputStream inputStream = delegate.getInputStream();
+                Object result = new byte[inputStream.available()];
+                inputStream.read((byte[]) result);
 
+                final MediaTypeCodec codec = codecRegistry.findCodec(contentType).orElse(null);
+                if (codec instanceof MapperMediaTypeCodec) {
+                    final MapperMediaTypeCodec mapperCodec = (MapperMediaTypeCodec) codec;
+
+                    try {
+                        result = mapperCodec.getJsonMapper().readValue((byte[]) result, Argument.of(JsonNode.class));
+                    } catch (JsonProcessingException e) {
                     }
                 }
-            } else {
-                if (type.isInstance(body)) {
-                    return (Optional<T>) Optional.of(body);
-                } else {
-                    if (body != null && body != parameters) {
-                        final T result = ConversionService.SHARED.convertRequired(body, arg);
-                        return Optional.ofNullable(result);
-                    }
-                }
-
+                System.out.println("result = " + (result instanceof byte[] ? "B[" + new String((byte[]) result) : result));
+                return result;
+            } catch (IOException e) {
+                throw new CodecException("Error decoding request body: " + e.getMessage(), e);
             }
         }
-        return Optional.empty();
     }
 
     @NonNull
@@ -348,12 +358,6 @@ public class DefaultServletHttpRequest<B> implements
     @Override
     public MutableConvertibleValues<Object> getAttributes() {
         return this;
-    }
-
-    @NonNull
-    @Override
-    public Optional<B> getBody() {
-        return Optional.empty();
     }
 
     @Override
@@ -609,5 +613,36 @@ public class DefaultServletHttpRequest<B> implements
             }
             return Optional.empty();
         }
+    }
+
+    private abstract static class BodyConvertor<T> {
+
+        private BodyConvertor<T> nextConvertor;
+
+        public abstract Optional<T> convert(Argument<T> valueType, T value);
+
+        protected synchronized Optional<T> convertFromNext(ConversionService conversionService, Argument<T> conversionValueType, T value) {
+            if (nextConvertor == null) {
+                Optional<T> conversion = conversionService.convert(value, ConversionContext.of(conversionValueType));
+                nextConvertor = new BodyConvertor<T>() {
+
+                    @Override
+                    public Optional<T> convert(Argument<T> valueType, T value) {
+                        if (conversionValueType.equalsType(valueType)) {
+                            return conversion;
+                        }
+                        return convertFromNext(conversionService, valueType, value);
+                    }
+
+                };
+                return conversion;
+            }
+            return nextConvertor.convert(conversionValueType, value);
+        }
+
+        public void cleanup() {
+            nextConvertor = null;
+        }
+
     }
 }

@@ -44,7 +44,7 @@ public class DefaultServletHttpHandler extends ServletHttpHandler<HttpServletReq
     protected ServletExchange<HttpServletRequest, HttpServletResponse> createExchange(
             HttpServletRequest request,
             HttpServletResponse response) {
-        return new DefaultServletHttpRequest<>(request, response, getMediaTypeCodecRegistry());
+        return new DefaultServletHttpRequest<>(request, response, getMediaTypeCodecRegistry(), getApplicationContext().getConversionService());
     }
 
     @Override
