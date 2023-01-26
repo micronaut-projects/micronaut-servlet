@@ -8,6 +8,6 @@ import org.junit.platform.suite.api.SuiteDisplayName;
 @Suite
 @SelectPackages("io.micronaut.http.server.tck.tests")
 @SuiteDisplayName("HTTP Server TCK for Undertow")
-@ExcludeClassNamePatterns(value = "io.micronaut.http.server.tck.tests.BodyTest|io.micronaut.http.server.tck.tests.MiscTest")
+@ExcludeClassNamePatterns(value = "io.micronaut.http.server.tck.tests.BodyTest")
 public class UndertowHttpServerTestSuite {
 }

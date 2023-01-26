@@ -56,6 +56,7 @@ import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
@@ -222,15 +223,27 @@ public class DefaultServletHttpRequest<B> implements
         return this.body.get();
     }
 
+    private byte[] readAll(InputStream inputStream) throws IOException {
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+
+        int nRead;
+        byte[] data = new byte[4];
+
+        while ((nRead = inputStream.read(data, 0, data.length)) != -1) {
+            buffer.write(data, 0, nRead);
+        }
+
+        buffer.flush();
+        return buffer.toByteArray();
+    }
+
     protected Object buildBody() {
         final MediaType contentType = getContentType().orElse(MediaType.APPLICATION_JSON_TYPE);
         if (isFormSubmission(contentType)) {
             return getParameters().asMap();
         } else {
             try {
-                ServletInputStream inputStream = delegate.getInputStream();
-                Object result = new byte[inputStream.available()];
-                inputStream.read((byte[]) result);
+                Object result = readAll(delegate.getInputStream());
 
                 final MediaTypeCodec codec = codecRegistry.findCodec(contentType).orElse(null);
                 if (codec instanceof MapperMediaTypeCodec) {
