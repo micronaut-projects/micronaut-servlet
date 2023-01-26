@@ -237,6 +237,7 @@ public class DefaultServletHttpRequest<B> implements
         return buffer.toByteArray();
     }
 
+    @Nullable
     protected Object buildBody() {
         final MediaType contentType = getContentType().orElse(MediaType.APPLICATION_JSON_TYPE);
         if (isFormSubmission(contentType)) {
@@ -248,13 +249,13 @@ public class DefaultServletHttpRequest<B> implements
                     return null;
                 }
                 final MediaTypeCodec codec = codecRegistry.findCodec(contentType).orElse(null);
-                if (codec instanceof MapperMediaTypeCodec) {
+                if (contentType.equals(MediaType.APPLICATION_JSON_TYPE) && codec instanceof MapperMediaTypeCodec) {
                     final MapperMediaTypeCodec mapperCodec = (MapperMediaTypeCodec) codec;
 
                     try {
-                        return mapperCodec.getJsonMapper().readValue((byte[]) bytes, Argument.of(JsonNode.class));
+                        return mapperCodec.getJsonMapper().readValue(bytes, Argument.of(JsonNode.class));
                     } catch (JsonProcessingException e) {
-                        throw new CodecException("Error decoding JSON stream for type: " + e.getMessage(), e);
+                        throw new CodecException("Error decoding request body from JSON " + e.getMessage(), e);
                     }
                 }
                 return bytes;
