@@ -4,7 +4,7 @@ managed-servlet-api = '4.0.1'
 kotlin-coroutines = '1.6.4'
 
 kotest-runner = '5.4.1'
-undertow = '2.2.18.Final'
+undertow = '2.3.4.Final'
 jetty = '9.4.49.v20220914'
 tomcat = '9.0.65'
 graal-svm = "22.0.0.2"
