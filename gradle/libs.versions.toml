@@ -18,7 +18,7 @@ google-cloud-functions = '1.0.4'
 kotlin = "1.7.21"
 
 # Micronaut
-micronaut-gradle-plugin = "3.6.7"
+micronaut-gradle-plugin = "3.7.3"
 
 [libraries]
 graal-svm = { module = "org.graalvm.nativeimage:svm", version.ref = "graal-svm" }
