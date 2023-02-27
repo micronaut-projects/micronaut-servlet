@@ -32,6 +32,7 @@ import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpMethod;
 import io.micronaut.http.HttpParameters;
 import io.micronaut.http.MediaType;
+import io.micronaut.http.MutableHttpRequest;
 import io.micronaut.http.codec.CodecException;
 import io.micronaut.http.codec.MediaTypeCodec;
 import io.micronaut.http.codec.MediaTypeCodecRegistry;
@@ -133,6 +134,11 @@ public class DefaultServletHttpRequest<B> implements
         this.headers = new ServletRequestHeaders();
         this.parameters = new ServletParameters();
         this.response = new DefaultServletHttpResponse<>(conversionService, this, response);
+    }
+
+    @Override
+    public ConversionService getConversionService() {
+        return this.conversionService;
     }
 
     /**
@@ -313,6 +319,11 @@ public class DefaultServletHttpRequest<B> implements
     @Override
     public HttpParameters getParameters() {
         return parameters;
+    }
+
+    @Override
+    public MutableHttpRequest<B> mutate() {
+        return new DefaultMutableServletHttpRequest<>(this);
     }
 
     @NonNull

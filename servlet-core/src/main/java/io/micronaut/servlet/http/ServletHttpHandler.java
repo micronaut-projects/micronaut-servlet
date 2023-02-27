@@ -114,6 +114,17 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
     }
 
     /**
+     * Default constructor.
+     *
+     * @param applicationContext The application context
+     * @deprecated Use {@link #ServletHttpHandler(ApplicationContext, ConversionService)}
+     */
+    @Deprecated
+    public ServletHttpHandler(ApplicationContext applicationContext) {
+        this(applicationContext, ConversionService.SHARED);
+    }
+
+    /**
      * @return The application context for the function.
      */
     public ApplicationContext getApplicationContext() {
