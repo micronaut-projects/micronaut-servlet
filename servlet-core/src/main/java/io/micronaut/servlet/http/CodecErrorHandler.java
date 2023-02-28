@@ -15,6 +15,7 @@
  */
 package io.micronaut.servlet.http;
 
+import io.micronaut.context.annotation.Secondary;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.Produces;
@@ -33,6 +34,7 @@ import jakarta.inject.Singleton;
  */
 @Singleton
 @Produces
+@Secondary
 final class CodecErrorHandler implements ExceptionHandler<CodecException, HttpResponse<?>> {
     private final ErrorResponseProcessor<?> responseProcessor;
 

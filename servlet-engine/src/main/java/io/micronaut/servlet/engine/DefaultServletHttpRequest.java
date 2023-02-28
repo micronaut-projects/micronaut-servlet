@@ -44,6 +44,7 @@ import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.convert.value.ConvertibleValues;
+import io.micronaut.core.convert.value.ConvertibleValuesMap;
 import io.micronaut.core.convert.value.MutableConvertibleValues;
 import io.micronaut.core.convert.value.MutableConvertibleValuesMap;
 import io.micronaut.core.io.IOUtils;
@@ -196,7 +197,12 @@ public class DefaultServletHttpRequest<B> extends MutableConvertibleValuesMap<Ob
                 try (InputStream inputStream = delegate.getInputStream()) {
                     if (isConvertibleValues) {
                         final Map map = codec.decode(Map.class, inputStream);
-                        body = ConvertibleValues.of(map);
+                        body = new ConvertibleValuesMap<>(map, conversionService) {
+                            @Override
+                            public Map asMap() {
+                                return map;
+                            }
+                        };
                         return (Optional<T>) Optional.of(body);
                     }
                     final T value = codec.decode(arg, inputStream);
@@ -211,7 +217,12 @@ public class DefaultServletHttpRequest<B> extends MutableConvertibleValuesMap<Ob
                 return (Optional<T>) Optional.of(body);
             }
             if (body != null && body != parameters) {
-                final T result = (T) conversionService.convertRequired(body, arg);
+                final T result;
+                if (body instanceof ConvertibleValuesMap<?> convertibleValuesMap) {
+                    result = (T) conversionService.convertRequired(convertibleValuesMap.asMap(), arg);
+                } else {
+                    result = (T) conversionService.convertRequired(body, arg);
+                }
                 return Optional.ofNullable(result);
             }
 

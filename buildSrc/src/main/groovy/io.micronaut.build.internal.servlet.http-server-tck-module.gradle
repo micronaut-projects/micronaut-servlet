@@ -1,5 +1,6 @@
 plugins {
-    id("java-library")
+    id("java")
+    id 'org.graalvm.buildtools.native'
 }
 
 repositories {
@@ -27,4 +28,19 @@ java {
 
 tasks.named("test") {
     useJUnitPlatform()
+}
+
+tasks.named("check") { task ->
+    def graal = ["jvmci.Compiler", "java.vendor.version", "java.vendor"].any {
+        System.getProperty(it)?.toLowerCase(Locale.ENGLISH)?.contains("graal")
+    }
+    if (graal) {
+        task.dependsOn("nativeTest")
+    }
+}
+
+graalvmNative {
+    metadataRepository {
+        enabled = true
+    }
 }
