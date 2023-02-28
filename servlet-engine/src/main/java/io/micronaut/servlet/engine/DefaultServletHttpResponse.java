@@ -40,9 +40,9 @@ import org.reactivestreams.Subscription;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 
-import javax.servlet.ServletOutputStream;
-import javax.servlet.WriteListener;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletOutputStream;
+import jakarta.servlet.WriteListener;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -295,7 +295,7 @@ public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpSe
             );
         } else {
 
-            final javax.servlet.http.Cookie c = new javax.servlet.http.Cookie(
+            final jakarta.servlet.http.Cookie c = new jakarta.servlet.http.Cookie(
                     cookie.getName(),
                     cookie.getValue());
             final String domain = cookie.getDomain();
@@ -363,7 +363,9 @@ public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpSe
         } else {
             this.reason = message.toString();
         }
-        delegate.setStatus(status);
+        if (!delegate.isCommitted()) {
+            delegate.setStatus(status);
+        }
         return this;
     }
 

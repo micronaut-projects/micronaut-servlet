@@ -35,15 +35,15 @@ import java.util.stream.Collectors;
  */
 public class DefaultServletCookies implements Cookies {
 
-    private static final javax.servlet.http.Cookie[] EMPTY_COOKIES = new javax.servlet.http.Cookie[0];
+    private static final jakarta.servlet.http.Cookie[] EMPTY_COOKIES = new jakarta.servlet.http.Cookie[0];
 
-    private final javax.servlet.http.Cookie[] cookies;
+    private final jakarta.servlet.http.Cookie[] cookies;
 
     /**
      * Default constructor.
      * @param cookies The cookies
      */
-    public DefaultServletCookies(javax.servlet.http.Cookie[] cookies) {
+    public DefaultServletCookies(jakarta.servlet.http.Cookie[] cookies) {
         if (cookies == null) {
             this.cookies = EMPTY_COOKIES;
         } else {
@@ -62,7 +62,7 @@ public class DefaultServletCookies implements Cookies {
     public Optional<Cookie> findCookie(CharSequence name) {
         final String cookieName = Objects.requireNonNull(name, "Cookie name cannot be null").toString();
         for (int i = 0; i < cookies.length; i++) {
-            javax.servlet.http.Cookie cookie = cookies[i];
+            jakarta.servlet.http.Cookie cookie = cookies[i];
             if (cookie.getName().equals(cookieName)) {
                 return Optional.of(new ServletCookieAdapter(cookie));
             }

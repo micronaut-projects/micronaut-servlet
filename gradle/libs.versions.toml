@@ -1,10 +1,10 @@
 [versions]
-managed-servlet-api = '4.0.1'
+managed-servlet-api = '6.0.0'
 kotlin-coroutines = '1.6.4'
 kotest-runner = '5.4.1'
-undertow = '2.2.18.Final'
-jetty = '9.4.49.v20220914'
-tomcat = '9.0.65'
+undertow = '2.3.4.Final'
+jetty = '11.0.13'
+tomcat = '10.1.5'
 graal-svm = "22.3.1"
 bcpkix = "1.70"
 
@@ -21,7 +21,7 @@ micronaut-gradle-plugin = "4.0.0-SNAPSHOT"
 [libraries]
 graal-svm = { module = "org.graalvm.nativeimage:svm", version.ref = "graal-svm" }
 
-managed-servlet-api = { module = 'javax.servlet:javax.servlet-api', version.ref = 'managed-servlet-api' }
+managed-servlet-api = { module = 'jakarta.servlet:jakarta.servlet-api', version.ref = 'managed-servlet-api' }
 micronaut-reactor = { module = "io.micronaut.reactor:micronaut-reactor-bom", version.ref = "micronaut-reactor" }
 micronaut-security = { module = "io.micronaut.security:micronaut-security-bom", version.ref = "micronaut-security" }
 micronaut-serde = { module = "io.micronaut.serde:micronaut-serde-bom", version.ref = "micronaut-serde" }

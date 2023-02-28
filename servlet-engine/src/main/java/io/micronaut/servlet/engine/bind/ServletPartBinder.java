@@ -33,8 +33,8 @@ import io.micronaut.http.server.exceptions.InternalServerException;
 import io.micronaut.servlet.engine.ServletCompletedFileUpload;
 import io.micronaut.servlet.http.ServletExchange;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -71,7 +71,7 @@ public class ServletPartBinder<T> implements AnnotatedRequestArgumentBinder<Part
             final HttpServletRequest nativeRequest = (HttpServletRequest) exchange.getRequest().getNativeRequest();
             final Argument<T> argument = context.getArgument();
             final String partName = context.getAnnotationMetadata().stringValue(Part.class).orElse(argument.getName());
-            final javax.servlet.http.Part part;
+            final jakarta.servlet.http.Part part;
             try {
                 part = nativeRequest.getPart(partName);
             } catch (IOException | ServletException e) {
@@ -79,7 +79,7 @@ public class ServletPartBinder<T> implements AnnotatedRequestArgumentBinder<Part
             }
             if (part != null) {
                 final Class<T> type = argument.getType();
-                if (javax.servlet.http.Part.class.isAssignableFrom(type)) {
+                if (jakarta.servlet.http.Part.class.isAssignableFrom(type)) {
                     //noinspection unchecked
                     return () -> (Optional<T>) Optional.of(part);
                 } else if (Readable.class.isAssignableFrom(type)) {
@@ -165,7 +165,7 @@ public class ServletPartBinder<T> implements AnnotatedRequestArgumentBinder<Part
         return BindingResult.UNSATISFIED;
     }
 
-    private BufferedReader newReader(javax.servlet.http.Part part) throws IOException {
+    private BufferedReader newReader(jakarta.servlet.http.Part part) throws IOException {
         final Charset charset = Optional.ofNullable(part.getContentType())
                 .map(MediaType::new)
                 .flatMap(MediaType::getCharset)

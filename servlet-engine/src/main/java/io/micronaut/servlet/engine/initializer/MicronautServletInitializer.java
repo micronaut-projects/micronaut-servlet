@@ -20,7 +20,7 @@ import io.micronaut.context.ApplicationContextBuilder;
 import io.micronaut.servlet.engine.DefaultMicronautServlet;
 import io.micronaut.servlet.engine.MicronautServletConfiguration;
 
-import javax.servlet.*;
+import jakarta.servlet.*;
 import java.util.Set;
 
 /**

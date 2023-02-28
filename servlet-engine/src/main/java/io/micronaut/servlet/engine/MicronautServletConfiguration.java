@@ -24,7 +24,7 @@ import io.micronaut.core.naming.Named;
 import io.micronaut.http.server.HttpServerConfiguration;
 import io.micronaut.servlet.http.ServletConfiguration;
 
-import javax.servlet.MultipartConfigElement;
+import jakarta.servlet.MultipartConfigElement;
 import java.io.File;
 import java.util.Optional;
 

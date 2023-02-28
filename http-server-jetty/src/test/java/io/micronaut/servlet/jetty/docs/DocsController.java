@@ -12,8 +12,8 @@ import io.micronaut.http.annotation.*;
 import io.micronaut.http.multipart.CompletedPart;
 import io.micronaut.servlet.jetty.Person;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -54,7 +54,7 @@ public class DocsController {
             @Part("one") Person person, // <2>
             @Part("two") String text, // <3>
             @Part("three") byte[] bytes, // <4>
-            @Part("four") javax.servlet.http.Part raw, // <5>
+            @Part("four") jakarta.servlet.http.Part raw, // <5>
             @Part("five") CompletedPart part) { // <6>
         return "Ok";
     }

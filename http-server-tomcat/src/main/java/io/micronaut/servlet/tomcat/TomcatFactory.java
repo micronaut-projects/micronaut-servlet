@@ -15,6 +15,9 @@
  */
 package io.micronaut.servlet.tomcat;
 
+import java.io.File;
+import java.util.List;
+
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Primary;
@@ -25,16 +28,14 @@ import io.micronaut.servlet.engine.DefaultMicronautServlet;
 import io.micronaut.servlet.engine.MicronautServletConfiguration;
 import io.micronaut.servlet.engine.server.ServletServerFactory;
 import io.micronaut.servlet.engine.server.ServletStaticResourceConfiguration;
+import jakarta.inject.Singleton;
 import org.apache.catalina.Context;
 import org.apache.catalina.Wrapper;
 import org.apache.catalina.connector.Connector;
 import org.apache.catalina.startup.Tomcat;
 import org.apache.catalina.webresources.TomcatURLStreamHandlerFactory;
-
-import jakarta.inject.Singleton;
-import java.io.File;
-import java.net.URL;
-import java.util.List;
+import org.apache.tomcat.util.net.SSLHostConfig;
+import org.apache.tomcat.util.net.SSLHostConfigCertificate;
 
 /**
  * Factory for the {@link Tomcat} instance.
@@ -120,60 +121,42 @@ public class TomcatFactory extends ServletServerFactory {
                 sslPort = 0;
             }
             Connector httpsConnector = new Connector();
+            SSLHostConfig sslHostConfig = new SSLHostConfig();
+            SSLHostConfigCertificate certificate = new SSLHostConfigCertificate(sslHostConfig, SSLHostConfigCertificate.Type.UNDEFINED);
+            sslHostConfig.addCertificate(certificate);
+            httpsConnector.addSslHostConfig(sslHostConfig);
             httpsConnector.setPort(sslPort);
             httpsConnector.setSecure(true);
             httpsConnector.setScheme("https");
             httpsConnector.setProperty("clientAuth", "false");
             httpsConnector.setProperty("sslProtocol", protocol);
             httpsConnector.setProperty("SSLEnabled", "true");
-            sslConfiguration.getCiphers().ifPresent(cyphers -> httpsConnector.setAttribute("cyphers", cyphers));
+            sslConfiguration.getCiphers().ifPresent(cyphers -> {
+                sslHostConfig.setCiphers(String.join(",", cyphers));
+            });
             sslConfiguration.getClientAuthentication().ifPresent(ca -> {
                 switch (ca) {
-                    case WANT:
-                        httpsConnector.setProperty("clientAuth", "want");
-                        break;
-                    default:
-                    case NEED:
-                        httpsConnector.setProperty("clientAuth", "true");
-                        break;
-
+                    case WANT -> httpsConnector.setProperty("clientAuth", "want");
+                    case NEED -> httpsConnector.setProperty("clientAuth", "true");
                 }
             });
 
 
             SslConfiguration.KeyStoreConfiguration keyStoreConfig = sslConfiguration.getKeyStore();
-            keyStoreConfig.getPassword().ifPresent(s ->
-                    httpsConnector.setProperty("keystorePass", s)
-            );
-            keyStoreConfig.getPath().ifPresent(path ->
-                    setPathAttribute(httpsConnector, "keystoreFile", path)
-            );
-            keyStoreConfig.getProvider().ifPresent(provider ->
-                    httpsConnector.setProperty("keystoreProvider", provider)
-            );
-            keyStoreConfig.getType().ifPresent(type ->
-                    httpsConnector.setProperty("keystoreType", type)
-            );
+            keyStoreConfig.getPassword().ifPresent(certificate::setCertificateKeystorePassword);
+            keyStoreConfig.getPath().ifPresent(certificate::setCertificateKeystoreFile);
+            keyStoreConfig.getProvider().ifPresent(certificate::setCertificateKeystorePassword);
+            keyStoreConfig.getType().ifPresent(certificate::setCertificateKeystoreType);
 
             SslConfiguration.TrustStoreConfiguration trustStore = sslConfiguration.getTrustStore();
-            trustStore.getPassword().ifPresent(s ->
-                    httpsConnector.setProperty("truststorePass", s)
-            );
-            trustStore.getPath().ifPresent(path ->
-                    setPathAttribute(httpsConnector, "truststoreFile", path)
-            );
-            trustStore.getProvider().ifPresent(provider ->
-                    httpsConnector.setProperty("truststoreProvider", provider)
-            );
-            trustStore.getType().ifPresent(type ->
-                    httpsConnector.setProperty("truststoreType", type)
-            );
-
+            trustStore.getPassword().ifPresent(sslHostConfig::setTruststorePassword);
+            trustStore.getPath().ifPresent(sslHostConfig::setTruststoreFile);
+            trustStore.getProvider().ifPresent(sslHostConfig::setTruststoreProvider);
+            trustStore.getType().ifPresent(sslHostConfig::setTruststoreType);
 
             SslConfiguration.KeyConfiguration keyConfig = sslConfiguration.getKey();
-
-            keyConfig.getAlias().ifPresent(s -> httpsConnector.setProperty("keyAlias", s));
-            keyConfig.getPassword().ifPresent(s -> httpsConnector.setProperty("keyPass", s));
+            keyConfig.getAlias().ifPresent(certificate::setCertificateKeyAlias);
+            keyConfig.getPassword().ifPresent(certificate::setCertificateKeyPassword);
 
             tomcat.getService().addConnector(httpsConnector);
         }
@@ -190,21 +173,6 @@ public class TomcatFactory extends ServletServerFactory {
         final Connector tomcatConnector = getServerConfiguration().getTomcatConnector();
         tomcatConnector.setPort(getConfiguredPort());
         return tomcatConnector;
-    }
-
-    private void setPathAttribute(Connector httpsConnector, String attributeName, String path) {
-        if (path.startsWith(ServletStaticResourceConfiguration.CLASSPATH_PREFIX)) {
-            String res = path.substring(ServletStaticResourceConfiguration.CLASSPATH_PREFIX.length());
-            URL resource = getEnvironment().getClassLoader().getResource(res);
-            if (resource != null) {
-                httpsConnector.setProperty(attributeName, resource.toString());
-            }
-        } else if (path.startsWith(ServletStaticResourceConfiguration.FILE_PREFIX)) {
-            String res = path.substring(ServletStaticResourceConfiguration.FILE_PREFIX.length());
-            httpsConnector.setProperty(attributeName, new File(res).getAbsolutePath());
-        } else {
-            httpsConnector.setProperty(attributeName, new File(path).getAbsolutePath());
-        }
     }
 
 }

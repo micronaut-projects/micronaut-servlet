@@ -26,10 +26,8 @@ import org.apache.catalina.loader.WebappClassLoaderBase;
 import org.apache.catalina.valves.ErrorReportValve;
 import org.apache.catalina.webresources.StandardRoot;
 import org.apache.coyote.UpgradeProtocol;
-import org.apache.coyote.ajp.AjpAprProtocol;
 import org.apache.coyote.ajp.AjpNio2Protocol;
 import org.apache.coyote.ajp.AjpNioProtocol;
-import org.apache.coyote.http11.Http11AprProtocol;
 import org.apache.coyote.http11.Http11Nio2Protocol;
 import org.apache.coyote.http11.Http11NioProtocol;
 import org.apache.coyote.http2.Http2Protocol;
@@ -130,13 +128,11 @@ final class Org_apache_catalina_core_StandardContext {
 @Internal
 @TargetClass(JreCompat.class)
 @TypeHint(value = {
-        Http11AprProtocol.class,
         Http11Nio2Protocol.class,
         Http2Protocol.class,
         Http11NioProtocol.class,
         AjpNioProtocol.class,
-        AjpNio2Protocol.class,
-        AjpAprProtocol.class
+        AjpNio2Protocol.class
 }, accessType = {TypeHint.AccessType.ALL_DECLARED_CONSTRUCTORS, TypeHint.AccessType.ALL_PUBLIC_METHODS})
 final class Org_apache_tomcat_util_compat_JreCompat {
     @Substitute

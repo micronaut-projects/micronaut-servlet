@@ -21,7 +21,7 @@ import io.micronaut.http.HttpRequest;
 import io.micronaut.http.bind.binders.TypedRequestArgumentBinder;
 import io.micronaut.servlet.http.ServletExchange;
 
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
 import java.util.Optional;
 
 /**

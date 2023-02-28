@@ -15,27 +15,21 @@
  */
 package io.micronaut.servlet.tomcat;
 
+import java.util.Optional;
+
 import io.micronaut.context.annotation.ConfigurationBuilder;
 import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.context.annotation.Replaces;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.annotation.TypeHint;
-import io.micronaut.core.convert.format.MapFormat;
-import io.micronaut.core.naming.conventions.StringConvention;
-import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.http.server.HttpServerConfiguration;
 import org.apache.catalina.connector.Connector;
-import org.apache.coyote.ajp.AjpAprProtocol;
 import org.apache.coyote.ajp.AjpNio2Protocol;
 import org.apache.coyote.ajp.AjpNioProtocol;
-import org.apache.coyote.http11.Http11AprProtocol;
 import org.apache.coyote.http11.Http11Nio2Protocol;
 import org.apache.coyote.http11.Http11NioProtocol;
 import org.apache.coyote.http2.Http2Protocol;
-
-import io.micronaut.core.annotation.Nullable;
-import java.util.Map;
-import java.util.Optional;
 
 /**
  * Extends {@link HttpServerConfiguration} and allows configuring Tomcat.
@@ -48,9 +42,7 @@ import java.util.Optional;
         TomcatConfiguration.class,
         Http11NioProtocol.class,
         Http11Nio2Protocol.class,
-        Http11AprProtocol.class,
         Http2Protocol.class,
-        AjpAprProtocol.class,
         AjpNio2Protocol.class,
         AjpNioProtocol.class
 })
@@ -75,17 +67,6 @@ public class TomcatConfiguration extends HttpServerConfiguration {
         this.tomcatConnector = new Connector(
                 protocol != null ? protocol : "org.apache.coyote.http11.Http11NioProtocol"
         );
-    }
-
-    /**
-     * @param attributes The connector attributes
-     */
-    public void setAttributes(@MapFormat(
-            transformation = MapFormat.MapTransformation.FLAT,
-            keyFormat = StringConvention.RAW) Map<String, String> attributes) {
-        if (CollectionUtils.isNotEmpty(attributes)) {
-            attributes.forEach(tomcatConnector::setAttribute);
-        }
     }
 
     /**
