@@ -22,6 +22,7 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.bind.annotation.Bindable;
 import io.micronaut.core.naming.Named;
 import io.micronaut.http.server.HttpServerConfiguration;
+import io.micronaut.servlet.http.ServletConfiguration;
 
 import javax.servlet.MultipartConfigElement;
 import java.io.File;
@@ -34,7 +35,7 @@ import java.util.Optional;
  * @since 1.0
  */
 @ConfigurationProperties(MicronautServletConfiguration.PREFIX)
-public class MicronautServletConfiguration implements Named {
+public class MicronautServletConfiguration implements Named, ServletConfiguration {
 
     /**
      * The prefix used for configuration.
@@ -43,6 +44,8 @@ public class MicronautServletConfiguration implements Named {
     private final String mapping;
     private final MultipartConfigElement multipartConfigElement;
     private final String name;
+    private boolean asyncFileServingEnabled = true;
+
 
     /**
      * Default constructor.
@@ -88,5 +91,18 @@ public class MicronautServletConfiguration implements Named {
     @Override
     public String getName() {
         return name;
+    }
+
+    /**
+     * Is async file serving enabled.
+     * @param enabled True if it is
+     */
+    public void setAsyncFileServingEnabled(boolean enabled) {
+        this.asyncFileServingEnabled = enabled;
+    }
+
+    @Override
+    public boolean isAsyncFileServingEnabled() {
+        return asyncFileServingEnabled;
     }
 }

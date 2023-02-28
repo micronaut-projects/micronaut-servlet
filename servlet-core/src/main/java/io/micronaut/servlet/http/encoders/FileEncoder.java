@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.http.MutableHttpResponse;
 import io.micronaut.http.server.types.files.SystemFile;
+import io.micronaut.servlet.http.ServletConfiguration;
 import io.micronaut.servlet.http.ServletExchange;
 import io.micronaut.servlet.http.ServletResponseEncoder;
 import org.reactivestreams.Publisher;
@@ -34,6 +35,12 @@ import java.io.File;
  */
 @Singleton
 public class FileEncoder implements ServletResponseEncoder<File> {
+    private final ServletConfiguration servletConfiguration;
+
+    public FileEncoder(ServletConfiguration servletConfiguration) {
+        this.servletConfiguration = servletConfiguration;
+    }
+
     @Override
     public Class<File> getResponseType() {
         return File.class;
@@ -41,6 +48,6 @@ public class FileEncoder implements ServletResponseEncoder<File> {
 
     @Override
     public Publisher<MutableHttpResponse<?>> encode(@NonNull ServletExchange<?, ?> exchange, AnnotationMetadata annotationMetadata, @NonNull File value) {
-        return new SystemFileEncoder().encode(exchange, annotationMetadata, new SystemFile(value));
+        return new SystemFileEncoder(servletConfiguration).encode(exchange, annotationMetadata, new SystemFile(value));
     }
 }

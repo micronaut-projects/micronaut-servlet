@@ -21,6 +21,7 @@ import io.micronaut.core.async.publisher.Publishers;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MutableHttpResponse;
 import io.micronaut.http.server.types.files.SystemFile;
+import io.micronaut.servlet.http.ServletConfiguration;
 import io.micronaut.servlet.http.ServletExchange;
 import io.micronaut.servlet.http.ServletHttpRequest;
 import io.micronaut.servlet.http.ServletHttpResponse;
@@ -44,6 +45,12 @@ import java.util.Arrays;
 @Singleton
 public class SystemFileEncoder extends AbstractFileEncoder<SystemFile> {
     private static final int BUFFER_SIZE = 1024;
+
+    private final ServletConfiguration servletConfiguration;
+
+    public SystemFileEncoder(ServletConfiguration servletConfiguration) {
+        this.servletConfiguration = servletConfiguration;
+    }
 
     @Override
     public Class<SystemFile> getResponseType() {
@@ -71,7 +78,7 @@ public class SystemFileEncoder extends AbstractFileEncoder<SystemFile> {
             );
         }
 
-        boolean asyncSupported = request.isAsyncSupported();
+        boolean asyncSupported = request.isAsyncSupported() && servletConfiguration.isAsyncFileServingEnabled();
         if (asyncSupported) {
             return response.stream(Flux.create(emitter -> {
                 try (InputStream in = new FileInputStream(value.getFile())) {
