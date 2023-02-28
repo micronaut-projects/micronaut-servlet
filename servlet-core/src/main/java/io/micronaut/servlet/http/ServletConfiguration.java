@@ -20,6 +20,11 @@ package io.micronaut.servlet.http;
  */
 public interface ServletConfiguration {
     /**
+     * The default configuration.
+     */
+    ServletConfiguration DEFAULT = () -> true;
+
+    /**
      * Is async file serving enabled.
      * @return True if it is.
      */

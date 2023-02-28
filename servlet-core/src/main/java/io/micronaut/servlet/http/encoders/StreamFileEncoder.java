@@ -25,6 +25,7 @@ import io.micronaut.servlet.http.ServletConfiguration;
 import io.micronaut.servlet.http.ServletExchange;
 import io.micronaut.servlet.http.ServletHttpRequest;
 import io.micronaut.servlet.http.ServletHttpResponse;
+import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
@@ -46,8 +47,13 @@ public class StreamFileEncoder extends AbstractFileEncoder<StreamedFile> {
     private static final int BUFFER_SIZE = 1024;
     private final ServletConfiguration servletConfiguration;
 
+    @Inject
     public StreamFileEncoder(ServletConfiguration servletConfiguration) {
         this.servletConfiguration = servletConfiguration;
+    }
+
+    public StreamFileEncoder() {
+        this(ServletConfiguration.DEFAULT);
     }
 
     @Override
