@@ -104,6 +104,7 @@ public class TomcatFactory extends ServletServerFactory {
                 configuration.getName(),
                 new DefaultMicronautServlet(getApplicationContext())
         );
+        servlet.setAsyncSupported(true);
         servlet.addMapping(configuration.getMapping());
         getStaticResourceConfigurations().forEach(config -> {
             servlet.addMapping(config.getMapping());
