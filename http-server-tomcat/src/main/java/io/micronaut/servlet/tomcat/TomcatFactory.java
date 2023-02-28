@@ -117,7 +117,7 @@ public class TomcatFactory extends ServletServerFactory {
             String protocol = sslConfiguration.getProtocol().orElse("TLS");
             int sslPort = sslConfiguration.getPort();
             if (sslPort == SslConfiguration.DEFAULT_PORT && getEnvironment().getActiveNames().contains(Environment.TEST)) {
-                sslPort = SocketUtils.findAvailableTcpPort();
+                sslPort = 0;
             }
             Connector httpsConnector = new Connector();
             httpsConnector.setPort(sslPort);
