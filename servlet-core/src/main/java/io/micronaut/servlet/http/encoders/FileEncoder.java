@@ -22,6 +22,7 @@ import io.micronaut.http.server.types.files.SystemFile;
 import io.micronaut.servlet.http.ServletConfiguration;
 import io.micronaut.servlet.http.ServletExchange;
 import io.micronaut.servlet.http.ServletResponseEncoder;
+import jakarta.inject.Inject;
 import org.reactivestreams.Publisher;
 
 import jakarta.inject.Singleton;
@@ -37,8 +38,13 @@ import java.io.File;
 public class FileEncoder implements ServletResponseEncoder<File> {
     private final ServletConfiguration servletConfiguration;
 
+    @Inject
     public FileEncoder(ServletConfiguration servletConfiguration) {
         this.servletConfiguration = servletConfiguration;
+    }
+
+    public FileEncoder() {
+        this(ServletConfiguration.DEFAULT);
     }
 
     @Override

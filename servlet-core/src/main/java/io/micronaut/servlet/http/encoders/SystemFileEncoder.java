@@ -25,6 +25,7 @@ import io.micronaut.servlet.http.ServletConfiguration;
 import io.micronaut.servlet.http.ServletExchange;
 import io.micronaut.servlet.http.ServletHttpRequest;
 import io.micronaut.servlet.http.ServletHttpResponse;
+import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
@@ -48,8 +49,13 @@ public class SystemFileEncoder extends AbstractFileEncoder<SystemFile> {
 
     private final ServletConfiguration servletConfiguration;
 
+    @Inject
     public SystemFileEncoder(ServletConfiguration servletConfiguration) {
         this.servletConfiguration = servletConfiguration;
+    }
+
+    public SystemFileEncoder() {
+        this(ServletConfiguration.DEFAULT);
     }
 
     @Override
