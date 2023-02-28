@@ -77,12 +77,12 @@ loadScripts(document, 'script');</script>
 <section class="class-description" id="class-description">
 <dl class="notes">
 <dt>All Implemented Interfaces:</dt>
-<dd><code>io.micronaut.core.bind.ArgumentBinder&lt;javax.servlet.http.HttpServletResponse,<wbr>io.micronaut.http.HttpRequest&lt;?&gt;&gt;</code>, <code>io.micronaut.core.bind.TypeArgumentBinder&lt;javax.servlet.http.HttpServletResponse,<wbr>io.micronaut.http.HttpRequest&lt;?&gt;&gt;</code>, <code>io.micronaut.http.bind.binders.RequestArgumentBinder&lt;javax.servlet.http.HttpServletResponse&gt;</code>, <code>io.micronaut.http.bind.binders.TypedRequestArgumentBinder&lt;javax.servlet.http.HttpServletResponse&gt;</code></dd>
+<dd><code>io.micronaut.core.bind.ArgumentBinder&lt;jakarta.servlet.http.HttpServletResponse,<wbr>io.micronaut.http.HttpRequest&lt;?&gt;&gt;</code>, <code>io.micronaut.core.bind.TypeArgumentBinder&lt;jakarta.servlet.http.HttpServletResponse,<wbr>io.micronaut.http.HttpRequest&lt;?&gt;&gt;</code>, <code>io.micronaut.http.bind.binders.RequestArgumentBinder&lt;jakarta.servlet.http.HttpServletResponse&gt;</code>, <code>io.micronaut.http.bind.binders.TypedRequestArgumentBinder&lt;jakarta.servlet.http.HttpServletResponse&gt;</code></dd>
 </dl>
 <hr>
 <div class="type-signature"><span class="modifiers">public class </span><span class="element-name type-name-label">ServletResponseBinder</span>
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>
-implements io.micronaut.http.bind.binders.TypedRequestArgumentBinder&lt;javax.servlet.http.HttpServletResponse&gt;</span></div>
+implements io.micronaut.http.bind.binders.TypedRequestArgumentBinder&lt;jakarta.servlet.http.HttpServletResponse&gt;</span></div>
 <div class="block">A binder capable of binding the servlet response.</div>
 <dl class="notes">
 <dt>Since:</dt>
@@ -111,7 +111,7 @@ implements io.micronaut.http.bind.binders.TypedRequestArgumentBinder&lt;javax.se
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Field</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color"><code>static final io.micronaut.core.type.Argument&lt;javax.servlet.http.HttpServletResponse&gt;</code></div>
+<div class="col-first even-row-color"><code>static final io.micronaut.core.type.Argument&lt;jakarta.servlet.http.HttpServletResponse&gt;</code></div>
 <div class="col-second even-row-color"><code><a href="#TYPE" class="member-name-link">TYPE</a></code></div>
 <div class="col-last even-row-color">&nbsp;</div>
 </div>
@@ -141,11 +141,11 @@ implements io.micronaut.http.bind.binders.TypedRequestArgumentBinder&lt;javax.se
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>io.micronaut.core.type.Argument&lt;javax.servlet.http.HttpServletResponse&gt;</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>io.micronaut.core.type.Argument&lt;jakarta.servlet.http.HttpServletResponse&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#argumentType()" class="member-name-link">argumentType</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>io.micronaut.core.bind.ArgumentBinder.BindingResult&lt;javax.servlet.http.HttpServletResponse&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#bind(io.micronaut.core.convert.ArgumentConversionContext,io.micronaut.http.HttpRequest)" class="member-name-link">bind</a><wbr>(io.micronaut.core.convert.ArgumentConversionContext&lt;javax.servlet.http.HttpServletResponse&gt;&nbsp;context,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>io.micronaut.core.bind.ArgumentBinder.BindingResult&lt;jakarta.servlet.http.HttpServletResponse&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#bind(io.micronaut.core.convert.ArgumentConversionContext,io.micronaut.http.HttpRequest)" class="member-name-link">bind</a><wbr>(io.micronaut.core.convert.ArgumentConversionContext&lt;jakarta.servlet.http.HttpServletResponse&gt;&nbsp;context,
  io.micronaut.http.HttpRequest&lt;?&gt;&nbsp;source)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 </div>
@@ -171,7 +171,7 @@ implements io.micronaut.http.bind.binders.TypedRequestArgumentBinder&lt;javax.se
 <li>
 <section class="detail" id="TYPE">
 <h3>TYPE</h3>
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type">io.micronaut.core.type.Argument&lt;javax.servlet.http.HttpServletResponse&gt;</span>&nbsp;<span class="element-name">TYPE</span></div>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type">io.micronaut.core.type.Argument&lt;jakarta.servlet.http.HttpServletResponse&gt;</span>&nbsp;<span class="element-name">TYPE</span></div>
 </section>
 </li>
 </ul>
@@ -199,21 +199,21 @@ implements io.micronaut.http.bind.binders.TypedRequestArgumentBinder&lt;javax.se
 <li>
 <section class="detail" id="argumentType()">
 <h3>argumentType</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">io.micronaut.core.type.Argument&lt;javax.servlet.http.HttpServletResponse&gt;</span>&nbsp;<span class="element-name">argumentType</span>()</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">io.micronaut.core.type.Argument&lt;jakarta.servlet.http.HttpServletResponse&gt;</span>&nbsp;<span class="element-name">argumentType</span>()</div>
 <dl class="notes">
 <dt>Specified by:</dt>
-<dd><code>argumentType</code>&nbsp;in interface&nbsp;<code>io.micronaut.core.bind.TypeArgumentBinder&lt;javax.servlet.http.HttpServletResponse,<wbr>io.micronaut.http.HttpRequest&lt;?&gt;&gt;</code></dd>
+<dd><code>argumentType</code>&nbsp;in interface&nbsp;<code>io.micronaut.core.bind.TypeArgumentBinder&lt;jakarta.servlet.http.HttpServletResponse,<wbr>io.micronaut.http.HttpRequest&lt;?&gt;&gt;</code></dd>
 </dl>
 </section>
 </li>
 <li>
 <section class="detail" id="bind(io.micronaut.core.convert.ArgumentConversionContext,io.micronaut.http.HttpRequest)">
 <h3>bind</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">io.micronaut.core.bind.ArgumentBinder.BindingResult&lt;javax.servlet.http.HttpServletResponse&gt;</span>&nbsp;<span class="element-name">bind</span><wbr><span class="parameters">(io.micronaut.core.convert.ArgumentConversionContext&lt;javax.servlet.http.HttpServletResponse&gt;&nbsp;context,
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">io.micronaut.core.bind.ArgumentBinder.BindingResult&lt;jakarta.servlet.http.HttpServletResponse&gt;</span>&nbsp;<span class="element-name">bind</span><wbr><span class="parameters">(io.micronaut.core.convert.ArgumentConversionContext&lt;jakarta.servlet.http.HttpServletResponse&gt;&nbsp;context,
  io.micronaut.http.HttpRequest&lt;?&gt;&nbsp;source)</span></div>
 <dl class="notes">
 <dt>Specified by:</dt>
-<dd><code>bind</code>&nbsp;in interface&nbsp;<code>io.micronaut.core.bind.ArgumentBinder&lt;javax.servlet.http.HttpServletResponse,<wbr>io.micronaut.http.HttpRequest&lt;?&gt;&gt;</code></dd>
+<dd><code>bind</code>&nbsp;in interface&nbsp;<code>io.micronaut.core.bind.ArgumentBinder&lt;jakarta.servlet.http.HttpServletResponse,<wbr>io.micronaut.http.HttpRequest&lt;?&gt;&gt;</code></dd>
 </dl>
 </section>
 </li>

@@ -80,6 +80,15 @@ loadScripts(document, 'script');</script>
 <li class="circle">io.micronaut.servlet.undertow.<a href="io/micronaut/servlet/undertow/UndertowServer.html" class="type-name-link" title="class in io.micronaut.servlet.undertow">UndertowServer</a></li>
 </ul>
 </li>
+<li class="circle">io.micronaut.core.convert.value.ConvertibleValuesMap&lt;V&gt; (implements io.micronaut.core.convert.ConversionServiceAware, io.micronaut.core.convert.value.ConvertibleValues&lt;V&gt;)
+<ul>
+<li class="circle">io.micronaut.core.convert.value.MutableConvertibleValuesMap&lt;V&gt; (implements io.micronaut.core.convert.value.MutableConvertibleValues&lt;V&gt;)
+<ul>
+<li class="circle">io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html" class="type-name-link" title="class in io.micronaut.servlet.engine">DefaultServletHttpRequest</a>&lt;B&gt; (implements io.micronaut.core.convert.value.MutableConvertibleValues&lt;V&gt;, io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletExchange.html" title="interface in io.micronaut.servlet.http">ServletExchange</a>&lt;Req,<wbr>Res&gt;, io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletHttpRequest.html" title="interface in io.micronaut.servlet.http">ServletHttpRequest</a>&lt;N,<wbr>B&gt;, io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/StreamedServletMessage.html" title="interface in io.micronaut.servlet.http">StreamedServletMessage</a>&lt;B,<wbr>BB&gt;)</li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="circle">io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder&lt;T&gt; (implements io.micronaut.http.bind.binders.BodyArgumentBinder&lt;T&gt;)
 <ul>
 <li class="circle">io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletBodyBinder.html" class="type-name-link" title="class in io.micronaut.servlet.http">ServletBodyBinder</a>&lt;T&gt; (implements io.micronaut.http.bind.binders.AnnotatedRequestArgumentBinder&lt;A,<wbr>T&gt;)</li>
@@ -87,12 +96,11 @@ loadScripts(document, 'script');</script>
 </li>
 <li class="circle">io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/DefaultServletCookies.html" class="type-name-link" title="class in io.micronaut.servlet.engine">DefaultServletCookies</a> (implements io.micronaut.http.cookie.Cookies)</li>
 <li class="circle">io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/DefaultServletExchange.html" class="type-name-link" title="class in io.micronaut.servlet.http">DefaultServletExchange</a>&lt;Req,<wbr>Res&gt; (implements io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletExchange.html" title="interface in io.micronaut.servlet.http">ServletExchange</a>&lt;Req,<wbr>Res&gt;)</li>
-<li class="circle">io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html" class="type-name-link" title="class in io.micronaut.servlet.engine">DefaultServletHttpRequest</a>&lt;B&gt; (implements io.micronaut.core.convert.value.MutableConvertibleValues&lt;V&gt;, io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletExchange.html" title="interface in io.micronaut.servlet.http">ServletExchange</a>&lt;Req,<wbr>Res&gt;, io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletHttpRequest.html" title="interface in io.micronaut.servlet.http">ServletHttpRequest</a>&lt;N,<wbr>B&gt;, io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/StreamedServletMessage.html" title="interface in io.micronaut.servlet.http">StreamedServletMessage</a>&lt;B,<wbr>BB&gt;)</li>
 <li class="circle">io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/DefaultServletHttpResponse.html" class="type-name-link" title="class in io.micronaut.servlet.engine">DefaultServletHttpResponse</a>&lt;B&gt; (implements io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletHttpResponse.html" title="interface in io.micronaut.servlet.http">ServletHttpResponse</a>&lt;N,<wbr>B&gt;)</li>
 <li class="circle">io.micronaut.servlet.http.encoders.<a href="io/micronaut/servlet/http/encoders/FileEncoder.html" class="type-name-link" title="class in io.micronaut.servlet.http.encoders">FileEncoder</a> (implements io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletResponseEncoder.html" title="interface in io.micronaut.servlet.http">ServletResponseEncoder</a>&lt;T&gt;)</li>
-<li class="circle">javax.servlet.GenericServlet (implements java.io.<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/Serializable.html" title="class or interface in java.io" class="external-link">Serializable</a>, javax.servlet.Servlet, javax.servlet.ServletConfig)
+<li class="circle">jakarta.servlet.GenericServlet (implements java.io.<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/Serializable.html" title="class or interface in java.io" class="external-link">Serializable</a>, jakarta.servlet.Servlet, jakarta.servlet.ServletConfig)
 <ul>
-<li class="circle">javax.servlet.http.HttpServlet
+<li class="circle">jakarta.servlet.http.HttpServlet
 <ul>
 <li class="circle">io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/DefaultMicronautServlet.html" class="type-name-link" title="class in io.micronaut.servlet.engine">DefaultMicronautServlet</a></li>
 </ul>
@@ -107,7 +115,7 @@ loadScripts(document, 'script');</script>
 </ul>
 </li>
 <li class="circle">io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/MicronautServletConfiguration.html" class="type-name-link" title="class in io.micronaut.servlet.engine">MicronautServletConfiguration</a> (implements io.micronaut.core.naming.Named, io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletConfiguration.html" title="interface in io.micronaut.servlet.http">ServletConfiguration</a>)</li>
-<li class="circle">io.micronaut.servlet.engine.initializer.<a href="io/micronaut/servlet/engine/initializer/MicronautServletInitializer.html" class="type-name-link" title="class in io.micronaut.servlet.engine.initializer">MicronautServletInitializer</a> (implements javax.servlet.ServletContainerInitializer)</li>
+<li class="circle">io.micronaut.servlet.engine.initializer.<a href="io/micronaut/servlet/engine/initializer/MicronautServletInitializer.html" class="type-name-link" title="class in io.micronaut.servlet.engine.initializer">MicronautServletInitializer</a> (implements jakarta.servlet.ServletContainerInitializer)</li>
 <li class="circle">org.eclipse.jetty.server.SecureRequestCustomizer (implements org.eclipse.jetty.server.HttpConfiguration.Customizer)
 <ul>
 <li class="circle">io.micronaut.servlet.jetty.<a href="io/micronaut/servlet/jetty/JettyConfiguration.JettySslConfiguration.html" class="type-name-link" title="class in io.micronaut.servlet.jetty">JettyConfiguration.JettySslConfiguration</a></li>

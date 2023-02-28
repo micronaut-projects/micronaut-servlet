@@ -77,12 +77,12 @@ loadScripts(document, 'script');</script>
 <section class="class-description" id="class-description">
 <dl class="notes">
 <dt>All Implemented Interfaces:</dt>
-<dd><code>javax.servlet.ServletContainerInitializer</code></dd>
+<dd><code>jakarta.servlet.ServletContainerInitializer</code></dd>
 </dl>
 <hr>
 <div class="type-signature"><span class="modifiers">public class </span><span class="element-name type-name-label">MicronautServletInitializer</span>
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>
-implements javax.servlet.ServletContainerInitializer</span></div>
+implements jakarta.servlet.ServletContainerInitializer</span></div>
 <div class="block">A servlet initializer for Micronaut for deployment as a WAR file.</div>
 <dl class="notes">
 <dt>Since:</dt>
@@ -118,13 +118,13 @@ implements javax.servlet.ServletContainerInitializer</span></div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected io.micronaut.context.ApplicationContextBuilder</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#buildApplicationContext(javax.servlet.ServletContext)" class="member-name-link">buildApplicationContext</a><wbr>(javax.servlet.ServletContext&nbsp;ctx)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#buildApplicationContext(jakarta.servlet.ServletContext)" class="member-name-link">buildApplicationContext</a><wbr>(jakarta.servlet.ServletContext&nbsp;ctx)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Builds the application context.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onStartup(java.util.Set,javax.servlet.ServletContext)" class="member-name-link">onStartup</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Set.html" title="class or interface in java.util" class="external-link">Set</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;&gt;&nbsp;c,
- javax.servlet.ServletContext&nbsp;ctx)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onStartup(java.util.Set,jakarta.servlet.ServletContext)" class="member-name-link">onStartup</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Set.html" title="class or interface in java.util" class="external-link">Set</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;&gt;&nbsp;c,
+ jakarta.servlet.ServletContext&nbsp;ctx)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 </div>
 </div>
@@ -158,20 +158,20 @@ implements javax.servlet.ServletContainerInitializer</span></div>
 <h2>Method Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="onStartup(java.util.Set,javax.servlet.ServletContext)">
+<section class="detail" id="onStartup(java.util.Set,jakarta.servlet.ServletContext)">
 <h3>onStartup</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">onStartup</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Set.html" title="class or interface in java.util" class="external-link">Set</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;&gt;&nbsp;c,
- javax.servlet.ServletContext&nbsp;ctx)</span></div>
+ jakarta.servlet.ServletContext&nbsp;ctx)</span></div>
 <dl class="notes">
 <dt>Specified by:</dt>
-<dd><code>onStartup</code>&nbsp;in interface&nbsp;<code>javax.servlet.ServletContainerInitializer</code></dd>
+<dd><code>onStartup</code>&nbsp;in interface&nbsp;<code>jakarta.servlet.ServletContainerInitializer</code></dd>
 </dl>
 </section>
 </li>
 <li>
-<section class="detail" id="buildApplicationContext(javax.servlet.ServletContext)">
+<section class="detail" id="buildApplicationContext(jakarta.servlet.ServletContext)">
 <h3>buildApplicationContext</h3>
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">io.micronaut.context.ApplicationContextBuilder</span>&nbsp;<span class="element-name">buildApplicationContext</span><wbr><span class="parameters">(javax.servlet.ServletContext&nbsp;ctx)</span></div>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">io.micronaut.context.ApplicationContextBuilder</span>&nbsp;<span class="element-name">buildApplicationContext</span><wbr><span class="parameters">(jakarta.servlet.ServletContext&nbsp;ctx)</span></div>
 <div class="block">Builds the application context.</div>
 <dl class="notes">
 <dt>Parameters:</dt>

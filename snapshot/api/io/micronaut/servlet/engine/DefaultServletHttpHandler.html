@@ -72,19 +72,19 @@ loadScripts(document, 'script');</script>
 <h1 title="Class DefaultServletHttpHandler" class="title">Class DefaultServletHttpHandler</h1>
 </div>
 <div class="inheritance" title="Inheritance Tree"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">java.lang.Object</a>
-<div class="inheritance"><a href="../http/ServletHttpHandler.html" title="class in io.micronaut.servlet.http">io.micronaut.servlet.http.ServletHttpHandler</a>&lt;javax.servlet.http.HttpServletRequest,<wbr>javax.servlet.http.HttpServletResponse&gt;
+<div class="inheritance"><a href="../http/ServletHttpHandler.html" title="class in io.micronaut.servlet.http">io.micronaut.servlet.http.ServletHttpHandler</a>&lt;jakarta.servlet.http.HttpServletRequest,<wbr>jakarta.servlet.http.HttpServletResponse&gt;
 <div class="inheritance">io.micronaut.servlet.engine.DefaultServletHttpHandler</div>
 </div>
 </div>
 <section class="class-description" id="class-description">
 <dl class="notes">
 <dt>All Implemented Interfaces:</dt>
-<dd><code>io.micronaut.context.LifeCycle&lt;<a href="../http/ServletHttpHandler.html" title="class in io.micronaut.servlet.http">ServletHttpHandler</a>&lt;javax.servlet.http.HttpServletRequest,<wbr>javax.servlet.http.HttpServletResponse&gt;&gt;</code>, <code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/Closeable.html" title="class or interface in java.io" class="external-link">Closeable</a></code>, <code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/AutoCloseable.html" title="class or interface in java.lang" class="external-link">AutoCloseable</a></code></dd>
+<dd><code>io.micronaut.context.LifeCycle&lt;<a href="../http/ServletHttpHandler.html" title="class in io.micronaut.servlet.http">ServletHttpHandler</a>&lt;jakarta.servlet.http.HttpServletRequest,<wbr>jakarta.servlet.http.HttpServletResponse&gt;&gt;</code>, <code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/Closeable.html" title="class or interface in java.io" class="external-link">Closeable</a></code>, <code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/AutoCloseable.html" title="class or interface in java.lang" class="external-link">AutoCloseable</a></code></dd>
 </dl>
 <hr>
 <div class="type-signature"><span class="annotations">@Singleton
 </span><span class="modifiers">public class </span><span class="element-name type-name-label">DefaultServletHttpHandler</span>
-<span class="extends-implements">extends <a href="../http/ServletHttpHandler.html" title="class in io.micronaut.servlet.http">ServletHttpHandler</a>&lt;javax.servlet.http.HttpServletRequest,<wbr>javax.servlet.http.HttpServletResponse&gt;</span></div>
+<span class="extends-implements">extends <a href="../http/ServletHttpHandler.html" title="class in io.micronaut.servlet.http">ServletHttpHandler</a>&lt;jakarta.servlet.http.HttpServletRequest,<wbr>jakarta.servlet.http.HttpServletResponse&gt;</span></div>
 <div class="block">Default implementation of <a href="../http/ServletHttpHandler.html" title="class in io.micronaut.servlet.http"><code>ServletHttpHandler</code></a> for the Servlet API.</div>
 <dl class="notes">
 <dt>Since:</dt>
@@ -137,9 +137,9 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="../http/ServletExchange.html" title="interface in io.micronaut.servlet.http">ServletExchange</a>&lt;javax.servlet.http.HttpServletRequest,<wbr>javax.servlet.http.HttpServletResponse&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#createExchange(javax.servlet.http.HttpServletRequest,javax.servlet.http.HttpServletResponse)" class="member-name-link">createExchange</a><wbr>(javax.servlet.http.HttpServletRequest&nbsp;request,
- javax.servlet.http.HttpServletResponse&nbsp;response)</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="../http/ServletExchange.html" title="interface in io.micronaut.servlet.http">ServletExchange</a>&lt;jakarta.servlet.http.HttpServletRequest,<wbr>jakarta.servlet.http.HttpServletResponse&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#createExchange(jakarta.servlet.http.HttpServletRequest,jakarta.servlet.http.HttpServletResponse)" class="member-name-link">createExchange</a><wbr>(jakarta.servlet.http.HttpServletRequest&nbsp;request,
+ jakarta.servlet.http.HttpServletResponse&nbsp;response)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Creates the <a href="../http/DefaultServletExchange.html" title="class in io.micronaut.servlet.http"><code>DefaultServletExchange</code></a> object.</div>
 </div>
@@ -147,8 +147,8 @@ loadScripts(document, 'script');</script>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isRunning()" class="member-name-link">isRunning</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#service(javax.servlet.http.HttpServletRequest,javax.servlet.http.HttpServletResponse)" class="member-name-link">service</a><wbr>(javax.servlet.http.HttpServletRequest&nbsp;request,
- javax.servlet.http.HttpServletResponse&nbsp;response)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#service(jakarta.servlet.http.HttpServletRequest,jakarta.servlet.http.HttpServletResponse)" class="member-name-link">service</a><wbr>(jakarta.servlet.http.HttpServletRequest&nbsp;request,
+ jakarta.servlet.http.HttpServletResponse&nbsp;response)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Handle the give native request and response.</div>
 </div>
@@ -212,15 +212,15 @@ loadScripts(document, 'script');</script>
 <h2>Method Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="createExchange(javax.servlet.http.HttpServletRequest,javax.servlet.http.HttpServletResponse)">
+<section class="detail" id="createExchange(jakarta.servlet.http.HttpServletRequest,jakarta.servlet.http.HttpServletResponse)">
 <h3>createExchange</h3>
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="../http/ServletExchange.html" title="interface in io.micronaut.servlet.http">ServletExchange</a>&lt;javax.servlet.http.HttpServletRequest,<wbr>javax.servlet.http.HttpServletResponse&gt;</span>&nbsp;<span class="element-name">createExchange</span><wbr><span class="parameters">(javax.servlet.http.HttpServletRequest&nbsp;request,
- javax.servlet.http.HttpServletResponse&nbsp;response)</span></div>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="../http/ServletExchange.html" title="interface in io.micronaut.servlet.http">ServletExchange</a>&lt;jakarta.servlet.http.HttpServletRequest,<wbr>jakarta.servlet.http.HttpServletResponse&gt;</span>&nbsp;<span class="element-name">createExchange</span><wbr><span class="parameters">(jakarta.servlet.http.HttpServletRequest&nbsp;request,
+ jakarta.servlet.http.HttpServletResponse&nbsp;response)</span></div>
 <div class="block"><span class="descfrm-type-label">Description copied from class:&nbsp;<code><a href="../http/ServletHttpHandler.html#createExchange(REQ,RES)">ServletHttpHandler</a></code></span></div>
 <div class="block">Creates the <a href="../http/DefaultServletExchange.html" title="class in io.micronaut.servlet.http"><code>DefaultServletExchange</code></a> object.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
-<dd><code><a href="../http/ServletHttpHandler.html#createExchange(REQ,RES)">createExchange</a></code>&nbsp;in class&nbsp;<code><a href="../http/ServletHttpHandler.html" title="class in io.micronaut.servlet.http">ServletHttpHandler</a>&lt;javax.servlet.http.HttpServletRequest,<wbr>javax.servlet.http.HttpServletResponse&gt;</code></dd>
+<dd><code><a href="../http/ServletHttpHandler.html#createExchange(REQ,RES)">createExchange</a></code>&nbsp;in class&nbsp;<code><a href="../http/ServletHttpHandler.html" title="class in io.micronaut.servlet.http">ServletHttpHandler</a>&lt;jakarta.servlet.http.HttpServletRequest,<wbr>jakarta.servlet.http.HttpServletResponse&gt;</code></dd>
 <dt>Parameters:</dt>
 <dd><code>request</code> - The request</dd>
 <dd><code>response</code> - The response</dd>
@@ -230,15 +230,15 @@ loadScripts(document, 'script');</script>
 </section>
 </li>
 <li>
-<section class="detail" id="service(javax.servlet.http.HttpServletRequest,javax.servlet.http.HttpServletResponse)">
+<section class="detail" id="service(jakarta.servlet.http.HttpServletRequest,jakarta.servlet.http.HttpServletResponse)">
 <h3>service</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">service</span><wbr><span class="parameters">(javax.servlet.http.HttpServletRequest&nbsp;request,
- javax.servlet.http.HttpServletResponse&nbsp;response)</span></div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">service</span><wbr><span class="parameters">(jakarta.servlet.http.HttpServletRequest&nbsp;request,
+ jakarta.servlet.http.HttpServletResponse&nbsp;response)</span></div>
 <div class="block"><span class="descfrm-type-label">Description copied from class:&nbsp;<code><a href="../http/ServletHttpHandler.html#service(REQ,RES)">ServletHttpHandler</a></code></span></div>
 <div class="block">Handle the give native request and response.</div>
 <dl class="notes">
 <dt>Overrides:</dt>
-<dd><code><a href="../http/ServletHttpHandler.html#service(REQ,RES)">service</a></code>&nbsp;in class&nbsp;<code><a href="../http/ServletHttpHandler.html" title="class in io.micronaut.servlet.http">ServletHttpHandler</a>&lt;javax.servlet.http.HttpServletRequest,<wbr>javax.servlet.http.HttpServletResponse&gt;</code></dd>
+<dd><code><a href="../http/ServletHttpHandler.html#service(REQ,RES)">service</a></code>&nbsp;in class&nbsp;<code><a href="../http/ServletHttpHandler.html" title="class in io.micronaut.servlet.http">ServletHttpHandler</a>&lt;jakarta.servlet.http.HttpServletRequest,<wbr>jakarta.servlet.http.HttpServletResponse&gt;</code></dd>
 <dt>Parameters:</dt>
 <dd><code>request</code> - The request</dd>
 <dd><code>response</code> - The response</dd>
@@ -251,9 +251,9 @@ loadScripts(document, 'script');</script>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">isRunning</span>()</div>
 <dl class="notes">
 <dt>Specified by:</dt>
-<dd><code>isRunning</code>&nbsp;in interface&nbsp;<code>io.micronaut.context.LifeCycle&lt;<a href="../http/ServletHttpHandler.html" title="class in io.micronaut.servlet.http">ServletHttpHandler</a>&lt;javax.servlet.http.HttpServletRequest,<wbr>javax.servlet.http.HttpServletResponse&gt;&gt;</code></dd>
+<dd><code>isRunning</code>&nbsp;in interface&nbsp;<code>io.micronaut.context.LifeCycle&lt;<a href="../http/ServletHttpHandler.html" title="class in io.micronaut.servlet.http">ServletHttpHandler</a>&lt;jakarta.servlet.http.HttpServletRequest,<wbr>jakarta.servlet.http.HttpServletResponse&gt;&gt;</code></dd>
 <dt>Overrides:</dt>
-<dd><code><a href="../http/ServletHttpHandler.html#isRunning()">isRunning</a></code>&nbsp;in class&nbsp;<code><a href="../http/ServletHttpHandler.html" title="class in io.micronaut.servlet.http">ServletHttpHandler</a>&lt;javax.servlet.http.HttpServletRequest,<wbr>javax.servlet.http.HttpServletResponse&gt;</code></dd>
+<dd><code><a href="../http/ServletHttpHandler.html#isRunning()">isRunning</a></code>&nbsp;in class&nbsp;<code><a href="../http/ServletHttpHandler.html" title="class in io.micronaut.servlet.http">ServletHttpHandler</a>&lt;jakarta.servlet.http.HttpServletRequest,<wbr>jakarta.servlet.http.HttpServletResponse&gt;</code></dd>
 </dl>
 </section>
 </li>
