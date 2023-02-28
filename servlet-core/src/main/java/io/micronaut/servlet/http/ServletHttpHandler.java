@@ -58,6 +58,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Paths;
@@ -224,9 +225,11 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
             response = routeExecutor.createDefaultErrorResponse(req, throwable);
         }
         if (response != null) {
+            String methodName = req.getMethodName();
+            URI uri = req.getUri();
             try {
                 if (LOG.isDebugEnabled()) {
-                    LOG.debug("Request [{} - {}] completed successfully", req.getMethodName(), req.getUri());
+                    LOG.debug("Request [{} - {}] completed successfully", methodName, uri);
                 }
                 encodeResponse(exchange, req, response, responsePublisherCallback);
             } catch (Throwable e) {
@@ -234,15 +237,15 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
                 try {
                     encodeResponse(exchange, req, response, responsePublisherCallback);
                 } catch (Throwable e2) {
-                    LOG.error("Request [{} - {}] completed with error: {}", req.getMethodName(), req.getUri(), e2.getMessage(), e2);
+                    LOG.error("Request [{} - {}] completed with error: {}", methodName, uri, e2.getMessage(), e2);
                     responsePublisherCallback.accept(null);
                     return;
                 }
             }
             if (throwable != null) {
-                LOG.error("Request [{} - {}] completed with error: {}", req.getMethodName(), req.getUri(), throwable.getMessage(), throwable);
+                LOG.error("Request [{} - {}] completed with error: {}", methodName, uri, throwable.getMessage(), throwable);
             } else {
-                LOG.debug("Request [{} - {}] completed successfully", req.getMethodName(), req.getUri());
+                LOG.debug("Request [{} - {}] completed successfully", methodName, uri);
             }
         } else {
             responsePublisherCallback.accept(null);

@@ -15,41 +15,6 @@
  */
 package io.micronaut.servlet.engine;
 
-import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
-import io.micronaut.core.convert.ArgumentConversionContext;
-import io.micronaut.core.convert.ConversionContext;
-import io.micronaut.core.convert.ConversionService;
-import io.micronaut.core.convert.value.ConvertibleValues;
-import io.micronaut.core.convert.value.MutableConvertibleValues;
-import io.micronaut.core.io.IOUtils;
-import io.micronaut.core.type.Argument;
-import io.micronaut.core.util.ArrayUtils;
-import io.micronaut.core.util.CollectionUtils;
-import io.micronaut.core.util.StringUtils;
-import io.micronaut.http.HttpHeaders;
-import io.micronaut.http.HttpMethod;
-import io.micronaut.http.HttpParameters;
-import io.micronaut.http.MediaType;
-import io.micronaut.http.MutableHttpRequest;
-import io.micronaut.http.codec.CodecException;
-import io.micronaut.http.codec.MediaTypeCodec;
-import io.micronaut.http.codec.MediaTypeCodecRegistry;
-import io.micronaut.http.cookie.Cookies;
-import io.micronaut.servlet.http.ServletExchange;
-import io.micronaut.servlet.http.ServletHttpRequest;
-import io.micronaut.servlet.http.ServletHttpResponse;
-import io.micronaut.servlet.http.StreamedServletMessage;
-import org.reactivestreams.Subscriber;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Sinks;
-
-import jakarta.servlet.AsyncContext;
-import jakarta.servlet.ReadListener;
-import jakarta.servlet.ServletInputStream;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -69,7 +34,44 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+
+import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
+import io.micronaut.core.convert.ArgumentConversionContext;
+import io.micronaut.core.convert.ConversionContext;
+import io.micronaut.core.convert.ConversionService;
+import io.micronaut.core.convert.value.ConvertibleValues;
+import io.micronaut.core.convert.value.MutableConvertibleValues;
+import io.micronaut.core.convert.value.MutableConvertibleValuesMap;
+import io.micronaut.core.io.IOUtils;
+import io.micronaut.core.type.Argument;
+import io.micronaut.core.util.ArrayUtils;
+import io.micronaut.core.util.CollectionUtils;
+import io.micronaut.core.util.StringUtils;
+import io.micronaut.http.HttpHeaders;
+import io.micronaut.http.HttpMethod;
+import io.micronaut.http.HttpParameters;
+import io.micronaut.http.MediaType;
+import io.micronaut.http.MutableHttpRequest;
+import io.micronaut.http.codec.CodecException;
+import io.micronaut.http.codec.MediaTypeCodec;
+import io.micronaut.http.codec.MediaTypeCodecRegistry;
+import io.micronaut.http.cookie.Cookies;
+import io.micronaut.servlet.http.ServletExchange;
+import io.micronaut.servlet.http.ServletHttpRequest;
+import io.micronaut.servlet.http.ServletHttpResponse;
+import io.micronaut.servlet.http.StreamedServletMessage;
+import jakarta.servlet.AsyncContext;
+import jakarta.servlet.ReadListener;
+import jakarta.servlet.ServletInputStream;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.reactivestreams.Subscriber;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Sinks;
 
 /**
  * Implementation of {@link io.micronaut.http.HttpRequest} ontop of the Servlet API.
@@ -79,7 +81,7 @@ import java.util.stream.Collectors;
  * @since 1.0.0
  */
 @Internal
-public class DefaultServletHttpRequest<B> implements
+public class DefaultServletHttpRequest<B> extends MutableConvertibleValuesMap<Object> implements
     ServletHttpRequest<HttpServletRequest, B>,
     MutableConvertibleValues<Object>,
     ServletExchange<HttpServletRequest, HttpServletResponse>,
@@ -109,6 +111,7 @@ public class DefaultServletHttpRequest<B> implements
                                         HttpServletRequest delegate,
                                         HttpServletResponse response,
                                         MediaTypeCodecRegistry codecRegistry) {
+        super(new ConcurrentHashMap<>(), conversionService);
         this.conversionService = conversionService;
         this.delegate = delegate;
         this.codecRegistry = codecRegistry;
@@ -366,55 +369,11 @@ public class DefaultServletHttpRequest<B> implements
     public MutableConvertibleValues<Object> put(CharSequence key, @Nullable Object value) {
         String name = Objects.requireNonNull(key, "Key cannot be null").toString();
         if (value == null) {
-            delegate.removeAttribute(name);
+            super.remove(name);
         } else {
-            delegate.setAttribute(name, value);
+            super.put(name, value);
         }
         return this;
-    }
-
-    @Override
-    public MutableConvertibleValues<Object> remove(CharSequence key) {
-        String name = Objects.requireNonNull(key, "Key cannot be null").toString();
-        delegate.removeAttribute(name);
-        return this;
-    }
-
-    @Override
-    public MutableConvertibleValues<Object> clear() {
-        while (delegate.getAttributeNames().hasMoreElements()) {
-            String attr = delegate.getAttributeNames().nextElement();
-            delegate.removeAttribute(attr);
-        }
-        return this;
-    }
-
-    @Override
-    public Set<String> names() {
-        return CollectionUtils.enumerationToSet(delegate.getAttributeNames());
-    }
-
-    @Override
-    public Collection<Object> values() {
-        return names()
-            .stream()
-            .map(delegate::getAttribute)
-            .collect(Collectors.toList());
-    }
-
-    @Override
-    public <T> Optional<T> get(CharSequence key, ArgumentConversionContext<T> conversionContext) {
-        String name = Objects.requireNonNull(key, "Key cannot be null").toString();
-        final Object v = delegate.getAttribute(name);
-        if (v != null) {
-            if (conversionContext.getArgument().getType().isInstance(v)) {
-                //noinspection unchecked
-                return (Optional<T>) Optional.of(v);
-            } else {
-                return conversionService.convert(v, conversionContext);
-            }
-        }
-        return Optional.empty();
     }
 
     @SuppressWarnings("unchecked")

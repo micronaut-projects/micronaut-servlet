@@ -363,7 +363,9 @@ public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpSe
         } else {
             this.reason = message.toString();
         }
-        delegate.setStatus(status);
+        if (!delegate.isCommitted()) {
+            delegate.setStatus(status);
+        }
         return this;
     }
 
