@@ -74,12 +74,12 @@ public class TomcatServer extends AbstractServletServer<Tomcat> {
     public int getPort() {
         Connector[] connectors = getServer().getService().findConnectors();
         if (connectors.length == 1) {
-            return getServer().getConnector().getPort();
+            return getServer().getConnector().getLocalPort();
         } else {
             return Arrays.stream(connectors).filter(Connector::getSecure)
                     .findFirst()
-                    .map(Connector::getPort)
-                    .orElseGet(() -> getServer().getConnector().getPort());
+                    .map(Connector::getLocalPort)
+                    .orElseGet(() -> getServer().getConnector().getLocalPort());
         }
     }
 

@@ -166,10 +166,10 @@ public abstract class ServletServerFactory extends SslBuilder<SSLContext> {
      */
     protected Integer getConfiguredPort() {
         return serverConfiguration.getPort().map(p ->
-                p == -1 ? SocketUtils.findAvailableTcpPort() : p
+                p == -1 ? 0 : p
         ).orElseGet(() -> {
             if (getEnvironment().getActiveNames().contains(Environment.TEST)) {
-                return SocketUtils.findAvailableTcpPort();
+                return 0;
             } else {
                 return 8080;
             }

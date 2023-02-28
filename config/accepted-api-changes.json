@@ -53,6 +53,11 @@
     "type": "io.micronaut.servlet.http.ServletCookies",
     "member": "Implemented interface io.micronaut.http.cookie.Cookies",
     "reason": "removed deprecated class for Micronaut 4.0.x"
+  },
+  {
+    "type": "io.micronaut.servlet.engine.DefaultServletHttpHandler",
+    "member": "Constructor io.micronaut.servlet.engine.DefaultServletHttpHandler(io.micronaut.context.ApplicationContext)",
+    "reason": "ConversionService compatibility"
   }
 ]
 

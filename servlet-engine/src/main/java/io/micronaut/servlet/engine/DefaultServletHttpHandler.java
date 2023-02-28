@@ -42,6 +42,17 @@ public class DefaultServletHttpHandler extends ServletHttpHandler<HttpServletReq
         super(applicationContext, conversionService);
     }
 
+    /**
+     * Default constructor.
+     *
+     * @param applicationContext The application context
+     * @deprecated use {@link #DefaultServletHttpHandler(ApplicationContext, ConversionService)}
+     */
+    @Deprecated
+    public DefaultServletHttpHandler(ApplicationContext applicationContext) {
+        super(applicationContext, ConversionService.SHARED);
+    }
+
     @Override
     protected ServletExchange<HttpServletRequest, HttpServletResponse> createExchange(
             HttpServletRequest request,

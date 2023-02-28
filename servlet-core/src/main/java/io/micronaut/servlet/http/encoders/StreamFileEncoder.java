@@ -21,6 +21,7 @@ import io.micronaut.core.async.publisher.Publishers;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MutableHttpResponse;
 import io.micronaut.http.server.types.files.StreamedFile;
+import io.micronaut.servlet.http.ServletConfiguration;
 import io.micronaut.servlet.http.ServletExchange;
 import io.micronaut.servlet.http.ServletHttpRequest;
 import io.micronaut.servlet.http.ServletHttpResponse;
@@ -43,6 +44,11 @@ import java.util.Arrays;
 @Singleton
 public class StreamFileEncoder extends AbstractFileEncoder<StreamedFile> {
     private static final int BUFFER_SIZE = 1024;
+    private final ServletConfiguration servletConfiguration;
+
+    public StreamFileEncoder(ServletConfiguration servletConfiguration) {
+        this.servletConfiguration = servletConfiguration;
+    }
 
     @Override
     public Class<StreamedFile> getResponseType() {
@@ -64,7 +70,7 @@ public class StreamFileEncoder extends AbstractFileEncoder<StreamedFile> {
             );
         }
 
-        boolean asyncSupported = request.isAsyncSupported();
+        boolean asyncSupported = request.isAsyncSupported() && servletConfiguration.isAsyncFileServingEnabled();
         if (asyncSupported) {
             return response.stream(Flux.create(emitter -> {
                 try (InputStream in = value.getInputStream()) {

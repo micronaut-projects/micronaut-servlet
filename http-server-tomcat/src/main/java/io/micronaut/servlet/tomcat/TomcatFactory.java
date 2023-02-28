@@ -20,7 +20,6 @@ import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Primary;
 import io.micronaut.context.env.Environment;
 import io.micronaut.core.io.ResourceResolver;
-import io.micronaut.core.io.socket.SocketUtils;
 import io.micronaut.http.ssl.SslConfiguration;
 import io.micronaut.servlet.engine.DefaultMicronautServlet;
 import io.micronaut.servlet.engine.MicronautServletConfiguration;
@@ -83,6 +82,7 @@ public class TomcatFactory extends ServletServerFactory {
     @Singleton
     @Primary
     protected Tomcat tomcatServer(Connector connector, MicronautServletConfiguration configuration) {
+        configuration.setAsyncFileServingEnabled(false);
         Tomcat tomcat = new Tomcat();
         tomcat.setHostname(getConfiguredHost());
         final String contextPath = getContextPath();
@@ -104,6 +104,7 @@ public class TomcatFactory extends ServletServerFactory {
                 configuration.getName(),
                 new DefaultMicronautServlet(getApplicationContext())
         );
+        servlet.setAsyncSupported(true);
         servlet.addMapping(configuration.getMapping());
         getStaticResourceConfigurations().forEach(config -> {
             servlet.addMapping(config.getMapping());
@@ -116,7 +117,7 @@ public class TomcatFactory extends ServletServerFactory {
             String protocol = sslConfiguration.getProtocol().orElse("TLS");
             int sslPort = sslConfiguration.getPort();
             if (sslPort == SslConfiguration.DEFAULT_PORT && getEnvironment().getActiveNames().contains(Environment.TEST)) {
-                sslPort = SocketUtils.findAvailableTcpPort();
+                sslPort = 0;
             }
             Connector httpsConnector = new Connector();
             httpsConnector.setPort(sslPort);
