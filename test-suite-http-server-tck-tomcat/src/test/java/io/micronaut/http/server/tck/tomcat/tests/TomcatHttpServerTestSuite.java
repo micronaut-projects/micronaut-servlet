@@ -9,11 +9,8 @@ import org.junit.platform.suite.api.SuiteDisplayName;
 @SelectPackages("io.micronaut.http.server.tck.tests")
 @SuiteDisplayName("HTTP Server TCK for Tomcat")
 @ExcludeClassNamePatterns({
-    "io.micronaut.http.server.tck.tests.FluxTest",
-    "io.micronaut.http.server.tck.tests.BodyTest",
     "io.micronaut.http.server.tck.tests.cors.CorsSimpleRequestTest",
     "io.micronaut.http.server.tck.tests.MiscTest",
-    "io.micronaut.http.server.tck.tests.ErrorHandlerTest",
     "io.micronaut.http.server.tck.tests.RemoteAddressTest",
     "io.micronaut.http.server.tck.tests.filter.ClientResponseFilterTest" // fails on GraalVM
 })
