@@ -15,6 +15,10 @@
  */
 package io.micronaut.servlet.tomcat;
 
+import java.io.File;
+import java.net.URL;
+import java.util.List;
+
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Primary;
@@ -25,16 +29,13 @@ import io.micronaut.servlet.engine.DefaultMicronautServlet;
 import io.micronaut.servlet.engine.MicronautServletConfiguration;
 import io.micronaut.servlet.engine.server.ServletServerFactory;
 import io.micronaut.servlet.engine.server.ServletStaticResourceConfiguration;
+import jakarta.inject.Singleton;
 import org.apache.catalina.Context;
 import org.apache.catalina.Wrapper;
 import org.apache.catalina.connector.Connector;
 import org.apache.catalina.startup.Tomcat;
 import org.apache.catalina.webresources.TomcatURLStreamHandlerFactory;
-
-import jakarta.inject.Singleton;
-import java.io.File;
-import java.net.URL;
-import java.util.List;
+import org.apache.tomcat.util.net.SSLHostConfig;
 
 /**
  * Factory for the {@link Tomcat} instance.
@@ -126,17 +127,16 @@ public class TomcatFactory extends ServletServerFactory {
             httpsConnector.setProperty("clientAuth", "false");
             httpsConnector.setProperty("sslProtocol", protocol);
             httpsConnector.setProperty("SSLEnabled", "true");
-            sslConfiguration.getCiphers().ifPresent(cyphers -> httpsConnector.setAttribute("cyphers", cyphers));
+            sslConfiguration.getCiphers().ifPresent(cyphers -> {
+                SSLHostConfig[] sslHostConfigs = httpsConnector.findSslHostConfigs();
+                for (SSLHostConfig sslHostConfig : sslHostConfigs) {
+                    sslHostConfig.setCiphers(String.join(",", cyphers));
+                }
+            });
             sslConfiguration.getClientAuthentication().ifPresent(ca -> {
                 switch (ca) {
-                    case WANT:
-                        httpsConnector.setProperty("clientAuth", "want");
-                        break;
-                    default:
-                    case NEED:
-                        httpsConnector.setProperty("clientAuth", "true");
-                        break;
-
+                    case WANT -> httpsConnector.setProperty("clientAuth", "want");
+                    case NEED -> httpsConnector.setProperty("clientAuth", "true");
                 }
             });
 

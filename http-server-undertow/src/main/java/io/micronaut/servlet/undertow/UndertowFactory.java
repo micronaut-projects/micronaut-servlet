@@ -38,8 +38,8 @@ import org.xnio.Option;
 import org.xnio.Options;
 
 import jakarta.inject.Singleton;
-import javax.servlet.Servlet;
-import javax.servlet.ServletException;
+import jakarta.servlet.Servlet;
+import jakarta.servlet.ServletException;
 import java.util.List;
 import java.util.Map;
 

@@ -8,8 +8,8 @@ import io.micronaut.http.*;
 import io.micronaut.http.annotation.*;
 import io.micronaut.http.cookie.Cookie;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.*;
 
 @Controller("/parameters")
@@ -97,7 +97,7 @@ public class ParametersController {
             @Part("one") Person person,
             @Part("two") String text,
             @Part("three") byte[] bytes,
-            @Part("four") javax.servlet.http.Part raw) throws IOException {
+            @Part("four") jakarta.servlet.http.Part raw) throws IOException {
         return "Good: " + (foo.equals("bar") &&
                 person.getName().equals("bar") &&
                 text.equals("Whatever") &&

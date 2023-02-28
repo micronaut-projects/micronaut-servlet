@@ -58,6 +58,36 @@
     "type": "io.micronaut.servlet.engine.DefaultServletHttpHandler",
     "member": "Constructor io.micronaut.servlet.engine.DefaultServletHttpHandler(io.micronaut.context.ApplicationContext)",
     "reason": "ConversionService compatibility"
+  },
+  {
+    "type": "io.micronaut.servlet.engine.DefaultMicronautServlet",
+    "member": "Implemented interface javax.servlet.ServletConfig",
+    "reason": "Jakarta upgrade"
+  },
+  {
+    "type": "io.micronaut.servlet.engine.DefaultServletCookies",
+    "member": "Constructor io.micronaut.servlet.engine.DefaultServletCookies(javax.servlet.http.Cookie[])",
+    "reason": "Jakarta upgrade"
+  },
+  {
+    "type": "io.micronaut.servlet.engine.initializer.MicronautServletInitializer",
+    "member": "Implemented interface javax.servlet.ServletContainerInitializer",
+    "reason": "Jakarta upgrade"
+  },
+  {
+    "type": "io.micronaut.servlet.engine.ServletCompletedFileUpload",
+    "member": "Constructor io.micronaut.servlet.engine.ServletCompletedFileUpload(javax.servlet.http.Part)",
+    "reason": "Jakarta upgrade"
+  },
+  {
+    "type": "io.micronaut.servlet.engine.ServletCookieAdapter",
+    "member": "Constructor io.micronaut.servlet.engine.ServletCookieAdapter(javax.servlet.http.Cookie)",
+    "reason": "Jakarta upgrade"
+  },
+  {
+    "type": "io.micronaut.servlet.engine.DefaultMicronautServlet",
+    "member": "Implemented interface javax.servlet.Servlet",
+    "reason": "Jakarta upgrade"
   }
 ]
 

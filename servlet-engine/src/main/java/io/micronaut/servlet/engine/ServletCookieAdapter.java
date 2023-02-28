@@ -28,20 +28,20 @@ import java.util.Objects;
  * @since 1.0
  */
 public final class ServletCookieAdapter implements Cookie {
-    private final javax.servlet.http.Cookie cookie;
+    private final jakarta.servlet.http.Cookie cookie;
 
     /**
      * Default constructor.
      * @param cookie The servlet cookie to adapt.
      */
-    public ServletCookieAdapter(javax.servlet.http.Cookie cookie) {
+    public ServletCookieAdapter(jakarta.servlet.http.Cookie cookie) {
         this.cookie = cookie;
     }
 
     /**
      * @return The backing servlet cookie
      */
-    public javax.servlet.http.Cookie getCookie() {
+    public jakarta.servlet.http.Cookie getCookie() {
         return cookie;
     }
 

@@ -32,13 +32,13 @@ import java.util.Optional;
  * @since 1.0.0
  */
 public final class ServletCompletedFileUpload implements CompletedFileUpload {
-    private final javax.servlet.http.Part part;
+    private final jakarta.servlet.http.Part part;
 
     /**
      * Default constructor.
      * @param part The part
      */
-    public ServletCompletedFileUpload(javax.servlet.http.Part part) {
+    public ServletCompletedFileUpload(jakarta.servlet.http.Part part) {
         this.part = Objects.requireNonNull(part, "Part cannot be null");
     }
 

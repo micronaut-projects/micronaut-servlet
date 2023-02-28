@@ -25,8 +25,8 @@ import io.micronaut.http.server.exceptions.InternalServerException;
 import io.micronaut.servlet.engine.ServletCompletedFileUpload;
 import io.micronaut.servlet.http.ServletExchange;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.util.Optional;
 
@@ -47,7 +47,7 @@ class CompletedPartRequestArgumentBinder implements TypedRequestArgumentBinder<C
         final Argument<?> argument = context.getArgument();
         final String partName = context.getAnnotationMetadata().stringValue(Part.class).orElse(argument.getName());
         try {
-            javax.servlet.http.Part part = nativeRequest.getPart(partName);
+            jakarta.servlet.http.Part part = nativeRequest.getPart(partName);
             if (part == null) {
                 return BindingResult.UNSATISFIED;
             }
