@@ -168,7 +168,7 @@ public final class DefaultServletHttpRequest<B> extends MutableConvertibleValues
             Argument<?> resolvedBodyType = resolveBodyType();
             try (InputStream inputStream = delegate.getInputStream())  {
                 if (resolvedBodyType != null && RAW_BODY_TYPES.contains(resolvedBodyType.getType())) {
-                    return readAll(inputStream);
+                    return inputStream.readAllBytes();
                 } else {
                     final MediaTypeCodec codec = codecRegistry.findCodec(contentType).orElse(null);
                     if (contentType.equals(MediaType.APPLICATION_JSON_TYPE) && codec instanceof MapperMediaTypeCodec mapperCodec) {
@@ -176,7 +176,7 @@ public final class DefaultServletHttpRequest<B> extends MutableConvertibleValues
                     } else if (codec != null) {
                         return decode(inputStream, codec);
                     } else {
-                        return readAll(inputStream);
+                        return inputStream.readAllBytes();
                     }
                 }
             } catch (EOFException e) {
@@ -231,20 +231,6 @@ public final class DefaultServletHttpRequest<B> extends MutableConvertibleValues
 
     private Object readJson(InputStream inputStream, MapperMediaTypeCodec mapperCodec) throws IOException {
         return mapperCodec.getJsonMapper().readValue(inputStream, Argument.of(JsonNode.class));
-    }
-
-    private byte[] readAll(InputStream inputStream) throws IOException {
-        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-
-        int nRead;
-        byte[] data = new byte[4];
-
-        while ((nRead = inputStream.read(data, 0, data.length)) != -1) {
-            buffer.write(data, 0, nRead);
-        }
-
-        buffer.flush();
-        return buffer.toByteArray();
     }
 
     @Override
