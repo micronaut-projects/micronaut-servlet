@@ -17,6 +17,7 @@ package io.micronaut.servlet.http.encoders;
 
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.MutableHttpResponse;
 import io.micronaut.http.server.types.files.SystemFile;
 import io.micronaut.servlet.http.ServletConfiguration;
@@ -39,8 +40,8 @@ public class FileEncoder implements ServletResponseEncoder<File> {
     private final ServletConfiguration servletConfiguration;
 
     @Inject
-    public FileEncoder(ServletConfiguration servletConfiguration) {
-        this.servletConfiguration = servletConfiguration;
+    public FileEncoder(@Nullable ServletConfiguration servletConfiguration) {
+        this.servletConfiguration = servletConfiguration != null ? servletConfiguration : ServletConfiguration.DEFAULT;
     }
 
     public FileEncoder() {
