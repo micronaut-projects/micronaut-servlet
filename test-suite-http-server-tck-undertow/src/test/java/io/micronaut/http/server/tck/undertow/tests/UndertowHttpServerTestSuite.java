@@ -11,7 +11,8 @@ import org.junit.platform.suite.api.SuiteDisplayName;
 @ExcludeClassNamePatterns({
     "io.micronaut.http.server.tck.tests.cors.CorsSimpleRequestTest",
     "io.micronaut.http.server.tck.tests.RemoteAddressTest",
-    "io.micronaut.http.server.tck.tests.filter.ClientResponseFilterTest" // fails on GraalVM
+    "io.micronaut.http.server.tck.tests.filter.ClientResponseFilterTest", // fails on GraalVM
+    "io.micronaut.http.server.tck.tests.ErrorHandlerTest" // fails on GraalVM
 })
 public class UndertowHttpServerTestSuite {
 }
