@@ -15,7 +15,10 @@
  */
 package io.micronaut.servlet.engine;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
@@ -30,41 +33,47 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
+import java.util.function.Supplier;
 
+import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.convert.ConversionService;
-import io.micronaut.core.convert.value.ConvertibleValues;
-import io.micronaut.core.convert.value.ConvertibleValuesMap;
 import io.micronaut.core.convert.value.MutableConvertibleValues;
 import io.micronaut.core.convert.value.MutableConvertibleValuesMap;
-import io.micronaut.core.io.IOUtils;
+import io.micronaut.core.io.buffer.ByteBuffer;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
+import io.micronaut.core.util.SupplierUtil;
+import io.micronaut.http.HttpAttributes;
 import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpMethod;
 import io.micronaut.http.HttpParameters;
+import io.micronaut.http.HttpRequest;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.MutableHttpRequest;
+import io.micronaut.http.annotation.Body;
 import io.micronaut.http.codec.CodecException;
 import io.micronaut.http.codec.MediaTypeCodec;
 import io.micronaut.http.codec.MediaTypeCodecRegistry;
 import io.micronaut.http.cookie.Cookies;
+import io.micronaut.inject.ExecutionHandle;
+import io.micronaut.json.codec.MapperMediaTypeCodec;
+import io.micronaut.json.tree.JsonNode;
 import io.micronaut.servlet.http.ServletExchange;
 import io.micronaut.servlet.http.ServletHttpRequest;
 import io.micronaut.servlet.http.ServletHttpResponse;
 import io.micronaut.servlet.http.StreamedServletMessage;
+import io.micronaut.web.router.RouteMatch;
 import jakarta.servlet.AsyncContext;
 import jakarta.servlet.ReadListener;
 import jakarta.servlet.ServletInputStream;
@@ -82,11 +91,13 @@ import reactor.core.publisher.Sinks;
  * @since 1.0.0
  */
 @Internal
-public class DefaultServletHttpRequest<B> extends MutableConvertibleValuesMap<Object> implements
+public final class DefaultServletHttpRequest<B> extends MutableConvertibleValuesMap<Object> implements
     ServletHttpRequest<HttpServletRequest, B>,
     MutableConvertibleValues<Object>,
     ServletExchange<HttpServletRequest, HttpServletResponse>,
     StreamedServletMessage<B, byte[]> {
+
+    private static final Set<Class<?>> RAW_BODY_TYPES = CollectionUtils.setOf(String.class, byte[].class, ByteBuffer.class, InputStream.class);
 
     private final ConversionService conversionService;
     private final HttpServletRequest delegate;
@@ -97,7 +108,8 @@ public class DefaultServletHttpRequest<B> extends MutableConvertibleValuesMap<Ob
     private final DefaultServletHttpResponse<B> response;
     private final MediaTypeCodecRegistry codecRegistry;
     private DefaultServletCookies cookies;
-    private Object body;
+    private Supplier<Optional<B>> body;
+
     private boolean bodyIsReadAsync;
 
     /**
@@ -138,6 +150,101 @@ public class DefaultServletHttpRequest<B> extends MutableConvertibleValuesMap<Ob
         this.headers = new ServletRequestHeaders();
         this.parameters = new ServletParameters();
         this.response = new DefaultServletHttpResponse<>(conversionService, this, response);
+        this.body = SupplierUtil.memoizedNonEmpty(() -> {
+            B built = (B) buildBody();
+            return Optional.ofNullable(built);
+        });
+    }
+
+    @Nullable
+    protected Object buildBody() {
+        final MediaType contentType = getContentType().orElse(MediaType.APPLICATION_JSON_TYPE);
+        if (isFormSubmission(contentType)) {
+            return getParameters().asMap();
+        } else {
+            if (delegate.getContentLength() == 0) {
+                return null;
+            }
+            Argument<?> resolvedBodyType = resolveBodyType();
+            try (InputStream inputStream = delegate.getInputStream())  {
+                if (resolvedBodyType != null && RAW_BODY_TYPES.contains(resolvedBodyType.getType())) {
+                    return readAll(inputStream);
+                } else {
+                    final MediaTypeCodec codec = codecRegistry.findCodec(contentType).orElse(null);
+                    if (contentType.equals(MediaType.APPLICATION_JSON_TYPE) && codec instanceof MapperMediaTypeCodec mapperCodec) {
+                        return readJson(inputStream, mapperCodec);
+                    } else if (codec != null) {
+                        return decode(inputStream, codec);
+                    } else {
+                        return readAll(inputStream);
+                    }
+                }
+            } catch (EOFException e) {
+                // no content
+                return null;
+            } catch (IOException e) {
+                throw new CodecException("Error decoding request body: " + e.getMessage(), e);
+            }
+        }
+    }
+
+    private Argument<?> resolveBodyType() {
+        RouteMatch<?> route = this.getAttribute(HttpAttributes.ROUTE_MATCH, RouteMatch.class).orElse(null);
+        if (route != null) {
+            Argument<?> bodyType = route.getBodyArgument()
+                /*
+                The getBodyArgument() method returns arguments for functions where it is
+                not possible to dictate whether the argument is supposed to bind the entire
+                body or just a part of the body. We check to ensure the argument has the body
+                annotation to exclude that use case
+                */
+                .filter(argument -> {
+                    AnnotationMetadata annotationMetadata = argument.getAnnotationMetadata();
+                    if (annotationMetadata.hasAnnotation(Body.class)) {
+                        return annotationMetadata.stringValue(Body.class).isEmpty();
+                    } else {
+                        return false;
+                    }
+                })
+                .orElseGet(() -> {
+                    if (route instanceof ExecutionHandle<?, ?> handle) {
+                        for (Argument<?> argument : handle.getArguments()) {
+                            if (argument.getType() == HttpRequest.class) {
+                                return argument;
+                            }
+                        }
+                    }
+                    return Argument.OBJECT_ARGUMENT;
+                });
+            if (bodyType.getType() == HttpRequest.class) {
+                bodyType = bodyType.getFirstTypeVariable().orElse(Argument.OBJECT_ARGUMENT);
+            }
+            return bodyType;
+        } else {
+            return Argument.OBJECT_ARGUMENT;
+        }
+    }
+
+    private Object decode(InputStream inputStream, MediaTypeCodec codec) throws IOException {
+        return codec.decode(Argument.of(byte[].class), inputStream);
+    }
+
+    private Object readJson(InputStream inputStream, MapperMediaTypeCodec mapperCodec) throws IOException {
+        return mapperCodec.getJsonMapper().readValue(inputStream, Argument.of(JsonNode.class));
+    }
+
+    private byte[] readAll(InputStream inputStream) throws IOException {
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+
+        int nRead;
+        byte[] data = new byte[4];
+
+        while ((nRead = inputStream.read(data, 0, data.length)) != -1) {
+            buffer.write(data, 0, nRead);
+        }
+
+        buffer.flush();
+        return buffer.toByteArray();
     }
 
     @Override
@@ -166,68 +273,11 @@ public class DefaultServletHttpRequest<B> extends MutableConvertibleValuesMap<Ob
     @NonNull
     @Override
     public <T> Optional<T> getBody(@NonNull Argument<T> arg) {
-        Objects.requireNonNull(arg);
         if (bodyIsReadAsync) {
             throw new IllegalStateException("Body is being read asynchronously!");
         }
-        final Class<T> type = arg.getType();
-        final MediaType contentType = getContentType().orElse(MediaType.APPLICATION_JSON_TYPE);
-        long contentLength = getContentLength();
-        if (body == null && contentLength != 0) {
 
-            boolean isConvertibleValues = ConvertibleValues.class == type;
-            if (isFormSubmission(contentType)) {
-                body = getParameters();
-                if (isConvertibleValues) {
-                    return (Optional<T>) Optional.of(body);
-                }
-                return Optional.empty();
-            }
-            if (CharSequence.class.isAssignableFrom(type)) {
-                try (BufferedReader reader = delegate.getReader()) {
-                    final T value = (T) IOUtils.readText(reader);
-                    body = value;
-                    return Optional.ofNullable(value);
-                } catch (IOException e) {
-                    throw new CodecException("Error decoding request body: " + e.getMessage(), e);
-                }
-            }
-            final MediaTypeCodec codec = codecRegistry.findCodec(contentType, type).orElse(null);
-            if (codec != null) {
-                try (InputStream inputStream = delegate.getInputStream()) {
-                    if (isConvertibleValues) {
-                        final Map map = codec.decode(Map.class, inputStream);
-                        body = new ConvertibleValuesMap<>(map, conversionService) {
-                            @Override
-                            public Map asMap() {
-                                return map;
-                            }
-                        };
-                        return (Optional<T>) Optional.of(body);
-                    }
-                    final T value = codec.decode(arg, inputStream);
-                    body = value;
-                    return Optional.ofNullable(value);
-                } catch (CodecException | IOException e) {
-                    throw new CodecException("Error decoding request body: " + e.getMessage(), e);
-                }
-            }
-        } else {
-            if (type.isInstance(body)) {
-                return (Optional<T>) Optional.of(body);
-            }
-            if (body != null && body != parameters) {
-                final T result;
-                if (body instanceof ConvertibleValuesMap<?> convertibleValuesMap) {
-                    result = (T) conversionService.convertRequired(convertibleValuesMap.asMap(), arg);
-                } else {
-                    result = (T) conversionService.convertRequired(body, arg);
-                }
-                return Optional.ofNullable(result);
-            }
-
-        }
-        return Optional.empty();
+        return getBody().map(t -> conversionService.convertRequired(t, arg));
     }
 
     @NonNull
@@ -373,7 +423,7 @@ public class DefaultServletHttpRequest<B> extends MutableConvertibleValuesMap<Ob
     @NonNull
     @Override
     public Optional<B> getBody() {
-        return Optional.empty();
+        return this.body.get();
     }
 
     @Override
@@ -425,16 +475,19 @@ public class DefaultServletHttpRequest<B> extends MutableConvertibleValuesMap<Ob
                     if (!complete) {
                         try {
                             do {
-                                int length = inputStream.read(buffer);
-                                if (length == -1) {
-                                    complete = true;
-                                    emitter.emitComplete(Sinks.EmitFailureHandler.FAIL_FAST);
-                                    break;
-                                } else {
-                                    if (buffer.length == length) {
-                                        emitter.emitNext(buffer, Sinks.EmitFailureHandler.FAIL_FAST);
+                                if (inputStream.isReady()) {
+
+                                    int length = inputStream.read(buffer);
+                                    if (length == -1) {
+                                        complete = true;
+                                        emitter.emitComplete(Sinks.EmitFailureHandler.FAIL_FAST);
+                                        break;
                                     } else {
-                                        emitter.emitNext(Arrays.copyOf(buffer, length), Sinks.EmitFailureHandler.FAIL_FAST);
+                                        if (buffer.length == length) {
+                                            emitter.emitNext(buffer, Sinks.EmitFailureHandler.FAIL_FAST);
+                                        } else {
+                                            emitter.emitNext(Arrays.copyOf(buffer, length), Sinks.EmitFailureHandler.FAIL_FAST);
+                                        }
                                     }
                                 }
                             } while (inputStream.isReady());
@@ -497,7 +550,7 @@ public class DefaultServletHttpRequest<B> extends MutableConvertibleValuesMap<Ob
             return names()
                 .stream()
                 .map(this::getAll)
-                .collect(Collectors.toList());
+                .toList();
         }
 
         @Override
@@ -541,7 +594,7 @@ public class DefaultServletHttpRequest<B> extends MutableConvertibleValuesMap<Ob
             return names()
                 .stream()
                 .map(this::getAll)
-                .collect(Collectors.toList());
+                .toList();
         }
 
         @Override

@@ -10,8 +10,6 @@ import org.junit.platform.suite.api.SuiteDisplayName;
 @SuiteDisplayName("HTTP Server TCK for Jetty")
 @ExcludeClassNamePatterns({
     "io.micronaut.http.server.tck.tests.cors.CorsSimpleRequestTest",
-    "io.micronaut.http.server.tck.tests.MiscTest",
-    "io.micronaut.http.server.tck.tests.RemoteAddressTest",
     "io.micronaut.http.server.tck.tests.filter.ClientResponseFilterTest" // fails on GraalVM
 })
 public class JettytHttpServerTestSuite {

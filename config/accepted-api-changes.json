@@ -88,6 +88,106 @@
     "type": "io.micronaut.servlet.engine.DefaultMicronautServlet",
     "member": "Implemented interface javax.servlet.Servlet",
     "reason": "Jakarta upgrade"
+  },
+  {
+    "type": "io.micronaut.servlet.tomcat.graal.$Constants$ReflectConfig",
+    "member": "Field $ANNOTATION_METADATA",
+    "reason": "GraalVM Metadata Moved to Shared Repository"
+  },
+  {
+    "type": "io.micronaut.servlet.tomcat.graal.$Constants$ReflectConfig",
+    "member": "Constructor io.micronaut.servlet.tomcat.graal.$Constants$ReflectConfig()",
+    "reason": "GraalVM Metadata Moved to Shared Repository"
+  },
+  {
+    "type": "io.micronaut.servlet.tomcat.graal.$Constants$ReflectConfig",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationSource",
+    "reason": "GraalVM Metadata Moved to Shared Repository"
+  },
+  {
+    "type": "io.micronaut.servlet.tomcat.graal.$Constants$ReflectConfig",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataProvider",
+    "reason": "GraalVM Metadata Moved to Shared Repository"
+  },
+  {
+    "type": "io.micronaut.servlet.tomcat.graal.$Constants$ReflectConfig",
+    "member": "Implemented interface io.micronaut.core.graal.GraalReflectionConfigurer",
+    "reason": "GraalVM Metadata Moved to Shared Repository"
+  },
+  {
+    "type": "io.micronaut.servlet.tomcat.graal.$Org_apache_catalina_core_StandardContext$ReflectConfig",
+    "member": "Field $ANNOTATION_METADATA",
+    "reason": "GraalVM Metadata Moved to Shared Repository"
+  },
+  {
+    "type": "io.micronaut.servlet.tomcat.graal.$Org_apache_catalina_core_StandardContext$ReflectConfig",
+    "member": "Constructor io.micronaut.servlet.tomcat.graal.$Org_apache_catalina_core_StandardContext$ReflectConfig()",
+    "reason": "GraalVM Metadata Moved to Shared Repository"
+  },
+  {
+    "type": "io.micronaut.servlet.tomcat.graal.$Org_apache_catalina_core_StandardContext$ReflectConfig",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationSource",
+    "reason": "GraalVM Metadata Moved to Shared Repository"
+  },
+  {
+    "type": "io.micronaut.servlet.tomcat.graal.$Org_apache_catalina_core_StandardContext$ReflectConfig",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataProvider",
+    "reason": "GraalVM Metadata Moved to Shared Repository"
+  },
+  {
+    "type": "io.micronaut.servlet.tomcat.graal.$Org_apache_catalina_core_StandardContext$ReflectConfig",
+    "member": "Implemented interface io.micronaut.core.graal.GraalReflectionConfigurer",
+    "reason": "GraalVM Metadata Moved to Shared Repository"
+  },
+  {
+    "type": "io.micronaut.servlet.tomcat.graal.$Org_apache_catalina_webresources_StandardRoot$ReflectConfig",
+    "member": "Field $ANNOTATION_METADATA",
+    "reason": "GraalVM Metadata Moved to Shared Repository"
+  },
+  {
+    "type": "io.micronaut.servlet.tomcat.graal.$Org_apache_catalina_webresources_StandardRoot$ReflectConfig",
+    "member": "Constructor io.micronaut.servlet.tomcat.graal.$Org_apache_catalina_webresources_StandardRoot$ReflectConfig()",
+    "reason": "GraalVM Metadata Moved to Shared Repository"
+  },
+  {
+    "type": "io.micronaut.servlet.tomcat.graal.$Org_apache_catalina_webresources_StandardRoot$ReflectConfig",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationSource",
+    "reason": "GraalVM Metadata Moved to Shared Repository"
+  },
+  {
+    "type": "io.micronaut.servlet.tomcat.graal.$Org_apache_catalina_webresources_StandardRoot$ReflectConfig",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataProvider",
+    "reason": "GraalVM Metadata Moved to Shared Repository"
+  },
+  {
+    "type": "io.micronaut.servlet.tomcat.graal.$Org_apache_catalina_webresources_StandardRoot$ReflectConfig",
+    "member": "Implemented interface io.micronaut.core.graal.GraalReflectionConfigurer",
+    "reason": "GraalVM Metadata Moved to Shared Repository"
+  },
+  {
+    "type": "io.micronaut.servlet.tomcat.graal.$Org_apache_tomcat_util_compat_JreCompat$ReflectConfig",
+    "member": "Field $ANNOTATION_METADATA",
+    "reason": "GraalVM Metadata Moved to Shared Repository"
+  },
+  {
+    "type": "io.micronaut.servlet.tomcat.graal.$Org_apache_tomcat_util_compat_JreCompat$ReflectConfig",
+    "member": "Constructor io.micronaut.servlet.tomcat.graal.$Org_apache_tomcat_util_compat_JreCompat$ReflectConfig()",
+    "reason": "GraalVM Metadata Moved to Shared Repository"
+  },
+  {
+    "type": "io.micronaut.servlet.tomcat.graal.$Org_apache_tomcat_util_compat_JreCompat$ReflectConfig",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationSource",
+    "reason": "GraalVM Metadata Moved to Shared Repository"
+  },
+  {
+    "type": "io.micronaut.servlet.tomcat.graal.$Org_apache_tomcat_util_compat_JreCompat$ReflectConfig",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataProvider",
+    "reason": "GraalVM Metadata Moved to Shared Repository"
+  },
+  {
+    "type": "io.micronaut.servlet.tomcat.graal.$Org_apache_tomcat_util_compat_JreCompat$ReflectConfig",
+    "member": "Implemented interface io.micronaut.core.graal.GraalReflectionConfigurer",
+    "reason": "GraalVM Metadata Moved to Shared Repository"
   }
 ]
 
