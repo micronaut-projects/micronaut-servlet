@@ -12,6 +12,7 @@ micronaut-reactor = "3.0.0-SNAPSHOT"
 micronaut-security = "4.0.0-SNAPSHOT"
 micronaut-serde = "2.0.0-SNAPSHOT"
 micronaut-session = "1.0.0-SNAPSHOT"
+micronaut-validation = "4.0.0-SNAPSHOT"
 google-cloud-functions = '1.0.4'
 kotlin = "1.8.10"
 
@@ -26,6 +27,7 @@ micronaut-reactor = { module = "io.micronaut.reactor:micronaut-reactor-bom", ver
 micronaut-security = { module = "io.micronaut.security:micronaut-security-bom", version.ref = "micronaut-security" }
 micronaut-serde = { module = "io.micronaut.serde:micronaut-serde-bom", version.ref = "micronaut-serde" }
 micronaut-session = { module = "io.micronaut.session:micronaut-session-bom", version.ref = "micronaut-session" }
+micronaut-validation = { module = "io.micronaut.validation:micronaut-validation-bom", version.ref = "micronaut-validation" }
 
 junit-jupiter-engine = { module = 'org.junit.jupiter:junit-jupiter-engine' }
 junit-platform-engine = { module = "org.junit.platform:junit-platform-suite-engine" }
