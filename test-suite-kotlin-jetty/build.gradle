@@ -27,7 +27,7 @@ dependencies {
     testImplementation mn.micronaut.retry
     testImplementation libs.kotest.runner
 
-    testImplementation project(":http-server-jetty")
+    testImplementation(projects.micronautHttpServerJetty)
 }
 
 tasks.named('test') {

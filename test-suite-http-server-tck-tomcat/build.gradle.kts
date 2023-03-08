@@ -3,5 +3,5 @@ plugins {
 }
 
 dependencies {
-    testImplementation(projects.httpServerTomcat)
+    testImplementation(projects.micronautHttpServerTomcat)
 }

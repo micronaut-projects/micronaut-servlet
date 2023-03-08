@@ -5,7 +5,7 @@ plugins {
 dependencies {
     annotationProcessor mn.micronaut.graal
 
-    api project(":servlet-engine")
+    api(projects.micronautServletEngine)
     api mn.micronaut.http.server
 
     compileOnly libs.graal.svm
