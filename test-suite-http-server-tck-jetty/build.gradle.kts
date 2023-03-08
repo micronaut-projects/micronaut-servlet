@@ -3,5 +3,5 @@ plugins {
 }
 
 dependencies {
-    testImplementation(projects.httpServerJetty)
+    testImplementation(projects.micronautHttpServerJetty)
 }

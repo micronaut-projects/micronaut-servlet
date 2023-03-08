@@ -5,13 +5,15 @@ plugins {
 dependencies {
     annotationProcessor mn.micronaut.graal
 
-    api project(":servlet-engine")
+    api(projects.micronautServletEngine)
     api mn.micronaut.http.server
 
     compileOnly libs.graal.svm
 
     testAnnotationProcessor mn.micronaut.inject.java
 
+    testCompileOnly(mnValidation.micronaut.validation.processor)
+    testImplementation(mnValidation.micronaut.validation)
     testImplementation mn.snakeyaml
     testImplementation mn.micronaut.http.client
     testImplementation(mnSession.micronaut.session)
