@@ -12,6 +12,8 @@ dependencies {
 
     testAnnotationProcessor mn.micronaut.inject.java
 
+    testCompileOnly(mnValidation.micronaut.validation.processor)
+    testImplementation(mnValidation.micronaut.validation)
     testImplementation mn.snakeyaml
     testImplementation mn.micronaut.http.client
     testImplementation(mnSession.micronaut.session)
