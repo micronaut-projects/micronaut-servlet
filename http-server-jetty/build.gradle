@@ -4,8 +4,8 @@ plugins {
 
 dependencies {
     implementation libs.jetty
+    testImplementation libs.bcpkix
     testCompileOnly(mnValidation.micronaut.validation.processor)
     testAnnotationProcessor(mnValidation.micronaut.validation.processor)
-    testImplementation libs.bcpkix
     testImplementation(mnValidation.micronaut.validation)
 }
