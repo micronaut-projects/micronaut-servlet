@@ -18,12 +18,11 @@ import io.micronaut.http.client.exceptions.HttpClientResponseException
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.micronaut.validation.Validated
 import jakarta.inject.Inject
+import jakarta.validation.Valid
+import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.NotNull
 import spock.lang.Issue
 import spock.lang.Specification
-
-import javax.validation.Valid
-import javax.validation.constraints.NotBlank
-import javax.validation.constraints.NotNull
 
 @MicronautTest
 @Property(name = 'spec.name', value = 'UndertowValidationStatusSpec')

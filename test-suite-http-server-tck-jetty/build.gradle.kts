@@ -4,4 +4,5 @@ plugins {
 
 dependencies {
     testImplementation(projects.micronautHttpServerJetty)
+    testImplementation(mnValidation.micronaut.validation)
 }

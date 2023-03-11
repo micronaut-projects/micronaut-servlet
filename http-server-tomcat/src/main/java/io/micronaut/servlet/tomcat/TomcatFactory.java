@@ -23,6 +23,7 @@ import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Primary;
 import io.micronaut.context.env.Environment;
 import io.micronaut.core.io.ResourceResolver;
+import io.micronaut.http.ssl.ClientAuthentication;
 import io.micronaut.http.ssl.SslConfiguration;
 import io.micronaut.servlet.engine.DefaultMicronautServlet;
 import io.micronaut.servlet.engine.MicronautServletConfiguration;
@@ -33,7 +34,6 @@ import org.apache.catalina.Context;
 import org.apache.catalina.Wrapper;
 import org.apache.catalina.connector.Connector;
 import org.apache.catalina.startup.Tomcat;
-import org.apache.catalina.webresources.TomcatURLStreamHandlerFactory;
 import org.apache.tomcat.util.net.SSLHostConfig;
 import org.apache.tomcat.util.net.SSLHostConfigCertificate;
 
@@ -45,10 +45,6 @@ import org.apache.tomcat.util.net.SSLHostConfigCertificate;
  */
 @Factory
 public class TomcatFactory extends ServletServerFactory {
-
-    static {
-        TomcatURLStreamHandlerFactory.disable();
-    }
 
     /**
      * Default constructor.
@@ -107,9 +103,9 @@ public class TomcatFactory extends ServletServerFactory {
         );
         servlet.setAsyncSupported(true);
         servlet.addMapping(configuration.getMapping());
-        getStaticResourceConfigurations().forEach(config -> {
-            servlet.addMapping(config.getMapping());
-        });
+        getStaticResourceConfigurations().forEach(config ->
+            servlet.addMapping(config.getMapping())
+        );
         configuration.getMultipartConfigElement()
                 .ifPresent(servlet::setMultipartConfigElement);
 
@@ -131,15 +127,12 @@ public class TomcatFactory extends ServletServerFactory {
             httpsConnector.setProperty("clientAuth", "false");
             httpsConnector.setProperty("sslProtocol", protocol);
             httpsConnector.setProperty("SSLEnabled", "true");
-            sslConfiguration.getCiphers().ifPresent(cyphers -> {
-                sslHostConfig.setCiphers(String.join(",", cyphers));
-            });
-            sslConfiguration.getClientAuthentication().ifPresent(ca -> {
-                switch (ca) {
-                    case WANT -> httpsConnector.setProperty("clientAuth", "want");
-                    case NEED -> httpsConnector.setProperty("clientAuth", "true");
-                }
-            });
+            sslConfiguration.getCiphers().ifPresent(cyphers ->
+                sslHostConfig.setCiphers(String.join(",", cyphers))
+            );
+            sslConfiguration.getClientAuthentication().ifPresent(ca ->
+                httpsConnector.setProperty("clientAuth", ca == ClientAuthentication.WANT ? "want" : "true")
+            );
 
 
             SslConfiguration.KeyStoreConfiguration keyStoreConfig = sslConfiguration.getKeyStore();
