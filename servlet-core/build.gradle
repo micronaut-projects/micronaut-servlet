@@ -6,7 +6,6 @@ dependencies {
     api libs.micronaut.inject
     api libs.micronaut.http.server
 
-    implementation libs.micronaut.http.netty
     implementation libs.micronaut.router
     implementation libs.projectreactor
 

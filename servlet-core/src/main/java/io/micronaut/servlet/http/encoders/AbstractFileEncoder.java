@@ -24,8 +24,6 @@ import io.micronaut.http.server.types.files.FileCustomizableResponseType;
 import io.micronaut.servlet.http.ServletHttpRequest;
 import io.micronaut.servlet.http.ServletHttpResponse;
 import io.micronaut.servlet.http.ServletResponseEncoder;
-import io.netty.handler.codec.http.HttpHeaderNames;
-import io.netty.handler.codec.http.HttpHeaderValues;
 
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
@@ -114,9 +112,9 @@ public abstract class AbstractFileEncoder<T extends FileCustomizableResponseType
         long length = value.getLength();
 
         if (length > -1) {
-            response.header(HttpHeaderNames.CONTENT_LENGTH, String.valueOf(length));
+            response.header(HttpHeaders.CONTENT_LENGTH, String.valueOf(length));
         } else {
-            response.header(HttpHeaderNames.TRANSFER_ENCODING, HttpHeaderValues.CHUNKED);
+            response.header(HttpHeaders.TRANSFER_ENCODING, "chunked");
         }
         value.process(response);
         return false;
