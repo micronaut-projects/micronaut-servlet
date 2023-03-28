@@ -1,4 +1,10 @@
 [versions]
+micronaut = "4.0.0-M1"
+micronaut-docs = "2.0.0"
+micronaut-test = "4.0.0-SNAPSHOT"
+groovy = "4.0.10"
+spock = "2.3-groovy-4.0"
+
 managed-servlet-api = '6.0.0'
 kotlin-coroutines = '1.6.4'
 kotest-runner = '5.5.5'
@@ -8,11 +14,11 @@ tomcat = '10.1.6'
 graal-svm = "22.3.1"
 bcpkix = "1.70"
 
-micronaut-reactor = "3.0.0-SNAPSHOT"
-micronaut-security = "4.0.0-SNAPSHOT"
-micronaut-serde = "2.0.0-SNAPSHOT"
-micronaut-session = "1.0.0-SNAPSHOT"
-micronaut-validation = "4.0.0-SNAPSHOT"
+micronaut-reactor = "3.0.0-M1"
+micronaut-security = "4.0.0-M1"
+micronaut-serde = "2.0.0-M1"
+micronaut-session = "4.0.0-M1"
+micronaut-validation = "4.0.0-M2"
 google-cloud-functions = '1.0.4'
 kotlin = "1.8.10"
 

@@ -15,7 +15,6 @@ rootProject.name = 'servlet-parent'
 
 micronautBuild {
     useStandardizedProjectNames = true
-
     addSnapshotRepository()
     importMicronautCatalog()
     importMicronautCatalog("micronaut-reactor")
