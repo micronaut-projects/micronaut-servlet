@@ -43,4 +43,9 @@ graalvmNative {
     metadataRepository {
         enabled = true
     }
+    binaries {
+        all {
+            resources.autodetect()
+        }
+    }
 }
