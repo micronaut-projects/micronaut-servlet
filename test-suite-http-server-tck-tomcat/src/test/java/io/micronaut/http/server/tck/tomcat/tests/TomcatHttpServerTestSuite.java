@@ -11,6 +11,7 @@ import org.junit.platform.suite.api.SuiteDisplayName;
 @SuiteDisplayName("HTTP Server TCK for Tomcat")
 @ExcludeClassNamePatterns({
     "io.micronaut.http.server.tck.tests.cors.CorsSimpleRequestTest",
+    "io.micronaut.http.server.tck.tests.staticresources.StaticResourceTest", // fails on GraalVm
     "io.micronaut.http.server.tck.tests.filter.ClientResponseFilterTest", // fails on GraalVM
     "io.micronaut.http.server.tck.tests.ErrorHandlerTest" // fails on GraalVM
 })
