@@ -43,12 +43,11 @@ class JettyExceptionHandlerSpec extends Specification {
 
     void "test an exception handler returning the body"() {
         when:
-        client.toBlocking().retrieve("/exception/my")
+        def resp = client.toBlocking().exchange("/exception/my", String)
 
         then:
-        def ex = thrown(HttpClientResponseException)
-        ex.response.status() == HttpStatus.INTERNAL_SERVER_ERROR
-        ex.response.getBody().get() == "hello"
+        resp.status() == HttpStatus.OK
+        resp.getBody().get() == "hello"
     }
 
     void "test a filter throwing an exception on a 404"() {

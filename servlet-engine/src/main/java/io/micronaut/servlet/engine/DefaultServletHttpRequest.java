@@ -189,7 +189,7 @@ public final class DefaultServletHttpRequest<B> extends MutableConvertibleValues
     private Argument<?> resolveBodyType() {
         RouteMatch<?> route = this.getAttribute(HttpAttributes.ROUTE_MATCH, RouteMatch.class).orElse(null);
         if (route != null) {
-            Argument<?> bodyType = route.getBodyArgument()
+            Argument<?> bodyType = route.getRouteInfo().getFullBodyArgument()
                 /*
                 The getBodyArgument() method returns arguments for functions where it is
                 not possible to dictate whether the argument is supposed to bind the entire

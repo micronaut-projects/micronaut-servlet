@@ -74,7 +74,7 @@ public abstract class ServletBinderRegistry implements RequestBinderRegistry {
     }
 
     @Override
-    public <T> Optional<ArgumentBinder<T, HttpRequest<?>>> findArgumentBinder(Argument<T> argument, HttpRequest<?> source) {
+    public <T> Optional<ArgumentBinder<T, HttpRequest<?>>> findArgumentBinder(Argument<T> argument) {
         final Class<? extends Annotation> annotation = argument.getAnnotationMetadata().getAnnotationTypeByStereotype(BINDABLE_ANN).orElse(null);
         if (annotation != null) {
             final RequestArgumentBinder binder = byAnnotation.get(annotation);
@@ -87,7 +87,7 @@ public abstract class ServletBinderRegistry implements RequestBinderRegistry {
         if (requestArgumentBinder != null) {
             return Optional.of(requestArgumentBinder);
         } else {
-            return this.defaultRegistry.findArgumentBinder(argument, source);
+            return this.defaultRegistry.findArgumentBinder(argument);
         }
     }
 }
