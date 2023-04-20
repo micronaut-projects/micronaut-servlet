@@ -3,6 +3,9 @@
     "includes": [
       {
         "pattern": "\\Qassets\\E"
+      },
+      {
+        "pattern": "\\Qlogback.xml\\E"
       }
     ]
   }
