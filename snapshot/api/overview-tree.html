@@ -67,6 +67,15 @@ loadScripts(document, 'script');</script>
 <ul>
 <li class="circle">java.lang.<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" class="type-name-link external-link" title="class or interface in java.lang">Object</a>
 <ul>
+<li class="circle">io.micronaut.core.bind.annotation.AbstractArgumentBinder&lt;T&gt;
+<ul>
+<li class="circle">io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder&lt;T&gt; (implements io.micronaut.http.bind.binders.BodyArgumentBinder&lt;T&gt;, io.micronaut.http.bind.binders.PostponedRequestArgumentBinder&lt;T&gt;)
+<ul>
+<li class="circle">io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletBodyBinder.html" class="type-name-link" title="class in io.micronaut.servlet.http">ServletBodyBinder</a>&lt;T&gt; (implements io.micronaut.http.bind.binders.AnnotatedRequestArgumentBinder&lt;A,<wbr>T&gt;)</li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="circle">io.micronaut.servlet.http.encoders.<a href="io/micronaut/servlet/http/encoders/AbstractFileEncoder.html" class="type-name-link" title="class in io.micronaut.servlet.http.encoders">AbstractFileEncoder</a>&lt;T&gt; (implements io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletResponseEncoder.html" title="interface in io.micronaut.servlet.http">ServletResponseEncoder</a>&lt;T&gt;)
 <ul>
 <li class="circle">io.micronaut.servlet.http.encoders.<a href="io/micronaut/servlet/http/encoders/StreamFileEncoder.html" class="type-name-link" title="class in io.micronaut.servlet.http.encoders">StreamFileEncoder</a></li>
@@ -87,11 +96,6 @@ loadScripts(document, 'script');</script>
 <li class="circle">io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html" class="type-name-link" title="class in io.micronaut.servlet.engine">DefaultServletHttpRequest</a>&lt;B&gt; (implements io.micronaut.core.convert.value.MutableConvertibleValues&lt;V&gt;, io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletExchange.html" title="interface in io.micronaut.servlet.http">ServletExchange</a>&lt;Req,<wbr>Res&gt;, io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletHttpRequest.html" title="interface in io.micronaut.servlet.http">ServletHttpRequest</a>&lt;N,<wbr>B&gt;, io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/StreamedServletMessage.html" title="interface in io.micronaut.servlet.http">StreamedServletMessage</a>&lt;B,<wbr>BB&gt;)</li>
 </ul>
 </li>
-</ul>
-</li>
-<li class="circle">io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder&lt;T&gt; (implements io.micronaut.http.bind.binders.BodyArgumentBinder&lt;T&gt;)
-<ul>
-<li class="circle">io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletBodyBinder.html" class="type-name-link" title="class in io.micronaut.servlet.http">ServletBodyBinder</a>&lt;T&gt; (implements io.micronaut.http.bind.binders.AnnotatedRequestArgumentBinder&lt;A,<wbr>T&gt;)</li>
 </ul>
 </li>
 <li class="circle">io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/DefaultServletCookies.html" class="type-name-link" title="class in io.micronaut.servlet.engine">DefaultServletCookies</a> (implements io.micronaut.http.cookie.Cookies)</li>

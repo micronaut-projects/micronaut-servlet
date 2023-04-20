@@ -140,8 +140,7 @@ implements io.micronaut.http.bind.RequestBinderRegistry</span></div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;io.micronaut.core.bind.ArgumentBinder&lt;T,<wbr>io.micronaut.http.HttpRequest&lt;?&gt;&gt;&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#findArgumentBinder(io.micronaut.core.type.Argument,io.micronaut.http.HttpRequest)" class="member-name-link">findArgumentBinder</a><wbr>(io.micronaut.core.type.Argument&lt;T&gt;&nbsp;argument,
- io.micronaut.http.HttpRequest&lt;?&gt;&nbsp;source)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#findArgumentBinder(io.micronaut.core.type.Argument)" class="member-name-link">findArgumentBinder</a><wbr>(io.micronaut.core.type.Argument&lt;T&gt;&nbsp;argument)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="ServletBodyBinder.html" title="class in io.micronaut.servlet.http">ServletBodyBinder</a></code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#newServletBodyBinder(io.micronaut.http.codec.MediaTypeCodecRegistry,io.micronaut.core.convert.ConversionService)" class="member-name-link">newServletBodyBinder</a><wbr>(io.micronaut.http.codec.MediaTypeCodecRegistry&nbsp;mediaTypeCodecRegistry,
@@ -157,7 +156,10 @@ implements io.micronaut.http.bind.RequestBinderRegistry</span></div>
 <code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#clone()" title="class or interface in java.lang" class="external-link">clone</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#equals(java.lang.Object)" title="class or interface in java.lang" class="external-link">equals</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#finalize()" title="class or interface in java.lang" class="external-link">finalize</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#getClass()" title="class or interface in java.lang" class="external-link">getClass</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#hashCode()" title="class or interface in java.lang" class="external-link">hashCode</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#notify()" title="class or interface in java.lang" class="external-link">notify</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#notifyAll()" title="class or interface in java.lang" class="external-link">notifyAll</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#toString()" title="class or interface in java.lang" class="external-link">toString</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#wait()" title="class or interface in java.lang" class="external-link">wait</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#wait(long)" title="class or interface in java.lang" class="external-link">wait</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#wait(long,int)" title="class or interface in java.lang" class="external-link">wait</a></code></div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-io.micronaut.core.bind.ArgumentBinderRegistry">Methods inherited from interface&nbsp;io.micronaut.core.bind.ArgumentBinderRegistry</h3>
-<code>addRequestArgumentBinder</code></div>
+<code>addArgumentBinder, addRequestArgumentBinder, findArgumentBinder</code></div>
+<div class="inherited-list">
+<h3 id="methods-inherited-from-class-io.micronaut.http.bind.RequestBinderRegistry">Methods inherited from interface&nbsp;io.micronaut.http.bind.RequestBinderRegistry</h3>
+<code>addUnmatchedRequestArgumentBinder</code></div>
 </section>
 </li>
 </ul>
@@ -228,11 +230,10 @@ implements io.micronaut.http.bind.RequestBinderRegistry</span></div>
 </section>
 </li>
 <li>
-<section class="detail" id="findArgumentBinder(io.micronaut.core.type.Argument,io.micronaut.http.HttpRequest)">
+<section class="detail" id="findArgumentBinder(io.micronaut.core.type.Argument)">
 <h3>findArgumentBinder</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>
-<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;io.micronaut.core.bind.ArgumentBinder&lt;T,<wbr>io.micronaut.http.HttpRequest&lt;?&gt;&gt;&gt;</span>&nbsp;<span class="element-name">findArgumentBinder</span><wbr><span class="parameters">(io.micronaut.core.type.Argument&lt;T&gt;&nbsp;argument,
- io.micronaut.http.HttpRequest&lt;?&gt;&nbsp;source)</span></div>
+<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;io.micronaut.core.bind.ArgumentBinder&lt;T,<wbr>io.micronaut.http.HttpRequest&lt;?&gt;&gt;&gt;</span>&nbsp;<span class="element-name">findArgumentBinder</span><wbr><span class="parameters">(io.micronaut.core.type.Argument&lt;T&gt;&nbsp;argument)</span></div>
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code>findArgumentBinder</code>&nbsp;in interface&nbsp;<code>io.micronaut.core.bind.ArgumentBinderRegistry&lt;io.micronaut.http.HttpRequest&lt;?&gt;&gt;</code></dd>

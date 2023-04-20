@@ -72,8 +72,10 @@ loadScripts(document, 'script');</script>
 <h1 title="Class ServletBodyBinder" class="title">Class ServletBodyBinder&lt;T&gt;</h1>
 </div>
 <div class="inheritance" title="Inheritance Tree"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">java.lang.Object</a>
+<div class="inheritance">io.micronaut.core.bind.annotation.AbstractArgumentBinder&lt;T&gt;
 <div class="inheritance">io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder&lt;T&gt;
 <div class="inheritance">io.micronaut.servlet.http.ServletBodyBinder&lt;T&gt;</div>
+</div>
 </div>
 </div>
 <section class="class-description" id="class-description">
@@ -83,7 +85,7 @@ loadScripts(document, 'script');</script>
 </dl>
 <dl class="notes">
 <dt>All Implemented Interfaces:</dt>
-<dd><code>io.micronaut.core.bind.annotation.AnnotatedArgumentBinder&lt;io.micronaut.http.annotation.Body,<wbr>T,<wbr>io.micronaut.http.HttpRequest&lt;?&gt;&gt;</code>, <code>io.micronaut.core.bind.ArgumentBinder&lt;T,<wbr>io.micronaut.http.HttpRequest&lt;?&gt;&gt;</code>, <code>io.micronaut.http.bind.binders.AnnotatedRequestArgumentBinder&lt;io.micronaut.http.annotation.Body,<wbr>T&gt;</code>, <code>io.micronaut.http.bind.binders.BodyArgumentBinder&lt;T&gt;</code>, <code>io.micronaut.http.bind.binders.RequestArgumentBinder&lt;T&gt;</code></dd>
+<dd><code>io.micronaut.core.bind.annotation.AnnotatedArgumentBinder&lt;io.micronaut.http.annotation.Body,<wbr>T,<wbr>io.micronaut.http.HttpRequest&lt;?&gt;&gt;</code>, <code>io.micronaut.core.bind.ArgumentBinder&lt;T,<wbr>io.micronaut.http.HttpRequest&lt;?&gt;&gt;</code>, <code>io.micronaut.http.bind.binders.AnnotatedRequestArgumentBinder&lt;io.micronaut.http.annotation.Body,<wbr>T&gt;</code>, <code>io.micronaut.http.bind.binders.BodyArgumentBinder&lt;T&gt;</code>, <code>io.micronaut.http.bind.binders.PostponedRequestArgumentBinder&lt;T&gt;</code>, <code>io.micronaut.http.bind.binders.RequestArgumentBinder&lt;T&gt;</code></dd>
 </dl>
 <hr>
 <div class="type-signature"><span class="modifiers">public class </span><span class="element-name type-name-label">ServletBodyBinder&lt;T&gt;</span>
@@ -157,8 +159,14 @@ implements io.micronaut.http.bind.binders.AnnotatedRequestArgumentBinder&lt;io.m
 </div>
 </div>
 <div class="inherited-list">
+<h3 id="methods-inherited-from-class-io.micronaut.core.bind.annotation.AbstractArgumentBinder">Methods inherited from class&nbsp;io.micronaut.core.bind.annotation.AbstractArgumentBinder</h3>
+<code>doBind, doBind, doConvert, doConvert, doResolve, getFallbackFormat</code></div>
+<div class="inherited-list">
 <h3 id="methods-inherited-from-class-java.lang.Object">Methods inherited from class&nbsp;java.lang.<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></h3>
 <code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#clone()" title="class or interface in java.lang" class="external-link">clone</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#equals(java.lang.Object)" title="class or interface in java.lang" class="external-link">equals</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#finalize()" title="class or interface in java.lang" class="external-link">finalize</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#getClass()" title="class or interface in java.lang" class="external-link">getClass</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#hashCode()" title="class or interface in java.lang" class="external-link">hashCode</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#notify()" title="class or interface in java.lang" class="external-link">notify</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#notifyAll()" title="class or interface in java.lang" class="external-link">notifyAll</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#toString()" title="class or interface in java.lang" class="external-link">toString</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#wait()" title="class or interface in java.lang" class="external-link">wait</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#wait(long)" title="class or interface in java.lang" class="external-link">wait</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#wait(long,int)" title="class or interface in java.lang" class="external-link">wait</a></code></div>
+<div class="inherited-list">
+<h3 id="methods-inherited-from-class-io.micronaut.http.bind.binders.PostponedRequestArgumentBinder">Methods inherited from interface&nbsp;io.micronaut.http.bind.binders.PostponedRequestArgumentBinder</h3>
+<code>bindPostponed</code></div>
 </section>
 </li>
 </ul>
