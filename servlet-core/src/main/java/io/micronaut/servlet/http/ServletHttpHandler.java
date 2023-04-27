@@ -318,7 +318,7 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
                                 HttpRequest<?> request,
                                 MutableHttpResponse<?> response,
                                 Consumer<HttpResponse<?>> responsePublisherCallback) {
-        final Object body = response.getBody().orElse(null);
+        Object body = response.getBody().orElse(null);
 
         if (LOG.isDebugEnabled()) {
             LOG.debug("Sending response {}", response.status());
@@ -391,7 +391,8 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
                         return;
                     } else {
                         // fallback to blocking
-                        response.body(Mono.from(publisher).block());
+                        body = Mono.from(publisher).block();
+                        response.body(body);
                     }
                 } else {
                     // stream case
@@ -400,7 +401,8 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
                         return;
                     } else {
                         // fallback to blocking
-                        servletResponse.body(Flux.from(publisher).collectList().block());
+                        body = Flux.from(publisher).collectList().block();
+                        servletResponse.body(body);
                     }
                 }
             }
