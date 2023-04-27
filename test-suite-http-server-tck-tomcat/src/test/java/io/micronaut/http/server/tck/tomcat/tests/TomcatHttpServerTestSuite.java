@@ -1,7 +1,6 @@
 package io.micronaut.http.server.tck.tomcat.tests;
 
 import org.junit.platform.suite.api.ExcludeClassNamePatterns;
-import org.junit.platform.suite.api.IncludeClassNamePatterns;
 import org.junit.platform.suite.api.SelectPackages;
 import org.junit.platform.suite.api.Suite;
 import org.junit.platform.suite.api.SuiteDisplayName;
@@ -10,10 +9,8 @@ import org.junit.platform.suite.api.SuiteDisplayName;
 @SelectPackages("io.micronaut.http.server.tck.tests")
 @SuiteDisplayName("HTTP Server TCK for Tomcat")
 @ExcludeClassNamePatterns({
-    "io.micronaut.http.server.tck.tests.cors.CorsSimpleRequestTest",
-    "io.micronaut.http.server.tck.tests.staticresources.StaticResourceTest", // fails on GraalVm
-    "io.micronaut.http.server.tck.tests.filter.ClientResponseFilterTest", // fails on GraalVM
-    "io.micronaut.http.server.tck.tests.ErrorHandlerTest" // fails on GraalVM
+    "io.micronaut.http.server.tck.tests.staticresources.StaticResourceTest", // Graal fails to see /assets from the TCK as a resource https://ge.micronaut.io/s/ufuhtbe5sgmxi
+    "io.micronaut.http.server.tck.tests.filter.ClientResponseFilterTest", // responseFilterThrowableParameter fails under Graal https://ge.micronaut.io/s/ufuhtbe5sgmxi
 })
 public class TomcatHttpServerTestSuite {
 }
