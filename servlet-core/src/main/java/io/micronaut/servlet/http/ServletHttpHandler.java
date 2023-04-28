@@ -66,6 +66,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -211,8 +213,22 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
                     }));
             });
         } else {
+            CompletableFuture<?> termination = new CompletableFuture<>();
             lc.handleNormal()
-                .onComplete((response, throwable) -> onComplete(exchange, req, response, throwable, requestTerminated));
+                .onComplete((response, throwable) -> {
+                    try {
+                        onComplete(exchange, req, response, throwable, requestTerminated);
+                    } finally {
+                        termination.complete(null);
+                    }
+                });
+            try {
+                termination.get();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            } catch (ExecutionException e) {
+                throw new AssertionError("we only call complete, shouldn't happen", e);
+            }
         }
     }
 
