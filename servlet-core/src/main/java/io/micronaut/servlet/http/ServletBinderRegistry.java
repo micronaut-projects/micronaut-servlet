@@ -23,6 +23,7 @@ import io.micronaut.http.HttpRequest;
 import io.micronaut.http.annotation.Body;
 import io.micronaut.http.bind.DefaultRequestBinderRegistry;
 import io.micronaut.http.bind.RequestBinderRegistry;
+import io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder;
 import io.micronaut.http.bind.binders.RequestArgumentBinder;
 import io.micronaut.http.codec.MediaTypeCodecRegistry;
 
@@ -35,12 +36,15 @@ import java.util.Optional;
 /**
  * A {@link RequestBinderRegistry} implementation specifically for Serverless functions over HTTP.
  *
+ * @param <T> The type
+ *
  * @author graemerocher
  * @since 2.0.0
  */
-public abstract class ServletBinderRegistry implements RequestBinderRegistry {
+public abstract class ServletBinderRegistry<T> implements RequestBinderRegistry {
 
     private static final String BINDABLE_ANN = Bindable.class.getName();
+    protected final DefaultBodyAnnotationBinder<T> defaultBodyAnnotationBinder;
     protected final Map<Class<? extends Annotation>, RequestArgumentBinder> byAnnotation = new LinkedHashMap<>(5);
     protected final Map<Class<?>, RequestArgumentBinder> byType = new LinkedHashMap<>(5);
     private final DefaultRequestBinderRegistry defaultRegistry;
@@ -51,26 +55,29 @@ public abstract class ServletBinderRegistry implements RequestBinderRegistry {
      * @param mediaTypeCodecRegistry The media type codec registry
      * @param conversionService      The conversion service
      * @param binders                Any registered binders
+     * @param defaultBodyAnnotationBinder The delegate default body binder
      */
     public ServletBinderRegistry(
             MediaTypeCodecRegistry mediaTypeCodecRegistry,
             ConversionService conversionService,
-            List<RequestArgumentBinder> binders) {
+            List<RequestArgumentBinder> binders,
+            DefaultBodyAnnotationBinder<T> defaultBodyAnnotationBinder) {
         this.defaultRegistry = new DefaultRequestBinderRegistry(conversionService, binders);
         this.byAnnotation.put(Body.class, newServletBodyBinder(mediaTypeCodecRegistry, conversionService));
         this.byType.put(HttpRequest.class, new ServletRequestBinder(mediaTypeCodecRegistry));
+        this.defaultBodyAnnotationBinder = defaultBodyAnnotationBinder;
     }
 
     /**
      * Creates the servlet body binder.
      * @param mediaTypeCodecRegistry The media type registry
      * @param conversionService The conversion service
-     * @return The servlet body body
+     * @return The servlet body
      */
     protected ServletBodyBinder newServletBodyBinder(
             MediaTypeCodecRegistry mediaTypeCodecRegistry,
             ConversionService conversionService) {
-        return new ServletBodyBinder(conversionService, mediaTypeCodecRegistry);
+        return new ServletBodyBinder(conversionService, mediaTypeCodecRegistry, defaultBodyAnnotationBinder);
     }
 
     @Override
