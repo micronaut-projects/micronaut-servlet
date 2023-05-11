@@ -73,7 +73,7 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
 
     @Override
     public Class<Body> getAnnotationType() {
-        return defaultBodyAnnotationBinder.getAnnotationType();
+        return Body.class;
     }
 
     @Override
