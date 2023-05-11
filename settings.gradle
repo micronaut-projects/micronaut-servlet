@@ -20,6 +20,7 @@ micronautBuild {
     importMicronautCatalog("micronaut-security")
     importMicronautCatalog("micronaut-session")
     importMicronautCatalog("micronaut-validation")
+    importMicronautCatalog("micronaut-logging")
 }
 
 include 'servlet-bom'
