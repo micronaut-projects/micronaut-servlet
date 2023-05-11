@@ -44,7 +44,6 @@ import java.util.Optional;
 public abstract class ServletBinderRegistry<T> implements RequestBinderRegistry {
 
     private static final String BINDABLE_ANN = Bindable.class.getName();
-    protected final DefaultBodyAnnotationBinder<T> defaultBodyAnnotationBinder;
     protected final Map<Class<? extends Annotation>, RequestArgumentBinder> byAnnotation = new LinkedHashMap<>(5);
     protected final Map<Class<?>, RequestArgumentBinder> byType = new LinkedHashMap<>(5);
     private final DefaultRequestBinderRegistry defaultRegistry;
@@ -63,9 +62,8 @@ public abstract class ServletBinderRegistry<T> implements RequestBinderRegistry 
             List<RequestArgumentBinder> binders,
             DefaultBodyAnnotationBinder<T> defaultBodyAnnotationBinder) {
         this.defaultRegistry = new DefaultRequestBinderRegistry(conversionService, binders);
-        this.byAnnotation.put(Body.class, newServletBodyBinder(mediaTypeCodecRegistry, conversionService));
+        this.byAnnotation.put(Body.class, newServletBodyBinder(mediaTypeCodecRegistry, conversionService, defaultBodyAnnotationBinder));
         this.byType.put(HttpRequest.class, new ServletRequestBinder(mediaTypeCodecRegistry));
-        this.defaultBodyAnnotationBinder = defaultBodyAnnotationBinder;
     }
 
     /**
@@ -74,10 +72,11 @@ public abstract class ServletBinderRegistry<T> implements RequestBinderRegistry 
      * @param conversionService The conversion service
      * @return The servlet body
      */
-    protected ServletBodyBinder newServletBodyBinder(
+    protected ServletBodyBinder<T> newServletBodyBinder(
             MediaTypeCodecRegistry mediaTypeCodecRegistry,
-            ConversionService conversionService) {
-        return new ServletBodyBinder(conversionService, mediaTypeCodecRegistry, defaultBodyAnnotationBinder);
+            ConversionService conversionService,
+            DefaultBodyAnnotationBinder<T> defaultBodyAnnotationBinder) {
+        return new ServletBodyBinder<>(conversionService, mediaTypeCodecRegistry, defaultBodyAnnotationBinder);
     }
 
     @Override

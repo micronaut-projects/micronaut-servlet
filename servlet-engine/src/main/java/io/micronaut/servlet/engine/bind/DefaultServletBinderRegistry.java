@@ -81,13 +81,16 @@ class DefaultServletBinderRegistry<T> extends ServletBinderRegistry<T> {
         byType.put(HttpServletRequest.class, new ServletRequestBinder());
         byType.put(HttpServletResponse.class, new ServletResponseBinder());
         byType.put(CompletedPart.class, new CompletedPartRequestArgumentBinder());
-        byAnnotation.put(Part.class, new ServletPartBinder(mediaTypeCodecRegistry));
+        byAnnotation.put(Part.class, new ServletPartBinder<>(mediaTypeCodecRegistry));
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    protected ServletBodyBinder newServletBodyBinder(MediaTypeCodecRegistry mediaTypeCodecRegistry, ConversionService conversionService) {
-        return new DefaultServletBodyBinder(conversionService, mediaTypeCodecRegistry, defaultBodyAnnotationBinder);
+    protected ServletBodyBinder<T> newServletBodyBinder(
+        MediaTypeCodecRegistry mediaTypeCodecRegistry,
+        ConversionService conversionService,
+        DefaultBodyAnnotationBinder<T> defaultBodyAnnotationBinder) {
+        return new DefaultServletBodyBinder<>(conversionService, mediaTypeCodecRegistry, defaultBodyAnnotationBinder);
     }
 
     /**
