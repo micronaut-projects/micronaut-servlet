@@ -95,7 +95,7 @@ class JettyParameterBindingSpec extends Specification {
         expect:
         response.status() == HttpStatus.BAD_REQUEST
         response.body().contains('Failed to convert argument')
-        response.body().contains('Expected one integer, but got array of multiple values')
+        response.body().contains('Expected one string, but got array of multiple values')
     }
 
     @Requires(property = 'spec.name', value = 'JettyParameterBindingSpec')

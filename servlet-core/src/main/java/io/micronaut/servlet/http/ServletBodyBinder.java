@@ -51,19 +51,24 @@ import java.util.Optional;
  * @author graemerocher
  * @since 2.0.0
  */
-public class ServletBodyBinder<T> extends DefaultBodyAnnotationBinder<T> implements AnnotatedRequestArgumentBinder<Body, T> {
+public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body, T> {
+    protected final ConversionService conversionService;
     private final MediaTypeCodecRegistry mediaTypeCodeRegistry;
+    private final DefaultBodyAnnotationBinder<T> defaultBodyAnnotationBinder;
 
     /**
      * Default constructor.
      *
-     * @param conversionService      The conversion service
-     * @param mediaTypeCodecRegistry The codec registry
+     * @param conversionService           The conversion service
+     * @param mediaTypeCodecRegistry      The codec registry
+     * @param defaultBodyAnnotationBinder The delegate default body binder
      */
     protected ServletBodyBinder(ConversionService conversionService,
-                                MediaTypeCodecRegistry mediaTypeCodecRegistry) {
-        super(conversionService);
+                                MediaTypeCodecRegistry mediaTypeCodecRegistry,
+                                DefaultBodyAnnotationBinder<T> defaultBodyAnnotationBinder) {
+        this.conversionService = conversionService;
         this.mediaTypeCodeRegistry = mediaTypeCodecRegistry;
+        this.defaultBodyAnnotationBinder = defaultBodyAnnotationBinder;
     }
 
     @Override
@@ -166,7 +171,7 @@ public class ServletBodyBinder<T> extends DefaultBodyAnnotationBinder<T> impleme
             }
 
         }
-        return super.bind(context, source);
+        return defaultBodyAnnotationBinder.bind(context, source);
     }
 
     private boolean isFormSubmission(MediaType contentType) {

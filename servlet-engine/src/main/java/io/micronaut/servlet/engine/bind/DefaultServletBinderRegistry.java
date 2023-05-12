@@ -25,10 +25,12 @@ import io.micronaut.http.HttpRequest;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.Part;
 import io.micronaut.http.bind.DefaultRequestBinderRegistry;
+import io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder;
 import io.micronaut.http.bind.binders.RequestArgumentBinder;
 import io.micronaut.http.codec.MediaTypeCodecRegistry;
 import io.micronaut.http.multipart.CompletedPart;
 import io.micronaut.json.codec.MapperMediaTypeCodec;
+import io.micronaut.servlet.http.ServletBinderRegistry;
 import io.micronaut.servlet.http.ServletBodyBinder;
 import io.micronaut.servlet.http.StreamedServletMessage;
 import jakarta.inject.Singleton;
@@ -50,13 +52,15 @@ import java.util.function.BiConsumer;
 /**
  * Replaces the {@link DefaultRequestBinderRegistry} with one capable of binding from servlet requests.
  *
+ * @param <T> The type
+ *
  * @author graemerocher
  * @since 1.0.0
  */
 @Singleton
 @Replaces(DefaultRequestBinderRegistry.class)
 @Internal
-class DefaultServletBinderRegistry extends io.micronaut.servlet.http.ServletBinderRegistry {
+class DefaultServletBinderRegistry<T> extends ServletBinderRegistry<T> {
 
     public static final Argument<byte[]> BYTE_ARRAY = Argument.of(byte[].class);
 
@@ -70,28 +74,37 @@ class DefaultServletBinderRegistry extends io.micronaut.servlet.http.ServletBind
     public DefaultServletBinderRegistry(
             MediaTypeCodecRegistry mediaTypeCodecRegistry,
             ConversionService conversionService,
-            List<RequestArgumentBinder> binders) {
-        super(mediaTypeCodecRegistry, conversionService, binders);
+            List<RequestArgumentBinder> binders,
+            DefaultBodyAnnotationBinder<T> defaultBodyAnnotationBinder
+    ) {
+        super(mediaTypeCodecRegistry, conversionService, binders, defaultBodyAnnotationBinder);
         byType.put(HttpServletRequest.class, new ServletRequestBinder());
         byType.put(HttpServletResponse.class, new ServletResponseBinder());
         byType.put(CompletedPart.class, new CompletedPartRequestArgumentBinder());
-        byAnnotation.put(Part.class, new ServletPartBinder(mediaTypeCodecRegistry));
+        byAnnotation.put(Part.class, new ServletPartBinder<>(mediaTypeCodecRegistry));
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    protected ServletBodyBinder newServletBodyBinder(MediaTypeCodecRegistry mediaTypeCodecRegistry, ConversionService conversionService) {
-        return new DefaultServletBodyBinder(conversionService, mediaTypeCodecRegistry);
+    protected ServletBodyBinder<T> newServletBodyBinder(
+        MediaTypeCodecRegistry mediaTypeCodecRegistry,
+        ConversionService conversionService,
+        DefaultBodyAnnotationBinder<T> defaultBodyAnnotationBinder) {
+        return new DefaultServletBodyBinder<>(conversionService, mediaTypeCodecRegistry, defaultBodyAnnotationBinder);
     }
 
     /**
      * Overridden body binder.
+     *
+     * @param <T> The type
      */
-    private static class DefaultServletBodyBinder extends ServletBodyBinder {
+    private static class DefaultServletBodyBinder<T> extends ServletBodyBinder<T> {
         private final MediaTypeCodecRegistry mediaTypeCodecRegistry;
 
-        public DefaultServletBodyBinder(ConversionService conversionService, MediaTypeCodecRegistry mediaTypeCodecRegistry) {
-            super(conversionService, mediaTypeCodecRegistry);
+        public DefaultServletBodyBinder(ConversionService conversionService,
+                                        MediaTypeCodecRegistry mediaTypeCodecRegistry,
+                                        DefaultBodyAnnotationBinder<T> defaultBodyAnnotationBinder) {
+            super(conversionService, mediaTypeCodecRegistry, defaultBodyAnnotationBinder);
             this.mediaTypeCodecRegistry = mediaTypeCodecRegistry;
         }
 

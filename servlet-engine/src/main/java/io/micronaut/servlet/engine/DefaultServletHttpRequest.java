@@ -15,29 +15,6 @@
  */
 package io.micronaut.servlet.engine;
 
-import java.io.BufferedReader;
-import java.io.EOFException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.InetSocketAddress;
-import java.net.URI;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import java.security.Principal;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.List;
-import java.util.Locale;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Supplier;
-
-import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
@@ -59,7 +36,6 @@ import io.micronaut.http.HttpParameters;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.MutableHttpRequest;
-import io.micronaut.http.annotation.Body;
 import io.micronaut.http.codec.CodecException;
 import io.micronaut.http.codec.MediaTypeCodec;
 import io.micronaut.http.codec.MediaTypeCodecRegistry;
@@ -80,6 +56,28 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.reactivestreams.Subscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
+
+import java.io.BufferedReader;
+import java.io.EOFException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.InetSocketAddress;
+import java.net.URI;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.security.Principal;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 
 /**
  * Implementation of {@link io.micronaut.http.HttpRequest} ontop of the Servlet API.
@@ -189,21 +187,7 @@ public final class DefaultServletHttpRequest<B> extends MutableConvertibleValues
     private Argument<?> resolveBodyType() {
         RouteMatch<?> route = this.getAttribute(HttpAttributes.ROUTE_MATCH, RouteMatch.class).orElse(null);
         if (route != null) {
-            Argument<?> bodyType = route.getRouteInfo().getFullBodyArgument()
-                /*
-                The getBodyArgument() method returns arguments for functions where it is
-                not possible to dictate whether the argument is supposed to bind the entire
-                body or just a part of the body. We check to ensure the argument has the body
-                annotation to exclude that use case
-                */
-                .filter(argument -> {
-                    AnnotationMetadata annotationMetadata = argument.getAnnotationMetadata();
-                    if (annotationMetadata.hasAnnotation(Body.class)) {
-                        return annotationMetadata.stringValue(Body.class).isEmpty();
-                    } else {
-                        return false;
-                    }
-                })
+            Argument<?> bodyType = route.getRouteInfo().getFullRequestBodyType()
                 .orElseGet(() -> {
                     if (route instanceof ExecutionHandle<?, ?> handle) {
                         for (Argument<?> argument : handle.getArguments()) {

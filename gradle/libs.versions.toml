@@ -1,8 +1,8 @@
 [versions]
-micronaut = "4.0.0-M2"
+micronaut = "4.0.0-M3"
 micronaut-docs = "2.0.0"
-micronaut-test = "4.0.0-M1"
-groovy = "4.0.10"
+micronaut-test = "4.0.0-M3"
+groovy = "4.0.11"
 spock = "2.3-groovy-4.0"
 
 managed-servlet-api = '6.0.0'
@@ -15,20 +15,23 @@ graal-svm = "22.3.2"
 bcpkix = "1.70"
 
 micronaut-reactor = "3.0.0-M1"
-micronaut-security = "4.0.0-M1"
-micronaut-serde = "2.0.0-M1"
+micronaut-security = "4.0.0-M3"
+micronaut-serde = "2.0.0-M5"
 micronaut-session = "4.0.0-M1"
-micronaut-validation = "4.0.0-M3"
+micronaut-validation = "4.0.0-M5"
 google-cloud-functions = '1.0.4'
 kotlin = "1.8.20"
+micronaut-logging = "1.0.0-M1"
 
 # Micronaut
-micronaut-gradle-plugin = "4.0.0-SNAPSHOT"
+micronaut-gradle-plugin = "4.0.0-M2"
 
 [libraries]
 graal-svm = { module = "org.graalvm.nativeimage:svm", version.ref = "graal-svm" }
 
 managed-servlet-api = { module = 'jakarta.servlet:jakarta.servlet-api', version.ref = 'managed-servlet-api' }
+
+micronaut-logging = { module = "io.micronaut.logging:micronaut-logging-bom", version.ref = "micronaut-logging" }
 micronaut-reactor = { module = "io.micronaut.reactor:micronaut-reactor-bom", version.ref = "micronaut-reactor" }
 micronaut-security = { module = "io.micronaut.security:micronaut-security-bom", version.ref = "micronaut-security" }
 micronaut-serde = { module = "io.micronaut.serde:micronaut-serde-bom", version.ref = "micronaut-serde" }
@@ -37,7 +40,6 @@ micronaut-validation = { module = "io.micronaut.validation:micronaut-validation-
 
 junit-jupiter-engine = { module = 'org.junit.jupiter:junit-jupiter-engine' }
 junit-platform-engine = { module = "org.junit.platform:junit-platform-suite-engine" }
-logback-classic = { module = "ch.qos.logback:logback-classic" }
 kotlin-stdlib-jdk8 = { module = 'org.jetbrains.kotlin:kotlin-stdlib-jdk8' }
 kotlin-reflect = { module = 'org.jetbrains.kotlin:kotlin-reflect' }
 

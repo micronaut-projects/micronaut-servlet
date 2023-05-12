@@ -188,6 +188,20 @@
     "type": "io.micronaut.servlet.tomcat.graal.$Org_apache_tomcat_util_compat_JreCompat$ReflectConfig",
     "member": "Implemented interface io.micronaut.core.graal.GraalReflectionConfigurer",
     "reason": "GraalVM Metadata Moved to Shared Repository"
-  }
-]
+  },
+  {
+    "type": "io.micronaut.servlet.http.ServletBinderRegistry",
+    "member": "Constructor io.micronaut.servlet.http.ServletBinderRegistry(io.micronaut.http.codec.MediaTypeCodecRegistry,io.micronaut.core.convert.ConversionService,java.util.List)",
+    "reason": "Core API change to DefaultBodyAnnotationBinder for Micronaut 4"
+  },
+  {
+    "type": "io.micronaut.servlet.http.ServletBodyBinder",
+    "member": "Constructor io.micronaut.servlet.http.ServletBodyBinder(io.micronaut.core.convert.ConversionService,io.micronaut.http.codec.MediaTypeCodecRegistry)",
+    "reason": "Core API change to DefaultBodyAnnotationBinder for Micronaut 4"
+  },
+  {
+    "type": "io.micronaut.servlet.http.ServletBodyBinder",
+    "member": "Implemented interface io.micronaut.http.bind.binders.BodyArgumentBinder",
+    "reason": "Core API change to DefaultBodyAnnotationBinder for Micronaut 4"
+  }]
 

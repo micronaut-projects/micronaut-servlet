@@ -15,12 +15,12 @@ rootProject.name = 'servlet-parent'
 
 micronautBuild {
     useStandardizedProjectNames = true
-    addSnapshotRepository()
     importMicronautCatalog()
     importMicronautCatalog("micronaut-reactor")
     importMicronautCatalog("micronaut-security")
     importMicronautCatalog("micronaut-session")
     importMicronautCatalog("micronaut-validation")
+    importMicronautCatalog("micronaut-logging")
 }
 
 include 'servlet-bom'
