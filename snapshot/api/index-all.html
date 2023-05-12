@@ -127,6 +127,8 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Attribute used to store the application context.</div>
 </dd>
+<dt><a href="io/micronaut/servlet/http/ServletBodyBinder.html#conversionService" class="member-name-link">conversionService</a> - Variable in class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletBodyBinder.html" title="class in io.micronaut.servlet.http">ServletBodyBinder</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/engine/DefaultServletHttpResponse.html#cookie(io.micronaut.http.cookie.Cookie)" class="member-name-link">cookie(Cookie)</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/DefaultServletHttpResponse.html" title="class in io.micronaut.servlet.engine">DefaultServletHttpResponse</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/engine/DefaultServletHttpHandler.html#createExchange(jakarta.servlet.http.HttpServletRequest,jakarta.servlet.http.HttpServletResponse)" class="member-name-link">createExchange(HttpServletRequest, HttpServletResponse)</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/DefaultServletHttpHandler.html" title="class in io.micronaut.servlet.engine">DefaultServletHttpHandler</a></dt>
@@ -634,7 +636,7 @@ loadScripts(document, 'script');</script>
 </dd>
 <dt><a href="io/micronaut/servlet/engine/DefaultMicronautServlet.html#newApplicationContextBuilder()" class="member-name-link">newApplicationContextBuilder()</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/DefaultMicronautServlet.html" title="class in io.micronaut.servlet.engine">DefaultMicronautServlet</a></dt>
 <dd>&nbsp;</dd>
-<dt><a href="io/micronaut/servlet/http/ServletBinderRegistry.html#newServletBodyBinder(io.micronaut.http.codec.MediaTypeCodecRegistry,io.micronaut.core.convert.ConversionService)" class="member-name-link">newServletBodyBinder(MediaTypeCodecRegistry, ConversionService)</a> - Method in class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletBinderRegistry.html" title="class in io.micronaut.servlet.http">ServletBinderRegistry</a></dt>
+<dt><a href="io/micronaut/servlet/http/ServletBinderRegistry.html#newServletBodyBinder(io.micronaut.http.codec.MediaTypeCodecRegistry,io.micronaut.core.convert.ConversionService,io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder)" class="member-name-link">newServletBodyBinder(MediaTypeCodecRegistry, ConversionService, DefaultBodyAnnotationBinder&lt;T&gt;)</a> - Method in class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletBinderRegistry.html" title="class in io.micronaut.servlet.http">ServletBinderRegistry</a></dt>
 <dd>
 <div class="block">Creates the servlet body binder.</div>
 </dd>
@@ -684,11 +686,11 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Handle the give native request and response.</div>
 </dd>
-<dt><a href="io/micronaut/servlet/http/ServletBinderRegistry.html" class="type-name-link" title="class in io.micronaut.servlet.http">ServletBinderRegistry</a> - Class in <a href="io/micronaut/servlet/http/package-summary.html">io.micronaut.servlet.http</a></dt>
+<dt><a href="io/micronaut/servlet/http/ServletBinderRegistry.html" class="type-name-link" title="class in io.micronaut.servlet.http">ServletBinderRegistry</a>&lt;<a href="io/micronaut/servlet/http/ServletBinderRegistry.html" title="type parameter in ServletBinderRegistry">T</a>&gt; - Class in <a href="io/micronaut/servlet/http/package-summary.html">io.micronaut.servlet.http</a></dt>
 <dd>
 <div class="block">A <code>RequestBinderRegistry</code> implementation specifically for Serverless functions over HTTP.</div>
 </dd>
-<dt><a href="io/micronaut/servlet/http/ServletBinderRegistry.html#%3Cinit%3E(io.micronaut.http.codec.MediaTypeCodecRegistry,io.micronaut.core.convert.ConversionService,java.util.List)" class="member-name-link">ServletBinderRegistry(MediaTypeCodecRegistry, ConversionService, List&lt;RequestArgumentBinder&gt;)</a> - Constructor for class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletBinderRegistry.html" title="class in io.micronaut.servlet.http">ServletBinderRegistry</a></dt>
+<dt><a href="io/micronaut/servlet/http/ServletBinderRegistry.html#%3Cinit%3E(io.micronaut.http.codec.MediaTypeCodecRegistry,io.micronaut.core.convert.ConversionService,java.util.List,io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder)" class="member-name-link">ServletBinderRegistry(MediaTypeCodecRegistry, ConversionService, List&lt;RequestArgumentBinder&gt;, DefaultBodyAnnotationBinder&lt;T&gt;)</a> - Constructor for class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletBinderRegistry.html" title="class in io.micronaut.servlet.http">ServletBinderRegistry</a></dt>
 <dd>
 <div class="block">Default constructor.</div>
 </dd>
@@ -696,7 +698,7 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Allows binding the body from a <a href="io/micronaut/servlet/http/ServletHttpRequest.html" title="interface in io.micronaut.servlet.http"><code>ServletHttpRequest</code></a>.</div>
 </dd>
-<dt><a href="io/micronaut/servlet/http/ServletBodyBinder.html#%3Cinit%3E(io.micronaut.core.convert.ConversionService,io.micronaut.http.codec.MediaTypeCodecRegistry)" class="member-name-link">ServletBodyBinder(ConversionService, MediaTypeCodecRegistry)</a> - Constructor for class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletBodyBinder.html" title="class in io.micronaut.servlet.http">ServletBodyBinder</a></dt>
+<dt><a href="io/micronaut/servlet/http/ServletBodyBinder.html#%3Cinit%3E(io.micronaut.core.convert.ConversionService,io.micronaut.http.codec.MediaTypeCodecRegistry,io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder)" class="member-name-link">ServletBodyBinder(ConversionService, MediaTypeCodecRegistry, DefaultBodyAnnotationBinder&lt;T&gt;)</a> - Constructor for class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletBodyBinder.html" title="class in io.micronaut.servlet.http">ServletBodyBinder</a></dt>
 <dd>
 <div class="block">Default constructor.</div>
 </dd>

@@ -51,7 +51,7 @@ loadScripts(document, 'script');</script>
 </ul>
 <ul class="sub-nav-list">
 <li>Detail:&nbsp;</li>
-<li>Field&nbsp;|&nbsp;</li>
+<li><a href="#field-detail">Field</a>&nbsp;|&nbsp;</li>
 <li><a href="#constructor-detail">Constr</a>&nbsp;|&nbsp;</li>
 <li><a href="#method-detail">Method</a></li>
 </ul>
@@ -72,11 +72,7 @@ loadScripts(document, 'script');</script>
 <h1 title="Class ServletBodyBinder" class="title">Class ServletBodyBinder&lt;T&gt;</h1>
 </div>
 <div class="inheritance" title="Inheritance Tree"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">java.lang.Object</a>
-<div class="inheritance">io.micronaut.core.bind.annotation.AbstractArgumentBinder&lt;T&gt;
-<div class="inheritance">io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder&lt;T&gt;
 <div class="inheritance">io.micronaut.servlet.http.ServletBodyBinder&lt;T&gt;</div>
-</div>
-</div>
 </div>
 <section class="class-description" id="class-description">
 <dl class="notes">
@@ -85,11 +81,11 @@ loadScripts(document, 'script');</script>
 </dl>
 <dl class="notes">
 <dt>All Implemented Interfaces:</dt>
-<dd><code>io.micronaut.core.bind.annotation.AnnotatedArgumentBinder&lt;io.micronaut.http.annotation.Body,<wbr>T,<wbr>io.micronaut.http.HttpRequest&lt;?&gt;&gt;</code>, <code>io.micronaut.core.bind.ArgumentBinder&lt;T,<wbr>io.micronaut.http.HttpRequest&lt;?&gt;&gt;</code>, <code>io.micronaut.http.bind.binders.AnnotatedRequestArgumentBinder&lt;io.micronaut.http.annotation.Body,<wbr>T&gt;</code>, <code>io.micronaut.http.bind.binders.BodyArgumentBinder&lt;T&gt;</code>, <code>io.micronaut.http.bind.binders.PostponedRequestArgumentBinder&lt;T&gt;</code>, <code>io.micronaut.http.bind.binders.RequestArgumentBinder&lt;T&gt;</code></dd>
+<dd><code>io.micronaut.core.bind.annotation.AnnotatedArgumentBinder&lt;io.micronaut.http.annotation.Body,<wbr>T,<wbr>io.micronaut.http.HttpRequest&lt;?&gt;&gt;</code>, <code>io.micronaut.core.bind.ArgumentBinder&lt;T,<wbr>io.micronaut.http.HttpRequest&lt;?&gt;&gt;</code>, <code>io.micronaut.http.bind.binders.AnnotatedRequestArgumentBinder&lt;io.micronaut.http.annotation.Body,<wbr>T&gt;</code>, <code>io.micronaut.http.bind.binders.RequestArgumentBinder&lt;T&gt;</code></dd>
 </dl>
 <hr>
 <div class="type-signature"><span class="modifiers">public class </span><span class="element-name type-name-label">ServletBodyBinder&lt;T&gt;</span>
-<span class="extends-implements">extends io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder&lt;T&gt;
+<span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>
 implements io.micronaut.http.bind.binders.AnnotatedRequestArgumentBinder&lt;io.micronaut.http.annotation.Body,<wbr>T&gt;</span></div>
 <div class="block">Allows binding the body from a <a href="ServletHttpRequest.html" title="interface in io.micronaut.servlet.http"><code>ServletHttpRequest</code></a>.</div>
 <dl class="notes">
@@ -114,9 +110,15 @@ implements io.micronaut.http.bind.binders.AnnotatedRequestArgumentBinder&lt;io.m
 <li>
 <section class="field-summary" id="field-summary">
 <h2>Field Summary</h2>
-<div class="inherited-list">
-<h3 id="fields-inherited-from-class-io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder">Fields inherited from class&nbsp;io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder</h3>
-<code>conversionService</code></div>
+<div class="caption"><span>Fields</span></div>
+<div class="summary-table three-column-summary">
+<div class="table-header col-first">Modifier and Type</div>
+<div class="table-header col-second">Field</div>
+<div class="table-header col-last">Description</div>
+<div class="col-first even-row-color"><code>protected final io.micronaut.core.convert.ConversionService</code></div>
+<div class="col-second even-row-color"><code><a href="#conversionService" class="member-name-link">conversionService</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+</div>
 </section>
 </li>
 <!-- ======== CONSTRUCTOR SUMMARY ======== -->
@@ -129,8 +131,9 @@ implements io.micronaut.http.bind.binders.AnnotatedRequestArgumentBinder&lt;io.m
 <div class="table-header col-second">Constructor</div>
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color"><code>protected </code></div>
-<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(io.micronaut.core.convert.ConversionService,io.micronaut.http.codec.MediaTypeCodecRegistry)" class="member-name-link">ServletBodyBinder</a><wbr>(io.micronaut.core.convert.ConversionService&nbsp;conversionService,
- io.micronaut.http.codec.MediaTypeCodecRegistry&nbsp;mediaTypeCodecRegistry)</code></div>
+<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(io.micronaut.core.convert.ConversionService,io.micronaut.http.codec.MediaTypeCodecRegistry,io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder)" class="member-name-link">ServletBodyBinder</a><wbr>(io.micronaut.core.convert.ConversionService&nbsp;conversionService,
+ io.micronaut.http.codec.MediaTypeCodecRegistry&nbsp;mediaTypeCodecRegistry,
+ io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder&lt;<a href="ServletBodyBinder.html" title="type parameter in ServletBodyBinder">T</a>&gt;&nbsp;defaultBodyAnnotationBinder)</code></div>
 <div class="col-last even-row-color">
 <div class="block">Default constructor.</div>
 </div>
@@ -159,35 +162,45 @@ implements io.micronaut.http.bind.binders.AnnotatedRequestArgumentBinder&lt;io.m
 </div>
 </div>
 <div class="inherited-list">
-<h3 id="methods-inherited-from-class-io.micronaut.core.bind.annotation.AbstractArgumentBinder">Methods inherited from class&nbsp;io.micronaut.core.bind.annotation.AbstractArgumentBinder</h3>
-<code>doBind, doBind, doConvert, doConvert, doResolve, getFallbackFormat</code></div>
-<div class="inherited-list">
 <h3 id="methods-inherited-from-class-java.lang.Object">Methods inherited from class&nbsp;java.lang.<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></h3>
 <code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#clone()" title="class or interface in java.lang" class="external-link">clone</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#equals(java.lang.Object)" title="class or interface in java.lang" class="external-link">equals</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#finalize()" title="class or interface in java.lang" class="external-link">finalize</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#getClass()" title="class or interface in java.lang" class="external-link">getClass</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#hashCode()" title="class or interface in java.lang" class="external-link">hashCode</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#notify()" title="class or interface in java.lang" class="external-link">notify</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#notifyAll()" title="class or interface in java.lang" class="external-link">notifyAll</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#toString()" title="class or interface in java.lang" class="external-link">toString</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#wait()" title="class or interface in java.lang" class="external-link">wait</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#wait(long)" title="class or interface in java.lang" class="external-link">wait</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#wait(long,int)" title="class or interface in java.lang" class="external-link">wait</a></code></div>
-<div class="inherited-list">
-<h3 id="methods-inherited-from-class-io.micronaut.http.bind.binders.PostponedRequestArgumentBinder">Methods inherited from interface&nbsp;io.micronaut.http.bind.binders.PostponedRequestArgumentBinder</h3>
-<code>bindPostponed</code></div>
 </section>
 </li>
 </ul>
 </section>
 <section class="details">
 <ul class="details-list">
+<!-- ============ FIELD DETAIL =========== -->
+<li>
+<section class="field-details" id="field-detail">
+<h2>Field Details</h2>
+<ul class="member-list">
+<li>
+<section class="detail" id="conversionService">
+<h3>conversionService</h3>
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type">io.micronaut.core.convert.ConversionService</span>&nbsp;<span class="element-name">conversionService</span></div>
+</section>
+</li>
+</ul>
+</section>
+</li>
 <!-- ========= CONSTRUCTOR DETAIL ======== -->
 <li>
 <section class="constructor-details" id="constructor-detail">
 <h2>Constructor Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="&lt;init&gt;(io.micronaut.core.convert.ConversionService,io.micronaut.http.codec.MediaTypeCodecRegistry)">
+<section class="detail" id="&lt;init&gt;(io.micronaut.core.convert.ConversionService,io.micronaut.http.codec.MediaTypeCodecRegistry,io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder)">
 <h3>ServletBodyBinder</h3>
 <div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="element-name">ServletBodyBinder</span><wbr><span class="parameters">(io.micronaut.core.convert.ConversionService&nbsp;conversionService,
- io.micronaut.http.codec.MediaTypeCodecRegistry&nbsp;mediaTypeCodecRegistry)</span></div>
+ io.micronaut.http.codec.MediaTypeCodecRegistry&nbsp;mediaTypeCodecRegistry,
+ io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder&lt;<a href="ServletBodyBinder.html" title="type parameter in ServletBodyBinder">T</a>&gt;&nbsp;defaultBodyAnnotationBinder)</span></div>
 <div class="block">Default constructor.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>conversionService</code> - The conversion service</dd>
 <dd><code>mediaTypeCodecRegistry</code> - The codec registry</dd>
+<dd><code>defaultBodyAnnotationBinder</code> - The delegate default body binder</dd>
 </dl>
 </section>
 </li>
@@ -206,10 +219,6 @@ implements io.micronaut.http.bind.binders.AnnotatedRequestArgumentBinder&lt;io.m
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code>getAnnotationType</code>&nbsp;in interface&nbsp;<code>io.micronaut.core.bind.annotation.AnnotatedArgumentBinder&lt;io.micronaut.http.annotation.Body,<wbr><a href="ServletBodyBinder.html" title="type parameter in ServletBodyBinder">T</a>,<wbr>io.micronaut.http.HttpRequest&lt;?&gt;&gt;</code></dd>
-<dt>Specified by:</dt>
-<dd><code>getAnnotationType</code>&nbsp;in interface&nbsp;<code>io.micronaut.http.bind.binders.BodyArgumentBinder&lt;<a href="ServletBodyBinder.html" title="type parameter in ServletBodyBinder">T</a>&gt;</code></dd>
-<dt>Overrides:</dt>
-<dd><code>getAnnotationType</code>&nbsp;in class&nbsp;<code>io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder&lt;<a href="ServletBodyBinder.html" title="type parameter in ServletBodyBinder">T</a>&gt;</code></dd>
 </dl>
 </section>
 </li>
@@ -221,8 +230,6 @@ implements io.micronaut.http.bind.binders.AnnotatedRequestArgumentBinder&lt;io.m
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code>bind</code>&nbsp;in interface&nbsp;<code>io.micronaut.core.bind.ArgumentBinder&lt;<a href="ServletBodyBinder.html" title="type parameter in ServletBodyBinder">T</a>,<wbr>io.micronaut.http.HttpRequest&lt;?&gt;&gt;</code></dd>
-<dt>Overrides:</dt>
-<dd><code>bind</code>&nbsp;in class&nbsp;<code>io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder&lt;<a href="ServletBodyBinder.html" title="type parameter in ServletBodyBinder">T</a>&gt;</code></dd>
 </dl>
 </section>
 </li>

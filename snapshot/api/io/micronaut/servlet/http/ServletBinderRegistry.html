@@ -69,18 +69,22 @@ loadScripts(document, 'script');</script>
 <!-- ======== START OF CLASS DATA ======== -->
 <div class="header">
 <div class="sub-title"><span class="package-label-in-type">Package</span>&nbsp;<a href="package-summary.html">io.micronaut.servlet.http</a></div>
-<h1 title="Class ServletBinderRegistry" class="title">Class ServletBinderRegistry</h1>
+<h1 title="Class ServletBinderRegistry" class="title">Class ServletBinderRegistry&lt;T&gt;</h1>
 </div>
 <div class="inheritance" title="Inheritance Tree"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">java.lang.Object</a>
-<div class="inheritance">io.micronaut.servlet.http.ServletBinderRegistry</div>
+<div class="inheritance">io.micronaut.servlet.http.ServletBinderRegistry&lt;T&gt;</div>
 </div>
 <section class="class-description" id="class-description">
+<dl class="notes">
+<dt>Type Parameters:</dt>
+<dd><code>T</code> - The type</dd>
+</dl>
 <dl class="notes">
 <dt>All Implemented Interfaces:</dt>
 <dd><code>io.micronaut.core.bind.ArgumentBinderRegistry&lt;io.micronaut.http.HttpRequest&lt;?&gt;&gt;</code>, <code>io.micronaut.http.bind.RequestBinderRegistry</code></dd>
 </dl>
 <hr>
-<div class="type-signature"><span class="modifiers">public abstract class </span><span class="element-name type-name-label">ServletBinderRegistry</span>
+<div class="type-signature"><span class="modifiers">public abstract class </span><span class="element-name type-name-label">ServletBinderRegistry&lt;T&gt;</span>
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>
 implements io.micronaut.http.bind.RequestBinderRegistry</span></div>
 <div class="block">A <code>RequestBinderRegistry</code> implementation specifically for Serverless functions over HTTP.</div>
@@ -119,9 +123,10 @@ implements io.micronaut.http.bind.RequestBinderRegistry</span></div>
 <div class="summary-table two-column-summary">
 <div class="table-header col-first">Constructor</div>
 <div class="table-header col-last">Description</div>
-<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(io.micronaut.http.codec.MediaTypeCodecRegistry,io.micronaut.core.convert.ConversionService,java.util.List)" class="member-name-link">ServletBinderRegistry</a><wbr>(io.micronaut.http.codec.MediaTypeCodecRegistry&nbsp;mediaTypeCodecRegistry,
+<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(io.micronaut.http.codec.MediaTypeCodecRegistry,io.micronaut.core.convert.ConversionService,java.util.List,io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder)" class="member-name-link">ServletBinderRegistry</a><wbr>(io.micronaut.http.codec.MediaTypeCodecRegistry&nbsp;mediaTypeCodecRegistry,
  io.micronaut.core.convert.ConversionService&nbsp;conversionService,
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;io.micronaut.http.bind.binders.RequestArgumentBinder&gt;&nbsp;binders)</code></div>
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;io.micronaut.http.bind.binders.RequestArgumentBinder&gt;&nbsp;binders,
+ io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder&lt;<a href="ServletBinderRegistry.html" title="type parameter in ServletBinderRegistry">T</a>&gt;&nbsp;defaultBodyAnnotationBinder)</code></div>
 <div class="col-last even-row-color">
 <div class="block">Default constructor.</div>
 </div>
@@ -142,9 +147,10 @@ implements io.micronaut.http.bind.RequestBinderRegistry</span></div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;io.micronaut.core.bind.ArgumentBinder&lt;T,<wbr>io.micronaut.http.HttpRequest&lt;?&gt;&gt;&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#findArgumentBinder(io.micronaut.core.type.Argument)" class="member-name-link">findArgumentBinder</a><wbr>(io.micronaut.core.type.Argument&lt;T&gt;&nbsp;argument)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="ServletBodyBinder.html" title="class in io.micronaut.servlet.http">ServletBodyBinder</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#newServletBodyBinder(io.micronaut.http.codec.MediaTypeCodecRegistry,io.micronaut.core.convert.ConversionService)" class="member-name-link">newServletBodyBinder</a><wbr>(io.micronaut.http.codec.MediaTypeCodecRegistry&nbsp;mediaTypeCodecRegistry,
- io.micronaut.core.convert.ConversionService&nbsp;conversionService)</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="ServletBodyBinder.html" title="class in io.micronaut.servlet.http">ServletBodyBinder</a>&lt;<a href="ServletBinderRegistry.html" title="type parameter in ServletBinderRegistry">T</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#newServletBodyBinder(io.micronaut.http.codec.MediaTypeCodecRegistry,io.micronaut.core.convert.ConversionService,io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder)" class="member-name-link">newServletBodyBinder</a><wbr>(io.micronaut.http.codec.MediaTypeCodecRegistry&nbsp;mediaTypeCodecRegistry,
+ io.micronaut.core.convert.ConversionService&nbsp;conversionService,
+ io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder&lt;<a href="ServletBinderRegistry.html" title="type parameter in ServletBinderRegistry">T</a>&gt;&nbsp;defaultBodyAnnotationBinder)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Creates the servlet body binder.</div>
 </div>
@@ -192,17 +198,19 @@ implements io.micronaut.http.bind.RequestBinderRegistry</span></div>
 <h2>Constructor Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="&lt;init&gt;(io.micronaut.http.codec.MediaTypeCodecRegistry,io.micronaut.core.convert.ConversionService,java.util.List)">
+<section class="detail" id="&lt;init&gt;(io.micronaut.http.codec.MediaTypeCodecRegistry,io.micronaut.core.convert.ConversionService,java.util.List,io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder)">
 <h3>ServletBinderRegistry</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">ServletBinderRegistry</span><wbr><span class="parameters">(io.micronaut.http.codec.MediaTypeCodecRegistry&nbsp;mediaTypeCodecRegistry,
  io.micronaut.core.convert.ConversionService&nbsp;conversionService,
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;io.micronaut.http.bind.binders.RequestArgumentBinder&gt;&nbsp;binders)</span></div>
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;io.micronaut.http.bind.binders.RequestArgumentBinder&gt;&nbsp;binders,
+ io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder&lt;<a href="ServletBinderRegistry.html" title="type parameter in ServletBinderRegistry">T</a>&gt;&nbsp;defaultBodyAnnotationBinder)</span></div>
 <div class="block">Default constructor.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>mediaTypeCodecRegistry</code> - The media type codec registry</dd>
 <dd><code>conversionService</code> - The conversion service</dd>
 <dd><code>binders</code> - Any registered binders</dd>
+<dd><code>defaultBodyAnnotationBinder</code> - The delegate default body binder</dd>
 </dl>
 </section>
 </li>
@@ -215,17 +223,18 @@ implements io.micronaut.http.bind.RequestBinderRegistry</span></div>
 <h2>Method Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="newServletBodyBinder(io.micronaut.http.codec.MediaTypeCodecRegistry,io.micronaut.core.convert.ConversionService)">
+<section class="detail" id="newServletBodyBinder(io.micronaut.http.codec.MediaTypeCodecRegistry,io.micronaut.core.convert.ConversionService,io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder)">
 <h3>newServletBodyBinder</h3>
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="ServletBodyBinder.html" title="class in io.micronaut.servlet.http">ServletBodyBinder</a></span>&nbsp;<span class="element-name">newServletBodyBinder</span><wbr><span class="parameters">(io.micronaut.http.codec.MediaTypeCodecRegistry&nbsp;mediaTypeCodecRegistry,
- io.micronaut.core.convert.ConversionService&nbsp;conversionService)</span></div>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="ServletBodyBinder.html" title="class in io.micronaut.servlet.http">ServletBodyBinder</a>&lt;<a href="ServletBinderRegistry.html" title="type parameter in ServletBinderRegistry">T</a>&gt;</span>&nbsp;<span class="element-name">newServletBodyBinder</span><wbr><span class="parameters">(io.micronaut.http.codec.MediaTypeCodecRegistry&nbsp;mediaTypeCodecRegistry,
+ io.micronaut.core.convert.ConversionService&nbsp;conversionService,
+ io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder&lt;<a href="ServletBinderRegistry.html" title="type parameter in ServletBinderRegistry">T</a>&gt;&nbsp;defaultBodyAnnotationBinder)</span></div>
 <div class="block">Creates the servlet body binder.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>mediaTypeCodecRegistry</code> - The media type registry</dd>
 <dd><code>conversionService</code> - The conversion service</dd>
 <dt>Returns:</dt>
-<dd>The servlet body body</dd>
+<dd>The servlet body</dd>
 </dl>
 </section>
 </li>
@@ -236,7 +245,7 @@ implements io.micronaut.http.bind.RequestBinderRegistry</span></div>
 <span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;io.micronaut.core.bind.ArgumentBinder&lt;T,<wbr>io.micronaut.http.HttpRequest&lt;?&gt;&gt;&gt;</span>&nbsp;<span class="element-name">findArgumentBinder</span><wbr><span class="parameters">(io.micronaut.core.type.Argument&lt;T&gt;&nbsp;argument)</span></div>
 <dl class="notes">
 <dt>Specified by:</dt>
-<dd><code>findArgumentBinder</code>&nbsp;in interface&nbsp;<code>io.micronaut.core.bind.ArgumentBinderRegistry&lt;io.micronaut.http.HttpRequest&lt;?&gt;&gt;</code></dd>
+<dd><code>findArgumentBinder</code>&nbsp;in interface&nbsp;<code>io.micronaut.core.bind.ArgumentBinderRegistry&lt;<a href="ServletBinderRegistry.html" title="type parameter in ServletBinderRegistry">T</a>&gt;</code></dd>
 </dl>
 </section>
 </li>
