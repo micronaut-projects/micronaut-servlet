@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 original authors
+ * Copyright 2017-2023 original authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ import java.io.Reader;
 import java.lang.reflect.Array;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -163,7 +164,13 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
                         Object[] array = content.toArray((Object[]) Array.newInstance(componentType, 0));
                         return () -> Optional.of((T) array);
                     }
-                    T content = codec.decode(argument, inputStream);
+                    T content;
+                    if (name != null) {
+                        var decode = codec.decode(Map.class, inputStream);
+                        content = conversionService.convert(decode.get(name), argument).orElse(null);
+                    } else {
+                        content = codec.decode(argument, inputStream);
+                    }
                     return () -> Optional.of(content);
                 } catch (CodecException | IOException e) {
                     throw new CodecException("Unable to decode request body: " + e.getMessage(), e);

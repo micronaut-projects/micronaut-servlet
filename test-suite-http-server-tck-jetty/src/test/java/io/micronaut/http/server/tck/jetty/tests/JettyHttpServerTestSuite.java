@@ -6,7 +6,10 @@ import org.junit.platform.suite.api.Suite;
 import org.junit.platform.suite.api.SuiteDisplayName;
 
 @Suite
-@SelectPackages("io.micronaut.http.server.tck.tests")
+@SelectPackages({
+    "io.micronaut.http.server.tck.tests",
+    "io.micronaut.http.server.tck.jetty.tests",
+})
 @SuiteDisplayName("HTTP Server TCK for Jetty")
 @ExcludeClassNamePatterns({
     "io.micronaut.http.server.tck.tests.staticresources.StaticResourceTest", // Graal fails to see /assets from the TCK as a resource https://ge.micronaut.io/s/ufuhtbe5sgmxi
