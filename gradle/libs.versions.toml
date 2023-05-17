@@ -7,7 +7,7 @@ spock = "2.3-groovy-4.0"
 
 managed-servlet-api = '6.0.0'
 kotlin-coroutines = '1.7.1'
-kotest-runner = '5.6.1'
+kotest-runner = '5.6.2'
 undertow = '2.3.5.Final'
 jetty = '11.0.15'
 tomcat = '10.1.8'
