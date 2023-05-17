@@ -166,7 +166,7 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
                     }
                     T content;
                     if (name != null) {
-                        Map decode = codec.decode(Map.class, inputStream);
+                        var decode = codec.decode(Map.class, inputStream);
                         content = conversionService.convert(decode.get(name), argument).orElse(null);
                     } else {
                         content = codec.decode(argument, inputStream);
