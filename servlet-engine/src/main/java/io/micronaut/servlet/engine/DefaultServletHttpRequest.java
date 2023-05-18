@@ -23,42 +23,35 @@ import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.convert.value.MutableConvertibleValues;
 import io.micronaut.core.convert.value.MutableConvertibleValuesMap;
-import io.micronaut.core.io.buffer.ByteBuffer;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.core.util.SupplierUtil;
-import io.micronaut.http.HttpAttributes;
 import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpMethod;
 import io.micronaut.http.HttpParameters;
-import io.micronaut.http.HttpRequest;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.MutableHttpRequest;
-import io.micronaut.http.codec.CodecException;
-import io.micronaut.http.codec.MediaTypeCodec;
 import io.micronaut.http.codec.MediaTypeCodecRegistry;
 import io.micronaut.http.cookie.Cookies;
-import io.micronaut.inject.ExecutionHandle;
-import io.micronaut.json.codec.MapperMediaTypeCodec;
-import io.micronaut.json.tree.JsonNode;
+import io.micronaut.servlet.http.BodyBuilder;
 import io.micronaut.servlet.http.ServletExchange;
 import io.micronaut.servlet.http.ServletHttpRequest;
 import io.micronaut.servlet.http.ServletHttpResponse;
 import io.micronaut.servlet.http.StreamedServletMessage;
-import io.micronaut.web.router.RouteMatch;
 import jakarta.servlet.AsyncContext;
 import jakarta.servlet.ReadListener;
 import jakarta.servlet.ServletInputStream;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.reactivestreams.Subscriber;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
 
 import java.io.BufferedReader;
-import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
@@ -92,8 +85,7 @@ public final class DefaultServletHttpRequest<B> extends MutableConvertibleValues
     MutableConvertibleValues<Object>,
     ServletExchange<HttpServletRequest, HttpServletResponse>,
     StreamedServletMessage<B, byte[]> {
-
-    private static final Set<Class<?>> RAW_BODY_TYPES = CollectionUtils.setOf(String.class, byte[].class, ByteBuffer.class, InputStream.class);
+    private static final Logger LOG = LoggerFactory.getLogger(DefaultServletHttpRequest.class);
 
     private final ConversionService conversionService;
     private final HttpServletRequest delegate;
@@ -115,11 +107,13 @@ public final class DefaultServletHttpRequest<B> extends MutableConvertibleValues
      * @param delegate          The servlet request
      * @param response          The servlet response
      * @param codecRegistry     The codec registry
+     * @param bodyBuilder       Body Builder
      */
     protected DefaultServletHttpRequest(ConversionService conversionService,
                                         HttpServletRequest delegate,
                                         HttpServletResponse response,
-                                        MediaTypeCodecRegistry codecRegistry) {
+                                        MediaTypeCodecRegistry codecRegistry,
+                                        BodyBuilder bodyBuilder) {
         super(new ConcurrentHashMap<>(), conversionService);
         this.conversionService = conversionService;
         this.delegate = delegate;
@@ -147,72 +141,17 @@ public final class DefaultServletHttpRequest<B> extends MutableConvertibleValues
         this.parameters = new ServletParameters();
         this.response = new DefaultServletHttpResponse<>(conversionService, this, response);
         this.body = SupplierUtil.memoizedNonEmpty(() -> {
-            B built = (B) buildBody();
-            return Optional.ofNullable(built);
-        });
-    }
-
-    @Nullable
-    protected Object buildBody() {
-        final MediaType contentType = getContentType().orElse(MediaType.APPLICATION_JSON_TYPE);
-        if (isFormSubmission(contentType)) {
-            return getParameters().asMap();
-        } else {
-            if (delegate.getContentLength() == 0) {
-                return null;
-            }
-            Argument<?> resolvedBodyType = resolveBodyType();
-            try (InputStream inputStream = delegate.getInputStream())  {
-                if (resolvedBodyType != null && RAW_BODY_TYPES.contains(resolvedBodyType.getType())) {
-                    return inputStream.readAllBytes();
-                } else {
-                    final MediaTypeCodec codec = codecRegistry.findCodec(contentType).orElse(null);
-                    if (contentType.equals(MediaType.APPLICATION_JSON_TYPE) && codec instanceof MapperMediaTypeCodec mapperCodec) {
-                        return readJson(inputStream, mapperCodec);
-                    } else if (codec != null) {
-                        return decode(inputStream, codec);
-                    } else {
-                        return inputStream.readAllBytes();
-                    }
-                }
-            } catch (EOFException e) {
-                // no content
-                return null;
+            try {
+                B built = (B) bodyBuilder.buildBody(this::getInputStream, this);
+                return Optional.ofNullable(built);
             } catch (IOException e) {
-                throw new CodecException("Error decoding request body: " + e.getMessage(), e);
+                if (LOG.isErrorEnabled()) {
+                    LOG.error("IOException trying to build the body", e);
+                }
+                return Optional.empty();
             }
-        }
-    }
 
-    private Argument<?> resolveBodyType() {
-        RouteMatch<?> route = this.getAttribute(HttpAttributes.ROUTE_MATCH, RouteMatch.class).orElse(null);
-        if (route != null) {
-            Argument<?> bodyType = route.getRouteInfo().getFullRequestBodyType()
-                .orElseGet(() -> {
-                    if (route instanceof ExecutionHandle<?, ?> handle) {
-                        for (Argument<?> argument : handle.getArguments()) {
-                            if (argument.getType() == HttpRequest.class) {
-                                return argument;
-                            }
-                        }
-                    }
-                    return Argument.OBJECT_ARGUMENT;
-                });
-            if (bodyType.getType() == HttpRequest.class) {
-                bodyType = bodyType.getFirstTypeVariable().orElse(Argument.OBJECT_ARGUMENT);
-            }
-            return bodyType;
-        } else {
-            return Argument.OBJECT_ARGUMENT;
-        }
-    }
-
-    private Object decode(InputStream inputStream, MediaTypeCodec codec) throws IOException {
-        return codec.decode(Argument.of(byte[].class), inputStream);
-    }
-
-    private Object readJson(InputStream inputStream, MapperMediaTypeCodec mapperCodec) throws IOException {
-        return mapperCodec.getJsonMapper().readValue(inputStream, Argument.of(JsonNode.class));
+        });
     }
 
     @Override
