@@ -70,6 +70,7 @@ public abstract class ServletBinderRegistry<T> implements RequestBinderRegistry 
      * Creates the servlet body binder.
      * @param mediaTypeCodecRegistry The media type registry
      * @param conversionService The conversion service
+     * @param defaultBodyAnnotationBinder Default Body annotation Binder
      * @return The servlet body
      */
     protected ServletBodyBinder<T> newServletBodyBinder(
