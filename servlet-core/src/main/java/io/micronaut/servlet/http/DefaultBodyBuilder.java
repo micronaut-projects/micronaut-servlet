@@ -62,7 +62,7 @@ public class DefaultBodyBuilder implements BodyBuilder {
     @Override
     @Nullable
     public Object buildBody(@NonNull Callable<InputStream> bodySupplier,
-                             @NonNull HttpRequest<?> request) throws IOException {
+                             @NonNull HttpRequest<?> request) {
         final MediaType contentType = request.getContentType().orElse(MediaType.APPLICATION_JSON_TYPE);
         if (BodyBuilder.isFormSubmission(contentType)) {
             return request.getParameters().asMap();

@@ -21,7 +21,6 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.MediaType;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.concurrent.Callable;
 
@@ -48,8 +47,7 @@ public interface BodyBuilder {
      * @param bodySupplier The HTTP Body supplied as an Input Stream
      * @param request The HTTP Request
      * @return An object representing the HTTP body or null
-     * @throws IOException IOException while reading the body
      */
     @Nullable
-    Object buildBody(@NonNull Callable<InputStream> bodySupplier, @NonNull HttpRequest<?> request) throws IOException;
+    Object buildBody(@NonNull Callable<InputStream> bodySupplier, @NonNull HttpRequest<?> request);
 }
