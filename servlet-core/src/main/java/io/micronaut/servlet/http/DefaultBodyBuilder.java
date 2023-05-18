@@ -67,7 +67,7 @@ public class DefaultBodyBuilder implements BodyBuilder {
         if (BodyBuilder.isFormSubmission(contentType)) {
             return request.getParameters().asMap();
         } else {
-            if (request.getContentLength() == 0) {
+            if (request.getContentLength() == -1) {
                 return null;
             }
             Argument<?> resolvedBodyType = resolveBodyType(request);
