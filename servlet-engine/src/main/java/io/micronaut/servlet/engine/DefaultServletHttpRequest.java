@@ -141,16 +141,8 @@ public final class DefaultServletHttpRequest<B> extends MutableConvertibleValues
         this.parameters = new ServletParameters();
         this.response = new DefaultServletHttpResponse<>(conversionService, this, response);
         this.body = SupplierUtil.memoizedNonEmpty(() -> {
-            try {
-                B built = (B) bodyBuilder.buildBody(this::getInputStream, this);
-                return Optional.ofNullable(built);
-            } catch (IOException e) {
-                if (LOG.isErrorEnabled()) {
-                    LOG.error("IOException trying to build the body", e);
-                }
-                return Optional.empty();
-            }
-
+            B built = (B) bodyBuilder.buildBody(this::getInputStream, this);
+            return Optional.ofNullable(built);
         });
     }
 
