@@ -25,6 +25,7 @@ import io.micronaut.core.async.publisher.Publishers;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.execution.ExecutionFlow;
 import io.micronaut.core.io.Writable;
+import io.micronaut.core.propagation.PropagatedContext;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.http.HttpAttributes;
 import io.micronaut.http.HttpHeaders;
@@ -38,6 +39,7 @@ import io.micronaut.http.annotation.Produces;
 import io.micronaut.http.codec.CodecException;
 import io.micronaut.http.codec.MediaTypeCodec;
 import io.micronaut.http.codec.MediaTypeCodecRegistry;
+import io.micronaut.http.context.ServerHttpRequestContext;
 import io.micronaut.http.context.event.HttpRequestReceivedEvent;
 import io.micronaut.http.context.event.HttpRequestTerminatedEvent;
 import io.micronaut.http.exceptions.HttpStatusException;
@@ -206,23 +208,25 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
 
         if (exchange.getRequest().isAsyncSupported()) {
             exchange.getRequest().executeAsync(asyncExecution -> {
-                lc.handleNormal()
-                    .onComplete((response, throwable) -> onComplete(exchange, req, response, throwable, httpResponse -> {
-                        asyncExecution.complete();
-                        requestTerminated.accept(httpResponse);
-                    }));
+                try (PropagatedContext.Scope ignore = PropagatedContext.newContext(new ServerHttpRequestContext(req)).propagate()) {
+                    lc.handleNormal()
+                        .onComplete((response, throwable) -> onComplete(exchange, req, response, throwable, httpResponse -> {
+                            asyncExecution.complete();
+                            requestTerminated.accept(httpResponse);
+                        }));
+                }
             });
         } else {
-            CompletableFuture<?> termination = new CompletableFuture<>();
-            lc.handleNormal()
-                .onComplete((response, throwable) -> {
-                    try {
-                        onComplete(exchange, req, response, throwable, requestTerminated);
-                    } finally {
-                        termination.complete(null);
-                    }
-                });
-            try {
+            try (PropagatedContext.Scope ignore = PropagatedContext.newContext(new ServerHttpRequestContext(req)).propagate()) {
+                CompletableFuture<?> termination = new CompletableFuture<>();
+                lc.handleNormal()
+                    .onComplete((response, throwable) -> {
+                        try {
+                            onComplete(exchange, req, response, throwable, requestTerminated);
+                        } finally {
+                            termination.complete(null);
+                        }
+                    });
                 termination.get();
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
