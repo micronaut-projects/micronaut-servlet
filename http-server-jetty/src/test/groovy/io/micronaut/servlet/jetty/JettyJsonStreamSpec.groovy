@@ -206,7 +206,6 @@ class JettyJsonStreamSpec extends Specification {
         Publisher<Book> list();
 
         @Post(uri = "/count", processes = MediaType.APPLICATION_JSON_STREAM)
-        @SingleResult
         Publisher<LibraryStats> count(@Body Publisher<Book> theBooks)
 
         @Get(uri = "/empty", consumes = MediaType.APPLICATION_JSON)

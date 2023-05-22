@@ -62,11 +62,11 @@ class JettyNotFoundSpec extends Specification {
     @Client('/not-found')
     static interface InventoryClient {
 
-        @Get(value = '/mono/{isbn}', processes = MediaType.TEXT_PLAIN)
+        @Get(value = '/mono/{isbn}', processes = MediaType.APPLICATION_JSON)
         @SingleResult
         Publisher<Boolean> mono(String isbn)
 
-        @Get(value = '/flux/{isbn}', processes = MediaType.TEXT_PLAIN)
+        @Get(value = '/flux/{isbn}', processes = MediaType.APPLICATION_JSON)
         @SingleResult
         Publisher<Boolean> flux(String isbn)
 
@@ -75,7 +75,7 @@ class JettyNotFoundSpec extends Specification {
     }
 
     @Requires(property = 'spec.name', value = 'JettyNotFoundSpec')
-    @Controller(value = "/not-found", produces = MediaType.TEXT_PLAIN)
+    @Controller(value = "/not-found", produces = MediaType.APPLICATION_JSON)
     static class InventoryController {
         Map<String, Boolean> stock = [
                 '1234': true
