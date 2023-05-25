@@ -16,6 +16,7 @@ import jakarta.inject.Inject
 import org.reactivestreams.Publisher
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
+import spock.lang.PendingFeature
 import spock.lang.Specification
 
 @MicronautTest
@@ -31,6 +32,7 @@ class JettyNotFoundSpec extends Specification {
         Flux.from(client.streaming('notthere')).collectList().block() == []
     }
 
+    @PendingFeature(reason = "https://github.com/micronaut-projects/micronaut-core/pull/9307")
     void "test 404 handling with not streaming publisher"() {
         when:
         def exists = Mono.from(client.mono('1234')).block()
@@ -62,11 +64,11 @@ class JettyNotFoundSpec extends Specification {
     @Client('/not-found')
     static interface InventoryClient {
 
-        @Get(value = '/mono/{isbn}', processes = MediaType.APPLICATION_JSON)
+        @Get(value = '/mono/{isbn}', processes = MediaType.TEXT_PLAIN)
         @SingleResult
         Publisher<Boolean> mono(String isbn)
 
-        @Get(value = '/flux/{isbn}', processes = MediaType.APPLICATION_JSON)
+        @Get(value = '/flux/{isbn}', processes = MediaType.TEXT_PLAIN)
         @SingleResult
         Publisher<Boolean> flux(String isbn)
 
@@ -75,7 +77,7 @@ class JettyNotFoundSpec extends Specification {
     }
 
     @Requires(property = 'spec.name', value = 'JettyNotFoundSpec')
-    @Controller(value = "/not-found", produces = MediaType.APPLICATION_JSON)
+    @Controller(value = "/not-found", produces = MediaType.TEXT_PLAIN)
     static class InventoryController {
         Map<String, Boolean> stock = [
                 '1234': true
