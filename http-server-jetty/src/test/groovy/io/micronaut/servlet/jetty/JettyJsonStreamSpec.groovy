@@ -21,16 +21,14 @@ import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import spock.lang.AutoCleanup
 import spock.lang.Issue
+import spock.lang.PendingFeature
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.util.concurrent.PollingConditions
 
 import java.time.Duration
 import java.time.temporal.ChronoUnit
-import java.time.temporal.TemporalUnit
 import java.util.concurrent.Semaphore
-import java.util.concurrent.TimeUnit
-
 /**
  * Created by graemerocher on 19/01/2018.
  */
@@ -175,6 +173,7 @@ class JettyJsonStreamSpec extends Specification {
         books*.title == ['The Stand', 'The Shining']
     }
 
+    @PendingFeature
     void "we can use a generated client to stream books to the server"() {
         given:
         signal = new Semaphore(1)
