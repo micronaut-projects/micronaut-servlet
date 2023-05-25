@@ -27,10 +27,7 @@ import spock.util.concurrent.PollingConditions
 
 import java.time.Duration
 import java.time.temporal.ChronoUnit
-import java.time.temporal.TemporalUnit
 import java.util.concurrent.Semaphore
-import java.util.concurrent.TimeUnit
-
 /**
  * Created by graemerocher on 19/01/2018.
  */
