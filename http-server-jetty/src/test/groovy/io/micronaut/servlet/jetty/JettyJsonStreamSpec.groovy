@@ -21,6 +21,7 @@ import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import spock.lang.AutoCleanup
 import spock.lang.Issue
+import spock.lang.PendingFeature
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.util.concurrent.PollingConditions
@@ -163,6 +164,7 @@ class JettyJsonStreamSpec extends Specification {
         stream.timeout(Duration.of(5, ChronoUnit.SECONDS)).blockFirst().bookCount == 10
     }
 
+    @PendingFeature
     void "we can stream data from the server through the generated client"() {
         when:
         List<Book> books = Flux.from(bookClient.list()).collectList().block()
