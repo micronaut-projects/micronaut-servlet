@@ -86,6 +86,10 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/engine/DefaultServletHttpResponse.html#body(T)" class="member-name-link">body(T)</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/DefaultServletHttpResponse.html" title="class in io.micronaut.servlet.engine">DefaultServletHttpResponse</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/http/BodyBuilder.html" class="type-name-link" title="interface in io.micronaut.servlet.http">BodyBuilder</a> - Interface in <a href="io/micronaut/servlet/http/package-summary.html">io.micronaut.servlet.http</a></dt>
+<dd>
+<div class="block">API to Read the Body of an HTTP Request where the body is supplied as an InputStream.</div>
+</dd>
 <dt><a href="io/micronaut/servlet/engine/server/ServletServerFactory.html#build(io.micronaut.http.ssl.SslConfiguration)" class="member-name-link">build(SslConfiguration)</a> - Method in class io.micronaut.servlet.engine.server.<a href="io/micronaut/servlet/engine/server/ServletServerFactory.html" title="class in io.micronaut.servlet.engine.server">ServletServerFactory</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/engine/server/ServletServerFactory.html#build(io.micronaut.http.ssl.SslConfiguration,io.micronaut.http.HttpVersion)" class="member-name-link">build(SslConfiguration, HttpVersion)</a> - Method in class io.micronaut.servlet.engine.server.<a href="io/micronaut/servlet/engine/server/ServletServerFactory.html" title="class in io.micronaut.servlet.engine.server">ServletServerFactory</a></dt>
@@ -96,7 +100,9 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Builds the application context.</div>
 </dd>
-<dt><a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html#buildBody()" class="member-name-link">buildBody()</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html" title="class in io.micronaut.servlet.engine">DefaultServletHttpRequest</a></dt>
+<dt><a href="io/micronaut/servlet/http/BodyBuilder.html#buildBody(java.util.concurrent.Callable,io.micronaut.http.HttpRequest)" class="member-name-link">buildBody(Callable&lt;InputStream&gt;, HttpRequest&lt;?&gt;)</a> - Method in interface io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/BodyBuilder.html" title="interface in io.micronaut.servlet.http">BodyBuilder</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/http/DefaultBodyBuilder.html#buildBody(java.util.concurrent.Callable,io.micronaut.http.HttpRequest)" class="member-name-link">buildBody(Callable&lt;InputStream&gt;, HttpRequest&lt;?&gt;)</a> - Method in class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/DefaultBodyBuilder.html" title="class in io.micronaut.servlet.http">DefaultBodyBuilder</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/http/ServletBinderRegistry.html#byAnnotation" class="member-name-link">byAnnotation</a> - Variable in class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletBinderRegistry.html" title="class in io.micronaut.servlet.http">ServletBinderRegistry</a></dt>
 <dd>&nbsp;</dd>
@@ -144,6 +150,12 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">The default configuration.</div>
 </dd>
+<dt><a href="io/micronaut/servlet/http/DefaultBodyBuilder.html" class="type-name-link" title="class in io.micronaut.servlet.http">DefaultBodyBuilder</a> - Class in <a href="io/micronaut/servlet/http/package-summary.html">io.micronaut.servlet.http</a></dt>
+<dd>
+<div class="block">Default implementation of <a href="io/micronaut/servlet/http/BodyBuilder.html" title="interface in io.micronaut.servlet.http"><code>BodyBuilder</code></a>.</div>
+</dd>
+<dt><a href="io/micronaut/servlet/http/DefaultBodyBuilder.html#%3Cinit%3E(io.micronaut.http.codec.MediaTypeCodecRegistry)" class="member-name-link">DefaultBodyBuilder(MediaTypeCodecRegistry)</a> - Constructor for class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/DefaultBodyBuilder.html" title="class in io.micronaut.servlet.http">DefaultBodyBuilder</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/engine/DefaultMicronautServlet.html" class="type-name-link" title="class in io.micronaut.servlet.engine">DefaultMicronautServlet</a> - Class in <a href="io/micronaut/servlet/engine/package-summary.html">io.micronaut.servlet.engine</a></dt>
 <dd>
 <div class="block">A servlet that initializes Micronaut and serves requests.</div>
@@ -190,7 +202,7 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Implementation of <code>HttpRequest</code> ontop of the Servlet API.</div>
 </dd>
-<dt><a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html#%3Cinit%3E(io.micronaut.core.convert.ConversionService,jakarta.servlet.http.HttpServletRequest,jakarta.servlet.http.HttpServletResponse,io.micronaut.http.codec.MediaTypeCodecRegistry)" class="member-name-link">DefaultServletHttpRequest(ConversionService, HttpServletRequest, HttpServletResponse, MediaTypeCodecRegistry)</a> - Constructor for class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html" title="class in io.micronaut.servlet.engine">DefaultServletHttpRequest</a></dt>
+<dt><a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html#%3Cinit%3E(io.micronaut.core.convert.ConversionService,jakarta.servlet.http.HttpServletRequest,jakarta.servlet.http.HttpServletResponse,io.micronaut.http.codec.MediaTypeCodecRegistry,io.micronaut.servlet.http.BodyBuilder)" class="member-name-link">DefaultServletHttpRequest(ConversionService, HttpServletRequest, HttpServletResponse, MediaTypeCodecRegistry, BodyBuilder)</a> - Constructor for class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html" title="class in io.micronaut.servlet.engine">DefaultServletHttpRequest</a></dt>
 <dd>
 <div class="block">Default constructor.</div>
 </dd>
@@ -539,6 +551,8 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/servlet/engine/ServletCompletedFileUpload.html#isComplete()" class="member-name-link">isComplete()</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/ServletCompletedFileUpload.html" title="class in io.micronaut.servlet.engine">ServletCompletedFileUpload</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/engine/server/ServletStaticResourceConfiguration.html#isEnabled()" class="member-name-link">isEnabled()</a> - Method in interface io.micronaut.servlet.engine.server.<a href="io/micronaut/servlet/engine/server/ServletStaticResourceConfiguration.html" title="interface in io.micronaut.servlet.engine.server">ServletStaticResourceConfiguration</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/http/BodyBuilder.html#isFormSubmission(io.micronaut.http.MediaType)" class="member-name-link">isFormSubmission(MediaType)</a> - Static method in interface io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/BodyBuilder.html" title="interface in io.micronaut.servlet.http">BodyBuilder</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/engine/ServletCookieAdapter.html#isHttpOnly()" class="member-name-link">isHttpOnly()</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/ServletCookieAdapter.html" title="class in io.micronaut.servlet.engine">ServletCookieAdapter</a></dt>
 <dd>&nbsp;</dd>
