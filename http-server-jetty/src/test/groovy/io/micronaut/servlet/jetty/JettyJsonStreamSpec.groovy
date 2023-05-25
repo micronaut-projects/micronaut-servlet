@@ -164,7 +164,6 @@ class JettyJsonStreamSpec extends Specification {
         stream.timeout(Duration.of(5, ChronoUnit.SECONDS)).blockFirst().bookCount == 10
     }
 
-    @PendingFeature
     void "we can stream data from the server through the generated client"() {
         when:
         List<Book> books = Flux.from(bookClient.list()).collectList().block()
@@ -174,6 +173,7 @@ class JettyJsonStreamSpec extends Specification {
         books*.title == ['The Stand', 'The Shining']
     }
 
+    @PendingFeature
     void "we can use a generated client to stream books to the server"() {
         given:
         signal = new Semaphore(1)
