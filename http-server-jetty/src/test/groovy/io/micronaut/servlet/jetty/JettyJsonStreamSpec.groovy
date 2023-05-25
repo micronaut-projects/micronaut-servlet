@@ -203,6 +203,7 @@ class JettyJsonStreamSpec extends Specification {
     @Client("/jsonstream/books")
     static interface BookClient {
         @Get(consumes = MediaType.APPLICATION_JSON_STREAM)
+        @SingleResult
         Publisher<Book> list();
 
         @Post(uri = "/count", processes = MediaType.APPLICATION_JSON_STREAM)
