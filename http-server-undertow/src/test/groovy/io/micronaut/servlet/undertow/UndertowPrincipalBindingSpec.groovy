@@ -63,9 +63,9 @@ class UndertowPrincipalBindingSpec extends Specification {
 
     @Requires(property = 'spec.name', value = 'UndertowPrincipalBindingSpec')
     @Singleton
-    static class AuthenticationProviderUserPassword implements AuthenticationProvider {
+    static class AuthenticationProviderUserPassword<T> implements AuthenticationProvider<T> {
         @Override
-        Publisher<AuthenticationResponse> authenticate(HttpRequest<?> httpRequest, AuthenticationRequest<?, ?> authenticationRequest) {
+        Publisher<AuthenticationResponse> authenticate(T httpRequest, AuthenticationRequest<?, ?> authenticationRequest) {
             Mono.create({ MonoSink emitter ->
                 String identity = authenticationRequest.identity
                 if (identity == 'sherlock' && authenticationRequest.secret == 'password') {

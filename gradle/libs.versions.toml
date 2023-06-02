@@ -1,7 +1,7 @@
 [versions]
-micronaut = "4.0.0-M5"
+micronaut = "4.0.0-M6"
 micronaut-docs = "2.0.0"
-micronaut-test = "4.0.0-M3"
+micronaut-test = "4.0.0-M5"
 groovy = "4.0.11"
 spock = "2.3-groovy-4.0"
 
@@ -15,10 +15,10 @@ graal-svm = "22.3.2"
 bcpkix = "1.70"
 
 micronaut-reactor = "3.0.0-M4"
-micronaut-security = "4.0.0-M3"
+micronaut-security = "4.0.0-M4"
 micronaut-serde = "2.0.0-M8"
 micronaut-session = "4.0.0-M2"
-micronaut-validation = "4.0.0-M8"
+micronaut-validation = "4.0.0-M9"
 google-cloud-functions = '1.0.4'
 kotlin = "1.8.21"
 micronaut-logging = "1.0.0-M2"

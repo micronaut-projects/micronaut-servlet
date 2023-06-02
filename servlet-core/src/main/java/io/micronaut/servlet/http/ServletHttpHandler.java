@@ -208,7 +208,7 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
 
         if (exchange.getRequest().isAsyncSupported()) {
             exchange.getRequest().executeAsync(asyncExecution -> {
-                try (PropagatedContext.Scope ignore = PropagatedContext.newContext(new ServerHttpRequestContext(req)).propagate()) {
+                try (PropagatedContext.Scope ignore = PropagatedContext.getOrEmpty().plus(new ServerHttpRequestContext(req)).propagate()) {
                     lc.handleNormal()
                         .onComplete((response, throwable) -> onComplete(exchange, req, response, throwable, httpResponse -> {
                             asyncExecution.complete();
@@ -217,7 +217,7 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
                 }
             });
         } else {
-            try (PropagatedContext.Scope ignore = PropagatedContext.newContext(new ServerHttpRequestContext(req)).propagate()) {
+            try (PropagatedContext.Scope ignore = PropagatedContext.getOrEmpty().plus(new ServerHttpRequestContext(req)).propagate()) {
                 CompletableFuture<?> termination = new CompletableFuture<>();
                 lc.handleNormal()
                     .onComplete((response, throwable) -> {
