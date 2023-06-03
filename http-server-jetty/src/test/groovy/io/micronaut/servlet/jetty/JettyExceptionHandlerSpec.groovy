@@ -15,7 +15,7 @@ import io.micronaut.http.annotation.Get
 import io.micronaut.http.client.HttpClient
 import io.micronaut.http.client.annotation.Client
 import io.micronaut.http.client.exceptions.HttpClientResponseException
-import io.micronaut.http.filter.OncePerRequestHttpServerFilter
+import io.micronaut.http.filter.HttpServerFilter
 import io.micronaut.http.filter.ServerFilterChain
 import io.micronaut.http.server.exceptions.ExceptionHandler
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
@@ -98,10 +98,9 @@ class JettyExceptionHandlerSpec extends Specification {
     @Singleton
     @Filter("/**")
     @Requires(property = "spec.name", value = "JettyExceptionHandlerSpec")
-    static class MyFilter extends OncePerRequestHttpServerFilter {
-
+    static class MyFilter implements HttpServerFilter {
         @Override
-        protected Publisher<MutableHttpResponse<?>> doFilterOnce(HttpRequest<?> request, ServerFilterChain chain) {
+        Publisher<MutableHttpResponse<?>> doFilter(HttpRequest<?> request, ServerFilterChain chain) {
             if (!request.getAttribute(HttpAttributes.ROUTE_MATCH).isPresent()) {
                 return Publishers.just(new Unauthorized())
             }

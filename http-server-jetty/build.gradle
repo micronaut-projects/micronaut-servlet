@@ -1,5 +1,5 @@
 plugins {
-    id 'io.micronaut.build.internal.servlet.implementation'
+    id("io.micronaut.build.internal.servlet.implementation")
 }
 
 dependencies {
@@ -8,4 +8,5 @@ dependencies {
     testCompileOnly(mnValidation.micronaut.validation.processor)
     testAnnotationProcessor(mnValidation.micronaut.validation.processor)
     testImplementation(mnValidation.micronaut.validation)
+    testImplementation(mn.micronaut.jackson.databind)
 }

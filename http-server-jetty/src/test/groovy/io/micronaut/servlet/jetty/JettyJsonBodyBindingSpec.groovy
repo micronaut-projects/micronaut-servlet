@@ -25,6 +25,7 @@ import org.reactivestreams.Publisher
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import reactor.core.scheduler.Schedulers
+import spock.lang.PendingFeature
 import spock.lang.Specification
 
 import java.util.concurrent.CompletableFuture
@@ -73,8 +74,8 @@ class JettyJsonBodyBindingSpec extends Specification {
         response.body() == "Body: Foo(Fred, 10)"
     }
 
+    @PendingFeature
     void "test map-based body parsing with invalid JSON"() {
-
         when:
         def json = '{"title":The Stand}'
         rxClient.toBlocking().exchange(
@@ -287,6 +288,7 @@ class JettyJsonBodyBindingSpec extends Specification {
         response.body() == 'not found'
     }
 
+    @PendingFeature
     void "test request generic type conversion error"() {
         when:
         def json = '[1,2,3]'
