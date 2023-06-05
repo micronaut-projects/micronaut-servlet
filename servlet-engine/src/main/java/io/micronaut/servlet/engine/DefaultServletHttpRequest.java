@@ -23,11 +23,14 @@ import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.convert.value.MutableConvertibleValues;
 import io.micronaut.core.convert.value.MutableConvertibleValuesMap;
+import io.micronaut.core.execution.ExecutionFlow;
+import io.micronaut.core.io.buffer.ByteBuffer;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.core.util.SupplierUtil;
+import io.micronaut.http.FullHttpRequest;
 import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpMethod;
 import io.micronaut.http.HttpParameters;
@@ -52,8 +55,10 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.nio.charset.Charset;
@@ -84,7 +89,9 @@ public final class DefaultServletHttpRequest<B> extends MutableConvertibleValues
     ServletHttpRequest<HttpServletRequest, B>,
     MutableConvertibleValues<Object>,
     ServletExchange<HttpServletRequest, HttpServletResponse>,
-    StreamedServletMessage<B, byte[]> {
+    StreamedServletMessage<B, byte[]>,
+    FullHttpRequest<B> {
+
     private static final Logger LOG = LoggerFactory.getLogger(DefaultServletHttpRequest.class);
 
     private final ConversionService conversionService;
@@ -99,6 +106,7 @@ public final class DefaultServletHttpRequest<B> extends MutableConvertibleValues
     private Supplier<Optional<B>> body;
 
     private boolean bodyIsReadAsync;
+    private ServletByteBuffer<B> servletByteBuffer;
 
     /**
      * Default constructor.
@@ -249,7 +257,7 @@ public final class DefaultServletHttpRequest<B> extends MutableConvertibleValues
 
     @Override
     public InputStream getInputStream() throws IOException {
-        return delegate.getInputStream();
+        return servletByteBuffer != null ? servletByteBuffer.toInputStream() : delegate.getInputStream();
     }
 
     @Override
@@ -418,6 +426,220 @@ public final class DefaultServletHttpRequest<B> extends MutableConvertibleValues
         }
         Flux<byte[]> bodyContent = emitter.asFlux();
         bodyContent.subscribe(s);
+    }
+
+    @Override
+    public boolean isFull() {
+        return !bodyIsReadAsync;
+    }
+
+    @Override
+    public ByteBuffer<?> contents() {
+        if (bodyIsReadAsync) {
+            throw new IllegalStateException("Cannot fetch body content of an asynchronous request");
+        }
+        try {
+            this.servletByteBuffer = new ServletByteBuffer<>(getInputStream().readAllBytes());
+            return servletByteBuffer;
+        } catch (IOException e) {
+            throw new IllegalStateException("Error getting all body contents", e);
+        }
+    }
+
+    @Override
+    public ExecutionFlow<ByteBuffer<?>> bufferContents() {
+        return ExecutionFlow.just(contents());
+    }
+
+    private final class ServletByteBuffer<T> implements ByteBuffer<T> {
+
+        private final byte[] underlyingBytes;
+        private int readerIndex;
+        private int writerIndex;
+
+        private ServletByteBuffer(byte[] underlyingBytes) {
+            this(underlyingBytes, underlyingBytes.length);
+        }
+
+        private ServletByteBuffer(byte[] underlyingBytes, int capacity) {
+            if (capacity < underlyingBytes.length) {
+                this.underlyingBytes = Arrays.copyOf(underlyingBytes, capacity);
+            } else if (capacity > underlyingBytes.length) {
+                this.underlyingBytes = new byte[capacity];
+                System.arraycopy(underlyingBytes, 0, this.underlyingBytes, 0, underlyingBytes.length);
+            } else {
+                this.underlyingBytes = underlyingBytes;
+            }
+        }
+
+        @Override
+        public T asNativeBuffer() {
+            throw new IllegalStateException("Not supported");
+        }
+
+        @Override
+        public int readableBytes() {
+            return underlyingBytes.length - readerIndex;
+        }
+
+        @Override
+        public int writableBytes() {
+            return underlyingBytes.length - writerIndex;
+        }
+
+        @Override
+        public int maxCapacity() {
+            return underlyingBytes.length;
+        }
+
+        @Override
+        public ByteBuffer capacity(int capacity) {
+            return new ServletByteBuffer<>(underlyingBytes, capacity);
+        }
+
+        @Override
+        public int readerIndex() {
+            return readerIndex;
+        }
+
+        @Override
+        public ByteBuffer readerIndex(int readPosition) {
+            this.readerIndex = Math.min(readPosition, underlyingBytes.length - 1);
+            return this;
+        }
+
+        @Override
+        public int writerIndex() {
+            return writerIndex;
+        }
+
+        @Override
+        public ByteBuffer writerIndex(int position) {
+            this.writerIndex = Math.min(position, underlyingBytes.length - 1);
+            return this;
+        }
+
+        @Override
+        public byte read() {
+            return underlyingBytes[readerIndex++];
+        }
+
+        @Override
+        public CharSequence readCharSequence(int length, Charset charset) {
+            String s = new String(underlyingBytes, readerIndex, length, charset);
+            readerIndex += length;
+            return s;
+        }
+
+        @Override
+        public ByteBuffer read(byte[] destination) {
+            int count = Math.min(readableBytes(), destination.length);
+            System.arraycopy(underlyingBytes, readerIndex, destination, 0, count);
+            readerIndex += count;
+            return this;
+        }
+
+        @Override
+        public ByteBuffer read(byte[] destination, int offset, int length) {
+            int count = Math.min(readableBytes(), Math.min(destination.length - offset, length));
+            System.arraycopy(underlyingBytes, readerIndex, destination, offset, count);
+            readerIndex += count;
+            return this;
+        }
+
+        @Override
+        public ByteBuffer write(byte b) {
+            underlyingBytes[writerIndex++] = b;
+            return this;
+        }
+
+        @Override
+        public ByteBuffer write(byte[] source) {
+            int count = Math.min(writableBytes(), source.length);
+            System.arraycopy(source, 0, underlyingBytes, writerIndex, count);
+            writerIndex += count;
+            return this;
+        }
+
+        @Override
+        public ByteBuffer write(CharSequence source, Charset charset) {
+            write(source.toString().getBytes(charset));
+            return this;
+        }
+
+        @Override
+        public ByteBuffer write(byte[] source, int offset, int length) {
+            int count = Math.min(writableBytes(), length);
+            System.arraycopy(source, offset, underlyingBytes, writerIndex, count);
+            writerIndex += count;
+            return this;
+        }
+
+        @Override
+        public ByteBuffer write(ByteBuffer... buffers) {
+            for (ByteBuffer<?> buffer : buffers) {
+                write(buffer.toByteArray());
+            }
+            return this;
+        }
+
+        @Override
+        public ByteBuffer write(java.nio.ByteBuffer... buffers) {
+            for (java.nio.ByteBuffer buffer : buffers) {
+                write(buffer.array());
+            }
+            return this;
+        }
+
+        @Override
+        public ByteBuffer slice(int index, int length) {
+            return new ServletByteBuffer<>(Arrays.copyOf(underlyingBytes, length), length);
+        }
+
+        @Override
+        public java.nio.ByteBuffer asNioBuffer() {
+            return java.nio.ByteBuffer.wrap(underlyingBytes, readerIndex, readableBytes());
+        }
+
+        @Override
+        public java.nio.ByteBuffer asNioBuffer(int index, int length) {
+            return java.nio.ByteBuffer.wrap(underlyingBytes, index, length);
+        }
+
+        @Override
+        public InputStream toInputStream() {
+            return new ByteArrayInputStream(underlyingBytes, readerIndex, readableBytes());
+        }
+
+        @Override
+        public OutputStream toOutputStream() {
+            throw new IllegalStateException("Not implemented");
+        }
+
+        @Override
+        public byte[] toByteArray() {
+            return Arrays.copyOfRange(underlyingBytes, readerIndex, readableBytes());
+        }
+
+        @Override
+        public String toString(Charset charset) {
+            return new String(underlyingBytes, readerIndex, readableBytes(), charset);
+        }
+
+        @Override
+        public int indexOf(byte b) {
+            for (int i = readerIndex; i < underlyingBytes.length; i++) {
+                if (underlyingBytes[i] == b) {
+                    return i;
+                }
+            }
+            return -1;
+        }
+
+        @Override
+        public byte getByte(int index) {
+            return underlyingBytes[index];
+        }
     }
 
     /**

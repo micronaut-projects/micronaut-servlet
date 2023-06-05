@@ -16,7 +16,6 @@ import org.junit.platform.suite.api.SuiteDisplayName;
     "io.micronaut.http.server.tck.tests.filter.ClientResponseFilterTest", // responseFilterThrowableParameter fails under Graal https://ge.micronaut.io/s/ufuhtbe5sgmxi
     "io.micronaut.http.server.tck.tests.codec.JsonCodecAdditionalTypeTest", // remove once this pr is merged https://github.com/micronaut-projects/micronaut-core/pull/9308/files
     "io.micronaut.http.server.tck.tests.constraintshandler.ControllerConstraintHandlerTest", // Bug accessing request body in @OnError
-    "io.micronaut.http.server.tck.tests.filter.RequestFilterTest", // Temporary disable tests until we get requestFilterBinding separated in the TCK (as it's testing anetty feature)
 })
 public class JettyHttpServerTestSuite {
 }
