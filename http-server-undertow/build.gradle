@@ -5,5 +5,5 @@ plugins {
 dependencies {
     implementation libs.undertow.servlet
     testImplementation libs.bcpkix
-    testImplementation(mn.micronaut.jackson.databind)
+    testImplementation(mnSerde.micronaut.serde.jackson)
 }
