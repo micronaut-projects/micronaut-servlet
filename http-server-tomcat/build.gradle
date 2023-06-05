@@ -5,6 +5,6 @@ plugins {
 dependencies {
     implementation libs.tomcat.embed.core
     testImplementation libs.bcpkix
-    testImplementation(mn.micronaut.jackson.databind)
+    testImplementation(mnSerde.micronaut.serde.jackson)
 }
 

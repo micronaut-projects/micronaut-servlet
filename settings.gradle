@@ -18,6 +18,7 @@ micronautBuild {
     importMicronautCatalog()
     importMicronautCatalog("micronaut-reactor")
     importMicronautCatalog("micronaut-security")
+    importMicronautCatalog("micronaut-serde")
     importMicronautCatalog("micronaut-session")
     importMicronautCatalog("micronaut-validation")
     importMicronautCatalog("micronaut-logging")
