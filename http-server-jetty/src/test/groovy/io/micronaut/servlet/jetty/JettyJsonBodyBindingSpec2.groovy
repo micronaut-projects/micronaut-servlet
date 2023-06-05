@@ -21,7 +21,6 @@ import io.micronaut.http.hateoas.JsonError
 import io.micronaut.http.hateoas.Link
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
-import spock.lang.PendingFeature
 import spock.lang.Specification
 
 @MicronautTest
@@ -32,8 +31,8 @@ class JettyJsonBodyBindingSpec2 extends Specification {
     @Client("/")
     HttpClient rxClient
 
-    @PendingFeature
     void "test map-based body parsing with invalid JSON"() {
+
         when:
         rxClient.toBlocking().exchange(HttpRequest.POST('/json/map', '{"title":The Stand}'), String)
 

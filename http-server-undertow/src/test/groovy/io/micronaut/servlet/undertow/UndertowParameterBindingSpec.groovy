@@ -14,7 +14,6 @@ import io.micronaut.http.client.HttpClient
 import io.micronaut.http.client.annotation.Client
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import reactor.core.publisher.Mono
-import spock.lang.PendingFeature
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -83,7 +82,6 @@ class UndertowParameterBindingSpec extends Specification {
         HttpMethod.POST | '/parameter/query?name=Fr%20ed'                 | "Parameter Value: Fr ed"    | HttpStatus.OK
     }
 
-    @PendingFeature
     void "test list to single error"() {
         given:
         def req = HttpRequest.GET('/parameter/exploded?title=The%20Stand&age=20&age=30')
