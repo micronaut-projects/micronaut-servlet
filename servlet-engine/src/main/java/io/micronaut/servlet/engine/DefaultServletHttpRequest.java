@@ -436,7 +436,8 @@ public final class DefaultServletHttpRequest<B> extends MutableConvertibleValues
     @Override
     public ByteBuffer<?> contents() {
         if (bodyIsReadAsync) {
-            throw new IllegalStateException("Cannot fetch body content of an asynchronous request");
+            LOG.debug("Body is read asynchronously, cannot get contents");
+            return null;
         }
         try {
             this.servletByteBuffer = new ServletByteBuffer<>(getInputStream().readAllBytes());
@@ -448,7 +449,11 @@ public final class DefaultServletHttpRequest<B> extends MutableConvertibleValues
 
     @Override
     public ExecutionFlow<ByteBuffer<?>> bufferContents() {
-        return ExecutionFlow.just(contents());
+        ByteBuffer<?> contents = contents();
+        if (contents == null) {
+            throw new IllegalStateException("Cannot buffer contents asynchronously");
+        }
+        return ExecutionFlow.just(contents);
     }
 
     private final class ServletByteBuffer<T> implements ByteBuffer<T> {
