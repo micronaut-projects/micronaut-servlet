@@ -157,7 +157,7 @@ public abstract class ServletServerFactory extends SslBuilder<SSLContext> {
     protected String getConfiguredHost() {
         return serverConfiguration
                 .getHost()
-                .orElseGet(() -> Optional.ofNullable(System.getenv("HOST")).orElse("0.0.0.0"));
+                .orElseGet(() -> Optional.ofNullable(System.getenv("HOST")).orElse(SocketUtils.LOCALHOST));
     }
 
     /**
