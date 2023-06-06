@@ -2,7 +2,6 @@ package io.micronaut.servlet.jetty
 
 import io.micronaut.context.annotation.Property
 import io.micronaut.context.annotation.Requires
-import io.micronaut.http.HttpHeaders
 import io.micronaut.http.HttpRequest
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
@@ -15,11 +14,8 @@ import io.micronaut.http.client.annotation.Client
 import io.micronaut.http.client.exceptions.HttpClientResponseException
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.micronaut.test.support.TestPropertyProvider
-import reactor.core.publisher.Mono
-import spock.lang.PendingFeature
-import spock.lang.Specification
-
 import jakarta.inject.Inject
+import spock.lang.Specification
 
 import static io.micronaut.http.HttpHeaders.*
 
@@ -46,24 +42,16 @@ class JettyCorsSpec extends Specification implements TestPropertyProvider {
         headerNames.contains(SERVER)
     }
 
-    @PendingFeature
-    void "test cors request without configuration"() {
-        given:
+    void "without configuration (on foobar), cors request fails due to the driveby protection"() {
+        when:
         def response = rxClient.toBlocking().exchange(
                 HttpRequest.GET('/test')
                         .header(ORIGIN, 'fooBar.com')
         )
 
-        when:
-        Set<String> headerNames = response.headers.names()
-
         then:
-        response.status == HttpStatus.NO_CONTENT
-        headerNames.size() == 2
-        // Client is now keep-alive so we don't get the connection header
-        !headerNames.contains(CONNECTION)
-        headerNames.contains(DATE)
-        headerNames.contains(SERVER)
+        def e = thrown(HttpClientResponseException)
+        e.response.status == HttpStatus.FORBIDDEN
     }
 
     void "test cors request with a controller that returns map"() {
