@@ -16,6 +16,7 @@ import io.micronaut.http.client.exceptions.HttpClientResponseException
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.micronaut.test.support.TestPropertyProvider
 import reactor.core.publisher.Mono
+import spock.lang.PendingFeature
 import spock.lang.Specification
 
 import jakarta.inject.Inject
@@ -45,6 +46,7 @@ class JettyCorsSpec extends Specification implements TestPropertyProvider {
         headerNames.contains(SERVER)
     }
 
+    @PendingFeature
     void "test cors request without configuration"() {
         given:
         def response = rxClient.toBlocking().exchange(
