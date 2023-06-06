@@ -19,6 +19,7 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
 import io.micronaut.context.exceptions.ConfigurationException;
 import io.micronaut.core.io.ResourceResolver;
+import io.micronaut.core.io.socket.SocketUtils;
 import io.micronaut.http.HttpVersion;
 import io.micronaut.http.server.HttpServerConfiguration;
 import io.micronaut.http.server.exceptions.HttpServerException;
