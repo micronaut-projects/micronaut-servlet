@@ -890,22 +890,8 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
 
     private void setHeadersFromMetadata(MutableHttpResponse<Object> res, AnnotationMetadata annotationMetadata, Object result) {
         if (!res.getContentType().isPresent()) {
-            // If this was from an error route, check the content type of that route
-            Optional<MediaType> routeContentType = res.getAttribute(HttpAttributes.ROUTE_MATCH)
-                .flatMap(route -> {
-                    if (route instanceof RouteInfo && ((RouteInfo<?>) route).isErrorRoute()) {
-                        return resolveRouteSpecificMediaType((RouteInfo<?>) route);
-                    }
-                    return Optional.empty();
-                });
-            final String contentType = routeContentType.map(MediaType::toString).orElseGet(() ->
-                annotationMetadata.stringValue(Produces.class).orElse(getDefaultMediaType(result))
-            );
-            if (contentType != null) {
-                res.contentType(contentType);
-            }
+            resolveContentType(res, annotationMetadata, result).ifPresent(res::contentType);
         }
-
         final List<AnnotationValue<Header>> headers = annotationMetadata.getAnnotationValuesByType(Header.class);
         for (AnnotationValue<Header> header : headers) {
             final String value = header.stringValue().orElse(null);
@@ -914,6 +900,25 @@ public abstract class ServletHttpHandler<Req, Res> implements AutoCloseable, Lif
                 res.header(name, value);
             }
         }
+    }
+
+    @NonNull
+    private Optional<String> resolveContentType(@NonNull MutableHttpResponse<Object> res,
+                                                @NonNull AnnotationMetadata annotationMetadata,
+                                                @NonNull Object result) {
+        // If this was from an error route, check the content type of that route
+        Optional<MediaType> routeContentType = res.getAttribute(HttpAttributes.ROUTE_MATCH)
+            .flatMap(route -> {
+                if (route instanceof RouteInfo && ((RouteInfo<?>) route).isErrorRoute()) {
+                    return resolveRouteSpecificMediaType((RouteInfo<?>) route);
+                }
+                return Optional.empty();
+            });
+        return Optional.ofNullable(
+            routeContentType.map(MediaType::toString)
+                .orElseGet(() -> annotationMetadata.stringValue(Produces.class)
+                    .orElse(getDefaultMediaType(result))
+        ));
     }
 
     private Optional<MediaType> resolveRouteSpecificMediaType(RouteInfo<?> finalRoute) {

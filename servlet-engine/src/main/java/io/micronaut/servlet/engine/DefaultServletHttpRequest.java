@@ -102,11 +102,8 @@ public class DefaultServletHttpRequest<B> implements
             MediaTypeCodecRegistry codecRegistry) {
         this.delegate = delegate;
         this.codecRegistry = codecRegistry;
-        final String contextPath = delegate.getContextPath();
+
         String requestURI = delegate.getRequestURI();
-        if (StringUtils.isNotEmpty(contextPath) && requestURI.startsWith(contextPath)) {
-            requestURI = requestURI.substring(contextPath.length());
-        }
 
         String queryString = delegate.getQueryString();
         if (StringUtils.isNotEmpty(queryString)) {
