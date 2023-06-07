@@ -50,7 +50,7 @@ loadScripts(document, 'script');</script>
 <div class="header">
 <h1>Index</h1>
 </div>
-<a href="#I:A">A</a>&nbsp;<a href="#I:B">B</a>&nbsp;<a href="#I:C">C</a>&nbsp;<a href="#I:D">D</a>&nbsp;<a href="#I:E">E</a>&nbsp;<a href="#I:F">F</a>&nbsp;<a href="#I:G">G</a>&nbsp;<a href="#I:H">H</a>&nbsp;<a href="#I:I">I</a>&nbsp;<a href="#I:J">J</a>&nbsp;<a href="#I:L">L</a>&nbsp;<a href="#I:M">M</a>&nbsp;<a href="#I:N">N</a>&nbsp;<a href="#I:O">O</a>&nbsp;<a href="#I:P">P</a>&nbsp;<a href="#I:R">R</a>&nbsp;<a href="#I:S">S</a>&nbsp;<a href="#I:T">T</a>&nbsp;<a href="#I:U">U</a>&nbsp;<a href="#I:V">V</a>&nbsp;<br><a href="allclasses-index.html">All&nbsp;Classes&nbsp;and&nbsp;Interfaces</a><span class="vertical-separator">|</span><a href="allpackages-index.html">All&nbsp;Packages</a><span class="vertical-separator">|</span><a href="constant-values.html">Constant&nbsp;Field&nbsp;Values</a><span class="vertical-separator">|</span><a href="serialized-form.html">Serialized&nbsp;Form</a>
+<a href="#I:A">A</a>&nbsp;<a href="#I:B">B</a>&nbsp;<a href="#I:C">C</a>&nbsp;<a href="#I:D">D</a>&nbsp;<a href="#I:E">E</a>&nbsp;<a href="#I:F">F</a>&nbsp;<a href="#I:G">G</a>&nbsp;<a href="#I:H">H</a>&nbsp;<a href="#I:I">I</a>&nbsp;<a href="#I:J">J</a>&nbsp;<a href="#I:L">L</a>&nbsp;<a href="#I:M">M</a>&nbsp;<a href="#I:N">N</a>&nbsp;<a href="#I:O">O</a>&nbsp;<a href="#I:P">P</a>&nbsp;<a href="#I:R">R</a>&nbsp;<a href="#I:S">S</a>&nbsp;<a href="#I:T">T</a>&nbsp;<a href="#I:U">U</a>&nbsp;<a href="#I:V">V</a>&nbsp;<a href="#I:W">W</a>&nbsp;<br><a href="allclasses-index.html">All&nbsp;Classes&nbsp;and&nbsp;Interfaces</a><span class="vertical-separator">|</span><a href="allpackages-index.html">All&nbsp;Packages</a><span class="vertical-separator">|</span><a href="constant-values.html">Constant&nbsp;Field&nbsp;Values</a><span class="vertical-separator">|</span><a href="serialized-form.html">Serialized&nbsp;Form</a>
 <h2 class="title" id="I:A">A</h2>
 <dl class="index">
 <dt><a href="io/micronaut/servlet/http/encoders/AbstractFileEncoder.html" class="type-name-link" title="class in io.micronaut.servlet.http.encoders">AbstractFileEncoder</a>&lt;<a href="io/micronaut/servlet/http/encoders/AbstractFileEncoder.html" title="type parameter in AbstractFileEncoder">T</a> extends io.micronaut.http.server.types.files.FileCustomizableResponseType&gt; - Class in <a href="io/micronaut/servlet/http/encoders/package-summary.html">io.micronaut.servlet.http.encoders</a></dt>
@@ -73,6 +73,12 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/engine/bind/ServletResponseBinder.html#argumentType()" class="member-name-link">argumentType()</a> - Method in class io.micronaut.servlet.engine.bind.<a href="io/micronaut/servlet/engine/bind/ServletResponseBinder.html" title="class in io.micronaut.servlet.engine.bind">ServletResponseBinder</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html#asNativeBuffer()" class="member-name-link">asNativeBuffer()</a> - Method in class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html" title="class in io.micronaut.servlet.http">ByteArrayByteBuffer</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html#asNioBuffer()" class="member-name-link">asNioBuffer()</a> - Method in class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html" title="class in io.micronaut.servlet.http">ByteArrayByteBuffer</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html#asNioBuffer(int,int)" class="member-name-link">asNioBuffer(int, int)</a> - Method in class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html" title="class in io.micronaut.servlet.http">ByteArrayByteBuffer</a></dt>
+<dd>&nbsp;</dd>
 </dl>
 <h2 class="title" id="I:B">B</h2>
 <dl class="index">
@@ -90,6 +96,8 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">API to Read the Body of an HTTP Request where the body is supplied as an InputStream.</div>
 </dd>
+<dt><a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html#bufferContents()" class="member-name-link">bufferContents()</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html" title="class in io.micronaut.servlet.engine">DefaultServletHttpRequest</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/engine/server/ServletServerFactory.html#build(io.micronaut.http.ssl.SslConfiguration)" class="member-name-link">build(SslConfiguration)</a> - Method in class io.micronaut.servlet.engine.server.<a href="io/micronaut/servlet/engine/server/ServletServerFactory.html" title="class in io.micronaut.servlet.engine.server">ServletServerFactory</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/engine/server/ServletServerFactory.html#build(io.micronaut.http.ssl.SslConfiguration,io.micronaut.http.HttpVersion)" class="member-name-link">build(SslConfiguration, HttpVersion)</a> - Method in class io.micronaut.servlet.engine.server.<a href="io/micronaut/servlet/engine/server/ServletServerFactory.html" title="class in io.micronaut.servlet.engine.server">ServletServerFactory</a></dt>
@@ -106,11 +114,25 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/http/ServletBinderRegistry.html#byAnnotation" class="member-name-link">byAnnotation</a> - Variable in class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletBinderRegistry.html" title="class in io.micronaut.servlet.http">ServletBinderRegistry</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html" class="type-name-link" title="class in io.micronaut.servlet.http">ByteArrayByteBuffer</a>&lt;<a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html" title="type parameter in ByteArrayByteBuffer">T</a>&gt; - Class in <a href="io/micronaut/servlet/http/package-summary.html">io.micronaut.servlet.http</a></dt>
+<dd>
+<div class="block">A <code>ByteBuffer</code> implementation that is backed by a byte array.</div>
+</dd>
+<dt><a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html#%3Cinit%3E(byte%5B%5D)" class="member-name-link">ByteArrayByteBuffer(byte[])</a> - Constructor for class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html" title="class in io.micronaut.servlet.http">ByteArrayByteBuffer</a></dt>
+<dd>
+<div class="block">Construct a new <a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html" title="class in io.micronaut.servlet.http"><code>ByteArrayByteBuffer</code></a> for the given bytes.</div>
+</dd>
+<dt><a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html#%3Cinit%3E(byte%5B%5D,int)" class="member-name-link">ByteArrayByteBuffer(byte[], int)</a> - Constructor for class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html" title="class in io.micronaut.servlet.http">ByteArrayByteBuffer</a></dt>
+<dd>
+<div class="block">Construct a new <a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html" title="class in io.micronaut.servlet.http"><code>ByteArrayByteBuffer</code></a> for the given bytes and capacity.</div>
+</dd>
 <dt><a href="io/micronaut/servlet/http/ServletBinderRegistry.html#byType" class="member-name-link">byType</a> - Variable in class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletBinderRegistry.html" title="class in io.micronaut.servlet.http">ServletBinderRegistry</a></dt>
 <dd>&nbsp;</dd>
 </dl>
 <h2 class="title" id="I:C">C</h2>
 <dl class="index">
+<dt><a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html#capacity(int)" class="member-name-link">capacity(int)</a> - Method in class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html" title="class in io.micronaut.servlet.http">ByteArrayByteBuffer</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/engine/server/ServletStaticResourceConfiguration.html#CLASSPATH_PREFIX" class="member-name-link">CLASSPATH_PREFIX</a> - Static variable in interface io.micronaut.servlet.engine.server.<a href="io/micronaut/servlet/engine/server/ServletStaticResourceConfiguration.html" title="interface in io.micronaut.servlet.engine.server">ServletStaticResourceConfiguration</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/http/ServletHttpHandler.html#close()" class="member-name-link">close()</a> - Method in class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletHttpHandler.html" title="class in io.micronaut.servlet.http">ServletHttpHandler</a></dt>
@@ -124,6 +146,8 @@ loadScripts(document, 'script');</script>
 <div class="block">Method should be called after the async processing is completed.</div>
 </dd>
 <dt><a href="io/micronaut/servlet/engine/DefaultServletHttpResponse.html#contentLength(long)" class="member-name-link">contentLength(long)</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/DefaultServletHttpResponse.html" title="class in io.micronaut.servlet.engine">DefaultServletHttpResponse</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html#contents()" class="member-name-link">contents()</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html" title="class in io.micronaut.servlet.engine">DefaultServletHttpRequest</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/engine/DefaultServletHttpResponse.html#contentType(io.micronaut.http.MediaType)" class="member-name-link">contentType(MediaType)</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/DefaultServletHttpResponse.html" title="class in io.micronaut.servlet.engine">DefaultServletHttpResponse</a></dt>
 <dd>&nbsp;</dd>
@@ -297,6 +321,8 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/servlet/engine/DefaultServletHttpResponse.html#getBody()" class="member-name-link">getBody()</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/DefaultServletHttpResponse.html" title="class in io.micronaut.servlet.engine">DefaultServletHttpResponse</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html#getBody(io.micronaut.core.type.Argument)" class="member-name-link">getBody(Argument&lt;T&gt;)</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html" title="class in io.micronaut.servlet.engine">DefaultServletHttpRequest</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html#getByte(int)" class="member-name-link">getByte(int)</a> - Method in class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html" title="class in io.micronaut.servlet.http">ByteArrayByteBuffer</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/engine/ServletCompletedFileUpload.html#getByteBuffer()" class="member-name-link">getByteBuffer()</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/ServletCompletedFileUpload.html" title="class in io.micronaut.servlet.engine">ServletCompletedFileUpload</a></dt>
 <dd>&nbsp;</dd>
@@ -516,6 +542,8 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Performs if not modified handling.</div>
 </dd>
+<dt><a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html#indexOf(byte)" class="member-name-link">indexOf(byte)</a> - Method in class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html" title="class in io.micronaut.servlet.http">ByteArrayByteBuffer</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/engine/DefaultMicronautServlet.html#init()" class="member-name-link">init()</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/DefaultMicronautServlet.html" title="class in io.micronaut.servlet.engine">DefaultMicronautServlet</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/engine/package-summary.html">io.micronaut.servlet.engine</a> - package io.micronaut.servlet.engine</dt>
@@ -553,6 +581,8 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/servlet/engine/server/ServletStaticResourceConfiguration.html#isEnabled()" class="member-name-link">isEnabled()</a> - Method in interface io.micronaut.servlet.engine.server.<a href="io/micronaut/servlet/engine/server/ServletStaticResourceConfiguration.html" title="interface in io.micronaut.servlet.engine.server">ServletStaticResourceConfiguration</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/http/BodyBuilder.html#isFormSubmission(io.micronaut.http.MediaType)" class="member-name-link">isFormSubmission(MediaType)</a> - Static method in interface io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/BodyBuilder.html" title="interface in io.micronaut.servlet.http">BodyBuilder</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html#isFull()" class="member-name-link">isFull()</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html" title="class in io.micronaut.servlet.engine">DefaultServletHttpRequest</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/engine/ServletCookieAdapter.html#isHttpOnly()" class="member-name-link">isHttpOnly()</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/ServletCookieAdapter.html" title="class in io.micronaut.servlet.engine">ServletCookieAdapter</a></dt>
 <dd>&nbsp;</dd>
@@ -621,6 +651,8 @@ loadScripts(document, 'script');</script>
 <dl class="index">
 <dt><a href="io/micronaut/servlet/engine/ServletCookieAdapter.html#maxAge(long)" class="member-name-link">maxAge(long)</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/ServletCookieAdapter.html" title="class in io.micronaut.servlet.engine">ServletCookieAdapter</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html#maxCapacity()" class="member-name-link">maxCapacity()</a> - Method in class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html" title="class in io.micronaut.servlet.http">ByteArrayByteBuffer</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/engine/MicronautServletConfiguration.html" class="type-name-link" title="class in io.micronaut.servlet.engine">MicronautServletConfiguration</a> - Class in <a href="io/micronaut/servlet/engine/package-summary.html">io.micronaut.servlet.engine</a></dt>
 <dd>
 <div class="block">Configuration properties for the Micronaut servlet.</div>
@@ -675,6 +707,20 @@ loadScripts(document, 'script');</script>
 </dl>
 <h2 class="title" id="I:R">R</h2>
 <dl class="index">
+<dt><a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html#read()" class="member-name-link">read()</a> - Method in class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html" title="class in io.micronaut.servlet.http">ByteArrayByteBuffer</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html#read(byte%5B%5D)" class="member-name-link">read(byte[])</a> - Method in class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html" title="class in io.micronaut.servlet.http">ByteArrayByteBuffer</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html#read(byte%5B%5D,int,int)" class="member-name-link">read(byte[], int, int)</a> - Method in class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html" title="class in io.micronaut.servlet.http">ByteArrayByteBuffer</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html#readableBytes()" class="member-name-link">readableBytes()</a> - Method in class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html" title="class in io.micronaut.servlet.http">ByteArrayByteBuffer</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html#readCharSequence(int,java.nio.charset.Charset)" class="member-name-link">readCharSequence(int, Charset)</a> - Method in class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html" title="class in io.micronaut.servlet.http">ByteArrayByteBuffer</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html#readerIndex()" class="member-name-link">readerIndex()</a> - Method in class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html" title="class in io.micronaut.servlet.http">ByteArrayByteBuffer</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html#readerIndex(int)" class="member-name-link">readerIndex(int)</a> - Method in class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html" title="class in io.micronaut.servlet.http">ByteArrayByteBuffer</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/engine/DefaultServletHttpResponse.html#reason()" class="member-name-link">reason()</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/DefaultServletHttpResponse.html" title="class in io.micronaut.servlet.engine">DefaultServletHttpResponse</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/jetty/JettyFactory.html#RESOURCE_BASE" class="member-name-link">RESOURCE_BASE</a> - Static variable in class io.micronaut.servlet.jetty.<a href="io/micronaut/servlet/jetty/JettyFactory.html" title="class in io.micronaut.servlet.jetty">JettyFactory</a></dt>
@@ -833,6 +879,8 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Sets the worker options.</div>
 </dd>
+<dt><a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html#slice(int,int)" class="member-name-link">slice(int, int)</a> - Method in class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html" title="class in io.micronaut.servlet.http">ByteArrayByteBuffer</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/engine/server/AbstractServletServer.html#start()" class="member-name-link">start()</a> - Method in class io.micronaut.servlet.engine.server.<a href="io/micronaut/servlet/engine/server/AbstractServletServer.html" title="class in io.micronaut.servlet.engine.server">AbstractServletServer</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/http/ServletHttpHandler.html#start()" class="member-name-link">start()</a> - Method in class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletHttpHandler.html" title="class in io.micronaut.servlet.http">ServletHttpHandler</a></dt>
@@ -904,6 +952,10 @@ loadScripts(document, 'script');</script>
 </dl>
 <h2 class="title" id="I:T">T</h2>
 <dl class="index">
+<dt><a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html#toByteArray()" class="member-name-link">toByteArray()</a> - Method in class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html" title="class in io.micronaut.servlet.http">ByteArrayByteBuffer</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html#toInputStream()" class="member-name-link">toInputStream()</a> - Method in class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html" title="class in io.micronaut.servlet.http">ByteArrayByteBuffer</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/tomcat/TomcatConfiguration.html" class="type-name-link" title="class in io.micronaut.servlet.tomcat">TomcatConfiguration</a> - Class in <a href="io/micronaut/servlet/tomcat/package-summary.html">io.micronaut.servlet.tomcat</a></dt>
 <dd>
 <div class="block">Extends <code>HttpServerConfiguration</code> and allows configuring Tomcat.</div>
@@ -936,6 +988,10 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Default constructor.</div>
 </dd>
+<dt><a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html#toOutputStream()" class="member-name-link">toOutputStream()</a> - Method in class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html" title="class in io.micronaut.servlet.http">ByteArrayByteBuffer</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html#toString(java.nio.charset.Charset)" class="member-name-link">toString(Charset)</a> - Method in class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html" title="class in io.micronaut.servlet.http">ByteArrayByteBuffer</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/engine/bind/ServletRequestBinder.html#TYPE" class="member-name-link">TYPE</a> - Static variable in class io.micronaut.servlet.engine.bind.<a href="io/micronaut/servlet/engine/bind/ServletRequestBinder.html" title="class in io.micronaut.servlet.engine.bind">ServletRequestBinder</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/engine/bind/ServletResponseBinder.html#TYPE" class="member-name-link">TYPE</a> - Static variable in class io.micronaut.servlet.engine.bind.<a href="io/micronaut/servlet/engine/bind/ServletResponseBinder.html" title="class in io.micronaut.servlet.engine.bind">ServletResponseBinder</a></dt>
@@ -985,7 +1041,28 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/servlet/engine/DefaultServletCookies.html#values()" class="member-name-link">values()</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/DefaultServletCookies.html" title="class in io.micronaut.servlet.engine">DefaultServletCookies</a></dt>
 <dd>&nbsp;</dd>
 </dl>
-<a href="#I:A">A</a>&nbsp;<a href="#I:B">B</a>&nbsp;<a href="#I:C">C</a>&nbsp;<a href="#I:D">D</a>&nbsp;<a href="#I:E">E</a>&nbsp;<a href="#I:F">F</a>&nbsp;<a href="#I:G">G</a>&nbsp;<a href="#I:H">H</a>&nbsp;<a href="#I:I">I</a>&nbsp;<a href="#I:J">J</a>&nbsp;<a href="#I:L">L</a>&nbsp;<a href="#I:M">M</a>&nbsp;<a href="#I:N">N</a>&nbsp;<a href="#I:O">O</a>&nbsp;<a href="#I:P">P</a>&nbsp;<a href="#I:R">R</a>&nbsp;<a href="#I:S">S</a>&nbsp;<a href="#I:T">T</a>&nbsp;<a href="#I:U">U</a>&nbsp;<a href="#I:V">V</a>&nbsp;<br><a href="allclasses-index.html">All&nbsp;Classes&nbsp;and&nbsp;Interfaces</a><span class="vertical-separator">|</span><a href="allpackages-index.html">All&nbsp;Packages</a><span class="vertical-separator">|</span><a href="constant-values.html">Constant&nbsp;Field&nbsp;Values</a><span class="vertical-separator">|</span><a href="serialized-form.html">Serialized&nbsp;Form</a></main>
+<h2 class="title" id="I:W">W</h2>
+<dl class="index">
+<dt><a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html#writableBytes()" class="member-name-link">writableBytes()</a> - Method in class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html" title="class in io.micronaut.servlet.http">ByteArrayByteBuffer</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html#write(byte)" class="member-name-link">write(byte)</a> - Method in class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html" title="class in io.micronaut.servlet.http">ByteArrayByteBuffer</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html#write(byte%5B%5D)" class="member-name-link">write(byte[])</a> - Method in class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html" title="class in io.micronaut.servlet.http">ByteArrayByteBuffer</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html#write(byte%5B%5D,int,int)" class="member-name-link">write(byte[], int, int)</a> - Method in class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html" title="class in io.micronaut.servlet.http">ByteArrayByteBuffer</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html#write(io.micronaut.core.io.buffer.ByteBuffer...)" class="member-name-link">write(ByteBuffer...)</a> - Method in class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html" title="class in io.micronaut.servlet.http">ByteArrayByteBuffer</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html#write(java.lang.CharSequence,java.nio.charset.Charset)" class="member-name-link">write(CharSequence, Charset)</a> - Method in class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html" title="class in io.micronaut.servlet.http">ByteArrayByteBuffer</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html#write(java.nio.ByteBuffer...)" class="member-name-link">write(ByteBuffer...)</a> - Method in class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html" title="class in io.micronaut.servlet.http">ByteArrayByteBuffer</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html#writerIndex()" class="member-name-link">writerIndex()</a> - Method in class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html" title="class in io.micronaut.servlet.http">ByteArrayByteBuffer</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html#writerIndex(int)" class="member-name-link">writerIndex(int)</a> - Method in class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html" title="class in io.micronaut.servlet.http">ByteArrayByteBuffer</a></dt>
+<dd>&nbsp;</dd>
+</dl>
+<a href="#I:A">A</a>&nbsp;<a href="#I:B">B</a>&nbsp;<a href="#I:C">C</a>&nbsp;<a href="#I:D">D</a>&nbsp;<a href="#I:E">E</a>&nbsp;<a href="#I:F">F</a>&nbsp;<a href="#I:G">G</a>&nbsp;<a href="#I:H">H</a>&nbsp;<a href="#I:I">I</a>&nbsp;<a href="#I:J">J</a>&nbsp;<a href="#I:L">L</a>&nbsp;<a href="#I:M">M</a>&nbsp;<a href="#I:N">N</a>&nbsp;<a href="#I:O">O</a>&nbsp;<a href="#I:P">P</a>&nbsp;<a href="#I:R">R</a>&nbsp;<a href="#I:S">S</a>&nbsp;<a href="#I:T">T</a>&nbsp;<a href="#I:U">U</a>&nbsp;<a href="#I:V">V</a>&nbsp;<a href="#I:W">W</a>&nbsp;<br><a href="allclasses-index.html">All&nbsp;Classes&nbsp;and&nbsp;Interfaces</a><span class="vertical-separator">|</span><a href="allpackages-index.html">All&nbsp;Packages</a><span class="vertical-separator">|</span><a href="constant-values.html">Constant&nbsp;Field&nbsp;Values</a><span class="vertical-separator">|</span><a href="serialized-form.html">Serialized&nbsp;Form</a></main>
 </div>
 </div>
 </body>
