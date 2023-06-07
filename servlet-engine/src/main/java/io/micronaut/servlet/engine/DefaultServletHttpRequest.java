@@ -436,7 +436,9 @@ public final class DefaultServletHttpRequest<B> extends MutableConvertibleValues
     @Override
     public ByteBuffer<?> contents() {
         if (bodyIsReadAsync) {
-            LOG.debug("Body is read asynchronously, cannot get contents");
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Body is read asynchronously, cannot get contents");
+            }
             return null;
         }
         try {
@@ -451,7 +453,7 @@ public final class DefaultServletHttpRequest<B> extends MutableConvertibleValues
     public ExecutionFlow<ByteBuffer<?>> bufferContents() {
         ByteBuffer<?> contents = contents();
         if (contents == null) {
-            throw new IllegalStateException("Cannot buffer contents asynchronously");
+            return null;
         }
         return ExecutionFlow.just(contents);
     }
