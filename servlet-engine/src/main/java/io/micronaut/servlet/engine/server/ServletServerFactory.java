@@ -19,6 +19,7 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
 import io.micronaut.context.exceptions.ConfigurationException;
 import io.micronaut.core.io.ResourceResolver;
+import io.micronaut.core.io.socket.SocketUtils;
 import io.micronaut.http.HttpVersion;
 import io.micronaut.http.server.HttpServerConfiguration;
 import io.micronaut.http.server.exceptions.HttpServerException;
@@ -157,7 +158,7 @@ public abstract class ServletServerFactory extends SslBuilder<SSLContext> {
     protected String getConfiguredHost() {
         return serverConfiguration
                 .getHost()
-                .orElseGet(() -> Optional.ofNullable(System.getenv("HOST")).orElse("0.0.0.0"));
+                .orElseGet(() -> Optional.ofNullable(System.getenv("HOST")).orElse(SocketUtils.LOCALHOST));
     }
 
     /**
