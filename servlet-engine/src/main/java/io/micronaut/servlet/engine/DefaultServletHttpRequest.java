@@ -23,11 +23,14 @@ import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.convert.value.MutableConvertibleValues;
 import io.micronaut.core.convert.value.MutableConvertibleValuesMap;
+import io.micronaut.core.execution.ExecutionFlow;
+import io.micronaut.core.io.buffer.ByteBuffer;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.core.util.SupplierUtil;
+import io.micronaut.http.FullHttpRequest;
 import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpMethod;
 import io.micronaut.http.HttpParameters;
@@ -36,6 +39,7 @@ import io.micronaut.http.MutableHttpRequest;
 import io.micronaut.http.codec.MediaTypeCodecRegistry;
 import io.micronaut.http.cookie.Cookies;
 import io.micronaut.servlet.http.BodyBuilder;
+import io.micronaut.servlet.http.ByteArrayByteBuffer;
 import io.micronaut.servlet.http.ServletExchange;
 import io.micronaut.servlet.http.ServletHttpRequest;
 import io.micronaut.servlet.http.ServletHttpResponse;
@@ -84,7 +88,9 @@ public final class DefaultServletHttpRequest<B> extends MutableConvertibleValues
     ServletHttpRequest<HttpServletRequest, B>,
     MutableConvertibleValues<Object>,
     ServletExchange<HttpServletRequest, HttpServletResponse>,
-    StreamedServletMessage<B, byte[]> {
+    StreamedServletMessage<B, byte[]>,
+    FullHttpRequest<B> {
+
     private static final Logger LOG = LoggerFactory.getLogger(DefaultServletHttpRequest.class);
 
     private final ConversionService conversionService;
@@ -99,6 +105,7 @@ public final class DefaultServletHttpRequest<B> extends MutableConvertibleValues
     private Supplier<Optional<B>> body;
 
     private boolean bodyIsReadAsync;
+    private ByteArrayByteBuffer<B> servletByteBuffer;
 
     /**
      * Default constructor.
@@ -246,7 +253,7 @@ public final class DefaultServletHttpRequest<B> extends MutableConvertibleValues
 
     @Override
     public InputStream getInputStream() throws IOException {
-        return delegate.getInputStream();
+        return servletByteBuffer != null ? servletByteBuffer.toInputStream() : delegate.getInputStream();
     }
 
     @Override
@@ -415,6 +422,38 @@ public final class DefaultServletHttpRequest<B> extends MutableConvertibleValues
         }
         Flux<byte[]> bodyContent = emitter.asFlux();
         bodyContent.subscribe(s);
+    }
+
+    @Override
+    public boolean isFull() {
+        return !bodyIsReadAsync;
+    }
+
+    @Override
+    public ByteBuffer<?> contents() {
+        if (bodyIsReadAsync) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Body is read asynchronously, cannot get contents");
+            }
+            return null;
+        }
+        try {
+            if (servletByteBuffer == null) {
+                this.servletByteBuffer = new ByteArrayByteBuffer<>(delegate.getInputStream().readAllBytes());
+            }
+            return servletByteBuffer;
+        } catch (IOException e) {
+            throw new IllegalStateException("Error getting all body contents", e);
+        }
+    }
+
+    @Override
+    public ExecutionFlow<ByteBuffer<?>> bufferContents() {
+        ByteBuffer<?> contents = contents();
+        if (contents == null) {
+            return null;
+        }
+        return ExecutionFlow.just(contents);
     }
 
     /**

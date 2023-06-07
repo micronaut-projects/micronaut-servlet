@@ -158,7 +158,10 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
                         final T converted = conversionService.convertRequired(publisher, type);
                         return () -> Optional.of(converted);
                     }
-                    if (type.isArray()) {
+                    if (type.isAssignableFrom(byte[].class)) {
+                        byte[] content = inputStream.readAllBytes();
+                        return () -> Optional.of((T) content);
+                    } else if (type.isArray()) {
                         Class<?> componentType = type.getComponentType();
                         List<T> content = (List<T>) codec.decode(Argument.listOf(componentType), inputStream);
                         Object[] array = content.toArray((Object[]) Array.newInstance(componentType, 0));
