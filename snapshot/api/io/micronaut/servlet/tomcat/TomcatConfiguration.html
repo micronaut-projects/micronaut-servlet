@@ -131,8 +131,8 @@ loadScripts(document, 'script');</script>
 <div class="summary-table two-column-summary">
 <div class="table-header col-first">Constructor</div>
 <div class="table-header col-last">Description</div>
-<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(io.micronaut.http.server.HttpServerConfiguration.MultipartConfiguration,java.lang.String)" class="member-name-link">TomcatConfiguration</a><wbr>(io.micronaut.http.server.HttpServerConfiguration.MultipartConfiguration&nbsp;multipartConfiguration,
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;protocol)</code></div>
+<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(io.micronaut.http.server.HttpServerConfiguration.MultipartConfiguration,java.lang.String)" class="member-name-link">TomcatConfiguration</a><wbr>(@Nullable io.micronaut.http.server.HttpServerConfiguration.MultipartConfiguration&nbsp;multipartConfiguration,
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;protocol)</code></div>
 <div class="col-last even-row-color">
 <div class="block">Default constructor.</div>
 </div>
@@ -160,7 +160,7 @@ loadScripts(document, 'script');</script>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getTomcatConnector()" class="member-name-link">getTomcatConnector</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setProtocol(java.lang.String)" class="member-name-link">setProtocol</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;protocol)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setProtocol(java.lang.String)" class="member-name-link">setProtocol</a><wbr>(@Nullable <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;protocol)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 </div>
 </div>
@@ -201,9 +201,9 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="&lt;init&gt;(io.micronaut.http.server.HttpServerConfiguration.MultipartConfiguration,java.lang.String)">
 <h3>TomcatConfiguration</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">TomcatConfiguration</span><wbr><span class="parameters">(@Nullable
- io.micronaut.http.server.HttpServerConfiguration.MultipartConfiguration&nbsp;multipartConfiguration,
+ @Nullable io.micronaut.http.server.HttpServerConfiguration.MultipartConfiguration&nbsp;multipartConfiguration,
  @Property(name="micronaut.server.tomcat.protocol") @Nullable
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;protocol)</span></div>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;protocol)</span></div>
 <div class="block">Default constructor.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -234,7 +234,7 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="setProtocol(java.lang.String)">
 <h3>setProtocol</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">setProtocol</span><wbr><span class="parameters">(@Nullable
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;protocol)</span></div>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;protocol)</span></div>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>protocol</code> - The protocol to use. Defaults to org.apache.coyote.http11.Http11NioProtocol.</dd>

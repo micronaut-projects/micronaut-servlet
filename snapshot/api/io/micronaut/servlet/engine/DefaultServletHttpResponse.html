@@ -146,16 +146,16 @@ implements <a href="../http/ServletHttpResponse.html" title="interface in io.mic
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>io.micronaut.http.MutableHttpResponse&lt;<a href="DefaultServletHttpResponse.html" title="type parameter in DefaultServletHttpResponse">B</a>&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#cookie(io.micronaut.http.cookie.Cookie)" class="member-name-link">cookie</a><wbr>(io.micronaut.http.cookie.Cookie&nbsp;cookie)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>io.micronaut.core.convert.value.MutableConvertibleValues&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull io.micronaut.core.convert.value.MutableConvertibleValues&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getAttributes()" class="member-name-link">getAttributes</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="DefaultServletHttpResponse.html" title="type parameter in DefaultServletHttpResponse">B</a>&gt;</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="DefaultServletHttpResponse.html" title="type parameter in DefaultServletHttpResponse">B</a>&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getBody()" class="member-name-link">getBody</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;io.micronaut.http.MediaType&gt;</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;io.micronaut.http.MediaType&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getContentType()" class="member-name-link">getContentType</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>io.micronaut.http.MutableHttpHeaders</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull io.micronaut.http.MutableHttpHeaders</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getHeaders()" class="member-name-link">getHeaders</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.servlet.http.HttpServletResponse</code></div>
@@ -274,7 +274,7 @@ implements <a href="../http/ServletHttpResponse.html" title="interface in io.mic
 <section class="detail" id="getContentType()">
 <h3>getContentType</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;io.micronaut.http.MediaType&gt;</span>&nbsp;<span class="element-name">getContentType</span>()</div>
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;io.micronaut.http.MediaType&gt;</span>&nbsp;<span class="element-name">getContentType</span>()</div>
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code>getContentType</code>&nbsp;in interface&nbsp;<code>io.micronaut.http.HttpMessage&lt;<a href="DefaultServletHttpResponse.html" title="type parameter in DefaultServletHttpResponse">B</a>&gt;</code></dd>
@@ -424,7 +424,7 @@ implements <a href="../http/ServletHttpResponse.html" title="interface in io.mic
 <section class="detail" id="getHeaders()">
 <h3>getHeaders</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">public</span>&nbsp;<span class="return-type">io.micronaut.http.MutableHttpHeaders</span>&nbsp;<span class="element-name">getHeaders</span>()</div>
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type">@NonNull io.micronaut.http.MutableHttpHeaders</span>&nbsp;<span class="element-name">getHeaders</span>()</div>
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code>getHeaders</code>&nbsp;in interface&nbsp;<code>io.micronaut.http.HttpMessage&lt;<a href="DefaultServletHttpResponse.html" title="type parameter in DefaultServletHttpResponse">B</a>&gt;</code></dd>
@@ -437,7 +437,7 @@ implements <a href="../http/ServletHttpResponse.html" title="interface in io.mic
 <section class="detail" id="getAttributes()">
 <h3>getAttributes</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">public</span>&nbsp;<span class="return-type">io.micronaut.core.convert.value.MutableConvertibleValues&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</span>&nbsp;<span class="element-name">getAttributes</span>()</div>
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type">@NonNull io.micronaut.core.convert.value.MutableConvertibleValues&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</span>&nbsp;<span class="element-name">getAttributes</span>()</div>
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code>getAttributes</code>&nbsp;in interface&nbsp;<code>io.micronaut.core.attr.AttributeHolder</code></dd>
@@ -452,7 +452,7 @@ implements <a href="../http/ServletHttpResponse.html" title="interface in io.mic
 <section class="detail" id="getBody()">
 <h3>getBody</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="DefaultServletHttpResponse.html" title="type parameter in DefaultServletHttpResponse">B</a>&gt;</span>&nbsp;<span class="element-name">getBody</span>()</div>
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="DefaultServletHttpResponse.html" title="type parameter in DefaultServletHttpResponse">B</a>&gt;</span>&nbsp;<span class="element-name">getBody</span>()</div>
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code>getBody</code>&nbsp;in interface&nbsp;<code>io.micronaut.http.HttpMessage&lt;<a href="DefaultServletHttpResponse.html" title="type parameter in DefaultServletHttpResponse">B</a>&gt;</code></dd>

@@ -105,7 +105,7 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-last">Description</div>
 <div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E()" class="member-name-link">StreamFileEncoder</a>()</code></div>
 <div class="col-last even-row-color">&nbsp;</div>
-<div class="col-constructor-name odd-row-color"><code><a href="#%3Cinit%3E(io.micronaut.servlet.http.ServletConfiguration)" class="member-name-link">StreamFileEncoder</a><wbr>(<a href="../ServletConfiguration.html" title="interface in io.micronaut.servlet.http">ServletConfiguration</a>&nbsp;servletConfiguration)</code></div>
+<div class="col-constructor-name odd-row-color"><code><a href="#%3Cinit%3E(io.micronaut.servlet.http.ServletConfiguration)" class="member-name-link">StreamFileEncoder</a><wbr>(@Nullable <a href="../ServletConfiguration.html" title="interface in io.micronaut.servlet.http">ServletConfiguration</a>&nbsp;servletConfiguration)</code></div>
 <div class="col-last odd-row-color">&nbsp;</div>
 </div>
 </section>
@@ -122,9 +122,9 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>org.reactivestreams.Publisher&lt;io.micronaut.http.MutableHttpResponse&lt;?&gt;&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#encode(io.micronaut.servlet.http.ServletExchange,io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.http.server.types.files.StreamedFile)" class="member-name-link">encode</a><wbr>(<a href="../ServletExchange.html" title="interface in io.micronaut.servlet.http">ServletExchange</a>&lt;?,<wbr>?&gt;&nbsp;exchange,
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#encode(io.micronaut.servlet.http.ServletExchange,io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.http.server.types.files.StreamedFile)" class="member-name-link">encode</a><wbr>(@NonNull <a href="../ServletExchange.html" title="interface in io.micronaut.servlet.http">ServletExchange</a>&lt;?,<wbr>?&gt;&nbsp;exchange,
  io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
- io.micronaut.http.server.types.files.StreamedFile&nbsp;value)</code></div>
+ @NonNull io.micronaut.http.server.types.files.StreamedFile&nbsp;value)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Encode the given value.</div>
 </div>
@@ -156,7 +156,7 @@ loadScripts(document, 'script');</script>
 <h3>StreamFileEncoder</h3>
 <div class="member-signature"><span class="annotations">@Inject
 </span><span class="modifiers">public</span>&nbsp;<span class="element-name">StreamFileEncoder</span><wbr><span class="parameters">(@Nullable
- <a href="../ServletConfiguration.html" title="interface in io.micronaut.servlet.http">ServletConfiguration</a>&nbsp;servletConfiguration)</span></div>
+ @Nullable <a href="../ServletConfiguration.html" title="interface in io.micronaut.servlet.http">ServletConfiguration</a>&nbsp;servletConfiguration)</span></div>
 </section>
 </li>
 <li>
@@ -187,10 +187,10 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="encode(io.micronaut.servlet.http.ServletExchange,io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.http.server.types.files.StreamedFile)">
 <h3>encode</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">org.reactivestreams.Publisher&lt;io.micronaut.http.MutableHttpResponse&lt;?&gt;&gt;</span>&nbsp;<span class="element-name">encode</span><wbr><span class="parameters">(@NonNull
- <a href="../ServletExchange.html" title="interface in io.micronaut.servlet.http">ServletExchange</a>&lt;?,<wbr>?&gt;&nbsp;exchange,
+ @NonNull <a href="../ServletExchange.html" title="interface in io.micronaut.servlet.http">ServletExchange</a>&lt;?,<wbr>?&gt;&nbsp;exchange,
  io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
  @NonNull
- io.micronaut.http.server.types.files.StreamedFile&nbsp;value)</span></div>
+ @NonNull io.micronaut.http.server.types.files.StreamedFile&nbsp;value)</span></div>
 <div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../ServletResponseEncoder.html#encode(io.micronaut.servlet.http.ServletExchange,io.micronaut.core.annotation.AnnotationMetadata,T)">ServletResponseEncoder</a></code></span></div>
 <div class="block">Encode the given value.</div>
 <dl class="notes">
