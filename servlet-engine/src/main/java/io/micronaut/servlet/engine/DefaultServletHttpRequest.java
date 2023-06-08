@@ -40,6 +40,7 @@ import io.micronaut.http.codec.MediaTypeCodecRegistry;
 import io.micronaut.http.cookie.Cookies;
 import io.micronaut.servlet.http.BodyBuilder;
 import io.micronaut.servlet.http.ByteArrayByteBuffer;
+import io.micronaut.servlet.http.ParsedBodyHolder;
 import io.micronaut.servlet.http.ServletExchange;
 import io.micronaut.servlet.http.ServletHttpRequest;
 import io.micronaut.servlet.http.ServletHttpResponse;
@@ -89,7 +90,8 @@ public final class DefaultServletHttpRequest<B> extends MutableConvertibleValues
     MutableConvertibleValues<Object>,
     ServletExchange<HttpServletRequest, HttpServletResponse>,
     StreamedServletMessage<B, byte[]>,
-    FullHttpRequest<B> {
+    FullHttpRequest<B>,
+    ParsedBodyHolder<B> {
 
     private static final Logger LOG = LoggerFactory.getLogger(DefaultServletHttpRequest.class);
 
@@ -106,6 +108,7 @@ public final class DefaultServletHttpRequest<B> extends MutableConvertibleValues
 
     private boolean bodyIsReadAsync;
     private ByteArrayByteBuffer<B> servletByteBuffer;
+    private B parsedBody;
 
     /**
      * Default constructor.
@@ -145,7 +148,7 @@ public final class DefaultServletHttpRequest<B> extends MutableConvertibleValues
         this.parameters = new ServletParameters();
         this.response = new DefaultServletHttpResponse<>(conversionService, this, response);
         this.body = SupplierUtil.memoizedNonEmpty(() -> {
-            B built = (B) bodyBuilder.buildBody(this::getInputStream, this);
+            B built = parsedBody != null ? parsedBody : (B) bodyBuilder.buildBody(this::getInputStream, this);
             return Optional.ofNullable(built);
         });
     }
@@ -321,6 +324,11 @@ public final class DefaultServletHttpRequest<B> extends MutableConvertibleValues
     @Override
     public MutableConvertibleValues<Object> getAttributes() {
         return this;
+    }
+
+    @Override
+    public void setParsedBody(B body) {
+        this.parsedBody = body;
     }
 
     @NonNull
