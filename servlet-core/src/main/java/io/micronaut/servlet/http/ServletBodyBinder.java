@@ -174,6 +174,9 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
                     } else {
                         content = codec.decode(argument, inputStream);
                     }
+                    if (content != null && servletHttpRequest instanceof ParsedBodyHolder parsedBody) {
+                        parsedBody.setParsedBody(content);
+                    }
                     return () -> Optional.of(content);
                 } catch (CodecException | IOException e) {
                     throw new CodecException("Unable to decode request body: " + e.getMessage(), e);
