@@ -16,7 +16,7 @@ bcpkix = "1.70"
 
 micronaut-reactor = "3.0.0-M5"
 micronaut-security = "4.0.0-M5"
-micronaut-serde = "2.0.0-M8"
+micronaut-serde = "2.0.0-M9"
 micronaut-session = "4.0.0-M2"
 micronaut-validation = "4.0.0-M9"
 google-cloud-functions = '1.0.4'
