@@ -33,6 +33,7 @@ import io.micronaut.http.MutableHttpResponse;
 import io.micronaut.http.annotation.Produces;
 import io.micronaut.http.codec.MediaTypeCodec;
 import io.micronaut.http.cookie.Cookie;
+import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.http.server.exceptions.InternalServerException;
 import io.micronaut.servlet.http.ServletHttpResponse;
 import org.reactivestreams.Publisher;
@@ -98,6 +99,7 @@ public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpSe
             boolean isJson = contentType.getSubtype().equals("json");
             boolean first = true;
             boolean raw = false;
+            boolean written = false;
             @Override
             public void onSubscribe(Subscription s) {
                 subscription = s;
@@ -128,41 +130,7 @@ public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpSe
                 try {
                     if (outputStream.isReady() && !finished.get()) {
 
-                        if (o instanceof byte[]) {
-                            raw = true;
-                            outputStream.write((byte[]) o);
-                            flushIfReady();
-                        } else if (o instanceof ByteBuffer) {
-                            ByteBuffer buf = (ByteBuffer) o;
-                            try {
-                                raw = true;
-                                outputStream.write(buf.toByteArray());
-                                flushIfReady();
-                            } finally {
-                                if (buf instanceof ReferenceCounted) {
-                                    ((ReferenceCounted) buf).release();
-                                }
-                            }
-                        } else if (codec != null) {
-
-                            if (isJson) {
-                                if (first) {
-                                    outputStream.write('[');
-                                    first = false;
-                                } else {
-                                    outputStream.write(',');
-                                }
-                            }
-                            if (outputStream.isReady()) {
-                                if (o instanceof CharSequence) {
-                                    outputStream.write(o.toString().getBytes(getCharacterEncoding()));
-                                } else {
-                                    byte[] bytes = codec.encode(o);
-                                    outputStream.write(bytes);
-                                }
-                                flushIfReady();
-                            }
-                        }
+                        writeToOutputStream(o);
 
                         if (outputStream.isReady()) {
                             subscription.request(1);
@@ -176,6 +144,45 @@ public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpSe
                 }
             }
 
+            private void writeToOutputStream(Object o) throws IOException {
+                written = true;
+                if (o instanceof byte[]) {
+                    raw = true;
+                    outputStream.write((byte[]) o);
+                    flushIfReady();
+                } else if (o instanceof ByteBuffer) {
+                    ByteBuffer buf = (ByteBuffer) o;
+                    try {
+                        raw = true;
+                        outputStream.write(buf.toByteArray());
+                        flushIfReady();
+                    } finally {
+                        if (buf instanceof ReferenceCounted) {
+                            ((ReferenceCounted) buf).release();
+                        }
+                    }
+                } else if (codec != null) {
+
+                    if (isJson) {
+                        if (first) {
+                            outputStream.write('[');
+                            first = false;
+                        } else {
+                            outputStream.write(',');
+                        }
+                    }
+                    if (outputStream.isReady()) {
+                        if (o instanceof CharSequence) {
+                            outputStream.write(o.toString().getBytes(getCharacterEncoding()));
+                        } else {
+                            byte[] bytes = codec.encode(o);
+                            outputStream.write(bytes);
+                        }
+                        flushIfReady();
+                    }
+                }
+            }
+
             private void flushIfReady() throws IOException {
                 if (outputStream.isReady()) {
                     outputStream.flush();
@@ -185,8 +192,34 @@ public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpSe
             @Override
             public void onError(Throwable t) {
                 if (finished.compareAndSet(false, true)) {
-                    emitter.error(t);
+                    if (t instanceof HttpStatusException) {
+                        maybeReportErrorDownstream(t);
+                    } else {
+                        emitter.error(t);
+                    }
                     subscription.cancel();
+                }
+            }
+
+            private void maybeReportErrorDownstream(Throwable t) {
+                HttpStatusException httpStatusException = (HttpStatusException) t;
+                delegate.setStatus(httpStatusException.getStatus().getCode());
+                if (!written) {
+                    try {
+                        Object message = httpStatusException.getBody().orElse(httpStatusException.getMessage());
+                        if (message instanceof CharSequence) {
+                            outputStream.write(message.toString().getBytes(getCharacterEncoding()));
+                            flushIfReady();
+                        } else {
+                            writeToOutputStream(message);
+                        }
+                        emitter.complete();
+                    } catch (IOException e) {
+                        emitter.error(e);
+                    }
+                } else {
+                    // Nothing we can do really...
+                    emitter.error(t);
                 }
             }
 
