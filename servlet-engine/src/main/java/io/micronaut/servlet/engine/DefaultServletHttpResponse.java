@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 original authors
+ * Copyright 2017-2023 original authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -151,19 +151,18 @@ public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpSe
 
             private void writeToOutputStream(Object o) throws IOException {
                 written = true;
-                if (o instanceof byte[]) {
+                if (o instanceof byte[] byteArray) {
                     raw = true;
-                    outputStream.write((byte[]) o);
+                    outputStream.write(byteArray);
                     flushIfReady();
-                } else if (o instanceof ByteBuffer) {
-                    ByteBuffer buf = (ByteBuffer) o;
+                } else if (o instanceof ByteBuffer buf) {
                     try {
                         raw = true;
                         outputStream.write(buf.toByteArray());
                         flushIfReady();
                     } finally {
-                        if (buf instanceof ReferenceCounted) {
-                            ((ReferenceCounted) buf).release();
+                        if (buf instanceof ReferenceCounted referenceCounted) {
+                            referenceCounted.release();
                         }
                     }
                 } else if (codec != null) {
@@ -322,9 +321,9 @@ public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpSe
 
     @Override
     public MutableHttpResponse<B> cookie(Cookie cookie) {
-        if (cookie instanceof ServletCookieAdapter) {
+        if (cookie instanceof ServletCookieAdapter servletCookieAdapter) {
             delegate.addCookie(
-                    ((ServletCookieAdapter) cookie).getCookie()
+                servletCookieAdapter.getCookie()
             );
         } else {
 
