@@ -217,7 +217,7 @@ public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpSe
                         } else {
                             writeToOutputStream(message);
                         }
-                        emitter.complete();
+                        finish();
                     } catch (IOException e) {
                         emitter.error(e);
                     }
@@ -239,12 +239,16 @@ public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpSe
                             }
                             flushIfReady();
                         }
-                        emitter.next(DefaultServletHttpResponse.this);
-                        emitter.complete();
+                        finish();
                     } catch (IOException e) {
                         emitter.error(e);
                     }
                 }
+            }
+
+            private void finish() {
+                emitter.next(DefaultServletHttpResponse.this);
+                emitter.complete();
             }
         }), FluxSink.OverflowStrategy.ERROR);
     }
