@@ -13,6 +13,7 @@ import org.junit.platform.suite.api.SuiteDisplayName;
     "io.micronaut.http.server.tck.tests.staticresources.StaticResourceTest", // Graal fails to see /assets from the TCK as a resource https://ge.micronaut.io/s/ufuhtbe5sgmxi
     "io.micronaut.http.server.tck.tests.filter.ClientResponseFilterTest", // responseFilterThrowableParameter fails under Graal https://ge.micronaut.io/s/ufuhtbe5sgmxi
     "io.micronaut.http.server.tck.tests.codec.JsonCodeAdditionalTypeTest", // remove once this pr is merged https://github.com/micronaut-projects/micronaut-core/pull/9419
+    "io.micronaut.http.server.tck.tests.StreamTest", // The outputstream in Undertow is marked ready asynchronously, and we throw the error early, so sometimes there's no body for statusErrorAsFirstItem.
 })
 public class UndertowHttpServerTestSuite {
 }

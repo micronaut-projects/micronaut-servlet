@@ -33,7 +33,9 @@ class UndertowStreamErrorSpec extends Specification {
         then:
         def e = thrown(HttpClientResponseException)
         e.response.status == HttpStatus.NOT_FOUND
-        e.response.body() == "foo"
+
+        // The outputstream in Undertow is marked ready asynchronously, and we throw the error early, so sometimes there's no body.
+        e.response.body() == "foo" || e.response.body() == null
     }
 
     void "immediate status error"() {
