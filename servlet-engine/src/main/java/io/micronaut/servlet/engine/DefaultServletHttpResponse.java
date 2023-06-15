@@ -211,10 +211,10 @@ public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpSe
                 if (!written) {
                     try {
                         Object message = httpStatusException.getBody().orElse(httpStatusException.getMessage());
-                        if (message instanceof CharSequence) {
+                        if (outputStream.isReady() && message instanceof CharSequence) {
                             outputStream.write(message.toString().getBytes(getCharacterEncoding()));
                             flushIfReady();
-                        } else {
+                        } else if (outputStream.isReady()) {
                             writeToOutputStream(message);
                         }
                         finish();
