@@ -253,7 +253,11 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
                 }
                 encodeResponse(exchange, req, response, responsePublisherCallback);
             } catch (Throwable e) {
-                response = routeExecutor.createDefaultErrorResponse(req, e);
+                if (e instanceof HttpStatusException statusException) {
+                    response = HttpResponse.status(statusException.getStatus()).body(statusException.getBody().orElse(null));
+                } else {
+                    response = routeExecutor.createDefaultErrorResponse(req, e);
+                }
                 try {
                     encodeResponse(exchange, req, response, responsePublisherCallback);
                 } catch (Throwable e2) {
