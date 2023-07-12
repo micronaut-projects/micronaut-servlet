@@ -22,7 +22,7 @@ micronaut-session = "4.0.0-M3"
 micronaut-validation = "4.0.0-M12"
 google-cloud-functions = '1.1.0'
 kotlin = "1.8.22"
-micronaut-logging = "1.0.0-M5"
+micronaut-logging = "1.0.0-M6"
 
 # Micronaut
 micronaut-gradle-plugin = "4.0.0-M8"
