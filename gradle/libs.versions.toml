@@ -1,9 +1,9 @@
 [versions]
 micronaut = "4.0.0"
 micronaut-docs = "2.0.0"
-micronaut-test = "4.0.0-M8"
+micronaut-test = "4.0.0"
 
-groovy = "4.0.12"
+groovy = "4.0.13"
 spock = "2.3-groovy-4.0"
 
 managed-servlet-api = '6.0.0'
@@ -15,17 +15,17 @@ tomcat = '10.1.11'
 graal-svm = "23.0.0"
 bcpkix = "1.70"
 
-micronaut-reactor = "3.0.0-M10"
-micronaut-security = "4.0.0-M9"
-micronaut-serde = "2.0.0-M13"
-micronaut-session = "4.0.0-M3"
-micronaut-validation = "4.0.0-M12"
+micronaut-reactor = "3.0.0"
+micronaut-security = "4.0.0"
+micronaut-serde = "2.0.0"
+micronaut-session = "4.0.0"
+micronaut-validation = "4.0.0"
 google-cloud-functions = '1.1.0'
 kotlin = "1.8.22"
 micronaut-logging = "1.0.0"
 
 # Micronaut
-micronaut-gradle-plugin = "4.0.0-M8"
+micronaut-gradle-plugin = "4.0.0"
 
 [libraries]
 # Core
