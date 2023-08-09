@@ -2,11 +2,11 @@ To deploy as a WAR file you need to make some adjustments to your dependencies.
 
 First make the server you are using a `developmentOnly` dependency (or `provided` in Maven):
 
-dependency:io.micronaut.servlet:micronaut-http-server-jetty[version="{version}", scope="provided"]
+dependency:io.micronaut.servlet:micronaut-http-server-jetty[scope="provided"]
 
 Then make sure you include `micronaut-servlet-engine` dependency in your build configuration:
 
-dependency:io.micronaut.servlet:micronaut-servlet-engine[version="{version}"]
+dependency:io.micronaut.servlet:micronaut-servlet-engine[]
 
 Then alter your build configuration to build a WAR file. In Gradle this can be done by applying the WAR plugin:
 
