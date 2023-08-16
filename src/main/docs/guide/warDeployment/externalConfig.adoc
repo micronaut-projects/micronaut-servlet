@@ -1,0 +1,41 @@
+In a standalone Micronaut Framework application, https://docs.micronaut.io/latest/guide/#propertySource[external property sources for configuration] can be configured via the Java system property `micronaut.config.files` or the environment variable `MICRONAUT_CONFIG_FILES`.
+When running as a WAR file, this can be problematic if you wish to run multiple Micronaut Framework WARs in the same container, as all applications will share the same location.
+
+To allow an external location per application, it is necessary to write our own replacement for api:servlet.engine.initializer.MicronautServletInitializer[].
+The following example will look for configuration in the `/tmp` directory and on the classpath in the `/some/path` directory.
+
+[source,java]
+.src/main/java/example/CustomMicronautServletInitializer.java
+----
+package example;
+
+import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.ApplicationContextBuilder;
+import io.micronaut.servlet.engine.initializer.MicronautServletInitializer;
+import jakarta.servlet.ServletContext;
+
+public class CustomInitializer extends MicronautServletInitializer {
+
+    @Override
+    protected ApplicationContextBuilder buildApplicationContext(ServletContext ctx) {
+        return ApplicationContext
+                .builder()
+                .overrideConfigLocations(
+                    "file:/tmp",
+                    "classpath:/some/path"
+                )
+                .classLoader(ctx.getClassLoader())
+                .singletons(ctx);
+    }
+}
+----
+
+We can then use Java's Service Provider Interface to register this class as the initializer by pointing to it in the `META-INF/services/jakarta.servlet.ServletContainerInitializer` file.
+
+[source,text]
+.src/main/resources/META-INF/services/jakarta.servlet.ServletContainerInitializer
+----
+example.CustomInitializer
+----
+
+NOTE: Some servlet containers may limit the locations that are accessible from applications for security reasons.
