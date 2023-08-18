@@ -1,5 +1,5 @@
 [versions]
-micronaut = "4.0.0"
+micronaut = "4.0.4"
 micronaut-docs = "2.0.0"
 micronaut-test = "4.0.0"
 
@@ -9,13 +9,13 @@ spock = "2.3-groovy-4.0"
 managed-servlet-api = '6.0.0'
 kotlin-coroutines = '1.7.3'
 kotest-runner = '5.6.2'
-undertow = '2.3.7.Final'
+undertow = '2.3.8.Final'
 jetty = '11.0.15'
 tomcat = '10.1.11'
 graal-svm = "23.0.1"
 bcpkix = "1.70"
 
-micronaut-reactor = "3.0.0"
+micronaut-reactor = "3.0.2"
 micronaut-security = "4.0.3"
 micronaut-serde = "2.0.0"
 micronaut-session = "4.0.0"
