@@ -363,15 +363,14 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
                 if (exchange.getRequest().isAsyncSupported()) {
                     Flux.from(responseEncoder.encode(exchange, routeAnnotationMetadata, body))
                         .subscribe(responsePublisherCallback);
-                    return;
                 } else {
                     // NOTE[moss]: blockLast() here *was* subscribe(), but that returns immediately, which was
                     // sometimes allowing the main response publisher to complete before this responseEncoder
                     // could fill out the response! Blocking here will ensure that the response is filled out
                     // before the main response publisher completes. This will be improved later to avoid the block.
                     Flux.from(responseEncoder.encode(exchange, routeAnnotationMetadata, body)).blockLast();
-                    // Continue blocking execution
                 }
+                return;
             }
 
             MediaType mediaType = response.getContentType().orElse(null);
