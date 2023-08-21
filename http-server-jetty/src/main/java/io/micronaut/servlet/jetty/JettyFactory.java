@@ -56,9 +56,10 @@ import java.util.stream.Stream;
 @Factory
 public class JettyFactory extends ServletServerFactory {
 
+    public static final String RESOURCE_BASE = "resourceBase";
+
     private static final Logger LOG = LoggerFactory.getLogger(JettyFactory.class);
 
-    public static final String RESOURCE_BASE = "resourceBase";
     private final JettyConfiguration jettyConfiguration;
 
     /**
