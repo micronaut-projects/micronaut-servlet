@@ -1,4 +1,3 @@
-
 package io.micronaut.servlet.jetty
 
 import io.micronaut.context.ApplicationContext
@@ -255,5 +254,27 @@ class JettyStaticResourceResolutionSpec extends Specification implements TestPro
         cleanup:
         embeddedServer?.stop()
         embeddedServer?.close()
+    }
+
+    void "test resolving a yaml file"() {
+        when:
+        HttpResponse<String> response = rxClient.toBlocking().exchange(HttpRequest.GET("/public/config.yml"), String)
+
+        then:
+        response.code() == HttpStatus.OK.code
+        response.body() == """openapi: 3.0.1
+info:
+  version: "0.0"
+"""
+    }
+
+    void "test resolving a text file"() {
+        when:
+        HttpResponse<String> response = rxClient.toBlocking().exchange(HttpRequest.GET("/public/message.txt"), String)
+
+        then:
+        response.code() == HttpStatus.OK.code
+        response.body() == """Hello there!
+"""
     }
 }
