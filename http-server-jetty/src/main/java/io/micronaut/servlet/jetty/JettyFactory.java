@@ -38,6 +38,9 @@ import org.eclipse.jetty.util.resource.ResourceCollection;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 
 import jakarta.inject.Singleton;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.util.List;
 import java.util.function.Function;
@@ -52,6 +55,8 @@ import java.util.stream.Stream;
  */
 @Factory
 public class JettyFactory extends ServletServerFactory {
+
+    private static final Logger LOG = LoggerFactory.getLogger(JettyFactory.class);
 
     public static final String RESOURCE_BASE = "resourceBase";
     private final JettyConfiguration jettyConfiguration;
@@ -158,7 +163,12 @@ public class JettyFactory extends ServletServerFactory {
                 servletHolder,
                 configuration.getMapping()
         );
-        servletHolder.setAsyncSupported(true);
+
+        Boolean isAsync = applicationContext.getEnvironment().getProperty("micronaut.server.testing.async", Boolean.class, true);
+        if (Boolean.FALSE.equals(isAsync)) {
+            LOG.warn("Async support disabled for testing purposes.");
+        }
+        servletHolder.setAsyncSupported(isAsync);
 
         configuration.getMultipartConfigElement().ifPresent(multipartConfiguration ->
                 servletHolder.getRegistration().setMultipartConfig(multipartConfiguration)

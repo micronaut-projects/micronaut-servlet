@@ -34,6 +34,8 @@ import io.undertow.UndertowOptions;
 import io.undertow.server.handlers.PathHandler;
 import io.undertow.servlet.Servlets;
 import io.undertow.servlet.api.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xnio.Option;
 import org.xnio.Options;
 
@@ -51,6 +53,8 @@ import java.util.Map;
  */
 @Factory
 public class UndertowFactory extends ServletServerFactory {
+
+    private static final Logger LOG = LoggerFactory.getLogger(UndertowFactory.class);
 
     private final UndertowConfiguration configuration;
 
@@ -218,7 +222,11 @@ public class UndertowFactory extends ServletServerFactory {
                     }
                 }
         );
-        servletInfo.setAsyncSupported(true);
+        Boolean isAsync = getApplicationContext().getEnvironment().getProperty("micronaut.server.testing.async", Boolean.class, true);
+        if (Boolean.FALSE.equals(isAsync)) {
+            LOG.warn("Async support disabled for testing purposes.");
+        }
+        servletInfo.setAsyncSupported(isAsync);
         servletInfo.addMapping(servletConfiguration.getMapping());
         getStaticResourceConfigurations().forEach(config -> {
             servletInfo.addMapping(config.getMapping());
