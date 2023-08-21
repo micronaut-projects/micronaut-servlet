@@ -5,6 +5,7 @@ warDeployment: WAR Deployment
 jetty: Jetty Server
 tomcat: Tomcat Server
 undertow: Undertow Server
+knownIssues: Known Issues
 faq: FAQ
 breaks: Breaking Changes
 repository: Repository

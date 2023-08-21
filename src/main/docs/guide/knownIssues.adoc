@@ -1,0 +1,10 @@
+There are some known issues with Servlet integration to the Micronaut Framework
+
+=== HttpProxyClient and Server Filters
+
+It is not currently possible to use the HttpProxyClient with Servlet Filters.
+
+=== Error handlers re-reading the request body
+
+Local error handlers that require the request body to be reparsed will not work in Servlet based applications.
+The body is read from the request input-stream and so attempting to reparse it for the error handler will fail.
