@@ -1,9 +1,9 @@
 [versions]
-micronaut = "4.0.5"
+micronaut = "4.1.1"
 micronaut-docs = "2.0.0"
-micronaut-test = "4.0.0"
+micronaut-test = "4.0.1"
 
-groovy = "4.0.13"
+groovy = "4.0.14"
 spock = "2.3-groovy-4.0"
 
 managed-servlet-api = '6.0.0'
@@ -16,7 +16,7 @@ graal-svm = "23.0.1"
 bcpkix = "1.70"
 
 micronaut-reactor = "3.0.2"
-micronaut-security = "4.0.3"
+micronaut-security = "4.0.4"
 micronaut-serde = "2.2.0"
 micronaut-session = "4.0.0"
 micronaut-validation = "4.0.1"
