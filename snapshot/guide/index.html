@@ -58,11 +58,13 @@
                                 
                                 <div class="toc-item" style="margin-left:0"><a href="#undertow"><strong>7</strong><span>Undertow Server</span></a></div>
                                 
-                                <div class="toc-item" style="margin-left:0"><a href="#faq"><strong>8</strong><span>FAQ</span></a></div>
+                                <div class="toc-item" style="margin-left:0"><a href="#knownIssues"><strong>8</strong><span>Known Issues</span></a></div>
                                 
-                                <div class="toc-item" style="margin-left:0"><a href="#breaks"><strong>9</strong><span>Breaking Changes</span></a></div>
+                                <div class="toc-item" style="margin-left:0"><a href="#faq"><strong>9</strong><span>FAQ</span></a></div>
                                 
-                                <div class="toc-item" style="margin-left:0"><a href="#repository"><strong>10</strong><span>Repository</span></a></div>
+                                <div class="toc-item" style="margin-left:0"><a href="#breaks"><strong>10</strong><span>Breaking Changes</span></a></div>
+                                
+                                <div class="toc-item" style="margin-left:0"><a href="#repository"><strong>11</strong><span>Repository</span></a></div>
                                 
                             </div>
                         </div>
@@ -109,11 +111,13 @@
         
         <div class="toc-item" style="margin-left:0px" id="toc-item-undertow"><a href="#undertow"><strong>7</strong><span>Undertow Server</span></a></div>
         
-        <div class="toc-item" style="margin-left:0px" id="toc-item-faq"><a href="#faq"><strong>8</strong><span>FAQ</span></a></div>
+        <div class="toc-item" style="margin-left:0px" id="toc-item-knownIssues"><a href="#knownIssues"><strong>8</strong><span>Known Issues</span></a></div>
         
-        <div class="toc-item" style="margin-left:0px" id="toc-item-breaks"><a href="#breaks"><strong>9</strong><span>Breaking Changes</span></a></div>
+        <div class="toc-item" style="margin-left:0px" id="toc-item-faq"><a href="#faq"><strong>9</strong><span>FAQ</span></a></div>
         
-        <div class="toc-item" style="margin-left:0px" id="toc-item-repository"><a href="#repository"><strong>10</strong><span>Repository</span></a></div>
+        <div class="toc-item" style="margin-left:0px" id="toc-item-breaks"><a href="#breaks"><strong>10</strong><span>Breaking Changes</span></a></div>
+        
+        <div class="toc-item" style="margin-left:0px" id="toc-item-repository"><a href="#repository"><strong>11</strong><span>Repository</span></a></div>
         
         </div>
     </div>
@@ -1075,7 +1079,33 @@ public class UndertowServerCustomizer implements BeanCreatedEventListener&lt;Und
 </div>
 </div>
 
-<h1 id="faq"><a class="anchor" href="#faq"></a>8 FAQ</h1>
+<h1 id="knownIssues"><a class="anchor" href="#knownIssues"></a>8 Known Issues</h1>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/master/src/main/docs/guide/knownIssues.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>There are some known issues with Servlet integration to the Micronaut Framework</p>
+</div>
+<div class="sect2">
+<h3 id="_httpproxyclient_and_server_filters">HttpProxyClient and Server Filters</h3>
+<div class="paragraph">
+<p>It is not currently possible to use the HttpProxyClient with Servlet Filters.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_error_handlers_re_reading_the_request_body">Error handlers re-reading the request body</h3>
+<div class="paragraph">
+<p>Local error handlers that require the request body to be reparsed will not work in Servlet based applications.
+The body is read from the request input-stream and so attempting to reparse it for the error handler will fail.</p>
+</div>
+</div>
+
+<h1 id="faq"><a class="anchor" href="#faq"></a>9 FAQ</h1>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/master/src/main/docs/guide/faq.adoc"'>
@@ -1112,7 +1142,7 @@ public class UndertowServerCustomizer implements BeanCreatedEventListener&lt;Und
 </div>
 </div>
 
-<h1 id="breaks"><a class="anchor" href="#breaks"></a>9 Breaking Changes</h1>
+<h1 id="breaks"><a class="anchor" href="#breaks"></a>10 Breaking Changes</h1>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/master/src/main/docs/guide/breaks.adoc"'>
@@ -1139,7 +1169,7 @@ To restore the original functionality, you need to configure <code>micronaut.ser
 </div>
 </div>
 
-<h1 id="repository"><a class="anchor" href="#repository"></a>10 Repository</h1>
+<h1 id="repository"><a class="anchor" href="#repository"></a>11 Repository</h1>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/master/src/main/docs/guide/repository.adoc"'>
