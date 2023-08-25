@@ -50,6 +50,8 @@ import java.io.IOException;
 import java.util.List;
 import java.util.stream.Stream;
 
+import static io.micronaut.core.util.StringUtils.isEmpty;
+
 /**
  * Factory for the Jetty server.
  *
@@ -238,12 +240,16 @@ public class JettyFactory extends ServletServerFactory {
 
         ResourceHandler resourceHandler = new ResourceHandler();
         resourceHandler.setBaseResource(mappedResourceCollection);
+        resourceHandler.setDirAllowed(false);
         resourceHandler.setDirectoriesListed(false);
-        resourceHandler.setCacheControl("private, max-age=60");
+        if (!isEmpty(config.getCacheControl())) {
+            resourceHandler.setCacheControl(config.getCacheControl());
+        }
 
         ContextHandler contextHandler = new ContextHandler(path + "/*");
         contextHandler.setContextPath("/");
         contextHandler.setHandler(resourceHandler);
+        contextHandler.setDisplayName("Static Resources " + mapping);
 
         return contextHandler;
     }

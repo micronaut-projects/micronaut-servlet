@@ -80,7 +80,7 @@ class JettyStaticResourceResolutionSpec extends Specification implements TestPro
         response.header(CONTENT_TYPE) == "text/html"
         Integer.parseInt(response.header(CONTENT_LENGTH)) > 0
         response.headers.contains(CACHE_CONTROL)
-        response.header(CACHE_CONTROL) == "private, max-age=60"
+        response.header(CACHE_CONTROL) == "private,max-age=60"
         response.body() == "<html><head></head><body>HTML Page from static file</body></html>"
     }
 
@@ -98,7 +98,7 @@ class JettyStaticResourceResolutionSpec extends Specification implements TestPro
         response.header(CONTENT_TYPE) == "text/html"
         Integer.parseInt(response.header(CONTENT_LENGTH)) > 0
         response.headers.contains(CACHE_CONTROL)
-        response.header(CACHE_CONTROL) == "private, max-age=60"
+        response.header(CACHE_CONTROL) == "private,max-age=60"
 
         response.body() == "<html><head></head><body>HTML Page from resources</body></html>"
     }
@@ -117,7 +117,7 @@ class JettyStaticResourceResolutionSpec extends Specification implements TestPro
         response.header(CONTENT_TYPE) == "text/html"
         Integer.parseInt(response.header(CONTENT_LENGTH)) > 0
         response.headers.contains(CACHE_CONTROL)
-        response.header(CACHE_CONTROL) == "private, max-age=60"
+        response.header(CACHE_CONTROL) == "private,max-age=60"
 
         response.body() == "<html><head></head><body>HTML Page from resources</body></html>"
     }
@@ -220,7 +220,9 @@ class JettyStaticResourceResolutionSpec extends Specification implements TestPro
         given:
         EmbeddedServer embeddedServer = ApplicationContext.run(EmbeddedServer, [
                 'micronaut.router.static-resources.default.paths': ['classpath:public'],
-                'micronaut.router.static-resources.default.mapping': '/static/**'])
+                'micronaut.router.static-resources.default.mapping': '/static/**',
+                'micronaut.router.static-resources.default.cache-control': '', // clear the cache control header
+        ])
         HttpClient rxClient = embeddedServer.applicationContext.createBean(HttpClient, embeddedServer.getURL())
 
 
@@ -235,8 +237,10 @@ class JettyStaticResourceResolutionSpec extends Specification implements TestPro
         response.code() == HttpStatus.OK.code
         response.header(CONTENT_TYPE) == "text/html"
         Integer.parseInt(response.header(CONTENT_LENGTH)) > 0
-        response.headers.contains(CACHE_CONTROL)
         response.body() == "<html><head></head><body>HTML Page from resources/foo</body></html>"
+
+        and: 'the cache control header is not set'
+        !response.headers.contains(CACHE_CONTROL)
 
         cleanup:
         embeddedServer.stop()
