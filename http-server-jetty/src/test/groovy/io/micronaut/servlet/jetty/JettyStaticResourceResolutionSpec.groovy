@@ -16,6 +16,8 @@ import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.micronaut.test.support.TestPropertyProvider
 import io.micronaut.web.router.resource.StaticResourceConfiguration
 import jakarta.inject.Inject
+import spock.lang.Issue
+import spock.lang.PendingFeature
 import spock.lang.Specification
 
 import java.nio.file.Files
@@ -255,5 +257,81 @@ class JettyStaticResourceResolutionSpec extends Specification implements TestPro
         cleanup:
         embeddedServer?.stop()
         embeddedServer?.close()
+    }
+
+    @Issue("https://github.com/micronaut-projects/micronaut-servlet/issues/251")
+    void "test resources with mapping names that are prefixes of one another can resolve index.html and a resource"() {
+        given:
+        EmbeddedServer embeddedServer = ApplicationContext.run(EmbeddedServer, [
+                'micronaut.router.static-resources.nest.paths': ['classpath:nest-test/nested'],
+                'micronaut.router.static-resources.nest.mapping': '/nest/**', // This mapping
+                'micronaut.router.static-resources.nest-test.paths': ['classpath:nest-test'],
+                'micronaut.router.static-resources.nest-test.mapping': '/nest-test/**', // is a prefix of this mapping (same with swagger and swagger-ui)
+        ])
+        def client = embeddedServer.applicationContext.createBean(HttpClient, embeddedServer.getURL()).toBlocking()
+
+        when:
+        def nestResponse = client.exchange(HttpRequest.GET("/nest"), String)
+        def nestText = this.class.classLoader.getResource("nest-test/nested/index.html").text
+
+        def nestTestResponse = client.exchange(HttpRequest.GET("/nest-test/something.txt"), String)
+        def nestTestText = this.class.classLoader.getResource("nest-test/something.txt").text
+
+        then:
+        with(nestResponse) {
+            code() == HttpStatus.OK.code
+            header(CONTENT_TYPE) == "text/html"
+            Integer.parseInt(header(CONTENT_LENGTH)) > 0
+            body() == nestText
+        }
+
+        with(nestTestResponse) {
+            code() == HttpStatus.OK.code
+            Integer.parseInt(header(CONTENT_LENGTH)) > 0
+            body() == nestTestText
+        }
+
+        cleanup:
+        embeddedServer.stop()
+        embeddedServer.close()
+    }
+
+    @Issue("https://github.com/micronaut-projects/micronaut-servlet/issues/251")
+    @PendingFeature
+    void "multiple index.html files causes issues with the static resource handling"() {
+        given:
+        EmbeddedServer embeddedServer = ApplicationContext.run(EmbeddedServer, [
+                'micronaut.router.static-resources.nest.paths': ['classpath:nest-test/nested'],
+                'micronaut.router.static-resources.nest.mapping': '/nest/**',
+                'micronaut.router.static-resources.public.paths': ['classpath:public'],
+                'micronaut.router.static-resources.public.mapping': '/public/**',
+        ])
+        def client = embeddedServer.applicationContext.createBean(HttpClient, embeddedServer.getURL()).toBlocking()
+
+        when:
+        def nestResponse = client.exchange(HttpRequest.GET("/nest"), String)
+        def nestText = this.class.classLoader.getResource("nest-test/nested/index.html").text
+
+        def publicResponse = client.exchange(HttpRequest.GET("/public/index.html"), String)
+        def publicText = this.class.classLoader.getResource("public/index.html").text
+
+        then:
+        with(nestResponse) {
+            code() == HttpStatus.OK.code
+            header(CONTENT_TYPE) == "text/html"
+            Integer.parseInt(header(CONTENT_LENGTH)) > 0
+            body() == nestText
+        }
+
+        with(publicResponse) {
+            code() == HttpStatus.OK.code
+            header(CONTENT_TYPE) == "text/html"
+            Integer.parseInt(header(CONTENT_LENGTH)) > 0
+            body() == publicText
+        }
+
+        cleanup:
+        embeddedServer.stop()
+        embeddedServer.close()
     }
 }

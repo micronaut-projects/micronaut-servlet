@@ -30,14 +30,22 @@ import io.micronaut.servlet.engine.DefaultMicronautServlet;
 import io.micronaut.servlet.engine.MicronautServletConfiguration;
 import io.micronaut.servlet.engine.server.ServletServerFactory;
 import io.micronaut.servlet.engine.server.ServletStaticResourceConfiguration;
+import jakarta.inject.Singleton;
 import org.eclipse.jetty.http.HttpVersion;
-import org.eclipse.jetty.server.*;
-import org.eclipse.jetty.servlet.*;
+import org.eclipse.jetty.server.HttpConfiguration;
+import org.eclipse.jetty.server.HttpConnectionFactory;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.server.SslConnectionFactory;
+import org.eclipse.jetty.servlet.DefaultServlet;
+import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.servlet.ServletHandler;
+import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.servlet.ServletMapping;
 import org.eclipse.jetty.util.resource.Resource;
 import org.eclipse.jetty.util.resource.ResourceCollection;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 
-import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -97,6 +105,7 @@ public class JettyFactory extends ServletServerFactory {
      */
     @Singleton
     @Primary
+    @SuppressWarnings("java:S2095")
     protected Server jettyServer(ApplicationContext applicationContext, MicronautServletConfiguration configuration, JettyConfiguration.JettySslConfiguration jettySslConfiguration) {
         final String host = getConfiguredHost();
         final Integer port = getConfiguredPort();
@@ -115,7 +124,7 @@ public class JettyFactory extends ServletServerFactory {
                         return path;
                     })
                     .collect(Collectors.toList());
-            resourceCollection = new ResourceCollection(src.stream()
+            Resource[] resourceArray = src.stream()
                     .flatMap((Function<ServletStaticResourceConfiguration, Stream<Resource>>) config -> {
                         List<String> paths = config.getPaths();
                         return paths.stream().map(path -> {
@@ -130,12 +139,25 @@ public class JettyFactory extends ServletServerFactory {
                                 }
                             }
                         });
-                    }).toArray(Resource[]::new)) {
+                    }).toArray(Resource[]::new);
+            resourceCollection = new ResourceCollection(resourceArray) {
                 @Override
                 public Resource addPath(String path) throws IOException {
+                    boolean found = false;
+                    // First, look for a match with a mapping that ends with a slash
+                    // So we don't match /foo-ui/resource with /foo and then try to find /foo/-ui/resource
                     for (String mapping : mappings) {
-                        if (path.startsWith(mapping)) {
+                        if (path.startsWith(mapping + "/")) {
                             path = path.substring(mapping.length());
+                            found = true;
+                        }
+                    }
+                    // If we didn't match, we may be looking for an index page with no trailing slash, so do what we had before
+                    if (!found) {
+                        for (String mapping : mappings) {
+                            if (path.startsWith(mapping)) {
+                                path = path.substring(mapping.length());
+                            }
                         }
                     }
                     return super.addPath(path);
@@ -214,9 +236,7 @@ public class JettyFactory extends ServletServerFactory {
                 defaultServletHolder.setInitParameter(RESOURCE_BASE, RESOURCE_BASE);
                 // some defaults
                 defaultServletHolder.setInitParameter("dirAllowed", StringUtils.FALSE);
-
             }
-
         }
         server.setHandler(contextHandler);
 
