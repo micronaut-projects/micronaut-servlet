@@ -17,7 +17,6 @@ import io.micronaut.test.support.TestPropertyProvider
 import io.micronaut.web.router.resource.StaticResourceConfiguration
 import jakarta.inject.Inject
 import spock.lang.Issue
-import spock.lang.PendingFeature
 import spock.lang.Specification
 
 import java.nio.file.Files
@@ -81,7 +80,7 @@ class JettyStaticResourceResolutionSpec extends Specification implements TestPro
         response.header(CONTENT_TYPE) == "text/html"
         Integer.parseInt(response.header(CONTENT_LENGTH)) > 0
         response.headers.contains(CACHE_CONTROL)
-        response.header(CACHE_CONTROL) == "max-age=3600,public"
+        response.header(CACHE_CONTROL) == "private, max-age=60"
         response.body() == "<html><head></head><body>HTML Page from static file</body></html>"
     }
 
@@ -99,7 +98,7 @@ class JettyStaticResourceResolutionSpec extends Specification implements TestPro
         response.header(CONTENT_TYPE) == "text/html"
         Integer.parseInt(response.header(CONTENT_LENGTH)) > 0
         response.headers.contains(CACHE_CONTROL)
-        response.header(CACHE_CONTROL) == "max-age=3600,public"
+        response.header(CACHE_CONTROL) == "private, max-age=60"
 
         response.body() == "<html><head></head><body>HTML Page from resources</body></html>"
     }
@@ -118,7 +117,7 @@ class JettyStaticResourceResolutionSpec extends Specification implements TestPro
         response.header(CONTENT_TYPE) == "text/html"
         Integer.parseInt(response.header(CONTENT_LENGTH)) > 0
         response.headers.contains(CACHE_CONTROL)
-        response.header(CACHE_CONTROL) == "max-age=3600,public"
+        response.header(CACHE_CONTROL) == "private, max-age=60"
 
         response.body() == "<html><head></head><body>HTML Page from resources</body></html>"
     }
@@ -142,7 +141,7 @@ class JettyStaticResourceResolutionSpec extends Specification implements TestPro
         response.code() == HttpStatus.OK.code
         response.header(CONTENT_TYPE) == "text/html"
         Integer.parseInt(response.header(CONTENT_LENGTH)) > 0
-        !response.headers.contains(CACHE_CONTROL)
+        response.headers.contains(CACHE_CONTROL)
 
         response.body() == "<html><head></head><body>HTML Page from resources</body></html>"
 
@@ -175,7 +174,7 @@ class JettyStaticResourceResolutionSpec extends Specification implements TestPro
         response.code() == HttpStatus.OK.code
         response.header(CONTENT_TYPE) == "text/html"
         Integer.parseInt(response.header(CONTENT_LENGTH)) > 0
-        !response.headers.contains(CACHE_CONTROL)
+        response.headers.contains(CACHE_CONTROL)
 
         response.body() == "<html><head></head><body>HTML Page from resources</body></html>"
 
@@ -209,7 +208,7 @@ class JettyStaticResourceResolutionSpec extends Specification implements TestPro
         response.code() == HttpStatus.OK.code
         response.header(CONTENT_TYPE) == "text/html"
         Integer.parseInt(response.header(CONTENT_LENGTH)) > 0
-        !response.headers.contains(CACHE_CONTROL)
+        response.headers.contains(CACHE_CONTROL)
         response.body() == "<html><head></head><body>HTML Page from resources</body></html>"
 
         cleanup:
@@ -236,7 +235,7 @@ class JettyStaticResourceResolutionSpec extends Specification implements TestPro
         response.code() == HttpStatus.OK.code
         response.header(CONTENT_TYPE) == "text/html"
         Integer.parseInt(response.header(CONTENT_LENGTH)) > 0
-        !response.headers.contains(CACHE_CONTROL)
+        response.headers.contains(CACHE_CONTROL)
         response.body() == "<html><head></head><body>HTML Page from resources/foo</body></html>"
 
         cleanup:
@@ -297,7 +296,6 @@ class JettyStaticResourceResolutionSpec extends Specification implements TestPro
     }
 
     @Issue("https://github.com/micronaut-projects/micronaut-servlet/issues/251")
-    @PendingFeature
     void "multiple index.html files causes issues with the static resource handling"() {
         given:
         EmbeddedServer embeddedServer = ApplicationContext.run(EmbeddedServer, [

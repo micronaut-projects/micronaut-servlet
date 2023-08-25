@@ -22,8 +22,6 @@ import io.micronaut.context.env.Environment;
 import io.micronaut.context.exceptions.ConfigurationException;
 import io.micronaut.core.io.ResourceResolver;
 import io.micronaut.core.io.socket.SocketUtils;
-import io.micronaut.core.util.CollectionUtils;
-import io.micronaut.core.util.StringUtils;
 import io.micronaut.http.ssl.ClientAuthentication;
 import io.micronaut.http.ssl.SslConfiguration;
 import io.micronaut.servlet.engine.DefaultMicronautServlet;
@@ -37,22 +35,19 @@ import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.SslConnectionFactory;
-import org.eclipse.jetty.servlet.DefaultServlet;
+import org.eclipse.jetty.server.handler.ContextHandler;
+import org.eclipse.jetty.server.handler.HandlerList;
+import org.eclipse.jetty.server.handler.ResourceHandler;
 import org.eclipse.jetty.servlet.ServletContextHandler;
-import org.eclipse.jetty.servlet.ServletHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
-import org.eclipse.jetty.servlet.ServletMapping;
 import org.eclipse.jetty.util.resource.Resource;
 import org.eclipse.jetty.util.resource.ResourceCollection;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -98,96 +93,30 @@ public class JettyFactory extends ServletServerFactory {
     /**
      * Builds the Jetty server bean.
      *
-     * @param applicationContext This application context
-     * @param configuration      The servlet configuration
+     * @param applicationContext    This application context
+     * @param configuration         The servlet configuration
      * @param jettySslConfiguration The Jetty SSL config
      * @return The Jetty server bean
      */
     @Singleton
     @Primary
-    @SuppressWarnings("java:S2095")
-    protected Server jettyServer(ApplicationContext applicationContext, MicronautServletConfiguration configuration, JettyConfiguration.JettySslConfiguration jettySslConfiguration) {
+    protected Server jettyServer(
+            ApplicationContext applicationContext,
+            MicronautServletConfiguration configuration,
+            JettyConfiguration.JettySslConfiguration jettySslConfiguration
+    ) {
         final String host = getConfiguredHost();
         final Integer port = getConfiguredPort();
-        Server server = new Server();
         String contextPath = getContextPath();
 
-        List<ServletStaticResourceConfiguration> src = getStaticResourceConfigurations();
-        ResourceCollection resourceCollection;
+        Server server = new Server();
 
-        if (CollectionUtils.isNotEmpty(src)) {
-            List<String> mappings = src.stream().map(ServletStaticResourceConfiguration::getMapping)
-                    .map(path -> {
-                        if (path.endsWith("/**")) {
-                            return path.substring(0, path.length() - 3);
-                        }
-                        return path;
-                    })
-                    .collect(Collectors.toList());
-            Resource[] resourceArray = src.stream()
-                    .flatMap((Function<ServletStaticResourceConfiguration, Stream<Resource>>) config -> {
-                        List<String> paths = config.getPaths();
-                        return paths.stream().map(path -> {
-                            if (path.startsWith(ServletStaticResourceConfiguration.CLASSPATH_PREFIX)) {
-                                String cp = path.substring(ServletStaticResourceConfiguration.CLASSPATH_PREFIX.length());
-                                return Resource.newClassPathResource(cp);
-                            } else {
-                                try {
-                                    return Resource.newResource(path);
-                                } catch (IOException e) {
-                                    throw new ConfigurationException("Static resource path doesn't exist: " + path, e);
-                                }
-                            }
-                        });
-                    }).toArray(Resource[]::new);
-            resourceCollection = new ResourceCollection(resourceArray) {
-                @Override
-                public Resource addPath(String path) throws IOException {
-                    boolean found = false;
-                    // First, look for a match with a mapping that ends with a slash
-                    // So we don't match /foo-ui/resource with /foo and then try to find /foo/-ui/resource
-                    for (String mapping : mappings) {
-                        if (path.startsWith(mapping + "/")) {
-                            path = path.substring(mapping.length());
-                            found = true;
-                        }
-                    }
-                    // If we didn't match, we may be looking for an index page with no trailing slash, so do what we had before
-                    if (!found) {
-                        for (String mapping : mappings) {
-                            if (path.startsWith(mapping)) {
-                                path = path.substring(mapping.length());
-                            }
-                        }
-                    }
-                    return super.addPath(path);
-                }
-            };
-        } else {
-            resourceCollection = null;
-        }
-
-        final ServletContextHandler contextHandler = new ServletContextHandler(
-                server,
-                contextPath,
-                false,
-                false
-        ) {
-            @Override
-            public Resource newResource(String urlOrPath) throws IOException {
-                if (resourceCollection != null && RESOURCE_BASE.endsWith(urlOrPath)) {
-                    return resourceCollection;
-                }
-                return super.newResource(urlOrPath);
-            }
-        };
+        final ServletContextHandler contextHandler = new ServletContextHandler(server, contextPath, false, false);
         final ServletHolder servletHolder = new ServletHolder(new DefaultMicronautServlet(applicationContext));
-        contextHandler.addServlet(
-                servletHolder,
-                configuration.getMapping()
-        );
+        contextHandler.addServlet(servletHolder, configuration.getMapping());
 
-        Boolean isAsync = applicationContext.getEnvironment().getProperty("micronaut.server.testing.async", Boolean.class, true);
+        Boolean isAsync = applicationContext.getEnvironment()
+                .getProperty("micronaut.server.testing.async", Boolean.class, true);
         if (Boolean.FALSE.equals(isAsync)) {
             LOG.warn("Async support disabled for testing purposes.");
         }
@@ -197,48 +126,13 @@ public class JettyFactory extends ServletServerFactory {
                 servletHolder.getRegistration().setMultipartConfig(multipartConfiguration)
         );
 
-        if (CollectionUtils.isNotEmpty(src)) {
+        List<ContextHandler> resourceHandlers = Stream.concat(
+                getStaticResourceConfigurations().stream().map(this::toHandler),
+                Stream.of(contextHandler)
+        ).toList();
 
-
-            List<String> mappings = src.stream()
-                    .map(config -> {
-                        String mapping = config.getMapping();
-                        if (mapping.endsWith("**")) {
-                            return mapping.substring(0, mapping.length() - 1);
-                        } else if (!mapping.endsWith("/*")) {
-                            return mapping + "/*";
-                        }
-                        return mapping;
-                    })
-                    .collect(Collectors.toList());
-
-            if (CollectionUtils.isNotEmpty(mappings)) {
-
-                ServletHolder defaultServletHolder = new ServletHolder(
-                        configuration.getName(),
-                        new DefaultServlet()
-                );
-                defaultServletHolder.setInitParameters(jettyConfiguration.getInitParameters());
-                contextHandler.addServlet(
-                        defaultServletHolder,
-                        mappings.iterator().next()
-                );
-                contextHandler.setBaseResource(resourceCollection);
-                ServletHandler servletHandler = defaultServletHolder.getServletHandler();
-                if (mappings.size() > 1) {
-                    ServletMapping m = new ServletMapping();
-                    m.setServletName(configuration.getName());
-                    m.setPathSpecs(mappings.subList(1, mappings.size()).toArray(StringUtils.EMPTY_STRING_ARRAY));
-                    servletHandler.addServletMapping(m);
-                }
-
-                // going to be replaced
-                defaultServletHolder.setInitParameter(RESOURCE_BASE, RESOURCE_BASE);
-                // some defaults
-                defaultServletHolder.setInitParameter("dirAllowed", StringUtils.FALSE);
-            }
-        }
-        server.setHandler(contextHandler);
+        HandlerList handlerList = new HandlerList(resourceHandlers.toArray(new ContextHandler[0]));
+        server.setHandler(handlerList);
 
         final SslConfiguration sslConfiguration = getSslConfiguration();
         if (sslConfiguration.isEnabled()) {
@@ -293,22 +187,64 @@ public class JettyFactory extends ServletServerFactory {
             httpsConfig.addCustomizer(jettySslConfiguration);
             ServerConnector https = new ServerConnector(server,
                     new SslConnectionFactory(sslContextFactory, HttpVersion.HTTP_1_1.asString()),
-                    new HttpConnectionFactory(httpsConfig));
+                    new HttpConnectionFactory(httpsConfig)
+            );
             https.setPort(securePort);
             server.addConnector(https);
 
         }
-        final ServerConnector http = new ServerConnector(
-                server,
-                new HttpConnectionFactory(jettyConfiguration.getHttpConfiguration())
-        );
+        final ServerConnector http = new ServerConnector(server, new HttpConnectionFactory(jettyConfiguration.getHttpConfiguration()));
         http.setPort(port);
         http.setHost(host);
-        server.addConnector(
-                http
-        );
+        server.addConnector(http);
 
         return server;
     }
 
+    /**
+     * For each static resource configuration, create a {@link ContextHandler} that serves the static resources.
+     *
+     * @param config
+     * @return
+     */
+    private ContextHandler toHandler(ServletStaticResourceConfiguration config) {
+        Resource[] resourceArray = config.getPaths().stream()
+                .map(path -> {
+                    if (path.startsWith(ServletStaticResourceConfiguration.CLASSPATH_PREFIX)) {
+                        String cp = path.substring(ServletStaticResourceConfiguration.CLASSPATH_PREFIX.length());
+                        return Resource.newClassPathResource(cp);
+                    } else {
+                        try {
+                            return Resource.newResource(path);
+                        } catch (IOException e) {
+                            throw new ConfigurationException("Static resource path doesn't exist: " + path, e);
+                        }
+                    }
+                }).toArray(Resource[]::new);
+
+        String path = config.getMapping();
+        if (path.endsWith("/**")) {
+            path = path.substring(0, path.length() - 3);
+        }
+
+        final String mapping = path;
+
+        ResourceCollection mappedResourceCollection = new ResourceCollection(resourceArray) {
+            @Override
+            public Resource addPath(String path) throws IOException {
+                return super.addPath(path.substring(mapping.length()));
+            }
+        };
+
+        ResourceHandler resourceHandler = new ResourceHandler();
+        resourceHandler.setBaseResource(mappedResourceCollection);
+        resourceHandler.setDirectoriesListed(false);
+        resourceHandler.setCacheControl("private, max-age=60");
+
+        ContextHandler contextHandler = new ContextHandler(path + "/*");
+        contextHandler.setContextPath("/");
+        contextHandler.setHandler(resourceHandler);
+
+        return contextHandler;
+    }
 }
