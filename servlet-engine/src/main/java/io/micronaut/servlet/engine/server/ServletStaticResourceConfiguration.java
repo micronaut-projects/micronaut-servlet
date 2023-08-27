@@ -57,6 +57,7 @@ public interface ServletStaticResourceConfiguration extends Toggleable {
      * For Jetty based servers, allow configuring the cache control header for static resource mappings (defaults to {@value #DEFAULT_CACHE_CONTROL_HEADER}).
      *
      * @return The cache control header
+     * @since 4.0.4
      */
     @Bindable(defaultValue = DEFAULT_CACHE_CONTROL_HEADER)
     String getCacheControl();
