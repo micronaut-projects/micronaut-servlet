@@ -13,5 +13,6 @@
     </root>
 <!--    <logger name="io.micronaut.http.client" level="trace" />-->
 <!--    <logger name="io.micronaut.servlet.http" level="trace" />-->
+<!--    <logger name="io.micronaut.servlet.jetty" level="trace" />-->
 <!--    <logger name="org.eclipse.jetty.server" level="trace" />-->
 </configuration>
