@@ -1,0 +1,3 @@
+If you are deploying the WAR to the root context -- for example by renaming the WAR to `ROOT.war` prior to deployment -- then the context path may be overridden by configuring `micronaut.server.context-path` in your application configuration.
+
+If you are deploying a WAR called `myproject-1.0.war` to Tomcat, Jetty, etc. the context path will be set to `/myproject-1.0`, and cannot be overridden via application configuration.
