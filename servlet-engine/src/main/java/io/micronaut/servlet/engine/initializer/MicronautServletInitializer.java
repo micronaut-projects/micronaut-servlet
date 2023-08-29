@@ -29,7 +29,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Map;
 import java.util.Set;
 
-import static io.micronaut.core.util.StringUtils.isEmpty;
+import static io.micronaut.core.util.StringUtils.isNotEmpty;
 
 /**
  * A servlet initializer for Micronaut for deployment as a WAR file.
@@ -71,7 +71,7 @@ public class MicronautServletInitializer implements ServletContainerInitializer 
 
         // If deployed as ROOT.war (to the root context, this will be empty)
         final String servletContextPath = ctx.getContextPath();
-        if (!isEmpty(servletContextPath)) {
+        if (isNotEmpty(servletContextPath)) {
             // We are loaded into a non-root context. Set the context path as a property.
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Setting micronaut context-path to match servlet context path: '{}'", servletContextPath);
