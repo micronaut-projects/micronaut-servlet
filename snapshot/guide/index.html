@@ -103,7 +103,9 @@
         
         <div class="toc-item" style="margin-left:0px" id="toc-item-warDeployment"><a href="#warDeployment"><strong>4</strong><span>WAR Deployment</span></a></div>
         
-        <div class="toc-item" style="margin-left:10px" id="toc-item-warContext"><a href="#warContext"><strong>4.1</strong><span>WAR Context path</span></a></div>
+        <div class="toc-item" style="margin-left:10px" id="toc-item-externalConfig"><a href="#externalConfig"><strong>4.1</strong><span>External Configuration</span></a></div>
+        
+        <div class="toc-item" style="margin-left:10px" id="toc-item-warContext"><a href="#warContext"><strong>4.2</strong><span>WAR Context path</span></a></div>
         
         <div class="toc-item" style="margin-left:0px" id="toc-item-jetty"><a href="#jetty"><strong>5</strong><span>Jetty Server</span></a></div>
         
@@ -133,7 +135,7 @@
 <h1 id="introduction"><a class="anchor" href="#introduction"></a>1 Introduction</h1>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/4.0.x/src/main/docs/guide/introduction.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/master/src/main/docs/guide/introduction.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -162,7 +164,7 @@
 <h1 id="releaseHistory"><a class="anchor" href="#releaseHistory"></a>2 Release History</h1>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/4.0.x/src/main/docs/guide/releaseHistory.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/master/src/main/docs/guide/releaseHistory.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -178,7 +180,7 @@
 <h1 id="servletApi"><a class="anchor" href="#servletApi"></a>3 Working with the Servlet API</h1>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/4.0.x/src/main/docs/guide/servletApi.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/master/src/main/docs/guide/servletApi.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -300,7 +302,7 @@ String multipart(
 <h1 id="warDeployment"><a class="anchor" href="#warDeployment"></a>4 WAR Deployment</h1>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/4.0.x/src/main/docs/guide/warDeployment.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/master/src/main/docs/guide/warDeployment.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -376,10 +378,75 @@ Micronaut will load using <a href="../api/io/micronaut/servlet/engine/initialize
 </table>
 </div>
 
-<h2 id="warContext"><a class="anchor" href="#warContext"></a>4.1 WAR Context path</h2>
+<h2 id="externalConfig"><a class="anchor" href="#externalConfig"></a>4.1 External Configuration</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/4.0.x/src/main/docs/guide/warDeployment/warContext.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/master/src/main/docs/guide/warDeployment/externalConfig.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>In a standalone Micronaut Framework application, <a href="https://docs.micronaut.io/latest/guide/#propertySource">external property sources for configuration</a> can be configured via the Java system property <code>micronaut.config.files</code> or the environment variable <code>MICRONAUT_CONFIG_FILES</code>.
+When running as a WAR file, this can be problematic if you wish to run multiple Micronaut Framework WARs in the same container, as all applications will share the same location.</p>
+</div>
+<div class="paragraph">
+<p>To allow an external location per application, it is necessary to write our own replacement for <a href="../api/io/micronaut/servlet/engine/initializer/MicronautServletInitializer.html">MicronautServletInitializer</a>.
+The following example will look for configuration in the <code>/tmp</code> directory and on the classpath in the <code>/some/path</code> directory.</p>
+</div>
+<div class="listingblock">
+<div class="title">src/main/java/example/CustomMicronautServletInitializer.java</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">package example;
+
+import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.ApplicationContextBuilder;
+import io.micronaut.servlet.engine.initializer.MicronautServletInitializer;
+import jakarta.servlet.ServletContext;
+
+public class CustomInitializer extends MicronautServletInitializer {
+
+    @Override
+    protected ApplicationContextBuilder buildApplicationContext(ServletContext ctx) {
+        return ApplicationContext
+                .builder()
+                .overrideConfigLocations(
+                    "file:/tmp",
+                    "classpath:/some/path"
+                )
+                .classLoader(ctx.getClassLoader())
+                .singletons(ctx);
+    }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>We can then use Java&#8217;s Service Provider Interface to register this class as the initializer by pointing to it in the <code>META-INF/services/jakarta.servlet.ServletContainerInitializer</code> file.</p>
+</div>
+<div class="listingblock">
+<div class="title">src/main/resources/META-INF/services/jakarta.servlet.ServletContainerInitializer</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-text hljs" data-lang="text">example.CustomInitializer</code></pre>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+Some servlet containers may limit the locations that are accessible from applications for security reasons.
+</td>
+</tr>
+</table>
+</div>
+
+<h2 id="warContext"><a class="anchor" href="#warContext"></a>4.2 WAR Context path</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/master/src/main/docs/guide/warDeployment/warContext.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -395,7 +462,7 @@ Micronaut will load using <a href="../api/io/micronaut/servlet/engine/initialize
 <h1 id="jetty"><a class="anchor" href="#jetty"></a>5 Jetty Server</h1>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/4.0.x/src/main/docs/guide/jetty.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/master/src/main/docs/guide/jetty.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -646,7 +713,7 @@ public class JettyServerCustomizer implements BeanCreatedEventListener&lt;Server
 <h1 id="tomcat"><a class="anchor" href="#tomcat"></a>6 Tomcat Server</h1>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/4.0.x/src/main/docs/guide/tomcat.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/master/src/main/docs/guide/tomcat.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -882,7 +949,7 @@ public class TomcatServerCustomizer implements BeanCreatedEventListener&lt;Tomca
 <h1 id="undertow"><a class="anchor" href="#undertow"></a>7 Undertow Server</h1>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/4.0.x/src/main/docs/guide/undertow.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/master/src/main/docs/guide/undertow.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -1033,7 +1100,7 @@ public class UndertowServerCustomizer implements BeanCreatedEventListener&lt;Und
 <h1 id="knownIssues"><a class="anchor" href="#knownIssues"></a>8 Known Issues</h1>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/4.0.x/src/main/docs/guide/knownIssues.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/master/src/main/docs/guide/knownIssues.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -1059,7 +1126,7 @@ The body is read from the request input-stream and so attempting to reparse it f
 <h1 id="faq"><a class="anchor" href="#faq"></a>9 FAQ</h1>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/4.0.x/src/main/docs/guide/faq.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/master/src/main/docs/guide/faq.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -1096,7 +1163,7 @@ The body is read from the request input-stream and so attempting to reparse it f
 <h1 id="breaks"><a class="anchor" href="#breaks"></a>10 Breaking Changes</h1>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/4.0.x/src/main/docs/guide/breaks.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/master/src/main/docs/guide/breaks.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -1123,7 +1190,7 @@ To restore the original functionality, you need to configure <code>micronaut.ser
 <h1 id="repository"><a class="anchor" href="#repository"></a>11 Repository</h1>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/4.0.x/src/main/docs/guide/repository.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/master/src/main/docs/guide/repository.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
