@@ -4,6 +4,7 @@ servletApi: Working with the Servlet API
 warDeployment:
   title: WAR Deployment
   externalConfig: External Configuration
+  warContext: WAR Context path
 jetty: Jetty Server
 tomcat: Tomcat Server
 undertow: Undertow Server
