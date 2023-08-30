@@ -1,7 +1,9 @@
 introduction: Introduction
 releaseHistory: Release History
 servletApi: Working with the Servlet API
-warDeployment: WAR Deployment
+warDeployment:
+  title: WAR Deployment
+  warContext: WAR Context path
 jetty: Jetty Server
 tomcat: Tomcat Server
 undertow: Undertow Server
