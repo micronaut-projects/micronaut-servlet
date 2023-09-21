@@ -3,6 +3,7 @@ releaseHistory: Release History
 servletApi: Working with the Servlet API
 warDeployment:
   title: WAR Deployment
+  versioning: Container version considerations
   externalConfig: External Configuration
   warContext: WAR Context path
 jetty: Jetty Server
