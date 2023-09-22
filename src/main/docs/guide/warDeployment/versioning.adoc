@@ -1,0 +1,7 @@
+Micronaut 4.0.0 switched to using the new `jakarta.servlet` package for Servlet API classes.
+This means that Micronaut 4.0.0+ WAR files will not run on Servlet containers that do not support the `jakarta.servlet` package.
+
+For example, Tomcat 10 switched to the `jakarta.servlet` package, so Micronaut 4.0.0 is required to run as a WAR on Tomcat 10.
+And Micronaut 4.0.0 WAR files cannot be run on Tomcat 9 or earlier.
+
+If you have a Micronaut 3 based WAR file that you wish to deploy to Tomcat 10, you need to deploy it to the `$CATALINA_BASE/webapps-javaee` directory instead of the usual `$CATALINA_BASE/webapps`, and Tomcat will perform a conversion to jakarta.servlet.
