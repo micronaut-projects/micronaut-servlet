@@ -103,9 +103,11 @@
         
         <div class="toc-item" style="margin-left:0px" id="toc-item-warDeployment"><a href="#warDeployment"><strong>4</strong><span>WAR Deployment</span></a></div>
         
-        <div class="toc-item" style="margin-left:10px" id="toc-item-externalConfig"><a href="#externalConfig"><strong>4.1</strong><span>External Configuration</span></a></div>
+        <div class="toc-item" style="margin-left:10px" id="toc-item-versioning"><a href="#versioning"><strong>4.1</strong><span>Container version considerations</span></a></div>
         
-        <div class="toc-item" style="margin-left:10px" id="toc-item-warContext"><a href="#warContext"><strong>4.2</strong><span>WAR Context path</span></a></div>
+        <div class="toc-item" style="margin-left:10px" id="toc-item-externalConfig"><a href="#externalConfig"><strong>4.2</strong><span>External Configuration</span></a></div>
+        
+        <div class="toc-item" style="margin-left:10px" id="toc-item-warContext"><a href="#warContext"><strong>4.3</strong><span>WAR Context path</span></a></div>
         
         <div class="toc-item" style="margin-left:0px" id="toc-item-jetty"><a href="#jetty"><strong>5</strong><span>Jetty Server</span></a></div>
         
@@ -378,7 +380,28 @@ Micronaut will load using <a href="../api/io/micronaut/servlet/engine/initialize
 </table>
 </div>
 
-<h2 id="externalConfig"><a class="anchor" href="#externalConfig"></a>4.1 External Configuration</h2>
+<h2 id="versioning"><a class="anchor" href="#versioning"></a>4.1 Container version considerations</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/master/src/main/docs/guide/warDeployment/versioning.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>Micronaut 4.0.0 switched to using the new <code>jakarta.servlet</code> package for Servlet API classes.
+This means that Micronaut 4.0.0+ WAR files will not run on Servlet containers that do not support the <code>jakarta.servlet</code> package.</p>
+</div>
+<div class="paragraph">
+<p>For example, Tomcat 10 switched to the <code>jakarta.servlet</code> package, so Micronaut 4.0.0 is required to run as a WAR on Tomcat 10.
+And Micronaut 4.0.0 WAR files cannot be run on Tomcat 9 or earlier.</p>
+</div>
+<div class="paragraph">
+<p>If you have a Micronaut 3 based WAR file that you wish to deploy to Tomcat 10, you need to deploy it to the <code>$CATALINA_BASE/webapps-javaee</code> directory instead of the usual <code>$CATALINA_BASE/webapps</code>, and Tomcat will perform a conversion to jakarta.servlet.</p>
+</div>
+
+<h2 id="externalConfig"><a class="anchor" href="#externalConfig"></a>4.2 External Configuration</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/master/src/main/docs/guide/warDeployment/externalConfig.adoc"'>
@@ -443,7 +466,7 @@ Some servlet containers may limit the locations that are accessible from applica
 </table>
 </div>
 
-<h2 id="warContext"><a class="anchor" href="#warContext"></a>4.2 WAR Context path</h2>
+<h2 id="warContext"><a class="anchor" href="#warContext"></a>4.3 WAR Context path</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/master/src/main/docs/guide/warDeployment/warContext.adoc"'>
