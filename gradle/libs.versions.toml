@@ -16,7 +16,7 @@ graal-svm = "23.0.1"
 bcpkix = "1.70"
 
 micronaut-reactor = "3.0.2"
-micronaut-security = "4.0.4"
+micronaut-security = "4.1.0"
 micronaut-serde = "2.2.5"
 micronaut-session = "4.0.0"
 micronaut-validation = "4.0.3"
