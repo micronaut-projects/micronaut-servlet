@@ -420,7 +420,9 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
                 } else {
                     // stream case
                     if (exchange.getRequest().isAsyncSupported()) {
-                        Mono.from(servletResponse.stream(publisher)).subscribe(responsePublisherCallback);
+                        Mono.from(servletResponse.stream(publisher)).subscribe(responsePublisherCallback, throwable -> {
+                            responsePublisherCallback.accept(null);
+                        });
                         return;
                     } else {
                         // fallback to blocking
