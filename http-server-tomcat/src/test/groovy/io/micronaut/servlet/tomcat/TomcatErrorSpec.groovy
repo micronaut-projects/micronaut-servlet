@@ -42,7 +42,7 @@ class TomcatErrorSpec extends Specification {
         client.toBlocking().exchange("/errors/stream-immediate", String)
 
         then:
-        HttpClientResponseException ex = thrown(HttpClientResponseException)
+        HttpClientResponseException ex = thrown()
         ex.status == HttpStatus.INTERNAL_SERVER_ERROR
         ex.response.body.orElseThrow() == "Internal Server Error: Immediate error"
     }
