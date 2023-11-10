@@ -52,7 +52,7 @@ class UndertowErrorSpec extends Specification {
         client.toBlocking().exchange("/errors/stream-delayed", Integer[].class)
 
         then:
-        HttpClientResponseException ex = thrown(HttpClientResponseException)
+        HttpClientResponseException ex = thrown()
         ex.status == HttpStatus.OK
         ex.message.contains("Unexpected end-of-input")
     }
