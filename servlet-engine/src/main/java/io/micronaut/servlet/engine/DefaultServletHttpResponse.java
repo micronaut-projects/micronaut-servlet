@@ -35,15 +35,17 @@ import io.micronaut.http.codec.MediaTypeCodec;
 import io.micronaut.http.cookie.Cookie;
 import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.servlet.http.ServletHttpResponse;
-import org.reactivestreams.Publisher;
-import org.reactivestreams.Subscriber;
-import org.reactivestreams.Subscription;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.FluxSink;
-
 import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.WriteListener;
 import jakarta.servlet.http.HttpServletResponse;
+import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.FluxSink;
+
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -66,6 +68,8 @@ import java.util.stream.Collectors;
  */
 @Internal
 public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpServletResponse, B> {
+
+    private static final Logger LOG = LoggerFactory.getLogger(DefaultServletHttpResponse.class);
 
     private static final byte[] EMPTY_ARRAY = "[]".getBytes();
 
@@ -199,7 +203,10 @@ public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpSe
                     if (t instanceof HttpStatusException) {
                         maybeReportErrorDownstream(t);
                     } else {
-                        emitter.error(t);
+                        if (LOG.isWarnEnabled()) {
+                            LOG.warn("Reactive response received an error after some data has already been written. This error cannot be forwarded to the client.", t);
+                        }
+                        maybeReportErrorDownstream(new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, HttpStatus.INTERNAL_SERVER_ERROR.getReason() + ": " + t.getMessage()));
                     }
                     subscription.cancel();
                 }

@@ -12,8 +12,10 @@ import io.micronaut.http.annotation.Produces
 import io.micronaut.http.annotation.Status
 import io.micronaut.http.client.HttpClient
 import io.micronaut.http.client.annotation.Client
+import io.micronaut.http.client.exceptions.HttpClientResponseException
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
+import reactor.core.publisher.Flux
 import spock.lang.Specification
 
 @MicronautTest
@@ -35,6 +37,26 @@ class JettyErrorSpec extends Specification {
         result.header(HttpHeaders.CONTENT_TYPE).startsWith(MediaType.TEXT_PLAIN)
     }
 
+    void "error that occurs with streaming response results in client receiving an error"() {
+        when:
+        client.toBlocking().exchange("/errors/stream-immediate", String)
+
+        then:
+        HttpClientResponseException ex = thrown()
+        ex.status == HttpStatus.INTERNAL_SERVER_ERROR
+        ex.response.body.orElseThrow() == "Internal Server Error: Immediate error"
+    }
+
+    void "error that occurs with streaming response after data sent results in client receiving incomplete data"() {
+        when:
+        client.toBlocking().exchange("/errors/stream-delayed", Integer[].class)
+
+        then:
+        HttpClientResponseException ex = thrown()
+        ex.status == HttpStatus.OK
+        ex.message.contains("Unexpected end-of-input")
+    }
+
     @Requires(property = "spec.name", value = "JettyErrorSpec")
     @Controller("/errors")
     static class ErrorController {
@@ -42,7 +64,22 @@ class JettyErrorSpec extends Specification {
         @Get("/local")
         @Produces(MediaType.APPLICATION_PDF)
         String localHandler() {
-            throw new AnotherException("bad things");
+            throw new AnotherException("bad things")
+        }
+
+        @Get("/stream-immediate")
+        Flux<String> streamingImmediateError() {
+            return Flux.error(new IllegalStateException("Immediate error"))
+        }
+
+        @Get("/stream-delayed")
+        Flux<Integer> streamingDelayedError() {
+            return Flux.range(1, 5).map(data -> {
+                if (data == 3) {
+                    throw new IllegalStateException("Delayed error")
+                }
+                return data
+            })
         }
 
         @Error

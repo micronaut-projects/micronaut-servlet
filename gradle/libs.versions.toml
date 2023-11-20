@@ -11,13 +11,13 @@ kotlin-coroutines = '1.7.3'
 kotest-runner = '5.8.0'
 undertow = '2.3.10.Final'
 jetty = '11.0.18'
-tomcat = '10.1.15'
+tomcat = '10.1.16'
 graal-svm = "23.1.1"
 bcpkix = "1.70"
 
 micronaut-reactor = "3.1.0"
-micronaut-security = "4.1.0"
-micronaut-serde = "2.3.0"
+micronaut-security = "4.4.0"
+micronaut-serde = "2.4.0"
 micronaut-session = "4.0.0"
 micronaut-validation = "4.0.3"
 google-cloud-functions = '1.1.0'
@@ -25,7 +25,7 @@ kotlin = "1.9.20"
 micronaut-logging = "1.1.2"
 
 # Micronaut
-micronaut-gradle-plugin = "4.1.2"
+micronaut-gradle-plugin = "4.2.0"
 
 [libraries]
 # Core
