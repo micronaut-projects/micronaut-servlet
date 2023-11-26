@@ -246,7 +246,7 @@ public class JettyFactory extends ServletServerFactory {
             resourceHandler.setCacheControl(config.getCacheControl());
         }
 
-        ContextHandler contextHandler = new ContextHandler(path + "/*");
+        ContextHandler contextHandler = new ContextHandler(path);
         contextHandler.setContextPath("/");
         contextHandler.setHandler(resourceHandler);
         contextHandler.setDisplayName("Static Resources " + mapping);
