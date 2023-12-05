@@ -1,4 +1,5 @@
 plugins {
+    id 'java'
     id 'io.micronaut.build.internal.servlet.base'
     id 'io.micronaut.build.internal.module'
 }

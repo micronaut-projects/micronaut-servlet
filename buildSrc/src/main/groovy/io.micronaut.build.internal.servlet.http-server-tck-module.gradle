@@ -1,5 +1,6 @@
 plugins {
     id 'io.micronaut.build.internal.servlet.base'
+    id 'java'
     id 'org.graalvm.buildtools.native'
 }
 
