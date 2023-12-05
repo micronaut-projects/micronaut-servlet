@@ -1,10 +1,6 @@
 plugins {
-    id("java")
+    id 'io.micronaut.build.internal.servlet.base'
     id 'org.graalvm.buildtools.native'
-}
-
-repositories {
-    mavenCentral()
 }
 
 dependencies {
@@ -34,7 +30,7 @@ graalvmNative {
         enabled = true
     }
     binaries {
-        all {
+        configureEach {
             resources.autodetect()
         }
     }

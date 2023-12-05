@@ -49,6 +49,7 @@ import io.micronaut.http.server.types.files.FileCustomizableResponseType;
 import io.micronaut.http.server.types.files.StreamedFile;
 import io.micronaut.http.server.types.files.SystemFile;
 import io.micronaut.web.router.RouteInfo;
+import io.micronaut.web.router.RouteMatch;
 import io.micronaut.web.router.resource.StaticResourceResolver;
 import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
@@ -204,12 +205,12 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
         final HttpRequest<Object> req = exchange.getRequest();
         applicationContext.publishEvent(new HttpRequestReceivedEvent(req));
 
-        ServletRequestLifecycle lc = new ServletRequestLifecycle(routeExecutor, req);
+        ServletRequestLifecycle lc = new ServletRequestLifecycle(routeExecutor);
 
         if (exchange.getRequest().isAsyncSupported()) {
             exchange.getRequest().executeAsync(asyncExecution -> {
                 try (PropagatedContext.Scope ignore = PropagatedContext.getOrEmpty().plus(new ServerHttpRequestContext(req)).propagate()) {
-                    lc.handleNormal()
+                    lc.handleNormal(req)
                         .onComplete((response, throwable) -> onComplete(exchange, req, response, throwable, httpResponse -> {
                             asyncExecution.complete();
                             requestTerminated.accept(httpResponse);
@@ -219,7 +220,7 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
         } else {
             try (PropagatedContext.Scope ignore = PropagatedContext.getOrEmpty().plus(new ServerHttpRequestContext(req)).propagate()) {
                 CompletableFuture<?> termination = new CompletableFuture<>();
-                lc.handleNormal()
+                lc.handleNormal(req)
                     .onComplete((response, throwable) -> {
                         try {
                             onComplete(exchange, req, response, throwable, requestTerminated);
@@ -238,13 +239,14 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
 
     private void onComplete(ServletExchange<REQ, RES> exchange,
                             HttpRequest<Object> req,
-                            MutableHttpResponse<?> response,
+                            HttpResponse<?> r,
                             Throwable throwable,
                             Consumer<HttpResponse<?>> responsePublisherCallback) {
         if (throwable != null) {
-            response = routeExecutor.createDefaultErrorResponse(req, throwable);
+            r = routeExecutor.createDefaultErrorResponse(req, throwable);
         }
-        if (response != null) {
+        if (r != null) {
+            MutableHttpResponse<?> response = r.toMutableResponse();
             String methodName = req.getMethodName();
             URI uri = req.getUri();
             try {
@@ -501,17 +503,26 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
     }
 
     private final class ServletRequestLifecycle extends RequestLifecycle {
-        ServletRequestLifecycle(RouteExecutor routeExecutor, HttpRequest<?> request) {
-            super(routeExecutor, request);
+        ServletRequestLifecycle(RouteExecutor routeExecutor) {
+            super(routeExecutor);
         }
 
-        ExecutionFlow<MutableHttpResponse<?>> handleNormal() {
-            return normalFlow();
+        ExecutionFlow<HttpResponse<?>> handleNormal(HttpRequest<?> request) {
+            return normalFlow(request);
         }
 
         @Override
-        protected FileCustomizableResponseType findFile() {
-            return matchFile(request().getPath()).orElse(null);
+        protected FileCustomizableResponseType findFile(HttpRequest<?> request) {
+            return matchFile(request.getPath()).orElse(null);
+        }
+
+        @Override
+        protected ExecutionFlow<RouteMatch<?>> fulfillArguments(RouteMatch<?> routeMatch, HttpRequest<?> request) {
+            try {
+                return super.fulfillArguments(routeMatch, request);
+            } catch (Exception e) {
+                return ExecutionFlow.error(e);
+            }
         }
     }
 }

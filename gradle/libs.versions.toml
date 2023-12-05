@@ -1,5 +1,5 @@
 [versions]
-micronaut = "4.2.0"
+micronaut = "4.3.0-SNAPSHOT"
 micronaut-docs = "2.0.0"
 micronaut-test = "4.0.1"
 
@@ -20,7 +20,6 @@ micronaut-security = "4.4.0"
 micronaut-serde = "2.4.0"
 micronaut-session = "4.1.0"
 micronaut-validation = "4.2.0"
-google-cloud-functions = '1.1.0'
 kotlin = "1.9.21"
 micronaut-logging = "1.1.2"
 
@@ -28,8 +27,6 @@ micronaut-logging = "1.1.2"
 micronaut-gradle-plugin = "4.2.0"
 
 [libraries]
-# Core
-micronaut-core = { module = 'io.micronaut:micronaut-core-bom', version.ref = 'micronaut' }
 
 graal-svm = { module = "org.graalvm.nativeimage:svm", version.ref = "graal-svm" }
 
@@ -57,7 +54,6 @@ jetty = { module = 'org.eclipse.jetty:jetty-servlet', version.ref = 'jetty' }
 kotest-runner = { module = 'io.kotest:kotest-runner-junit5', version.ref = 'kotest-runner' }
 bcpkix = { module = "org.bouncycastle:bcpkix-jdk15on", version.ref = "bcpkix" }
 
-google-cloud-functions = { module = 'com.google.cloud.functions:functions-framework-api', version.ref = 'google-cloud-functions' }
 # Gradle
 gradle-micronaut = { module = "io.micronaut.gradle:micronaut-gradle-plugin", version.ref = "micronaut-gradle-plugin" }
 gradle-kotlin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
