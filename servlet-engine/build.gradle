@@ -8,6 +8,7 @@ dependencies {
     api(projects.micronautServletCore)
     api libs.managed.servlet.api
 
+    implementation(mn.micronaut.http.server)
     implementation(mnReactor.micronaut.reactor)
     implementation mn.micronaut.discovery.core
     implementation mn.micronaut.jackson.core

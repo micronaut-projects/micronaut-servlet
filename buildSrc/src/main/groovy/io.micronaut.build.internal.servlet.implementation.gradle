@@ -6,7 +6,7 @@ dependencies {
     annotationProcessor mn.micronaut.graal
 
     api(projects.micronautServletEngine)
-    api mn.micronaut.http.server
+    implementation(mn.micronaut.http.server)
 
     compileOnly libs.graal.svm
 
