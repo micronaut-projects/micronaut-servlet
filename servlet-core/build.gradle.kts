@@ -3,7 +3,6 @@ plugins {
 }
 
 dependencies {
-    api(mn.micronaut.inject)
     api(mn.micronaut.http.server)
     compileOnly(mn.micronaut.json.core)
     implementation(mn.micronaut.http.netty)
