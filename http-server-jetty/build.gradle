@@ -9,4 +9,5 @@ dependencies {
     testAnnotationProcessor(mnValidation.micronaut.validation.processor)
     testImplementation(mnValidation.micronaut.validation)
     testImplementation(mnSerde.micronaut.serde.jackson)
+    testImplementation(mnLogging.logback.classic)
 }
