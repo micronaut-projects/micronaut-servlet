@@ -5,7 +5,6 @@ plugins {
 dependencies {
     api(mn.micronaut.http.server)
     compileOnly(mn.micronaut.json.core)
-    implementation(mn.micronaut.http.netty)
     implementation(mn.micronaut.router)
     implementation(mnReactor.micronaut.reactor)
     testAnnotationProcessor(mn.micronaut.inject.java)
