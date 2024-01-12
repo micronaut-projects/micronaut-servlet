@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 original authors
+ * Copyright 2017-2024 original authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -246,7 +246,7 @@ public class JettyFactory extends ServletServerFactory {
             resourceHandler.setCacheControl(config.getCacheControl());
         }
 
-        ContextHandler contextHandler = new ContextHandler(path + "/*");
+        ContextHandler contextHandler = new ContextHandler(path);
         contextHandler.setContextPath("/");
         contextHandler.setHandler(resourceHandler);
         contextHandler.setDisplayName("Static Resources " + mapping);

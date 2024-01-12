@@ -1,6 +1,8 @@
-
 package io.micronaut.servlet.jetty
 
+import ch.qos.logback.classic.Level
+import ch.qos.logback.classic.spi.ILoggingEvent
+import ch.qos.logback.core.AppenderBase
 import io.micronaut.context.ApplicationContext
 import io.micronaut.context.env.Environment
 import io.micronaut.context.exceptions.BeanInstantiationException
@@ -16,12 +18,16 @@ import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.micronaut.test.support.TestPropertyProvider
 import io.micronaut.web.router.resource.StaticResourceConfiguration
 import jakarta.inject.Inject
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import spock.lang.Issue
 import spock.lang.Specification
 
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.util.concurrent.BlockingQueue
+import java.util.concurrent.LinkedBlockingQueue
 
 import static io.micronaut.http.HttpHeaders.CACHE_CONTROL
 import static io.micronaut.http.HttpHeaders.CONTENT_LENGTH
@@ -302,6 +308,13 @@ class JettyStaticResourceResolutionSpec extends Specification implements TestPro
     @Issue("https://github.com/micronaut-projects/micronaut-servlet/issues/251")
     void "multiple index.html files causes issues with the static resource handling"() {
         given:
+        MemoryAppender appender = new MemoryAppender()
+        Logger log = LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME)
+        ch.qos.logback.classic.Logger logger = (ch.qos.logback.classic.Logger) log
+        logger.addAppender(appender)
+        logger.setLevel(Level.WARN)
+        appender.start()
+
         EmbeddedServer embeddedServer = ApplicationContext.run(EmbeddedServer, [
                 'micronaut.router.static-resources.nest.paths': ['classpath:nest-test/nested'],
                 'micronaut.router.static-resources.nest.mapping': '/nest/**',
@@ -332,8 +345,21 @@ class JettyStaticResourceResolutionSpec extends Specification implements TestPro
             body() == publicText
         }
 
+        and: 'No warning logs'
+        appender.events.empty
+
         cleanup:
         embeddedServer.stop()
         embeddedServer.close()
+        appender.stop()
+    }
+
+    static class MemoryAppender extends AppenderBase<ILoggingEvent> {
+        final BlockingQueue<ILoggingEvent> events = new LinkedBlockingQueue<>()
+
+        @Override
+        protected void append(ILoggingEvent e) {
+            events.add(e)
+        }
     }
 }
