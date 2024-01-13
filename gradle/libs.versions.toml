@@ -15,7 +15,7 @@ tomcat = '10.1.16'
 graal-svm = "23.1.1"
 bcpkix = "1.70"
 
-micronaut-reactor = "3.1.0"
+micronaut-reactor = "3.2.1"
 micronaut-security = "4.4.0"
 micronaut-serde = "2.7.0"
 micronaut-session = "4.2.0"
