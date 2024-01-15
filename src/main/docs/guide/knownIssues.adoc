@@ -8,3 +8,8 @@ It is not currently possible to use the HttpProxyClient with Servlet Filters.
 
 Local error handlers that require the request body to be reparsed will not work in Servlet based applications.
 The body is read from the request input-stream and so attempting to reparse it for the error handler will fail.
+
+=== Management port
+
+With a Netty based server, you can https://docs.micronaut.io/latest/guide/#_management_port[configure a management port for the server].
+This is not currently supported with Servlet based servers, and management endpoints (when enabled) will be available on the same port as the main application.
