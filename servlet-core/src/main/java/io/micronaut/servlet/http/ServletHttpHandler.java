@@ -204,12 +204,12 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
         final HttpRequest<Object> req = exchange.getRequest();
         applicationContext.publishEvent(new HttpRequestReceivedEvent(req));
 
-        ServletRequestLifecycle lc = new ServletRequestLifecycle(routeExecutor, req);
+        ServletRequestLifecycle lc = new ServletRequestLifecycle(routeExecutor);
 
         if (exchange.getRequest().isAsyncSupported()) {
             exchange.getRequest().executeAsync(asyncExecution -> {
                 try (PropagatedContext.Scope ignore = PropagatedContext.getOrEmpty().plus(new ServerHttpRequestContext(req)).propagate()) {
-                    lc.handleNormal()
+                    lc.handleNormal(req)
                         .onComplete((response, throwable) -> onComplete(exchange, req, response.toMutableResponse(), throwable, httpResponse -> {
                             asyncExecution.complete();
                             requestTerminated.accept(httpResponse);
@@ -219,7 +219,7 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
         } else {
             try (PropagatedContext.Scope ignore = PropagatedContext.getOrEmpty().plus(new ServerHttpRequestContext(req)).propagate()) {
                 CompletableFuture<?> termination = new CompletableFuture<>();
-                lc.handleNormal()
+                lc.handleNormal(req)
                     .onComplete((response, throwable) -> {
                         try {
                             onComplete(exchange, req, response.toMutableResponse(), throwable, requestTerminated);
@@ -501,17 +501,17 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
     }
 
     private final class ServletRequestLifecycle extends RequestLifecycle {
-        ServletRequestLifecycle(RouteExecutor routeExecutor, HttpRequest<?> request) {
-            super(routeExecutor, request);
+        ServletRequestLifecycle(RouteExecutor routeExecutor) {
+            super(routeExecutor);
         }
 
-        ExecutionFlow<HttpResponse<?>> handleNormal() {
-            return normalFlow();
+        ExecutionFlow<HttpResponse<?>> handleNormal(HttpRequest<?> request) {
+            return normalFlow(request);
         }
 
         @Override
-        protected FileCustomizableResponseType findFile() {
-            return matchFile(request().getPath()).orElse(null);
+        protected FileCustomizableResponseType findFile(HttpRequest<?> request) {
+            return matchFile(request.getPath()).orElse(null);
         }
     }
 }
