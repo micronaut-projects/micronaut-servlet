@@ -210,7 +210,7 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
             exchange.getRequest().executeAsync(asyncExecution -> {
                 try (PropagatedContext.Scope ignore = PropagatedContext.getOrEmpty().plus(new ServerHttpRequestContext(req)).propagate()) {
                     lc.handleNormal()
-                        .onComplete((response, throwable) -> onComplete(exchange, req, response, throwable, httpResponse -> {
+                        .onComplete((response, throwable) -> onComplete(exchange, req, response.toMutableResponse(), throwable, httpResponse -> {
                             asyncExecution.complete();
                             requestTerminated.accept(httpResponse);
                         }));
@@ -222,7 +222,7 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
                 lc.handleNormal()
                     .onComplete((response, throwable) -> {
                         try {
-                            onComplete(exchange, req, response, throwable, requestTerminated);
+                            onComplete(exchange, req, response.toMutableResponse(), throwable, requestTerminated);
                         } finally {
                             termination.complete(null);
                         }
@@ -505,7 +505,7 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
             super(routeExecutor, request);
         }
 
-        ExecutionFlow<MutableHttpResponse<?>> handleNormal() {
+        ExecutionFlow<HttpResponse<?>> handleNormal() {
             return normalFlow();
         }
 
