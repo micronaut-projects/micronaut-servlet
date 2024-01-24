@@ -13,7 +13,6 @@ import org.junit.platform.suite.api.SuiteDisplayName;
     "io.micronaut.http.server.tck.tests.filter.ClientResponseFilterTest", // responseFilterThrowableParameter fails under Graal https://ge.micronaut.io/s/ufuhtbe5sgmxi
     "io.micronaut.http.server.tck.tests.FilterProxyTest", // see https://github.com/micronaut-projects/micronaut-core/issues/9725
     "io.micronaut.http.server.tck.tests.LocalErrorReadingBodyTest", // Cannot read body as text once stream is exhausted trying to read it as a different type See https://github.com/micronaut-projects/micronaut-servlet/pull/548
-    "io.micronaut.http.server.tck.tests.filter.options.OptionsFilterTest" // needs https://github.com/micronaut-projects/micronaut-core/pull/10126
 })
 public class TomcatHttpServerTestSuite {
 }
