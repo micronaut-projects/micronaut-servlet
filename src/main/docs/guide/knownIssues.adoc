@@ -16,5 +16,7 @@ This is not currently supported with Servlet based servers, and management endpo
 
 === ServiceReadyEvent publication
 
-When using the Netty runtime, the `ServiceReadyEvent` is published when the server is ready to accept requests.
+When using the Netty runtime, the `ServiceReadyEvent` is automatically published when the server is ready to accept requests.
 This is not currently supported with Servlet based servers.
+
+If you wish to generate a `ServiceReadyEvent` you can do so manually by injecting a `ApplicationEventPublisher<ServiceReadyEvent>` bean and publishing the event yourself when your application is ready.
