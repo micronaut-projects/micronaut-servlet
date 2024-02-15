@@ -13,3 +13,10 @@ The body is read from the request input-stream and so attempting to reparse it f
 
 With a Netty based server, you can https://docs.micronaut.io/latest/guide/#_management_port[configure a management port for the server].
 This is not currently supported with Servlet based servers, and management endpoints (when enabled) will be available on the same port as the main application.
+
+=== ServiceReadyEvent publication
+
+When using the Netty runtime, the `ServiceReadyEvent` is automatically published when the server is ready to accept requests.
+This is not currently supported with Servlet based servers.
+
+If you wish to generate a `ServiceReadyEvent` you can do so manually by injecting a `ApplicationEventPublisher<ServiceReadyEvent>` bean and publishing the event yourself when your application is ready.
