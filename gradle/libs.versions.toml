@@ -11,7 +11,7 @@ kotlin-coroutines = '1.7.3'
 kotest-runner = '5.8.0'
 undertow = '2.3.12.Final'
 jetty = '11.0.20'
-tomcat = '10.1.18'
+tomcat = '10.1.19'
 graal-svm = "23.1.2"
 bcpkix = "1.70"
 
