@@ -15,9 +15,9 @@ dependencies {
 
     testImplementation libs.kotlin.stdlib.jdk8
     testImplementation libs.kotlin.reflect
-    testImplementation libs.kotlinx.coroutines.core
-    testImplementation libs.kotlinx.coroutines.jdk8
-    testImplementation libs.kotlinx.coroutines.rx2
+    testImplementation mn.kotlinx.coroutines.core
+    testImplementation mn.kotlinx.coroutines.jdk8
+    testImplementation mn.kotlinx.coroutines.rx2
 
     testImplementation mn.micronaut.jackson.databind
     testImplementation mn.snakeyaml
