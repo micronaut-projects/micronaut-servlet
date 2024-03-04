@@ -7,7 +7,6 @@ groovy = "4.0.15"
 spock = "2.3-groovy-4.0"
 
 managed-servlet-api = '6.0.0'
-kotlin-coroutines = '1.7.3'
 kotest-runner = '5.8.0'
 undertow = '2.3.12.Final'
 jetty = '11.0.20'
@@ -46,10 +45,6 @@ junit-jupiter-engine = { module = 'org.junit.jupiter:junit-jupiter-engine' }
 junit-platform-engine = { module = "org.junit.platform:junit-platform-suite-engine" }
 kotlin-stdlib-jdk8 = { module = 'org.jetbrains.kotlin:kotlin-stdlib-jdk8' }
 kotlin-reflect = { module = 'org.jetbrains.kotlin:kotlin-reflect' }
-
-kotlinx-coroutines-core = { module = 'org.jetbrains.kotlinx:kotlinx-coroutines-core', version.ref = 'kotlin-coroutines' }
-kotlinx-coroutines-jdk8 = { module = 'org.jetbrains.kotlinx:kotlinx-coroutines-jdk8', version.ref = 'kotlin-coroutines' }
-kotlinx-coroutines-rx2 = { module = 'org.jetbrains.kotlinx:kotlinx-coroutines-rx2', version.ref = 'kotlin-coroutines' }
 
 tomcat-embed-core = { module = 'org.apache.tomcat.embed:tomcat-embed-core', version.ref = 'tomcat' }
 undertow-servlet = { module = 'io.undertow:undertow-servlet', version.ref = 'undertow' }
