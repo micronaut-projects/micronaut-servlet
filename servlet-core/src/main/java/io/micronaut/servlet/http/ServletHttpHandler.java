@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 original authors
+ * Copyright 2017-2024 original authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -116,17 +116,6 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
         // hack for bug fixed in Micronaut 1.3.3
         applicationContext.getEnvironment()
             .addConverter(HttpRequest.class, HttpRequest.class, httpRequest -> httpRequest);
-    }
-
-    /**
-     * Default constructor.
-     *
-     * @param applicationContext The application context
-     * @deprecated Use {@link #ServletHttpHandler(ApplicationContext, ConversionService)}
-     */
-    @Deprecated
-    public ServletHttpHandler(ApplicationContext applicationContext) {
-        this(applicationContext, ConversionService.SHARED);
     }
 
     /**

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 original authors
+ * Copyright 2017-2024 original authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import io.micronaut.core.convert.ConversionService;
 import io.micronaut.servlet.http.BodyBuilder;
 import io.micronaut.servlet.http.ServletExchange;
 import io.micronaut.servlet.http.ServletHttpHandler;
-
 import jakarta.inject.Singleton;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -41,17 +40,6 @@ public class DefaultServletHttpHandler extends ServletHttpHandler<HttpServletReq
      */
     public DefaultServletHttpHandler(ApplicationContext applicationContext, ConversionService conversionService) {
         super(applicationContext, conversionService);
-    }
-
-    /**
-     * Default constructor.
-     *
-     * @param applicationContext The application context
-     * @deprecated use {@link #DefaultServletHttpHandler(ApplicationContext, ConversionService)}
-     */
-    @Deprecated
-    public DefaultServletHttpHandler(ApplicationContext applicationContext) {
-        super(applicationContext, ConversionService.SHARED);
     }
 
     @Override
