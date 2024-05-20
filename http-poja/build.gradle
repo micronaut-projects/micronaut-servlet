@@ -1,0 +1,11 @@
+plugins {
+    id("io.micronaut.build.internal.servlet.implementation")
+}
+
+dependencies {
+    api project(":micronaut-servlet-core")
+    implementation("com.athaydes.rawhttp:rawhttp-core:2.4.1")
+    implementation("com.athaydes.rawhttp:rawhttp-cookies:0.2.1")
+
+}
+
