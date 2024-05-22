@@ -30,7 +30,7 @@ import org.apache.tomcat.util.threads.VirtualThreadExecutor;
  */
 @Requires(sdk = Requires.Sdk.JAVA, version = "21")
 @Singleton
-public class TomcatVirtualThreadEnabler implements BeanCreatedEventListener<Connector> {
+class TomcatVirtualThreadEnabler implements BeanCreatedEventListener<Connector> {
     private final ServletConfiguration servletConfiguration;
 
     public TomcatVirtualThreadEnabler(ServletConfiguration servletConfiguration) {
