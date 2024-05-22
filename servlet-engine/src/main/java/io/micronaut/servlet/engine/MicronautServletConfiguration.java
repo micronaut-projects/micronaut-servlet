@@ -17,10 +17,13 @@ package io.micronaut.servlet.engine;
 
 import io.micronaut.context.annotation.ConfigurationInject;
 import io.micronaut.context.annotation.ConfigurationProperties;
+import io.micronaut.context.annotation.Property;
 import io.micronaut.context.env.Environment;
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.bind.annotation.Bindable;
 import io.micronaut.core.naming.Named;
+import io.micronaut.core.util.StringUtils;
 import io.micronaut.http.server.HttpServerConfiguration;
 import io.micronaut.servlet.http.ServletConfiguration;
 
@@ -46,6 +49,8 @@ public class MicronautServletConfiguration implements Named, ServletConfiguratio
     private final String name;
     private boolean asyncFileServingEnabled = true;
 
+    private boolean asyncSupported = true;
+
 
     /**
      * Default constructor.
@@ -70,6 +75,33 @@ public class MicronautServletConfiguration implements Named, ServletConfiguratio
             );
         } else {
             this.multipartConfigElement = null;
+        }
+    }
+
+    @Override
+    public boolean isAsyncSupported() {
+        return asyncSupported;
+    }
+
+    /**
+     * Set whether async is supported or not.
+     * @param asyncSupported True if async is supported.
+     */
+    public void setAsyncSupported(boolean asyncSupported) {
+        this.asyncSupported = asyncSupported;
+    }
+
+    /**
+     * Legacy property to disable async for testing.
+     *
+     * @param asyncSupported Is async supported
+     * @deprecated Use {@link #setAsyncSupported(boolean)} instead
+     */
+    @Deprecated(forRemoval = true, since = "4.8.0")
+    @Property(name = "micronaut.server.testing.async")
+    public void setTestAsyncSupported(@Nullable Boolean asyncSupported) {
+        if (asyncSupported != null) {
+            this.asyncSupported = asyncSupported;
         }
     }
 
@@ -103,6 +135,6 @@ public class MicronautServletConfiguration implements Named, ServletConfiguratio
 
     @Override
     public boolean isAsyncFileServingEnabled() {
-        return asyncFileServingEnabled;
+        return asyncSupported && asyncFileServingEnabled;
     }
 }

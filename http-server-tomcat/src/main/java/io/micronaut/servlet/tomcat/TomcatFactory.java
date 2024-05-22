@@ -106,9 +106,9 @@ public class TomcatFactory extends ServletServerFactory {
                 new DefaultMicronautServlet(getApplicationContext())
         );
 
-        Boolean isAsync = getApplicationContext().getEnvironment().getProperty("micronaut.server.testing.async", Boolean.class, true);
+        boolean isAsync = configuration.isAsyncSupported();
         if (Boolean.FALSE.equals(isAsync)) {
-            LOG.warn("Async support disabled for testing purposes.");
+            LOG.debug("Servlet async mode is disabled");
         }
         servlet.setAsyncSupported(isAsync);
         servlet.addMapping(configuration.getMapping());

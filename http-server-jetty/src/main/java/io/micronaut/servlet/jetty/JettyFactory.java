@@ -117,10 +117,9 @@ public class JettyFactory extends ServletServerFactory {
         final ServletHolder servletHolder = new ServletHolder(new DefaultMicronautServlet(applicationContext));
         contextHandler.addServlet(servletHolder, configuration.getMapping());
 
-        Boolean isAsync = applicationContext.getEnvironment()
-                .getProperty("micronaut.server.testing.async", Boolean.class, true);
+        boolean isAsync = configuration.isAsyncSupported();
         if (Boolean.FALSE.equals(isAsync)) {
-            LOG.warn("Async support disabled for testing purposes.");
+            LOG.debug("Servlet async mode is disabled");
         }
         servletHolder.setAsyncSupported(isAsync);
 
