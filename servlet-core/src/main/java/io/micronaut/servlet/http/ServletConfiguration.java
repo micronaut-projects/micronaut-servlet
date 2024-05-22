@@ -38,4 +38,16 @@ public interface ServletConfiguration {
     default boolean isAsyncSupported() {
         return true;
     }
+
+    /**
+     * Whether to enable virtual thread support if available.
+     *
+     * <p>If virtual threads are not available this option does nothing.</p>
+     *
+     * @return True if they should be enabled
+     * @since 4.8.0
+     */
+    default boolean isEnableVirtualThreads() {
+        return true;
+    }
 }
