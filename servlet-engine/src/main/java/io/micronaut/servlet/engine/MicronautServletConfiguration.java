@@ -50,6 +50,7 @@ public class MicronautServletConfiguration implements Named, ServletConfiguratio
     private boolean asyncFileServingEnabled = true;
 
     private boolean asyncSupported = true;
+    private boolean enableVirtualThreads = true;
 
 
     /**
@@ -103,6 +104,20 @@ public class MicronautServletConfiguration implements Named, ServletConfiguratio
         if (asyncSupported != null) {
             this.asyncSupported = asyncSupported;
         }
+    }
+
+    @Override
+    public boolean isEnableVirtualThreads() {
+        return this.enableVirtualThreads;
+    }
+
+    /**
+     * Whether virtual threads are enabled.
+     * @param enableVirtualThreads True if they are enabled
+     * @since 4.8.0
+     */
+    public void setEnableVirtualThreads(boolean enableVirtualThreads) {
+        this.enableVirtualThreads = enableVirtualThreads;
     }
 
     /**

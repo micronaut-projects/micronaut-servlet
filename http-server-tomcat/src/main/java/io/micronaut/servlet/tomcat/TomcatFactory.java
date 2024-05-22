@@ -15,6 +15,10 @@
  */
 package io.micronaut.servlet.tomcat;
 
+import io.micronaut.context.annotation.Requires;
+import io.micronaut.core.annotation.Nullable;
+import io.micronaut.core.util.StringUtils;
+import jakarta.inject.Named;
 import java.io.File;
 import java.util.List;
 
@@ -48,6 +52,7 @@ import org.slf4j.LoggerFactory;
 @Factory
 public class TomcatFactory extends ServletServerFactory {
 
+    private static final String HTTPS = "HTTPS";
     private static final Logger LOG = LoggerFactory.getLogger(TomcatFactory.class);
 
     /**
@@ -77,12 +82,16 @@ public class TomcatFactory extends ServletServerFactory {
      * The Tomcat server bean.
      *
      * @param connector The connector
+     * @param httpsConnector The HTTPS connector
      * @param configuration The servlet configuration
      * @return The Tomcat server
      */
     @Singleton
     @Primary
-    protected Tomcat tomcatServer(Connector connector, MicronautServletConfiguration configuration) {
+    protected Tomcat tomcatServer(
+        Connector connector,
+        @Named(HTTPS) @Nullable Connector httpsConnector,
+        MicronautServletConfiguration configuration) {
         configuration.setAsyncFileServingEnabled(false);
         Tomcat tomcat = new Tomcat();
         tomcat.setHostname(getConfiguredHost());
@@ -118,48 +127,7 @@ public class TomcatFactory extends ServletServerFactory {
         configuration.getMultipartConfigElement()
                 .ifPresent(servlet::setMultipartConfigElement);
 
-        SslConfiguration sslConfiguration = getSslConfiguration();
-        if (sslConfiguration.isEnabled()) {
-            String protocol = sslConfiguration.getProtocol().orElse("TLS");
-            int sslPort = sslConfiguration.getPort();
-            if (sslPort == SslConfiguration.DEFAULT_PORT && getEnvironment().getActiveNames().contains(Environment.TEST)) {
-                sslPort = 0;
-            }
-            Connector httpsConnector = new Connector();
-            SSLHostConfig sslHostConfig = new SSLHostConfig();
-            SSLHostConfigCertificate certificate = new SSLHostConfigCertificate(sslHostConfig, SSLHostConfigCertificate.Type.UNDEFINED);
-            sslHostConfig.addCertificate(certificate);
-            httpsConnector.addSslHostConfig(sslHostConfig);
-            httpsConnector.setPort(sslPort);
-            httpsConnector.setSecure(true);
-            httpsConnector.setScheme("https");
-            httpsConnector.setProperty("clientAuth", "false");
-            httpsConnector.setProperty("sslProtocol", protocol);
-            httpsConnector.setProperty("SSLEnabled", "true");
-            sslConfiguration.getCiphers().ifPresent(cyphers ->
-                sslHostConfig.setCiphers(String.join(",", cyphers))
-            );
-            sslConfiguration.getClientAuthentication().ifPresent(ca ->
-                httpsConnector.setProperty("clientAuth", ca == ClientAuthentication.WANT ? "want" : "true")
-            );
-
-
-            SslConfiguration.KeyStoreConfiguration keyStoreConfig = sslConfiguration.getKeyStore();
-            keyStoreConfig.getPassword().ifPresent(certificate::setCertificateKeystorePassword);
-            keyStoreConfig.getPath().ifPresent(certificate::setCertificateKeystoreFile);
-            keyStoreConfig.getProvider().ifPresent(certificate::setCertificateKeystorePassword);
-            keyStoreConfig.getType().ifPresent(certificate::setCertificateKeystoreType);
-
-            SslConfiguration.TrustStoreConfiguration trustStore = sslConfiguration.getTrustStore();
-            trustStore.getPassword().ifPresent(sslHostConfig::setTruststorePassword);
-            trustStore.getPath().ifPresent(sslHostConfig::setTruststoreFile);
-            trustStore.getProvider().ifPresent(sslHostConfig::setTruststoreProvider);
-            trustStore.getType().ifPresent(sslHostConfig::setTruststoreType);
-
-            SslConfiguration.KeyConfiguration keyConfig = sslConfiguration.getKey();
-            keyConfig.getAlias().ifPresent(certificate::setCertificateKeyAlias);
-            keyConfig.getPassword().ifPresent(certificate::setCertificateKeyPassword);
-
+        if (httpsConnector != null) {
             tomcat.getService().addConnector(httpsConnector);
         }
 
@@ -167,7 +135,7 @@ public class TomcatFactory extends ServletServerFactory {
     }
 
     /**
-     * @return Create the protocol.
+     * @return Create the connector.
      */
     @Singleton
     @Primary
@@ -177,4 +145,54 @@ public class TomcatFactory extends ServletServerFactory {
         return tomcatConnector;
     }
 
-}
+    /**
+     * The HTTPS connector.
+     * @param sslConfiguration The SSL configuration.
+     * @return The SSL connector
+     */
+    @Singleton
+    @Named(HTTPS)
+    @Requires(property = SslConfiguration.PREFIX + ".enabled", value = StringUtils.TRUE)
+    protected Connector sslConnector(SslConfiguration sslConfiguration) {
+        String protocol = sslConfiguration.getProtocol().orElse("TLS");
+        int sslPort = sslConfiguration.getPort();
+        if (sslPort == SslConfiguration.DEFAULT_PORT && getEnvironment().getActiveNames().contains(Environment.TEST)) {
+            sslPort = 0;
+        }
+        Connector httpsConnector = new Connector();
+        SSLHostConfig sslHostConfig = new SSLHostConfig();
+        SSLHostConfigCertificate certificate = new SSLHostConfigCertificate(sslHostConfig, SSLHostConfigCertificate.Type.UNDEFINED);
+        sslHostConfig.addCertificate(certificate);
+        httpsConnector.addSslHostConfig(sslHostConfig);
+        httpsConnector.setPort(sslPort);
+        httpsConnector.setSecure(true);
+        httpsConnector.setScheme("https");
+        httpsConnector.setProperty("clientAuth", "false");
+        httpsConnector.setProperty("sslProtocol", protocol);
+        httpsConnector.setProperty("SSLEnabled", "true");
+        sslConfiguration.getCiphers().ifPresent(cyphers ->
+            sslHostConfig.setCiphers(String.join(",", cyphers))
+        );
+        sslConfiguration.getClientAuthentication().ifPresent(ca ->
+            httpsConnector.setProperty("clientAuth", ca == ClientAuthentication.WANT ? "want" : "true")
+        );
+
+
+        SslConfiguration.KeyStoreConfiguration keyStoreConfig = sslConfiguration.getKeyStore();
+        keyStoreConfig.getPassword().ifPresent(certificate::setCertificateKeystorePassword);
+        keyStoreConfig.getPath().ifPresent(certificate::setCertificateKeystoreFile);
+        keyStoreConfig.getProvider().ifPresent(certificate::setCertificateKeystorePassword);
+        keyStoreConfig.getType().ifPresent(certificate::setCertificateKeystoreType);
+
+        SslConfiguration.TrustStoreConfiguration trustStore = sslConfiguration.getTrustStore();
+        trustStore.getPassword().ifPresent(sslHostConfig::setTruststorePassword);
+        trustStore.getPath().ifPresent(sslHostConfig::setTruststoreFile);
+        trustStore.getProvider().ifPresent(sslHostConfig::setTruststoreProvider);
+        trustStore.getType().ifPresent(sslHostConfig::setTruststoreType);
+
+        SslConfiguration.KeyConfiguration keyConfig = sslConfiguration.getKey();
+        keyConfig.getAlias().ifPresent(certificate::setCertificateKeyAlias);
+        keyConfig.getPassword().ifPresent(certificate::setCertificateKeyPassword);
+        return httpsConnector;
+    }
+ }

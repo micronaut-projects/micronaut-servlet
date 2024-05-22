@@ -20,15 +20,20 @@ import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Primary;
 import io.micronaut.context.env.Environment;
 import io.micronaut.context.exceptions.ConfigurationException;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.io.ResourceResolver;
 import io.micronaut.core.io.socket.SocketUtils;
 import io.micronaut.http.ssl.ClientAuthentication;
 import io.micronaut.http.ssl.SslConfiguration;
+import io.micronaut.inject.qualifiers.Qualifiers;
+import io.micronaut.scheduling.LoomSupport;
+import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.servlet.engine.DefaultMicronautServlet;
 import io.micronaut.servlet.engine.MicronautServletConfiguration;
 import io.micronaut.servlet.engine.server.ServletServerFactory;
 import io.micronaut.servlet.engine.server.ServletStaticResourceConfiguration;
 import jakarta.inject.Singleton;
+import java.util.concurrent.ExecutorService;
 import org.eclipse.jetty.http.HttpVersion;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
@@ -43,6 +48,7 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.resource.Resource;
 import org.eclipse.jetty.util.resource.ResourceCollection;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
+import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -111,7 +117,7 @@ public class JettyFactory extends ServletServerFactory {
         final Integer port = getConfiguredPort();
         String contextPath = getContextPath();
 
-        Server server = new Server();
+        Server server = newServer(applicationContext, configuration);
 
         final ServletContextHandler contextHandler = new ServletContextHandler(server, contextPath, false, false);
         final ServletHolder servletHolder = new ServletHolder(new DefaultMicronautServlet(applicationContext));
@@ -203,10 +209,30 @@ public class JettyFactory extends ServletServerFactory {
     }
 
     /**
+     * Create a new server instance.
+     * @param applicationContext The application context
+     * @param configuration The configuration
+     * @return The server
+     */
+    protected @NonNull Server newServer(@NonNull ApplicationContext applicationContext, @NonNull MicronautServletConfiguration configuration) {
+        Server server;
+        if (configuration.isEnableVirtualThreads() && LoomSupport.isSupported()) {
+            QueuedThreadPool threadPool = new QueuedThreadPool();
+            threadPool.setVirtualThreadsExecutor(
+                applicationContext.getBean(ExecutorService.class, Qualifiers.byName(TaskExecutors.BLOCKING))
+            );
+            server = new Server(threadPool);
+        } else {
+            server = new Server();
+        }
+        return server;
+    }
+
+    /**
      * For each static resource configuration, create a {@link ContextHandler} that serves the static resources.
      *
-     * @param config
-     * @return
+     * @param config The static resource configuration
+     * @return the context handler
      */
     private ContextHandler toHandler(ServletStaticResourceConfiguration config) {
         Resource[] resourceArray = config.getPaths().stream()
