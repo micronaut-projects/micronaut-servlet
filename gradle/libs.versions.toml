@@ -13,7 +13,7 @@ tomcat = '10.1.24'
 graal-svm = "23.1.2"
 bcpkix = "1.70"
 
-managed-jetty = '11.0.20'
+managed-jetty = '11.0.21'
 
 micronaut-reactor = "3.3.0"
 micronaut-security = "4.7.0"
