@@ -15,16 +15,12 @@
  */
 package io.micronaut.servlet.tomcat;
 
-import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.event.BeanCreatedEvent;
 import io.micronaut.context.event.BeanCreatedEventListener;
 import io.micronaut.core.annotation.NonNull;
-import io.micronaut.inject.qualifiers.Qualifiers;
-import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.servlet.http.ServletConfiguration;
 import jakarta.inject.Singleton;
-import java.util.concurrent.ExecutorService;
 import org.apache.catalina.connector.Connector;
 import org.apache.coyote.ProtocolHandler;
 import org.apache.tomcat.util.threads.VirtualThreadExecutor;
@@ -36,11 +32,9 @@ import org.apache.tomcat.util.threads.VirtualThreadExecutor;
 @Singleton
 public class TomcatVirtualThreadEnabler implements BeanCreatedEventListener<Connector> {
     private final ServletConfiguration servletConfiguration;
-    private final ApplicationContext applicationContext;
 
-    public TomcatVirtualThreadEnabler(ServletConfiguration servletConfiguration, ApplicationContext applicationContext) {
+    public TomcatVirtualThreadEnabler(ServletConfiguration servletConfiguration) {
         this.servletConfiguration = servletConfiguration;
-        this.applicationContext = applicationContext;
     }
 
     @Override
@@ -48,8 +42,7 @@ public class TomcatVirtualThreadEnabler implements BeanCreatedEventListener<Conn
         Connector connector = event.getBean();
         if (servletConfiguration.isEnableVirtualThreads()) {
             ProtocolHandler protocolHandler = connector.getProtocolHandler();
-            ExecutorService executorService = applicationContext.getBean(ExecutorService.class, Qualifiers.byName(TaskExecutors.BLOCKING));
-            protocolHandler.setExecutor(executorService);
+            protocolHandler.setExecutor(new VirtualThreadExecutor("tomcat-handler-"));
         }
         return connector;
     }

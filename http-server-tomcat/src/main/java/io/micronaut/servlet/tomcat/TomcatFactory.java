@@ -38,7 +38,6 @@ import org.apache.catalina.Context;
 import org.apache.catalina.Wrapper;
 import org.apache.catalina.connector.Connector;
 import org.apache.catalina.startup.Tomcat;
-import org.apache.coyote.ProtocolHandler;
 import org.apache.tomcat.util.net.SSLHostConfig;
 import org.apache.tomcat.util.net.SSLHostConfigCertificate;
 import org.slf4j.Logger;
@@ -53,8 +52,8 @@ import org.slf4j.LoggerFactory;
 @Factory
 public class TomcatFactory extends ServletServerFactory {
 
+    private static final String HTTPS = "HTTPS";
     private static final Logger LOG = LoggerFactory.getLogger(TomcatFactory.class);
-    public static final String HTTPS = "HTTPS";
 
     /**
      * Default constructor.
