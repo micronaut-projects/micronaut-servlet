@@ -23,7 +23,7 @@ import spock.lang.Specification
 
 @MicronautTest
 @Property(name = "spec.name", value = SPEC_NAME)
-@Property(name = "micronaut.server.testing.async", value = "false")
+@Property(name = "micronaut.servlet.async-supported", value = "false")
 class JettyResponseEncoderSpec extends Specification {
 
     private static final String SPEC_NAME = "JettyResponseEncoderSpec"

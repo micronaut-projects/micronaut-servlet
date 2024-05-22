@@ -29,4 +29,13 @@ public interface ServletConfiguration {
      * @return True if it is.
      */
     boolean isAsyncFileServingEnabled();
+
+    /**
+     * Whether to do request processing asynchronously by default (defaults to {@code true}).
+     * @return True whether async is enabled
+     * @since 4.8.0
+     */
+    default boolean isAsyncSupported() {
+        return true;
+    }
 }

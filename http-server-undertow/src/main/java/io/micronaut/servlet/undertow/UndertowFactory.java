@@ -222,9 +222,9 @@ public class UndertowFactory extends ServletServerFactory {
                     }
                 }
         );
-        Boolean isAsync = getApplicationContext().getEnvironment().getProperty("micronaut.server.testing.async", Boolean.class, true);
+        boolean isAsync = servletConfiguration.isAsyncSupported();
         if (Boolean.FALSE.equals(isAsync)) {
-            LOG.warn("Async support disabled for testing purposes.");
+            LOG.debug("Servlet async mode is disabled");
         }
         servletInfo.setAsyncSupported(isAsync);
         servletInfo.addMapping(servletConfiguration.getMapping());
