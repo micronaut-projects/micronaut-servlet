@@ -12,9 +12,10 @@ import java.io.PrintWriter;
 public class MyExtraServlet extends GenericServlet {
     @Override
     public void service(ServletRequest req, ServletResponse res) throws ServletException, IOException {
-        PrintWriter writer = res.getWriter();
-        res.setContentType("text/plain");
-        writer.write("My Servlet!");
-        writer.flush();
+        try (PrintWriter writer = res.getWriter()) {
+            res.setContentType("text/plain");
+            writer.write("My Servlet!");
+            writer.flush();
+        };
     }
 }
