@@ -42,8 +42,6 @@ import org.apache.catalina.connector.Connector;
 import org.apache.catalina.startup.Tomcat;
 import org.apache.tomcat.util.net.SSLHostConfig;
 import org.apache.tomcat.util.net.SSLHostConfigCertificate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Factory for the {@link Tomcat} instance.
@@ -83,14 +81,13 @@ public class TomcatFactory extends ServletServerFactory {
      * The Tomcat server bean.
      *
      * @param connector      The connector
-     * @param httpsConnector The HTTPS connector
      * @param configuration  The servlet configuration
      * @return The Tomcat server
      */
     protected Tomcat tomcatServer(Connector connector, MicronautServletConfiguration configuration) {
         return tomcatServer(
             connector,
-            getApplicationContext().getBean(Connector.class, Qualifiers.byName(HTTPS))
+            getApplicationContext().getBean(Connector.class, Qualifiers.byName(HTTPS)),
             configuration,
             getApplicationContext().getBean(MicronautServletInitializer.class));
     }
