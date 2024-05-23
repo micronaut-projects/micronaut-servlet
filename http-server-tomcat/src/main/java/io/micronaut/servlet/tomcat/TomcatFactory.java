@@ -16,6 +16,7 @@
 package io.micronaut.servlet.tomcat;
 
 import io.micronaut.context.annotation.Requires;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.inject.qualifiers.Qualifiers;
@@ -80,8 +81,8 @@ public class TomcatFactory extends ServletServerFactory {
     /**
      * The Tomcat server bean.
      *
-     * @param connector      The connector
-     * @param configuration  The servlet configuration
+     * @param connector     The connector
+     * @param configuration The servlet configuration
      * @return The Tomcat server
      */
     protected Tomcat tomcatServer(Connector connector, MicronautServletConfiguration configuration) {
@@ -109,34 +110,79 @@ public class TomcatFactory extends ServletServerFactory {
         MicronautServletConfiguration configuration,
         MicronautServletInitializer servletInitializer) {
         configuration.setAsyncFileServingEnabled(false);
-        Tomcat tomcat = new Tomcat();
-        tomcat.setHostname(getConfiguredHost());
-        final String contextPath = getContextPath();
-        tomcat.getHost().setAutoDeploy(false);
-        tomcat.setConnector(connector);
-        final String cp = contextPath != null && !contextPath.equals("/") ? contextPath : "";
-        final Context context = tomcat.addContext(cp, "/");
 
+        Tomcat tomcat = newTomcat();
+        final Context context = newTomcatContext(tomcat);
 
-        // add required folder
-        File docBaseFile = new File(context.getDocBase());
-        if (!docBaseFile.isAbsolute()) {
-            docBaseFile = new File(((org.apache.catalina.Host) context.getParent()).getAppBaseFile(), docBaseFile.getPath());
-        }
-        docBaseFile.mkdirs();
+        configureServletInitializer(context, servletInitializer);
+        configureConnectors(tomcat, connector, httpsConnector);
 
+        return tomcat;
+    }
+
+    /**
+     * Configure the Micronaut servlet intializer.
+     *
+     * @param context            The context
+     * @param servletInitializer The intializer
+     */
+    protected void configureServletInitializer(Context context, MicronautServletInitializer servletInitializer) {
         getStaticResourceConfigurations().forEach(config ->
             servletInitializer.addMicronautServletMapping(config.getMapping())
         );
         context.addServletContainerInitializer(
             servletInitializer, Set.of(DefaultMicronautServlet.class)
         );
+    }
 
+    /**
+     * Configures the available connectors.
+     *
+     * @param tomcat         The tomcat instance
+     * @param httpConnector  The HTTP connector
+     * @param httpsConnector The HTTPS connector
+     */
+    protected void configureConnectors(@NonNull Tomcat tomcat, @NonNull Connector httpConnector, @Nullable Connector httpsConnector) {
+        TomcatConfiguration serverConfiguration = getServerConfiguration();
 
         if (httpsConnector != null) {
             tomcat.getService().addConnector(httpsConnector);
+            if (serverConfiguration.isDualProtocol()) {
+                tomcat.getService().addConnector(httpConnector);
+            }
+        } else {
+            tomcat.setConnector(httpConnector);
         }
+    }
 
+    /**
+     * Create a new context.
+     *
+     * @param tomcat The tomcat instance
+     * @return The context
+     */
+    protected @NonNull Context newTomcatContext(@NonNull Tomcat tomcat) {
+        final String contextPath = getContextPath();
+        final String cp = contextPath != null && !contextPath.equals("/") ? contextPath : "";
+        final Context context = tomcat.addContext(cp, "/");
+        // add required folder
+        File docBaseFile = new File(context.getDocBase());
+        if (!docBaseFile.isAbsolute()) {
+            docBaseFile = new File(((org.apache.catalina.Host) context.getParent()).getAppBaseFile(), docBaseFile.getPath());
+        }
+        docBaseFile.mkdirs();
+        return context;
+    }
+
+    /**
+     * Create a new tomcat server.
+     *
+     * @return The tomcat server
+     */
+    protected @NonNull Tomcat newTomcat() {
+        Tomcat tomcat = new Tomcat();
+        tomcat.getHost().setAutoDeploy(false);
+        tomcat.setHostname(getConfiguredHost());
         return tomcat;
     }
 

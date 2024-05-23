@@ -23,8 +23,9 @@ import io.micronaut.context.annotation.Primary;
 import io.micronaut.context.env.Environment;
 import io.micronaut.context.exceptions.ConfigurationException;
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.io.ResourceResolver;
-import io.micronaut.core.io.socket.SocketUtils;
+import io.micronaut.http.server.HttpServerConfiguration;
 import io.micronaut.http.ssl.ClientAuthentication;
 import io.micronaut.http.ssl.SslConfiguration;
 import io.micronaut.inject.qualifiers.Qualifiers;
@@ -136,7 +137,101 @@ public class JettyFactory extends ServletServerFactory {
 
         Server server = newServer(applicationContext, configuration);
 
-        final ServletContextHandler contextHandler = new ServletContextHandler(server, contextPath, false, false);
+        final ServletContextHandler contextHandler = newJettyContext(server, contextPath);
+        configureServletInitializer(server, contextHandler, micronautServletInitializer);
+
+        final SslConfiguration sslConfiguration = getSslConfiguration();
+        ServerConnector https = null;
+        if (sslConfiguration.isEnabled()) {
+            https = newHttpsConnector(server, sslConfiguration, jettySslConfiguration);
+
+        }
+        final ServerConnector http = new ServerConnector(server, new HttpConnectionFactory(jettyConfiguration.getHttpConfiguration()));
+        http.setPort(port);
+        http.setHost(host);
+        configureConnectors(server, http, https);
+
+        return server;
+    }
+
+    /**
+     * Create the HTTPS connector.
+     *
+     * @param server                The server
+     * @param sslConfiguration      The SSL configuration
+     * @param jettySslConfiguration The Jetty SSL configuration
+     * @return The server connector
+     */
+    protected @NonNull ServerConnector newHttpsConnector(
+        @NonNull Server server,
+        @NonNull SslConfiguration sslConfiguration,
+        @NonNull JettyConfiguration.JettySslConfiguration jettySslConfiguration) {
+        ServerConnector https;
+        final HttpConfiguration httpConfig = jettyConfiguration.getHttpConfiguration();
+        int securePort = sslConfiguration.getPort();
+        if (securePort == SslConfiguration.DEFAULT_PORT && getEnvironment().getActiveNames().contains(Environment.TEST)) {
+            securePort = 0; // random port
+        }
+        httpConfig.setSecurePort(securePort);
+
+        SslContextFactory.Server sslContextFactory = new SslContextFactory.Server();
+
+        ClientAuthentication clientAuth = sslConfiguration.getClientAuthentication().orElse(ClientAuthentication.NEED);
+        switch (clientAuth) {
+            case WANT:
+                sslContextFactory.setWantClientAuth(true);
+                break;
+            case NEED:
+            default:
+                sslContextFactory.setNeedClientAuth(true);
+        }
+
+        sslConfiguration.getProtocol().ifPresent(sslContextFactory::setProtocol);
+        sslConfiguration.getProtocols().ifPresent(sslContextFactory::setIncludeProtocols);
+        sslConfiguration.getCiphers().ifPresent(sslConfiguration::setCiphers);
+        final SslConfiguration.KeyStoreConfiguration keyStoreConfig = sslConfiguration.getKeyStore();
+        keyStoreConfig.getPassword().ifPresent(sslContextFactory::setKeyStorePassword);
+        keyStoreConfig.getPath().ifPresent(path -> {
+            if (path.startsWith(ServletStaticResourceConfiguration.CLASSPATH_PREFIX)) {
+                String cp = path.substring(ServletStaticResourceConfiguration.CLASSPATH_PREFIX.length());
+                sslContextFactory.setKeyStorePath(Resource.newClassPathResource(cp).getURI().toString());
+            } else {
+                sslContextFactory.setKeyStorePath(path);
+            }
+        });
+        keyStoreConfig.getProvider().ifPresent(sslContextFactory::setKeyStoreProvider);
+        keyStoreConfig.getType().ifPresent(sslContextFactory::setKeyStoreType);
+        SslConfiguration.TrustStoreConfiguration trustStore = sslConfiguration.getTrustStore();
+        trustStore.getPassword().ifPresent(sslContextFactory::setTrustStorePassword);
+        trustStore.getType().ifPresent(sslContextFactory::setTrustStoreType);
+        trustStore.getPath().ifPresent(path -> {
+            if (path.startsWith(ServletStaticResourceConfiguration.CLASSPATH_PREFIX)) {
+                String cp = path.substring(ServletStaticResourceConfiguration.CLASSPATH_PREFIX.length());
+                sslContextFactory.setTrustStorePath(Resource.newClassPathResource(cp).getURI().toString());
+            } else {
+                sslContextFactory.setTrustStorePath(path);
+            }
+        });
+        trustStore.getProvider().ifPresent(sslContextFactory::setTrustStoreProvider);
+
+        HttpConfiguration httpsConfig = new HttpConfiguration(httpConfig);
+        httpsConfig.addCustomizer(jettySslConfiguration);
+        https = new ServerConnector(server,
+            new SslConnectionFactory(sslContextFactory, HttpVersion.HTTP_1_1.asString()),
+            new HttpConnectionFactory(httpsConfig)
+        );
+        https.setPort(securePort);
+        return https;
+    }
+
+    /**
+     * Configures the servlet initializer
+     *
+     * @param server                      The server
+     * @param contextHandler              The context handler
+     * @param micronautServletInitializer The initializer
+     */
+    protected void configureServletInitializer(Server server, ServletContextHandler contextHandler, MicronautServletInitializer micronautServletInitializer) {
         contextHandler.addServletContainerInitializer(micronautServletInitializer);
 
         List<ContextHandler> resourceHandlers = Stream.concat(
@@ -146,78 +241,43 @@ public class JettyFactory extends ServletServerFactory {
 
         HandlerList handlerList = new HandlerList(resourceHandlers.toArray(new ContextHandler[0]));
         server.setHandler(handlerList);
+    }
 
-        final SslConfiguration sslConfiguration = getSslConfiguration();
-        if (sslConfiguration.isEnabled()) {
-            final HttpConfiguration httpConfig = jettyConfiguration.getHttpConfiguration();
-            int securePort = sslConfiguration.getPort();
-            if (securePort == SslConfiguration.DEFAULT_PORT && getEnvironment().getActiveNames().contains(Environment.TEST)) {
-                securePort = SocketUtils.findAvailableTcpPort();
+    /**
+     * Create the Jetty context.
+     *
+     * @param server      The server
+     * @param contextPath The context path
+     * @return The handler
+     */
+    protected @NonNull ServletContextHandler newJettyContext(@NonNull Server server, @NonNull String contextPath) {
+        return new ServletContextHandler(server, contextPath, false, false);
+    }
+
+    /**
+     * Configures the server connectors.
+     *
+     * @param server        The server
+     * @param http          The HTTP connector
+     * @param https         The HTTPS connector if configured.
+     */
+    protected void configureConnectors(@NonNull Server server, @NonNull ServerConnector http, @Nullable ServerConnector https) {
+        HttpServerConfiguration serverConfiguration = getServerConfiguration();
+        if (https != null) {
+            server.addConnector(https); // must be first
+            if (serverConfiguration.isDualProtocol()) {
+                server.addConnector(https);
             }
-            httpConfig.setSecurePort(securePort);
-
-            SslContextFactory.Server sslContextFactory = new SslContextFactory.Server();
-
-            ClientAuthentication clientAuth = sslConfiguration.getClientAuthentication().orElse(ClientAuthentication.NEED);
-            switch (clientAuth) {
-                case WANT:
-                    sslContextFactory.setWantClientAuth(true);
-                    break;
-                case NEED:
-                default:
-                    sslContextFactory.setNeedClientAuth(true);
-            }
-
-            sslConfiguration.getProtocol().ifPresent(sslContextFactory::setProtocol);
-            sslConfiguration.getProtocols().ifPresent(sslContextFactory::setIncludeProtocols);
-            sslConfiguration.getCiphers().ifPresent(sslConfiguration::setCiphers);
-            final SslConfiguration.KeyStoreConfiguration keyStoreConfig = sslConfiguration.getKeyStore();
-            keyStoreConfig.getPassword().ifPresent(sslContextFactory::setKeyStorePassword);
-            keyStoreConfig.getPath().ifPresent(path -> {
-                if (path.startsWith(ServletStaticResourceConfiguration.CLASSPATH_PREFIX)) {
-                    String cp = path.substring(ServletStaticResourceConfiguration.CLASSPATH_PREFIX.length());
-                    sslContextFactory.setKeyStorePath(Resource.newClassPathResource(cp).getURI().toString());
-                } else {
-                    sslContextFactory.setKeyStorePath(path);
-                }
-            });
-            keyStoreConfig.getProvider().ifPresent(sslContextFactory::setKeyStoreProvider);
-            keyStoreConfig.getType().ifPresent(sslContextFactory::setKeyStoreType);
-            SslConfiguration.TrustStoreConfiguration trustStore = sslConfiguration.getTrustStore();
-            trustStore.getPassword().ifPresent(sslContextFactory::setTrustStorePassword);
-            trustStore.getType().ifPresent(sslContextFactory::setTrustStoreType);
-            trustStore.getPath().ifPresent(path -> {
-                if (path.startsWith(ServletStaticResourceConfiguration.CLASSPATH_PREFIX)) {
-                    String cp = path.substring(ServletStaticResourceConfiguration.CLASSPATH_PREFIX.length());
-                    sslContextFactory.setTrustStorePath(Resource.newClassPathResource(cp).getURI().toString());
-                } else {
-                    sslContextFactory.setTrustStorePath(path);
-                }
-            });
-            trustStore.getProvider().ifPresent(sslContextFactory::setTrustStoreProvider);
-
-            HttpConfiguration httpsConfig = new HttpConfiguration(httpConfig);
-            httpsConfig.addCustomizer(jettySslConfiguration);
-            ServerConnector https = new ServerConnector(server,
-                new SslConnectionFactory(sslContextFactory, HttpVersion.HTTP_1_1.asString()),
-                new HttpConnectionFactory(httpsConfig)
-            );
-            https.setPort(securePort);
-            server.addConnector(https);
-
+        } else {
+            server.addConnector(http);
         }
-        final ServerConnector http = new ServerConnector(server, new HttpConnectionFactory(jettyConfiguration.getHttpConfiguration()));
-        http.setPort(port);
-        http.setHost(host);
-        server.addConnector(http);
-
-        return server;
     }
 
     /**
      * Create a new server instance.
+     *
      * @param applicationContext The application context
-     * @param configuration The configuration
+     * @param configuration      The configuration
      * @return The server
      */
     protected @NonNull Server newServer(@NonNull ApplicationContext applicationContext, @NonNull MicronautServletConfiguration configuration) {

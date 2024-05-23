@@ -115,7 +115,7 @@ public class UndertowFactory extends ServletServerFactory {
         if (sslConfiguration.isEnabled()) {
             int sslPort = sslConfiguration.getPort();
             if (sslPort == SslConfiguration.DEFAULT_PORT && getEnvironment().getActiveNames().contains(Environment.TEST)) {
-                sslPort = SocketUtils.findAvailableTcpPort();
+                sslPort = 0; // random port
             }
             int finalSslPort = sslPort;
             build(sslConfiguration).ifPresent(sslContext ->
