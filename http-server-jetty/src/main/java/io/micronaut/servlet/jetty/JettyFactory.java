@@ -266,7 +266,7 @@ public class JettyFactory extends ServletServerFactory {
         if (https != null) {
             server.addConnector(https); // must be first
             if (serverConfiguration.isDualProtocol()) {
-                server.addConnector(https);
+                server.addConnector(http);
             }
         } else {
             server.addConnector(http);
