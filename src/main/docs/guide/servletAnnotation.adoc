@@ -1,7 +1,16 @@
-The following annotations can be used from the Servlet API to add additional servlets, filters and listeners as beans:
+To use the Servlet APIs annotations to register servlets, filters and listeners you first need to add the following annotation processor dependency:
+
+dependency:io.micronaut.servlet:micronaut-servlet-processor[scope="annotationProcessor"]
+
+The following annotations can then be used from the Servlet API to add additional servlets, filters and listeners as beans:
 
 * `jakarta.servlet.annotation.WebFilter` - Applicable to types that implement the `jakarta.servlet.Filter` interface.
 * `jakarta.servlet.annotation.WebServlet` - Applicable to types that implement the `jakarta.servlet.Servlet` interface.
 * `jakarta.servlet.annotation.WebListener` - See the annotation javadoc for applicable types.
 
 The `io.micronaut.core.annotation.Order` annotation can be used to control registration order and hence filter order. For example A value of `io.micronaut.core.order.Ordered.HIGHEST_PRECEDENCE` will run the filter first.
+
+In addition you can use the following annotations on methods of `@Factory` beans to instantiate servlets and filters and register them:
+
+* ann:servlet.engine.annotation.ServletBean[] - Register a new servlet via a factory method
+* ann:servlet.engine.annotation.ServletFilterBean[] - Register a new filter via a factory method
