@@ -15,6 +15,8 @@
  */
 package io.micronaut.servlet.jetty;
 
+import static io.micronaut.core.util.StringUtils.isEmpty;
+
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Primary;
@@ -28,11 +30,14 @@ import io.micronaut.http.ssl.SslConfiguration;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.scheduling.LoomSupport;
 import io.micronaut.scheduling.TaskExecutors;
-import io.micronaut.servlet.engine.DefaultMicronautServlet;
 import io.micronaut.servlet.engine.MicronautServletConfiguration;
+import io.micronaut.servlet.engine.initializer.MicronautServletInitializer;
 import io.micronaut.servlet.engine.server.ServletServerFactory;
 import io.micronaut.servlet.engine.server.ServletStaticResourceConfiguration;
 import jakarta.inject.Singleton;
+import java.io.IOException;
+import java.util.List;
+import java.util.stream.Stream;
 import java.util.concurrent.ExecutorService;
 import org.eclipse.jetty.http.HttpVersion;
 import org.eclipse.jetty.server.HttpConfiguration;
@@ -44,19 +49,10 @@ import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.HandlerList;
 import org.eclipse.jetty.server.handler.ResourceHandler;
 import org.eclipse.jetty.servlet.ServletContextHandler;
-import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.resource.Resource;
 import org.eclipse.jetty.util.resource.ResourceCollection;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.util.List;
-import java.util.stream.Stream;
-
-import static io.micronaut.core.util.StringUtils.isEmpty;
 
 /**
  * Factory for the Jetty server.
@@ -68,8 +64,6 @@ import static io.micronaut.core.util.StringUtils.isEmpty;
 public class JettyFactory extends ServletServerFactory {
 
     public static final String RESOURCE_BASE = "resourceBase";
-
-    private static final Logger LOG = LoggerFactory.getLogger(JettyFactory.class);
 
     private final JettyConfiguration jettyConfiguration;
 
@@ -83,17 +77,17 @@ public class JettyFactory extends ServletServerFactory {
      * @param staticResourceConfigurations The static resource configs
      */
     public JettyFactory(
-            ResourceResolver resourceResolver,
-            JettyConfiguration serverConfiguration,
-            SslConfiguration sslConfiguration,
-            ApplicationContext applicationContext,
-            List<ServletStaticResourceConfiguration> staticResourceConfigurations) {
+        ResourceResolver resourceResolver,
+        JettyConfiguration serverConfiguration,
+        SslConfiguration sslConfiguration,
+        ApplicationContext applicationContext,
+        List<ServletStaticResourceConfiguration> staticResourceConfigurations) {
         super(
-                resourceResolver,
-                serverConfiguration,
-                sslConfiguration,
-                applicationContext,
-                staticResourceConfigurations
+            resourceResolver,
+            serverConfiguration,
+            sslConfiguration,
+            applicationContext,
+            staticResourceConfigurations
         );
         this.jettyConfiguration = serverConfiguration;
     }
@@ -106,12 +100,35 @@ public class JettyFactory extends ServletServerFactory {
      * @param jettySslConfiguration The Jetty SSL config
      * @return The Jetty server bean
      */
+    protected Server jettyServer(
+        ApplicationContext applicationContext,
+        MicronautServletConfiguration configuration,
+        JettyConfiguration.JettySslConfiguration jettySslConfiguration
+    ) {
+        return jettyServer(
+            applicationContext,
+            configuration,
+            jettySslConfiguration,
+            applicationContext.getBean(MicronautServletInitializer.class)
+        );
+    }
+
+    /**
+     * Builds the Jetty server bean.
+     *
+     * @param applicationContext          This application context
+     * @param configuration               The servlet configuration
+     * @param jettySslConfiguration       The Jetty SSL config
+     * @param micronautServletInitializer The micronaut servlet initializer
+     * @return The Jetty server bean
+     */
     @Singleton
     @Primary
     protected Server jettyServer(
-            ApplicationContext applicationContext,
-            MicronautServletConfiguration configuration,
-            JettyConfiguration.JettySslConfiguration jettySslConfiguration
+        ApplicationContext applicationContext,
+        MicronautServletConfiguration configuration,
+        JettyConfiguration.JettySslConfiguration jettySslConfiguration,
+        MicronautServletInitializer micronautServletInitializer
     ) {
         final String host = getConfiguredHost();
         final Integer port = getConfiguredPort();
@@ -120,22 +137,11 @@ public class JettyFactory extends ServletServerFactory {
         Server server = newServer(applicationContext, configuration);
 
         final ServletContextHandler contextHandler = new ServletContextHandler(server, contextPath, false, false);
-        final ServletHolder servletHolder = new ServletHolder(new DefaultMicronautServlet(applicationContext));
-        contextHandler.addServlet(servletHolder, configuration.getMapping());
-
-        boolean isAsync = configuration.isAsyncSupported();
-        if (Boolean.FALSE.equals(isAsync)) {
-            LOG.debug("Servlet async mode is disabled");
-        }
-        servletHolder.setAsyncSupported(isAsync);
-
-        configuration.getMultipartConfigElement().ifPresent(multipartConfiguration ->
-                servletHolder.getRegistration().setMultipartConfig(multipartConfiguration)
-        );
+        contextHandler.addServletContainerInitializer(micronautServletInitializer);
 
         List<ContextHandler> resourceHandlers = Stream.concat(
-                getStaticResourceConfigurations().stream().map(this::toHandler),
-                Stream.of(contextHandler)
+            getStaticResourceConfigurations().stream().map(this::toHandler),
+            Stream.of(contextHandler)
         ).toList();
 
         HandlerList handlerList = new HandlerList(resourceHandlers.toArray(new ContextHandler[0]));
@@ -193,8 +199,8 @@ public class JettyFactory extends ServletServerFactory {
             HttpConfiguration httpsConfig = new HttpConfiguration(httpConfig);
             httpsConfig.addCustomizer(jettySslConfiguration);
             ServerConnector https = new ServerConnector(server,
-                    new SslConnectionFactory(sslContextFactory, HttpVersion.HTTP_1_1.asString()),
-                    new HttpConnectionFactory(httpsConfig)
+                new SslConnectionFactory(sslContextFactory, HttpVersion.HTTP_1_1.asString()),
+                new HttpConnectionFactory(httpsConfig)
             );
             https.setPort(securePort);
             server.addConnector(https);
@@ -236,18 +242,18 @@ public class JettyFactory extends ServletServerFactory {
      */
     private ContextHandler toHandler(ServletStaticResourceConfiguration config) {
         Resource[] resourceArray = config.getPaths().stream()
-                .map(path -> {
-                    if (path.startsWith(ServletStaticResourceConfiguration.CLASSPATH_PREFIX)) {
-                        String cp = path.substring(ServletStaticResourceConfiguration.CLASSPATH_PREFIX.length());
-                        return Resource.newClassPathResource(cp);
-                    } else {
-                        try {
-                            return Resource.newResource(path);
-                        } catch (IOException e) {
-                            throw new ConfigurationException("Static resource path doesn't exist: " + path, e);
-                        }
+            .map(path -> {
+                if (path.startsWith(ServletStaticResourceConfiguration.CLASSPATH_PREFIX)) {
+                    String cp = path.substring(ServletStaticResourceConfiguration.CLASSPATH_PREFIX.length());
+                    return Resource.newClassPathResource(cp);
+                } else {
+                    try {
+                        return Resource.newResource(path);
+                    } catch (IOException e) {
+                        throw new ConfigurationException("Static resource path doesn't exist: " + path, e);
                     }
-                }).toArray(Resource[]::new);
+                }
+            }).toArray(Resource[]::new);
 
         String path = config.getMapping();
         if (path.endsWith("/**")) {

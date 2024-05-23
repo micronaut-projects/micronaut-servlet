@@ -1,0 +1,7 @@
+The following annotations can be used from the Servlet API to add additional servlets, filters and listeners as beans:
+
+* `jakarta.servlet.annotation.WebFilter` - Applicable to types that implement the `jakarta.servlet.Filter` interface.
+* `jakarta.servlet.annotation.WebServlet` - Applicable to types that implement the `jakarta.servlet.Servlet` interface.
+* `jakarta.servlet.annotation.WebListener` - See the annotation javadoc for applicable types.
+
+The `io.micronaut.core.annotation.Order` annotation can be used to control registration order and hence filter order. For example A value of `io.micronaut.core.order.Ordered.HIGHEST_PRECEDENCE` will run the filter first.

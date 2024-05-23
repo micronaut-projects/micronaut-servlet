@@ -18,7 +18,9 @@ package io.micronaut.servlet.tomcat;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.util.StringUtils;
+import io.micronaut.inject.qualifiers.Qualifiers;
 import jakarta.inject.Named;
+import io.micronaut.servlet.engine.initializer.MicronautServletInitializer;
 import java.io.File;
 import java.util.List;
 
@@ -34,8 +36,8 @@ import io.micronaut.servlet.engine.MicronautServletConfiguration;
 import io.micronaut.servlet.engine.server.ServletServerFactory;
 import io.micronaut.servlet.engine.server.ServletStaticResourceConfiguration;
 import jakarta.inject.Singleton;
+import java.util.Set;
 import org.apache.catalina.Context;
-import org.apache.catalina.Wrapper;
 import org.apache.catalina.connector.Connector;
 import org.apache.catalina.startup.Tomcat;
 import org.apache.tomcat.util.net.SSLHostConfig;
@@ -53,7 +55,6 @@ import org.slf4j.LoggerFactory;
 public class TomcatFactory extends ServletServerFactory {
 
     private static final String HTTPS = "HTTPS";
-    private static final Logger LOG = LoggerFactory.getLogger(TomcatFactory.class);
 
     /**
      * Default constructor.
@@ -65,11 +66,11 @@ public class TomcatFactory extends ServletServerFactory {
      * @param staticResourceConfigurations The static resource configs
      */
     protected TomcatFactory(
-            ResourceResolver resourceResolver,
-            TomcatConfiguration serverConfiguration,
-            SslConfiguration sslConfiguration,
-            ApplicationContext applicationContext,
-            List<ServletStaticResourceConfiguration> staticResourceConfigurations) {
+        ResourceResolver resourceResolver,
+        TomcatConfiguration serverConfiguration,
+        SslConfiguration sslConfiguration,
+        ApplicationContext applicationContext,
+        List<ServletStaticResourceConfiguration> staticResourceConfigurations) {
         super(resourceResolver, serverConfiguration, sslConfiguration, applicationContext, staticResourceConfigurations);
     }
 
@@ -81,9 +82,26 @@ public class TomcatFactory extends ServletServerFactory {
     /**
      * The Tomcat server bean.
      *
-     * @param connector The connector
+     * @param connector      The connector
      * @param httpsConnector The HTTPS connector
-     * @param configuration The servlet configuration
+     * @param configuration  The servlet configuration
+     * @return The Tomcat server
+     */
+    protected Tomcat tomcatServer(Connector connector, MicronautServletConfiguration configuration) {
+        return tomcatServer(
+            connector,
+            getApplicationContext().getBean(Connector.class, Qualifiers.byName(HTTPS))
+            configuration,
+            getApplicationContext().getBean(MicronautServletInitializer.class));
+    }
+
+    /**
+     * The Tomcat server bean.
+     *
+     * @param connector          The connector
+     * @param httpsConnector     The HTTPS connectors
+     * @param configuration      The servlet configuration
+     * @param servletInitializer The servlet initializer
      * @return The Tomcat server
      */
     @Singleton
@@ -91,7 +109,8 @@ public class TomcatFactory extends ServletServerFactory {
     protected Tomcat tomcatServer(
         Connector connector,
         @Named(HTTPS) @Nullable Connector httpsConnector,
-        MicronautServletConfiguration configuration) {
+        MicronautServletConfiguration configuration,
+        MicronautServletInitializer servletInitializer) {
         configuration.setAsyncFileServingEnabled(false);
         Tomcat tomcat = new Tomcat();
         tomcat.setHostname(getConfiguredHost());
@@ -109,23 +128,13 @@ public class TomcatFactory extends ServletServerFactory {
         }
         docBaseFile.mkdirs();
 
-        final Wrapper servlet = Tomcat.addServlet(
-                context,
-                configuration.getName(),
-                new DefaultMicronautServlet(getApplicationContext())
+        getStaticResourceConfigurations().forEach(config ->
+            servletInitializer.addMicronautServletMapping(config.getMapping())
+        );
+        context.addServletContainerInitializer(
+            servletInitializer, Set.of(DefaultMicronautServlet.class)
         );
 
-        boolean isAsync = configuration.isAsyncSupported();
-        if (Boolean.FALSE.equals(isAsync)) {
-            LOG.debug("Servlet async mode is disabled");
-        }
-        servlet.setAsyncSupported(isAsync);
-        servlet.addMapping(configuration.getMapping());
-        getStaticResourceConfigurations().forEach(config ->
-            servlet.addMapping(config.getMapping())
-        );
-        configuration.getMultipartConfigElement()
-                .ifPresent(servlet::setMultipartConfigElement);
 
         if (httpsConnector != null) {
             tomcat.getService().addConnector(httpsConnector);
@@ -147,6 +156,7 @@ public class TomcatFactory extends ServletServerFactory {
 
     /**
      * The HTTPS connector.
+     *
      * @param sslConfiguration The SSL configuration.
      * @return The SSL connector
      */
@@ -195,4 +205,4 @@ public class TomcatFactory extends ServletServerFactory {
         keyConfig.getPassword().ifPresent(certificate::setCertificateKeyPassword);
         return httpsConnector;
     }
- }
+}

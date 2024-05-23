@@ -24,8 +24,8 @@ import io.micronaut.core.io.socket.SocketUtils;
 import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.http.server.exceptions.ServerStartupException;
 import io.micronaut.http.ssl.SslConfiguration;
-import io.micronaut.servlet.engine.DefaultMicronautServlet;
 import io.micronaut.servlet.engine.MicronautServletConfiguration;
+import io.micronaut.servlet.engine.initializer.MicronautServletInitializer;
 import io.micronaut.servlet.engine.server.ServletServerFactory;
 import io.micronaut.servlet.engine.server.ServletStaticResourceConfiguration;
 import io.undertow.Handlers;
@@ -33,17 +33,20 @@ import io.undertow.Undertow;
 import io.undertow.UndertowOptions;
 import io.undertow.server.handlers.PathHandler;
 import io.undertow.servlet.Servlets;
-import io.undertow.servlet.api.*;
+import io.undertow.servlet.api.DeploymentInfo;
+import io.undertow.servlet.api.DeploymentManager;
+import io.undertow.servlet.api.InstanceHandle;
+import io.undertow.servlet.api.ServletContainerInitializerInfo;
+import jakarta.inject.Singleton;
+import jakarta.servlet.ServletContainerInitializer;
+import jakarta.servlet.ServletException;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.Option;
 import org.xnio.Options;
-
-import jakarta.inject.Singleton;
-import jakarta.servlet.Servlet;
-import jakarta.servlet.ServletException;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Factory for the undertow server.
@@ -198,46 +201,43 @@ public class UndertowFactory extends ServletServerFactory {
      * @param servletConfiguration The servlet configuration.
      * @return The deployment info
      */
+    protected DeploymentInfo deploymentInfo(MicronautServletConfiguration servletConfiguration) {
+        return deploymentInfo(servletConfiguration, getApplicationContext().getBean(MicronautServletInitializer.class));
+    }
+
+    /**
+     * The deployment info bean.
+     *
+     * @param servletConfiguration The servlet configuration.
+     * @param servletInitializer The servlet initializer
+     * @return The deployment info
+     */
     @Singleton
     @Primary
-    protected DeploymentInfo deploymentInfo(MicronautServletConfiguration servletConfiguration) {
+    protected DeploymentInfo deploymentInfo(MicronautServletConfiguration servletConfiguration, MicronautServletInitializer servletInitializer) {
         final String cp = getContextPath();
-
-        ServletInfo servletInfo = Servlets.servlet(
-                servletConfiguration.getName(), DefaultMicronautServlet.class, () -> new InstanceHandle<Servlet>() {
-
-                    private DefaultMicronautServlet instance;
-
-                    @Override
-                    public Servlet getInstance() {
-                        instance = new DefaultMicronautServlet(getApplicationContext());
-                        return instance;
-                    }
-
-                    @Override
-                    public void release() {
-                        if (instance != null) {
-                            instance.destroy();
-                        }
-                    }
-                }
-        );
-        boolean isAsync = servletConfiguration.isAsyncSupported();
-        if (Boolean.FALSE.equals(isAsync)) {
-            LOG.debug("Servlet async mode is disabled");
-        }
-        servletInfo.setAsyncSupported(isAsync);
-        servletInfo.addMapping(servletConfiguration.getMapping());
         getStaticResourceConfigurations().forEach(config -> {
-            servletInfo.addMapping(config.getMapping());
+            servletInitializer.addMicronautServletMapping(config.getMapping());
         });
-        final DeploymentInfo deploymentInfo = Servlets.deployment()
+        return Servlets.deployment()
                 .setDeploymentName(servletConfiguration.getName())
                 .setClassLoader(getEnvironment().getClassLoader())
                 .setContextPath(cp)
-                .addServlet(servletInfo);
-        servletConfiguration.getMultipartConfigElement().ifPresent(deploymentInfo::setDefaultMultipartConfig);
-        return deploymentInfo;
+                .addServletContainerInitializer(new ServletContainerInitializerInfo(
+                    MicronautServletInitializer.class,
+                        () -> new InstanceHandle<>() {
+                            @Override
+                            public ServletContainerInitializer getInstance() {
+                                return servletInitializer;
+                            }
+
+                            @Override
+                            public void release() {
+
+                            }
+                        },
+                    Set.of(MicronautServletInitializer.class)
+                ));
     }
 
 }
