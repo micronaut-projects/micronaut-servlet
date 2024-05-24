@@ -34,6 +34,12 @@ class SuspendControllerSpec : StringSpec() {
     )
 
     init {
+        "test suspend status delayed" {
+            val response = client.exchange(GET<Any>("/suspend/statusDelayed"), String::class.java).awaitSingle()
+
+            response.status shouldBe HttpStatus.CREATED
+        }
+
         "test suspend applies CORS options" {
             val origin = "foo.com"
             val headers = "$CONTENT_TYPE,$ACCEPT"
@@ -93,12 +99,6 @@ class SuspendControllerSpec : StringSpec() {
 
         "test suspend status" {
             val response = client.exchange(GET<Any>("/suspend/status"), String::class.java).awaitSingle()
-
-            response.status shouldBe HttpStatus.CREATED
-        }
-
-        "test suspend status delayed" {
-            val response = client.exchange(GET<Any>("/suspend/statusDelayed"), String::class.java).awaitSingle()
 
             response.status shouldBe HttpStatus.CREATED
         }

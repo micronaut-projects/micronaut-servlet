@@ -26,6 +26,7 @@ import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.execution.ExecutionFlow;
 import io.micronaut.core.io.Writable;
 import io.micronaut.core.propagation.PropagatedContext;
+import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.http.HttpAttributes;
 import io.micronaut.http.HttpHeaders;
@@ -36,6 +37,7 @@ import io.micronaut.http.MediaType;
 import io.micronaut.http.MutableHttpResponse;
 import io.micronaut.http.annotation.Header;
 import io.micronaut.http.annotation.Produces;
+import io.micronaut.http.body.MessageBodyWriter;
 import io.micronaut.http.codec.CodecException;
 import io.micronaut.http.codec.MediaTypeCodec;
 import io.micronaut.http.codec.MediaTypeCodecRegistry;
@@ -351,18 +353,26 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
                 traceHeaders(response.getHeaders());
             }
 
-            AnnotationMetadata routeAnnotationMetadata = response.getAttribute(HttpAttributes.ROUTE_INFO, RouteInfo.class)
+            @SuppressWarnings("rawtypes")
+            Optional<RouteInfo> routeInfoAttribute = response.getAttribute(HttpAttributes.ROUTE_INFO, RouteInfo.class);
+            AnnotationMetadata routeAnnotationMetadata = routeInfoAttribute
                 .map(AnnotationMetadataProvider::getAnnotationMetadata)
                 .orElse(AnnotationMetadata.EMPTY_METADATA);
-
+            @SuppressWarnings("unchecked")
+            Argument<Object> bodyArgument = routeInfoAttribute.map(RouteInfo::getResponseBodyType).orElse(null);
+            boolean isVoid = routeInfoAttribute.map(RouteInfo::isVoid).orElse(false);
             ServletHttpResponse<RES, ?> servletResponse = exchange.getResponse();
             servletResponse.status(response.status(), response.reason());
 
-            if (body != null) {
+            if (body != null && !isVoid) {
                 Class<?> bodyType = body.getClass();
+                if (bodyArgument == null || !bodyArgument.isInstance(body)) {
+                    bodyArgument = (Argument<Object>) Argument.of(bodyType);
+                }
                 ServletResponseEncoder<Object> responseEncoder = (ServletResponseEncoder<Object>) responseEncoders.get(bodyType);
+                boolean asyncSupported = exchange.getRequest().isAsyncSupported();
                 if (responseEncoder != null) {
-                    if (exchange.getRequest().isAsyncSupported()) {
+                    if (asyncSupported) {
                         Flux.from(responseEncoder.encode(exchange, routeAnnotationMetadata, body))
                             .subscribe(responsePublisherCallback);
                     } else {
@@ -377,7 +387,7 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
 
                 MediaType mediaType = response.getContentType().orElse(null);
                 if (mediaType == null) {
-                    mediaType = response.getAttribute(HttpAttributes.ROUTE_INFO, RouteInfo.class)
+                    mediaType = routeInfoAttribute
                         .map(routeInfo -> {
                             final Produces ann = bodyType.getAnnotation(Produces.class);
                             if (ann != null) {
@@ -398,7 +408,7 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
                     boolean isSingle = Publishers.isSingle(body.getClass());
                     Publisher<?> publisher = Publishers.convertPublisher(conversionService, body, Publisher.class);
                     if (isSingle) {
-                        if (exchange.getRequest().isAsyncSupported()) {
+                        if (asyncSupported) {
                             Flux<Object> flux = Flux.from(publisher);
                             flux.next().switchIfEmpty(Mono.just(response)).subscribe(bodyValue -> {
                                 MutableHttpResponse<?> nextResponse;
@@ -421,7 +431,7 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
                         }
                     } else {
                         // stream case
-                        if (exchange.getRequest().isAsyncSupported()) {
+                        if (asyncSupported) {
                             Mono.from(servletResponse.stream(publisher)).subscribe(responsePublisherCallback, throwable -> {
                                 responsePublisherCallback.accept(null);
                             });
@@ -435,52 +445,68 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
                 }
                 if (body instanceof HttpStatus) {
                     servletResponse.status((HttpStatus) body);
-                } else if (body instanceof CharSequence) {
-                    if (response.getContentType().isEmpty()) {
-                        response.contentType(MediaType.APPLICATION_JSON);
-                    }
-                    try (BufferedWriter writer = servletResponse.getWriter()) {
-                        writer.write(body.toString());
-                        writer.flush();
-                    } catch (IOException e) {
-                        throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-                    }
-                } else if (body instanceof byte[] byteArray) {
-                    try (OutputStream outputStream = servletResponse.getOutputStream()) {
-                        outputStream.write(byteArray);
-                        outputStream.flush();
-                    } catch (IOException e) {
-                        throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-                    }
-                } else if (body instanceof Writable writable) {
-                    try (OutputStream outputStream = servletResponse.getOutputStream()) {
-                        writable.writeTo(outputStream, response.getCharacterEncoding());
-                        outputStream.flush();
-                    } catch (IOException e) {
-                        throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-                    }
                 } else {
-                    final MediaTypeCodec codec = mediaTypeCodecRegistry.findCodec(mediaType, bodyType).orElse(null);
-                    if (codec != null) {
+                    if (body instanceof CharSequence) {
+                        if (response.getContentType().isEmpty()) {
+                            response.contentType(MediaType.APPLICATION_JSON);
+                        }
+                        try (BufferedWriter writer = servletResponse.getWriter()) {
+                            writer.write(body.toString());
+                            writer.flush();
+                        } catch (IOException e) {
+                            throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+                        }
+                    } else if (body instanceof byte[] byteArray) {
                         try (OutputStream outputStream = servletResponse.getOutputStream()) {
-                            codec.encode(body, outputStream);
+                            outputStream.write(byteArray);
                             outputStream.flush();
-                        } catch (Throwable e) {
-                            if (e instanceof CodecException codecException) {
-                                throw codecException;
-                            }
-                            throw new CodecException("Failed to encode object [" + body + "] to content type [" + mediaType + "]: " + e.getMessage(), e);
+                        } catch (IOException e) {
+                            throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+                        }
+                    } else if (body instanceof Writable writable) {
+                        try (OutputStream outputStream = servletResponse.getOutputStream()) {
+                            writable.writeTo(outputStream, response.getCharacterEncoding());
+                            outputStream.flush();
+                        } catch (IOException e) {
+                            throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
                         }
                     } else {
-                        throw new CodecException("No codec present capable of encoding object [" + body + "] to content type [" + mediaType + "]");
+                        MessageBodyWriter<Object> messageBodyWriter =
+                            routeInfoAttribute.map(RouteInfo::getMessageBodyWriter).orElse(null);
+                        if (messageBodyWriter != null && messageBodyWriter.isWriteable(bodyArgument, mediaType)) {
+                            try (OutputStream outputStream = servletResponse.getOutputStream()) {
+                                messageBodyWriter.writeTo(
+                                    bodyArgument,
+                                    mediaType,
+                                    body,
+                                    response.getHeaders(),
+                                    outputStream
+                                );
+                            } catch (IOException e) {
+                                throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+                            }
+                        } else {
+                            final MediaTypeCodec codec = mediaTypeCodecRegistry.findCodec(mediaType, bodyType).orElse(null);
+                            if (codec != null) {
+                                try (OutputStream outputStream = servletResponse.getOutputStream()) {
+                                    codec.encode(body, outputStream);
+                                    outputStream.flush();
+                                } catch (Throwable e) {
+                                    if (e instanceof CodecException codecException) {
+                                        throw codecException;
+                                    }
+                                    throw new CodecException("Failed to encode object [" + body + "] to content type [" + mediaType + "]: " + e.getMessage(), e);
+                                }
+                            } else {
+                                throw new CodecException("No codec present capable of encoding object [" + body + "] to content type [" + mediaType + "]");
+                            }
+                        }
                     }
                 }
             }
             responsePublisherCallback.accept(response);
         } catch (CodecException e) {
-            if (e.getCause() instanceof EOFException) {
-                // connection dropped, nothing we can do
-            } else {
+            if (!(e.getCause() instanceof EOFException)) {
                 throw e;
             }
         }
