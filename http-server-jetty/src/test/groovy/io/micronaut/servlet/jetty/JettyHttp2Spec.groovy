@@ -14,8 +14,11 @@ import io.micronaut.http.client.HttpVersionSelection
 import io.micronaut.http.client.annotation.Client
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
+import org.conscrypt.OpenSSLProvider
 import spock.lang.Specification
 import spock.util.environment.OperatingSystem
+
+import java.security.Security
 
 @MicronautTest
 @Property(name = 'spec.name', value = 'JettyHttp2PostSpec')
@@ -24,6 +27,10 @@ import spock.util.environment.OperatingSystem
 @Property(name = "micronaut.ssl.build-self-signed", value = "true")
 @spock.lang.Requires({ os.family != OperatingSystem.Family.MAC_OS })
 class JettyHttp2Spec extends Specification {
+    static {
+        Security.insertProviderAt(new OpenSSLProvider(), 1);
+    }
+
     @Inject
     @Client(
             value = "/",
