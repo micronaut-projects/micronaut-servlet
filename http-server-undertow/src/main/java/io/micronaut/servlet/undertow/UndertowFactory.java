@@ -20,7 +20,6 @@ import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Primary;
 import io.micronaut.context.env.Environment;
 import io.micronaut.core.io.ResourceResolver;
-import io.micronaut.core.io.socket.SocketUtils;
 import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.http.server.exceptions.ServerStartupException;
 import io.micronaut.http.ssl.SslConfiguration;
@@ -43,8 +42,7 @@ import jakarta.servlet.ServletException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import javax.net.ssl.SSLContext;
 import org.xnio.Option;
 import org.xnio.Options;
 
@@ -56,8 +54,6 @@ import org.xnio.Options;
  */
 @Factory
 public class UndertowFactory extends ServletServerFactory {
-
-    private static final Logger LOG = LoggerFactory.getLogger(UndertowFactory.class);
 
     private final UndertowConfiguration configuration;
 
@@ -93,10 +89,7 @@ public class UndertowFactory extends ServletServerFactory {
         final Undertow.Builder builder = configuration.getUndertowBuilder();
         int port = getConfiguredPort();
         String host = getConfiguredHost();
-        builder.addHttpListener(
-                port,
-                host
-        );
+
 
         final String cp = getContextPath();
         final DeploymentManager deploymentManager = Servlets.defaultContainer().addDeployment(deploymentInfo);
@@ -118,13 +111,31 @@ public class UndertowFactory extends ServletServerFactory {
                 sslPort = 0; // random port
             }
             int finalSslPort = sslPort;
-            build(sslConfiguration).ifPresent(sslContext ->
-                    builder.addHttpsListener(
-                            finalSslPort,
-                            host,
-                            sslContext
-                    ));
+            SSLContext sslContext = build(sslConfiguration).orElse(null);
+            if (sslContext != null) {
+                builder.addHttpsListener(
+                    finalSslPort,
+                    host,
+                    sslContext
+                );
+                if (getServerConfiguration().isDualProtocol()) {
+                    builder.addHttpListener(
+                        port,
+                        host
+                    );
+                }
+            } else {
+                builder.addHttpListener(
+                    port,
+                    host
+                );
+            }
 
+        } else {
+            builder.addHttpListener(
+                port,
+                host
+            );
         }
 
         Map<String, String> serverOptions = configuration.getServerOptions();
@@ -200,7 +211,9 @@ public class UndertowFactory extends ServletServerFactory {
      *
      * @param servletConfiguration The servlet configuration.
      * @return The deployment info
+     * @deprecated Use {@link #deploymentInfo(MicronautServletConfiguration, MicronautServletInitializer)}
      */
+    @Deprecated(forRemoval = true, since = "4.8.0")
     protected DeploymentInfo deploymentInfo(MicronautServletConfiguration servletConfiguration) {
         return deploymentInfo(servletConfiguration, getApplicationContext().getBean(MicronautServletInitializer.class));
     }
