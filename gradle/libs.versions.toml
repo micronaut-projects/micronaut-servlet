@@ -14,7 +14,7 @@ graal-svm = "23.1.2"
 bcpkix = "1.70"
 
 managed-jetty = '11.0.20'
-managed-jetty-alpn-openjdk = '9.4.54.v20240208'
+
 micronaut-reactor = "3.3.0"
 micronaut-security = "4.6.9"
 micronaut-serde = "2.8.2"
@@ -54,7 +54,7 @@ undertow-servlet = { module = 'io.undertow:undertow-servlet', version.ref = 'und
 jetty-servlet = { module = 'org.eclipse.jetty:jetty-servlet', version.ref = 'managed-jetty' }
 jetty-http2-server = { module = 'org.eclipse.jetty.http2:http2-server', version.ref = 'managed-jetty' }
 jetty-alpn-server = { module = 'org.eclipse.jetty:jetty-alpn-server', version.ref = 'managed-jetty' }
-jetty-alpn-openjdk8-server = { module = 'org.eclipse.jetty:jetty-alpn-openjdk8-server', version.ref = 'managed-jetty-alpn-openjdk'}
+jetty-alpn-conscrypt-server = { module = 'org.eclipse.jetty:jetty-alpn-conscrypt-server', version.ref = 'managed-jetty' }
 kotest-runner = { module = 'io.kotest:kotest-runner-junit5', version.ref = 'kotest-runner' }
 bcpkix = { module = "org.bouncycastle:bcpkix-jdk15on", version.ref = "bcpkix" }
 
