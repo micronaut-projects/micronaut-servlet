@@ -15,7 +15,7 @@ import java.io.IOException;
 @Factory
 public class MyFilterFactory {
 
-    @ServletFilterBean(filterName = "another", value = "/extra-filter/*")
+    @ServletFilterBean(filterName = "another", value = {"/extra-filter/*", "/extra-servlet/*"})
     @Order(Ordered.HIGHEST_PRECEDENCE)
     Filter myOtherFilter() {
         return new GenericFilter() {

@@ -19,6 +19,7 @@ public class MyExtraFilter extends GenericFilter {
         if (!Boolean.TRUE.equals(request.getAttribute("runFirst"))) {
             throw new IllegalStateException("Should have run second");
         }
+        request.setAttribute("runSecond", true);
         PrintWriter writer = res.getWriter();
         res.setContentType("text/plain");
         writer.write("My Filter!");

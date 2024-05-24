@@ -12,6 +12,10 @@ import java.io.PrintWriter;
 public class MyExtraServlet extends GenericServlet {
     @Override
     public void service(ServletRequest req, ServletResponse res) throws ServletException, IOException {
+        if (!Boolean.TRUE.equals(req.getAttribute("runFirst")) ||
+            !Boolean.TRUE.equals(req.getAttribute("runSecond"))) {
+            throw new IllegalStateException("Should have run last");
+        }
         try (PrintWriter writer = res.getWriter()) {
             res.setContentType("text/plain");
             writer.write("My Servlet!");
