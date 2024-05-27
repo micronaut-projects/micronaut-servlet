@@ -23,6 +23,7 @@ import io.micronaut.core.annotation.NonNull;
  * @see io.micronaut.http.HttpAttributes
  */
 public enum ServletAttributes implements CharSequence {
+
     /**
      * Attribute to lookup the {@link jakarta.servlet.ServletConfig}.
      */
@@ -54,7 +55,6 @@ public enum ServletAttributes implements CharSequence {
     public CharSequence subSequence(int start, int end) {
         return name.substring(start, end);
     }
-
 
     @Override
     @NonNull

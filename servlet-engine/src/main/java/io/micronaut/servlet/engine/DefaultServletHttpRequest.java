@@ -92,6 +92,7 @@ public final class DefaultServletHttpRequest<B> implements
     ParsedBodyHolder<B> {
 
     private static final Logger LOG = LoggerFactory.getLogger(DefaultServletHttpRequest.class);
+    private static final String NULL_KEY = "Attribute key cannot be null";
 
     private final ConversionService conversionService;
     private final HttpServletRequest delegate;
@@ -155,7 +156,7 @@ public final class DefaultServletHttpRequest<B> implements
             @Override
             public <T> Optional<T> get(CharSequence name, ArgumentConversionContext<T> conversionContext) {
                 Objects.requireNonNull(conversionContext, "Conversion context cannot be null");
-                Objects.requireNonNull(name, "Attribute key cannot be null");
+                Objects.requireNonNull(name, NULL_KEY);
                 Object attribute = delegate.getAttribute(name.toString());
                 return Optional.ofNullable(attribute)
                         .flatMap(v -> conversionService.convert(v, conversionContext));
@@ -173,14 +174,14 @@ public final class DefaultServletHttpRequest<B> implements
 
             @Override
             public MutableConvertibleValues<Object> put(CharSequence key, @Nullable Object value) {
-                Objects.requireNonNull(key, "Attribute key cannot be null");
+                Objects.requireNonNull(key, NULL_KEY);
                 delegate.setAttribute(key.toString(), value);
                 return this;
             }
 
             @Override
             public MutableConvertibleValues<Object> remove(CharSequence key) {
-                Objects.requireNonNull(key, "Attribute key cannot be null");
+                Objects.requireNonNull(key, NULL_KEY);
                 delegate.removeAttribute(key.toString());
                 return this;
             }
