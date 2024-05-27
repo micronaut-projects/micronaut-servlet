@@ -14,5 +14,5 @@ NOTE: Using `HIGHEST_PRECEDENCE` will prevent any other filter running before yo
 
 In addition, you can use the following annotations on methods of https://docs.micronaut.io/latest/guide/#factories[@Factory beans] to instantiate servlets and filters and register them:
 
-* ann:servlet.engine.annotation.ServletBean[] - Equivalent of https://jakarta.ee/specifications/servlet/5.0/apidocs/jakarta/servlet/annotation/webservlet[@WebServlet] but can be applied to a method of a factory to Register a new servlet.
-* ann:servlet.engine.annotation.ServletFilterBean[] - Equivalent of https://jakarta.ee/specifications/servlet/5.0/apidocs/jakarta/servlet/annotation/webfilter[@WebFilter] but can be applied to a method of a factory to Register a new filter.
+* ann:servlet.api.annotation.ServletBean[] - Equivalent of https://jakarta.ee/specifications/servlet/5.0/apidocs/jakarta/servlet/annotation/webservlet[@WebServlet] but can be applied to a method of a factory to Register a new servlet.
+* ann:servlet.api.annotation.ServletFilterBean[] - Equivalent of https://jakarta.ee/specifications/servlet/5.0/apidocs/jakarta/servlet/annotation/webfilter[@WebFilter] but can be applied to a method of a factory to Register a new filter.
