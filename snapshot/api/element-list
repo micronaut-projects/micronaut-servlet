@@ -1,4 +1,6 @@
+io.micronaut.servlet.annotation.processor
 io.micronaut.servlet.engine
+io.micronaut.servlet.engine.annotation
 io.micronaut.servlet.engine.bind
 io.micronaut.servlet.engine.initializer
 io.micronaut.servlet.engine.server
