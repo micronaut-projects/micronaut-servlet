@@ -40,7 +40,10 @@ import java.io.IOException;
 import java.util.List;
 import java.util.stream.Stream;
 import java.util.concurrent.ExecutorService;
+import org.eclipse.jetty.alpn.server.ALPNServerConnectionFactory;
 import org.eclipse.jetty.http.HttpVersion;
+import org.eclipse.jetty.http2.server.HTTP2CServerConnectionFactory;
+import org.eclipse.jetty.http2.server.HTTP2ServerConnectionFactory;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.Server;
@@ -146,12 +149,34 @@ public class JettyFactory extends ServletServerFactory {
             https = newHttpsConnector(server, sslConfiguration, jettySslConfiguration);
 
         }
-        final ServerConnector http = new ServerConnector(server, new HttpConnectionFactory(jettyConfiguration.getHttpConfiguration()));
-        http.setPort(port);
-        http.setHost(host);
+        final ServerConnector http = newHttpConnector(server, host, port);
         configureConnectors(server, http, https);
 
         return server;
+    }
+
+    /**
+     * Create the HTTP connector.
+     * @param server The server
+     * @param host The host
+     * @param port The port
+     * @return The server connector.
+     */
+    protected @NonNull ServerConnector newHttpConnector(@NonNull Server server, @NonNull String host, @NonNull Integer port) {
+        HttpConfiguration httpConfig = jettyConfiguration.getHttpConfiguration();
+        HttpConnectionFactory http11 = new HttpConnectionFactory(httpConfig);
+        HttpServerConfiguration serverConfiguration = getServerConfiguration();
+        final ServerConnector http;
+        if (serverConfiguration.getHttpVersion() == io.micronaut.http.HttpVersion.HTTP_2_0) {
+            HTTP2CServerConnectionFactory h2c = new HTTP2CServerConnectionFactory(httpConfig);
+            http = new ServerConnector(server, http11, h2c);
+        } else {
+            http = new ServerConnector(server, http11);
+        }
+
+        http.setPort(port);
+        http.setHost(host);
+        return http;
     }
 
     /**
@@ -216,10 +241,29 @@ public class JettyFactory extends ServletServerFactory {
 
         HttpConfiguration httpsConfig = new HttpConfiguration(httpConfig);
         httpsConfig.addCustomizer(jettySslConfiguration);
-        https = new ServerConnector(server,
-            new SslConnectionFactory(sslContextFactory, HttpVersion.HTTP_1_1.asString()),
-            new HttpConnectionFactory(httpsConfig)
-        );
+
+        // The ConnectionFactory for HTTP/1.1.
+        HttpConnectionFactory http11 = new HttpConnectionFactory(httpsConfig);
+
+        if (getServerConfiguration().getHttpVersion() == io.micronaut.http.HttpVersion.HTTP_2_0) {
+            // The ConnectionFactory for HTTP/2.
+            HTTP2ServerConnectionFactory h2 = new HTTP2ServerConnectionFactory(httpConfig);
+            // The ALPN ConnectionFactory.
+            ALPNServerConnectionFactory alpn = new ALPNServerConnectionFactory();
+            // The default protocol to use in case there is no negotiation.
+            alpn.setDefaultProtocol(http11.getProtocol());
+            // The ConnectionFactory for TLS.
+            SslConnectionFactory tls = new SslConnectionFactory(sslContextFactory, alpn.getProtocol());
+            // The ServerConnector instance.
+            https = new ServerConnector(server, tls, alpn, h2, http11);
+        } else {
+            SslConnectionFactory sslConnectionFactory = new SslConnectionFactory(sslContextFactory, HttpVersion.HTTP_1_1.asString());
+            https = new ServerConnector(server,
+                sslConnectionFactory,
+                http11
+            );
+        }
+
         https.setPort(securePort);
         return https;
     }

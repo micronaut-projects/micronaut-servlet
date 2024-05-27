@@ -50,6 +50,7 @@ import io.micronaut.http.server.types.files.StreamedFile;
 import io.micronaut.http.server.types.files.SystemFile;
 import io.micronaut.web.router.RouteInfo;
 import io.micronaut.web.router.resource.StaticResourceResolver;
+import java.io.EOFException;
 import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -342,136 +343,147 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
                                 HttpRequest<?> request,
                                 MutableHttpResponse<?> response,
                                 Consumer<HttpResponse<?>> responsePublisherCallback) {
-        Object body = response.getBody().orElse(null);
+        try {
+            Object body = response.getBody().orElse(null);
 
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Sending response {}", response.status());
-            traceHeaders(response.getHeaders());
-        }
-
-        AnnotationMetadata routeAnnotationMetadata = response.getAttribute(HttpAttributes.ROUTE_INFO, RouteInfo.class)
-            .map(AnnotationMetadataProvider::getAnnotationMetadata)
-            .orElse(AnnotationMetadata.EMPTY_METADATA);
-
-        ServletHttpResponse<RES, ?> servletResponse = exchange.getResponse();
-        servletResponse.status(response.status(), response.reason());
-
-        if (body != null) {
-            Class<?> bodyType = body.getClass();
-            ServletResponseEncoder<Object> responseEncoder = (ServletResponseEncoder<Object>) responseEncoders.get(bodyType);
-            if (responseEncoder != null) {
-                if (exchange.getRequest().isAsyncSupported()) {
-                    Flux.from(responseEncoder.encode(exchange, routeAnnotationMetadata, body))
-                        .subscribe(responsePublisherCallback);
-                } else {
-                    // NOTE[moss]: blockLast() here *was* subscribe(), but that returns immediately, which was
-                    // sometimes allowing the main response publisher to complete before this responseEncoder
-                    // could fill out the response! Blocking here will ensure that the response is filled out
-                    // before the main response publisher completes. This will be improved later to avoid the block.
-                    Flux.from(responseEncoder.encode(exchange, routeAnnotationMetadata, body)).blockLast();
-                }
-                return;
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Sending response {}", response.status());
+                traceHeaders(response.getHeaders());
             }
 
-            MediaType mediaType = response.getContentType().orElse(null);
-            if (mediaType == null) {
-                mediaType = response.getAttribute(HttpAttributes.ROUTE_INFO, RouteInfo.class)
-                    .map(routeInfo -> {
-                        final Produces ann = bodyType.getAnnotation(Produces.class);
-                        if (ann != null) {
-                            final String[] v = ann.value();
-                            if (ArrayUtils.isNotEmpty(v)) {
-                                return new MediaType(v[0]);
-                            }
-                        }
-                        return routeExecutor.resolveDefaultResponseContentType(request, routeInfo);
-                    })
-                    // RouteExecutor will pick json by default, so we do too
-                    .orElse(MediaType.APPLICATION_JSON_TYPE);
-                response.contentType(mediaType);
-            }
+            AnnotationMetadata routeAnnotationMetadata = response.getAttribute(HttpAttributes.ROUTE_INFO, RouteInfo.class)
+                .map(AnnotationMetadataProvider::getAnnotationMetadata)
+                .orElse(AnnotationMetadata.EMPTY_METADATA);
 
-            setHeadersFromMetadata(servletResponse, routeAnnotationMetadata, body);
-            if (Publishers.isConvertibleToPublisher(body)) {
-                boolean isSingle = Publishers.isSingle(body.getClass());
-                Publisher<?> publisher = Publishers.convertPublisher(conversionService, body, Publisher.class);
-                if (isSingle) {
+            ServletHttpResponse<RES, ?> servletResponse = exchange.getResponse();
+            servletResponse.status(response.status(), response.reason());
+
+            if (body != null) {
+                Class<?> bodyType = body.getClass();
+                ServletResponseEncoder<Object> responseEncoder = (ServletResponseEncoder<Object>) responseEncoders.get(bodyType);
+                if (responseEncoder != null) {
                     if (exchange.getRequest().isAsyncSupported()) {
-                        Flux<Object> flux = Flux.from(publisher);
-                        flux.next().switchIfEmpty(Mono.just(response)).subscribe(bodyValue -> {
-                            MutableHttpResponse<?> nextResponse;
-                            if (bodyValue instanceof MutableHttpResponse) {
-                                nextResponse = ((MutableHttpResponse<?>) bodyValue);
-                                if (response == nextResponse) {
-                                    nextResponse.body(null);
+                        Flux.from(responseEncoder.encode(exchange, routeAnnotationMetadata, body))
+                            .subscribe(responsePublisherCallback);
+                    } else {
+                        // NOTE[moss]: blockLast() here *was* subscribe(), but that returns immediately, which was
+                        // sometimes allowing the main response publisher to complete before this responseEncoder
+                        // could fill out the response! Blocking here will ensure that the response is filled out
+                        // before the main response publisher completes. This will be improved later to avoid the block.
+                        Flux.from(responseEncoder.encode(exchange, routeAnnotationMetadata, body)).blockLast();
+                    }
+                    return;
+                }
+
+                MediaType mediaType = response.getContentType().orElse(null);
+                if (mediaType == null) {
+                    mediaType = response.getAttribute(HttpAttributes.ROUTE_INFO, RouteInfo.class)
+                        .map(routeInfo -> {
+                            final Produces ann = bodyType.getAnnotation(Produces.class);
+                            if (ann != null) {
+                                final String[] v = ann.value();
+                                if (ArrayUtils.isNotEmpty(v)) {
+                                    return new MediaType(v[0]);
                                 }
-                            } else {
-                                nextResponse = response.body(bodyValue);
                             }
-                            // Call encoding again, the body might need to be encoded
-                            encodeResponse(exchange, request, nextResponse, responsePublisherCallback);
-                        });
-                        return;
+                            return routeExecutor.resolveDefaultResponseContentType(request, routeInfo);
+                        })
+                        // RouteExecutor will pick json by default, so we do too
+                        .orElse(MediaType.APPLICATION_JSON_TYPE);
+                    response.contentType(mediaType);
+                }
+
+                setHeadersFromMetadata(servletResponse, routeAnnotationMetadata, body);
+                if (Publishers.isConvertibleToPublisher(body)) {
+                    boolean isSingle = Publishers.isSingle(body.getClass());
+                    Publisher<?> publisher = Publishers.convertPublisher(conversionService, body, Publisher.class);
+                    if (isSingle) {
+                        if (exchange.getRequest().isAsyncSupported()) {
+                            Flux<Object> flux = Flux.from(publisher);
+                            flux.next().switchIfEmpty(Mono.just(response)).subscribe(bodyValue -> {
+                                MutableHttpResponse<?> nextResponse;
+                                if (bodyValue instanceof MutableHttpResponse) {
+                                    nextResponse = ((MutableHttpResponse<?>) bodyValue);
+                                    if (response == nextResponse) {
+                                        nextResponse.body(null);
+                                    }
+                                } else {
+                                    nextResponse = response.body(bodyValue);
+                                }
+                                // Call encoding again, the body might need to be encoded
+                                encodeResponse(exchange, request, nextResponse, responsePublisherCallback);
+                            });
+                            return;
+                        } else {
+                            // fallback to blocking
+                            body = Mono.from(publisher).block();
+                            response.body(body);
+                        }
                     } else {
-                        // fallback to blocking
-                        body = Mono.from(publisher).block();
-                        response.body(body);
+                        // stream case
+                        if (exchange.getRequest().isAsyncSupported()) {
+                            Mono.from(servletResponse.stream(publisher)).subscribe(responsePublisherCallback, throwable -> {
+                                responsePublisherCallback.accept(null);
+                            });
+                            return;
+                        } else {
+                            // fallback to blocking
+                            body = Flux.from(publisher).collectList().block();
+                            servletResponse.body(body);
+                        }
+                    }
+                }
+                if (body instanceof HttpStatus) {
+                    servletResponse.status((HttpStatus) body);
+                } else if (body instanceof CharSequence) {
+                    if (response.getContentType().isEmpty()) {
+                        response.contentType(MediaType.APPLICATION_JSON);
+                    }
+                    try (BufferedWriter writer = servletResponse.getWriter()) {
+                        writer.write(body.toString());
+                        writer.flush();
+                    } catch (IOException e) {
+                        throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+                    }
+                } else if (body instanceof byte[] byteArray) {
+                    try (OutputStream outputStream = servletResponse.getOutputStream()) {
+                        outputStream.write(byteArray);
+                        outputStream.flush();
+                    } catch (IOException e) {
+                        throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+                    }
+                } else if (body instanceof Writable writable) {
+                    try (OutputStream outputStream = servletResponse.getOutputStream()) {
+                        writable.writeTo(outputStream, response.getCharacterEncoding());
+                        outputStream.flush();
+                    } catch (IOException e) {
+                        throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
                     }
                 } else {
-                    // stream case
-                    if (exchange.getRequest().isAsyncSupported()) {
-                        Mono.from(servletResponse.stream(publisher)).subscribe(responsePublisherCallback, throwable -> {
-                            responsePublisherCallback.accept(null);
-                        });
-                        return;
+                    final MediaTypeCodec codec = mediaTypeCodecRegistry.findCodec(mediaType, bodyType).orElse(null);
+                    if (codec != null) {
+                        try (OutputStream outputStream = servletResponse.getOutputStream()) {
+                            codec.encode(body, outputStream);
+                            outputStream.flush();
+                        } catch (Throwable e) {
+                            if (e instanceof CodecException codecException) {
+                                throw codecException;
+                            }
+                            throw new CodecException("Failed to encode object [" + body + "] to content type [" + mediaType + "]: " + e.getMessage(), e);
+                        }
                     } else {
-                        // fallback to blocking
-                        body = Flux.from(publisher).collectList().block();
-                        servletResponse.body(body);
+                        throw new CodecException("No codec present capable of encoding object [" + body + "] to content type [" + mediaType + "]");
                     }
                 }
             }
-            if (body instanceof HttpStatus) {
-                servletResponse.status((HttpStatus) body);
-            } else if (body instanceof CharSequence) {
-                if (response.getContentType().isEmpty()) {
-                    response.contentType(MediaType.APPLICATION_JSON);
-                }
-                try (BufferedWriter writer = servletResponse.getWriter()) {
-                    writer.write(body.toString());
-                    writer.flush();
-                } catch (IOException e) {
-                    throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-                }
-            } else if (body instanceof byte[] byteArray) {
-                try (OutputStream outputStream = servletResponse.getOutputStream()) {
-                    outputStream.write(byteArray);
-                    outputStream.flush();
-                } catch (IOException e) {
-                    throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-                }
-            } else if (body instanceof Writable writable) {
-                try (OutputStream outputStream = servletResponse.getOutputStream()) {
-                    writable.writeTo(outputStream, response.getCharacterEncoding());
-                    outputStream.flush();
-                } catch (IOException e) {
-                    throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-                }
+            responsePublisherCallback.accept(response);
+        } catch (CodecException e) {
+            if (e.getCause() instanceof EOFException) {
+                // connection dropped, nothing we can do
             } else {
-                final MediaTypeCodec codec = mediaTypeCodecRegistry.findCodec(mediaType, bodyType).orElse(null);
-                if (codec != null) {
-                    try (OutputStream outputStream = servletResponse.getOutputStream()) {
-                        codec.encode(body, outputStream);
-                        outputStream.flush();
-                    } catch (Throwable e) {
-                        throw new CodecException("Failed to encode object [" + body + "] to content type [" + mediaType + "]: " + e.getMessage(), e);
-                    }
-                } else {
-                    throw new CodecException("No codec present capable of encoding object [" + body + "] to content type [" + mediaType + "]");
-                }
+                throw e;
             }
         }
-        responsePublisherCallback.accept(response);
     }
 
     private void setHeadersFromMetadata(MutableHttpResponse<?> res, AnnotationMetadata annotationMetadata, Object result) {

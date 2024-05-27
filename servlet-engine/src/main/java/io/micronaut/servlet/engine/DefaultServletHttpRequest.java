@@ -34,6 +34,8 @@ import io.micronaut.http.FullHttpRequest;
 import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpMethod;
 import io.micronaut.http.HttpParameters;
+import io.micronaut.http.HttpRequest;
+import io.micronaut.http.HttpVersion;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.MutableHttpRequest;
 import io.micronaut.http.codec.MediaTypeCodecRegistry;
@@ -78,7 +80,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
 /**
- * Implementation of {@link io.micronaut.http.HttpRequest} ontop of the Servlet API.
+ * Implementation of {@link HttpRequest} ontop of the Servlet API.
  *
  * @param <B> The body type
  * @author graemerocher
@@ -151,6 +153,15 @@ public final class DefaultServletHttpRequest<B> extends MutableConvertibleValues
             B built = parsedBody != null ? parsedBody : (B) bodyBuilder.buildBody(this::getInputStream, this);
             return Optional.ofNullable(built);
         });
+    }
+
+    @Override
+    public HttpVersion getHttpVersion() {
+        String protocol = getNativeRequest().getProtocol();
+        return switch (protocol) {
+            case "HTTP/2.0" -> HttpVersion.HTTP_2_0;
+            default -> ServletHttpRequest.super.getHttpVersion();
+        };
     }
 
     @Override

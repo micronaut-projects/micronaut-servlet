@@ -4,7 +4,10 @@ plugins {
 
 dependencies {
     implementation libs.jetty.servlet
+    implementation(libs.jetty.http2.server)
+    implementation(libs.jetty.alpn.server)
     testImplementation libs.bcpkix
+    testImplementation(libs.jetty.alpn.conscrypt.server)
     testCompileOnly(mnValidation.micronaut.validation.processor)
     testAnnotationProcessor(mnValidation.micronaut.validation.processor)
     testAnnotationProcessor(projects.micronautServletProcessor)
