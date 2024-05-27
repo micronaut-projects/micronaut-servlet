@@ -3,7 +3,7 @@ package io.micronaut.servlet.jetty;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.core.annotation.Order;
 import io.micronaut.core.order.Ordered;
-import io.micronaut.servlet.engine.annotation.ServletFilterBean;
+import io.micronaut.servlet.api.annotation.ServletFilterBean;
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.GenericFilter;

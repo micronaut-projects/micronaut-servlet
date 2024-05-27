@@ -26,6 +26,7 @@ micronautBuild {
 include 'servlet-bom'
 include 'servlet-processor'
 include 'servlet-core'
+include 'servlet-api'
 include 'servlet-engine'
 include 'http-server-jetty'
 include 'http-server-undertow'

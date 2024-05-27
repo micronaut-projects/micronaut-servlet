@@ -34,6 +34,8 @@ import io.micronaut.servlet.http.ServletBinderRegistry;
 import io.micronaut.servlet.http.ServletBodyBinder;
 import io.micronaut.servlet.http.StreamedServletMessage;
 import jakarta.inject.Singleton;
+import jakarta.servlet.ServletConfig;
+import jakarta.servlet.ServletContext;
 import org.reactivestreams.Processor;
 import reactor.core.publisher.Flux;
 
@@ -80,6 +82,8 @@ class DefaultServletBinderRegistry<T> extends ServletBinderRegistry<T> {
         super(mediaTypeCodecRegistry, conversionService, binders, defaultBodyAnnotationBinder);
         byType.put(HttpServletRequest.class, new ServletRequestBinder());
         byType.put(HttpServletResponse.class, new ServletResponseBinder());
+        byType.put(ServletConfig.class, new ServletConfigBinder());
+        byType.put(ServletContext.class, new ServletContextBinder());
         byType.put(CompletedPart.class, new CompletedPartRequestArgumentBinder());
         byAnnotation.put(Part.class, new ServletPartBinder<>(mediaTypeCodecRegistry));
     }

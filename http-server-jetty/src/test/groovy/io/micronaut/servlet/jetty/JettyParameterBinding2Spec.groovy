@@ -88,6 +88,18 @@ class JettyParameterBinding2Spec extends Specification {
         response.body() == 'Hello text/plain;q=1.0'
     }
 
+    void "test context binding"() {
+        given:
+        def request = HttpRequest.GET("/parameters/context")
+        request.header(HttpHeaders.CONTENT_TYPE, "text/plain;q=1.0")
+        def response = client.toBlocking().exchange(request, String)
+
+        expect:
+        response.status() == HttpStatus.OK
+        response.contentType.get() == MediaType.TEXT_PLAIN_TYPE
+        response.body() == 'Hello micronaut /'
+    }
+
     void "test request and response"() {
         given:
         def request = HttpRequest.GET("/parameters/reqAndRes")

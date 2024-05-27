@@ -7,6 +7,8 @@ import io.micronaut.http.*;
 import io.micronaut.http.annotation.*;
 import io.micronaut.http.cookie.Cookie;
 
+import jakarta.servlet.ServletConfig;
+import jakarta.servlet.ServletContext;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.*;
@@ -32,6 +34,11 @@ public class ParametersController {
     @Get(value = "/header", produces = MediaType.TEXT_PLAIN)
     String headerValue(@Header(HttpHeaders.CONTENT_TYPE) String contentType) {
         return "Hello " + contentType;
+    }
+
+    @Get(value = "/context", produces = MediaType.TEXT_PLAIN)
+    String context(ServletConfig config, ServletContext servletContext) {
+        return "Hello " + config.getServletName() + " " + servletContext.getServletContextName();
     }
 
     @Get("/cookies")

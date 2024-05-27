@@ -22,7 +22,6 @@ import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.convert.value.MutableConvertibleValues;
-import io.micronaut.core.convert.value.MutableConvertibleValuesMap;
 import io.micronaut.core.execution.ExecutionFlow;
 import io.micronaut.core.io.buffer.ByteBuffer;
 import io.micronaut.core.type.Argument;
@@ -52,12 +51,6 @@ import jakarta.servlet.ReadListener;
 import jakarta.servlet.ServletInputStream;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.reactivestreams.Subscriber;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Sinks;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -76,8 +69,12 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
+import org.reactivestreams.Subscriber;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Sinks;
 
 /**
  * Implementation of {@link HttpRequest} ontop of the Servlet API.
@@ -87,9 +84,8 @@ import java.util.function.Supplier;
  * @since 1.0.0
  */
 @Internal
-public final class DefaultServletHttpRequest<B> extends MutableConvertibleValuesMap<Object> implements
+public final class DefaultServletHttpRequest<B> implements
     ServletHttpRequest<HttpServletRequest, B>,
-    MutableConvertibleValues<Object>,
     ServletExchange<HttpServletRequest, HttpServletResponse>,
     StreamedServletMessage<B, byte[]>,
     FullHttpRequest<B>,
@@ -105,6 +101,7 @@ public final class DefaultServletHttpRequest<B> extends MutableConvertibleValues
     private final ServletParameters parameters;
     private final DefaultServletHttpResponse<B> response;
     private final MediaTypeCodecRegistry codecRegistry;
+    private final MutableConvertibleValues<Object> attributes;
     private DefaultServletCookies cookies;
     private Supplier<Optional<B>> body;
 
@@ -126,7 +123,7 @@ public final class DefaultServletHttpRequest<B> extends MutableConvertibleValues
                                         HttpServletResponse response,
                                         MediaTypeCodecRegistry codecRegistry,
                                         BodyBuilder bodyBuilder) {
-        super(new ConcurrentHashMap<>(), conversionService);
+        super();
         this.conversionService = conversionService;
         this.delegate = delegate;
         this.codecRegistry = codecRegistry;
@@ -153,6 +150,54 @@ public final class DefaultServletHttpRequest<B> extends MutableConvertibleValues
             B built = parsedBody != null ? parsedBody : (B) bodyBuilder.buildBody(this::getInputStream, this);
             return Optional.ofNullable(built);
         });
+        this.attributes = new MutableConvertibleValues<>() {
+
+            @Override
+            public <T> Optional<T> get(CharSequence name, ArgumentConversionContext<T> conversionContext) {
+                Objects.requireNonNull(conversionContext, "Conversion context cannot be null");
+                Objects.requireNonNull(name, "Attribute key cannot be null");
+                Object attribute = delegate.getAttribute(name.toString());
+                return Optional.ofNullable(attribute)
+                        .flatMap(v -> conversionService.convert(v, conversionContext));
+            }
+
+            @Override
+            public Set<String> names() {
+                return CollectionUtils.enumerationToSet(delegate.getAttributeNames());
+            }
+
+            @Override
+            public Collection<Object> values() {
+                return names().stream().map(delegate::getAttribute).toList();
+            }
+
+            @Override
+            public MutableConvertibleValues<Object> put(CharSequence key, @Nullable Object value) {
+                Objects.requireNonNull(key, "Attribute key cannot be null");
+                delegate.setAttribute(key.toString(), value);
+                return this;
+            }
+
+            @Override
+            public MutableConvertibleValues<Object> remove(CharSequence key) {
+                Objects.requireNonNull(key, "Attribute key cannot be null");
+                delegate.removeAttribute(key.toString());
+                return this;
+            }
+
+            @Override
+            public MutableConvertibleValues<Object> clear() {
+                names().forEach(delegate::removeAttribute);
+                return this;
+            }
+        };
+    }
+
+    /**
+     * @return The conversion service.
+     */
+    public ConversionService getConversionService() {
+        return conversionService;
     }
 
     @Override
@@ -162,11 +207,6 @@ public final class DefaultServletHttpRequest<B> extends MutableConvertibleValues
             case "HTTP/2.0" -> HttpVersion.HTTP_2_0;
             default -> ServletHttpRequest.super.getHttpVersion();
         };
-    }
-
-    @Override
-    public ConversionService getConversionService() {
-        return this.conversionService;
     }
 
     /**
@@ -334,7 +374,7 @@ public final class DefaultServletHttpRequest<B> extends MutableConvertibleValues
     @NonNull
     @Override
     public MutableConvertibleValues<Object> getAttributes() {
-        return this;
+        return this.attributes;
     }
 
     @Override
@@ -346,17 +386,6 @@ public final class DefaultServletHttpRequest<B> extends MutableConvertibleValues
     @Override
     public Optional<B> getBody() {
         return this.body.get();
-    }
-
-    @Override
-    public MutableConvertibleValues<Object> put(CharSequence key, @Nullable Object value) {
-        String name = Objects.requireNonNull(key, "Key cannot be null").toString();
-        if (value == null) {
-            super.remove(name);
-        } else {
-            super.put(name, value);
-        }
-        return this;
     }
 
     @SuppressWarnings("unchecked")
