@@ -19,7 +19,7 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.ApplicationContextBuilder;
 import io.micronaut.context.env.Environment;
 import io.micronaut.core.annotation.TypeHint;
-
+import io.micronaut.servlet.api.ServletAttributes;
 import jakarta.inject.Inject;
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.annotation.WebServlet;
@@ -71,6 +71,8 @@ public class DefaultMicronautServlet extends HttpServlet {
     @Override
     protected void service(HttpServletRequest req, HttpServletResponse resp) {
         if (handler != null) {
+            req.setAttribute(ServletAttributes.SERVLET_CONFIG.toString(), getServletConfig());
+            req.setAttribute(ServletAttributes.SERVLET_CONTEXT.toString(), getServletContext());
             handler.service(req, resp);
         }
     }

@@ -370,7 +370,7 @@ public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpSe
     @NonNull
     @Override
     public MutableConvertibleValues<Object> getAttributes() {
-        return request;
+        return request.getAttributes();
     }
 
     @NonNull
