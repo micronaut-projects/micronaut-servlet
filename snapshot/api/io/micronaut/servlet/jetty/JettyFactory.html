@@ -168,22 +168,29 @@ loadScripts(document, 'script');</script>
 <div class="block">Builds the Jetty server bean.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected @NonNull org.eclipse.jetty.server.ServerConnector</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#newHttpsConnector(org.eclipse.jetty.server.Server,io.micronaut.http.ssl.SslConfiguration,io.micronaut.servlet.jetty.JettyConfiguration.JettySslConfiguration)" class="member-name-link">newHttpsConnector</a><wbr>(@NonNull org.eclipse.jetty.server.Server&nbsp;server,
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#newHttpConnector(org.eclipse.jetty.server.Server,java.lang.String,java.lang.Integer)" class="member-name-link">newHttpConnector</a><wbr>(@NonNull org.eclipse.jetty.server.Server&nbsp;server,
+ @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;host,
+ @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;port)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Create the HTTP connector.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected @NonNull org.eclipse.jetty.server.ServerConnector</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#newHttpsConnector(org.eclipse.jetty.server.Server,io.micronaut.http.ssl.SslConfiguration,io.micronaut.servlet.jetty.JettyConfiguration.JettySslConfiguration)" class="member-name-link">newHttpsConnector</a><wbr>(@NonNull org.eclipse.jetty.server.Server&nbsp;server,
  @NonNull io.micronaut.http.ssl.SslConfiguration&nbsp;sslConfiguration,
  <a href="JettyConfiguration.JettySslConfiguration.html" title="class in io.micronaut.servlet.jetty">JettyConfiguration.JettySslConfiguration</a>&nbsp;jettySslConfiguration)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Create the HTTPS connector.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected @NonNull org.eclipse.jetty.servlet.ServletContextHandler</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#newJettyContext(org.eclipse.jetty.server.Server,java.lang.String)" class="member-name-link">newJettyContext</a><wbr>(@NonNull org.eclipse.jetty.server.Server&nbsp;server,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected @NonNull org.eclipse.jetty.servlet.ServletContextHandler</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#newJettyContext(org.eclipse.jetty.server.Server,java.lang.String)" class="member-name-link">newJettyContext</a><wbr>(@NonNull org.eclipse.jetty.server.Server&nbsp;server,
  @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;contextPath)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Create the Jetty context.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected @NonNull org.eclipse.jetty.server.Server</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#newServer(io.micronaut.context.ApplicationContext,io.micronaut.servlet.engine.MicronautServletConfiguration)" class="member-name-link">newServer</a><wbr>(@NonNull io.micronaut.context.ApplicationContext&nbsp;applicationContext,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected @NonNull org.eclipse.jetty.server.Server</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#newServer(io.micronaut.context.ApplicationContext,io.micronaut.servlet.engine.MicronautServletConfiguration)" class="member-name-link">newServer</a><wbr>(@NonNull io.micronaut.context.ApplicationContext&nbsp;applicationContext,
  @NonNull <a href="../engine/MicronautServletConfiguration.html" title="class in io.micronaut.servlet.engine">MicronautServletConfiguration</a>&nbsp;configuration)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Create a new server instance.</div>
 </div>
 </div>
@@ -293,6 +300,27 @@ loadScripts(document, 'script');</script>
 <dd><code>micronautServletInitializer</code> - The micronaut servlet initializer</dd>
 <dt>Returns:</dt>
 <dd>The Jetty server bean</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="newHttpConnector(org.eclipse.jetty.server.Server,java.lang.String,java.lang.Integer)">
+<h3>newHttpConnector</h3>
+<div class="member-signature"><span class="annotations">@NonNull
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">@NonNull org.eclipse.jetty.server.ServerConnector</span>&nbsp;<span class="element-name">newHttpConnector</span><wbr><span class="parameters">(@NonNull
+ @NonNull org.eclipse.jetty.server.Server&nbsp;server,
+ @NonNull
+ @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;host,
+ @NonNull
+ @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;port)</span></div>
+<div class="block">Create the HTTP connector.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>server</code> - The server</dd>
+<dd><code>host</code> - The host</dd>
+<dd><code>port</code> - The port</dd>
+<dt>Returns:</dt>
+<dd>The server connector.</dd>
 </dl>
 </section>
 </li>
