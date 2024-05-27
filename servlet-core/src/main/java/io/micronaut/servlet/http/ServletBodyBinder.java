@@ -23,21 +23,23 @@ import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.io.IOUtils;
 import io.micronaut.core.io.Readable;
 import io.micronaut.core.type.Argument;
+import io.micronaut.http.HttpAttributes;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.Body;
 import io.micronaut.http.bind.binders.AnnotatedRequestArgumentBinder;
 import io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder;
+import io.micronaut.http.body.MessageBodyReader;
 import io.micronaut.http.codec.CodecException;
 import io.micronaut.http.codec.MediaTypeCodec;
 import io.micronaut.http.codec.MediaTypeCodecRegistry;
+import io.micronaut.web.router.RouteInfo;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.Array;
 import java.util.Collections;
@@ -84,35 +86,13 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
         String name = argument.getAnnotationMetadata().stringValue(Body.class).orElse(null);
         if (source instanceof ServletHttpRequest<?, ?> servletHttpRequest) {
             if (Readable.class.isAssignableFrom(type)) {
-                Readable readable = new Readable() {
-                    @Override
-                    public Reader asReader() throws IOException {
-                        return servletHttpRequest.getReader();
-                    }
-
-                    @NonNull
-                    @Override
-                    public InputStream asInputStream() throws IOException {
-                        return servletHttpRequest.getInputStream();
-                    }
-
-                    @Override
-                    public boolean exists() {
-                        return true;
-                    }
-
-                    @NonNull
-                    @Override
-                    public String getName() {
-                        return servletHttpRequest.getPath();
-                    }
-                };
+                Readable readable = new ServletReadable(servletHttpRequest);
                 return () -> (Optional<T>) Optional.of(readable);
             }
             if (CharSequence.class.isAssignableFrom(type) && name == null) {
-                try (InputStream inputStream = servletHttpRequest.getInputStream()) {
-                    final String content = IOUtils.readText(new BufferedReader(new InputStreamReader(inputStream, source.getCharacterEncoding())));
-                    return () -> (Optional<T>) Optional.of(content);
+                try (BufferedReader bufferedReader = servletHttpRequest.getReader()) {
+                    String text = IOUtils.readText(bufferedReader);
+                    return () -> (Optional<T>) Optional.of(text);
                 } catch (IOException e) {
                     return new BindingResult<T>() {
                         @Override
@@ -137,49 +117,66 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
                     Optional<T> result = conversionService.convert(servletHttpRequest.getParameters().asMap(), context);
                     return () -> result;
                 }
-            }
-            final MediaTypeCodec codec = mediaTypeCodeRegistry
-                    .findCodec(mediaType, type)
+            } else {
+                MessageBodyReader messageBodyReader = source.getAttribute(HttpAttributes.ROUTE_INFO, RouteInfo.class)
+                    .map(RouteInfo::getMessageBodyReader)
                     .orElse(null);
-
-            if (codec != null) {
-                try (InputStream inputStream = servletHttpRequest.getInputStream()) {
-                    if (Publishers.isConvertibleToPublisher(type)) {
-                        final Argument<?> typeArg = argument.getFirstTypeVariable().orElse(Argument.OBJECT_ARGUMENT);
-                        if (Publishers.isSingle(type)) {
-                            T content = (T) codec.decode(typeArg, inputStream);
-                            final Publisher<T> publisher = Publishers.just(content);
-                            final T converted = conversionService.convertRequired(publisher, type);
-                            return () -> Optional.of(converted);
+                if (name == null && messageBodyReader != null && messageBodyReader.isReadable(context.getArgument(), mediaType)) {
+                    try (InputStream inputStream = servletHttpRequest.getInputStream()) {
+                        Object content = messageBodyReader.read(context.getArgument(), mediaType, source.getHeaders(), inputStream);
+                        if (content != null && servletHttpRequest instanceof ParsedBodyHolder parsedBody) {
+                            parsedBody.setParsedBody(content);
                         }
-                        final Argument<? extends List<?>> containerType = Argument.listOf(typeArg.getType());
-                        T content = (T) codec.decode(containerType, inputStream);
-                        final Publisher<T> publisher = Flux.fromIterable((Iterable) content);
-                        final T converted = conversionService.convertRequired(publisher, type);
-                        return () -> Optional.of(converted);
+                        return () -> (Optional<T>) Optional.ofNullable(content);
+                    } catch (CodecException | IOException e) {
+                        throw new CodecException("Unable to decode request body: " + e.getMessage(), e);
                     }
-                    if (type.isAssignableFrom(byte[].class)) {
-                        byte[] content = inputStream.readAllBytes();
-                        return () -> Optional.of((T) content);
-                    } else if (type.isArray()) {
-                        Class<?> componentType = type.getComponentType();
-                        List<T> content = (List<T>) codec.decode(Argument.listOf(componentType), inputStream);
-                        Object[] array = content.toArray((Object[]) Array.newInstance(componentType, 0));
-                        return () -> Optional.of((T) array);
+                } else {
+
+                    final MediaTypeCodec codec = mediaTypeCodeRegistry
+                        .findCodec(mediaType, type)
+                        .orElse(null);
+
+                    if (codec != null) {
+                        try (InputStream inputStream = servletHttpRequest.getInputStream()) {
+                            if (Publishers.isConvertibleToPublisher(type)) {
+                                final Argument<?> typeArg = argument.getFirstTypeVariable().orElse(Argument.OBJECT_ARGUMENT);
+                                if (Publishers.isSingle(type)) {
+                                    T content = (T) codec.decode(typeArg, inputStream);
+                                    final Publisher<T> publisher = Publishers.just(content);
+                                    final T converted = conversionService.convertRequired(publisher, type);
+                                    return () -> Optional.of(converted);
+                                }
+                                final Argument<? extends List<?>> containerType = Argument.listOf(typeArg.getType());
+                                T content = (T) codec.decode(containerType, inputStream);
+                                final Publisher<T> publisher = Flux.fromIterable((Iterable) content);
+                                final T converted = conversionService.convertRequired(publisher, type);
+                                return () -> Optional.of(converted);
+                            }
+                            if (type.isAssignableFrom(byte[].class)) {
+                                byte[] content = inputStream.readAllBytes();
+                                return () -> Optional.of((T) content);
+                            } else if (type.isArray()) {
+                                Class<?> componentType = type.getComponentType();
+                                List<T> content = (List<T>) codec.decode(Argument.listOf(componentType), inputStream);
+                                Object[] array = content.toArray((Object[]) Array.newInstance(componentType, 0));
+                                return () -> Optional.of((T) array);
+                            }
+                            T content;
+                            if (name != null) {
+                                var decode = codec.decode(Map.class, inputStream);
+                                content = conversionService.convert(decode.get(name), argument).orElse(null);
+                            } else {
+                                content = codec.decode(argument, inputStream);
+                            }
+                            if (content != null && servletHttpRequest instanceof ParsedBodyHolder parsedBody) {
+                                parsedBody.setParsedBody(content);
+                            }
+                            return () -> Optional.of(content);
+                        } catch (CodecException | IOException e) {
+                            throw new CodecException("Unable to decode request body: " + e.getMessage(), e);
+                        }
                     }
-                    T content;
-                    if (name != null) {
-                        var decode = codec.decode(Map.class, inputStream);
-                        content = conversionService.convert(decode.get(name), argument).orElse(null);
-                    } else {
-                        content = codec.decode(argument, inputStream);
-                    }
-                    if (content != null && servletHttpRequest instanceof ParsedBodyHolder parsedBody) {
-                        parsedBody.setParsedBody(content);
-                    }
-                    return () -> Optional.of(content);
-                } catch (CodecException | IOException e) {
-                    throw new CodecException("Unable to decode request body: " + e.getMessage(), e);
                 }
             }
 
@@ -189,5 +186,35 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
 
     private boolean isFormSubmission(MediaType contentType) {
         return MediaType.APPLICATION_FORM_URLENCODED_TYPE.equals(contentType) || MediaType.MULTIPART_FORM_DATA_TYPE.equals(contentType);
+    }
+
+    private static final class ServletReadable implements Readable {
+        private final ServletHttpRequest<?, ?> servletHttpRequest;
+
+        public ServletReadable(ServletHttpRequest<?, ?> servletHttpRequest) {
+            this.servletHttpRequest = servletHttpRequest;
+        }
+
+        @Override
+        public Reader asReader() throws IOException {
+            return servletHttpRequest.getReader();
+        }
+
+        @NonNull
+        @Override
+        public InputStream asInputStream() throws IOException {
+            return servletHttpRequest.getInputStream();
+        }
+
+        @Override
+        public boolean exists() {
+            return true;
+        }
+
+        @NonNull
+        @Override
+        public String getName() {
+            return servletHttpRequest.getPath();
+        }
     }
 }
