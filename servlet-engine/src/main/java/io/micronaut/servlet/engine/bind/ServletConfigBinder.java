@@ -15,6 +15,7 @@
  */
 package io.micronaut.servlet.engine.bind;
 
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.type.Argument;
@@ -26,7 +27,8 @@ import jakarta.servlet.ServletConfig;
 /**
  * Argument binder for the servlet config.
  */
-public final class ServletConfigBinder implements TypedRequestArgumentBinder<ServletConfig> {
+@Internal
+final class ServletConfigBinder implements TypedRequestArgumentBinder<ServletConfig> {
 
     public static final @NonNull Argument<ServletConfig> TYPE = Argument.of(ServletConfig.class);
 
