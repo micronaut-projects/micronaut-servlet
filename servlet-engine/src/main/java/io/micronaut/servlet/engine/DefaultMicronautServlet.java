@@ -20,7 +20,9 @@ import io.micronaut.context.ApplicationContextBuilder;
 import io.micronaut.context.env.Environment;
 import io.micronaut.core.annotation.TypeHint;
 
+import jakarta.inject.Inject;
 import jakarta.servlet.ServletContext;
+import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -33,6 +35,10 @@ import java.util.Objects;
  * @since 1.0
  */
 @TypeHint(DefaultMicronautServlet.class)
+@WebServlet(
+    name = DefaultMicronautServlet.NAME,
+    loadOnStartup = 1
+)
 public class DefaultMicronautServlet extends HttpServlet {
     /**
      * The name of the servlet.
@@ -51,6 +57,7 @@ public class DefaultMicronautServlet extends HttpServlet {
      * Constructor that takes an application context.
      * @param applicationContext The application context.
      */
+    @Inject
     public DefaultMicronautServlet(ApplicationContext applicationContext) {
         this.applicationContext = Objects.requireNonNull(applicationContext, "The application context cannot be null");
     }

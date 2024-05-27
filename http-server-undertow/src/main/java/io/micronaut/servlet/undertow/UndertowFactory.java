@@ -20,12 +20,11 @@ import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Primary;
 import io.micronaut.context.env.Environment;
 import io.micronaut.core.io.ResourceResolver;
-import io.micronaut.core.io.socket.SocketUtils;
 import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.http.server.exceptions.ServerStartupException;
 import io.micronaut.http.ssl.SslConfiguration;
-import io.micronaut.servlet.engine.DefaultMicronautServlet;
 import io.micronaut.servlet.engine.MicronautServletConfiguration;
+import io.micronaut.servlet.engine.initializer.MicronautServletInitializer;
 import io.micronaut.servlet.engine.server.ServletServerFactory;
 import io.micronaut.servlet.engine.server.ServletStaticResourceConfiguration;
 import io.undertow.Handlers;
@@ -33,17 +32,19 @@ import io.undertow.Undertow;
 import io.undertow.UndertowOptions;
 import io.undertow.server.handlers.PathHandler;
 import io.undertow.servlet.Servlets;
-import io.undertow.servlet.api.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.xnio.Option;
-import org.xnio.Options;
-
+import io.undertow.servlet.api.DeploymentInfo;
+import io.undertow.servlet.api.DeploymentManager;
+import io.undertow.servlet.api.InstanceHandle;
+import io.undertow.servlet.api.ServletContainerInitializerInfo;
 import jakarta.inject.Singleton;
-import jakarta.servlet.Servlet;
+import jakarta.servlet.ServletContainerInitializer;
 import jakarta.servlet.ServletException;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import javax.net.ssl.SSLContext;
+import org.xnio.Option;
+import org.xnio.Options;
 
 /**
  * Factory for the undertow server.
@@ -53,8 +54,6 @@ import java.util.Map;
  */
 @Factory
 public class UndertowFactory extends ServletServerFactory {
-
-    private static final Logger LOG = LoggerFactory.getLogger(UndertowFactory.class);
 
     private final UndertowConfiguration configuration;
 
@@ -90,10 +89,7 @@ public class UndertowFactory extends ServletServerFactory {
         final Undertow.Builder builder = configuration.getUndertowBuilder();
         int port = getConfiguredPort();
         String host = getConfiguredHost();
-        builder.addHttpListener(
-                port,
-                host
-        );
+
 
         final String cp = getContextPath();
         final DeploymentManager deploymentManager = Servlets.defaultContainer().addDeployment(deploymentInfo);
@@ -112,16 +108,34 @@ public class UndertowFactory extends ServletServerFactory {
         if (sslConfiguration.isEnabled()) {
             int sslPort = sslConfiguration.getPort();
             if (sslPort == SslConfiguration.DEFAULT_PORT && getEnvironment().getActiveNames().contains(Environment.TEST)) {
-                sslPort = SocketUtils.findAvailableTcpPort();
+                sslPort = 0; // random port
             }
             int finalSslPort = sslPort;
-            build(sslConfiguration).ifPresent(sslContext ->
-                    builder.addHttpsListener(
-                            finalSslPort,
-                            host,
-                            sslContext
-                    ));
+            SSLContext sslContext = build(sslConfiguration).orElse(null);
+            if (sslContext != null) {
+                builder.addHttpsListener(
+                    finalSslPort,
+                    host,
+                    sslContext
+                );
+                if (getServerConfiguration().isDualProtocol()) {
+                    builder.addHttpListener(
+                        port,
+                        host
+                    );
+                }
+            } else {
+                builder.addHttpListener(
+                    port,
+                    host
+                );
+            }
 
+        } else {
+            builder.addHttpListener(
+                port,
+                host
+            );
         }
 
         Map<String, String> serverOptions = configuration.getServerOptions();
@@ -197,47 +211,46 @@ public class UndertowFactory extends ServletServerFactory {
      *
      * @param servletConfiguration The servlet configuration.
      * @return The deployment info
+     * @deprecated Use {@link #deploymentInfo(MicronautServletConfiguration, MicronautServletInitializer)}
+     */
+    @Deprecated(forRemoval = true, since = "4.8.0")
+    protected DeploymentInfo deploymentInfo(MicronautServletConfiguration servletConfiguration) {
+        return deploymentInfo(servletConfiguration, getApplicationContext().getBean(MicronautServletInitializer.class));
+    }
+
+    /**
+     * The deployment info bean.
+     *
+     * @param servletConfiguration The servlet configuration.
+     * @param servletInitializer The servlet initializer
+     * @return The deployment info
      */
     @Singleton
     @Primary
-    protected DeploymentInfo deploymentInfo(MicronautServletConfiguration servletConfiguration) {
+    protected DeploymentInfo deploymentInfo(MicronautServletConfiguration servletConfiguration, MicronautServletInitializer servletInitializer) {
         final String cp = getContextPath();
-
-        ServletInfo servletInfo = Servlets.servlet(
-                servletConfiguration.getName(), DefaultMicronautServlet.class, () -> new InstanceHandle<Servlet>() {
-
-                    private DefaultMicronautServlet instance;
-
-                    @Override
-                    public Servlet getInstance() {
-                        instance = new DefaultMicronautServlet(getApplicationContext());
-                        return instance;
-                    }
-
-                    @Override
-                    public void release() {
-                        if (instance != null) {
-                            instance.destroy();
-                        }
-                    }
-                }
-        );
-        boolean isAsync = servletConfiguration.isAsyncSupported();
-        if (Boolean.FALSE.equals(isAsync)) {
-            LOG.debug("Servlet async mode is disabled");
-        }
-        servletInfo.setAsyncSupported(isAsync);
-        servletInfo.addMapping(servletConfiguration.getMapping());
         getStaticResourceConfigurations().forEach(config -> {
-            servletInfo.addMapping(config.getMapping());
+            servletInitializer.addMicronautServletMapping(config.getMapping());
         });
-        final DeploymentInfo deploymentInfo = Servlets.deployment()
+        return Servlets.deployment()
                 .setDeploymentName(servletConfiguration.getName())
                 .setClassLoader(getEnvironment().getClassLoader())
                 .setContextPath(cp)
-                .addServlet(servletInfo);
-        servletConfiguration.getMultipartConfigElement().ifPresent(deploymentInfo::setDefaultMultipartConfig);
-        return deploymentInfo;
+                .addServletContainerInitializer(new ServletContainerInitializerInfo(
+                    MicronautServletInitializer.class,
+                        () -> new InstanceHandle<>() {
+                            @Override
+                            public ServletContainerInitializer getInstance() {
+                                return servletInitializer;
+                            }
+
+                            @Override
+                            public void release() {
+
+                            }
+                        },
+                    Set.of(MicronautServletInitializer.class)
+                ));
     }
 
 }

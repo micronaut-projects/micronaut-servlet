@@ -1,0 +1,3 @@
+io.micronaut.servlet.annotation.processor.WebFilterMapper
+io.micronaut.servlet.annotation.processor.WebListenerMapper
+io.micronaut.servlet.annotation.processor.WebServletMapper

@@ -23,7 +23,6 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.bind.annotation.Bindable;
 import io.micronaut.core.naming.Named;
-import io.micronaut.core.util.StringUtils;
 import io.micronaut.http.server.HttpServerConfiguration;
 import io.micronaut.servlet.http.ServletConfiguration;
 

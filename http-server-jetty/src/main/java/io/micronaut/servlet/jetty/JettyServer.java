@@ -61,7 +61,8 @@ public class JettyServer extends AbstractServletServer<Server> {
 
     @Override
     public int getPort() {
-        return getServer().getURI().getPort();
+        Server server = getServer();
+        return server.getURI().getPort();
     }
 
     @Override

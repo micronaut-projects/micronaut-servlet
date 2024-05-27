@@ -1,0 +1,18 @@
+To use the https://jakarta.ee/specifications/servlet/5.0/apidocs/jakarta/servlet/annotation/package-summary[Servlet APIs annotations] to register servlets, filters and listeners you first need to add the following annotation processor dependency:
+
+dependency:io.micronaut.servlet:micronaut-servlet-processor[scope="annotationProcessor"]
+
+The following annotations can then be used from the Servlet API to add additional servlets, filters and listeners as beans:
+
+* https://jakarta.ee/specifications/servlet/5.0/apidocs/jakarta/servlet/annotation/webfilter[@WebFilter] - Applicable to types that implement the `jakarta.servlet.Filter` interface.
+* https://jakarta.ee/specifications/servlet/5.0/apidocs/jakarta/servlet/annotation/webservlet[@WebServlet] - Applicable to types that implement the `jakarta.servlet.Servlet` interface.
+* https://jakarta.ee/specifications/servlet/5.0/apidocs/jakarta/servlet/annotation/weblistener[@WebListener] - See the annotation javadoc for applicable types.
+
+The https://docs.micronaut.io/latest/api/io/micronaut/core/annotation/Order.html[@Order] annotation can be used to control registration order and hence filter order. For example a value of https://docs.micronaut.io/latest/api/io/micronaut/core/order/Ordered.html#HIGHEST_PRECEDENCE[io.micronaut.core.order.Ordered.HIGHEST_PRECEDENCE] will run the filter first.
+
+NOTE: Using `HIGHEST_PRECEDENCE` will prevent any other filter running before your filter. The default position is `0` and `HIGHEST_PRECEDENCE` == `Integer.MIN_VALUE` hence you should consider using constants to the represent the position of your filter that exist somewhere between `HIGHEST_PRECEDENCE` and `LOWEST_PRECEDENCE`.
+
+In addition, you can use the following annotations on methods of https://docs.micronaut.io/latest/guide/#factories[@Factory beans] to instantiate servlets and filters and register them:
+
+* ann:servlet.engine.annotation.ServletBean[] - Equivalent of https://jakarta.ee/specifications/servlet/5.0/apidocs/jakarta/servlet/annotation/webservlet[@WebServlet] but can be applied to a method of a factory to Register a new servlet.
+* ann:servlet.engine.annotation.ServletFilterBean[] - Equivalent of https://jakarta.ee/specifications/servlet/5.0/apidocs/jakarta/servlet/annotation/webfilter[@WebFilter] but can be applied to a method of a factory to Register a new filter.
