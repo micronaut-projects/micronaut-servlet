@@ -72,11 +72,7 @@ loadScripts(document, 'script');</script>
 <h1 title="Class DefaultServletHttpRequest" class="title">Class DefaultServletHttpRequest&lt;B&gt;</h1>
 </div>
 <div class="inheritance" title="Inheritance Tree"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">java.lang.Object</a>
-<div class="inheritance">io.micronaut.core.convert.value.ConvertibleValuesMap&lt;V&gt;
-<div class="inheritance">io.micronaut.core.convert.value.MutableConvertibleValuesMap&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;
 <div class="inheritance">io.micronaut.servlet.engine.DefaultServletHttpRequest&lt;B&gt;</div>
-</div>
-</div>
 </div>
 <section class="class-description" id="class-description">
 <dl class="notes">
@@ -85,13 +81,13 @@ loadScripts(document, 'script');</script>
 </dl>
 <dl class="notes">
 <dt>All Implemented Interfaces:</dt>
-<dd><code>io.micronaut.core.attr.AttributeHolder</code>, <code>io.micronaut.core.attr.MutableAttributeHolder</code>, <code>io.micronaut.core.convert.ConversionServiceAware</code>, <code>io.micronaut.core.convert.ConversionServiceProvider</code>, <code>io.micronaut.core.convert.value.ConvertibleValues&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</code>, <code>io.micronaut.core.convert.value.MutableConvertibleValues&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</code>, <code>io.micronaut.core.value.ValueResolver&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/CharSequence.html" title="class or interface in java.lang" class="external-link">CharSequence</a>&gt;</code>, <code>io.micronaut.http.FullHttpRequest&lt;B&gt;</code>, <code>io.micronaut.http.HttpMessage&lt;B&gt;</code>, <code>io.micronaut.http.HttpRequest&lt;B&gt;</code>, <code><a href="../http/ParsedBodyHolder.html" title="interface in io.micronaut.servlet.http">ParsedBodyHolder</a>&lt;B&gt;</code>, <code><a href="../http/ServletExchange.html" title="interface in io.micronaut.servlet.http">ServletExchange</a>&lt;jakarta.servlet.http.HttpServletRequest,<wbr>jakarta.servlet.http.HttpServletResponse&gt;</code>, <code><a href="../http/ServletHttpRequest.html" title="interface in io.micronaut.servlet.http">ServletHttpRequest</a>&lt;jakarta.servlet.http.HttpServletRequest,<wbr>B&gt;</code>, <code><a href="../http/StreamedServletMessage.html" title="interface in io.micronaut.servlet.http">StreamedServletMessage</a>&lt;B,<wbr>byte[]&gt;</code>, <code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Map.Entry.html" title="class or interface in java.util" class="external-link">Map.Entry</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&gt;</code>, <code>org.reactivestreams.Publisher&lt;byte[]&gt;</code></dd>
+<dd><code>io.micronaut.core.attr.AttributeHolder</code>, <code>io.micronaut.core.attr.MutableAttributeHolder</code>, <code>io.micronaut.http.FullHttpRequest&lt;B&gt;</code>, <code>io.micronaut.http.HttpMessage&lt;B&gt;</code>, <code>io.micronaut.http.HttpRequest&lt;B&gt;</code>, <code><a href="../http/ParsedBodyHolder.html" title="interface in io.micronaut.servlet.http">ParsedBodyHolder</a>&lt;B&gt;</code>, <code><a href="../http/ServletExchange.html" title="interface in io.micronaut.servlet.http">ServletExchange</a>&lt;jakarta.servlet.http.HttpServletRequest,<wbr>jakarta.servlet.http.HttpServletResponse&gt;</code>, <code><a href="../http/ServletHttpRequest.html" title="interface in io.micronaut.servlet.http">ServletHttpRequest</a>&lt;jakarta.servlet.http.HttpServletRequest,<wbr>B&gt;</code>, <code><a href="../http/StreamedServletMessage.html" title="interface in io.micronaut.servlet.http">StreamedServletMessage</a>&lt;B,<wbr>byte[]&gt;</code>, <code>org.reactivestreams.Publisher&lt;byte[]&gt;</code></dd>
 </dl>
 <hr>
 <div class="type-signature"><span class="annotations">@Internal
 </span><span class="modifiers">public final class </span><span class="element-name type-name-label">DefaultServletHttpRequest&lt;B&gt;</span>
-<span class="extends-implements">extends io.micronaut.core.convert.value.MutableConvertibleValuesMap&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;
-implements <a href="../http/ServletHttpRequest.html" title="interface in io.micronaut.servlet.http">ServletHttpRequest</a>&lt;jakarta.servlet.http.HttpServletRequest,<wbr>B&gt;, io.micronaut.core.convert.value.MutableConvertibleValues&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;, <a href="../http/ServletExchange.html" title="interface in io.micronaut.servlet.http">ServletExchange</a>&lt;jakarta.servlet.http.HttpServletRequest,<wbr>jakarta.servlet.http.HttpServletResponse&gt;, <a href="../http/StreamedServletMessage.html" title="interface in io.micronaut.servlet.http">StreamedServletMessage</a>&lt;B,<wbr>byte[]&gt;, io.micronaut.http.FullHttpRequest&lt;B&gt;, <a href="../http/ParsedBodyHolder.html" title="interface in io.micronaut.servlet.http">ParsedBodyHolder</a>&lt;B&gt;</span></div>
+<span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>
+implements <a href="../http/ServletHttpRequest.html" title="interface in io.micronaut.servlet.http">ServletHttpRequest</a>&lt;jakarta.servlet.http.HttpServletRequest,<wbr>B&gt;, <a href="../http/ServletExchange.html" title="interface in io.micronaut.servlet.http">ServletExchange</a>&lt;jakarta.servlet.http.HttpServletRequest,<wbr>jakarta.servlet.http.HttpServletResponse&gt;, <a href="../http/StreamedServletMessage.html" title="interface in io.micronaut.servlet.http">StreamedServletMessage</a>&lt;B,<wbr>byte[]&gt;, io.micronaut.http.FullHttpRequest&lt;B&gt;, <a href="../http/ParsedBodyHolder.html" title="interface in io.micronaut.servlet.http">ParsedBodyHolder</a>&lt;B&gt;</span></div>
 <div class="block">Implementation of <code>HttpRequest</code> ontop of the Servlet API.</div>
 <dl class="notes">
 <dt>Since:</dt>
@@ -115,12 +111,6 @@ implements <a href="../http/ServletHttpRequest.html" title="interface in io.micr
 <li>
 <section class="field-summary" id="field-summary">
 <h2>Field Summary</h2>
-<div class="inherited-list">
-<h3 id="fields-inherited-from-class-io.micronaut.core.convert.value.ConvertibleValuesMap">Fields inherited from class&nbsp;io.micronaut.core.convert.value.ConvertibleValuesMap</h3>
-<code>map</code></div>
-<div class="inherited-list">
-<h3 id="fields-inherited-from-class-io.micronaut.core.convert.value.ConvertibleValues">Fields inherited from interface&nbsp;io.micronaut.core.convert.value.ConvertibleValues</h3>
-<code>EMPTY</code></div>
 <div class="inherited-list">
 <h3 id="fields-inherited-from-class-io.micronaut.http.HttpRequest">Fields inherited from interface&nbsp;io.micronaut.http.HttpRequest</h3>
 <code>SCHEME_HTTP, SCHEME_HTTPS</code></div>
@@ -266,36 +256,23 @@ implements <a href="../http/ServletHttpRequest.html" title="interface in io.micr
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>io.micronaut.http.MutableHttpRequest&lt;<a href="DefaultServletHttpRequest.html" title="type parameter in DefaultServletHttpRequest">B</a>&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#mutate()" class="member-name-link">mutate</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>io.micronaut.core.convert.value.MutableConvertibleValues&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#put(java.lang.CharSequence,java.lang.Object)" class="member-name-link">put</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/CharSequence.html" title="class or interface in java.lang" class="external-link">CharSequence</a>&nbsp;key,
- @Nullable <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setParsedBody(B)" class="member-name-link">setParsedBody</a><wbr>(<a href="DefaultServletHttpRequest.html" title="type parameter in DefaultServletHttpRequest">B</a>&nbsp;body)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setParsedBody(B)" class="member-name-link">setParsedBody</a><wbr>(<a href="DefaultServletHttpRequest.html" title="type parameter in DefaultServletHttpRequest">B</a>&nbsp;body)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Set the parsed body.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#subscribe(org.reactivestreams.Subscriber)" class="member-name-link">subscribe</a><wbr>(org.reactivestreams.Subscriber&lt;? super byte[]&gt;&nbsp;s)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#subscribe(org.reactivestreams.Subscriber)" class="member-name-link">subscribe</a><wbr>(org.reactivestreams.Subscriber&lt;? super byte[]&gt;&nbsp;s)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 </div>
 </div>
 </div>
-<div class="inherited-list">
-<h3 id="methods-inherited-from-class-io.micronaut.core.convert.value.MutableConvertibleValuesMap">Methods inherited from class&nbsp;io.micronaut.core.convert.value.MutableConvertibleValuesMap</h3>
-<code>clear, remove, toString</code></div>
-<div class="inherited-list">
-<h3 id="methods-inherited-from-class-io.micronaut.core.convert.value.ConvertibleValuesMap">Methods inherited from class&nbsp;io.micronaut.core.convert.value.ConvertibleValuesMap</h3>
-<code>contains, empty, equals, get, getValue, hashCode, names, setConversionService, values</code></div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-java.lang.Object">Methods inherited from class&nbsp;java.lang.<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></h3>
-<code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#clone()" title="class or interface in java.lang" class="external-link">clone</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#finalize()" title="class or interface in java.lang" class="external-link">finalize</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#getClass()" title="class or interface in java.lang" class="external-link">getClass</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#notify()" title="class or interface in java.lang" class="external-link">notify</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#notifyAll()" title="class or interface in java.lang" class="external-link">notifyAll</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#wait()" title="class or interface in java.lang" class="external-link">wait</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#wait(long)" title="class or interface in java.lang" class="external-link">wait</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#wait(long,int)" title="class or interface in java.lang" class="external-link">wait</a></code></div>
+<code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#clone()" title="class or interface in java.lang" class="external-link">clone</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#equals(java.lang.Object)" title="class or interface in java.lang" class="external-link">equals</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#finalize()" title="class or interface in java.lang" class="external-link">finalize</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#getClass()" title="class or interface in java.lang" class="external-link">getClass</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#hashCode()" title="class or interface in java.lang" class="external-link">hashCode</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#notify()" title="class or interface in java.lang" class="external-link">notify</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#notifyAll()" title="class or interface in java.lang" class="external-link">notifyAll</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#toString()" title="class or interface in java.lang" class="external-link">toString</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#wait()" title="class or interface in java.lang" class="external-link">wait</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#wait(long)" title="class or interface in java.lang" class="external-link">wait</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#wait(long,int)" title="class or interface in java.lang" class="external-link">wait</a></code></div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-io.micronaut.core.attr.AttributeHolder">Methods inherited from interface&nbsp;io.micronaut.core.attr.AttributeHolder</h3>
 <code>getAttribute, getAttribute</code></div>
-<div class="inherited-list">
-<h3 id="methods-inherited-from-class-io.micronaut.core.convert.value.ConvertibleValues">Methods inherited from interface&nbsp;io.micronaut.core.convert.value.ConvertibleValues</h3>
-<code>asMap, asMap, asProperties, contains, forEach, getValue, getValueType, isEmpty, iterator, names, subMap, subMap, subMap, values</code></div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-io.micronaut.http.HttpMessage">Methods inherited from interface&nbsp;io.micronaut.http.HttpMessage</h3>
 <code>getBody, getBody, getBodyWriter</code></div>
@@ -303,17 +280,8 @@ implements <a href="../http/ServletHttpRequest.html" title="interface in io.micr
 <h3 id="methods-inherited-from-class-io.micronaut.http.HttpRequest">Methods inherited from interface&nbsp;io.micronaut.http.HttpRequest</h3>
 <code>accept, getCertificate, getOrigin, getPath, getUserPrincipal, setAttribute</code></div>
 <div class="inherited-list">
-<h3 id="methods-inherited-from-class-java.lang.Iterable">Methods inherited from interface&nbsp;java.lang.<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a></h3>
-<code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Iterable.html#forEach(java.util.function.Consumer)" title="class or interface in java.lang" class="external-link">forEach</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Iterable.html#spliterator()" title="class or interface in java.lang" class="external-link">spliterator</a></code></div>
-<div class="inherited-list">
 <h3 id="methods-inherited-from-class-io.micronaut.core.attr.MutableAttributeHolder">Methods inherited from interface&nbsp;io.micronaut.core.attr.MutableAttributeHolder</h3>
 <code>removeAttribute</code></div>
-<div class="inherited-list">
-<h3 id="methods-inherited-from-class-io.micronaut.core.convert.value.MutableConvertibleValues">Methods inherited from interface&nbsp;io.micronaut.core.convert.value.MutableConvertibleValues</h3>
-<code>clear, putAll, putAll, remove</code></div>
-<div class="inherited-list">
-<h3 id="methods-inherited-from-class-io.micronaut.core.value.ValueResolver">Methods inherited from interface&nbsp;io.micronaut.core.value.ValueResolver</h3>
-<code>get, get, get, get</code></div>
 </section>
 </li>
 </ul>
@@ -353,24 +321,22 @@ implements <a href="../http/ServletHttpRequest.html" title="interface in io.micr
 <h2>Method Details</h2>
 <ul class="member-list">
 <li>
+<section class="detail" id="getConversionService()">
+<h3>getConversionService</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">io.micronaut.core.convert.ConversionService</span>&nbsp;<span class="element-name">getConversionService</span>()</div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd>The conversion service.</dd>
+</dl>
+</section>
+</li>
+<li>
 <section class="detail" id="getHttpVersion()">
 <h3>getHttpVersion</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">io.micronaut.http.HttpVersion</span>&nbsp;<span class="element-name">getHttpVersion</span>()</div>
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code>getHttpVersion</code>&nbsp;in interface&nbsp;<code>io.micronaut.http.HttpRequest&lt;<a href="DefaultServletHttpRequest.html" title="type parameter in DefaultServletHttpRequest">B</a>&gt;</code></dd>
-</dl>
-</section>
-</li>
-<li>
-<section class="detail" id="getConversionService()">
-<h3>getConversionService</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">io.micronaut.core.convert.ConversionService</span>&nbsp;<span class="element-name">getConversionService</span>()</div>
-<dl class="notes">
-<dt>Specified by:</dt>
-<dd><code>getConversionService</code>&nbsp;in interface&nbsp;<code>io.micronaut.core.convert.ConversionServiceProvider</code></dd>
-<dt>Specified by:</dt>
-<dd><code>getConversionService</code>&nbsp;in interface&nbsp;<code>io.micronaut.core.convert.value.ConvertibleValues&lt;<a href="DefaultServletHttpRequest.html" title="type parameter in DefaultServletHttpRequest">B</a>&gt;</code></dd>
 </dl>
 </section>
 </li>
@@ -704,20 +670,6 @@ implements <a href="../http/ServletHttpRequest.html" title="interface in io.micr
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code>getBody</code>&nbsp;in interface&nbsp;<code>io.micronaut.http.HttpMessage&lt;<a href="DefaultServletHttpRequest.html" title="type parameter in DefaultServletHttpRequest">B</a>&gt;</code></dd>
-</dl>
-</section>
-</li>
-<li>
-<section class="detail" id="put(java.lang.CharSequence,java.lang.Object)">
-<h3>put</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">io.micronaut.core.convert.value.MutableConvertibleValues&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</span>&nbsp;<span class="element-name">put</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/CharSequence.html" title="class or interface in java.lang" class="external-link">CharSequence</a>&nbsp;key,
- @Nullable
- @Nullable <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value)</span></div>
-<dl class="notes">
-<dt>Specified by:</dt>
-<dd><code>put</code>&nbsp;in interface&nbsp;<code>io.micronaut.core.convert.value.MutableConvertibleValues&lt;<a href="DefaultServletHttpRequest.html" title="type parameter in DefaultServletHttpRequest">B</a>&gt;</code></dd>
-<dt>Overrides:</dt>
-<dd><code>put</code>&nbsp;in class&nbsp;<code>io.micronaut.core.convert.value.MutableConvertibleValuesMap&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</code></dd>
 </dl>
 </section>
 </li>
