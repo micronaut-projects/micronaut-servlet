@@ -19,6 +19,7 @@ import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.util.StringUtils;
+import io.micronaut.http.HttpVersion;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import jakarta.inject.Named;
 import io.micronaut.servlet.engine.initializer.MicronautServletInitializer;
@@ -41,6 +42,7 @@ import java.util.Set;
 import org.apache.catalina.Context;
 import org.apache.catalina.connector.Connector;
 import org.apache.catalina.startup.Tomcat;
+import org.apache.coyote.http2.Http2Protocol;
 import org.apache.tomcat.util.net.SSLHostConfig;
 import org.apache.tomcat.util.net.SSLHostConfigCertificate;
 
@@ -144,7 +146,10 @@ public class TomcatFactory extends ServletServerFactory {
      */
     protected void configureConnectors(@NonNull Tomcat tomcat, @NonNull Connector httpConnector, @Nullable Connector httpsConnector) {
         TomcatConfiguration serverConfiguration = getServerConfiguration();
-
+        HttpVersion httpVersion = getServerConfiguration().getHttpVersion();
+        if (httpVersion == HttpVersion.HTTP_2_0) {
+            httpConnector.addUpgradeProtocol(new Http2Protocol());
+        }
         if (httpsConnector != null) {
             tomcat.getService().addConnector(httpsConnector);
             if (serverConfiguration.isDualProtocol()) {
