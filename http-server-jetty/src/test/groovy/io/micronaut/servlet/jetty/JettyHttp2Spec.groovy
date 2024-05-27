@@ -23,6 +23,7 @@ import spock.util.environment.OperatingSystem
 @Property(name = "micronaut.server.http-version", value = "2.0")
 @Property(name = "micronaut.ssl.enabled", value = "true")
 @Property(name = "micronaut.ssl.build-self-signed", value = "true")
+@spock.lang.Requires({ os.family != OperatingSystem.Family.MAC_OS })
 class JettyHttp2Spec extends Specification {
     @Inject
     @Client(

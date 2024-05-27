@@ -26,6 +26,8 @@ import io.micronaut.core.io.buffer.ReferenceCounted;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.http.HttpHeaders;
+import io.micronaut.http.HttpResponse;
+import io.micronaut.http.HttpResponseProvider;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.MutableHttpHeaders;
@@ -380,21 +382,28 @@ public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpSe
     @SuppressWarnings("unchecked")
     @Override
     public <T> MutableHttpResponse<T> body(@Nullable T body) {
-        if (body != null) {
-            getContentType().orElseGet(() -> {
-                final Produces ann = body.getClass().getAnnotation(Produces.class);
-                if (ann != null) {
-                    final String[] v = ann.value();
-                    if (ArrayUtils.isNotEmpty(v)) {
-                        final MediaType mediaType = new MediaType(v[0]);
-                        contentType(mediaType);
-                        return mediaType;
+        if (body instanceof HttpResponseProvider responseProvider) {
+            HttpResponse<T> response = (HttpResponse<T>) responseProvider.getResponse();
+            if (response != this && response.body() != null) {
+                body(response.body());
+            }
+        } else {
+            if (body != null) {
+                getContentType().orElseGet(() -> {
+                    final Produces ann = body.getClass().getAnnotation(Produces.class);
+                    if (ann != null) {
+                        final String[] v = ann.value();
+                        if (ArrayUtils.isNotEmpty(v)) {
+                            final MediaType mediaType = new MediaType(v[0]);
+                            contentType(mediaType);
+                            return mediaType;
+                        }
                     }
-                }
-                return null;
-            });
+                    return null;
+                });
+            }
+            this.body = (B) body;
         }
-        this.body = (B) body;
         return (MutableHttpResponse<T>) this;
     }
 
