@@ -16,12 +16,12 @@ bcpkix = "1.70"
 managed-jetty = '11.0.20'
 
 micronaut-reactor = "3.3.0"
-micronaut-security = "4.6.9"
+micronaut-security = "4.7.0"
 micronaut-serde = "2.9.0"
 micronaut-session = "4.3.0"
 micronaut-validation = "4.5.0"
 google-cloud-functions = '1.1.0'
-kotlin = "1.9.22"
+kotlin = "1.9.24"
 micronaut-logging = "1.2.3"
 
 # Micronaut
