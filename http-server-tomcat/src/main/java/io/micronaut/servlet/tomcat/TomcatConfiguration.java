@@ -15,6 +15,10 @@
  */
 package io.micronaut.servlet.tomcat;
 
+import io.micronaut.context.annotation.Requires;
+import io.micronaut.core.util.StringUtils;
+import io.micronaut.core.util.Toggleable;
+import jakarta.inject.Inject;
 import java.util.Optional;
 
 import io.micronaut.context.annotation.ConfigurationBuilder;
@@ -25,6 +29,7 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.annotation.TypeHint;
 import io.micronaut.http.server.HttpServerConfiguration;
 import org.apache.catalina.connector.Connector;
+import org.apache.catalina.valves.ExtendedAccessLogValve;
 import org.apache.coyote.ajp.AjpNio2Protocol;
 import org.apache.coyote.ajp.AjpNioProtocol;
 import org.apache.coyote.http11.Http11Nio2Protocol;
@@ -53,6 +58,8 @@ public class TomcatConfiguration extends HttpServerConfiguration {
     protected final Connector tomcatConnector;
     private final MultipartConfiguration multipartConfiguration;
     private String protocol;
+
+    private AccessLogConfiguration accessLogConfiguration;
 
     /**
      * Default constructor.
@@ -97,4 +104,39 @@ public class TomcatConfiguration extends HttpServerConfiguration {
         return Optional.ofNullable(multipartConfiguration);
     }
 
+    /**
+     * @return The access log configuration.
+     * @since 4.8.0
+     */
+    public Optional<AccessLogConfiguration> getAccessLogConfiguration() {
+        return Optional.ofNullable(accessLogConfiguration);
+    }
+
+    /**
+     * Sets the access log configuration.
+     * @param accessLogConfiguration The access log configuration.
+     * @since 4.8.0
+     */
+    @Inject
+    public void setAccessLogConfiguration(@Nullable AccessLogConfiguration accessLogConfiguration) {
+        this.accessLogConfiguration = accessLogConfiguration;
+    }
+
+    /**
+     * The access log configuration.
+     * @since 4.8.0
+     */
+    @ConfigurationProperties(value = AccessLogConfiguration.PREFIX, excludes = {"next", "container"})
+    @Requires(property = AccessLogConfiguration.ENABLED, value = StringUtils.TRUE)
+    public static class AccessLogConfiguration extends ExtendedAccessLogValve implements Toggleable {
+
+        public static final String PREFIX = "access-log";
+
+        public static final String ENABLED = TomcatConfiguration.PREFIX + ".tomcat." + PREFIX + ".enabled";
+
+        @Override
+        public boolean isEnabled() {
+            return super.enabled;
+        }
+    }
 }

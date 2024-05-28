@@ -10,7 +10,7 @@ import spock.lang.Specification
 import java.nio.file.Files
 
 @MicronautTest
-class JettyRequestLogSpec extends Specification implements TestPropertyProvider{
+class JettyAccessLogSpec extends Specification implements TestPropertyProvider {
     @Inject
     JettyConfiguration.JettyRequestLog requestLog
 
