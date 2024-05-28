@@ -19,14 +19,17 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Primary;
 import io.micronaut.context.env.Environment;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.io.ResourceResolver;
 import io.micronaut.core.reflect.ReflectionUtils;
+import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.http.server.exceptions.ServerStartupException;
 import io.micronaut.http.ssl.SslConfiguration;
 import io.micronaut.servlet.engine.MicronautServletConfiguration;
 import io.micronaut.servlet.engine.initializer.MicronautServletInitializer;
 import io.micronaut.servlet.engine.server.ServletServerFactory;
 import io.micronaut.servlet.engine.server.ServletStaticResourceConfiguration;
+import io.micronaut.web.router.Router;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.UndertowOptions;
@@ -57,6 +60,7 @@ import org.xnio.Options;
 public class UndertowFactory extends ServletServerFactory {
 
     private final UndertowConfiguration configuration;
+    private final Router router;
 
     /**
      * Default constructor.
@@ -75,6 +79,7 @@ public class UndertowFactory extends ServletServerFactory {
             List<ServletStaticResourceConfiguration> staticResourceConfigurations) {
         super(resourceResolver, configuration, sslConfiguration, applicationContext, staticResourceConfigurations);
         this.configuration = configuration;
+        this.router = applicationContext.findBean(Router.class).orElse(null);
     }
 
     /**
@@ -125,11 +130,13 @@ public class UndertowFactory extends ServletServerFactory {
                         host
                     );
                 }
+                applyAdditionalPorts(builder, host, port, sslContext);
             } else {
                 builder.addHttpListener(
                     port,
                     host
                 );
+                applyAdditionalPorts(builder, host, port, null);
             }
 
         } else {
@@ -137,6 +144,7 @@ public class UndertowFactory extends ServletServerFactory {
                 port,
                 host
             );
+            applyAdditionalPorts(builder, host, port, null);
         }
 
         Map<String, String> serverOptions = configuration.getServerOptions();
@@ -181,6 +189,27 @@ public class UndertowFactory extends ServletServerFactory {
             }
         });
         return builder;
+    }
+
+    private void applyAdditionalPorts(Undertow.Builder builder, String host, int serverPort, @Nullable SSLContext sslContext) {
+        if (router != null) {
+            Set<Integer> exposedPorts = router.getExposedPorts();
+            if (CollectionUtils.isNotEmpty(exposedPorts)) {
+                for (Integer exposedPort : exposedPorts) {
+                    if (!exposedPort.equals(serverPort)) {
+                        addListener(builder, host, sslContext, exposedPort);
+                    }
+                }
+            }
+        }
+    }
+
+    private static void addListener(Undertow.Builder builder, String host, SSLContext sslContext, Integer exposedPort) {
+        if (sslContext != null) {
+            builder.addHttpsListener(exposedPort, host, sslContext);
+        } else {
+            builder.addHttpListener(exposedPort, host);
+        }
     }
 
     private Object getOptionValue(String key) {

@@ -18,9 +18,11 @@ package io.micronaut.servlet.tomcat;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.http.HttpVersion;
 import io.micronaut.inject.qualifiers.Qualifiers;
+import io.micronaut.web.router.Router;
 import jakarta.inject.Named;
 import io.micronaut.servlet.engine.initializer.MicronautServletInitializer;
 import jakarta.servlet.ServletContainerInitializer;
@@ -44,6 +46,7 @@ import java.util.Set;
 import org.apache.catalina.Context;
 import org.apache.catalina.connector.Connector;
 import org.apache.catalina.startup.Tomcat;
+import org.apache.coyote.ProtocolHandler;
 import org.apache.coyote.http2.Http2Protocol;
 import org.apache.tomcat.util.net.SSLHostConfig;
 import org.apache.tomcat.util.net.SSLHostConfigCertificate;
@@ -58,6 +61,8 @@ import org.apache.tomcat.util.net.SSLHostConfigCertificate;
 public class TomcatFactory extends ServletServerFactory {
 
     private static final String HTTPS = "HTTPS";
+    private static final String CLIENT_AUTH = "clientAuth";
+    private final Router router;
 
     /**
      * Default constructor.
@@ -75,6 +80,7 @@ public class TomcatFactory extends ServletServerFactory {
         ApplicationContext applicationContext,
         List<ServletStaticResourceConfiguration> staticResourceConfigurations) {
         super(resourceResolver, serverConfiguration, sslConfiguration, applicationContext, staticResourceConfigurations);
+        this.router = applicationContext.findBean(Router.class).orElse(null);
     }
 
     @Override
@@ -165,9 +171,56 @@ public class TomcatFactory extends ServletServerFactory {
             if (serverConfiguration.isDualProtocol()) {
                 tomcat.getService().addConnector(httpConnector);
             }
+            applyAdditionalPorts(tomcat, httpsConnector);
         } else {
             tomcat.setConnector(httpConnector);
+            applyAdditionalPorts(tomcat, httpConnector);
         }
+    }
+
+    private void applyAdditionalPorts(Tomcat server, Connector serverConnector) {
+        if (router != null) {
+            Set<Integer> exposedPorts = router.getExposedPorts();
+            if (CollectionUtils.isNotEmpty(exposedPorts)) {
+                for (Integer exposedPort : exposedPorts) {
+                    if (!exposedPort.equals(serverConnector.getLocalPort())) {
+                        Connector newConnector = cloneConnectorSettings(serverConnector);
+                        newConnector.setPort(exposedPort);
+                        server.getService().addConnector(newConnector);
+                    }
+                }
+            }
+        }
+    }
+
+    private static Connector cloneConnectorSettings(Connector serverConnector) {
+        Connector newConnector = new Connector(serverConnector.getProtocol());
+        ProtocolHandler protocolHandler = serverConnector.getProtocolHandler();
+        SSLHostConfig[] sslHostConfigs = protocolHandler.findSslHostConfigs();
+        for (SSLHostConfig sslHostConfig : sslHostConfigs) {
+            newConnector.addSslHostConfig(sslHostConfig);
+            newConnector.setSecure(true);
+            newConnector.setScheme("https");
+            newConnector.setProperty(CLIENT_AUTH, "false");
+            newConnector.setProperty("sslProtocol", "TLS");
+            newConnector.setProperty("SSLEnabled", "true");
+        }
+        newConnector.setAllowBackslash(serverConnector.getAllowBackslash());
+        newConnector.setAllowTrace(serverConnector.getAllowTrace());
+        newConnector.setAsyncTimeout(serverConnector.getAsyncTimeout());
+        newConnector.setDiscardFacades(serverConnector.getDiscardFacades());
+        newConnector.setEnableLookups(serverConnector.getEnableLookups());
+        newConnector.setSecure(serverConnector.getSecure());
+        newConnector.setScheme(serverConnector.getScheme());
+        newConnector.setEnforceEncodingInGetWriter(serverConnector.getEnforceEncodingInGetWriter());
+        newConnector.setMaxCookieCount(serverConnector.getMaxCookieCount());
+        newConnector.setMaxPostSize(serverConnector.getMaxPostSize());
+        newConnector.setMaxParameterCount(serverConnector.getMaxParameterCount());
+        newConnector.setMaxSavePostSize(serverConnector.getMaxSavePostSize());
+        newConnector.setParseBodyMethods(serverConnector.getParseBodyMethods());
+        newConnector.setRejectSuspiciousURIs(serverConnector.getRejectSuspiciousURIs());
+        newConnector.setUseIPVHosts(serverConnector.getUseIPVHosts());
+        return newConnector;
     }
 
     /**
@@ -235,14 +288,14 @@ public class TomcatFactory extends ServletServerFactory {
         httpsConnector.setPort(sslPort);
         httpsConnector.setSecure(true);
         httpsConnector.setScheme("https");
-        httpsConnector.setProperty("clientAuth", "false");
+        httpsConnector.setProperty(CLIENT_AUTH, "false");
         httpsConnector.setProperty("sslProtocol", protocol);
         httpsConnector.setProperty("SSLEnabled", "true");
         sslConfiguration.getCiphers().ifPresent(cyphers ->
             sslHostConfig.setCiphers(String.join(",", cyphers))
         );
         sslConfiguration.getClientAuthentication().ifPresent(ca ->
-            httpsConnector.setProperty("clientAuth", ca == ClientAuthentication.WANT ? "want" : "true")
+            httpsConnector.setProperty(CLIENT_AUTH, ca == ClientAuthentication.WANT ? "want" : "true")
         );
 
 

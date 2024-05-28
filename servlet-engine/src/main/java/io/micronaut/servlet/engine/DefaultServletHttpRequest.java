@@ -157,19 +157,34 @@ public final class DefaultServletHttpRequest<B> implements
             public <T> Optional<T> get(CharSequence name, ArgumentConversionContext<T> conversionContext) {
                 Objects.requireNonNull(conversionContext, "Conversion context cannot be null");
                 Objects.requireNonNull(name, NULL_KEY);
-                Object attribute = delegate.getAttribute(name.toString());
+                Object attribute = null;
+                try {
+                    attribute = delegate.getAttribute(name.toString());
+                } catch (IllegalStateException e) {
+                    // ignore, request not longer active
+                }
                 return Optional.ofNullable(attribute)
                         .flatMap(v -> conversionService.convert(v, conversionContext));
             }
 
             @Override
             public Set<String> names() {
-                return CollectionUtils.enumerationToSet(delegate.getAttributeNames());
+                try {
+                    return CollectionUtils.enumerationToSet(delegate.getAttributeNames());
+                } catch (IllegalStateException e) {
+                    // ignore, request no longer active
+                    return Set.of();
+                }
             }
 
             @Override
             public Collection<Object> values() {
-                return names().stream().map(delegate::getAttribute).toList();
+                try {
+                    return names().stream().map(delegate::getAttribute).toList();
+                } catch (IllegalStateException e) {
+                    // ignore, request no longer active
+                    return Collections.emptyList();
+                }
             }
 
             @Override
