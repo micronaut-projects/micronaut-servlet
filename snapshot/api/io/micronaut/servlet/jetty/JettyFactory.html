@@ -146,9 +146,9 @@ loadScripts(document, 'script');</script>
 <div class="block">Configures the server connectors.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#configureServletInitializer(org.eclipse.jetty.server.Server,org.eclipse.jetty.servlet.ServletContextHandler,io.micronaut.servlet.engine.initializer.MicronautServletInitializer)" class="member-name-link">configureServletInitializer</a><wbr>(org.eclipse.jetty.server.Server&nbsp;server,
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#configureServletInitializer(org.eclipse.jetty.server.Server,org.eclipse.jetty.servlet.ServletContextHandler,java.util.Collection)" class="member-name-link">configureServletInitializer</a><wbr>(org.eclipse.jetty.server.Server&nbsp;server,
  org.eclipse.jetty.servlet.ServletContextHandler&nbsp;contextHandler,
- <a href="../engine/initializer/MicronautServletInitializer.html" title="class in io.micronaut.servlet.engine.initializer">MicronautServletInitializer</a>&nbsp;micronautServletInitializer)</code></div>
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;jakarta.servlet.ServletContainerInitializer&gt;&nbsp;servletContainerInitializers)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Configures the servlet initializer</div>
 </div>
@@ -160,10 +160,10 @@ loadScripts(document, 'script');</script>
 <div class="block">Builds the Jetty server bean.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected org.eclipse.jetty.server.Server</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#jettyServer(io.micronaut.context.ApplicationContext,io.micronaut.servlet.engine.MicronautServletConfiguration,io.micronaut.servlet.jetty.JettyConfiguration.JettySslConfiguration,io.micronaut.servlet.engine.initializer.MicronautServletInitializer)" class="member-name-link">jettyServer</a><wbr>(io.micronaut.context.ApplicationContext&nbsp;applicationContext,
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#jettyServer(io.micronaut.context.ApplicationContext,io.micronaut.servlet.engine.MicronautServletConfiguration,io.micronaut.servlet.jetty.JettyConfiguration.JettySslConfiguration,java.util.Collection)" class="member-name-link">jettyServer</a><wbr>(io.micronaut.context.ApplicationContext&nbsp;applicationContext,
  <a href="../engine/MicronautServletConfiguration.html" title="class in io.micronaut.servlet.engine">MicronautServletConfiguration</a>&nbsp;configuration,
  <a href="JettyConfiguration.JettySslConfiguration.html" title="class in io.micronaut.servlet.jetty">JettyConfiguration.JettySslConfiguration</a>&nbsp;jettySslConfiguration,
- <a href="../engine/initializer/MicronautServletInitializer.html" title="class in io.micronaut.servlet.engine.initializer">MicronautServletInitializer</a>&nbsp;micronautServletInitializer)</code></div>
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;jakarta.servlet.ServletContainerInitializer&gt;&nbsp;servletContainerInitializers)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Builds the Jetty server bean.</div>
 </div>
@@ -283,21 +283,21 @@ loadScripts(document, 'script');</script>
 </section>
 </li>
 <li>
-<section class="detail" id="jettyServer(io.micronaut.context.ApplicationContext,io.micronaut.servlet.engine.MicronautServletConfiguration,io.micronaut.servlet.jetty.JettyConfiguration.JettySslConfiguration,io.micronaut.servlet.engine.initializer.MicronautServletInitializer)">
+<section class="detail" id="jettyServer(io.micronaut.context.ApplicationContext,io.micronaut.servlet.engine.MicronautServletConfiguration,io.micronaut.servlet.jetty.JettyConfiguration.JettySslConfiguration,java.util.Collection)">
 <h3>jettyServer</h3>
 <div class="member-signature"><span class="annotations">@Singleton
 @Primary
 </span><span class="modifiers">protected</span>&nbsp;<span class="return-type">org.eclipse.jetty.server.Server</span>&nbsp;<span class="element-name">jettyServer</span><wbr><span class="parameters">(io.micronaut.context.ApplicationContext&nbsp;applicationContext,
  <a href="../engine/MicronautServletConfiguration.html" title="class in io.micronaut.servlet.engine">MicronautServletConfiguration</a>&nbsp;configuration,
  <a href="JettyConfiguration.JettySslConfiguration.html" title="class in io.micronaut.servlet.jetty">JettyConfiguration.JettySslConfiguration</a>&nbsp;jettySslConfiguration,
- <a href="../engine/initializer/MicronautServletInitializer.html" title="class in io.micronaut.servlet.engine.initializer">MicronautServletInitializer</a>&nbsp;micronautServletInitializer)</span></div>
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;jakarta.servlet.ServletContainerInitializer&gt;&nbsp;servletContainerInitializers)</span></div>
 <div class="block">Builds the Jetty server bean.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>applicationContext</code> - This application context</dd>
 <dd><code>configuration</code> - The servlet configuration</dd>
 <dd><code>jettySslConfiguration</code> - The Jetty SSL config</dd>
-<dd><code>micronautServletInitializer</code> - The micronaut servlet initializer</dd>
+<dd><code>servletContainerInitializers</code> - The micronaut servlet initializer</dd>
 <dt>Returns:</dt>
 <dd>The Jetty server bean</dd>
 </dl>
@@ -346,17 +346,17 @@ loadScripts(document, 'script');</script>
 </section>
 </li>
 <li>
-<section class="detail" id="configureServletInitializer(org.eclipse.jetty.server.Server,org.eclipse.jetty.servlet.ServletContextHandler,io.micronaut.servlet.engine.initializer.MicronautServletInitializer)">
+<section class="detail" id="configureServletInitializer(org.eclipse.jetty.server.Server,org.eclipse.jetty.servlet.ServletContextHandler,java.util.Collection)">
 <h3>configureServletInitializer</h3>
 <div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">configureServletInitializer</span><wbr><span class="parameters">(org.eclipse.jetty.server.Server&nbsp;server,
  org.eclipse.jetty.servlet.ServletContextHandler&nbsp;contextHandler,
- <a href="../engine/initializer/MicronautServletInitializer.html" title="class in io.micronaut.servlet.engine.initializer">MicronautServletInitializer</a>&nbsp;micronautServletInitializer)</span></div>
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;jakarta.servlet.ServletContainerInitializer&gt;&nbsp;servletContainerInitializers)</span></div>
 <div class="block">Configures the servlet initializer</div>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>server</code> - The server</dd>
 <dd><code>contextHandler</code> - The context handler</dd>
-<dd><code>micronautServletInitializer</code> - The initializer</dd>
+<dd><code>servletContainerInitializers</code> - The servlet initializers</dd>
 </dl>
 </section>
 </li>

@@ -133,10 +133,10 @@ loadScripts(document, 'script');</script>
 <div class="block">Configures the available connectors.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#configureServletInitializer(org.apache.catalina.Context,io.micronaut.servlet.engine.initializer.MicronautServletInitializer)" class="member-name-link">configureServletInitializer</a><wbr>(org.apache.catalina.Context&nbsp;context,
- <a href="../engine/initializer/MicronautServletInitializer.html" title="class in io.micronaut.servlet.engine.initializer">MicronautServletInitializer</a>&nbsp;servletInitializer)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#configureServletInitializer(org.apache.catalina.Context,java.util.Collection)" class="member-name-link">configureServletInitializer</a><wbr>(org.apache.catalina.Context&nbsp;context,
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;jakarta.servlet.ServletContainerInitializer&gt;&nbsp;servletInitializers)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Configure the Micronaut servlet intializer.</div>
+<div class="block">Configure the Micronaut servlet initializer.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="TomcatConfiguration.html" title="class in io.micronaut.servlet.tomcat">TomcatConfiguration</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getServerConfiguration()" class="member-name-link">getServerConfiguration</a>()</code></div>
@@ -160,10 +160,10 @@ loadScripts(document, 'script');</script>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#tomcatConnector()" class="member-name-link">tomcatConnector</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected org.apache.catalina.startup.Tomcat</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#tomcatServer(org.apache.catalina.connector.Connector,org.apache.catalina.connector.Connector,io.micronaut.servlet.engine.MicronautServletConfiguration,io.micronaut.servlet.engine.initializer.MicronautServletInitializer)" class="member-name-link">tomcatServer</a><wbr>(org.apache.catalina.connector.Connector&nbsp;connector,
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#tomcatServer(org.apache.catalina.connector.Connector,org.apache.catalina.connector.Connector,io.micronaut.servlet.engine.MicronautServletConfiguration,java.util.Collection)" class="member-name-link">tomcatServer</a><wbr>(org.apache.catalina.connector.Connector&nbsp;connector,
  @Nullable org.apache.catalina.connector.Connector&nbsp;httpsConnector,
  <a href="../engine/MicronautServletConfiguration.html" title="class in io.micronaut.servlet.engine">MicronautServletConfiguration</a>&nbsp;configuration,
- <a href="../engine/initializer/MicronautServletInitializer.html" title="class in io.micronaut.servlet.engine.initializer">MicronautServletInitializer</a>&nbsp;servletInitializer)</code></div>
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;jakarta.servlet.ServletContainerInitializer&gt;&nbsp;servletInitializers)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">The Tomcat server bean.</div>
 </div>
@@ -251,7 +251,7 @@ loadScripts(document, 'script');</script>
 </section>
 </li>
 <li>
-<section class="detail" id="tomcatServer(org.apache.catalina.connector.Connector,org.apache.catalina.connector.Connector,io.micronaut.servlet.engine.MicronautServletConfiguration,io.micronaut.servlet.engine.initializer.MicronautServletInitializer)">
+<section class="detail" id="tomcatServer(org.apache.catalina.connector.Connector,org.apache.catalina.connector.Connector,io.micronaut.servlet.engine.MicronautServletConfiguration,java.util.Collection)">
 <h3>tomcatServer</h3>
 <div class="member-signature"><span class="annotations">@Singleton
 @Primary
@@ -259,29 +259,29 @@ loadScripts(document, 'script');</script>
  @Named("HTTPS") @Nullable
  @Nullable org.apache.catalina.connector.Connector&nbsp;httpsConnector,
  <a href="../engine/MicronautServletConfiguration.html" title="class in io.micronaut.servlet.engine">MicronautServletConfiguration</a>&nbsp;configuration,
- <a href="../engine/initializer/MicronautServletInitializer.html" title="class in io.micronaut.servlet.engine.initializer">MicronautServletInitializer</a>&nbsp;servletInitializer)</span></div>
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;jakarta.servlet.ServletContainerInitializer&gt;&nbsp;servletInitializers)</span></div>
 <div class="block">The Tomcat server bean.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>connector</code> - The connector</dd>
 <dd><code>httpsConnector</code> - The HTTPS connectors</dd>
 <dd><code>configuration</code> - The servlet configuration</dd>
-<dd><code>servletInitializer</code> - The servlet initializer</dd>
+<dd><code>servletInitializers</code> - The servlet initializer</dd>
 <dt>Returns:</dt>
 <dd>The Tomcat server</dd>
 </dl>
 </section>
 </li>
 <li>
-<section class="detail" id="configureServletInitializer(org.apache.catalina.Context,io.micronaut.servlet.engine.initializer.MicronautServletInitializer)">
+<section class="detail" id="configureServletInitializer(org.apache.catalina.Context,java.util.Collection)">
 <h3>configureServletInitializer</h3>
 <div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">configureServletInitializer</span><wbr><span class="parameters">(org.apache.catalina.Context&nbsp;context,
- <a href="../engine/initializer/MicronautServletInitializer.html" title="class in io.micronaut.servlet.engine.initializer">MicronautServletInitializer</a>&nbsp;servletInitializer)</span></div>
-<div class="block">Configure the Micronaut servlet intializer.</div>
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;jakarta.servlet.ServletContainerInitializer&gt;&nbsp;servletInitializers)</span></div>
+<div class="block">Configure the Micronaut servlet initializer.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>context</code> - The context</dd>
-<dd><code>servletInitializer</code> - The intializer</dd>
+<dd><code>servletInitializers</code> - The initializers</dd>
 </dl>
 </section>
 </li>

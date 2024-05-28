@@ -173,11 +173,11 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Configures the server connectors.</div>
 </dd>
-<dt><a href="io/micronaut/servlet/tomcat/TomcatFactory.html#configureServletInitializer(org.apache.catalina.Context,io.micronaut.servlet.engine.initializer.MicronautServletInitializer)" class="member-name-link">configureServletInitializer(Context, MicronautServletInitializer)</a> - Method in class io.micronaut.servlet.tomcat.<a href="io/micronaut/servlet/tomcat/TomcatFactory.html" title="class in io.micronaut.servlet.tomcat">TomcatFactory</a></dt>
+<dt><a href="io/micronaut/servlet/tomcat/TomcatFactory.html#configureServletInitializer(org.apache.catalina.Context,java.util.Collection)" class="member-name-link">configureServletInitializer(Context, Collection&lt;ServletContainerInitializer&gt;)</a> - Method in class io.micronaut.servlet.tomcat.<a href="io/micronaut/servlet/tomcat/TomcatFactory.html" title="class in io.micronaut.servlet.tomcat">TomcatFactory</a></dt>
 <dd>
-<div class="block">Configure the Micronaut servlet intializer.</div>
+<div class="block">Configure the Micronaut servlet initializer.</div>
 </dd>
-<dt><a href="io/micronaut/servlet/jetty/JettyFactory.html#configureServletInitializer(org.eclipse.jetty.server.Server,org.eclipse.jetty.servlet.ServletContextHandler,io.micronaut.servlet.engine.initializer.MicronautServletInitializer)" class="member-name-link">configureServletInitializer(Server, ServletContextHandler, MicronautServletInitializer)</a> - Method in class io.micronaut.servlet.jetty.<a href="io/micronaut/servlet/jetty/JettyFactory.html" title="class in io.micronaut.servlet.jetty">JettyFactory</a></dt>
+<dt><a href="io/micronaut/servlet/jetty/JettyFactory.html#configureServletInitializer(org.eclipse.jetty.server.Server,org.eclipse.jetty.servlet.ServletContextHandler,java.util.Collection)" class="member-name-link">configureServletInitializer(Server, ServletContextHandler, Collection&lt;ServletContainerInitializer&gt;)</a> - Method in class io.micronaut.servlet.jetty.<a href="io/micronaut/servlet/jetty/JettyFactory.html" title="class in io.micronaut.servlet.jetty">JettyFactory</a></dt>
 <dd>
 <div class="block">Configures the servlet initializer</div>
 </dd>
@@ -279,10 +279,10 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/servlet/undertow/UndertowFactory.html#deploymentInfo(io.micronaut.servlet.engine.MicronautServletConfiguration)" class="member-name-link">deploymentInfo(MicronautServletConfiguration)</a> - Method in class io.micronaut.servlet.undertow.<a href="io/micronaut/servlet/undertow/UndertowFactory.html" title="class in io.micronaut.servlet.undertow">UndertowFactory</a></dt>
 <dd>
 <div class="deprecation-block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span>
-<div class="deprecation-comment">Use <a href="io/micronaut/servlet/undertow/UndertowFactory.html#deploymentInfo(io.micronaut.servlet.engine.MicronautServletConfiguration,io.micronaut.servlet.engine.initializer.MicronautServletInitializer)"><code>UndertowFactory.deploymentInfo(MicronautServletConfiguration, MicronautServletInitializer)</code></a></div>
+<div class="deprecation-comment">Use {@link ##deploymentInfo(MicronautServletConfiguration, Collection)}</div>
 </div>
 </dd>
-<dt><a href="io/micronaut/servlet/undertow/UndertowFactory.html#deploymentInfo(io.micronaut.servlet.engine.MicronautServletConfiguration,io.micronaut.servlet.engine.initializer.MicronautServletInitializer)" class="member-name-link">deploymentInfo(MicronautServletConfiguration, MicronautServletInitializer)</a> - Method in class io.micronaut.servlet.undertow.<a href="io/micronaut/servlet/undertow/UndertowFactory.html" title="class in io.micronaut.servlet.undertow">UndertowFactory</a></dt>
+<dt><a href="io/micronaut/servlet/undertow/UndertowFactory.html#deploymentInfo(io.micronaut.servlet.engine.MicronautServletConfiguration,java.util.Collection)" class="member-name-link">deploymentInfo(MicronautServletConfiguration, Collection&lt;ServletContainerInitializer&gt;)</a> - Method in class io.micronaut.servlet.undertow.<a href="io/micronaut/servlet/undertow/UndertowFactory.html" title="class in io.micronaut.servlet.undertow">UndertowFactory</a></dt>
 <dd>
 <div class="block">The deployment info bean.</div>
 </dd>
@@ -711,7 +711,7 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Builds the Jetty server bean.</div>
 </dd>
-<dt><a href="io/micronaut/servlet/jetty/JettyFactory.html#jettyServer(io.micronaut.context.ApplicationContext,io.micronaut.servlet.engine.MicronautServletConfiguration,io.micronaut.servlet.jetty.JettyConfiguration.JettySslConfiguration,io.micronaut.servlet.engine.initializer.MicronautServletInitializer)" class="member-name-link">jettyServer(ApplicationContext, MicronautServletConfiguration, JettyConfiguration.JettySslConfiguration, MicronautServletInitializer)</a> - Method in class io.micronaut.servlet.jetty.<a href="io/micronaut/servlet/jetty/JettyFactory.html" title="class in io.micronaut.servlet.jetty">JettyFactory</a></dt>
+<dt><a href="io/micronaut/servlet/jetty/JettyFactory.html#jettyServer(io.micronaut.context.ApplicationContext,io.micronaut.servlet.engine.MicronautServletConfiguration,io.micronaut.servlet.jetty.JettyConfiguration.JettySslConfiguration,java.util.Collection)" class="member-name-link">jettyServer(ApplicationContext, MicronautServletConfiguration, JettyConfiguration.JettySslConfiguration, Collection&lt;ServletContainerInitializer&gt;)</a> - Method in class io.micronaut.servlet.jetty.<a href="io/micronaut/servlet/jetty/JettyFactory.html" title="class in io.micronaut.servlet.jetty">JettyFactory</a></dt>
 <dd>
 <div class="block">Builds the Jetty server bean.</div>
 </dd>
@@ -1162,7 +1162,7 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Default constructor.</div>
 </dd>
-<dt><a href="io/micronaut/servlet/tomcat/TomcatFactory.html#tomcatServer(org.apache.catalina.connector.Connector,org.apache.catalina.connector.Connector,io.micronaut.servlet.engine.MicronautServletConfiguration,io.micronaut.servlet.engine.initializer.MicronautServletInitializer)" class="member-name-link">tomcatServer(Connector, Connector, MicronautServletConfiguration, MicronautServletInitializer)</a> - Method in class io.micronaut.servlet.tomcat.<a href="io/micronaut/servlet/tomcat/TomcatFactory.html" title="class in io.micronaut.servlet.tomcat">TomcatFactory</a></dt>
+<dt><a href="io/micronaut/servlet/tomcat/TomcatFactory.html#tomcatServer(org.apache.catalina.connector.Connector,org.apache.catalina.connector.Connector,io.micronaut.servlet.engine.MicronautServletConfiguration,java.util.Collection)" class="member-name-link">tomcatServer(Connector, Connector, MicronautServletConfiguration, Collection&lt;ServletContainerInitializer&gt;)</a> - Method in class io.micronaut.servlet.tomcat.<a href="io/micronaut/servlet/tomcat/TomcatFactory.html" title="class in io.micronaut.servlet.tomcat">TomcatFactory</a></dt>
 <dd>
 <div class="block">The Tomcat server bean.</div>
 </dd>
