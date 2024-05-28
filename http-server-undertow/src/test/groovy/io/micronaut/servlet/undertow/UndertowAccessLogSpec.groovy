@@ -13,6 +13,7 @@ import io.undertow.Undertow
 import io.undertow.server.handlers.accesslog.AccessLogHandler
 import jakarta.inject.Inject
 import spock.lang.Specification
+import spock.util.concurrent.PollingConditions
 
 import java.nio.file.Files
 
@@ -28,14 +29,19 @@ class UndertowAccessLogSpec extends Specification implements TestPropertyProvide
     String log
 
     void 'test access log configuration'() {
+        given:
+        PollingConditions pollingConditions = new PollingConditions(timeout: 20)
         expect:
         accessLogConfiguration
         accessLogConfiguration.pattern == 'combined'
         undertow != null
         undertow.listenerInfo[0].openListener.rootHandler instanceof AccessLogHandler
         rxClient.toBlocking().retrieve("/log-me") == 'ok'
-        new File(log, "access-log").exists()
-        new File(log, "access-log").text
+        pollingConditions.eventually {
+            assert new File(log, "access-log").exists()
+            assert new File(log, "access-log").text
+        }
+
     }
 
     @Override
