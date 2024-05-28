@@ -32,11 +32,12 @@ import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.scheduling.LoomSupport;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.servlet.engine.MicronautServletConfiguration;
-import io.micronaut.servlet.engine.initializer.MicronautServletInitializer;
 import io.micronaut.servlet.engine.server.ServletServerFactory;
 import io.micronaut.servlet.engine.server.ServletStaticResourceConfiguration;
 import jakarta.inject.Singleton;
+import jakarta.servlet.ServletContainerInitializer;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Stream;
 import java.util.concurrent.ExecutorService;
@@ -113,7 +114,7 @@ public class JettyFactory extends ServletServerFactory {
             applicationContext,
             configuration,
             jettySslConfiguration,
-            applicationContext.getBean(MicronautServletInitializer.class)
+            applicationContext.getBeansOfType(ServletContainerInitializer.class)
         );
     }
 
@@ -123,7 +124,7 @@ public class JettyFactory extends ServletServerFactory {
      * @param applicationContext          This application context
      * @param configuration               The servlet configuration
      * @param jettySslConfiguration       The Jetty SSL config
-     * @param micronautServletInitializer The micronaut servlet initializer
+     * @param servletContainerInitializers The micronaut servlet initializer
      * @return The Jetty server bean
      */
     @Singleton
@@ -132,7 +133,7 @@ public class JettyFactory extends ServletServerFactory {
         ApplicationContext applicationContext,
         MicronautServletConfiguration configuration,
         JettyConfiguration.JettySslConfiguration jettySslConfiguration,
-        MicronautServletInitializer micronautServletInitializer
+        Collection<ServletContainerInitializer> servletContainerInitializers
     ) {
         final String host = getConfiguredHost();
         final Integer port = getConfiguredPort();
@@ -141,7 +142,7 @@ public class JettyFactory extends ServletServerFactory {
         Server server = newServer(applicationContext, configuration);
 
         final ServletContextHandler contextHandler = newJettyContext(server, contextPath);
-        configureServletInitializer(server, contextHandler, micronautServletInitializer);
+        configureServletInitializer(server, contextHandler, servletContainerInitializers);
 
         final SslConfiguration sslConfiguration = getSslConfiguration();
         ServerConnector https = null;
@@ -273,10 +274,12 @@ public class JettyFactory extends ServletServerFactory {
      *
      * @param server                      The server
      * @param contextHandler              The context handler
-     * @param micronautServletInitializer The initializer
+     * @param servletContainerInitializers The servlet initializers
      */
-    protected void configureServletInitializer(Server server, ServletContextHandler contextHandler, MicronautServletInitializer micronautServletInitializer) {
-        contextHandler.addServletContainerInitializer(micronautServletInitializer);
+    protected void configureServletInitializer(Server server, ServletContextHandler contextHandler, Collection<ServletContainerInitializer> servletContainerInitializers) {
+        for (ServletContainerInitializer servletContainerInitializer : servletContainerInitializers) {
+            contextHandler.addServletContainerInitializer(servletContainerInitializer);
+        }
 
         List<ContextHandler> resourceHandlers = Stream.concat(
             getStaticResourceConfigurations().stream().map(this::toHandler),
