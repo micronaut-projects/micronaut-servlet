@@ -23,7 +23,9 @@ import io.micronaut.http.HttpVersion;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import jakarta.inject.Named;
 import io.micronaut.servlet.engine.initializer.MicronautServletInitializer;
+import jakarta.servlet.ServletContainerInitializer;
 import java.io.File;
+import java.util.Collection;
 import java.util.List;
 
 import io.micronaut.context.ApplicationContext;
@@ -92,7 +94,7 @@ public class TomcatFactory extends ServletServerFactory {
             connector,
             getApplicationContext().getBean(Connector.class, Qualifiers.byName(HTTPS)),
             configuration,
-            getApplicationContext().getBean(MicronautServletInitializer.class));
+            getApplicationContext().getBeansOfType(ServletContainerInitializer.class));
     }
 
     /**
@@ -101,7 +103,7 @@ public class TomcatFactory extends ServletServerFactory {
      * @param connector          The connector
      * @param httpsConnector     The HTTPS connectors
      * @param configuration      The servlet configuration
-     * @param servletInitializer The servlet initializer
+     * @param servletInitializers The servlet initializer
      * @return The Tomcat server
      */
     @Singleton
@@ -110,31 +112,39 @@ public class TomcatFactory extends ServletServerFactory {
         Connector connector,
         @Named(HTTPS) @Nullable Connector httpsConnector,
         MicronautServletConfiguration configuration,
-        MicronautServletInitializer servletInitializer) {
+        Collection<ServletContainerInitializer> servletInitializers) {
         configuration.setAsyncFileServingEnabled(false);
 
         Tomcat tomcat = newTomcat();
         final Context context = newTomcatContext(tomcat);
 
-        configureServletInitializer(context, servletInitializer);
+        configureServletInitializer(context, servletInitializers);
         configureConnectors(tomcat, connector, httpsConnector);
 
         return tomcat;
     }
 
     /**
-     * Configure the Micronaut servlet intializer.
+     * Configure the Micronaut servlet initializer.
      *
      * @param context            The context
-     * @param servletInitializer The intializer
+     * @param servletInitializers The initializers
      */
-    protected void configureServletInitializer(Context context, MicronautServletInitializer servletInitializer) {
-        getStaticResourceConfigurations().forEach(config ->
-            servletInitializer.addMicronautServletMapping(config.getMapping())
-        );
-        context.addServletContainerInitializer(
-            servletInitializer, Set.of(DefaultMicronautServlet.class)
-        );
+    protected void configureServletInitializer(Context context, Collection<ServletContainerInitializer> servletInitializers) {
+        for (ServletContainerInitializer servletInitializer : servletInitializers) {
+            if (servletInitializer instanceof MicronautServletInitializer micronautServletInitializer) {
+                getStaticResourceConfigurations().forEach(config ->
+                    micronautServletInitializer.addMicronautServletMapping(config.getMapping())
+                );
+                context.addServletContainerInitializer(
+                    servletInitializer, Set.of(DefaultMicronautServlet.class)
+                );
+            } else {
+                context.addServletContainerInitializer(
+                    servletInitializer, Set.of()
+                );
+            }
+        }
     }
 
     /**

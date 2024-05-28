@@ -39,6 +39,7 @@ import io.undertow.servlet.api.ServletContainerInitializerInfo;
 import jakarta.inject.Singleton;
 import jakarta.servlet.ServletContainerInitializer;
 import jakarta.servlet.ServletException;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -211,46 +212,54 @@ public class UndertowFactory extends ServletServerFactory {
      *
      * @param servletConfiguration The servlet configuration.
      * @return The deployment info
-     * @deprecated Use {@link #deploymentInfo(MicronautServletConfiguration, MicronautServletInitializer)}
+     * @deprecated Use {@link ##deploymentInfo(MicronautServletConfiguration, Collection)}
      */
     @Deprecated(forRemoval = true, since = "4.8.0")
     protected DeploymentInfo deploymentInfo(MicronautServletConfiguration servletConfiguration) {
-        return deploymentInfo(servletConfiguration, getApplicationContext().getBean(MicronautServletInitializer.class));
+        return deploymentInfo(servletConfiguration, getApplicationContext().getBeansOfType(ServletContainerInitializer.class));
     }
 
     /**
      * The deployment info bean.
      *
      * @param servletConfiguration The servlet configuration.
-     * @param servletInitializer The servlet initializer
+     * @param servletInitializers The servlet initializer
      * @return The deployment info
      */
     @Singleton
     @Primary
-    protected DeploymentInfo deploymentInfo(MicronautServletConfiguration servletConfiguration, MicronautServletInitializer servletInitializer) {
+    protected DeploymentInfo deploymentInfo(MicronautServletConfiguration servletConfiguration, Collection<ServletContainerInitializer> servletInitializers) {
         final String cp = getContextPath();
-        getStaticResourceConfigurations().forEach(config -> {
-            servletInitializer.addMicronautServletMapping(config.getMapping());
-        });
-        return Servlets.deployment()
-                .setDeploymentName(servletConfiguration.getName())
-                .setClassLoader(getEnvironment().getClassLoader())
-                .setContextPath(cp)
+        for (ServletContainerInitializer servletInitializer : servletInitializers) {
+            if (servletInitializer instanceof MicronautServletInitializer micronautServletInitializer) {
+                getStaticResourceConfigurations().forEach(config -> {
+                    micronautServletInitializer.addMicronautServletMapping(config.getMapping());
+                });
+            }
+        }
+        DeploymentInfo deploymentInfo = Servlets.deployment()
+            .setDeploymentName(servletConfiguration.getName())
+            .setClassLoader(getEnvironment().getClassLoader())
+            .setContextPath(cp);
+        for (ServletContainerInitializer servletInitializer : servletInitializers) {
+            deploymentInfo
                 .addServletContainerInitializer(new ServletContainerInitializerInfo(
-                    MicronautServletInitializer.class,
-                        () -> new InstanceHandle<>() {
-                            @Override
-                            public ServletContainerInitializer getInstance() {
-                                return servletInitializer;
-                            }
+                    servletInitializer.getClass(),
+                    () -> new InstanceHandle<>() {
+                        @Override
+                        public ServletContainerInitializer getInstance() {
+                            return servletInitializer;
+                        }
 
-                            @Override
-                            public void release() {
+                        @Override
+                        public void release() {
 
-                            }
-                        },
-                    Set.of(MicronautServletInitializer.class)
+                        }
+                    },
+                    Set.of(servletInitializer.getClass())
                 ));
+        }
+        return deploymentInfo;
     }
 
 }
