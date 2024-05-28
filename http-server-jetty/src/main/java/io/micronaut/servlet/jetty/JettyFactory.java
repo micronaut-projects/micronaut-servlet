@@ -25,6 +25,7 @@ import io.micronaut.context.exceptions.ConfigurationException;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.io.ResourceResolver;
+import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.http.server.HttpServerConfiguration;
 import io.micronaut.http.ssl.ClientAuthentication;
 import io.micronaut.http.ssl.SslConfiguration;
@@ -35,15 +36,18 @@ import io.micronaut.servlet.engine.MicronautServletConfiguration;
 import io.micronaut.servlet.engine.initializer.MicronautServletInitializer;
 import io.micronaut.servlet.engine.server.ServletServerFactory;
 import io.micronaut.servlet.engine.server.ServletStaticResourceConfiguration;
+import io.micronaut.web.router.Router;
 import jakarta.inject.Singleton;
 import java.io.IOException;
 import java.util.List;
-import java.util.stream.Stream;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
+import java.util.stream.Stream;
 import org.eclipse.jetty.alpn.server.ALPNServerConnectionFactory;
 import org.eclipse.jetty.http.HttpVersion;
 import org.eclipse.jetty.http2.server.HTTP2CServerConnectionFactory;
 import org.eclipse.jetty.http2.server.HTTP2ServerConnectionFactory;
+import org.eclipse.jetty.server.ConnectionFactory;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.Server;
@@ -70,6 +74,7 @@ public class JettyFactory extends ServletServerFactory {
     public static final String RESOURCE_BASE = "resourceBase";
 
     private final JettyConfiguration jettyConfiguration;
+    private final Router router;
 
     /**
      * Default constructor.
@@ -94,6 +99,7 @@ public class JettyFactory extends ServletServerFactory {
             staticResourceConfigurations
         );
         this.jettyConfiguration = serverConfiguration;
+        this.router = applicationContext.findBean(Router.class).orElse(null);
     }
 
     /**
@@ -269,7 +275,7 @@ public class JettyFactory extends ServletServerFactory {
     }
 
     /**
-     * Configures the servlet initializer
+     * Configures the servlet initializer.
      *
      * @param server                      The server
      * @param contextHandler              The context handler
@@ -312,8 +318,29 @@ public class JettyFactory extends ServletServerFactory {
             if (serverConfiguration.isDualProtocol()) {
                 server.addConnector(http);
             }
+            applyAdditionalPorts(server, https);
         } else {
             server.addConnector(http);
+            applyAdditionalPorts(server, http);
+        }
+    }
+
+    private void applyAdditionalPorts(Server server, ServerConnector serverConnector) {
+        if (router != null) {
+            Set<Integer> exposedPorts = router.getExposedPorts();
+            if (CollectionUtils.isNotEmpty(exposedPorts)) {
+                for (Integer exposedPort : exposedPorts) {
+                    if (!exposedPort.equals(serverConnector.getLocalPort())) {
+                        ServerConnector connector = new ServerConnector(
+                            server,
+                            serverConnector.getConnectionFactories().toArray(ConnectionFactory[]::new)
+                        );
+                        connector.setPort(exposedPort);
+                        connector.setHost(getConfiguredHost());
+                        server.addConnector(connector);
+                    }
+                }
+            }
         }
     }
 

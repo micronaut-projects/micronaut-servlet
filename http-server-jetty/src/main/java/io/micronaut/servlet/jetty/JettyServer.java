@@ -19,12 +19,11 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.http.server.exceptions.HttpServerException;
 import io.micronaut.runtime.ApplicationConfiguration;
 import io.micronaut.servlet.engine.server.AbstractServletServer;
-import org.eclipse.jetty.server.Server;
-
 import jakarta.inject.Singleton;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
+import org.eclipse.jetty.server.Server;
 
 /**
  * An implementation of the {@link io.micronaut.runtime.server.EmbeddedServer} interface for Jetty.
@@ -51,7 +50,8 @@ public class JettyServer extends AbstractServletServer<Server> {
 
     @Override
     protected void startServer() throws Exception {
-        getServer().start();
+        Server server = getServer();
+        server.start();
     }
 
     @Override

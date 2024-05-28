@@ -57,7 +57,8 @@ public class TomcatServer extends AbstractServletServer<Tomcat> {
     @Override
     protected void startServer() throws Exception {
         if (running.compareAndSet(false, true)) {
-            getServer().start();
+            Tomcat server = getServer();
+            server.start();
         }
     }
 

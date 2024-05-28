@@ -4,10 +4,12 @@ import io.micronaut.context.ApplicationContext
 import io.micronaut.context.annotation.Requires
 import io.micronaut.core.io.socket.SocketUtils
 import io.micronaut.core.util.StringUtils
+import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Get
 import io.micronaut.http.client.BlockingHttpClient
 import io.micronaut.http.client.HttpClient
+import io.micronaut.http.client.exceptions.HttpClientResponseException
 import io.micronaut.runtime.server.EmbeddedServer
 import io.netty.handler.ssl.util.SelfSignedCertificate
 import spock.lang.Issue
@@ -59,7 +61,6 @@ class JettyManagementPortSpec extends Specification {
         ]
     }
 
-    @PendingFeature
     def 'management port can be configured different to main port'() {
         given:
         def port = SocketUtils.findAvailableTcpPort()
@@ -73,11 +74,19 @@ class JettyManagementPortSpec extends Specification {
 
         when:
         def mainResponse = mainClient.exchange('/management-port', String)
-        def healthResponse = mainClient.exchange('/health', String)
+        def healthResponse = managementClient.exchange('/health', String)
 
         then:
         mainResponse.body() == 'Hello world'
         healthResponse.body() == '{"status":"UP"}'
+
+        when:
+        mainClient.exchange('/health', String)
+
+        then:
+        def e = thrown(HttpClientResponseException)
+        e.response.status() == HttpStatus.NOT_FOUND
+
 
         cleanup:
         mainClient.close()
@@ -85,7 +94,6 @@ class JettyManagementPortSpec extends Specification {
         server.stop()
     }
 
-    @PendingFeature
     def 'management port can be configured different to main port and uses ssl if also configured'() {
         given:
         def port = SocketUtils.findAvailableTcpPort()
@@ -99,11 +107,18 @@ class JettyManagementPortSpec extends Specification {
 
         when:
         def mainResponse = mainClient.exchange('/management-port', String)
-        def healthResponse = mainClient.exchange('/health', String)
+        def healthResponse = managementClient.exchange('/health', String)
 
         then:
         mainResponse.body() == 'Hello world'
         healthResponse.body() == '{"status":"UP"}'
+
+        when:
+        mainClient.exchange('/health', String)
+
+        then:
+        def e = thrown(HttpClientResponseException)
+        e.response.status() == HttpStatus.NOT_FOUND
 
         cleanup:
         mainClient.close()

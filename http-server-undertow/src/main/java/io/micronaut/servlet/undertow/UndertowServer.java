@@ -23,6 +23,7 @@ import io.undertow.Undertow;
 
 import jakarta.inject.Singleton;
 import java.net.*;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -54,10 +55,12 @@ public class UndertowServer extends AbstractServletServer<Undertow> {
     protected void startServer() throws Exception {
         Undertow server = getServer();
         server.start();
-        this.listenersByProtocol = server.getListenerInfo().stream().collect(Collectors.toMap(
-                Undertow.ListenerInfo::getProtcol,
-                (listenerInfo -> listenerInfo)
-        ));
+        this.listenersByProtocol = new HashMap<>();
+        for (Undertow.ListenerInfo listenerInfo : server.getListenerInfo()) {
+            if (!listenersByProtocol.containsKey(listenerInfo.getProtcol())) {
+                listenersByProtocol.put(listenerInfo.getProtcol(), listenerInfo);
+            }
+        }
     }
 
     @Override
