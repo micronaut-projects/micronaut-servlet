@@ -127,12 +127,13 @@ public class TomcatConfiguration extends HttpServerConfiguration {
      * @since 4.8.0
      */
     @ConfigurationProperties(value = AccessLogConfiguration.PREFIX, excludes = {"next", "container"})
-    @Requires(property = AccessLogConfiguration.ENABLED, value = StringUtils.TRUE)
+    @Requires(property = AccessLogConfiguration.ENABLED_PROPERTY, value = StringUtils.TRUE)
+    @SuppressWarnings("java:S110")
     public static class AccessLogConfiguration extends ExtendedAccessLogValve implements Toggleable {
 
         public static final String PREFIX = "access-log";
 
-        public static final String ENABLED = TomcatConfiguration.PREFIX + ".tomcat." + PREFIX + ".enabled";
+        public static final String ENABLED_PROPERTY = HttpServerConfiguration.PREFIX + ".tomcat." + PREFIX + ".enabled";
 
         @Override
         public boolean isEnabled() {

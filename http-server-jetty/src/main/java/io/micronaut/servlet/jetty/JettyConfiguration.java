@@ -129,10 +129,10 @@ public class JettyConfiguration extends HttpServerConfiguration {
      * @since 4.8.0
      */
     @ConfigurationProperties(JettyRequestLog.ACCESS_LOG)
-    @Requires(property = JettyRequestLog.ENABLED, value = StringUtils.TRUE)
+    @Requires(property = JettyRequestLog.ENABLED_PROPERTY, value = StringUtils.TRUE)
     public static class JettyRequestLog implements Toggleable {
         public static final String ACCESS_LOG = "access-log";
-        public static final String ENABLED = JettyConfiguration.PREFIX + ".jetty." + ACCESS_LOG + ".enabled";
+        public static final String ENABLED_PROPERTY = HttpServerConfiguration.PREFIX + ".jetty." + ACCESS_LOG + ".enabled";
         @ConfigurationBuilder(prefixes = "set", excludes = "eventListeners")
         RequestLogWriter requestLogWriter = new RequestLogWriter();
 

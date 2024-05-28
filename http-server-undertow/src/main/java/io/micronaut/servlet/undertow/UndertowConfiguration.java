@@ -168,12 +168,12 @@ public class UndertowConfiguration extends HttpServerConfiguration {
      * @since 4.8.0
      */
     @ConfigurationProperties(AccessLogConfiguration.PREFIX)
-    @Requires(property = AccessLogConfiguration.ENABLED, value = StringUtils.TRUE)
+    @Requires(property = AccessLogConfiguration.ENABLED_PROPERTY, value = StringUtils.TRUE)
     public static class AccessLogConfiguration implements Toggleable {
 
         public static final String PREFIX = "access-log";
 
-        public static final String ENABLED = UndertowConfiguration.PREFIX + ".undertow." + PREFIX + ".enabled";
+        public static final String ENABLED_PROPERTY = HttpServerConfiguration.PREFIX + ".undertow." + PREFIX + ".enabled";
 
         @ConfigurationBuilder(prefixes = "set", excludes = {"logFileHeaderGenerator", "logWriteExecutor"})
         DefaultAccessLogReceiver.Builder builder = DefaultAccessLogReceiver.builder();
