@@ -106,8 +106,13 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-second">Class</div>
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color"><code>static class&nbsp;</code></div>
-<div class="col-second even-row-color"><code><a href="JettyConfiguration.JettySslConfiguration.html" class="type-name-link" title="class in io.micronaut.servlet.jetty">JettyConfiguration.JettySslConfiguration</a></code></div>
+<div class="col-second even-row-color"><code><a href="JettyConfiguration.JettyRequestLog.html" class="type-name-link" title="class in io.micronaut.servlet.jetty">JettyConfiguration.JettyRequestLog</a></code></div>
 <div class="col-last even-row-color">
+<div class="block">Jetty access log configuration.</div>
+</div>
+<div class="col-first odd-row-color"><code>static class&nbsp;</code></div>
+<div class="col-second odd-row-color"><code><a href="JettyConfiguration.JettySslConfiguration.html" class="type-name-link" title="class in io.micronaut.servlet.jetty">JettyConfiguration.JettySslConfiguration</a></code></div>
+<div class="col-last odd-row-color">
 <div class="block">The default connection pool configuration.</div>
 </div>
 </div>
@@ -146,6 +151,11 @@ loadScripts(document, 'script');</script>
 <div class="col-last even-row-color">
 <div class="block">Default constructor.</div>
 </div>
+<div class="col-constructor-name odd-row-color"><code><a href="#%3Cinit%3E(io.micronaut.http.server.HttpServerConfiguration.MultipartConfiguration,io.micronaut.servlet.jetty.JettyConfiguration.JettyRequestLog)" class="member-name-link">JettyConfiguration</a><wbr>(@Nullable io.micronaut.http.server.HttpServerConfiguration.MultipartConfiguration&nbsp;multipartConfiguration,
+ @Nullable <a href="JettyConfiguration.JettyRequestLog.html" title="class in io.micronaut.servlet.jetty">JettyConfiguration.JettyRequestLog</a>&nbsp;requestLog)</code></div>
+<div class="col-last odd-row-color">
+<div class="block">Default constructor.</div>
+</div>
 </div>
 </section>
 </li>
@@ -169,9 +179,12 @@ loadScripts(document, 'script');</script>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;io.micronaut.http.server.HttpServerConfiguration.MultipartConfiguration&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getMultipartConfiguration()" class="member-name-link">getMultipartConfiguration</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setInitParameters(java.util.Map)" class="member-name-link">setInitParameters</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;initParameters)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="JettyConfiguration.JettyRequestLog.html" title="class in io.micronaut.servlet.jetty">JettyConfiguration.JettyRequestLog</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getRequestLog()" class="member-name-link">getRequestLog</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setInitParameters(java.util.Map)" class="member-name-link">setInitParameters</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;initParameters)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Sets the servlet init parameters.</div>
 </div>
 </div>
@@ -221,6 +234,21 @@ loadScripts(document, 'script');</script>
 </dl>
 </section>
 </li>
+<li>
+<section class="detail" id="&lt;init&gt;(io.micronaut.http.server.HttpServerConfiguration.MultipartConfiguration,io.micronaut.servlet.jetty.JettyConfiguration.JettyRequestLog)">
+<h3>JettyConfiguration</h3>
+<div class="member-signature"><span class="annotations">@Inject
+</span><span class="modifiers">public</span>&nbsp;<span class="element-name">JettyConfiguration</span><wbr><span class="parameters">(@Nullable
+ @Nullable io.micronaut.http.server.HttpServerConfiguration.MultipartConfiguration&nbsp;multipartConfiguration,
+ @Nullable
+ @Nullable <a href="JettyConfiguration.JettyRequestLog.html" title="class in io.micronaut.servlet.jetty">JettyConfiguration.JettyRequestLog</a>&nbsp;requestLog)</span></div>
+<div class="block">Default constructor.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>multipartConfiguration</code> - The multipart configuration.</dd>
+</dl>
+</section>
+</li>
 </ul>
 </section>
 </li>
@@ -246,6 +274,16 @@ loadScripts(document, 'script');</script>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>The multipart configuration</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="getRequestLog()">
+<h3>getRequestLog</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="JettyConfiguration.JettyRequestLog.html" title="class in io.micronaut.servlet.jetty">JettyConfiguration.JettyRequestLog</a>&gt;</span>&nbsp;<span class="element-name">getRequestLog</span>()</div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd>The request log configuration.</dd>
 </dl>
 </section>
 </li>

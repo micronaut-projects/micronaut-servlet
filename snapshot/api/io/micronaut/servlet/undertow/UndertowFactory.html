@@ -136,15 +136,18 @@ loadScripts(document, 'script');</script>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">The deployment info bean.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected io.undertow.Undertow.Builder</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#undertowBuilder(io.undertow.servlet.api.DeploymentInfo,io.micronaut.servlet.engine.MicronautServletConfiguration)" class="member-name-link">undertowBuilder</a><wbr>(io.undertow.servlet.api.DeploymentInfo&nbsp;deploymentInfo,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="UndertowConfiguration.html" title="class in io.micronaut.servlet.undertow">UndertowConfiguration</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getServerConfiguration()" class="member-name-link">getServerConfiguration</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected io.undertow.Undertow.Builder</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#undertowBuilder(io.undertow.servlet.api.DeploymentInfo,io.micronaut.servlet.engine.MicronautServletConfiguration)" class="member-name-link">undertowBuilder</a><wbr>(io.undertow.servlet.api.DeploymentInfo&nbsp;deploymentInfo,
  <a href="../engine/MicronautServletConfiguration.html" title="class in io.micronaut.servlet.engine">MicronautServletConfiguration</a>&nbsp;servletConfiguration)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">The undertow builder bean.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected io.undertow.Undertow</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#undertowServer(io.undertow.Undertow.Builder)" class="member-name-link">undertowServer</a><wbr>(io.undertow.Undertow.Builder&nbsp;builder)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected io.undertow.Undertow</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#undertowServer(io.undertow.Undertow.Builder)" class="member-name-link">undertowServer</a><wbr>(io.undertow.Undertow.Builder&nbsp;builder)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">The undertow bean.</div>
 </div>
 </div>
@@ -152,7 +155,7 @@ loadScripts(document, 'script');</script>
 </div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-io.micronaut.servlet.engine.server.ServletServerFactory">Methods inherited from class&nbsp;io.micronaut.servlet.engine.server.<a href="../engine/server/ServletServerFactory.html" title="class in io.micronaut.servlet.engine.server">ServletServerFactory</a></h3>
-<code><a href="../engine/server/ServletServerFactory.html#build(io.micronaut.http.ssl.SslConfiguration)">build</a>, <a href="../engine/server/ServletServerFactory.html#build(io.micronaut.http.ssl.SslConfiguration,io.micronaut.http.HttpVersion)">build</a>, <a href="../engine/server/ServletServerFactory.html#getApplicationContext()">getApplicationContext</a>, <a href="../engine/server/ServletServerFactory.html#getConfiguredHost()">getConfiguredHost</a>, <a href="../engine/server/ServletServerFactory.html#getConfiguredPort()">getConfiguredPort</a>, <a href="../engine/server/ServletServerFactory.html#getContextPath()">getContextPath</a>, <a href="../engine/server/ServletServerFactory.html#getEnvironment()">getEnvironment</a>, <a href="../engine/server/ServletServerFactory.html#getServerConfiguration()">getServerConfiguration</a>, <a href="../engine/server/ServletServerFactory.html#getSslConfiguration()">getSslConfiguration</a>, <a href="../engine/server/ServletServerFactory.html#getStaticResourceConfigurations()">getStaticResourceConfigurations</a></code></div>
+<code><a href="../engine/server/ServletServerFactory.html#build(io.micronaut.http.ssl.SslConfiguration)">build</a>, <a href="../engine/server/ServletServerFactory.html#build(io.micronaut.http.ssl.SslConfiguration,io.micronaut.http.HttpVersion)">build</a>, <a href="../engine/server/ServletServerFactory.html#getApplicationContext()">getApplicationContext</a>, <a href="../engine/server/ServletServerFactory.html#getConfiguredHost()">getConfiguredHost</a>, <a href="../engine/server/ServletServerFactory.html#getConfiguredPort()">getConfiguredPort</a>, <a href="../engine/server/ServletServerFactory.html#getContextPath()">getContextPath</a>, <a href="../engine/server/ServletServerFactory.html#getEnvironment()">getEnvironment</a>, <a href="../engine/server/ServletServerFactory.html#getSslConfiguration()">getSslConfiguration</a>, <a href="../engine/server/ServletServerFactory.html#getStaticResourceConfigurations()">getStaticResourceConfigurations</a></code></div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-io.micronaut.http.ssl.SslBuilder">Methods inherited from class&nbsp;io.micronaut.http.ssl.SslBuilder</h3>
 <code>getKeyManagerFactory, getKeyStore, getTrustManagerFactory, getTrustStore, load</code></div>
@@ -197,6 +200,18 @@ loadScripts(document, 'script');</script>
 <section class="method-details" id="method-detail">
 <h2>Method Details</h2>
 <ul class="member-list">
+<li>
+<section class="detail" id="getServerConfiguration()">
+<h3>getServerConfiguration</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="UndertowConfiguration.html" title="class in io.micronaut.servlet.undertow">UndertowConfiguration</a></span>&nbsp;<span class="element-name">getServerConfiguration</span>()</div>
+<dl class="notes">
+<dt>Overrides:</dt>
+<dd><code><a href="../engine/server/ServletServerFactory.html#getServerConfiguration()">getServerConfiguration</a></code>&nbsp;in class&nbsp;<code><a href="../engine/server/ServletServerFactory.html" title="class in io.micronaut.servlet.engine.server">ServletServerFactory</a></code></dd>
+<dt>Returns:</dt>
+<dd>The server config</dd>
+</dl>
+</section>
+</li>
 <li>
 <section class="detail" id="undertowBuilder(io.undertow.servlet.api.DeploymentInfo,io.micronaut.servlet.engine.MicronautServletConfiguration)">
 <h3>undertowBuilder</h3>
