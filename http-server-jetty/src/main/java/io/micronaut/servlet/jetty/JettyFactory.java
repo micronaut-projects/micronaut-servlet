@@ -49,6 +49,7 @@ import org.eclipse.jetty.http.HttpVersion;
 import org.eclipse.jetty.http2.server.HTTP2CServerConnectionFactory;
 import org.eclipse.jetty.http2.server.HTTP2ServerConnectionFactory;
 import org.eclipse.jetty.server.ConnectionFactory;
+import org.eclipse.jetty.server.CustomRequestLog;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.Server;
@@ -146,6 +147,15 @@ public class JettyFactory extends ServletServerFactory {
         String contextPath = getContextPath();
 
         Server server = newServer(applicationContext, configuration);
+
+        jettyConfiguration.getRequestLog().ifPresent(requestLog -> {
+            if (requestLog.isEnabled()) {
+                server.setRequestLog(new CustomRequestLog(
+                    requestLog.requestLogWriter,
+                    requestLog.getPattern()
+                ));
+            }
+        });
 
         final ServletContextHandler contextHandler = newJettyContext(server, contextPath);
         configureServletInitializer(server, contextHandler, servletContainerInitializers);
