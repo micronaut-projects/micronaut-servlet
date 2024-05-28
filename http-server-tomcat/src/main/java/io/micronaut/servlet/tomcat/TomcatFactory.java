@@ -59,6 +59,7 @@ import org.apache.tomcat.util.net.SSLHostConfigCertificate;
 public class TomcatFactory extends ServletServerFactory {
 
     private static final String HTTPS = "HTTPS";
+    private static final String CLIENT_AUTH = "clientAuth";
     private final Router router;
 
     /**
@@ -190,7 +191,7 @@ public class TomcatFactory extends ServletServerFactory {
             newConnector.addSslHostConfig(sslHostConfig);
             newConnector.setSecure(true);
             newConnector.setScheme("https");
-            newConnector.setProperty("clientAuth", "false");
+            newConnector.setProperty(CLIENT_AUTH, "false");
             newConnector.setProperty("sslProtocol", "TLS");
             newConnector.setProperty("SSLEnabled", "true");
         }
@@ -277,14 +278,14 @@ public class TomcatFactory extends ServletServerFactory {
         httpsConnector.setPort(sslPort);
         httpsConnector.setSecure(true);
         httpsConnector.setScheme("https");
-        httpsConnector.setProperty("clientAuth", "false");
+        httpsConnector.setProperty(CLIENT_AUTH, "false");
         httpsConnector.setProperty("sslProtocol", protocol);
         httpsConnector.setProperty("SSLEnabled", "true");
         sslConfiguration.getCiphers().ifPresent(cyphers ->
             sslHostConfig.setCiphers(String.join(",", cyphers))
         );
         sslConfiguration.getClientAuthentication().ifPresent(ca ->
-            httpsConnector.setProperty("clientAuth", ca == ClientAuthentication.WANT ? "want" : "true")
+            httpsConnector.setProperty(CLIENT_AUTH, ca == ClientAuthentication.WANT ? "want" : "true")
         );
 
 

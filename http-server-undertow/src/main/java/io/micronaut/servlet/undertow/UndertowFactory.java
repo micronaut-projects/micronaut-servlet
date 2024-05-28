@@ -196,14 +196,18 @@ public class UndertowFactory extends ServletServerFactory {
             if (CollectionUtils.isNotEmpty(exposedPorts)) {
                 for (Integer exposedPort : exposedPorts) {
                     if (!exposedPort.equals(serverPort)) {
-                        if (sslContext != null) {
-                            builder.addHttpsListener(exposedPort, host, sslContext);
-                        } else {
-                            builder.addHttpListener(exposedPort, host);
-                        }
+                        addListener(builder, host, sslContext, exposedPort);
                     }
                 }
             }
+        }
+    }
+
+    private static void addListener(Undertow.Builder builder, String host, SSLContext sslContext, Integer exposedPort) {
+        if (sslContext != null) {
+            builder.addHttpsListener(exposedPort, host, sslContext);
+        } else {
+            builder.addHttpListener(exposedPort, host);
         }
     }
 
