@@ -33,7 +33,8 @@ import io.micronaut.web.router.Router;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.UndertowOptions;
-import io.undertow.server.handlers.PathHandler;
+import io.undertow.server.HttpHandler;
+import io.undertow.server.handlers.accesslog.AccessLogHandler;
 import io.undertow.servlet.Servlets;
 import io.undertow.servlet.api.DeploymentInfo;
 import io.undertow.servlet.api.DeploymentManager;
@@ -82,6 +83,11 @@ public class UndertowFactory extends ServletServerFactory {
         this.router = applicationContext.findBean(Router.class).orElse(null);
     }
 
+    @Override
+    public UndertowConfiguration getServerConfiguration() {
+        return (UndertowConfiguration) super.getServerConfiguration();
+    }
+
     /**
      * The undertow builder bean.
      *
@@ -101,14 +107,24 @@ public class UndertowFactory extends ServletServerFactory {
         final DeploymentManager deploymentManager = Servlets.defaultContainer().addDeployment(deploymentInfo);
         deploymentManager
                 .deploy();
-        PathHandler path;
+        HttpHandler httpHandler;
         try {
-            path = Handlers.path(Handlers.redirect(cp))
+            httpHandler = Handlers.path(Handlers.redirect(cp))
                     .addPrefixPath(cp, deploymentManager.start());
         } catch (ServletException e) {
             throw new ServerStartupException("Error starting Undertow server: " + e.getMessage(), e);
         }
-        builder.setHandler(path);
+        UndertowConfiguration serverConfiguration = getServerConfiguration();
+        UndertowConfiguration.AccessLogConfiguration accessLogConfiguration = serverConfiguration.getAccessLogConfiguration().orElse(null);
+        if (accessLogConfiguration != null) {
+            httpHandler = new AccessLogHandler(
+                httpHandler,
+                accessLogConfiguration.builder.build(),
+                accessLogConfiguration.getPattern(),
+                getApplicationContext().getClassLoader()
+            );
+        }
+        builder.setHandler(httpHandler);
 
         final SslConfiguration sslConfiguration = getSslConfiguration();
         if (sslConfiguration.isEnabled()) {
@@ -261,9 +277,9 @@ public class UndertowFactory extends ServletServerFactory {
         final String cp = getContextPath();
         for (ServletContainerInitializer servletInitializer : servletInitializers) {
             if (servletInitializer instanceof MicronautServletInitializer micronautServletInitializer) {
-                getStaticResourceConfigurations().forEach(config -> {
-                    micronautServletInitializer.addMicronautServletMapping(config.getMapping());
-                });
+                getStaticResourceConfigurations().forEach(config ->
+                    micronautServletInitializer.addMicronautServletMapping(config.getMapping())
+                );
             }
         }
         DeploymentInfo deploymentInfo = Servlets.deployment()

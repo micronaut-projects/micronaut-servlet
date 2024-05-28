@@ -43,8 +43,10 @@ import io.micronaut.servlet.engine.server.ServletServerFactory;
 import io.micronaut.servlet.engine.server.ServletStaticResourceConfiguration;
 import jakarta.inject.Singleton;
 import java.util.Set;
+import org.apache.catalina.Container;
 import org.apache.catalina.Context;
 import org.apache.catalina.connector.Connector;
+import org.apache.catalina.core.ContainerBase;
 import org.apache.catalina.startup.Tomcat;
 import org.apache.coyote.ProtocolHandler;
 import org.apache.coyote.http2.Http2Protocol;
@@ -126,6 +128,18 @@ public class TomcatFactory extends ServletServerFactory {
 
         configureServletInitializer(context, servletInitializers);
         configureConnectors(tomcat, connector, httpsConnector);
+
+        TomcatConfiguration serverConfiguration = getServerConfiguration();
+        serverConfiguration.getAccessLogConfiguration().ifPresent(accessValve -> {
+            if (accessValve.isEnabled()) {
+                Container[] children = tomcat.getHost().findChildren();
+                for (Container child : children) {
+                    if (child instanceof ContainerBase containerBase) {
+                        containerBase.addValve(accessValve);
+                    }
+                }
+            }
+        });
 
         return tomcat;
     }
