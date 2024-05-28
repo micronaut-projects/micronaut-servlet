@@ -1225,23 +1225,6 @@ public class UndertowServerCustomizer implements BeanCreatedEventListener&lt;Und
 The body is read from the request input-stream and so attempting to reparse it for the error handler will fail.</p>
 </div>
 </div>
-<div class="sect2">
-<h3 id="_management_port">Management port</h3>
-<div class="paragraph">
-<p>With a Netty based server, you can <a href="https://docs.micronaut.io/latest/guide/#_management_port">configure a management port for the server</a>.
-This is not currently supported with Servlet based servers, and management endpoints (when enabled) will be available on the same port as the main application.</p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_servicereadyevent_publication">ServiceReadyEvent publication</h3>
-<div class="paragraph">
-<p>When using the Netty runtime, the <code>ServiceReadyEvent</code> is automatically published when the server is ready to accept requests.
-This is not currently supported with Servlet based servers.</p>
-</div>
-<div class="paragraph">
-<p>If you wish to generate a <code>ServiceReadyEvent</code> you can do so manually by injecting a <code>ApplicationEventPublisher&lt;ServiceReadyEvent&gt;</code> bean and publishing the event yourself when your application is ready.</p>
-</div>
-</div>
 
 <h1 id="faq"><a class="anchor" href="#faq"></a>10 FAQ</h1>
 
