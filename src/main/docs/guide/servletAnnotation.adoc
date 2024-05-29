@@ -26,3 +26,5 @@ snippet::io.micronaut.servlet.jetty.MyFilterFactory[tags="class", indent=0, proj
 <2> The ann:servlet.api.annotation.ServletFilterBean[] annotation is used and a filter name defined
 <3> 1 or more mappings are defined. Note these can be resolved from property placeholder configuration if necessary.
 <4> The order of the filter is defined.
+
+NOTE: Servlet Filters are not to be confused with https://docs.micronaut.io/latest/guide/#filters[Micronaut filters]. Servlet Filters always run before the Micronaut Servlet which in turn runs the Micronaut Filters hence it is not possible to place a Servlet Filter after Micronaut Filters.
