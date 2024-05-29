@@ -21,3 +21,14 @@ include::http-server-undertow/src/test/java/io/micronaut/servlet/undertow/docs/U
 include::http-server-undertow/src/test/java/io/micronaut/servlet/undertow/docs/UndertowServerCustomizer.java[tags=class, indent=0]
 ----
 
+=== Access Log Configuration
+
+To configure the https://access.redhat.com/documentation/en-us/red_hat_jboss_enterprise_application_platform/7.3/html/configuration_guide/configuring_the_web_server_undertow#access_logging[Undertow Access Log]:
+
+.Undertow Access Log Configuration
+[configuration]
+----
+micronaut.server.undertow.access-log.enabled: true,
+micronaut.server.undertow.access-log.pattern: combined
+micronaut.server.undertow.access-log.output-directory: /var/logs
+----

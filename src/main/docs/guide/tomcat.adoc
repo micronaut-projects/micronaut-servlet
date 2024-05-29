@@ -21,3 +21,14 @@ include::http-server-tomcat/src/test/java/io/micronaut/servlet/tomcat/docs/Tomca
 include::http-server-tomcat/src/test/java/io/micronaut/servlet/tomcat/docs/TomcatServerCustomizer.java[tags=class, indent=0]
 ----
 
+=== Access Log Configuration
+
+To configure the https://tomcat.apache.org/tomcat-10.1-doc/config/valve.html#Access_Logging[Tomcat Access Log]:
+
+.Tomcat Access Log Configuration
+[configuration]
+----
+micronaut.server.tomcat.access-log.enabled: true,
+micronaut.server.tomcat.access-log.pattern: combined
+micronaut.server.tomcat.access-log.directory: /var/logs
+----

@@ -1,5 +1,6 @@
 package io.micronaut.servlet.jetty
 
+import io.micronaut.context.annotation.Property
 import io.micronaut.http.client.HttpClient
 import io.micronaut.http.client.annotation.Client
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
@@ -7,6 +8,7 @@ import jakarta.inject.Inject
 import spock.lang.Specification
 
 @MicronautTest
+@Property(name = "my.filter.mapping", value = "/extra-servlet/*")
 class JettyServletAnnotationSpec extends Specification {
     @Inject
     @Client("/")
