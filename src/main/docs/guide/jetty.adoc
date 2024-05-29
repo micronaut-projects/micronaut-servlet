@@ -21,3 +21,16 @@ include::http-server-jetty/src/test/java/io/micronaut/servlet/jetty/docs/JettySe
 include::http-server-jetty/src/test/java/io/micronaut/servlet/jetty/docs/JettyServerCustomizer.java[tags=class, indent=0]
 ----
 
+=== Access Log Configuration
+
+To configure the https://eclipse.dev/jetty/documentation/jetty-11/programming-guide/index.html#pg-server-http-request-logging[Jetty Access Log]:
+
+.Jetty Access Log Configuration
+[configuration]
+----
+micronaut.server.jetty.access-log.enabled: true
+micronaut.server.jetty.access-log.filename: /tmp/access.log
+micronaut.server.jetty.access-log.retain-days: 10
+micronaut.server.jetty.access-log.pattern: >
+    %{client}a - %u %t "%r" %s %O
+----

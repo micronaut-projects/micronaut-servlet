@@ -16,3 +16,15 @@ In addition, you can use the following annotations on methods of https://docs.mi
 
 * ann:servlet.api.annotation.ServletBean[] - Equivalent of https://jakarta.ee/specifications/servlet/5.0/apidocs/jakarta/servlet/annotation/webservlet[@WebServlet] but can be applied to a method of a factory to Register a new servlet.
 * ann:servlet.api.annotation.ServletFilterBean[] - Equivalent of https://jakarta.ee/specifications/servlet/5.0/apidocs/jakarta/servlet/annotation/webfilter[@WebFilter] but can be applied to a method of a factory to Register a new filter.
+
+The following example adds a new Servlet filter with the highest precedence:
+
+.Adding a Filter with a Factory
+snippet::io.micronaut.servlet.jetty.MyFilterFactory[tags="class", indent=0, project="http-server-jetty"]
+
+<1> A `@Factory` bean is defined
+<2> The ann:servlet.api.annotation.ServletFilterBean[] annotation is used and a filter name defined
+<3> 1 or more mappings are defined. Note these can be resolved from property placeholder configuration if necessary.
+<4> The order of the filter is defined.
+
+NOTE: Servlet Filters are not to be confused with https://docs.micronaut.io/latest/guide/#filters[Micronaut filters]. Servlet Filters always run before the Micronaut Servlet which in turn runs the Micronaut Filters hence it is not possible to place a Servlet Filter after Micronaut Filters.
