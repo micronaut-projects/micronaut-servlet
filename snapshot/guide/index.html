@@ -380,6 +380,75 @@ Using <code>HIGHEST_PRECEDENCE</code> will prevent any other filter running befo
 </li>
 </ul>
 </div>
+<div class="paragraph">
+<p>The following example adds a new Servlet filter with the highest precedence:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title">Adding a Filter with a Factory</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">import io.micronaut.context.annotation.Factory;
+import io.micronaut.core.annotation.Order;
+import io.micronaut.core.order.Ordered;
+import io.micronaut.servlet.api.annotation.ServletFilterBean;
+import jakarta.servlet.Filter;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.GenericFilter;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
+import java.io.IOException;
+
+@Factory // <b class="conum">(1)</b>
+public class MyFilterFactory {
+
+    @ServletFilterBean(
+        filterName = "another", // <b class="conum">(2)</b>
+        value = {"/extra-filter/*", "${my.filter.mapping}"}) // <b class="conum">(3)</b>
+    @Order(Ordered.HIGHEST_PRECEDENCE) // <b class="conum">(4)</b>
+    Filter myOtherFilter() {
+        return new GenericFilter() {
+            @Override
+            public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws ServletException, IOException {
+                request.setAttribute("runFirst", true);
+                chain.doFilter(request, response);
+            }
+        };
+    }
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>A <code>@Factory</code> bean is defined</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>The <a href="../api/io/micronaut/servlet/api/annotation/ServletFilterBean.html">@ServletFilterBean</a> annotation is used and a filter name defined</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>1 or more mappings are defined. Note these can be resolved from property placeholder configuration if necessary.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="4"></i><b>4</b></td>
+<td>The order of the filter is defined.</td>
+</tr>
+</table>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+Servlet Filters are not to be confused with <a href="https://docs.micronaut.io/latest/guide/#filters">Micronaut filters</a>. Servlet Filters always run before the Micronaut Servlet which in turn runs the Micronaut Filters hence it is not possible to place a Servlet Filter after Micronaut Filters.
+</td>
+</tr>
+</table>
+</div>
 
 <h1 id="warDeployment"><a class="anchor" href="#warDeployment"></a>5 WAR Deployment</h1>
 
@@ -812,6 +881,70 @@ public class JettyServerCustomizer implements BeanCreatedEventListener&lt;Server
 }</code></pre>
 </div>
 </div>
+<div class="sect2">
+<h3 id="_access_log_configuration">Access Log Configuration</h3>
+<div class="paragraph">
+<p>To configure the <a href="https://eclipse.dev/jetty/documentation/jetty-11/programming-guide/index.html#pg-server-http-request-logging">Jetty Access Log</a>:</p>
+</div>
+<div class="openblock">
+<div class="title">Jetty Access Log Configuration</div>
+<div class="content">
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-properties hljs" data-lang="properties">micronaut.server.jetty.access-log.enabled=true
+micronaut.server.jetty.access-log.filename=/tmp/access.log
+micronaut.server.jetty.access-log.retain-days=10
+micronaut.server.jetty.access-log.pattern=%{client}a - %u %t "%r" %s %O</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">micronaut.server.jetty.access-log.enabled: true
+micronaut.server.jetty.access-log.filename: /tmp/access.log
+micronaut.server.jetty.access-log.retain-days: 10
+micronaut.server.jetty.access-log.pattern: &gt;
+    %{client}a - %u %t "%r" %s %O</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">"micronaut.server.jetty.access-log.enabled"=true
+"micronaut.server.jetty.access-log.filename"="/tmp/access.log"
+"micronaut.server.jetty.access-log.retain-days"=10
+"micronaut.server.jetty.access-log.pattern"="%{client}a - %u %t \"%r\" %s %O"</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy-config hljs" data-lang="groovy-config">micronaut.server.jetty.accessLog.enabled = true
+micronaut.server.jetty.accessLog.filename = "/tmp/access.log"
+micronaut.server.jetty.accessLog.retainDays = 10
+micronaut.server.jetty.accessLog.pattern = "%{client}a - %u %t \"%r\" %s %O"</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-hocon hljs" data-lang="hocon">{
+  "micronaut.server.jetty.access-log.enabled" = true
+  "micronaut.server.jetty.access-log.filename" = "/tmp/access.log"
+  "micronaut.server.jetty.access-log.retain-days" = 10
+  "micronaut.server.jetty.access-log.pattern" = "%{client}a - %u %t \"%r\" %s %O"
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json-config hljs" data-lang="json-config">{
+  "micronaut.server.jetty.access-log.enabled": true,
+  "micronaut.server.jetty.access-log.filename": "/tmp/access.log",
+  "micronaut.server.jetty.access-log.retain-days": 10,
+  "micronaut.server.jetty.access-log.pattern": "%{client}a - %u %t \"%r\" %s %O"
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
 
 <h1 id="tomcat"><a class="anchor" href="#tomcat"></a>7 Tomcat Server</h1>
 
@@ -1048,6 +1181,63 @@ public class TomcatServerCustomizer implements BeanCreatedEventListener&lt;Tomca
 }</code></pre>
 </div>
 </div>
+<div class="sect2">
+<h3 id="_access_log_configuration">Access Log Configuration</h3>
+<div class="paragraph">
+<p>To configure the <a href="https://tomcat.apache.org/tomcat-10.1-doc/config/valve.html#Access_Logging">Tomcat Access Log</a>:</p>
+</div>
+<div class="openblock">
+<div class="title">Tomcat Access Log Configuration</div>
+<div class="content">
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-properties hljs" data-lang="properties">micronaut.server.tomcat.access-log.enabled=true,
+micronaut.server.tomcat.access-log.pattern=combined
+micronaut.server.tomcat.access-log.directory=/var/logs</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">micronaut.server.tomcat.access-log.enabled: true,
+micronaut.server.tomcat.access-log.pattern: combined
+micronaut.server.tomcat.access-log.directory: /var/logs</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">"micronaut.server.tomcat.access-log.enabled"="true,"
+"micronaut.server.tomcat.access-log.pattern"="combined"
+"micronaut.server.tomcat.access-log.directory"="/var/logs"</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy-config hljs" data-lang="groovy-config">micronaut.server.tomcat.accessLog.enabled = "true,"
+micronaut.server.tomcat.accessLog.pattern = "combined"
+micronaut.server.tomcat.accessLog.directory = "/var/logs"</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-hocon hljs" data-lang="hocon">{
+  "micronaut.server.tomcat.access-log.enabled" = "true,"
+  "micronaut.server.tomcat.access-log.pattern" = "combined"
+  "micronaut.server.tomcat.access-log.directory" = "/var/logs"
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json-config hljs" data-lang="json-config">{
+  "micronaut.server.tomcat.access-log.enabled": "true,",
+  "micronaut.server.tomcat.access-log.pattern": "combined",
+  "micronaut.server.tomcat.access-log.directory": "/var/logs"
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
 
 <h1 id="undertow"><a class="anchor" href="#undertow"></a>8 Undertow Server</h1>
 
@@ -1197,6 +1387,63 @@ public class UndertowServerCustomizer implements BeanCreatedEventListener&lt;Und
         return undertowBuilder;
     }
 }</code></pre>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_access_log_configuration">Access Log Configuration</h3>
+<div class="paragraph">
+<p>To configure the <a href="https://access.redhat.com/documentation/en-us/red_hat_jboss_enterprise_application_platform/7.3/html/configuration_guide/configuring_the_web_server_undertow#access_logging">Undertow Access Log</a>:</p>
+</div>
+<div class="openblock">
+<div class="title">Undertow Access Log Configuration</div>
+<div class="content">
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-properties hljs" data-lang="properties">micronaut.server.undertow.access-log.enabled=true,
+micronaut.server.undertow.access-log.pattern=combined
+micronaut.server.undertow.access-log.output-directory=/var/logs</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">micronaut.server.undertow.access-log.enabled: true,
+micronaut.server.undertow.access-log.pattern: combined
+micronaut.server.undertow.access-log.output-directory: /var/logs</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">"micronaut.server.undertow.access-log.enabled"="true,"
+"micronaut.server.undertow.access-log.pattern"="combined"
+"micronaut.server.undertow.access-log.output-directory"="/var/logs"</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy-config hljs" data-lang="groovy-config">micronaut.server.undertow.accessLog.enabled = "true,"
+micronaut.server.undertow.accessLog.pattern = "combined"
+micronaut.server.undertow.accessLog.outputDirectory = "/var/logs"</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-hocon hljs" data-lang="hocon">{
+  "micronaut.server.undertow.access-log.enabled" = "true,"
+  "micronaut.server.undertow.access-log.pattern" = "combined"
+  "micronaut.server.undertow.access-log.output-directory" = "/var/logs"
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json-config hljs" data-lang="json-config">{
+  "micronaut.server.undertow.access-log.enabled": "true,",
+  "micronaut.server.undertow.access-log.pattern": "combined",
+  "micronaut.server.undertow.access-log.output-directory": "/var/logs"
+}</code></pre>
+</div>
+</div>
+</div>
 </div>
 </div>
 
