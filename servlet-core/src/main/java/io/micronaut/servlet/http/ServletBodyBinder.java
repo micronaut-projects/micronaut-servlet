@@ -123,7 +123,19 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
                     .orElse(null);
                 if (name == null && messageBodyReader != null && messageBodyReader.isReadable(context.getArgument(), mediaType)) {
                     try (InputStream inputStream = servletHttpRequest.getInputStream()) {
-                        Object content = messageBodyReader.read(context.getArgument(), mediaType, source.getHeaders(), inputStream);
+                        Object content;
+                        if (Publishers.isConvertibleToPublisher(context.getArgument().getType())) {
+                            Argument<?> firstArg = context.getArgument().getFirstTypeVariable().orElse(Argument.OBJECT_ARGUMENT);
+                            Publisher<?> publisher;
+                            if (Publishers.isSingle(context.getArgument().getType())) {
+                                publisher = Publishers.just(messageBodyReader.read(firstArg, mediaType, source.getHeaders(), inputStream));
+                            } else {
+                                publisher = Flux.fromIterable((Iterable<?>) messageBodyReader.read(Argument.listOf(firstArg), mediaType, source.getHeaders(), inputStream));
+                            }
+                            content = conversionService.convertRequired(publisher, type);
+                        } else {
+                            content = messageBodyReader.read(context.getArgument(), mediaType, source.getHeaders(), inputStream);
+                        }
                         if (content != null && servletHttpRequest instanceof ParsedBodyHolder parsedBody) {
                             parsedBody.setParsedBody(content);
                         }

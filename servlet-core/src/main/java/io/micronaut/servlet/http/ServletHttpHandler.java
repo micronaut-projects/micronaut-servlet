@@ -37,9 +37,10 @@ import io.micronaut.http.MediaType;
 import io.micronaut.http.MutableHttpResponse;
 import io.micronaut.http.annotation.Header;
 import io.micronaut.http.annotation.Produces;
+import io.micronaut.http.body.DynamicMessageBodyWriter;
+import io.micronaut.http.body.MessageBodyHandlerRegistry;
 import io.micronaut.http.body.MessageBodyWriter;
 import io.micronaut.http.codec.CodecException;
-import io.micronaut.http.codec.MediaTypeCodec;
 import io.micronaut.http.codec.MediaTypeCodecRegistry;
 import io.micronaut.http.context.ServerHttpRequestContext;
 import io.micronaut.http.context.event.HttpRequestReceivedEvent;
@@ -52,14 +53,13 @@ import io.micronaut.http.server.types.files.StreamedFile;
 import io.micronaut.http.server.types.files.SystemFile;
 import io.micronaut.web.router.RouteInfo;
 import io.micronaut.web.router.resource.StaticResourceResolver;
-import java.io.EOFException;
 import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.io.BufferedWriter;
+import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -94,6 +94,7 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
     private final RouteExecutor routeExecutor;
     private final ConversionService conversionService;
     private final MediaTypeCodecRegistry mediaTypeCodecRegistry;
+    private final MessageBodyHandlerRegistry messageBodyHandlerRegistry;
     private final Map<Class<?>, ServletResponseEncoder<?>> responseEncoders;
     private final StaticResourceResolver staticResourceResolver;
 
@@ -106,6 +107,7 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
     protected ServletHttpHandler(ApplicationContext applicationContext, ConversionService conversionService) {
         this.applicationContext = Objects.requireNonNull(applicationContext, "The application context cannot be null");
         this.mediaTypeCodecRegistry = applicationContext.getBean(MediaTypeCodecRegistry.class);
+        this.messageBodyHandlerRegistry = applicationContext.getBean(MessageBodyHandlerRegistry.class);
         //noinspection unchecked
         this.responseEncoders = applicationContext.streamOfType(ServletResponseEncoder.class)
             .collect(Collectors.toMap(
@@ -403,6 +405,14 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
                     response.contentType(mediaType);
                 }
 
+                MessageBodyWriter<Object> messageBodyWriter = null;
+                if (!(body instanceof HttpStatus)) {
+                    messageBodyWriter = routeInfoAttribute.map(RouteInfo::getMessageBodyWriter).orElse(null);
+                    if (messageBodyWriter == null) {
+                        messageBodyWriter = new DynamicMessageBodyWriter(messageBodyHandlerRegistry, List.of(mediaType));
+                    }
+                }
+
                 setHeadersFromMetadata(servletResponse, routeAnnotationMetadata, body);
                 if (Publishers.isConvertibleToPublisher(body)) {
                     boolean isSingle = Publishers.isSingle(body.getClass());
@@ -438,69 +448,54 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
                             return;
                         } else {
                             // fallback to blocking
-                            body = Flux.from(publisher).collectList().block();
-                            servletResponse.body(body);
+                            try (OutputStream outputStream = servletResponse.getOutputStream()) {
+                                boolean json = mediaType.equals(MediaType.APPLICATION_JSON_TYPE);
+                                if (json) {
+                                    outputStream.write('[');
+                                }
+                                boolean first = true;
+                                for (Object o : Flux.from(publisher).toIterable()) {
+                                    if (!first && json) {
+                                        outputStream.write(',');
+                                    }
+                                    first = false;
+
+                                    messageBodyWriter.writeTo(
+                                        bodyArgument,
+                                        mediaType,
+                                        o,
+                                        response.getHeaders(),
+                                        outputStream
+                                    );
+                                }
+                                if (json) {
+                                    outputStream.write(']');
+                                }
+                            } catch (IOException e) {
+                                throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+                            }
+                            responsePublisherCallback.accept(response);
+                            return;
                         }
                     }
                 }
                 if (body instanceof HttpStatus httpStatus) {
                     servletResponse.status(httpStatus);
                 } else {
-                    if (body instanceof CharSequence) {
-                        if (response.getContentType().isEmpty()) {
-                            response.contentType(MediaType.APPLICATION_JSON);
-                        }
-                        try (BufferedWriter writer = servletResponse.getWriter()) {
-                            writer.write(body.toString());
-                            writer.flush();
-                        } catch (IOException e) {
-                            throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-                        }
-                    } else if (body instanceof byte[] byteArray) {
-                        try (OutputStream outputStream = servletResponse.getOutputStream()) {
-                            outputStream.write(byteArray);
-                            outputStream.flush();
-                        } catch (IOException e) {
-                            throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-                        }
-                    } else if (body instanceof Writable writable) {
-                        try (OutputStream outputStream = servletResponse.getOutputStream()) {
-                            writable.writeTo(outputStream, response.getCharacterEncoding());
-                            outputStream.flush();
-                        } catch (IOException e) {
-                            throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-                        }
-                    } else {
-                        MessageBodyWriter<Object> messageBodyWriter =
-                            routeInfoAttribute.map(RouteInfo::getMessageBodyWriter).orElse(null);
-                        if (messageBodyWriter != null && messageBodyWriter.isWriteable(bodyArgument, mediaType)) {
-                            try (OutputStream outputStream = servletResponse.getOutputStream()) {
-                                messageBodyWriter.writeTo(
-                                    bodyArgument,
-                                    mediaType,
-                                    body,
-                                    response.getHeaders(),
-                                    outputStream
-                                );
-                            } catch (IOException e) {
-                                throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-                            }
+                    try (OutputStream outputStream = servletResponse.getOutputStream()) {
+                        if (body instanceof Writable w) {
+                            w.writeTo(outputStream);
                         } else {
-                            final MediaTypeCodec codec = mediaTypeCodecRegistry.findCodec(mediaType, bodyType).orElse(null);
-                            if (codec != null) {
-                                try (OutputStream outputStream = servletResponse.getOutputStream()) {
-                                    codec.encode(body, outputStream);
-                                    outputStream.flush();
-                                } catch (Throwable e) {
-                                    if (e instanceof CodecException codecException) {
-                                        throw codecException;
-                                    }
-                                    throw new CodecException("Failed to encode object [" + body + "] to content type [" + mediaType + "]: " + e.getMessage(), e);
-                                }
-                            } else {
-                                throw new CodecException("No codec present capable of encoding object [" + body + "] to content type [" + mediaType + "]");
-                            }
+                            messageBodyWriter.writeTo(
+                                bodyArgument,
+                                mediaType,
+                                body,
+                                response.getHeaders(),
+                                outputStream
+                            );
                         }
+                    } catch (IOException e) {
+                        throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
                     }
                 }
             }
