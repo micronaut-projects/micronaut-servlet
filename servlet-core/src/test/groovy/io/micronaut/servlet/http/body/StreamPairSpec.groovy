@@ -1,4 +1,4 @@
-package io.micronaut.servlet.engine.body
+package io.micronaut.servlet.http.body
 
 import io.micronaut.http.body.ByteBody
 import spock.lang.Specification

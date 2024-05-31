@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.servlet.engine.body;
+package io.micronaut.servlet.http.body;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
@@ -27,12 +27,14 @@ import java.util.concurrent.CompletableFuture;
 
 /**
  * {@link io.micronaut.http.body.AvailableByteBody} implementation based on a byte array.
+ * <p>
+ * Note: While internal, this is also used from the AWS and GCP modules.
  *
  * @author Jonas Konrad
  * @since 4.9.0
  */
 @Internal
-final class AvailableByteArrayBody extends AbstractServletByteBody implements CloseableAvailableByteBody {
+public final class AvailableByteArrayBody extends AbstractServletByteBody implements CloseableAvailableByteBody {
     private byte[] array;
 
     public AvailableByteArrayBody(byte[] array) {
