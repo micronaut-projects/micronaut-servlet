@@ -163,6 +163,12 @@ public class UndertowFactory extends ServletServerFactory {
             applyAdditionalPorts(builder, host, port, null);
         }
 
+        if (servletConfiguration.getMaxThreads() != null) {
+            builder.setServerOption(Options.WORKER_TASK_MAX_THREADS, servletConfiguration.getMaxThreads());
+            if (servletConfiguration.getMinThreads() != null) {
+                builder.setServerOption(Options.WORKER_TASK_CORE_THREADS, servletConfiguration.getMinThreads());
+            }
+        }
         Map<String, String> serverOptions = configuration.getServerOptions();
         serverOptions.forEach((key, value) -> {
             Object opt = ReflectionUtils.findDeclaredField(UndertowOptions.class, key)

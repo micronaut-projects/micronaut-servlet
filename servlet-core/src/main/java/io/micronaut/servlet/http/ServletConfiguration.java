@@ -50,4 +50,23 @@ public interface ServletConfiguration {
     default boolean isEnableVirtualThreads() {
         return true;
     }
+
+    /**
+     * Get the minimum number of threads in the created thread pool.
+     *
+     * @return The minimum number of threads
+     */
+    default Integer getMinThreads() {
+        return null;
+    }
+
+    /**
+     * Get the maximum number of threads in the created thread pool.
+     *
+     * @return The maximum number of threads
+     */
+    default Integer getMaxThreads() {
+        return null;
+    }
+
 }
