@@ -126,11 +126,12 @@ implements <a href="../http/ServletHttpRequest.html" title="interface in io.micr
 <div class="table-header col-second">Constructor</div>
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color"><code>protected </code></div>
-<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(io.micronaut.core.convert.ConversionService,jakarta.servlet.http.HttpServletRequest,jakarta.servlet.http.HttpServletResponse,io.micronaut.http.codec.MediaTypeCodecRegistry,io.micronaut.servlet.http.BodyBuilder)" class="member-name-link">DefaultServletHttpRequest</a><wbr>(io.micronaut.core.convert.ConversionService&nbsp;conversionService,
+<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(io.micronaut.core.convert.ConversionService,jakarta.servlet.http.HttpServletRequest,jakarta.servlet.http.HttpServletResponse,io.micronaut.http.codec.MediaTypeCodecRegistry,io.micronaut.servlet.http.BodyBuilder,java.util.concurrent.Executor)" class="member-name-link">DefaultServletHttpRequest</a><wbr>(io.micronaut.core.convert.ConversionService&nbsp;conversionService,
  jakarta.servlet.http.HttpServletRequest&nbsp;delegate,
  jakarta.servlet.http.HttpServletResponse&nbsp;response,
  io.micronaut.http.codec.MediaTypeCodecRegistry&nbsp;codecRegistry,
- <a href="../http/BodyBuilder.html" title="interface in io.micronaut.servlet.http">BodyBuilder</a>&nbsp;bodyBuilder)</code></div>
+ <a href="../http/BodyBuilder.html" title="interface in io.micronaut.servlet.http">BodyBuilder</a>&nbsp;bodyBuilder,
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/Executor.html" title="class or interface in java.util.concurrent" class="external-link">Executor</a>&nbsp;ioExecutor)</code></div>
 <div class="col-last even-row-color">
 <div class="block">Default constructor.</div>
 </div>
@@ -288,13 +289,14 @@ implements <a href="../http/ServletHttpRequest.html" title="interface in io.micr
 <h2>Constructor Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="&lt;init&gt;(io.micronaut.core.convert.ConversionService,jakarta.servlet.http.HttpServletRequest,jakarta.servlet.http.HttpServletResponse,io.micronaut.http.codec.MediaTypeCodecRegistry,io.micronaut.servlet.http.BodyBuilder)">
+<section class="detail" id="&lt;init&gt;(io.micronaut.core.convert.ConversionService,jakarta.servlet.http.HttpServletRequest,jakarta.servlet.http.HttpServletResponse,io.micronaut.http.codec.MediaTypeCodecRegistry,io.micronaut.servlet.http.BodyBuilder,java.util.concurrent.Executor)">
 <h3>DefaultServletHttpRequest</h3>
 <div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="element-name">DefaultServletHttpRequest</span><wbr><span class="parameters">(io.micronaut.core.convert.ConversionService&nbsp;conversionService,
  jakarta.servlet.http.HttpServletRequest&nbsp;delegate,
  jakarta.servlet.http.HttpServletResponse&nbsp;response,
  io.micronaut.http.codec.MediaTypeCodecRegistry&nbsp;codecRegistry,
- <a href="../http/BodyBuilder.html" title="interface in io.micronaut.servlet.http">BodyBuilder</a>&nbsp;bodyBuilder)</span></div>
+ <a href="../http/BodyBuilder.html" title="interface in io.micronaut.servlet.http">BodyBuilder</a>&nbsp;bodyBuilder,
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/Executor.html" title="class or interface in java.util.concurrent" class="external-link">Executor</a>&nbsp;ioExecutor)</span></div>
 <div class="block">Default constructor.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -303,6 +305,7 @@ implements <a href="../http/ServletHttpRequest.html" title="interface in io.micr
 <dd><code>response</code> - The servlet response</dd>
 <dd><code>codecRegistry</code> - The codec registry</dd>
 <dd><code>bodyBuilder</code> - Body Builder</dd>
+<dd><code>ioExecutor</code> - Executor for blocking operations</dd>
 </dl>
 </section>
 </li>

@@ -3,10 +3,10 @@ io.micronaut.servlet.api
 io.micronaut.servlet.api.annotation
 io.micronaut.servlet.engine
 io.micronaut.servlet.engine.bind
-io.micronaut.servlet.engine.body
 io.micronaut.servlet.engine.initializer
 io.micronaut.servlet.engine.server
 io.micronaut.servlet.http
+io.micronaut.servlet.http.body
 io.micronaut.servlet.http.encoders
 io.micronaut.servlet.jetty
 io.micronaut.servlet.tomcat
