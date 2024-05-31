@@ -47,6 +47,7 @@ import org.apache.catalina.Container;
 import org.apache.catalina.Context;
 import org.apache.catalina.connector.Connector;
 import org.apache.catalina.core.ContainerBase;
+import org.apache.catalina.core.StandardThreadExecutor;
 import org.apache.catalina.startup.Tomcat;
 import org.apache.coyote.ProtocolHandler;
 import org.apache.coyote.http2.Http2Protocol;
@@ -124,6 +125,21 @@ public class TomcatFactory extends ServletServerFactory {
         configuration.setAsyncFileServingEnabled(false);
 
         Tomcat tomcat = newTomcat();
+        if (configuration.getMaxThreads() != null) {
+            StandardThreadExecutor executor = new StandardThreadExecutor();
+            executor.setName("tomcatThreadPool");
+            executor.setMaxThreads(configuration.getMaxThreads());
+            if (configuration.getMinThreads() != null) {
+                executor.setMinSpareThreads(configuration.getMinThreads());
+            }
+            tomcat.getService().addExecutor(executor);
+            if (connector != null) {
+                connector.getProtocolHandler().setExecutor(executor);
+            }
+            if (httpsConnector != null) {
+                httpsConnector.getProtocolHandler().setExecutor(executor);
+            }
+        }
         final Context context = newTomcatContext(tomcat);
 
         configureServletInitializer(context, servletInitializers);

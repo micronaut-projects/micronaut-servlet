@@ -365,17 +365,23 @@ public class JettyFactory extends ServletServerFactory {
      * @return The server
      */
     protected @NonNull Server newServer(@NonNull ApplicationContext applicationContext, @NonNull MicronautServletConfiguration configuration) {
-        Server server;
+        QueuedThreadPool threadPool;
+        if (configuration.getMaxThreads() != null) {
+            if (configuration.getMinThreads() != null) {
+                threadPool = new QueuedThreadPool(configuration.getMaxThreads(), configuration.getMinThreads());
+            } else {
+                threadPool = new QueuedThreadPool(configuration.getMaxThreads());
+            }
+        } else {
+            threadPool = new QueuedThreadPool();
+        }
+
         if (configuration.isEnableVirtualThreads() && LoomSupport.isSupported()) {
-            QueuedThreadPool threadPool = new QueuedThreadPool();
             threadPool.setVirtualThreadsExecutor(
                 applicationContext.getBean(ExecutorService.class, Qualifiers.byName(TaskExecutors.BLOCKING))
             );
-            server = new Server(threadPool);
-        } else {
-            server = new Server();
         }
-        return server;
+        return new Server(threadPool);
     }
 
     /**

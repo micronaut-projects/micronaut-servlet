@@ -51,6 +51,9 @@ public class MicronautServletConfiguration implements Named, ServletConfiguratio
     private boolean asyncSupported = true;
     private boolean enableVirtualThreads = true;
 
+    private Integer minThreads;
+    private Integer maxThreads;
+
 
     /**
      * Default constructor.
@@ -150,5 +153,33 @@ public class MicronautServletConfiguration implements Named, ServletConfiguratio
     @Override
     public boolean isAsyncFileServingEnabled() {
         return asyncSupported && asyncFileServingEnabled;
+    }
+
+    @Override
+    public Integer getMinThreads() {
+        return minThreads;
+    }
+
+    /**
+     * Specify the minimum number of threads in the created thread pool.
+     *
+     * @param minThreads The minimum number of threads
+     */
+    public void setMinThreads(Integer minThreads) {
+        this.minThreads = minThreads;
+    }
+
+    @Override
+    public Integer getMaxThreads() {
+        return maxThreads;
+    }
+
+    /**
+     * Specify the maximum number of threads in the created thread pool.
+     *
+     * @param maxThreads The maximum number of threads
+     */
+    public void setMaxThreads(Integer maxThreads) {
+        this.maxThreads = maxThreads;
     }
 }
