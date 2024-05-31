@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.servlet.engine.body;
+package io.micronaut.servlet.http.body;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.http.body.CloseableByteBody;
@@ -25,7 +25,7 @@ import io.micronaut.http.body.CloseableByteBody;
  * @since 4.9.0
  */
 @Internal
-public abstract class AbstractServletByteBody implements CloseableByteBody {
+abstract class AbstractServletByteBody implements CloseableByteBody {
     static void failClaim() {
         throw new IllegalStateException("Request body has already been claimed: Two conflicting sites are trying to access the request body. If this is intentional, the first user must ByteBody#split the body. To find out where the body was claimed, turn on TRACE logging for io.micronaut.http.server.netty.body.NettyByteBody.");
     }

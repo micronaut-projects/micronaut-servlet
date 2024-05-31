@@ -17,13 +17,17 @@ package io.micronaut.servlet.engine;
 
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.convert.ConversionService;
+import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.servlet.http.BodyBuilder;
 import io.micronaut.servlet.http.ServletExchange;
 import io.micronaut.servlet.http.ServletHttpHandler;
-
+import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+
+import java.util.concurrent.Executor;
+import java.util.concurrent.ForkJoinPool;
 
 /**
  * Default implementation of {@link ServletHttpHandler} for the Servlet API.
@@ -33,32 +37,48 @@ import jakarta.servlet.http.HttpServletResponse;
  */
 @Singleton
 public class DefaultServletHttpHandler extends ServletHttpHandler<HttpServletRequest, HttpServletResponse> {
+    private final Executor ioExecutor;
+
     /**
      * Default constructor.
      *
      * @param applicationContext The application context
      * @param conversionService  The conversion service
+     * @param ioExecutor         Executor to use for blocking IO operations
      */
-    public DefaultServletHttpHandler(ApplicationContext applicationContext, ConversionService conversionService) {
+    public DefaultServletHttpHandler(ApplicationContext applicationContext, ConversionService conversionService, @Named(TaskExecutors.BLOCKING) Executor ioExecutor) {
         super(applicationContext, conversionService);
+        this.ioExecutor = ioExecutor;
     }
 
     /**
      * Default constructor.
      *
      * @param applicationContext The application context
-     * @deprecated use {@link #DefaultServletHttpHandler(ApplicationContext, ConversionService)}
+     * @param conversionService  The conversion service
+     * @deprecated use {@link #DefaultServletHttpHandler(ApplicationContext, ConversionService, Executor)}
+     */
+    @Deprecated
+    public DefaultServletHttpHandler(ApplicationContext applicationContext, ConversionService conversionService) {
+        this(applicationContext, conversionService, ForkJoinPool.commonPool());
+    }
+
+    /**
+     * Default constructor.
+     *
+     * @param applicationContext The application context
+     * @deprecated use {@link #DefaultServletHttpHandler(ApplicationContext, ConversionService, Executor)}
      */
     @Deprecated
     public DefaultServletHttpHandler(ApplicationContext applicationContext) {
-        super(applicationContext, ConversionService.SHARED);
+        this(applicationContext, ConversionService.SHARED);
     }
 
     @Override
     protected ServletExchange<HttpServletRequest, HttpServletResponse> createExchange(
             HttpServletRequest request,
             HttpServletResponse response) {
-        return new DefaultServletHttpRequest<>(applicationContext.getConversionService(), request, response, getMediaTypeCodecRegistry(), applicationContext.getBean(BodyBuilder.class));
+        return new DefaultServletHttpRequest<>(applicationContext.getConversionService(), request, response, getMediaTypeCodecRegistry(), applicationContext.getBean(BodyBuilder.class), ioExecutor);
     }
 
     @Override
