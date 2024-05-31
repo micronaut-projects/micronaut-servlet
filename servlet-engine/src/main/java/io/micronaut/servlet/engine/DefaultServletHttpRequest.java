@@ -22,14 +22,12 @@ import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.convert.value.MutableConvertibleValues;
-import io.micronaut.core.execution.ExecutionFlow;
 import io.micronaut.core.io.buffer.ByteBuffer;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.core.util.SupplierUtil;
-import io.micronaut.http.FullHttpRequest;
 import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpMethod;
 import io.micronaut.http.HttpParameters;
@@ -37,10 +35,15 @@ import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpVersion;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.MutableHttpRequest;
+import io.micronaut.http.ServerHttpRequest;
+import io.micronaut.http.body.AvailableByteBody;
+import io.micronaut.http.body.ByteBody;
+import io.micronaut.http.body.CloseableAvailableByteBody;
+import io.micronaut.http.body.CloseableByteBody;
 import io.micronaut.http.codec.MediaTypeCodecRegistry;
 import io.micronaut.http.cookie.Cookies;
+import io.micronaut.servlet.engine.body.AvailableByteArrayBody;
 import io.micronaut.servlet.http.BodyBuilder;
-import io.micronaut.servlet.http.ByteArrayByteBuffer;
 import io.micronaut.servlet.http.ParsedBodyHolder;
 import io.micronaut.servlet.http.ServletExchange;
 import io.micronaut.servlet.http.ServletHttpRequest;
@@ -51,9 +54,17 @@ import jakarta.servlet.ReadListener;
 import jakarta.servlet.ServletInputStream;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscriber;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Sinks;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InterruptedIOException;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.nio.charset.Charset;
@@ -68,13 +79,12 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
-import org.reactivestreams.Subscriber;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Sinks;
 
 /**
  * Implementation of {@link HttpRequest} ontop of the Servlet API.
@@ -88,7 +98,7 @@ public final class DefaultServletHttpRequest<B> implements
     ServletHttpRequest<HttpServletRequest, B>,
     ServletExchange<HttpServletRequest, HttpServletResponse>,
     StreamedServletMessage<B, byte[]>,
-    FullHttpRequest<B>,
+    ServerHttpRequest<B>,
     ParsedBodyHolder<B> {
 
     private static final Logger LOG = LoggerFactory.getLogger(DefaultServletHttpRequest.class);
@@ -103,11 +113,11 @@ public final class DefaultServletHttpRequest<B> implements
     private final DefaultServletHttpResponse<B> response;
     private final MediaTypeCodecRegistry codecRegistry;
     private final MutableConvertibleValues<Object> attributes;
+    private final StreamingBodyImpl byteBody = new StreamingBodyImpl();
     private DefaultServletCookies cookies;
     private Supplier<Optional<B>> body;
 
     private boolean bodyIsReadAsync;
-    private ByteArrayByteBuffer<B> servletByteBuffer;
     private B parsedBody;
 
     /**
@@ -323,7 +333,18 @@ public final class DefaultServletHttpRequest<B> implements
 
     @Override
     public InputStream getInputStream() throws IOException {
-        return servletByteBuffer != null ? servletByteBuffer.toInputStream() : delegate.getInputStream();
+        CompletableFuture<? extends CloseableAvailableByteBody> buffered = byteBody.buffered.get();
+        if (buffered == null) {
+            return delegate.getInputStream();
+        } else {
+            try (CloseableAvailableByteBody split = buffered.get().split()) {
+                return split.toInputStream();
+            } catch (InterruptedException e) {
+                throw new InterruptedIOException();
+            } catch (ExecutionException e) {
+                throw new IOException(e);
+            }
+        }
     }
 
     @Override
@@ -489,35 +510,8 @@ public final class DefaultServletHttpRequest<B> implements
     }
 
     @Override
-    public boolean isFull() {
-        return !bodyIsReadAsync;
-    }
-
-    @Override
-    public ByteBuffer<?> contents() {
-        if (bodyIsReadAsync) {
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Body is read asynchronously, cannot get contents");
-            }
-            return null;
-        }
-        try {
-            if (servletByteBuffer == null) {
-                this.servletByteBuffer = new ByteArrayByteBuffer<>(delegate.getInputStream().readAllBytes());
-            }
-            return servletByteBuffer;
-        } catch (IOException e) {
-            throw new IllegalStateException("Error getting all body contents", e);
-        }
-    }
-
-    @Override
-    public ExecutionFlow<ByteBuffer<?>> bufferContents() {
-        ByteBuffer<?> contents = contents();
-        if (contents == null) {
-            return null;
-        }
-        return ExecutionFlow.just(contents);
+    public @NonNull ByteBody byteBody() {
+        return byteBody;
     }
 
     /**
@@ -635,6 +629,64 @@ public final class DefaultServletHttpRequest<B> implements
                 }
             }
             return Optional.empty();
+        }
+    }
+
+    /**
+     * Temporary streaming {@link ByteBody} implementation that only supports buffering, for filter
+     * body binding to work. Will be replaced by a proper streaming implementation.
+     */
+    private class StreamingBodyImpl implements CloseableByteBody {
+        private final AtomicReference<CompletableFuture<? extends CloseableAvailableByteBody>> buffered = new AtomicReference<>();
+
+        @Override
+        public void close() {
+        }
+
+        @Override
+        public @NonNull CloseableByteBody split(SplitBackpressureMode backpressureMode) {
+            return this;
+        }
+
+        @Override
+        public @NonNull OptionalLong expectedLength() {
+            return OptionalLong.empty();
+        }
+
+        @Override
+        public @NonNull InputStream toInputStream() {
+            throw new UnsupportedOperationException("Streaming access not yet implemented for servlet");
+        }
+
+        @Override
+        public @NonNull Publisher<byte[]> toByteArrayPublisher() {
+            throw new UnsupportedOperationException("Streaming access not yet implemented for servlet");
+        }
+
+        @Override
+        public @NonNull Publisher<ByteBuffer<?>> toByteBufferPublisher() {
+            throw new UnsupportedOperationException("Streaming access not yet implemented for servlet");
+        }
+
+        @Override
+        public CompletableFuture<? extends CloseableAvailableByteBody> buffer() {
+            if (bodyIsReadAsync) {
+                throw new UnsupportedOperationException("Body is read asynchronously, cannot get contents");
+            }
+            CompletableFuture<CloseableAvailableByteBody> dest = new CompletableFuture<>();
+            CompletableFuture<? extends CloseableAvailableByteBody> result;
+            if (buffered.compareAndSet(null, dest)) {
+                try (InputStream is = delegate.getInputStream()) {
+                    dest.complete(new AvailableByteArrayBody(is.readAllBytes()));
+                } catch (Throwable t) {
+                    dest.completeExceptionally(t);
+                }
+                result = dest;
+            } else {
+                result = buffered.get();
+            }
+            // give each caller their own body
+            return result.thenApply(AvailableByteBody::split);
         }
     }
 }
