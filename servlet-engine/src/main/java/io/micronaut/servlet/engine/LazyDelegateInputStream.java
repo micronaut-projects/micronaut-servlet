@@ -15,6 +15,7 @@
  */
 package io.micronaut.servlet.engine;
 
+import io.micronaut.core.annotation.Internal;
 import jakarta.servlet.http.HttpServletRequest;
 
 import java.io.IOException;
@@ -27,11 +28,12 @@ import java.io.InputStream;
  * @since 4.9.0
  * @author Jonas Konrad
  */
+@Internal
 final class LazyDelegateInputStream extends InputStream {
     private HttpServletRequest request;
     private InputStream delegate;
 
-    public LazyDelegateInputStream(HttpServletRequest request) {
+    LazyDelegateInputStream(HttpServletRequest request) {
         this.request = request;
     }
 

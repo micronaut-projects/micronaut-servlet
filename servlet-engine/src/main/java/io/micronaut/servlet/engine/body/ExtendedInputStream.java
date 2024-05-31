@@ -15,6 +15,7 @@
  */
 package io.micronaut.servlet.engine.body;
 
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.body.ByteBody;
 import org.slf4j.Logger;
@@ -32,6 +33,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * @author Jonas Konrad
  * @since 4.9.0
  */
+@Internal
 abstract class ExtendedInputStream extends InputStream {
     private static final int CHUNK_SIZE = 8192;
     private static final Logger LOG = LoggerFactory.getLogger(ExtendedInputStream.class);
@@ -80,8 +82,15 @@ abstract class ExtendedInputStream extends InputStream {
         cancelInput();
     }
 
+    /**
+     * Allow discarding the input of this stream. See {@link ByteBody#allowDiscard()}.
+     */
     public abstract void allowDiscard();
 
+    /**
+     * Cancel any further upstream input. This also removes any backpressure that this stream
+     * may apply on its upstream.
+     */
     public abstract void cancelInput();
 
     private static final class Wrapper extends ExtendedInputStream {

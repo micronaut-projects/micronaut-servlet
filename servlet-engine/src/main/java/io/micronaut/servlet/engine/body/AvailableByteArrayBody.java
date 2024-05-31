@@ -32,7 +32,7 @@ import java.util.concurrent.CompletableFuture;
  * @since 4.9.0
  */
 @Internal
-public final class AvailableByteArrayBody extends AbstractServletByteBody implements CloseableAvailableByteBody {
+final class AvailableByteArrayBody extends AbstractServletByteBody implements CloseableAvailableByteBody {
     private byte[] array;
 
     public AvailableByteArrayBody(byte[] array) {
