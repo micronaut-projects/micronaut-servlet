@@ -22,14 +22,12 @@ import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.convert.value.MutableConvertibleValues;
-import io.micronaut.core.execution.ExecutionFlow;
 import io.micronaut.core.io.buffer.ByteBuffer;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.core.util.SupplierUtil;
-import io.micronaut.http.FullHttpRequest;
 import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpMethod;
 import io.micronaut.http.HttpParameters;
@@ -46,7 +44,6 @@ import io.micronaut.http.codec.MediaTypeCodecRegistry;
 import io.micronaut.http.cookie.Cookies;
 import io.micronaut.servlet.engine.body.AvailableByteArrayBody;
 import io.micronaut.servlet.http.BodyBuilder;
-import io.micronaut.servlet.http.ByteArrayByteBuffer;
 import io.micronaut.servlet.http.ParsedBodyHolder;
 import io.micronaut.servlet.http.ServletExchange;
 import io.micronaut.servlet.http.ServletHttpRequest;
@@ -57,11 +54,17 @@ import jakarta.servlet.ReadListener;
 import jakarta.servlet.ServletInputStream;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscriber;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Sinks;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
-import java.io.UncheckedIOException;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.nio.charset.Charset;
@@ -82,13 +85,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
-
-import org.reactivestreams.Publisher;
-import org.reactivestreams.Subscriber;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Sinks;
 
 /**
  * Implementation of {@link HttpRequest} ontop of the Servlet API.
@@ -117,7 +113,7 @@ public final class DefaultServletHttpRequest<B> implements
     private final DefaultServletHttpResponse<B> response;
     private final MediaTypeCodecRegistry codecRegistry;
     private final MutableConvertibleValues<Object> attributes;
-    private final MockStreamingBody byteBody = new MockStreamingBody();
+    private final StreamingBodyImpl byteBody = new StreamingBodyImpl();
     private DefaultServletCookies cookies;
     private Supplier<Optional<B>> body;
 
@@ -640,7 +636,7 @@ public final class DefaultServletHttpRequest<B> implements
      * Temporary streaming {@link ByteBody} implementation that only supports buffering, for filter
      * body binding to work. Will be replaced by a proper streaming implementation.
      */
-    private class MockStreamingBody implements CloseableByteBody {
+    private class StreamingBodyImpl implements CloseableByteBody {
         private final AtomicReference<CompletableFuture<? extends CloseableAvailableByteBody>> buffered = new AtomicReference<>();
 
         @Override
@@ -680,8 +676,8 @@ public final class DefaultServletHttpRequest<B> implements
             CompletableFuture<CloseableAvailableByteBody> dest = new CompletableFuture<>();
             CompletableFuture<? extends CloseableAvailableByteBody> result;
             if (buffered.compareAndSet(null, dest)) {
-                try {
-                    dest.complete(new AvailableByteArrayBody(delegate.getInputStream().readAllBytes()));
+                try (InputStream is = delegate.getInputStream()) {
+                    dest.complete(new AvailableByteArrayBody(is.readAllBytes()));
                 } catch (Throwable t) {
                     dest.completeExceptionally(t);
                 }
