@@ -28,7 +28,7 @@ import java.util.concurrent.CompletableFuture;
 /**
  * {@link io.micronaut.http.body.AvailableByteBody} implementation based on a byte array.
  * <p>
- * Note: While internal, this is also used from the AWS and GCP modules.
+ * Note: While internal, this is also used from the Azure, AWS and GCP modules.
  *
  * @author Jonas Konrad
  * @since 4.9.0
