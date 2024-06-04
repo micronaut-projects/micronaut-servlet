@@ -36,6 +36,8 @@ import java.util.concurrent.Executor;
 
 /**
  * Streaming {@link io.micronaut.http.body.ByteBody} implementation for servlet.
+ * <p>
+ * Note: While internal, this is also used from the Azure, AWS and GCP modules.
  *
  * @since 4.9.0
  * @author Jonas Konrad

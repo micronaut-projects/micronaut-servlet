@@ -61,6 +61,7 @@ import reactor.core.publisher.Mono;
 
 import java.io.EOFException;
 import java.io.File;
+import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
@@ -448,15 +449,19 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
                             return;
                         } else {
                             // fallback to blocking
-                            try (OutputStream outputStream = servletResponse.getOutputStream()) {
+
+                            // LazyOutputStream must not be initialized before publisher exceptions
+                            // are checked
+                            try (OutputStream outputStream = new LazyOutputStream(servletResponse)) {
                                 boolean json = mediaType.equals(MediaType.APPLICATION_JSON_TYPE);
-                                if (json) {
-                                    outputStream.write('[');
-                                }
                                 boolean first = true;
                                 for (Object o : Flux.from(publisher).toIterable()) {
-                                    if (!first && json) {
-                                        outputStream.write(',');
+                                    if (json) {
+                                        if (!first) {
+                                            outputStream.write(',');
+                                        } else {
+                                            outputStream.write('[');
+                                        }
                                     }
                                     first = false;
 
@@ -465,10 +470,13 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
                                         mediaType,
                                         o,
                                         response.getHeaders(),
-                                        outputStream
+                                        new UncloseableOutputStream(outputStream)
                                     );
                                 }
                                 if (json) {
+                                    if (first) {
+                                        outputStream.write('[');
+                                    }
                                     outputStream.write(']');
                                 }
                             } catch (IOException e) {
@@ -545,6 +553,51 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
         @Override
         protected FileCustomizableResponseType findFile(HttpRequest<?> request) {
             return matchFile(request.getPath()).orElse(null);
+        }
+    }
+
+    private static final class LazyOutputStream extends OutputStream {
+        private ServletHttpResponse<?, ?> response;
+        private OutputStream stream;
+
+        public LazyOutputStream(ServletHttpResponse<?, ?> response) {
+            this.response = response;
+        }
+
+        private OutputStream stream() throws IOException {
+            if (stream == null) {
+                stream = response.getOutputStream();
+                response = null;
+            }
+            return stream;
+        }
+
+        @Override
+        public void write(int b) throws IOException {
+            stream().write(b);
+        }
+
+        @Override
+        public void write(byte[] b, int off, int len) throws IOException {
+            stream().write(b, off, len);
+        }
+
+        @Override
+        public void close() throws IOException {
+            if (stream != null) {
+                stream.close();
+            }
+        }
+    }
+
+    private static final class UncloseableOutputStream extends FilterOutputStream {
+        public UncloseableOutputStream(OutputStream out) {
+            super(out);
+        }
+
+        @Override
+        public void close() throws IOException {
+            // do nothing
         }
     }
 }
