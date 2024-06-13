@@ -2,8 +2,10 @@ package io.micronaut.servlet.http.body
 
 import io.micronaut.http.body.ByteBody
 import spock.lang.Specification
+import spock.lang.TempDir
 import spock.lang.Timeout
 
+import java.nio.file.Path
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.ThreadLocalRandom
@@ -12,6 +14,9 @@ import java.util.concurrent.TimeUnit
 @Timeout(10)
 class StreamPairSpec extends Specification {
     private ExecutorService executor
+
+    @TempDir
+    Path tempFile
 
     static byte[] bytes(int n) {
         def data = new byte[n]
@@ -54,6 +59,18 @@ class StreamPairSpec extends Specification {
         def p = StreamPair.createStreamPair(ExtendedInputStream.wrap(new ByteArrayInputStream(data)), ByteBody.SplitBackpressureMode.FASTEST)
         assert Arrays.equals(p.left().readAllBytes(), data)
         assert Arrays.equals(p.right().readAllBytes(), data)
+    }
+
+    def fastestWithClosing() {
+        given:
+        def data = bytes(100)
+        File file = tempFile.resolve("test.txt").toFile()
+        file.bytes = data
+        def stream = new FileInputStream(file)
+        def p = StreamPair.createStreamPair(ExtendedInputStream.wrap(stream), ByteBody.SplitBackpressureMode.FASTEST)
+        assert Arrays.equals(p.right().readAllBytes(), data)
+        stream.close() // Theoretically the stream can be closed, as all the data was read
+        assert Arrays.equals(p.left().readAllBytes(), data)
     }
 
     def original() {

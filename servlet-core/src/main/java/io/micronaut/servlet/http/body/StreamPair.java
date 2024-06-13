@@ -243,8 +243,12 @@ final class StreamPair {
                 if (!queue.isEmpty() && fastModeSlowerSide == left) {
                     return queue.take(b, off, len);
                 } else {
+                    if (singleSideComplete) {
+                        return -1;
+                    }
                     int n = upstream.read(b, off, len);
                     if (n == -1) {
+                        singleSideComplete = true;
                         return -1;
                     }
                     if (!isOtherSideCancelled()) {
