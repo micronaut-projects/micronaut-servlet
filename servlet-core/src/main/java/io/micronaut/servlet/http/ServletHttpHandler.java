@@ -215,11 +215,16 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
         if (exchange.getRequest().isAsyncSupported()) {
             exchange.getRequest().executeAsync(asyncExecution -> {
                 try (PropagatedContext.Scope ignore = PropagatedContext.getOrEmpty().plus(new ServerHttpRequestContext(req)).propagate()) {
-                    lc.handleNormal(req)
-                        .onComplete((response, throwable) -> onComplete(exchange, req, response.toMutableResponse(), throwable, httpResponse -> {
-                            asyncExecution.complete();
-                            requestTerminated.accept(httpResponse);
-                        }));
+                    lc.handleNormal(req).onComplete((response, throwable) -> onComplete(
+                            exchange,
+                            req,
+                            response == null ? null : response.toMutableResponse(),
+                            throwable,
+                            httpResponse -> {
+                                asyncExecution.complete();
+                                requestTerminated.accept(httpResponse);
+                            }
+                    ));
                 }
             });
         } else {
@@ -228,7 +233,13 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
                 lc.handleNormal(req)
                     .onComplete((response, throwable) -> {
                         try {
-                            onComplete(exchange, req, response.toMutableResponse(), throwable, requestTerminated);
+                            onComplete(
+                                    exchange,
+                                    req,
+                                    response == null ? null : response.toMutableResponse(),
+                                    throwable,
+                                    requestTerminated
+                            );
                         } finally {
                             termination.complete(null);
                         }
