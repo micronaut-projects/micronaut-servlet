@@ -61,8 +61,14 @@ public class ServerlessApplication implements EmbeddedApplication<ServerlessAppl
         return true; // once this bean is instantiated, we assume it's running, so return true.
     }
 
-    @Override
-    public @NonNull ServerlessApplication start() {
+    /**
+     * Run the application using a particular channel
+     *
+     * @param input The input stream
+     * @param output The output stream
+     * @return The application
+     */
+    protected @NonNull ServerlessApplication start(InputStream input, OutputStream output) {
         final ConversionService conversionService = new DefaultMutableConversionService();
         final ServletHttpHandler<RawHttpRequest, RawHttpResponse<Void>> servletHttpHandler =
             new ServletHttpHandler<>(applicationContext, null) {
@@ -73,19 +79,29 @@ public class ServerlessApplication implements EmbeddedApplication<ServerlessAppl
                 }
             };
         try {
-            Channel channel = System.inheritedChannel();
-            if (channel != null) {
-                try (InputStream in = Channels.newInputStream((ReadableByteChannel) channel);
-                     OutputStream out = Channels.newOutputStream((WritableByteChannel) channel)) {
-                    runIndefinitely(servletHttpHandler, conversionService, in, out);
-                }
-            } else {
-                runIndefinitely(servletHttpHandler, conversionService, System.in, System.out);
-            }
+            runIndefinitely(servletHttpHandler, conversionService, input, output);
+
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
         return this;
+    }
+
+    @Override
+    public @NonNull ServerlessApplication start() {
+        try {
+            Channel channel = System.inheritedChannel();
+            if (channel != null) {
+                try (InputStream in = Channels.newInputStream((ReadableByteChannel) channel);
+                     OutputStream out = Channels.newOutputStream((WritableByteChannel) channel)) {
+                    return start(in, out);
+                }
+            } else {
+                return start(System.in, System.out);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException();
+        }
     }
 
     void runIndefinitely(ServletHttpHandler<RawHttpRequest, RawHttpResponse<Void>> servletHttpHandler,
