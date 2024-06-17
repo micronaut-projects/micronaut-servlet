@@ -7,5 +7,6 @@ dependencies {
     implementation("com.athaydes.rawhttp:rawhttp-core:2.4.1")
     implementation("com.athaydes.rawhttp:rawhttp-cookies:0.2.1")
 
+    testImplementation(mnSerde.micronaut.serde.jackson)
 }
 
