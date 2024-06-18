@@ -1,0 +1,28 @@
+plugins {
+    id("io.micronaut.build.internal.servlet.implementation")
+    id("java-library")
+}
+
+dependencies {
+    testAnnotationProcessor(platform(mn.micronaut.core.bom))
+    testAnnotationProcessor(mn.micronaut.inject.java)
+    testImplementation(platform(mn.micronaut.core.bom))
+    testImplementation(mn.micronaut.inject.java)
+
+    testImplementation(mn.micronaut.http.client)
+    testImplementation(mn.micronaut.http.server.tck)
+    testImplementation(libs.junit.platform.engine)
+    testImplementation(mn.micronaut.jackson.databind)
+    testImplementation(libs.junit.jupiter.engine)
+    testRuntimeOnly(mnLogging.logback.classic)
+
+    testRuntimeOnly(mnValidation.micronaut.validation)
+
+    testImplementation(projects.micronautHttpPoja)
+    testImplementation(mnSerde.micronaut.serde.jackson)
+    testImplementation(mn.micronaut.http.client)
+
+    testImplementation("com.athaydes.rawhttp:rawhttp-core:2.4.1")
+    testImplementation("com.athaydes.rawhttp:rawhttp-cookies:0.2.1")
+}
+
