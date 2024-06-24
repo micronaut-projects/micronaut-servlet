@@ -26,7 +26,7 @@ import org.junit.platform.suite.api.SuiteDisplayName;
 })
 @SuiteDisplayName("HTTP Server TCK for POJA")
 @ExcludeClassNamePatterns({
-    // 78 tests of 158 fail
+    // 89 tests of 188 fail
     "io.micronaut.http.server.tck.tests.staticresources.StaticResourceTest",
     "io.micronaut.http.server.tck.tests.hateoas.JsonErrorTest",
     "io.micronaut.http.server.tck.tests.VersionTest",
@@ -43,7 +43,6 @@ import org.junit.platform.suite.api.SuiteDisplayName;
     "io.micronaut.http.server.tck.tests.MiscTest",
     "io.micronaut.http.server.tck.tests.BodyTest",
     "io.micronaut.http.server.tck.tests.cors.CorsSimpleRequestTest",
-    "io.micronaut.http.server.tck.tests.CookiesTest",
     "io.micronaut.http.server.tck.tests.hateoas.JsonErrorSerdeTest",
     "io.micronaut.http.server.tck.tests.RemoteAddressTest",
     "io.micronaut.http.server.tck.tests.binding.LocalDateTimeTest",
