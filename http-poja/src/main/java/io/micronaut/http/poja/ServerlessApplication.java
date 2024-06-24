@@ -19,8 +19,11 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.convert.DefaultMutableConversionService;
+import io.micronaut.http.codec.MediaTypeCodecRegistry;
+import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.runtime.ApplicationConfiguration;
 import io.micronaut.runtime.EmbeddedApplication;
+import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.servlet.http.ServletExchange;
 import io.micronaut.servlet.http.ServletHttpHandler;
 import io.micronaut.servlet.http.ServletHttpRequest;
@@ -36,6 +39,8 @@ import java.nio.channels.Channel;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 
 /**
  * Implementation of {@link EmbeddedApplication} for POSIX serverless environments.
@@ -84,7 +89,6 @@ public class ServerlessApplication implements EmbeddedApplication<ServerlessAppl
      * @return The application
      */
     protected @NonNull ServerlessApplication start(InputStream input, OutputStream output) {
-        final ConversionService conversionService = new DefaultMutableConversionService();
         final ServletHttpHandler<RawHttpRequest, RawHttpResponse<Void>> servletHttpHandler =
             new ServletHttpHandler<>(applicationContext, null) {
                 @Override
@@ -94,7 +98,7 @@ public class ServerlessApplication implements EmbeddedApplication<ServerlessAppl
                 }
             };
         try {
-            runIndefinitely(servletHttpHandler, conversionService, input, output);
+            runIndefinitely(servletHttpHandler, applicationContext, input, output);
 
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -120,22 +124,26 @@ public class ServerlessApplication implements EmbeddedApplication<ServerlessAppl
     }
 
     void runIndefinitely(ServletHttpHandler<RawHttpRequest, RawHttpResponse<Void>> servletHttpHandler,
-                         ConversionService conversionService,
+                         ApplicationContext applicationContext,
                          InputStream in,
                          OutputStream out) throws IOException {
         while (true) {
-            handleSingleRequest(servletHttpHandler, conversionService, in, out);
+            handleSingleRequest(servletHttpHandler, applicationContext, in, out);
         }
     }
 
     void handleSingleRequest(ServletHttpHandler<RawHttpRequest, RawHttpResponse<Void>> servletHttpHandler,
-                                    ConversionService conversionService,
+                                    ApplicationContext applicationContext,
                                     InputStream in,
                                     OutputStream out) throws IOException {
+        ConversionService conversionService = applicationContext.getConversionService();
+        MediaTypeCodecRegistry codecRegistry = applicationContext.getBean(MediaTypeCodecRegistry.class);
+        ExecutorService ioExecutor = applicationContext.getBean(ExecutorService.class, Qualifiers.byName(TaskExecutors.IO));
+
         ServletExchange<RawHttpRequest, RawHttpResponse<Void>> servletExchange =
             new ServletExchange<>() {
                 private final ServletHttpRequest<RawHttpRequest, Object> httpRequest =
-                    new RawHttpBasedServletHttpRequest(in, conversionService);
+                    new RawHttpBasedServletHttpRequest(in, conversionService, codecRegistry, ioExecutor);
 
                 private final ServletHttpResponse<RawHttpResponse<Void>, String> httpResponse =
                     new RawHttpBasedServletHttpResponse(conversionService);
