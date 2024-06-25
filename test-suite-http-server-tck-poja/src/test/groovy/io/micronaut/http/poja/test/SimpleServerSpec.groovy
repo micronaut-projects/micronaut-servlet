@@ -70,6 +70,18 @@ class SimpleServerSpec extends BaseServerlessApplicationSpec {
         response.getBody(String.class).get() == "Hello, Andriy\n"
     }
 
+    void "test POST method with unused body"() {
+        given:
+        BlockingHttpClient client = HttpClient.create(new URL("http://localhost:" + app.port)).toBlocking()
+
+        when:
+        HttpResponse<?> response = client.exchange(HttpRequest.POST("/test/unused-body", null).header("Host", "h"))
+
+        then:
+        response.contentType.get() == MediaType.TEXT_PLAIN_TYPE
+        response.getBody(String.class).get() == "Success!"
+    }
+
     void "test PUT method"() {
         given:
         BlockingHttpClient client = HttpClient.create(new URL("http://localhost:" + app.port)).toBlocking()
@@ -103,6 +115,11 @@ class SimpleServerSpec extends BaseServerlessApplicationSpec {
         @Status(HttpStatus.CREATED)
         String create(@NonNull String name) {
             return "Hello, " + name + "\n"
+        }
+
+        @Post("/unused-body")
+        String createUnusedBody() {
+            return "Success!"
         }
 
         @Put("/{name}")

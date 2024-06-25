@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.http.poja;
+package io.micronaut.http.poja.rawhttp;
 
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
@@ -25,8 +25,8 @@ import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MutableHttpHeaders;
 import io.micronaut.http.MutableHttpResponse;
 import io.micronaut.http.cookie.Cookie;
+import io.micronaut.http.poja.PojaHttpResponse;
 import io.micronaut.http.simple.SimpleHttpHeaders;
-import io.micronaut.servlet.http.ServletHttpResponse;
 import rawhttp.core.HttpVersion;
 import rawhttp.core.RawHttpHeaders;
 import rawhttp.core.RawHttpResponse;
@@ -43,7 +43,7 @@ import java.util.Optional;
 /**
  * @author Sahoo.
  */
-class RawHttpBasedServletHttpResponse implements ServletHttpResponse<RawHttpResponse<Void>, String> {
+public class RawHttpBasedServletHttpResponse extends PojaHttpResponse {
 
     private final ByteArrayOutputStream out = new ByteArrayOutputStream();
 

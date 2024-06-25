@@ -18,8 +18,9 @@ package io.micronaut.http.poja;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.convert.ConversionService;
-import io.micronaut.core.convert.DefaultMutableConversionService;
 import io.micronaut.http.codec.MediaTypeCodecRegistry;
+import io.micronaut.http.poja.rawhttp.RawHttpBasedServletHttpRequest;
+import io.micronaut.http.poja.rawhttp.RawHttpBasedServletHttpResponse;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.runtime.ApplicationConfiguration;
 import io.micronaut.runtime.EmbeddedApplication;
@@ -39,7 +40,6 @@ import java.nio.channels.Channel;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 
 /**
@@ -138,7 +138,7 @@ public class ServerlessApplication implements EmbeddedApplication<ServerlessAppl
                                     OutputStream out) throws IOException {
         ConversionService conversionService = applicationContext.getConversionService();
         MediaTypeCodecRegistry codecRegistry = applicationContext.getBean(MediaTypeCodecRegistry.class);
-        ExecutorService ioExecutor = applicationContext.getBean(ExecutorService.class, Qualifiers.byName(TaskExecutors.IO));
+        ExecutorService ioExecutor = applicationContext.getBean(ExecutorService.class, Qualifiers.byName(TaskExecutors.BLOCKING));
 
         ServletExchange<RawHttpRequest, RawHttpResponse<Void>> servletExchange =
             new ServletExchange<>() {
