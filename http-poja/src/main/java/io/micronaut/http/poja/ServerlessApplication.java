@@ -27,8 +27,6 @@ import io.micronaut.runtime.EmbeddedApplication;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.servlet.http.ServletExchange;
 import io.micronaut.servlet.http.ServletHttpHandler;
-import io.micronaut.servlet.http.ServletHttpRequest;
-import io.micronaut.servlet.http.ServletHttpResponse;
 import jakarta.inject.Singleton;
 import rawhttp.core.RawHttpRequest;
 import rawhttp.core.RawHttpResponse;
@@ -99,7 +97,6 @@ public class ServerlessApplication implements EmbeddedApplication<ServerlessAppl
             };
         try {
             runIndefinitely(servletHttpHandler, applicationContext, input, output);
-
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -140,28 +137,36 @@ public class ServerlessApplication implements EmbeddedApplication<ServerlessAppl
         MediaTypeCodecRegistry codecRegistry = applicationContext.getBean(MediaTypeCodecRegistry.class);
         ExecutorService ioExecutor = applicationContext.getBean(ExecutorService.class, Qualifiers.byName(TaskExecutors.BLOCKING));
 
-        ServletExchange<RawHttpRequest, RawHttpResponse<Void>> servletExchange =
-            new ServletExchange<>() {
-                private final ServletHttpRequest<RawHttpRequest, Object> httpRequest =
-                    new RawHttpBasedServletHttpRequest(in, conversionService, codecRegistry, ioExecutor);
+        RawHttpExchange exchange = new RawHttpExchange(
+            new RawHttpBasedServletHttpRequest<>(in, conversionService, codecRegistry, ioExecutor),
+            new RawHttpBasedServletHttpResponse(conversionService)
+        );
 
-                private final ServletHttpResponse<RawHttpResponse<Void>, String> httpResponse =
-                    new RawHttpBasedServletHttpResponse(conversionService);
-
-                @Override
-                public ServletHttpRequest<RawHttpRequest, Object> getRequest() {
-                    return httpRequest;
-                }
-
-                @Override
-                public ServletHttpResponse<RawHttpResponse<Void>, String> getResponse() {
-                    return httpResponse;
-                }
-            };
-
-        servletHttpHandler.service(servletExchange);
-        RawHttpResponse<Void> rawHttpResponse = servletExchange.getResponse().getNativeResponse();
+        servletHttpHandler.service(exchange);
+        RawHttpResponse<Void> rawHttpResponse = exchange.getResponse().getNativeResponse();
         rawHttpResponse.writeTo(out);
+    }
+
+    @Override
+    public @NonNull ServerlessApplication stop() {
+        return EmbeddedApplication.super.stop();
+    }
+
+    public record RawHttpExchange(
+        RawHttpBasedServletHttpRequest<Object> httpRequest,
+        RawHttpBasedServletHttpResponse httpResponse
+    ) implements ServletExchange<RawHttpRequest, RawHttpResponse<Void>> {
+
+        @Override
+        public RawHttpBasedServletHttpRequest<Object> getRequest() {
+            return httpRequest;
+        }
+
+        @Override
+        public RawHttpBasedServletHttpResponse getResponse() {
+            return httpResponse;
+        }
+
     }
 
 }

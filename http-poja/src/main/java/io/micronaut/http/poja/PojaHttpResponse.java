@@ -6,7 +6,7 @@ import rawhttp.core.RawHttpResponse;
 /**
  * A base class for serverless POJA responses.
  */
-public abstract class PojaHttpResponse implements ServletHttpResponse<RawHttpResponse<Void>, String> {
+public abstract class PojaHttpResponse<T> implements ServletHttpResponse<RawHttpResponse<?>, T> {
 
 
 

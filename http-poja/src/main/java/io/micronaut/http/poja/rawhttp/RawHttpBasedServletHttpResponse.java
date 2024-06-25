@@ -43,7 +43,7 @@ import java.util.Optional;
 /**
  * @author Sahoo.
  */
-public class RawHttpBasedServletHttpResponse extends PojaHttpResponse {
+public class RawHttpBasedServletHttpResponse<T> extends PojaHttpResponse<T> {
 
     private final ByteArrayOutputStream out = new ByteArrayOutputStream();
 
@@ -51,17 +51,18 @@ public class RawHttpBasedServletHttpResponse extends PojaHttpResponse {
 
     private String reason = HttpStatus.OK.getReason();
 
-    private String body;
     private final SimpleHttpHeaders headers;
 
     private final MutableConvertibleValues<Object> attributes = new MutableConvertibleValuesMap<>();
+
+    private T bodyObject;
 
     public RawHttpBasedServletHttpResponse(ConversionService conversionService) {
         this.headers = new SimpleHttpHeaders(conversionService);
     }
 
     @Override
-    public RawHttpResponse<Void> getNativeResponse() {
+    public RawHttpResponse<T> getNativeResponse() {
         headers.add(HttpHeaders.CONTENT_LENGTH, String.valueOf(out.size()));
         return new RawHttpResponse<>(null,
                 null,
@@ -87,18 +88,24 @@ public class RawHttpBasedServletHttpResponse extends PojaHttpResponse {
     }
 
     @Override
-    public MutableHttpResponse<String> cookie(Cookie cookie) {
+    public MutableHttpResponse<T> cookie(Cookie cookie) {
         return this;
     }
 
     @Override
-    public <T> MutableHttpResponse<T> body(@Nullable T body) {
-        // TODO
-        throw new UnsupportedOperationException("TBD");
+    public <B> MutableHttpResponse<B> body(@Nullable B body) {
+        this.bodyObject = (T) body;
+        return (MutableHttpResponse<B>) this;
+    }
+
+    @NonNull
+    @Override
+    public Optional<T> getBody() {
+        return Optional.ofNullable(bodyObject);
     }
 
     @Override
-    public MutableHttpResponse<String> status(int code, CharSequence message) {
+    public MutableHttpResponse<T> status(int code, CharSequence message) {
         this.code = code;
         if (message == null) {
             this.reason = HttpStatus.getDefaultReason(code);
@@ -128,8 +135,4 @@ public class RawHttpBasedServletHttpResponse extends PojaHttpResponse {
         return attributes;
     }
 
-    @Override
-    public @NonNull Optional<String> getBody() {
-        return Optional.ofNullable(body);
-    }
 }

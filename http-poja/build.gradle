@@ -19,8 +19,8 @@ plugins {
 
 dependencies {
     api(projects.micronautServletCore)
-    implementation("com.athaydes.rawhttp:rawhttp-core:2.4.1")
-    implementation("com.athaydes.rawhttp:rawhttp-cookies:0.2.1")
+    implementation(libs.rawhttp.core)
+    implementation(libs.rawhttp.cookies)
 
     compileOnly(mn.reactor)
     compileOnly(mn.micronaut.json.core)
