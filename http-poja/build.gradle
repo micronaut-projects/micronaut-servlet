@@ -14,13 +14,16 @@
  * limitations under the License.
  */
 plugins {
-    id("io.micronaut.build.internal.servlet.implementation")
+    id("io.micronaut.build.internal.servlet.module")
 }
 
 dependencies {
-    api project(":micronaut-servlet-core")
+    api(projects.micronautServletCore)
     implementation("com.athaydes.rawhttp:rawhttp-core:2.4.1")
     implementation("com.athaydes.rawhttp:rawhttp-cookies:0.2.1")
+
+    compileOnly(mn.reactor)
+    compileOnly(mn.micronaut.json.core)
 
     testImplementation(mnSerde.micronaut.serde.jackson)
 }
