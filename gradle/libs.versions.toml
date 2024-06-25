@@ -23,6 +23,8 @@ micronaut-validation = "4.6.0"
 google-cloud-functions = '1.1.0'
 kotlin = "1.9.24"
 micronaut-logging = "1.3.0"
+rawhttp-core = "2.4.1"
+rawhttp-cookies = "0.2.1"
 
 # Micronaut
 micronaut-gradle-plugin = "4.4.0"
@@ -57,6 +59,9 @@ jetty-alpn-server = { module = 'org.eclipse.jetty:jetty-alpn-server', version.re
 jetty-alpn-conscrypt-server = { module = 'org.eclipse.jetty:jetty-alpn-conscrypt-server', version.ref = 'managed-jetty' }
 kotest-runner = { module = 'io.kotest:kotest-runner-junit5', version.ref = 'kotest-runner' }
 bcpkix = { module = "org.bouncycastle:bcpkix-jdk15on", version.ref = "bcpkix" }
+
+rawhttp-core = { module = "com.athaydes.rawhttp:rawhttp-core", version.ref = "rawhttp-core" }
+rawhttp-cookies = { module = "com.athaydes.rawhttp:rawhttp-cookies", version.ref = "rawhttp-cookies" }
 
 google-cloud-functions = { module = 'com.google.cloud.functions:functions-framework-api', version.ref = 'google-cloud-functions' }
 # Gradle
