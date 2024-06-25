@@ -13,47 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.http.poja;
+package io.micronaut.http.poja.rawhttp;
 
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.convert.ConversionService;
-import io.micronaut.core.convert.value.ConvertibleMultiValues;
-import io.micronaut.core.convert.value.ConvertibleMultiValuesMap;
-import io.micronaut.core.convert.value.ConvertibleValues;
 import io.micronaut.core.convert.value.MutableConvertibleValues;
 import io.micronaut.core.convert.value.MutableConvertibleValuesMap;
-import io.micronaut.core.io.IOUtils;
-import io.micronaut.core.type.Argument;
-import io.micronaut.core.util.StringUtils;
 import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpMethod;
 import io.micronaut.http.HttpParameters;
-import io.micronaut.http.MediaType;
-import io.micronaut.http.ServerHttpRequest;
 import io.micronaut.http.body.ByteBody;
 import io.micronaut.http.body.ByteBody.SplitBackpressureMode;
 import io.micronaut.http.body.CloseableByteBody;
-import io.micronaut.http.codec.MediaTypeCodec;
 import io.micronaut.http.codec.MediaTypeCodecRegistry;
 import io.micronaut.http.cookie.Cookie;
 import io.micronaut.http.cookie.Cookies;
-import io.micronaut.http.poja.fork.netty.QueryStringDecoder;
+import io.micronaut.http.poja.PojaHttpRequest;
 import io.micronaut.http.simple.cookies.SimpleCookies;
-import io.micronaut.servlet.http.ServletHttpRequest;
 import io.micronaut.servlet.http.body.InputStreamByteBody;
 import rawhttp.cookies.ServerCookieHelper;
 import rawhttp.core.RawHttp;
 import rawhttp.core.RawHttpHeaders;
 import rawhttp.core.RawHttpRequest;
-import rawhttp.core.body.BodyReader;
 
-import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.HttpCookie;
 import java.net.URI;
 import java.net.URLDecoder;
@@ -62,34 +49,34 @@ import java.util.AbstractMap;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Set;
-import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
  * @author Sahoo.
  */
-class RawHttpBasedServletHttpRequest<B> implements ServletHttpRequest<RawHttpRequest, B>, ServerHttpRequest<B> {
+public class RawHttpBasedServletHttpRequest<B> extends PojaHttpRequest<B> {
     private final RawHttp rawHttp;
     private final RawHttpRequest rawHttpRequest;
     private final ByteBody byteBody;
     private final RawHttpBasedHeaders headers;
-
-    private final ConversionService conversionService;
-    private final MediaTypeCodecRegistry codecRegistry;
     private final RawHttpBasedParameters queryParameters;
 
     public RawHttpBasedServletHttpRequest(
-        InputStream in, ConversionService conversionService, MediaTypeCodecRegistry codecRegistry, Executor ioExecutor
+        InputStream in,
+        ConversionService conversionService,
+        MediaTypeCodecRegistry codecRegistry,
+        ExecutorService ioExecutor
     ) {
+        super(conversionService, codecRegistry);
         this.rawHttp = new RawHttp();
         try {
             rawHttpRequest = rawHttp.parseRequest(in);
@@ -103,21 +90,7 @@ class RawHttpBasedServletHttpRequest<B> implements ServletHttpRequest<RawHttpReq
         this.byteBody = rawHttpRequest.getBody()
             .map(b -> InputStreamByteBody.create(b.asRawStream(), contentLength, ioExecutor))
             .orElse(InputStreamByteBody.create(new ByteArrayInputStream(new byte[0]), OptionalLong.of(0), ioExecutor));
-        this.conversionService = conversionService;
-        this.codecRegistry = codecRegistry;
         queryParameters = new RawHttpBasedParameters(getUri().getRawQuery(), conversionService);
-    }
-
-    @Override
-    public InputStream getInputStream() throws IOException {
-        return null;
-    }
-
-    @Override
-    public BufferedReader getReader() throws IOException {
-        return null;
-//            return new BufferedReader(new InputStreamReader(getInputStream(),
-//                    rawHttp.getOptions().getHttpHeadersOptions().getHeaderValuesCharset()));
     }
 
     @Override
@@ -164,92 +137,13 @@ class RawHttpBasedServletHttpRequest<B> implements ServletHttpRequest<RawHttpReq
     }
 
     @Override
-    public <T> @NonNull Optional<T> getBody(@NonNull ArgumentConversionContext<T> conversionContext) {
-        Optional<? extends BodyReader> reader = rawHttpRequest.getBody();
-        if (reader.isEmpty()) {
-            return Optional.empty();
-        }
-        reader.get().asRawStream();
-
-        Argument<T> arg = conversionContext.getArgument();
-        if (arg == null) {
-            return Optional.empty();
-        }
-        final Class<T> type = arg.getType();
-        final MediaType contentType = getContentType().orElse(MediaType.APPLICATION_JSON_TYPE);
-
-        if (isFormSubmission()) {
-            try (CloseableByteBody body = byteBody().split(SplitBackpressureMode.FASTEST)) {
-                String content = IOUtils.readText(new BufferedReader(new InputStreamReader(
-                    body.toInputStream(), getCharacterEncoding()
-                )));
-                ConvertibleMultiValues<?> form = parseFormData(content);
-                if (ConvertibleValues.class == type || Object.class == type) {
-                    return Optional.of((T) form);
-                } else {
-                    return conversionService.convert(form.asMap(), arg);
-                }
-            } catch (IOException e) {
-                throw new RuntimeException("Unable to parse body", e);
-            }
-        }
-
-        final MediaTypeCodec codec = codecRegistry.findCodec(contentType, type).orElse(null);
-        if (codec == null) {
-            return Optional.empty();
-        }
-        if (ConvertibleValues.class == type || Object.class == type) {
-            final Map map = consumeBody(inputStream -> codec.decode(Map.class, inputStream));
-            ConvertibleValues result = ConvertibleValues.of(map);
-            return Optional.of((T) result);
-        } else {
-            final T value = consumeBody(inputStream -> codec.decode(arg, inputStream));
-            return Optional.of(value);
-        }
-    }
-
-    private ConvertibleMultiValues<CharSequence> parseFormData(String body) {
-        Map parameterValues = new QueryStringDecoder(body, false).parameters();
-
-        // Remove empty values
-        Iterator<Entry<String, List<CharSequence>>> iterator = parameterValues.entrySet().iterator();
-        while (iterator.hasNext()) {
-            List<CharSequence> value = iterator.next().getValue();
-            if (value.isEmpty() || StringUtils.isEmpty(value.get(0))) {
-                iterator.remove();
-            }
-        }
-
-        return new ConvertibleMultiValuesMap<CharSequence>(parameterValues, conversionService);
-    }
-
-    public boolean isFormSubmission() {
-        MediaType contentType = getContentType().orElse(null);
-        return MediaType.APPLICATION_FORM_URLENCODED_TYPE.equals(contentType)
-            || MediaType.MULTIPART_FORM_DATA_TYPE.equals(contentType);
-    }
-
-    /**
-     * A method that allows consuming body.
-     *
-     * @return The result
-     * @param <T> The function return value
-     */
-    public <T> T consumeBody(Function<InputStream, T> consumer) {
-        return consumer.apply(byteBody.split(SplitBackpressureMode.FASTEST).toInputStream());
-    }
-
-    @Override
     public @NonNull Optional<B> getBody() {
-        // TODO: figure out what needs to be done.
-        System.err.println("TBD: getBody() Retuning null body for now.");
-        Thread.dumpStack();
-        return Optional.empty();
+        return (Optional<B>) getBody(Object.class);
     }
 
     @Override
-    public @NonNull ByteBody byteBody() {
-        return byteBody;
+    public @NonNull CloseableByteBody byteBody() {
+        return byteBody.split(SplitBackpressureMode.FASTEST);
     }
 
     public record RawHttpCookie(
