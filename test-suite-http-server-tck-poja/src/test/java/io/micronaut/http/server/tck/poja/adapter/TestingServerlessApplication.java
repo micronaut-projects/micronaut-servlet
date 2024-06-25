@@ -38,6 +38,10 @@ public class TestingServerlessApplication extends ServerlessApplication {
     private OutputStream serverInput;
     private InputStream serverOutput;
 
+    private Pipe inputPipe;
+    private Pipe outputPipe;
+    private Thread serverThread;
+
     /**
      * Default constructor.
      *
@@ -66,7 +70,6 @@ public class TestingServerlessApplication extends ServerlessApplication {
     public TestingServerlessApplication start() {
         createServerSocket();
 
-        Pipe inputPipe, outputPipe;
         try {
             inputPipe = Pipe.open();
             outputPipe = Pipe.open();
@@ -77,25 +80,26 @@ public class TestingServerlessApplication extends ServerlessApplication {
         }
 
         // Run the request handling on a new thread
-        new Thread(() ->
+        serverThread = new Thread(() ->
             start(
                     Channels.newInputStream(inputPipe.source()),
                     Channels.newOutputStream(outputPipe.sink())
             )
-        ).start();
+        );
+        serverThread.start();
 
         // Run the thread that sends requests to the server
         new Thread(() -> {
-            while (true) {
-                try {
-                    Socket socket = serverSocket.accept();
+            while (!serverSocket.isClosed()) {
+                try (Socket socket = serverSocket.accept()) {
                     String request = readInputStream(socket.getInputStream());
                     serverInput.write(request.getBytes());
                     serverInput.write(new byte[]{'\n'});
 
                     String response = readInputStream(serverOutput);
                     socket.getOutputStream().write(response.getBytes());
-                    socket.close();
+                } catch (java.net.SocketException ignored) {
+                    // Socket closed
                 } catch (IOException e) {
                     throw new UncheckedIOException(e);
                 }
@@ -107,15 +111,23 @@ public class TestingServerlessApplication extends ServerlessApplication {
 
     @Override
     public @NonNull ServerlessApplication stop() {
+        super.stop();
         try {
             serverSocket.close();
-        } catch (IOException ignored) {
+            inputPipe.sink().close();
+            inputPipe.source().close();
+            outputPipe.sink().close();
+            outputPipe.source().close();
+            serverThread.interrupt();
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
         }
-        return super.stop();
+        return this;
     }
 
     String readInputStream(InputStream inputStream) {
         BufferedReader input = new BufferedReader(new InputStreamReader(inputStream));
+
         StringBuilder result = new StringBuilder();
 
         boolean body = false;

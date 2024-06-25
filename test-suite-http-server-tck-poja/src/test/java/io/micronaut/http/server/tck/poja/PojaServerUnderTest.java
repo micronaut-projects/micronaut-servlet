@@ -94,6 +94,6 @@ public class PojaServerUnderTest implements ServerUnderTest {
     @Override
     public void close() throws IOException {
         applicationContext.close();
-        application.close();
+        client.close();
     }
 }

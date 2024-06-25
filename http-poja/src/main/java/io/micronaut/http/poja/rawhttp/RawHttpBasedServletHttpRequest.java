@@ -37,6 +37,7 @@ import rawhttp.cookies.ServerCookieHelper;
 import rawhttp.core.RawHttp;
 import rawhttp.core.RawHttpHeaders;
 import rawhttp.core.RawHttpRequest;
+import rawhttp.core.body.BodyReader;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -56,7 +57,6 @@ import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -87,9 +87,10 @@ public class RawHttpBasedServletHttpRequest<B> extends PojaHttpRequest<B> {
         OptionalLong contentLength = rawHttpRequest.getHeaders().getFirst(HttpHeaders.CONTENT_LENGTH)
             .map(Long::parseLong).map(OptionalLong::of).orElse(OptionalLong.empty());
 
-        this.byteBody = rawHttpRequest.getBody()
-            .map(b -> InputStreamByteBody.create(b.asRawStream(), contentLength, ioExecutor))
-            .orElse(InputStreamByteBody.create(new ByteArrayInputStream(new byte[0]), OptionalLong.of(0), ioExecutor));
+        InputStream stream = rawHttpRequest.getBody()
+            .map(BodyReader::asRawStream)
+            .orElse(new ByteArrayInputStream(new byte[0]));
+        this.byteBody = InputStreamByteBody.create(stream, contentLength, ioExecutor);
         queryParameters = new RawHttpBasedParameters(getUri().getRawQuery(), conversionService);
     }
 

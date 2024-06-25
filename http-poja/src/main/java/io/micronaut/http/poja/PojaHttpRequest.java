@@ -116,12 +116,12 @@ public abstract class PojaHttpRequest<B> implements ServletHttpRequest<RawHttpRe
 
     @Override
     public InputStream getInputStream() {
-        return byteBody().split(SplitBackpressureMode.FASTEST).toInputStream();
+        return byteBody().toInputStream();
     }
 
     @Override
     public BufferedReader getReader() {
-        return new BufferedReader(new InputStreamReader(getInputStream()));
+        return new BufferedReader(new InputStreamReader(byteBody().toInputStream()));
     }
 
     /**
