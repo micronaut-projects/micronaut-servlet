@@ -17,8 +17,9 @@ import io.micronaut.http.body.CloseableByteBody;
 import io.micronaut.http.codec.MediaTypeCodec;
 import io.micronaut.http.codec.MediaTypeCodecRegistry;
 import io.micronaut.http.poja.fork.netty.QueryStringDecoder;
+import io.micronaut.servlet.http.ServletExchange;
 import io.micronaut.servlet.http.ServletHttpRequest;
-import rawhttp.core.RawHttpRequest;
+import io.micronaut.servlet.http.ServletHttpResponse;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -39,20 +40,24 @@ import java.util.function.Function;
  * @param <B> The body type
  * @author Andriy
  */
-public abstract class PojaHttpRequest<B> implements ServletHttpRequest<RawHttpRequest, B>, ServerHttpRequest<B> {
+public abstract class PojaHttpRequest<B, REQ, RES>
+        implements ServletHttpRequest<REQ, B>, ServerHttpRequest<B>, ServletExchange<REQ, RES> {
 
     public static final Argument<ConvertibleValues> CONVERTIBLE_VALUES_ARGUMENT = Argument.of(ConvertibleValues.class);
 
     protected final ConversionService conversionService;
     protected final MediaTypeCodecRegistry codecRegistry;
     protected final MutableConvertibleValues<Object> attributes = new MutableConvertibleValuesMap<>();
+    protected final PojaHttpResponse<?, RES> response;
 
     public PojaHttpRequest(
             ConversionService conversionService,
-            MediaTypeCodecRegistry codecRegistry
+            MediaTypeCodecRegistry codecRegistry,
+            PojaHttpResponse<?, RES> response
     ) {
         this.conversionService = conversionService;
         this.codecRegistry = codecRegistry;
+        this.response = response;
     }
 
     @Override
@@ -141,6 +146,16 @@ public abstract class PojaHttpRequest<B> implements ServletHttpRequest<RawHttpRe
         MediaType contentType = getContentType().orElse(null);
         return MediaType.APPLICATION_FORM_URLENCODED_TYPE.equals(contentType)
             || MediaType.MULTIPART_FORM_DATA_TYPE.equals(contentType);
+    }
+
+    @Override
+    public ServletHttpRequest<REQ, ? super Object> getRequest() {
+        return (ServletHttpRequest) this;
+    }
+
+    @Override
+    public ServletHttpResponse<RES, ?> getResponse() {
+        return response;
     }
 
     private ConvertibleMultiValues<CharSequence> parseFormData(String body) {

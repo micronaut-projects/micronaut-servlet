@@ -80,7 +80,7 @@ final class PojaBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body, T>
         final Argument<T> argument = context.getArgument();
         final Class<T> type = argument.getType();
         String name = argument.getAnnotationMetadata().stringValue(Body.class).orElse(null);
-        if (source instanceof PojaHttpRequest<?> pojaHttpRequest) {
+        if (source instanceof PojaHttpRequest<?, ?, ?> pojaHttpRequest) {
             if (CharSequence.class.isAssignableFrom(type) && name == null) {
                 return pojaHttpRequest.consumeBody(inputStream -> {
                     try {
@@ -127,7 +127,7 @@ final class PojaBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body, T>
     }
 
     private BindingResult<T> bindFormData(
-        PojaHttpRequest<?> servletHttpRequest, String name, ArgumentConversionContext<T> context
+        PojaHttpRequest<?, ?, ?> servletHttpRequest, String name, ArgumentConversionContext<T> context
     ) {
         Optional<ConvertibleValues> form = servletHttpRequest.getBody(PojaHttpRequest.CONVERTIBLE_VALUES_ARGUMENT);
         if (form.isEmpty()) {

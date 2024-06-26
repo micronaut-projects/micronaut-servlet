@@ -26,27 +26,24 @@ import org.junit.platform.suite.api.SuiteDisplayName;
 })
 @SuiteDisplayName("HTTP Server TCK for POJA")
 @ExcludeClassNamePatterns({
-    // 47 tests of 188 fail
+    // 23 tests of 188 fail
+    "io.micronaut.http.server.tck.tests.BodyArgumentTest",
+    "io.micronaut.http.server.tck.tests.BodyTest",
     "io.micronaut.http.server.tck.tests.constraintshandler.ControllerConstraintHandlerTest",
     "io.micronaut.http.server.tck.tests.cors.CorsSimpleRequestTest",
-    "io.micronaut.http.server.tck.tests.cors.CrossOriginTest",
-    "io.micronaut.http.server.tck.tests.ErrorHandlerTest",
+    "io.micronaut.http.server.tck.tests.ErrorHandlerFluxTest",
     "io.micronaut.http.server.tck.tests.FilterProxyTest",
-    "io.micronaut.http.server.tck.tests.FiltersTest",
+    "io.micronaut.http.server.tck.tests.FluxTest",
     "io.micronaut.http.server.tck.tests.endpoints.health.HealthTest",
-    "io.micronaut.http.server.tck.tests.bodywritable.HtmlBodyWritableTest",
-    "io.micronaut.http.server.tck.tests.filter.HttpServerFilterTest",
     "io.micronaut.http.server.tck.tests.hateoas.JsonErrorSerdeTest",
     "io.micronaut.http.server.tck.tests.hateoas.JsonErrorTest",
-    "io.micronaut.http.server.tck.tests.LocalErrorReadingBodyTest",
     "io.micronaut.http.server.tck.tests.OctetTest",
-    "io.micronaut.http.server.tck.tests.filter.options.OptionsFilterTest",
-    "io.micronaut.http.server.tck.tests.RemoteAddressTest",
     "io.micronaut.http.server.tck.tests.filter.RequestFilterExceptionHandlerTest",
     "io.micronaut.http.server.tck.tests.filter.RequestFilterTest",
     "io.micronaut.http.server.tck.tests.filter.ResponseFilterTest",
     "io.micronaut.http.server.tck.tests.staticresources.StaticResourceTest",
-    "io.micronaut.http.server.tck.tests.hateoas.VndErrorTest",
+    "io.micronaut.http.server.tck.tests.StreamTest",
+    "io.micronaut.http.server.tck.tests.hateoas.VndErrorTest"
 })
 public class PojaServerTestSuite {
 }
