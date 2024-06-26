@@ -26,7 +26,7 @@ import org.junit.platform.suite.api.SuiteDisplayName;
 })
 @SuiteDisplayName("HTTP Server TCK for POJA")
 @ExcludeClassNamePatterns({
-    // 54 tests of 188 fail
+    // 47 tests of 188 fail
     "io.micronaut.http.server.tck.tests.constraintshandler.ControllerConstraintHandlerTest",
     "io.micronaut.http.server.tck.tests.cors.CorsSimpleRequestTest",
     "io.micronaut.http.server.tck.tests.cors.CrossOriginTest",
