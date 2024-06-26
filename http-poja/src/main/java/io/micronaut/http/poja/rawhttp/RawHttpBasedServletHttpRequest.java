@@ -299,7 +299,7 @@ public class RawHttpBasedServletHttpRequest<B> extends PojaHttpRequest<B, RawHtt
         @Override
         public @Nullable String get(CharSequence name) {
             List<String> all = getAll(name);
-            return all.isEmpty() ? null : all.get(0);
+            return all == null || all.isEmpty() ? null : all.get(0);
         }
 
         @Override
