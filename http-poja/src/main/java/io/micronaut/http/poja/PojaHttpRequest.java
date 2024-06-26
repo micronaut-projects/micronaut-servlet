@@ -223,7 +223,7 @@ public abstract class PojaHttpRequest<B, REQ, RES>
 
         @Override
         public byte[] readAllBytes() throws IOException {
-            return stream.readAllBytes();
+            return stream.readNBytes((int) (maxSize - size));
         }
 
         @Override
