@@ -64,6 +64,9 @@ public class RawHttpBasedServletHttpResponse<T> extends PojaHttpResponse<T, RawH
     @Override
     public RawHttpResponse<T> getNativeResponse() {
         headers.add(HttpHeaders.CONTENT_LENGTH, String.valueOf(out.size()));
+        if ("chunked".equals(headers.get(HttpHeaders.TRANSFER_ENCODING))) {
+            headers.remove(HttpHeaders.TRANSFER_ENCODING);
+        }
         return new RawHttpResponse<>(null,
                 null,
                 new StatusLine(HttpVersion.HTTP_1_1, code, reason),
