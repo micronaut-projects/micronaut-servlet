@@ -3,7 +3,7 @@ package io.micronaut.http.server.tck.poja.adapter;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Replaces;
 import io.micronaut.core.annotation.NonNull;
-import io.micronaut.http.poja.ServerlessApplication;
+import io.micronaut.http.poja.rawhttp.ServerlessApplication;
 import io.micronaut.runtime.ApplicationConfiguration;
 import jakarta.inject.Singleton;
 
@@ -16,6 +16,7 @@ import java.io.UncheckedIOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.CharBuffer;
+import java.nio.channels.AsynchronousCloseException;
 import java.nio.channels.Channels;
 import java.nio.channels.Pipe;
 import java.util.ArrayList;
@@ -24,7 +25,7 @@ import java.util.Locale;
 import java.util.Random;
 
 /**
- * An extension of {@link io.micronaut.http.poja.ServerlessApplication} that creates 2
+ * An extension of {@link ServerlessApplication} that creates 2
  * pipes to communicate with the server and simplifies reading and writing to them.
  *
  * @author Andriy Dmytruk
@@ -80,12 +81,19 @@ public class TestingServerlessApplication extends ServerlessApplication {
         }
 
         // Run the request handling on a new thread
-        serverThread = new Thread(() ->
-            start(
+        serverThread = new Thread(() -> {
+            try {
+                start(
                     Channels.newInputStream(inputPipe.source()),
                     Channels.newOutputStream(outputPipe.sink())
-            )
-        );
+                );
+            } catch (RuntimeException e) {
+                // The exception happens since socket is closed when context is destroyed
+                if (!(e.getCause() instanceof AsynchronousCloseException)) {
+                    throw e;
+                }
+            }
+        });
         serverThread.start();
 
         // Run the thread that sends requests to the server
@@ -152,10 +160,6 @@ public class TestingServerlessApplication extends ServerlessApplication {
             for (int i = 0; i < lines.size(); ++i) {
                 String line = lines.get(i);
                 if (i != 0) {
-                    result.append("\n");
-                    if (body) {
-                        currentSize += 1;
-                    }
                     lastLine = line;
                 } else {
                     lastLine = lastLine + line;
@@ -165,6 +169,10 @@ public class TestingServerlessApplication extends ServerlessApplication {
                 }
                 result.append(line);
                 if (i < lines.size() - 1) {
+                    result.append("\n");
+                    if (body) {
+                        currentSize += 1;
+                    }
                     if (lastLine.toLowerCase(Locale.ENGLISH).startsWith("content-length: ")) {
                         expectedSize = Integer.parseInt(lastLine.substring("content-length: ".length()).trim());
                     }

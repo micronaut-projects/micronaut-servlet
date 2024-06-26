@@ -6,6 +6,7 @@ import io.micronaut.http.HttpRequest
 import io.micronaut.http.MutableHttpResponse
 import io.micronaut.http.annotation.Filter
 import io.micronaut.http.filter.ServerFilterChain
+import io.micronaut.http.poja.rawhttp.ServerlessApplication
 import io.micronaut.runtime.ApplicationConfiguration
 import io.micronaut.session.Session
 import io.micronaut.session.SessionStore
@@ -32,7 +33,7 @@ abstract class BaseServerlessApplicationSpec extends Specification {
     TestingServerlessApplication app
 
     /**
-     * An extension of {@link ServerlessApplication} that creates 2
+     * An extension of {@link io.micronaut.http.poja.rawhttp.ServerlessApplication} that creates 2
      * pipes to communicate with the server and simplifies reading and writing to them.
      */
     @Singleton

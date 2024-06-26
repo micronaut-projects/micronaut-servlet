@@ -26,24 +26,22 @@ import org.junit.platform.suite.api.SuiteDisplayName;
 })
 @SuiteDisplayName("HTTP Server TCK for POJA")
 @ExcludeClassNamePatterns({
-    // 23 tests of 188 fail
-    "io.micronaut.http.server.tck.tests.BodyArgumentTest",
-    "io.micronaut.http.server.tck.tests.BodyTest",
-    "io.micronaut.http.server.tck.tests.constraintshandler.ControllerConstraintHandlerTest",
-    "io.micronaut.http.server.tck.tests.cors.CorsSimpleRequestTest",
-    "io.micronaut.http.server.tck.tests.ErrorHandlerFluxTest",
-    "io.micronaut.http.server.tck.tests.FilterProxyTest",
-    "io.micronaut.http.server.tck.tests.FluxTest",
-    "io.micronaut.http.server.tck.tests.endpoints.health.HealthTest",
+    // 21 tests of 188 fail
+    // JSON error is not parsed
     "io.micronaut.http.server.tck.tests.hateoas.JsonErrorSerdeTest",
     "io.micronaut.http.server.tck.tests.hateoas.JsonErrorTest",
+    "io.micronaut.http.server.tck.tests.hateoas.VndErrorTest",
+    // Cors are not supported and should be handled by a proxy
+    "io.micronaut.http.server.tck.tests.cors.CorsSimpleRequestTest",
+    // Unclassified
+    "io.micronaut.http.server.tck.tests.constraintshandler.ControllerConstraintHandlerTest",
+    "io.micronaut.http.server.tck.tests.FilterProxyTest",
+    "io.micronaut.http.server.tck.tests.endpoints.health.HealthTest",
     "io.micronaut.http.server.tck.tests.OctetTest",
     "io.micronaut.http.server.tck.tests.filter.RequestFilterExceptionHandlerTest",
     "io.micronaut.http.server.tck.tests.filter.RequestFilterTest",
     "io.micronaut.http.server.tck.tests.filter.ResponseFilterTest",
     "io.micronaut.http.server.tck.tests.staticresources.StaticResourceTest",
-    "io.micronaut.http.server.tck.tests.StreamTest",
-    "io.micronaut.http.server.tck.tests.hateoas.VndErrorTest"
 })
 public class PojaServerTestSuite {
 }
