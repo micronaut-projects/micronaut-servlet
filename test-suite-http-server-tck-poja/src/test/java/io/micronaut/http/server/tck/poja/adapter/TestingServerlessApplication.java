@@ -19,6 +19,7 @@ import java.nio.CharBuffer;
 import java.nio.channels.AsynchronousCloseException;
 import java.nio.channels.Channels;
 import java.nio.channels.Pipe;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -105,7 +106,7 @@ public class TestingServerlessApplication extends ServerlessApplication {
                     serverInput.write(new byte[]{'\n'});
 
                     String response = readInputStream(serverOutput);
-                    socket.getOutputStream().write(response.getBytes());
+                    socket.getOutputStream().write(response.getBytes(StandardCharsets.ISO_8859_1));
                 } catch (java.net.SocketException ignored) {
                     // Socket closed
                 } catch (IOException e) {
@@ -134,7 +135,8 @@ public class TestingServerlessApplication extends ServerlessApplication {
     }
 
     String readInputStream(InputStream inputStream) {
-        BufferedReader input = new BufferedReader(new InputStreamReader(inputStream));
+        // Read with non-UTF charset in case there is binary data and we need to write it back
+        BufferedReader input = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.ISO_8859_1));
 
         StringBuilder result = new StringBuilder();
 
@@ -186,7 +188,7 @@ public class TestingServerlessApplication extends ServerlessApplication {
             }
         }
 
-        return result.toString().replace("\r", "");
+        return result.toString();
     }
 
     private List<String> split(String value) {
