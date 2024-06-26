@@ -6,13 +6,13 @@ import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.convert.value.ConvertibleMultiValues;
 import io.micronaut.core.convert.value.ConvertibleMultiValuesMap;
 import io.micronaut.core.convert.value.ConvertibleValues;
+import io.micronaut.core.convert.value.MutableConvertibleValues;
+import io.micronaut.core.convert.value.MutableConvertibleValuesMap;
 import io.micronaut.core.io.IOUtils;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.ServerHttpRequest;
-import io.micronaut.http.body.ByteBody;
-import io.micronaut.http.body.ByteBody.SplitBackpressureMode;
 import io.micronaut.http.body.CloseableByteBody;
 import io.micronaut.http.codec.MediaTypeCodec;
 import io.micronaut.http.codec.MediaTypeCodecRegistry;
@@ -45,6 +45,7 @@ public abstract class PojaHttpRequest<B> implements ServletHttpRequest<RawHttpRe
 
     protected final ConversionService conversionService;
     protected final MediaTypeCodecRegistry codecRegistry;
+    protected final MutableConvertibleValues<Object> attributes = new MutableConvertibleValuesMap<>();
 
     public PojaHttpRequest(
             ConversionService conversionService,
@@ -56,6 +57,13 @@ public abstract class PojaHttpRequest<B> implements ServletHttpRequest<RawHttpRe
 
     @Override
     public abstract CloseableByteBody byteBody();
+
+    @Override
+    public @NonNull MutableConvertibleValues<Object> getAttributes() {
+        // Attributes are used for sharing internal data used by Micronaut logic.
+        // We need to store them and provide when needed.
+        return attributes;
+    }
 
     /**
      * A utility method that allows consuming body.

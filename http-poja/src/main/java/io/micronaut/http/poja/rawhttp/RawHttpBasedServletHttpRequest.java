@@ -19,8 +19,6 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.convert.ConversionService;
-import io.micronaut.core.convert.value.MutableConvertibleValues;
-import io.micronaut.core.convert.value.MutableConvertibleValuesMap;
 import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpMethod;
 import io.micronaut.http.HttpParameters;
@@ -128,13 +126,6 @@ public class RawHttpBasedServletHttpRequest<B> extends PojaHttpRequest<B> {
     @Override
     public @NonNull HttpHeaders getHeaders() {
         return headers;
-    }
-
-    @Override
-    public @NonNull MutableConvertibleValues<Object> getAttributes() {
-        // Attributes are used for sharing internal data and is not applicable in our case.
-        // So, return empty map.
-        return new MutableConvertibleValuesMap<>();
     }
 
     @Override
