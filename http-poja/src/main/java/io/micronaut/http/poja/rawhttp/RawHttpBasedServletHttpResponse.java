@@ -43,7 +43,7 @@ import java.util.Optional;
 /**
  * @author Sahoo.
  */
-public class RawHttpBasedServletHttpResponse<T> extends PojaHttpResponse<T> {
+public class RawHttpBasedServletHttpResponse<T> extends PojaHttpResponse<T, RawHttpResponse<?>> {
 
     private final ByteArrayOutputStream out = new ByteArrayOutputStream();
 
