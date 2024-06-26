@@ -137,36 +137,19 @@ public class ServerlessApplication implements EmbeddedApplication<ServerlessAppl
         MediaTypeCodecRegistry codecRegistry = applicationContext.getBean(MediaTypeCodecRegistry.class);
         ExecutorService ioExecutor = applicationContext.getBean(ExecutorService.class, Qualifiers.byName(TaskExecutors.BLOCKING));
 
-        RawHttpExchange exchange = new RawHttpExchange(
-            new RawHttpBasedServletHttpRequest<>(in, conversionService, codecRegistry, ioExecutor),
-            new RawHttpBasedServletHttpResponse(conversionService)
+        RawHttpBasedServletHttpResponse<Void> response = new RawHttpBasedServletHttpResponse<>(conversionService);
+        RawHttpBasedServletHttpRequest<?> exchange = new RawHttpBasedServletHttpRequest<>(
+            in, conversionService, codecRegistry, ioExecutor, response
         );
 
         servletHttpHandler.service(exchange);
-        RawHttpResponse<Void> rawHttpResponse = exchange.getResponse().getNativeResponse();
+        RawHttpResponse<?> rawHttpResponse = response.getNativeResponse();
         rawHttpResponse.writeTo(out);
     }
 
     @Override
     public @NonNull ServerlessApplication stop() {
         return EmbeddedApplication.super.stop();
-    }
-
-    public record RawHttpExchange(
-        RawHttpBasedServletHttpRequest<Object> httpRequest,
-        RawHttpBasedServletHttpResponse httpResponse
-    ) implements ServletExchange<RawHttpRequest, RawHttpResponse<Void>> {
-
-        @Override
-        public RawHttpBasedServletHttpRequest<Object> getRequest() {
-            return httpRequest;
-        }
-
-        @Override
-        public RawHttpBasedServletHttpResponse getResponse() {
-            return httpResponse;
-        }
-
     }
 
 }

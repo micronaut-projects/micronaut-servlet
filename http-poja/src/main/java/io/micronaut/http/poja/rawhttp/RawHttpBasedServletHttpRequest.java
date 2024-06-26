@@ -35,6 +35,7 @@ import rawhttp.cookies.ServerCookieHelper;
 import rawhttp.core.RawHttp;
 import rawhttp.core.RawHttpHeaders;
 import rawhttp.core.RawHttpRequest;
+import rawhttp.core.RawHttpResponse;
 import rawhttp.core.body.BodyReader;
 
 import java.io.ByteArrayInputStream;
@@ -61,7 +62,7 @@ import java.util.stream.Collectors;
 /**
  * @author Sahoo.
  */
-public class RawHttpBasedServletHttpRequest<B> extends PojaHttpRequest<B> {
+public class RawHttpBasedServletHttpRequest<B> extends PojaHttpRequest<B, RawHttpRequest, RawHttpResponse<Void>> {
     private final RawHttp rawHttp;
     private final RawHttpRequest rawHttpRequest;
     private final ByteBody byteBody;
@@ -72,9 +73,10 @@ public class RawHttpBasedServletHttpRequest<B> extends PojaHttpRequest<B> {
         InputStream in,
         ConversionService conversionService,
         MediaTypeCodecRegistry codecRegistry,
-        ExecutorService ioExecutor
+        ExecutorService ioExecutor,
+        RawHttpBasedServletHttpResponse<Void> response
     ) {
-        super(conversionService, codecRegistry);
+        super(conversionService, codecRegistry, (RawHttpBasedServletHttpResponse) response);
         this.rawHttp = new RawHttp();
         try {
             rawHttpRequest = rawHttp.parseRequest(in);
