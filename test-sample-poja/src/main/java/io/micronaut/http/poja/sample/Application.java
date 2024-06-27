@@ -1,4 +1,4 @@
-package io.micronaut.http.poja.sample1;
+package io.micronaut.http.poja.sample;
 
 import io.micronaut.runtime.Micronaut;
 
