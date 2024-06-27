@@ -57,8 +57,6 @@ public class ServerlessApplication implements EmbeddedApplication<ServerlessAppl
      */
     public ServerlessApplication(ApplicationContext applicationContext,
                                  ApplicationConfiguration applicationConfiguration) {
-        // TODO: Accept InputStream and OutputStream so that they can be configured using beans.
-        // default them to streams based on System.inheritedChannel if possible, else System.in/out.
         this.applicationContext = applicationContext;
         this.applicationConfiguration = applicationConfiguration;
     }
@@ -104,6 +102,8 @@ public class ServerlessApplication implements EmbeddedApplication<ServerlessAppl
     @Override
     public @NonNull ServerlessApplication start() {
         try {
+            // Default streams to streams based on System.inheritedChannel.
+            // If not possible, use System.in/out.
             Channel channel = System.inheritedChannel();
             if (channel != null) {
                 try (InputStream in = Channels.newInputStream((ReadableByteChannel) channel);
