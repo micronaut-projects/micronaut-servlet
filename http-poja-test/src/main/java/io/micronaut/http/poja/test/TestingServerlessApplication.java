@@ -1,7 +1,24 @@
-package io.micronaut.http.server.tck.poja.adapter;
+/*
+ * Copyright © 2024 Oracle and/or its affiliates.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micronaut.http.poja.test;
 
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Replaces;
+import io.micronaut.context.annotation.Requires;
+import io.micronaut.context.env.Environment;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.http.poja.rawhttp.ServerlessApplication;
 import io.micronaut.runtime.ApplicationConfiguration;
@@ -24,6 +41,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * An extension of {@link ServerlessApplication} that creates 2
@@ -32,9 +50,11 @@ import java.util.Random;
  * @author Andriy Dmytruk
  */
 @Singleton
+@Requires(env = Environment.TEST)
 @Replaces(ServerlessApplication.class)
 public class TestingServerlessApplication extends ServerlessApplication {
 
+    private AtomicBoolean isRunning = new AtomicBoolean(false);
     private int port;
     private ServerSocket serverSocket;
     private OutputStream serverInput;
@@ -70,6 +90,9 @@ public class TestingServerlessApplication extends ServerlessApplication {
 
     @Override
     public TestingServerlessApplication start() {
+        if (isRunning.compareAndSet(true, true)) {
+            return this; // Already running
+        }
         createServerSocket();
 
         try {
@@ -134,7 +157,16 @@ public class TestingServerlessApplication extends ServerlessApplication {
         return this;
     }
 
-    String readInputStream(InputStream inputStream) {
+    @Override
+    public boolean isRunning() {
+        return isRunning.get();
+    }
+
+    public int getPort() {
+        return port;
+    }
+
+    private String readInputStream(InputStream inputStream) {
         // Read with non-UTF charset in case there is binary data and we need to write it back
         BufferedReader input = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.ISO_8859_1));
 
@@ -203,10 +235,6 @@ public class TestingServerlessApplication extends ServerlessApplication {
         }
         result.add(value.substring(startI));
         return result;
-    }
-
-    public int getPort() {
-        return port;
     }
 
 }

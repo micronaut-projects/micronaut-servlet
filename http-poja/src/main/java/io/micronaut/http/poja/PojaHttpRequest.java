@@ -12,7 +12,10 @@ import io.micronaut.core.io.IOUtils;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.http.MediaType;
+import io.micronaut.http.MutableHttpRequest;
 import io.micronaut.http.ServerHttpRequest;
+import io.micronaut.http.body.ByteBody;
+import io.micronaut.http.body.ByteBody.SplitBackpressureMode;
 import io.micronaut.http.body.CloseableByteBody;
 import io.micronaut.http.codec.MediaTypeCodec;
 import io.micronaut.http.codec.MediaTypeCodecRegistry;
@@ -41,7 +44,7 @@ import java.util.function.Function;
  * @author Andriy
  */
 public abstract class PojaHttpRequest<B, REQ, RES>
-        implements ServletHttpRequest<REQ, B>, ServerHttpRequest<B>, ServletExchange<REQ, RES> {
+        implements ServletHttpRequest<REQ, B>, ServerHttpRequest<B>, ServletExchange<REQ, RES>, MutableHttpRequest<B> {
 
     public static final Argument<ConvertibleValues> CONVERTIBLE_VALUES_ARGUMENT = Argument.of(ConvertibleValues.class);
 
@@ -61,7 +64,7 @@ public abstract class PojaHttpRequest<B, REQ, RES>
     }
 
     @Override
-    public abstract CloseableByteBody byteBody();
+    public abstract ByteBody byteBody();
 
     @Override
     public @NonNull MutableConvertibleValues<Object> getAttributes() {
@@ -77,12 +80,8 @@ public abstract class PojaHttpRequest<B, REQ, RES>
      * @param <T> The function return value
      */
     public <T> T consumeBody(Function<InputStream, T> consumer) {
-        try (CloseableByteBody byteBody = byteBody()) {
-            InputStream stream = new LimitingInputStream(
-                byteBody.toInputStream(),
-                byteBody.expectedLength().orElse(0)
-            );
-            return consumer.apply(stream);
+        try (CloseableByteBody byteBody = byteBody().split(SplitBackpressureMode.FASTEST)) {
+            return consumer.apply(byteBody.toInputStream());
         }
     }
 
@@ -129,12 +128,12 @@ public abstract class PojaHttpRequest<B, REQ, RES>
 
     @Override
     public InputStream getInputStream() {
-        return byteBody().toInputStream();
+        return byteBody().split(SplitBackpressureMode.FASTEST).toInputStream();
     }
 
     @Override
     public BufferedReader getReader() {
-        return new BufferedReader(new InputStreamReader(byteBody().toInputStream()));
+        return new BufferedReader(new InputStreamReader(getInputStream()));
     }
 
     /**
@@ -171,120 +170,6 @@ public abstract class PojaHttpRequest<B, REQ, RES>
         }
 
         return new ConvertibleMultiValuesMap<CharSequence>(parameterValues, conversionService);
-    }
-
-    /**
-     * A wrapper around input stream that limits the maximum size to be read.
-     */
-    public static class LimitingInputStream extends InputStream {
-
-        private long size;
-        private final InputStream stream;
-        private final long maxSize;
-
-        public LimitingInputStream(InputStream stream, long maxSize) {
-            this.maxSize = maxSize;
-            this.stream = stream;
-        }
-
-        @Override
-        public synchronized void mark(int readlimit) {
-            stream.mark(readlimit);
-        }
-
-        @Override
-        public int read() throws IOException {
-            return stream.read();
-        }
-
-        @Override
-        public int read(byte[] b) throws IOException {
-            synchronized(this) {
-                if (size >= maxSize) {
-                    return -1;
-                }
-                int sizeRead = stream.read(b);
-                size += sizeRead;
-                return size > maxSize ? sizeRead + (int) (maxSize - size) : sizeRead;
-            }
-        }
-
-        @Override
-        public int read(byte[] b, int off, int len) throws IOException {
-            synchronized (this) {
-                if (size >= maxSize) {
-                    return -1;
-                }
-                int sizeRead = stream.read(b, off, len);
-                size += sizeRead + off;
-                return size > maxSize ? sizeRead + (int) (maxSize - size) : sizeRead;
-            }
-        }
-
-        @Override
-        public byte[] readAllBytes() throws IOException {
-            return stream.readNBytes((int) (maxSize - size));
-        }
-
-        @Override
-        public byte[] readNBytes(int len) throws IOException {
-            return stream.readNBytes(len);
-        }
-
-        @Override
-        public int readNBytes(byte[] b, int off, int len) throws IOException {
-            return stream.readNBytes(b, off, len);
-        }
-
-        @Override
-        public long skip(long n) throws IOException {
-            return stream.skip(n);
-        }
-
-        @Override
-        public void skipNBytes(long n) throws IOException {
-            stream.skipNBytes(n);
-        }
-
-        @Override
-        public int available() throws IOException {
-            return stream.available();
-        }
-
-        @Override
-        public void close() throws IOException {
-            stream.close();
-        }
-
-        @Override
-        public synchronized void reset() throws IOException {
-            stream.reset();
-        }
-
-        @Override
-        public boolean markSupported() {
-            return stream.markSupported();
-        }
-
-        @Override
-        public long transferTo(OutputStream out) throws IOException {
-            return stream.transferTo(out);
-        }
-
-        @Override
-        public int hashCode() {
-            return stream.hashCode();
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            return stream.equals(obj);
-        }
-
-        @Override
-        public String toString() {
-            return stream.toString();
-        }
     }
 
 }
