@@ -15,13 +15,20 @@
  */
 plugins {
     id("io.micronaut.build.internal.servlet.module")
+    id("application")
 }
 
 dependencies {
     implementation(projects.micronautHttpPoja)
-    api(mn.micronaut.inject.java)
-    api(mn.micronaut.http.client)
+    implementation(mnLogging.slf4j.simple)
+    implementation(mn.micronaut.jackson.databind)
 
+    testImplementation(projects.micronautHttpPojaTest)
     testImplementation(mn.micronaut.jackson.databind)
 }
 
+run {
+    mainClass.set("io.micronaut.http.poja.sample.Application")
+    standardInput = System.in
+    standardOutput = System.out
+}
