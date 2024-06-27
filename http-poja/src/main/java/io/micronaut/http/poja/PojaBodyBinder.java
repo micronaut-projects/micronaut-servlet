@@ -94,6 +94,16 @@ final class PojaBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body, T>
                         return new ConversionFailedBindingResult<>(e);
                     }
                 });
+            } else if (argument.getType().isAssignableFrom(byte[].class) && name == null) {
+                return pojaHttpRequest.consumeBody(inputStream -> {
+                    try {
+                        byte[] bytes = inputStream.readAllBytes();
+                        return () -> (Optional<T>) Optional.of(bytes);
+                    } catch (IOException e) {
+                        LOG.debug("Error occurred reading function body: {}", e.getMessage(), e);
+                        return new ConversionFailedBindingResult<>(e);
+                    }
+                });
             } else {
                 final MediaType mediaType = source.getContentType().orElse(MediaType.APPLICATION_JSON_TYPE);
                 if (pojaHttpRequest.isFormSubmission()) {

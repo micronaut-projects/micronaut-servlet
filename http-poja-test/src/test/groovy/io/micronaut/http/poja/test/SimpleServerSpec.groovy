@@ -1,29 +1,29 @@
 package io.micronaut.http.poja.test
 
 
-import io.micronaut.context.annotation.Property
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.http.HttpRequest
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.*
-import io.micronaut.http.client.BlockingHttpClient
 import io.micronaut.http.client.HttpClient
+import io.micronaut.http.client.annotation.Client
 import io.micronaut.http.client.exceptions.HttpClientResponseException
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
+import jakarta.inject.Inject
+import spock.lang.Specification
 
 @MicronautTest
-@Property(name = "micronaut.security.enabled", value = "false")
-class SimpleServerSpec extends BaseServerlessApplicationSpec {
+class SimpleServerSpec extends Specification {
 
+    @Inject
+    @Client("/")
+    HttpClient client
 
     void "test GET method"() {
-        given:
-        BlockingHttpClient client = HttpClient.create(new URL("http://localhost:" + app.port)).toBlocking()
-
         when:
-        HttpResponse<?> response = client.exchange(HttpRequest.GET("/test").header("Host", "h"))
+        HttpResponse<?> response = client.toBlocking().exchange(HttpRequest.GET("/test").header("Host", "h"))
 
         then:
         response.status == HttpStatus.OK
@@ -32,11 +32,8 @@ class SimpleServerSpec extends BaseServerlessApplicationSpec {
     }
 
     void "test invalid GET method"() {
-        given:
-        BlockingHttpClient client = HttpClient.create(new URL("http://localhost:" + app.port)).toBlocking()
-
         when:
-        HttpResponse<?> response = client.exchange(HttpRequest.GET("/test-invalid").header("Host", "h"))
+        HttpResponse<?> response = client.toBlocking().exchange(HttpRequest.GET("/test-invalid").header("Host", "h"))
 
         then:
         var e = thrown(HttpClientResponseException)
@@ -46,11 +43,8 @@ class SimpleServerSpec extends BaseServerlessApplicationSpec {
     }
 
     void "test DELETE method"() {
-        given:
-        BlockingHttpClient client = HttpClient.create(new URL("http://localhost:" + app.port)).toBlocking()
-
         when:
-        HttpResponse<?> response = client.exchange(HttpRequest.DELETE("/test").header("Host", "h"))
+        HttpResponse<?> response = client.toBlocking().exchange(HttpRequest.DELETE("/test").header("Host", "h"))
 
         then:
         response.status() == HttpStatus.OK
@@ -58,11 +52,8 @@ class SimpleServerSpec extends BaseServerlessApplicationSpec {
     }
 
     void "test POST method"() {
-        given:
-        BlockingHttpClient client = HttpClient.create(new URL("http://localhost:" + app.port)).toBlocking()
-
         when:
-        HttpResponse<?> response = client.exchange(HttpRequest.POST("/test/Andriy", null).header("Host", "h"))
+        HttpResponse<?> response = client.toBlocking().exchange(HttpRequest.POST("/test/Andriy", null).header("Host", "h"))
 
         then:
         response.status() == HttpStatus.CREATED
@@ -71,11 +62,8 @@ class SimpleServerSpec extends BaseServerlessApplicationSpec {
     }
 
     void "test POST method with unused body"() {
-        given:
-        BlockingHttpClient client = HttpClient.create(new URL("http://localhost:" + app.port)).toBlocking()
-
         when:
-        HttpResponse<?> response = client.exchange(HttpRequest.POST("/test/unused-body", null).header("Host", "h"))
+        HttpResponse<?> response = client.toBlocking().exchange(HttpRequest.POST("/test/unused-body", null).header("Host", "h"))
 
         then:
         response.contentType.get() == MediaType.TEXT_PLAIN_TYPE
@@ -83,11 +71,8 @@ class SimpleServerSpec extends BaseServerlessApplicationSpec {
     }
 
     void "test PUT method"() {
-        given:
-        BlockingHttpClient client = HttpClient.create(new URL("http://localhost:" + app.port)).toBlocking()
-
         when:
-        HttpResponse<?> response = client.exchange(HttpRequest.PUT("/test/Andriy", null).header("Host", "h"))
+        HttpResponse<?> response = client.toBlocking().exchange(HttpRequest.PUT("/test/Andriy", null).header("Host", "h"))
 
         then:
         response.status() == HttpStatus.OK

@@ -1,7 +1,6 @@
 package io.micronaut.http.poja
 
 
-import io.micronaut.context.annotation.Property
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.MediaType
@@ -9,7 +8,6 @@ import io.micronaut.http.annotation.*
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 
 @MicronautTest
-@Property(name = "micronaut.security.enabled", value = "false")
 class SimpleServerSpec extends BaseServerlessApplicationSpec {
 
     void "test GET method"() {
