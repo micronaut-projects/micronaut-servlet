@@ -19,16 +19,18 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.convert.ConversionService;
+import io.micronaut.core.convert.value.MutableConvertibleMultiValuesMap;
 import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpMethod;
-import io.micronaut.http.HttpParameters;
+import io.micronaut.http.MutableHttpHeaders;
+import io.micronaut.http.MutableHttpParameters;
+import io.micronaut.http.MutableHttpRequest;
 import io.micronaut.http.body.ByteBody;
-import io.micronaut.http.body.ByteBody.SplitBackpressureMode;
-import io.micronaut.http.body.CloseableByteBody;
 import io.micronaut.http.codec.MediaTypeCodecRegistry;
 import io.micronaut.http.cookie.Cookie;
 import io.micronaut.http.cookie.Cookies;
 import io.micronaut.http.poja.PojaHttpRequest;
+import io.micronaut.http.poja.util.LimitingInputStream;
 import io.micronaut.http.simple.cookies.SimpleCookies;
 import io.micronaut.servlet.http.body.InputStreamByteBody;
 import rawhttp.cookies.ServerCookieHelper;
@@ -90,6 +92,7 @@ public class RawHttpBasedServletHttpRequest<B> extends PojaHttpRequest<B, RawHtt
         InputStream stream = rawHttpRequest.getBody()
             .map(BodyReader::asRawStream)
             .orElse(new ByteArrayInputStream(new byte[0]));
+        stream = new LimitingInputStream(stream, contentLength.orElse(0));
         this.byteBody = InputStreamByteBody.create(stream, contentLength, ioExecutor);
         queryParameters = new RawHttpBasedParameters(getUri().getRawQuery(), conversionService);
     }
@@ -111,7 +114,7 @@ public class RawHttpBasedServletHttpRequest<B> extends PojaHttpRequest<B, RawHtt
     }
 
     @Override
-    public @NonNull HttpParameters getParameters() {
+    public @NonNull MutableHttpParameters getParameters() {
         return queryParameters;
     }
 
@@ -126,7 +129,22 @@ public class RawHttpBasedServletHttpRequest<B> extends PojaHttpRequest<B, RawHtt
     }
 
     @Override
-    public @NonNull HttpHeaders getHeaders() {
+    public MutableHttpRequest<B> cookie(Cookie cookie) {
+        throw new RuntimeException("Setting cookies not implemented");
+    }
+
+    @Override
+    public MutableHttpRequest<B> uri(URI uri) {
+        return null;
+    }
+
+    @Override
+    public <T> MutableHttpRequest<T> body(T body) {
+        return null;
+    }
+
+    @Override
+    public @NonNull MutableHttpHeaders getHeaders() {
         return headers;
     }
 
@@ -136,8 +154,13 @@ public class RawHttpBasedServletHttpRequest<B> extends PojaHttpRequest<B, RawHtt
     }
 
     @Override
-    public @NonNull CloseableByteBody byteBody() {
-        return byteBody.split(SplitBackpressureMode.FASTEST);
+    public @NonNull ByteBody byteBody() {
+        return byteBody;
+    }
+
+    @Override
+    public void setConversionService(@NonNull ConversionService conversionService) {
+
     }
 
     public record RawHttpCookie(
@@ -245,66 +268,99 @@ public class RawHttpBasedServletHttpRequest<B> extends PojaHttpRequest<B, RawHtt
         }
     }
 
-    public static class RawHttpBasedHeaders implements HttpHeaders {
-        private final RawHttpHeaders rawHttpHeaders;
-        private final ConversionService conversionService;
+    public static class RawHttpBasedHeaders implements MutableHttpHeaders {
+        private final MutableConvertibleMultiValuesMap<String> headers;
 
         private RawHttpBasedHeaders(RawHttpHeaders rawHttpHeaders, ConversionService conversionService) {
-            this.rawHttpHeaders = rawHttpHeaders;
-            this.conversionService = conversionService;
+            this.headers = new MutableConvertibleMultiValuesMap<>((Map) rawHttpHeaders.asMap(), conversionService);
         }
 
         @Override
         public List<String> getAll(CharSequence name) {
-            return rawHttpHeaders.get(String.valueOf(name));
+            return headers.getAll(toUppercaseAscii(name));
         }
 
         @Override
         public @Nullable String get(CharSequence name) {
-            List<String> all = getAll(name);
-            return all.isEmpty() ? null : all.get(0);
+            return headers.get(toUppercaseAscii(name));
         }
 
         @Override
         public Set<String> names() {
-            return rawHttpHeaders.getUniqueHeaderNames();
+            return headers.names();
         }
 
         @Override
         public Collection<List<String>> values() {
-            return rawHttpHeaders.asMap().values();
+            return headers.values();
         }
 
         @Override
         public <T> Optional<T> get(CharSequence name, ArgumentConversionContext<T> conversionContext) {
-            String header = get(name);
-            return header == null ? Optional.empty() : conversionService.convert(header, conversionContext);
+            return headers.get(toUppercaseAscii(name), conversionContext);
+        }
+
+        @Override
+        public MutableHttpHeaders add(CharSequence header, CharSequence value) {
+            headers.add(toUppercaseAscii(header), value == null ? null : value.toString());
+            return this;
+        }
+
+        @Override
+        public MutableHttpHeaders remove(CharSequence header) {
+            headers.remove(toUppercaseAscii(header));
+            return this;
+        }
+
+        @Override
+        public void setConversionService(@NonNull ConversionService conversionService) {
+            this.headers.setConversionService(conversionService);
+        }
+
+        private static String toUppercaseAscii(CharSequence charSequence) {
+            String s;
+            if (charSequence == null) {
+                return null;
+            } else if (charSequence instanceof String) {
+                s = (String) charSequence;
+            } else {
+                s = charSequence.toString();
+            }
+            StringBuilder result = new StringBuilder(s.length());
+            for (int i = 0; i < s.length(); i++) {
+                char c = s.charAt(i);
+                if ('a' <= c && c <= 'z') {
+                    c = (char) (c - 32);
+                }
+                result.append(c);
+            }
+            return result.toString();
         }
     }
 
-    private static class RawHttpBasedParameters implements HttpParameters {
-        private final Map<String, List<String>> queryParams;
-        private final ConversionService conversionService;
+    private static class RawHttpBasedParameters implements MutableHttpParameters {
+        private final MutableConvertibleMultiValuesMap<String> queryParams;
 
         private RawHttpBasedParameters(String queryString, ConversionService conversionService) {
-            queryParams = QueryParametersParser.parseQueryParameters(queryString);
-            this.conversionService = conversionService;
+            queryParams = new MutableConvertibleMultiValuesMap<>(
+                (Map) QueryParametersParser.parseQueryParameters(queryString),
+                conversionService
+            );
         }
 
         @Override
         public List<String> getAll(CharSequence name) {
-            return queryParams.get(name.toString());
+            return queryParams.getAll(name);
         }
 
         @Override
         public @Nullable String get(CharSequence name) {
-            List<String> all = getAll(name);
-            return all == null || all.isEmpty() ? null : all.get(0);
+            return queryParams.get(name);
         }
 
         @Override
         public Set<String> names() {
-            return queryParams.keySet();
+            return queryParams.names();
         }
 
         @Override
@@ -314,8 +370,20 @@ public class RawHttpBasedServletHttpRequest<B> extends PojaHttpRequest<B, RawHtt
 
         @Override
         public <T> Optional<T> get(CharSequence name, ArgumentConversionContext<T> conversionContext) {
-            String header = get(name);
-            return header == null ? Optional.empty() : conversionService.convert(header, conversionContext);
+            return queryParams.get(name, conversionContext);
+        }
+
+        @Override
+        public MutableHttpParameters add(CharSequence name, List<CharSequence> values) {
+            for (CharSequence value: values) {
+                queryParams.add(name, value == null ? null : value.toString());
+            }
+            return this;
+        }
+
+        @Override
+        public void setConversionService(@NonNull ConversionService conversionService) {
+            queryParams.setConversionService(conversionService);
         }
 
         static class QueryParametersParser {

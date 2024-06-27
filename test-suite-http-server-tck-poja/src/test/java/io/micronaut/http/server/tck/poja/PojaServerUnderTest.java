@@ -23,7 +23,7 @@ import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.client.BlockingHttpClient;
 import io.micronaut.http.client.HttpClient;
-import io.micronaut.http.server.tck.poja.adapter.TestingServerlessApplication;
+import io.micronaut.http.poja.test.TestingServerlessApplication;
 import io.micronaut.http.tck.ServerUnderTest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
