@@ -95,7 +95,9 @@ abstract class BaseServerlessApplicationSpec extends Specification {
             var result = readInfo.toString().substring(lastIndex)
             lastIndex += result.length()
 
-            return result.replace('\r', '')
+            return result
+                    .replace('\r', '')
+                    .replaceAll("Date: .*\n", "")
         }
     }
 

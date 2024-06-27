@@ -27,4 +27,3 @@ dependencies {
 
     testImplementation(mnSerde.micronaut.serde.jackson)
 }
-
