@@ -162,6 +162,11 @@ public class TestingServerlessApplication extends ServerlessApplication {
         return isRunning.get();
     }
 
+    /**
+     * Get the port.
+     *
+     * @return The port
+     */
     public int getPort() {
         return port;
     }
@@ -182,7 +187,7 @@ public class TestingServerlessApplication extends ServerlessApplication {
             buffer.clear();
             try {
                 int length = input.read(buffer);
-                if (length < 0 ) {
+                if (length < 0) {
                     break;
                 }
             } catch (IOException e) {

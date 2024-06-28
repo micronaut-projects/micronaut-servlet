@@ -19,9 +19,11 @@ import io.micronaut.servlet.http.ServletHttpResponse;
 
 /**
  * A base class for serverless POJA responses.
+ *
+ * @param <T> The body type
+ * @param <RES> The POJA response type
  */
 public abstract class PojaHttpResponse<T, RES> implements ServletHttpResponse<RES, T> {
-
 
 
 }

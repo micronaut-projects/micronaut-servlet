@@ -60,6 +60,7 @@ public class ServerlessApplication implements EmbeddedApplication<ServerlessAppl
         this.applicationContext = applicationContext;
         this.applicationConfiguration = applicationConfiguration;
     }
+
     @Override
     public ApplicationContext getApplicationContext() {
         return applicationContext;
@@ -76,7 +77,7 @@ public class ServerlessApplication implements EmbeddedApplication<ServerlessAppl
     }
 
     /**
-     * Run the application using a particular channel
+     * Run the application using a particular channel.
      *
      * @param input The input stream
      * @param output The output stream
@@ -118,7 +119,16 @@ public class ServerlessApplication implements EmbeddedApplication<ServerlessAppl
         }
     }
 
-    void runIndefinitely(ServletHttpHandler<RawHttpRequest, RawHttpResponse<Void>> servletHttpHandler,
+    /**
+     * A method to start the application in a loop.
+     *
+     * @param servletHttpHandler The handler
+     * @param applicationContext The application context
+     * @param in The input stream
+     * @param out The output stream
+     * @throws IOException IO exception
+     */
+    protected void runIndefinitely(ServletHttpHandler<RawHttpRequest, RawHttpResponse<Void>> servletHttpHandler,
                          ApplicationContext applicationContext,
                          InputStream in,
                          OutputStream out) throws IOException {
@@ -127,6 +137,15 @@ public class ServerlessApplication implements EmbeddedApplication<ServerlessAppl
         }
     }
 
+    /**
+     * Handle a single request.
+     *
+     * @param servletHttpHandler The handler
+     * @param applicationContext The application context
+     * @param in The input stream
+     * @param out The output stream
+     * @throws IOException IO exception
+     */
     void handleSingleRequest(ServletHttpHandler<RawHttpRequest, RawHttpResponse<Void>> servletHttpHandler,
                                     ApplicationContext applicationContext,
                                     InputStream in,

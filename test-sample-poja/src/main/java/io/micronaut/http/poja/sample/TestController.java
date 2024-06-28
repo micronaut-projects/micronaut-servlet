@@ -26,7 +26,7 @@ import io.micronaut.http.annotation.Put;
 import io.micronaut.http.annotation.Status;
 
 /**
- * A controller for testing
+ * A controller for testing.
  *
  * @author Sahoo.
  */
@@ -34,24 +34,24 @@ import io.micronaut.http.annotation.Status;
 public class TestController {
 
     @Get
-    public String index() {
+    public final String index() {
         return "Hello, Micronaut Without Netty!\n";
     }
 
     @Delete
-    public void delete() {
+    public final void delete() {
         System.err.println("Delete called");
     }
 
     @Post("/{name}")
     @Status(HttpStatus.CREATED)
-    public String create(@NonNull String name) {
+    public final String create(@NonNull String name) {
         return "Hello, " + name + "\n";
     }
 
     @Put("/{name}")
     @Status(HttpStatus.OK)
-    public String update(@NonNull String name) {
+    public final String update(@NonNull String name) {
         return "Hello, " + name + "!\n";
     }
 

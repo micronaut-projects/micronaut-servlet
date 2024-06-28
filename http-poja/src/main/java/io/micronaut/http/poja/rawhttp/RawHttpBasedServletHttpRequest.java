@@ -63,6 +63,8 @@ import java.util.stream.Collectors;
 
 /**
  * @author Sahoo.
+ *
+ * @param <B> Body type
  */
 public class RawHttpBasedServletHttpRequest<B> extends PojaHttpRequest<B, RawHttpRequest, RawHttpResponse<Void>> {
     private final RawHttp rawHttp;
@@ -163,6 +165,11 @@ public class RawHttpBasedServletHttpRequest<B> extends PojaHttpRequest<B, RawHtt
 
     }
 
+    /**
+     * An implementation of cookie.
+     *
+     * @param cookie The internal cookie
+     */
     public record RawHttpCookie(
         HttpCookie cookie
     ) implements Cookie {
@@ -268,11 +275,17 @@ public class RawHttpBasedServletHttpRequest<B> extends PojaHttpRequest<B, RawHtt
         }
     }
 
-    public static class RawHttpBasedHeaders implements MutableHttpHeaders {
-        private final MutableConvertibleMultiValuesMap<String> headers;
+    /**
+     * Headers implementation.
+     *
+     * @param headers The values
+     */
+    public record RawHttpBasedHeaders(
+        MutableConvertibleMultiValuesMap<String> headers
+    ) implements MutableHttpHeaders {
 
-        private RawHttpBasedHeaders(RawHttpHeaders rawHttpHeaders, ConversionService conversionService) {
-            this.headers = new MutableConvertibleMultiValuesMap<>((Map) rawHttpHeaders.asMap(), conversionService);
+        public RawHttpBasedHeaders(RawHttpHeaders rawHttpHeaders, ConversionService conversionService) {
+            this(new MutableConvertibleMultiValuesMap<>((Map) rawHttpHeaders.asMap(), conversionService));
         }
 
         @Override
@@ -338,14 +351,20 @@ public class RawHttpBasedServletHttpRequest<B> extends PojaHttpRequest<B, RawHtt
         }
     }
 
-    private static class RawHttpBasedParameters implements MutableHttpParameters {
-        private final MutableConvertibleMultiValuesMap<String> queryParams;
+    /**
+     * Query parameters implementation.
+     *
+     * @param queryParams The values
+     */
+    private record RawHttpBasedParameters(
+        MutableConvertibleMultiValuesMap<String> queryParams
+    ) implements MutableHttpParameters {
 
         private RawHttpBasedParameters(String queryString, ConversionService conversionService) {
-            queryParams = new MutableConvertibleMultiValuesMap<>(
+            this(new MutableConvertibleMultiValuesMap<>(
                 (Map) QueryParametersParser.parseQueryParameters(queryString),
                 conversionService
-            );
+            ));
         }
 
         @Override
