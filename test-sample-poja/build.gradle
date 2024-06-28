@@ -32,3 +32,9 @@ run {
     standardInput = System.in
     standardOutput = System.out
 }
+
+micronautBuild {
+    binaryCompatibility {
+        enabled.set(false)
+    }
+}
