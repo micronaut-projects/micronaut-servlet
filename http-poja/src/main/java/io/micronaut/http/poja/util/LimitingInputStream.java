@@ -45,7 +45,7 @@ public class LimitingInputStream extends InputStream {
 
     @Override
     public int read(byte[] b) throws IOException {
-        synchronized(this) {
+        synchronized (this) {
             if (size >= maxSize) {
                 return -1;
             }
