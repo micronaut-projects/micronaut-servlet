@@ -55,6 +55,8 @@ import java.util.function.Function;
  * to be reused for body and binding.
  *
  * @param <B> The body type
+ * @param <REQ> The POJA request type
+ * @param <RES> The POJA response type
  * @author Andriy
  */
 public abstract class PojaHttpRequest<B, REQ, RES>
@@ -92,6 +94,7 @@ public abstract class PojaHttpRequest<B, REQ, RES>
      *
      * @return The result
      * @param <T> The function return value
+     * @param consumer The method to consume the body
      */
     public <T> T consumeBody(Function<InputStream, T> consumer) {
         try (CloseableByteBody byteBody = byteBody().split(SplitBackpressureMode.FASTEST)) {

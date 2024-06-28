@@ -42,6 +42,8 @@ import java.util.Optional;
 
 /**
  * @author Sahoo.
+ *
+ * @param <T> The body type
  */
 public class RawHttpBasedServletHttpResponse<T> extends PojaHttpResponse<T, RawHttpResponse<?>> {
 
