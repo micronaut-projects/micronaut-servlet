@@ -7,7 +7,7 @@ groovy = "4.0.15"
 spock = "2.3-groovy-4.0"
 
 managed-servlet-api = '6.0.0'
-kotest-runner = '5.8.1'
+kotest-runner = '5.9.1'
 undertow = '2.3.14.Final'
 tomcat = '10.1.25'
 graal-svm = "23.1.2"
