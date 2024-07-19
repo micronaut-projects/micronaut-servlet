@@ -15,7 +15,7 @@ bcpkix = "1.70"
 
 managed-jetty = '11.0.22'
 
-micronaut-reactor = "3.3.0"
+micronaut-reactor = "3.4.1"
 micronaut-security = "4.9.0"
 micronaut-serde = "2.10.2"
 micronaut-session = "4.3.0"
