@@ -379,7 +379,7 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
 
             if (body != null && !isVoid) {
                 Class<?> bodyType = body.getClass();
-                if (bodyArgument == null || !bodyArgument.isInstance(body)) {
+                if (bodyArgument == null || !bodyArgument.isInstance(body) || bodyArgument.getType().equals(Object.class)) {
                     bodyArgument = (Argument<Object>) Argument.of(bodyType);
                 }
                 ServletResponseEncoder<Object> responseEncoder = (ServletResponseEncoder<Object>) responseEncoders.get(bodyType);
