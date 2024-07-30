@@ -26,6 +26,7 @@ import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.execution.ExecutionFlow;
 import io.micronaut.core.io.Writable;
 import io.micronaut.core.propagation.PropagatedContext;
+import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.http.HttpAttributes;
@@ -37,6 +38,7 @@ import io.micronaut.http.MediaType;
 import io.micronaut.http.MutableHttpResponse;
 import io.micronaut.http.annotation.Header;
 import io.micronaut.http.annotation.Produces;
+import io.micronaut.http.body.DynamicMessageBodyWriter;
 import io.micronaut.http.body.MessageBodyHandlerRegistry;
 import io.micronaut.http.body.MessageBodyWriter;
 import io.micronaut.http.codec.CodecException;
@@ -422,7 +424,12 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
                     if (messageBodyWriter == null) {
                         MediaType finalMediaType = mediaType;
                         Argument<Object> finalBodyArgument = bodyArgument;
-                        messageBodyWriter = messageBodyHandlerRegistry.findWriter(bodyArgument, List.of(mediaType))
+                        Optional<MessageBodyWriter<Object>> writer = messageBodyHandlerRegistry.findWriter(bodyArgument, List.of(mediaType));
+                        if (writer.isEmpty() && mediaType.equals(MediaType.TEXT_PLAIN_TYPE) && ClassUtils.isJavaBasicType(body.getClass())) {
+                            // TODO: remove after Core 4.6
+                            writer = (Optional) messageBodyHandlerRegistry.findWriter(Argument.STRING, List.of(MediaType.TEXT_PLAIN_TYPE));
+                        }
+                        messageBodyWriter = writer
                             .orElseThrow(() -> new CodecException("Cannot encode value of argument [" + finalBodyArgument + "]. No possible encoders found for media type: " + finalMediaType));
                     }
                 }
