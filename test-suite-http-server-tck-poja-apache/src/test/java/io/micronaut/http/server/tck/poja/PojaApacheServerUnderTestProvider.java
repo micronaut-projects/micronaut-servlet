@@ -1,5 +1,5 @@
 /*
- * Copyright © 2024 Oracle and/or its affiliates.
+ * Copyright 2017-2023 original authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,21 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-plugins {
-    id("io.micronaut.build.internal.servlet.module")
-}
+package io.micronaut.http.server.tck.poja;
 
-dependencies {
-    implementation(projects.micronautHttpPojaCommon)
-    api(mn.micronaut.inject.java)
-    api(mn.micronaut.http.client)
+import io.micronaut.http.tck.ServerUnderTest;
+import io.micronaut.http.tck.ServerUnderTestProvider;
 
-    testImplementation(mn.micronaut.jackson.databind)
-    testImplementation(projects.micronautHttpPojaApache)
-}
+import java.util.Map;
 
-micronautBuild {
-    binaryCompatibility {
-        enabled.set(false)
+public class PojaApacheServerUnderTestProvider implements ServerUnderTestProvider {
+
+    @Override
+    public ServerUnderTest getServer(Map<String, Object> properties) {
+        return new PojaApacheServerUnderTest(properties);
     }
+
 }

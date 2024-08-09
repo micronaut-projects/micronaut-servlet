@@ -15,26 +15,27 @@
  */
 plugins {
     id("io.micronaut.build.internal.servlet.module")
-    id("application")
+    id("idea")
 }
 
 dependencies {
-    implementation(projects.micronautHttpPojaApache)
-    implementation(mnLogging.slf4j.simple)
-    implementation(mn.micronaut.jackson.databind)
+    api(projects.micronautHttpPojaCommon)
+    implementation(libs.apache.http.core5)
+    implementation(libs.apache.http.client5)
 
-    testImplementation(projects.micronautHttpPojaTest)
-    testImplementation(mn.micronaut.jackson.databind)
-}
+    compileOnly(mn.reactor)
+    compileOnly(mn.micronaut.json.core)
 
-run {
-    mainClass.set("io.micronaut.http.poja.sample.Application")
-    standardInput = System.in
-    standardOutput = System.out
+
+    testImplementation(mnSerde.micronaut.serde.jackson)
 }
 
 micronautBuild {
     binaryCompatibility {
         enabled.set(false)
     }
+}
+
+javadoc {
+    failOnError(false)
 }
