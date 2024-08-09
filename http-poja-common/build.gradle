@@ -19,8 +19,6 @@ plugins {
 
 dependencies {
     api(projects.micronautServletCore)
-    implementation(libs.rawhttp.core)
-    implementation(libs.rawhttp.cookies)
 
     compileOnly(mn.reactor)
     compileOnly(mn.micronaut.json.core)
