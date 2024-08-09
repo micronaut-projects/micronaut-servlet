@@ -2,7 +2,7 @@ package io.micronaut.http.poja
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.context.annotation.Replaces
-import io.micronaut.http.poja.llhttp.ServerlessApplication
+import io.micronaut.http.poja.llhttp.ApacheServerlessApplication
 import io.micronaut.runtime.ApplicationConfiguration
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
@@ -22,12 +22,12 @@ abstract class BaseServerlessApplicationSpec extends Specification {
     TestingServerlessApplication app
 
     /**
-     * An extension of {@link io.micronaut.http.poja.llhttp.ServerlessApplication} that creates 2
+     * An extension of {@link ApacheServerlessApplication} that creates 2
      * pipes to communicate with the server and simplifies reading and writing to them.
      */
     @Singleton
-    @Replaces(ServerlessApplication.class)
-    static class TestingServerlessApplication extends ServerlessApplication {
+    @Replaces(ApacheServerlessApplication.class)
+    static class TestingServerlessApplication extends ApacheServerlessApplication {
 
         OutputStream input
         Pipe.SourceChannel output
@@ -45,7 +45,7 @@ abstract class BaseServerlessApplicationSpec extends Specification {
         }
 
         @Override
-        ServerlessApplication start() {
+        ApacheServerlessApplication start() {
             var inputPipe = Pipe.open()
             var outputPipe = Pipe.open()
             input = Channels.newOutputStream(inputPipe.sink())
