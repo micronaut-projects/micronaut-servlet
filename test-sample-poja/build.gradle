@@ -19,7 +19,7 @@ plugins {
 }
 
 dependencies {
-    implementation(projects.micronautHttpPoja)
+    implementation(projects.micronautHttpPojaLlhttp)
     implementation(mnLogging.slf4j.simple)
     implementation(mn.micronaut.jackson.databind)
 

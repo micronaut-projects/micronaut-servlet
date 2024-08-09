@@ -18,11 +18,14 @@ plugins {
 }
 
 dependencies {
-    implementation(projects.micronautHttpPojaLlhttp)
-    api(mn.micronaut.inject.java)
-    api(mn.micronaut.http.client)
+    api(projects.micronautHttpPojaCommon)
+    implementation(libs.rawhttp.core)
+    implementation(libs.rawhttp.cookies)
 
-    testImplementation(mn.micronaut.jackson.databind)
+    compileOnly(mn.reactor)
+    compileOnly(mn.micronaut.json.core)
+
+    testImplementation(mnSerde.micronaut.serde.jackson)
 }
 
 micronautBuild {
