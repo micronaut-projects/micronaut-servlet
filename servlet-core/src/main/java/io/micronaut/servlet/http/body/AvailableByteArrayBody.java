@@ -35,7 +35,7 @@ import java.util.concurrent.CompletableFuture;
  * @deprecated Use {@link io.micronaut.http.body.stream.AvailableByteArrayBody} from core instead
  */
 @Internal
-@Deprecated
+@Deprecated(forRemoval = true)
 public final class AvailableByteArrayBody extends AbstractServletByteBody implements CloseableAvailableByteBody {
     private byte[] array;
 
