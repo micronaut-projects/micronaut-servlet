@@ -6,7 +6,7 @@ micronaut-test = "4.0.1"
 groovy = "4.0.15"
 spock = "2.3-groovy-4.0"
 
-managed-servlet-api = '6.0.0'
+managed-servlet-api = '6.1.0'
 kotest-runner = '5.9.1'
 undertow = '2.3.15.Final'
 tomcat = '10.1.26'
