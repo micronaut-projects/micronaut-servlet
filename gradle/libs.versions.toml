@@ -33,7 +33,7 @@ micronaut-core = { module = 'io.micronaut:micronaut-core-bom', version.ref = 'mi
 
 boms-jetty = { module = 'org.eclipse.jetty:jetty-bom', version.ref = 'managed-jetty' }
 
-graal-svm = { module = "org.graalvm.nativeimage:svm", version.ref = "graal-svm" }
+graal-svm = { module = "org.graalvm.sdk:nativeimage", version.ref = "graal-svm" }
 
 managed-servlet-api = { module = 'jakarta.servlet:jakarta.servlet-api', version.ref = 'managed-servlet-api' }
 
