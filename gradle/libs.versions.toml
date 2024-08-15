@@ -9,7 +9,7 @@ spock = "2.3-groovy-4.0"
 managed-servlet-api = '6.0.0'
 kotest-runner = '5.9.1'
 undertow = '2.3.15.Final'
-tomcat = '10.1.26'
+tomcat = '10.1.28'
 graal-svm = "23.1.4"
 bcpkix = "1.70"
 
