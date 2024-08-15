@@ -33,6 +33,7 @@ import io.micronaut.http.poja.PojaHttpRequest;
 import io.micronaut.http.simple.cookies.SimpleCookie;
 import io.micronaut.http.simple.cookies.SimpleCookies;
 import io.micronaut.servlet.http.body.InputStreamByteBody;
+import org.apache.hc.client5.http.cookie.CookieOrigin;
 import org.apache.hc.client5.http.cookie.CookieSpec;
 import org.apache.hc.client5.http.cookie.MalformedCookieException;
 import org.apache.hc.client5.http.impl.cookie.RFC6265CookieSpecFactory;
@@ -42,6 +43,7 @@ import org.apache.hc.core5.http.Header;
 import org.apache.hc.core5.http.HttpException;
 import org.apache.hc.core5.http.impl.io.DefaultHttpRequestParser;
 import org.apache.hc.core5.http.impl.io.SessionInputBufferImpl;
+import org.apache.hc.core5.http.message.BasicHeader;
 import org.apache.hc.core5.net.URIBuilder;
 
 import java.io.ByteArrayInputStream;
@@ -245,17 +247,28 @@ public class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, ClassicHttpR
 
     private SimpleCookies parseCookies(ClassicHttpRequest request, ConversionService conversionService) {
         SimpleCookies cookies = new SimpleCookies(conversionService);
-        CookieSpec cookieSpec = new RFC6265CookieSpecFactory().create(null); // The code does not use the context
 
-        // Parse cookies from the response headers
+        // Manually parse cookies from the response headers
         for (Header header : request.getHeaders(MultiValueHeaders.COOKIE)) {
-            try {
-                var parsedCookies = cookieSpec.parse(header, null);
-                for (var parsedCookie: parsedCookies) {
-                   cookies.put(parsedCookie.getName(), parseCookie(parsedCookie));
+            String cookie = header.getValue();
+
+            String name = null;
+            int start = 0;
+            for (int i = 0; i < cookie.length(); ++i) {
+                if (i < cookie.length() - 1 && cookie.charAt(i) == ';' && cookie.charAt(i + 1) == ' ') {
+                    if (name != null) {
+                        cookies.put(name, Cookie.of(name, cookie.substring(start, i)));
+                        name = null;
+                        start = i + 2;
+                        ++i;
+                    }
+                } else if (cookie.charAt(i) == '=') {
+                    name = cookie.substring(start, i);
+                    start = i + 1;
                 }
-            } catch (MalformedCookieException e) {
-                throw new RuntimeException("The cookie is wrong", e);
+            }
+            if (name != null) {
+                cookies.put(name, Cookie.of(name, cookie.substring(start)));
             }
         }
         return cookies;
@@ -271,7 +284,10 @@ public class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, ClassicHttpR
                 default -> {}
             }
         }
-        result.maxAge(Long.parseLong(cookie.getAttribute(org.apache.hc.client5.http.cookie.Cookie.MAX_AGE_ATTR)));
+        String maxAge = cookie.getAttribute(org.apache.hc.client5.http.cookie.Cookie.MAX_AGE_ATTR);
+        if (maxAge != null) {
+            result.maxAge(Long.parseLong(maxAge));
+        }
         result.domain(cookie.getAttribute(org.apache.hc.client5.http.cookie.Cookie.DOMAIN_ATTR));
         result.path(cookie.getAttribute(org.apache.hc.client5.http.cookie.Cookie.PATH_ATTR));
         result.httpOnly(cookie.isHttpOnly());
