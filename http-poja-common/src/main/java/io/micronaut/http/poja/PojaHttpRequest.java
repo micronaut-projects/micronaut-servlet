@@ -112,21 +112,12 @@ public abstract class PojaHttpRequest<B, REQ, RES>
         final MediaType contentType = getContentType().orElse(MediaType.APPLICATION_JSON_TYPE);
 
         if (isFormSubmission()) {
-            return consumeBody(inputStream -> {
-                try {
-                    String content = IOUtils.readText(new BufferedReader(new InputStreamReader(
-                        inputStream, getCharacterEncoding()
-                    )));
-                    ConvertibleMultiValues<?> form = parseFormData(content);
-                    if (ConvertibleValues.class == type || Object.class == type) {
-                        return Optional.of((T) form);
-                    } else {
-                        return conversionService.convert(form.asMap(), arg);
-                    }
-                } catch (IOException e) {
-                    throw new RuntimeException("Unable to parse body", e);
-                }
-            });
+            ConvertibleMultiValues<?> form = getFormData();
+            if (ConvertibleValues.class == type || Object.class == type) {
+                return Optional.of((T) form);
+            } else {
+                return conversionService.convert(form.asMap(), arg);
+            }
         }
 
         final MediaTypeCodec codec = codecRegistry.findCodec(contentType, type).orElse(null);
@@ -141,6 +132,19 @@ public abstract class PojaHttpRequest<B, REQ, RES>
             final T value = consumeBody(inputStream -> codec.decode(arg, inputStream));
             return Optional.of(value);
         }
+    }
+
+    protected ConvertibleMultiValues<?> getFormData() {
+        return consumeBody(inputStream -> {
+            try {
+                String content = IOUtils.readText(new BufferedReader(new InputStreamReader(
+                    inputStream, getCharacterEncoding()
+                )));
+                return parseFormData(content);
+            } catch (IOException e) {
+                throw new RuntimeException("Unable to parse body", e);
+            }
+        });
     }
 
     @Override
