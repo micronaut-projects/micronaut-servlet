@@ -20,7 +20,6 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.convert.value.MutableConvertibleMultiValuesMap;
-import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpMethod;
 import io.micronaut.http.MutableHttpHeaders;
 import io.micronaut.http.MutableHttpParameters;
@@ -88,7 +87,7 @@ public class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, ClassicHttpR
         ExecutorService ioExecutor,
         ApacheServletHttpResponse<?> response
     ) {
-        super(conversionService, codecRegistry, (ApacheServletHttpResponse) response);
+        super(conversionService, codecRegistry, response);
 
         SessionInputBufferImpl sessionInputBuffer = new SessionInputBufferImpl(8192);
         DefaultHttpRequestParser parser = new DefaultHttpRequestParser();
@@ -110,19 +109,19 @@ public class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, ClassicHttpR
         cookies = parseCookies(request, conversionService);
 
         long contentLength = getContentLength();
-        boolean chunked = headers.get(HttpHeaders.TRANSFER_ENCODING) != null
-            && headers.get(HttpHeaders.TRANSFER_ENCODING).equalsIgnoreCase("chunked");
-
+        OptionalLong optionalContentLength = contentLength >= 0 ? OptionalLong.of(contentLength) : OptionalLong.empty();
         try {
-            if (contentLength >= 0 || chunked) {
-                byteBody = InputStreamByteBody.create(
-                    request.getEntity().getContent(),
-                    contentLength >= 0 ? OptionalLong.of(contentLength) : OptionalLong.empty(),
-                    ioExecutor
+            if (sessionInputBuffer.available() > 0) {
+                byte[] data = new byte[sessionInputBuffer.available()];
+                sessionInputBuffer.read(data, inputStream);
+
+                InputStream combinedStream = new CombinedInputStream(
+                    new ByteArrayInputStream(data),
+                    inputStream
                 );
+                byteBody = InputStreamByteBody.create(combinedStream, optionalContentLength, ioExecutor);
             } else {
-                // Empty
-                byteBody = InputStreamByteBody.create(new ByteArrayInputStream(new byte[0]), OptionalLong.of(0), ioExecutor);
+                byteBody = InputStreamByteBody.create(inputStream, optionalContentLength, ioExecutor);
             }
         } catch (IOException e) {
             throw new RuntimeException("Could not get request body", e);
@@ -188,6 +187,60 @@ public class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, ClassicHttpR
     @Override
     public void setConversionService(@NonNull ConversionService conversionService) {
 
+    }
+
+    /**
+     * An input stream that would initially delegate to the first input stream
+     * and then to the second one. Created specifically to be used with {@link ByteBody}.
+     */
+    private static class CombinedInputStream extends InputStream {
+
+        private final InputStream first;
+        private final InputStream second;
+        private boolean finishedFirst;
+
+        /**
+         * Create the input stream from first stream and second stream.
+         *
+         * @param first The first stream
+         * @param second The second stream
+         */
+        CombinedInputStream(InputStream first, InputStream second) {
+            this.first = first;
+            this.second = second;
+        }
+
+        @Override
+        public int read() throws IOException {
+            if (finishedFirst) {
+                return second.read();
+            }
+            int result = first.read();
+            if (result == -1) {
+                finishedFirst = true;
+                return second.read();
+            }
+            return result;
+        }
+
+        @Override
+        public int read(byte[] b, int off, int len) throws IOException {
+            if (finishedFirst) {
+                return second.read(b, off, len);
+            }
+            int readLength = first.read(b, off, len);
+            if (readLength < len) {
+                finishedFirst = true;
+                readLength += second.read(b, off + readLength, len - readLength);
+            }
+            return readLength;
+        }
+
+        @Override
+        public void close() throws IOException {
+            first.close();
+            second.close();
+        }
     }
 
     private SimpleCookies parseCookies(ClassicHttpRequest request, ConversionService conversionService) {
@@ -295,7 +348,7 @@ public class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, ClassicHttpR
                 }
                 map.get(header.getName()).add(header.getValue());
             }
-            return new MutableConvertibleMultiValuesMap<>(Collections.emptyMap(), conversionService);
+            return new MutableConvertibleMultiValuesMap<>(map, conversionService);
         }
 
         private static MutableConvertibleMultiValuesMap<String> standardizeHeaders(
