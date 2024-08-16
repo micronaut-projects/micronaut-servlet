@@ -22,6 +22,8 @@ import io.micronaut.servlet.http.ServletHttpResponse;
  *
  * @param <T> The body type
  * @param <RES> The POJA response type
+ * @author Andriy Dmytruk
+ * @since 4.10.0
  */
 public abstract class PojaHttpResponse<T, RES> implements ServletHttpResponse<RES, T> {
 

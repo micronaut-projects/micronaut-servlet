@@ -27,6 +27,12 @@ public class LimitingInputStream extends InputStream {
     private final InputStream stream;
     private final long maxSize;
 
+    /**
+     * Create the limiting input stream.
+     *
+     * @param stream The delegate stream
+     * @param maxSize The maximum size to read
+     */
     public LimitingInputStream(InputStream stream, long maxSize) {
         this.maxSize = maxSize;
         this.stream = stream;

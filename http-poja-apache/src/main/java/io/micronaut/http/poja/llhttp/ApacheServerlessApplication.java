@@ -16,7 +16,6 @@
 package io.micronaut.http.poja.llhttp;
 
 import io.micronaut.context.ApplicationContext;
-import io.micronaut.context.annotation.DefaultImplementation;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.http.codec.MediaTypeCodecRegistry;
 import io.micronaut.http.poja.PojaHttpServerlessApplication;
@@ -41,6 +40,7 @@ import java.util.concurrent.ExecutorService;
  * Implementation of {@link PojaHttpServerlessApplication} for Apache.
  *
  * @author Andriy Dmytruk.
+ * @since 4.10.0
  */
 @Singleton
 public class ApacheServerlessApplication

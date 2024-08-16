@@ -58,7 +58,8 @@ import java.util.stream.Collectors;
  * An implementation of the POJA Http Request based on Apache.
  *
  * @param <B> Body type
- * @author Andriy Dmytruk.
+ * @author Andriy Dmytruk
+ * @since 4.10.0
  */
 public class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, ClassicHttpRequest, ClassicHttpResponse> {
 
@@ -72,6 +73,15 @@ public class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, ClassicHttpR
 
     private final ByteBody byteBody;
 
+    /**
+     * Create an Apache-based request.
+     *
+     * @param inputStream The input stream
+     * @param conversionService The conversion service
+     * @param codecRegistry The media codec registry
+     * @param ioExecutor The executor service
+     * @param response The response
+     */
     public ApacheServletHttpRequest(
         InputStream inputStream,
         ConversionService conversionService,
@@ -104,8 +114,8 @@ public class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, ClassicHttpR
         OptionalLong optionalContentLength = contentLength >= 0 ? OptionalLong.of(contentLength) : OptionalLong.empty();
         try {
             InputStream bodyStream = inputStream;
-            if (sessionInputBuffer.available() > 0) {
-                byte[] data = new byte[sessionInputBuffer.available()];
+            if (sessionInputBuffer.length() > 0) {
+                byte[] data = new byte[sessionInputBuffer.length()];
                 sessionInputBuffer.read(data, inputStream);
 
                 bodyStream = new CombinedInputStream(
@@ -189,6 +199,57 @@ public class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, ClassicHttpR
 
     }
 
+    private SimpleCookies parseCookies(ClassicHttpRequest request, ConversionService conversionService) {
+        SimpleCookies cookies = new SimpleCookies(conversionService);
+
+        // Manually parse cookies from the response headers
+        for (Header header : request.getHeaders(MultiValueHeaders.COOKIE)) {
+            String cookie = header.getValue();
+
+            String name = null;
+            int start = 0;
+            for (int i = 0; i < cookie.length(); ++i) {
+                if (i < cookie.length() - 1 && cookie.charAt(i) == ';' && cookie.charAt(i + 1) == ' ') {
+                    if (name != null) {
+                        cookies.put(name, Cookie.of(name, cookie.substring(start, i)));
+                        name = null;
+                        start = i + 2;
+                        ++i;
+                    }
+                } else if (cookie.charAt(i) == '=') {
+                    name = cookie.substring(start, i);
+                    start = i + 1;
+                }
+            }
+            if (name != null) {
+                cookies.put(name, Cookie.of(name, cookie.substring(start)));
+            }
+        }
+        return cookies;
+    }
+
+    private static MultiValueHeaders createHeaders(
+        Header[] headers, ConversionService conversionService
+    ) {
+        Map<String, List<String>> map = new HashMap<>();
+        for (Header header: headers) {
+            if (!map.containsKey(header.getName())) {
+                map.put(header.getName(), new ArrayList<>(1));
+            }
+            map.get(header.getName()).add(header.getValue());
+        }
+        return new MultiValueHeaders(map, conversionService);
+    }
+
+    private static MultiValuesQueryParameters parseQueryParameters(URI uri, ConversionService conversionService) {
+        Map<CharSequence, List<String>> map = new URIBuilder(uri).getQueryParams().stream()
+            .collect(Collectors.groupingBy(
+                    NameValuePair::getName,
+                    Collectors.mapping(NameValuePair::getValue, Collectors.toList())
+            ));
+        return new MultiValuesQueryParameters(map, conversionService);
+    }
+
     /**
      * An input stream that would initially delegate to the first input stream
      * and then to the second one. Created specifically to be used with {@link ByteBody}.
@@ -241,57 +302,6 @@ public class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, ClassicHttpR
             first.close();
             second.close();
         }
-    }
-
-    private SimpleCookies parseCookies(ClassicHttpRequest request, ConversionService conversionService) {
-        SimpleCookies cookies = new SimpleCookies(conversionService);
-
-        // Manually parse cookies from the response headers
-        for (Header header : request.getHeaders(MultiValueHeaders.COOKIE)) {
-            String cookie = header.getValue();
-
-            String name = null;
-            int start = 0;
-            for (int i = 0; i < cookie.length(); ++i) {
-                if (i < cookie.length() - 1 && cookie.charAt(i) == ';' && cookie.charAt(i + 1) == ' ') {
-                    if (name != null) {
-                        cookies.put(name, Cookie.of(name, cookie.substring(start, i)));
-                        name = null;
-                        start = i + 2;
-                        ++i;
-                    }
-                } else if (cookie.charAt(i) == '=') {
-                    name = cookie.substring(start, i);
-                    start = i + 1;
-                }
-            }
-            if (name != null) {
-                cookies.put(name, Cookie.of(name, cookie.substring(start)));
-            }
-        }
-        return cookies;
-    }
-
-    private static MultiValueHeaders createHeaders(
-        Header[] headers, ConversionService conversionService
-    ) {
-        Map<String, List<String>> map = new HashMap<>();
-        for (Header header: headers) {
-            if (!map.containsKey(header.getName())) {
-                map.put(header.getName(), new ArrayList<>(1));
-            }
-            map.get(header.getName()).add(header.getValue());
-        }
-        return new MultiValueHeaders(map, conversionService);
-    }
-
-    private static MultiValuesQueryParameters parseQueryParameters(URI uri, ConversionService conversionService) {
-        Map<CharSequence, List<String>> map = new URIBuilder(uri).getQueryParams().stream()
-            .collect(Collectors.groupingBy(
-                    NameValuePair::getName,
-                    Collectors.mapping(NameValuePair::getValue, Collectors.toList())
-            ));
-        return new MultiValuesQueryParameters(map, conversionService);
     }
 
 }
