@@ -80,7 +80,6 @@ public class ApacheServletHttpResponse<T> extends PojaHttpResponse<T, ClassicHtt
         ByteArrayEntity body = new ByteArrayEntity(out.toByteArray(), contentType);
         response.setEntity(body);
         return response;
-
     }
 
     @Override
