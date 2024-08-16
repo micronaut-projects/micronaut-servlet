@@ -16,10 +16,7 @@
 package io.micronaut.http.poja.llhttp;
 
 import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
-import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.convert.ConversionService;
-import io.micronaut.core.convert.value.MutableConvertibleMultiValuesMap;
 import io.micronaut.http.HttpMethod;
 import io.micronaut.http.MutableHttpHeaders;
 import io.micronaut.http.MutableHttpParameters;
@@ -30,12 +27,15 @@ import io.micronaut.http.cookie.Cookie;
 import io.micronaut.http.cookie.Cookies;
 import io.micronaut.http.poja.PojaHttpRequest;
 import io.micronaut.http.poja.util.LimitingInputStream;
+import io.micronaut.http.poja.util.MultiValueHeaders;
+import io.micronaut.http.poja.util.MultiValuesQueryParameters;
 import io.micronaut.http.simple.cookies.SimpleCookies;
 import io.micronaut.servlet.http.body.InputStreamByteBody;
 import org.apache.hc.core5.http.ClassicHttpRequest;
 import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.apache.hc.core5.http.Header;
 import org.apache.hc.core5.http.HttpException;
+import org.apache.hc.core5.http.NameValuePair;
 import org.apache.hc.core5.http.impl.io.DefaultHttpRequestParser;
 import org.apache.hc.core5.http.impl.io.SessionInputBufferImpl;
 import org.apache.hc.core5.net.URIBuilder;
@@ -46,14 +46,11 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
-import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
@@ -99,8 +96,8 @@ public class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, ClassicHttpR
         } catch (URISyntaxException e) {
             throw new RuntimeException("Could not get request URI", e);
         }
-        headers = new MultiValueHeaders(request.getHeaders(), conversionService);
-        queryParameters = new MultiValuesQueryParameters(uri, conversionService);
+        headers = createHeaders(request.getHeaders(), conversionService);
+        queryParameters = parseQueryParameters(uri, conversionService);
         cookies = parseCookies(request, conversionService);
 
         long contentLength = getContentLength();
@@ -118,6 +115,9 @@ public class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, ClassicHttpR
             }
             if (contentLength >= 0) {
                 bodyStream = new LimitingInputStream(bodyStream, contentLength);
+            } else {
+                // Empty
+                bodyStream = new ByteArrayInputStream(new byte[0]);
             }
             byteBody = InputStreamByteBody.create(
                 bodyStream, optionalContentLength, ioExecutor
@@ -129,7 +129,7 @@ public class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, ClassicHttpR
 
     @Override
     public ClassicHttpRequest getNativeRequest() {
-        return null;
+        return request;
     }
 
     @Override
@@ -174,6 +174,7 @@ public class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, ClassicHttpR
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public @NonNull Optional<B> getBody() {
         return (Optional<B>) getBody(Object.class);
     }
@@ -271,172 +272,26 @@ public class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, ClassicHttpR
         return cookies;
     }
 
-    /**
-     * Headers implementation.
-     *
-     * @param headers The values
-     */
-    public record MultiValueHeaders(
-        MutableConvertibleMultiValuesMap<String> headers
-    ) implements MutableHttpHeaders {
-
-        public MultiValueHeaders(Header[] headers, ConversionService conversionService) {
-            this(convertHeaders(headers, conversionService));
-        }
-
-        public MultiValueHeaders(Map<String, List<String>> headers, ConversionService conversionService) {
-            this(standardizeHeaders(headers, conversionService));
-        }
-
-        @Override
-        public List<String> getAll(CharSequence name) {
-            return headers.getAll(standardizeHeader(name));
-        }
-
-        @Override
-        public @Nullable String get(CharSequence name) {
-            return headers.get(standardizeHeader(name));
-        }
-
-        @Override
-        public Set<String> names() {
-            return headers.names();
-        }
-
-        @Override
-        public Collection<List<String>> values() {
-            return headers.values();
-        }
-
-        @Override
-        public <T> Optional<T> get(CharSequence name, ArgumentConversionContext<T> conversionContext) {
-            return headers.get(standardizeHeader(name), conversionContext);
-        }
-
-        @Override
-        public MutableHttpHeaders add(CharSequence header, CharSequence value) {
-            headers.add(standardizeHeader(header), value == null ? null : value.toString());
-            return this;
-        }
-
-        @Override
-        public MutableHttpHeaders remove(CharSequence header) {
-            headers.remove(standardizeHeader(header));
-            return this;
-        }
-
-        @Override
-        public void setConversionService(@NonNull ConversionService conversionService) {
-            this.headers.setConversionService(conversionService);
-        }
-
-        private static MutableConvertibleMultiValuesMap<String> convertHeaders(
-            Header[] headers, ConversionService conversionService
-        ) {
-            Map<CharSequence, List<String>> map = new HashMap<>();
-            for (Header header: headers) {
-                String name = standardizeHeader(header.getName());
-                if (!map.containsKey(name)) {
-                    map.put(name, new ArrayList<>(1));
-                }
-                map.get(name).add(header.getValue());
+    private static MultiValueHeaders createHeaders(
+        Header[] headers, ConversionService conversionService
+    ) {
+        Map<String, List<String>> map = new HashMap<>();
+        for (Header header: headers) {
+            if (!map.containsKey(header.getName())) {
+                map.put(header.getName(), new ArrayList<>(1));
             }
-            return new MutableConvertibleMultiValuesMap<>(map, conversionService);
+            map.get(header.getName()).add(header.getValue());
         }
-
-        private static MutableConvertibleMultiValuesMap<String> standardizeHeaders(
-            Map<String, List<String>> headers, ConversionService conversionService
-        ) {
-            MutableConvertibleMultiValuesMap<String> map
-                = new MutableConvertibleMultiValuesMap<>(Collections.emptyMap(), conversionService);
-            for (String key: headers.keySet()) {
-                map.put(standardizeHeader(key), headers.get(key));
-            }
-            return map;
-        }
-
-        private static String standardizeHeader(CharSequence charSequence) {
-            String s;
-            if (charSequence == null) {
-                return null;
-            } else if (charSequence instanceof String) {
-                s = (String) charSequence;
-            } else {
-                s = charSequence.toString();
-            }
-
-            StringBuilder result = new StringBuilder(s.length());
-            boolean upperCase = true;
-            for (int i = 0; i < s.length(); i++) {
-                char c = s.charAt(i);
-                if (upperCase && ('a' <= c && c <= 'z')) {
-                    c = (char) (c - 32);
-                }
-                result.append(c);
-                upperCase = c == '-';
-            }
-            return result.toString();
-        }
+        return new MultiValueHeaders(map, conversionService);
     }
 
-    /**
-     * Query parameters implementation.
-     *
-     * @param queryParams The values
-     */
-    private record MultiValuesQueryParameters(
-        MutableConvertibleMultiValuesMap<String> queryParams
-    ) implements MutableHttpParameters {
-
-        private MultiValuesQueryParameters(URI uri, ConversionService conversionService) {
-            this(new MutableConvertibleMultiValuesMap<>(parseQueryParameters(uri), conversionService));
-        }
-
-        @Override
-        public List<String> getAll(CharSequence name) {
-            return queryParams.getAll(name);
-        }
-
-        @Override
-        public @Nullable String get(CharSequence name) {
-            return queryParams.get(name);
-        }
-
-        @Override
-        public Set<String> names() {
-            return queryParams.names();
-        }
-
-        @Override
-        public Collection<List<String>> values() {
-            return queryParams.values();
-        }
-
-        @Override
-        public <T> Optional<T> get(CharSequence name, ArgumentConversionContext<T> conversionContext) {
-            return queryParams.get(name, conversionContext);
-        }
-
-        @Override
-        public MutableHttpParameters add(CharSequence name, List<CharSequence> values) {
-            for (CharSequence value: values) {
-                queryParams.add(name, value == null ? null : value.toString());
-            }
-            return this;
-        }
-
-        @Override
-        public void setConversionService(@NonNull ConversionService conversionService) {
-            queryParams.setConversionService(conversionService);
-        }
-
-        public static Map<CharSequence, List<String>> parseQueryParameters(URI uri) {
-            return new URIBuilder(uri).getQueryParams().stream()
-                .collect(Collectors.groupingBy(
-                    nameValuePair -> nameValuePair.getName(),
-                    Collectors.mapping(nameValuePair -> nameValuePair.getValue(), Collectors.toList())
-                ));
-        }
-
+    private static MultiValuesQueryParameters parseQueryParameters(URI uri, ConversionService conversionService) {
+        Map<CharSequence, List<String>> map = new URIBuilder(uri).getQueryParams().stream()
+            .collect(Collectors.groupingBy(
+                    NameValuePair::getName,
+                    Collectors.mapping(NameValuePair::getValue, Collectors.toList())
+            ));
+        return new MultiValuesQueryParameters(map, conversionService);
     }
+
 }
