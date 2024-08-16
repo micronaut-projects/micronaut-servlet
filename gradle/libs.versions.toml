@@ -14,7 +14,6 @@ graal-svm = "23.1.4"
 bcpkix = "1.70"
 
 managed-apache-http-core5 = "5.2.5"
-managed-apache-http-client5 = "5.3.1"
 managed-jetty = '11.0.22'
 
 micronaut-reactor = "3.4.1"
@@ -52,7 +51,6 @@ kotlin-stdlib-jdk8 = { module = 'org.jetbrains.kotlin:kotlin-stdlib-jdk8' }
 kotlin-reflect = { module = 'org.jetbrains.kotlin:kotlin-reflect' }
 
 apache-http-core5 = { module = 'org.apache.httpcomponents.core5:httpcore5', version.ref = 'managed-apache-http-core5' }
-apache-http-client5 = { module = 'org.apache.httpcomponents.client5:httpclient5', version.ref = 'managed-apache-http-client5' }
 tomcat-embed-core = { module = 'org.apache.tomcat.embed:tomcat-embed-core', version.ref = 'tomcat' }
 undertow-servlet = { module = 'io.undertow:undertow-servlet', version.ref = 'undertow' }
 jetty-servlet = { module = 'org.eclipse.jetty:jetty-servlet', version.ref = 'managed-jetty' }
