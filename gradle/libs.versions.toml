@@ -10,7 +10,6 @@ managed-servlet-api = '6.1.0'
 kotest-runner = '5.9.1'
 undertow = '2.3.15.Final'
 tomcat = '10.1.26'
-graal-svm = "23.1.4"
 bcpkix = "1.70"
 
 managed-jetty = '11.0.22'
@@ -32,8 +31,6 @@ micronaut-gradle-plugin = "4.4.2"
 micronaut-core = { module = 'io.micronaut:micronaut-core-bom', version.ref = 'micronaut' }
 
 boms-jetty = { module = 'org.eclipse.jetty:jetty-bom', version.ref = 'managed-jetty' }
-
-graal-svm = { module = "org.graalvm.nativeimage:svm", version.ref = "graal-svm" }
 
 managed-servlet-api = { module = 'jakarta.servlet:jakarta.servlet-api', version.ref = 'managed-servlet-api' }
 

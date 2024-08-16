@@ -7,8 +7,6 @@ dependencies {
 
     api(projects.micronautServletEngine)
 
-    compileOnly libs.graal.svm
-
     testAnnotationProcessor mn.micronaut.inject.java
 
     testCompileOnly(mnValidation.micronaut.validation.processor)
