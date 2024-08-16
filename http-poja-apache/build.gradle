@@ -21,7 +21,6 @@ plugins {
 dependencies {
     api(projects.micronautHttpPojaCommon)
     implementation(libs.apache.http.core5)
-    implementation(libs.apache.http.client5)
 
     compileOnly(mn.reactor)
     compileOnly(mn.micronaut.json.core)

@@ -28,22 +28,16 @@ import io.micronaut.http.body.ByteBody;
 import io.micronaut.http.codec.MediaTypeCodecRegistry;
 import io.micronaut.http.cookie.Cookie;
 import io.micronaut.http.cookie.Cookies;
-import io.micronaut.http.cookie.SameSite;
 import io.micronaut.http.poja.PojaHttpRequest;
-import io.micronaut.http.simple.cookies.SimpleCookie;
+import io.micronaut.http.poja.util.LimitingInputStream;
 import io.micronaut.http.simple.cookies.SimpleCookies;
 import io.micronaut.servlet.http.body.InputStreamByteBody;
-import org.apache.hc.client5.http.cookie.CookieOrigin;
-import org.apache.hc.client5.http.cookie.CookieSpec;
-import org.apache.hc.client5.http.cookie.MalformedCookieException;
-import org.apache.hc.client5.http.impl.cookie.RFC6265CookieSpecFactory;
 import org.apache.hc.core5.http.ClassicHttpRequest;
 import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.apache.hc.core5.http.Header;
 import org.apache.hc.core5.http.HttpException;
 import org.apache.hc.core5.http.impl.io.DefaultHttpRequestParser;
 import org.apache.hc.core5.http.impl.io.SessionInputBufferImpl;
-import org.apache.hc.core5.http.message.BasicHeader;
 import org.apache.hc.core5.net.URIBuilder;
 
 import java.io.ByteArrayInputStream;
@@ -56,7 +50,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
@@ -113,18 +106,22 @@ public class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, ClassicHttpR
         long contentLength = getContentLength();
         OptionalLong optionalContentLength = contentLength >= 0 ? OptionalLong.of(contentLength) : OptionalLong.empty();
         try {
+            InputStream bodyStream = inputStream;
             if (sessionInputBuffer.available() > 0) {
                 byte[] data = new byte[sessionInputBuffer.available()];
                 sessionInputBuffer.read(data, inputStream);
 
-                InputStream combinedStream = new CombinedInputStream(
+                bodyStream = new CombinedInputStream(
                     new ByteArrayInputStream(data),
                     inputStream
                 );
-                byteBody = InputStreamByteBody.create(combinedStream, optionalContentLength, ioExecutor);
-            } else {
-                byteBody = InputStreamByteBody.create(inputStream, optionalContentLength, ioExecutor);
             }
+            if (contentLength >= 0) {
+                bodyStream = new LimitingInputStream(bodyStream, contentLength);
+            }
+            byteBody = InputStreamByteBody.create(
+                bodyStream, optionalContentLength, ioExecutor
+            );
         } catch (IOException e) {
             throw new RuntimeException("Could not get request body", e);
         }
@@ -274,27 +271,6 @@ public class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, ClassicHttpR
         return cookies;
     }
 
-    private SimpleCookie parseCookie(org.apache.hc.client5.http.cookie.Cookie cookie) {
-        SimpleCookie result = new SimpleCookie(cookie.getName(), cookie.getValue());
-        if (cookie.containsAttribute(Cookie.ATTRIBUTE_SAME_SITE)) {
-            switch (cookie.getAttribute(Cookie.ATTRIBUTE_SAME_SITE).toLowerCase(Locale.ENGLISH)) {
-                case "lax" -> result.sameSite(SameSite.Lax);
-                case "strict" -> result.sameSite(SameSite.Strict);
-                case "none" -> result.sameSite(SameSite.None);
-                default -> {}
-            }
-        }
-        String maxAge = cookie.getAttribute(org.apache.hc.client5.http.cookie.Cookie.MAX_AGE_ATTR);
-        if (maxAge != null) {
-            result.maxAge(Long.parseLong(maxAge));
-        }
-        result.domain(cookie.getAttribute(org.apache.hc.client5.http.cookie.Cookie.DOMAIN_ATTR));
-        result.path(cookie.getAttribute(org.apache.hc.client5.http.cookie.Cookie.PATH_ATTR));
-        result.httpOnly(cookie.isHttpOnly());
-        result.secure(cookie.isSecure());
-        return result;
-    }
-
     /**
      * Headers implementation.
      *
@@ -359,10 +335,11 @@ public class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, ClassicHttpR
         ) {
             Map<CharSequence, List<String>> map = new HashMap<>();
             for (Header header: headers) {
-                if (!map.containsKey(header.getName())) {
-                    map.put(header.getName(), new ArrayList<>(1));
+                String name = standardizeHeader(header.getName());
+                if (!map.containsKey(name)) {
+                    map.put(name, new ArrayList<>(1));
                 }
-                map.get(header.getName()).add(header.getValue());
+                map.get(name).add(header.getValue());
             }
             return new MutableConvertibleMultiValuesMap<>(map, conversionService);
         }
