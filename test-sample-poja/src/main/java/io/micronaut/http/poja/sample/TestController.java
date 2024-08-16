@@ -47,7 +47,6 @@ public class TestController {
     @Post("/{name}")
     @Status(HttpStatus.CREATED)
     public final String create(@NonNull String name, HttpRequest<?> request) {
-        request.getBody();
         return "Hello, " + name + "\n";
     }
 

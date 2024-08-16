@@ -123,7 +123,7 @@ public class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, ClassicHttpR
                     inputStream
                 );
             }
-            if (contentLength >= 0) {
+            if (contentLength > 0) {
                 bodyStream = new LimitingInputStream(bodyStream, contentLength);
             } else {
                 // Empty
