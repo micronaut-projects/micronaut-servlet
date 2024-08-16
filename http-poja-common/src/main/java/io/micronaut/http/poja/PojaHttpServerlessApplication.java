@@ -34,7 +34,10 @@ import java.nio.channels.WritableByteChannel;
  * A base class for POJA serverless applications.
  * It implements {@link EmbeddedApplication} for POSIX serverless environments.
  *
+ * @param <REQ> The request type
+ * @param <RES> The response type
  * @author Andriy Dmytruk.
+ * @since 4.10.0
  */
 public abstract class PojaHttpServerlessApplication<REQ, RES> implements EmbeddedApplication<PojaHttpServerlessApplication> {
 

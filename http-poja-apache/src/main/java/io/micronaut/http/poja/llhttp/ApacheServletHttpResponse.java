@@ -31,7 +31,6 @@ import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.apache.hc.core5.http.ContentType;
 import org.apache.hc.core5.http.io.entity.ByteArrayEntity;
 import org.apache.hc.core5.http.message.BasicClassicHttpResponse;
-import org.apache.hc.core5.http.message.BasicHttpResponse;
 
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
@@ -45,6 +44,7 @@ import java.util.Optional;
  *
  * @param <T> The body type
  * @author Andriy Dmytruk
+ * @since 4.10.0
  */
 public class ApacheServletHttpResponse<T> extends PojaHttpResponse<T, ClassicHttpResponse> {
 
@@ -56,6 +56,11 @@ public class ApacheServletHttpResponse<T> extends PojaHttpResponse<T, ClassicHtt
     private final MutableConvertibleValues<Object> attributes = new MutableConvertibleValuesMap<>();
     private T bodyObject;
 
+    /**
+     * Create an Apache-based response.
+     *
+     * @param conversionService The conversion service
+     */
     public ApacheServletHttpResponse(ConversionService conversionService) {
         this.headers = new SimpleHttpHeaders(conversionService);
     }

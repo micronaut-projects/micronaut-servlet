@@ -32,7 +32,7 @@ import java.util.Map;
  * Splits an HTTP query string into a path string and key-value parameter pairs.
  * This decoder is for one time use only.  Create a new instance for each URI:
  * <pre>
- * {@link QueryStringDecoder} decoder = new {@link QueryStringDecoder}("/hello?recipient=world&x=1;y=2");
+ * {@link QueryStringDecoder} decoder = new {@link QueryStringDecoder}("/hello?recipient=world&amp;x=1;y=2");
  * assert decoder.path().equals("/hello");
  * assert decoder.parameters().get("recipient").get(0).equals("world");
  * assert decoder.parameters().get("x").get(0).equals("1");
@@ -40,13 +40,13 @@ import java.util.Map;
  * </pre>
  *
  * This decoder can also decode the content of an HTTP POST request whose
- * content type is <tt>application/x-www-form-urlencoded</tt>:
+ * content type is <code>application/x-www-form-urlencoded</code>:
  * <pre>
- * {@link QueryStringDecoder} decoder = new {@link QueryStringDecoder}("recipient=world&x=1;y=2", false);
+ * {@link QueryStringDecoder} decoder = new {@link QueryStringDecoder}("recipient=world&amp;x=1;y=2", false);
  * ...
  * </pre>
  *
- * <h3>HashDOS vulnerability fix</h3>
+ * <b>HashDOS vulnerability fix</b>
  *
  * As a workaround to the <a href="https://netty.io/s/hashdos">HashDOS</a> vulnerability, the decoder
  * limits the maximum number of decoded key-value parameter pairs, up to {@literal 1024} by

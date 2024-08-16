@@ -58,6 +58,7 @@ import java.util.function.Function;
  * @param <REQ> The POJA request type
  * @param <RES> The POJA response type
  * @author Andriy
+ * @since 4.10.0
  */
 public abstract class PojaHttpRequest<B, REQ, RES>
         implements ServletHttpRequest<REQ, B>, ServerHttpRequest<B>, ServletExchange<REQ, RES>, MutableHttpRequest<B> {
@@ -134,6 +135,11 @@ public abstract class PojaHttpRequest<B, REQ, RES>
         }
     }
 
+    /**
+     * A method used for retrieving form data. Can be overridden by specific implementations.
+     *
+     * @return The form data as multi-values.
+     */
     protected ConvertibleMultiValues<?> getFormData() {
         return consumeBody(inputStream -> {
             try {
