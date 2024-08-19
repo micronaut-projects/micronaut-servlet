@@ -46,7 +46,6 @@ import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Random;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -64,6 +63,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Replaces(EmbeddedApplication.class)
 public class TestingServerlessEmbeddedApplication implements EmbeddedServer {
 
+    private static final SecureRandom RANDOM = new SecureRandom();
+
     private PojaHttpServerlessApplication<?, ?> application;
 
     private AtomicBoolean isRunning = new AtomicBoolean(false);
@@ -75,8 +76,6 @@ public class TestingServerlessEmbeddedApplication implements EmbeddedServer {
     private Pipe inputPipe;
     private Pipe outputPipe;
     private Thread serverThread;
-
-    private final static SecureRandom random = new SecureRandom();
 
     /**
      * Default constructor.
@@ -92,7 +91,7 @@ public class TestingServerlessEmbeddedApplication implements EmbeddedServer {
     private void createServerSocket() {
         IOException exception = null;
         for (int i = 0; i < 100; ++i) {
-            port = random.nextInt(10000, 20000);
+            port = RANDOM.nextInt(10000, 20000);
             try {
                 serverSocket = new ServerSocket(port);
                 return;
