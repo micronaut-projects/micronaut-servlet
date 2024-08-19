@@ -48,7 +48,6 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -85,17 +84,20 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
      * @param codecRegistry The media codec registry
      * @param ioExecutor The executor service
      * @param response The response
+     * @param configuration The configuration
      */
     public ApacheServletHttpRequest(
         InputStream inputStream,
         ConversionService conversionService,
         MediaTypeCodecRegistry codecRegistry,
         ExecutorService ioExecutor,
-        ApacheServletHttpResponse<?> response
+        ApacheServletHttpResponse<?> response,
+        ApacheServletConfiguration configuration
     ) {
         super(conversionService, codecRegistry, response);
 
-        SessionInputBufferImpl sessionInputBuffer = new SessionInputBufferImpl(8192);
+        SessionInputBufferImpl sessionInputBuffer
+            = new SessionInputBufferImpl(configuration.inputBufferSize());
         DefaultHttpRequestParser parser = new DefaultHttpRequestParser();
 
         try {
@@ -259,7 +261,7 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
      * An input stream that would initially delegate to the first input stream
      * and then to the second one. Created specifically to be used with {@link ByteBody}.
      */
-    private final static class CombinedInputStream extends InputStream {
+    private static final class CombinedInputStream extends InputStream {
 
         private final InputStream first;
         private final InputStream second;

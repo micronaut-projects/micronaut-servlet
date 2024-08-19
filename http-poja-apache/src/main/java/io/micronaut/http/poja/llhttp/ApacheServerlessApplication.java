@@ -53,6 +53,7 @@ public class ApacheServerlessApplication
     private final ConversionService conversionService;
     private final MediaTypeCodecRegistry codecRegistry;
     private final ExecutorService ioExecutor;
+    private final ApacheServletConfiguration configuration;
 
     /**
      * Default constructor.
@@ -66,6 +67,7 @@ public class ApacheServerlessApplication
         conversionService = applicationContext.getConversionService();
         codecRegistry = applicationContext.getBean(MediaTypeCodecRegistry.class);
         ioExecutor = applicationContext.getBean(ExecutorService.class, Qualifiers.byName(TaskExecutors.BLOCKING));
+        configuration = applicationContext.getBean(ApacheServletConfiguration.class);
     }
 
     @Override
@@ -77,7 +79,7 @@ public class ApacheServerlessApplication
         ApacheServletHttpResponse<?> response = new ApacheServletHttpResponse<>(conversionService);
         try {
             ApacheServletHttpRequest exchange = new ApacheServletHttpRequest<>(
-                in, conversionService, codecRegistry, ioExecutor, response
+                in, conversionService, codecRegistry, ioExecutor, response, configuration
             );
             servletHttpHandler.service(exchange);
         } catch (ApacheServletBadRequestException e) {
@@ -89,7 +91,7 @@ public class ApacheServerlessApplication
     }
 
     private void writeResponse(ClassicHttpResponse response, OutputStream out) throws IOException {
-        SessionOutputBuffer buffer = new SessionOutputBufferImpl(8 * 1024);
+        SessionOutputBuffer buffer = new SessionOutputBufferImpl(configuration.outputBufferSize());
         DefaultHttpResponseWriter responseWriter = new DefaultHttpResponseWriter();
         try {
             responseWriter.write(response, buffer, out);
