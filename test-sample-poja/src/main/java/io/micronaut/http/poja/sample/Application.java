@@ -25,15 +25,9 @@ import io.micronaut.runtime.Micronaut;
  */
 public class Application {
 
-    public static void main(String[] args) throws Exception {
-        // Need to disable banner because Micronaut prints banner to STDOUT,
-        // which gets mixed with HTTP response.
-        // See GCN-4489
-        Micronaut.build(args)
-                .banner(false)
-                .mainClass(Application.class)
-                .start();
+    public static void main(String[] args) {
         Micronaut.run(Application.class, args);
     }
+
 }
 
