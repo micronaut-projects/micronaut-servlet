@@ -14,17 +14,24 @@
  * limitations under the License.
  */
 plugins {
-    id("io.micronaut.build.internal.servlet.module")
+    id("io.micronaut.build.internal.servlet.base")
     id("application")
+    id("groovy")
 }
 
 dependencies {
     implementation(projects.micronautHttpPojaApache)
     implementation(mnLogging.slf4j.simple)
     implementation(mn.micronaut.jackson.databind)
+    annotationProcessor(mn.micronaut.inject.java)
 
     testImplementation(projects.micronautHttpPojaTest)
     testImplementation(mn.micronaut.jackson.databind)
+    testImplementation(mnTest.micronaut.test.spock)
+
+    testImplementation(mn.micronaut.inject.groovy.test)
+    testImplementation(mn.micronaut.inject.java)
+    testImplementation(mn.micronaut.inject.groovy)
 }
 
 run {
@@ -33,8 +40,6 @@ run {
     standardOutput = System.out
 }
 
-micronautBuild {
-    binaryCompatibility {
-        enabled.set(false)
-    }
+test {
+    useJUnitPlatform()
 }
