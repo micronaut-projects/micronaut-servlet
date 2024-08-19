@@ -18,6 +18,7 @@ package io.micronaut.http.poja.llhttp;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.convert.ConversionService;
+import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpMethod;
 import io.micronaut.http.MutableHttpHeaders;
 import io.micronaut.http.MutableHttpParameters;
@@ -210,7 +211,7 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
         SimpleCookies cookies = new SimpleCookies(conversionService);
 
         // Manually parse cookies from the response headers
-        for (Header header : request.getHeaders(MultiValueHeaders.COOKIE)) {
+        for (Header header : request.getHeaders(HttpHeaders.COOKIE)) {
             String cookie = header.getValue();
 
             String name = null;

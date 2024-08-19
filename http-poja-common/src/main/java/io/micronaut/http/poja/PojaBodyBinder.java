@@ -82,28 +82,9 @@ final class PojaBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body, T>
         String name = argument.getAnnotationMetadata().stringValue(Body.class).orElse(null);
         if (source instanceof PojaHttpRequest<?, ?, ?> pojaHttpRequest) {
             if (CharSequence.class.isAssignableFrom(type) && name == null) {
-                return pojaHttpRequest.consumeBody(inputStream -> {
-                    try {
-                        String content = IOUtils.readText(new BufferedReader(new InputStreamReader(
-                            inputStream, source.getCharacterEncoding()
-                        )));
-                        LOG.trace("Read content of length {} from function body", content.length());
-                        return () -> (Optional<T>) Optional.of(content);
-                    } catch (IOException e) {
-                        LOG.debug("Error occurred reading function body: {}", e.getMessage(), e);
-                        return new ConversionFailedBindingResult<>(e);
-                    }
-                });
+                return (BindingResult<T>) bindCharSequence(pojaHttpRequest, source);
             } else if (argument.getType().isAssignableFrom(byte[].class) && name == null) {
-                return pojaHttpRequest.consumeBody(inputStream -> {
-                    try {
-                        byte[] bytes = inputStream.readAllBytes();
-                        return () -> (Optional<T>) Optional.of(bytes);
-                    } catch (IOException e) {
-                        LOG.debug("Error occurred reading function body: {}", e.getMessage(), e);
-                        return new ConversionFailedBindingResult<>(e);
-                    }
-                });
+                return (BindingResult<T>) bindByteArray(pojaHttpRequest);
             } else {
                 final MediaType mediaType = source.getContentType().orElse(MediaType.APPLICATION_JSON_TYPE);
                 if (pojaHttpRequest.isFormSubmission()) {
@@ -134,6 +115,33 @@ final class PojaBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body, T>
         }
         LOG.trace("Not a function request, falling back to default body decoding");
         return defaultBodyBinder.bind(context, source);
+    }
+
+    private BindingResult<CharSequence> bindCharSequence(PojaHttpRequest<?, ?, ?> pojaHttpRequest, HttpRequest<?> source) {
+        return pojaHttpRequest.consumeBody(inputStream -> {
+            try {
+                String content = IOUtils.readText(new BufferedReader(new InputStreamReader(
+                    inputStream, source.getCharacterEncoding()
+                )));
+                LOG.trace("Read content of length {} from function body", content.length());
+                return () -> Optional.of(content);
+            } catch (IOException e) {
+                LOG.debug("Error occurred reading function body: {}", e.getMessage(), e);
+                return new ConversionFailedBindingResult<>(e);
+            }
+        });
+    }
+
+    private BindingResult<byte[]> bindByteArray(PojaHttpRequest<?, ?, ?> pojaHttpRequest) {
+        return pojaHttpRequest.consumeBody(inputStream -> {
+            try {
+                byte[] bytes = inputStream.readAllBytes();
+                return () -> Optional.of(bytes);
+            } catch (IOException e) {
+                LOG.debug("Error occurred reading function body: {}", e.getMessage(), e);
+                return new ConversionFailedBindingResult<>(e);
+            }
+        });
     }
 
     private BindingResult<T> bindFormData(
@@ -187,7 +195,7 @@ final class PojaBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body, T>
         if (Publishers.isSingle(type)) {
             T content = (T) codec.decode(typeArg, inputStream);
             final Publisher<T> publisher = Publishers.just(content);
-            LOG.trace("Decoded object from function body: {}", content);
+            LOG.trace("Decoded single publisher from function body: {}", content);
             final T converted = conversionService.convertRequired(publisher, type);
             return () -> Optional.of(converted);
         } else {
@@ -218,7 +226,7 @@ final class PojaBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body, T>
                 }
             }
             T content = (T) codec.decode(containerType, inputStream);
-            LOG.trace("Decoded object from function body: {}", content);
+            LOG.trace("Decoded flux publisher from function body: {}", content);
             final Flux flowable = Flux.fromIterable((Iterable) content);
             final T converted = conversionService.convertRequired(flowable, type);
             return () -> Optional.of(converted);

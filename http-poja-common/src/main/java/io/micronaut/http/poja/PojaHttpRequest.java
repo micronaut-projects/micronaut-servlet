@@ -140,7 +140,7 @@ public abstract class PojaHttpRequest<B, REQ, RES>
      *
      * @return The form data as multi-values.
      */
-    protected ConvertibleMultiValues<?> getFormData() {
+    protected ConvertibleMultiValues<CharSequence> getFormData() {
         return consumeBody(inputStream -> {
             try {
                 String content = IOUtils.readText(new BufferedReader(new InputStreamReader(

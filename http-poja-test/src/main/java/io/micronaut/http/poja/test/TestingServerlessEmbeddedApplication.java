@@ -42,6 +42,7 @@ import java.nio.channels.AsynchronousCloseException;
 import java.nio.channels.Channels;
 import java.nio.channels.Pipe;
 import java.nio.charset.StandardCharsets;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -75,6 +76,8 @@ public class TestingServerlessEmbeddedApplication implements EmbeddedServer {
     private Pipe outputPipe;
     private Thread serverThread;
 
+    private final static SecureRandom random = new SecureRandom();
+
     /**
      * Default constructor.
      *
@@ -89,7 +92,7 @@ public class TestingServerlessEmbeddedApplication implements EmbeddedServer {
     private void createServerSocket() {
         IOException exception = null;
         for (int i = 0; i < 100; ++i) {
-            port = new Random().nextInt(10000, 20000);
+            port = random.nextInt(10000, 20000);
             try {
                 serverSocket = new ServerSocket(port);
                 return;
