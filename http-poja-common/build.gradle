@@ -23,6 +23,7 @@ dependencies {
     compileOnly(mn.reactor)
     compileOnly(mn.micronaut.json.core)
 
+    testImplementation(mn.reactor)
     testImplementation(mnSerde.micronaut.serde.jackson)
 }
 
