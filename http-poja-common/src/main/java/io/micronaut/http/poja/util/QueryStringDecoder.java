@@ -59,6 +59,7 @@ import java.util.Map;
  * </a>.
  * </p>
  */
+@SuppressWarnings("java:S3776" /* Reduce cognitive complexity warning */)
 public class QueryStringDecoder {
 
     private static final Charset DEFAULT_CHARSET = StandardCharsets.UTF_8;

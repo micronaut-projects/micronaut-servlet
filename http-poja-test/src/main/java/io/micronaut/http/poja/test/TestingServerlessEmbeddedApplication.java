@@ -209,6 +209,7 @@ public class TestingServerlessEmbeddedApplication implements EmbeddedServer {
         return URI.create("http://localhost:" + getPort());
     }
 
+    @SuppressWarnings("java:S3776" /* Reduce cognitive complexity warning */)
     private String readInputStream(InputStream inputStream) {
         // Read with non-UTF charset in case there is binary data and we need to write it back
         BufferedReader input = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.ISO_8859_1));
