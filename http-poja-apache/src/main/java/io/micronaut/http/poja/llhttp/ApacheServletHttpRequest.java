@@ -15,6 +15,7 @@
  */
 package io.micronaut.http.poja.llhttp;
 
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.http.HttpMethod;
@@ -26,6 +27,7 @@ import io.micronaut.http.codec.MediaTypeCodecRegistry;
 import io.micronaut.http.cookie.Cookie;
 import io.micronaut.http.cookie.Cookies;
 import io.micronaut.http.poja.PojaHttpRequest;
+import io.micronaut.http.poja.llhttp.exception.ApacheServletBadRequestException;
 import io.micronaut.http.poja.util.LimitingInputStream;
 import io.micronaut.http.poja.util.MultiValueHeaders;
 import io.micronaut.http.poja.util.MultiValuesQueryParameters;
@@ -47,6 +49,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -61,12 +64,13 @@ import java.util.stream.Collectors;
  * @author Andriy Dmytruk
  * @since 4.10.0
  */
-public class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, ClassicHttpRequest, ClassicHttpResponse> {
+@Internal
+public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, ClassicHttpRequest, ClassicHttpResponse> {
 
     private final ClassicHttpRequest request;
 
     private final HttpMethod method;
-    private final URI uri;
+    private URI uri;
     private final MultiValueHeaders headers;
     private final MultiValuesQueryParameters queryParameters;
     private final SimpleCookies cookies;
@@ -97,14 +101,14 @@ public class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, ClassicHttpR
         try {
             request = parser.parse(sessionInputBuffer, inputStream);
         } catch (HttpException | IOException e) {
-            throw new RuntimeException("Could parse HTTP request", e);
+            throw new ApacheServletBadRequestException("HTTP request could not be parsed", e);
         }
 
         method = HttpMethod.parse(request.getMethod());
         try {
             uri = request.getUri();
         } catch (URISyntaxException e) {
-            throw new RuntimeException("Could not get request URI", e);
+            throw new ApacheServletBadRequestException("Could not get request URI", e);
         }
         headers = createHeaders(request.getHeaders(), conversionService);
         queryParameters = parseQueryParameters(uri, conversionService);
@@ -133,7 +137,7 @@ public class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, ClassicHttpR
                 bodyStream, optionalContentLength, ioExecutor
             );
         } catch (IOException e) {
-            throw new RuntimeException("Could not get request body", e);
+            throw new ApacheServletBadRequestException("Could not parse request body", e);
         }
     }
 
@@ -170,12 +174,13 @@ public class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, ClassicHttpR
 
     @Override
     public MutableHttpRequest<B> uri(URI uri) {
-        return null;
+        this.uri = uri;
+        return this;
     }
 
     @Override
     public <T> MutableHttpRequest<T> body(T body) {
-        return null;
+        throw new UnsupportedOperationException("Could not change request body");
     }
 
     @Override
@@ -196,7 +201,7 @@ public class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, ClassicHttpR
 
     @Override
     public void setConversionService(@NonNull ConversionService conversionService) {
-
+        // Not implemented
     }
 
     private SimpleCookies parseCookies(ClassicHttpRequest request, ConversionService conversionService) {
@@ -231,7 +236,7 @@ public class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, ClassicHttpR
     private static MultiValueHeaders createHeaders(
         Header[] headers, ConversionService conversionService
     ) {
-        Map<String, List<String>> map = new HashMap<>();
+        Map<String, List<String>> map = new LinkedHashMap<>();
         for (Header header: headers) {
             if (!map.containsKey(header.getName())) {
                 map.put(header.getName(), new ArrayList<>(1));
@@ -254,7 +259,7 @@ public class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, ClassicHttpR
      * An input stream that would initially delegate to the first input stream
      * and then to the second one. Created specifically to be used with {@link ByteBody}.
      */
-    private static class CombinedInputStream extends InputStream {
+    private final static class CombinedInputStream extends InputStream {
 
         private final InputStream first;
         private final InputStream second;

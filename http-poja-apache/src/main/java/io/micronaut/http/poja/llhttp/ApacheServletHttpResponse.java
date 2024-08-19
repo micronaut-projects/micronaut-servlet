@@ -15,6 +15,7 @@
  */
 package io.micronaut.http.poja.llhttp;
 
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.ConversionService;
@@ -46,7 +47,8 @@ import java.util.Optional;
  * @author Andriy Dmytruk
  * @since 4.10.0
  */
-public class ApacheServletHttpResponse<T> extends PojaHttpResponse<T, ClassicHttpResponse> {
+@Internal
+public final class ApacheServletHttpResponse<T> extends PojaHttpResponse<T, ClassicHttpResponse> {
 
     private int code = HttpStatus.OK.getCode();
     private String reasonPhrase = HttpStatus.OK.getReason();

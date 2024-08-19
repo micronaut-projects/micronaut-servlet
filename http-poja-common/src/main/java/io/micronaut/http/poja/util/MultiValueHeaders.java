@@ -23,7 +23,7 @@ import io.micronaut.core.convert.value.MutableConvertibleMultiValuesMap;
 import io.micronaut.http.MutableHttpHeaders;
 
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -89,7 +89,7 @@ public record MultiValueHeaders(
         Map<String, List<String>> headers, ConversionService conversionService
     ) {
         MutableConvertibleMultiValuesMap<String> map
-            = new MutableConvertibleMultiValuesMap<>(new HashMap<>(), conversionService);
+            = new MutableConvertibleMultiValuesMap<>(new LinkedHashMap<>(), conversionService);
         for (String key: headers.keySet()) {
             map.put(standardizeHeader(key), headers.get(key));
         }

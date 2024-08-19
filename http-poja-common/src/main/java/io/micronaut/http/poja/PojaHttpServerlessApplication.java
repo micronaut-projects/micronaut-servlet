@@ -39,7 +39,7 @@ import java.nio.channels.WritableByteChannel;
  * @author Andriy Dmytruk.
  * @since 4.10.0
  */
-public abstract class PojaHttpServerlessApplication<REQ, RES> implements EmbeddedApplication<PojaHttpServerlessApplication> {
+public abstract class PojaHttpServerlessApplication<REQ, RES> implements EmbeddedApplication<PojaHttpServerlessApplication<REQ, RES>> {
 
     private final ApplicationContext applicationContext;
     private final ApplicationConfiguration applicationConfiguration;
@@ -78,7 +78,7 @@ public abstract class PojaHttpServerlessApplication<REQ, RES> implements Embedde
      * @param output The output stream
      * @return The application
      */
-    public @NonNull PojaHttpServerlessApplication start(InputStream input, OutputStream output) {
+    public @NonNull PojaHttpServerlessApplication<REQ, RES> start(InputStream input, OutputStream output) {
         final ServletHttpHandler<REQ, RES> servletHttpHandler =
             new ServletHttpHandler<>(applicationContext, null) {
                 @Override
@@ -87,7 +87,7 @@ public abstract class PojaHttpServerlessApplication<REQ, RES> implements Embedde
                 }
             };
         try {
-            runIndefinitely(servletHttpHandler, applicationContext, input, output);
+            runIndefinitely(servletHttpHandler, input, output);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -95,7 +95,7 @@ public abstract class PojaHttpServerlessApplication<REQ, RES> implements Embedde
     }
 
     @Override
-    public @NonNull PojaHttpServerlessApplication start() {
+    public @NonNull PojaHttpServerlessApplication<REQ, RES> start() {
         try {
             // Default streams to streams based on System.inheritedChannel.
             // If not possible, use System.in/out.
@@ -117,17 +117,18 @@ public abstract class PojaHttpServerlessApplication<REQ, RES> implements Embedde
      * A method to start the application in a loop.
      *
      * @param servletHttpHandler The handler
-     * @param applicationContext The application context
      * @param in The input stream
      * @param out The output stream
      * @throws IOException IO exception
      */
-    protected void runIndefinitely(ServletHttpHandler<REQ, RES> servletHttpHandler,
-                         ApplicationContext applicationContext,
-                         InputStream in,
-                         OutputStream out) throws IOException {
+    @SuppressWarnings("InfiniteLoopStatement")
+    protected void runIndefinitely(
+            ServletHttpHandler<REQ, RES> servletHttpHandler,
+            InputStream in,
+            OutputStream out
+    ) throws IOException {
         while (true) {
-            handleSingleRequest(servletHttpHandler, applicationContext, in, out);
+            handleSingleRequest(servletHttpHandler, in, out);
         }
     }
 
@@ -135,15 +136,15 @@ public abstract class PojaHttpServerlessApplication<REQ, RES> implements Embedde
      * Handle a single request.
      *
      * @param servletHttpHandler The handler
-     * @param applicationContext The application context
      * @param in The input stream
      * @param out The output stream
      * @throws IOException IO exception
      */
-    protected abstract void handleSingleRequest(ServletHttpHandler<REQ, RES> servletHttpHandler,
-                                    ApplicationContext applicationContext,
-                                    InputStream in,
-                                    OutputStream out) throws IOException;
+    protected abstract void handleSingleRequest(
+            ServletHttpHandler<REQ, RES> servletHttpHandler,
+            InputStream in,
+            OutputStream out
+    ) throws IOException;
 
     @Override
     public @NonNull PojaHttpServerlessApplication<REQ, RES> stop() {
