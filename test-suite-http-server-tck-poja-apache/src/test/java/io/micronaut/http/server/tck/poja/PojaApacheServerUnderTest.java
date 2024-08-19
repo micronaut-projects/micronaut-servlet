@@ -35,6 +35,7 @@ import java.net.URL;
 import java.util.Map;
 import java.util.Optional;
 
+@SuppressWarnings("java:S2187")
 public class PojaApacheServerUnderTest implements ServerUnderTest {
 
     private static final Logger LOG = LoggerFactory.getLogger(PojaApacheServerUnderTest.class);

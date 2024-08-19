@@ -121,7 +121,7 @@ public abstract class PojaHttpServerlessApplication<REQ, RES> implements Embedde
      * @param out The output stream
      * @throws IOException IO exception
      */
-    @SuppressWarnings("InfiniteLoopStatement")
+    @SuppressWarnings({"InfiniteLoopStatement", "java:S2189"})
     protected void runIndefinitely(
             ServletHttpHandler<REQ, RES> servletHttpHandler,
             InputStream in,
