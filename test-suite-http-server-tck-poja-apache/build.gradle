@@ -1,6 +1,5 @@
 plugins {
-    id("io.micronaut.build.internal.servlet.module")
-    id("java-library")
+    id("io.micronaut.build.internal.servlet.http-server-tck-module")
 }
 
 dependencies {
@@ -22,10 +21,4 @@ dependencies {
     testImplementation(projects.micronautHttpPojaTest)
     testImplementation(mnSerde.micronaut.serde.jackson)
     testImplementation(mn.micronaut.http.client)
-}
-
-micronautBuild {
-    binaryCompatibility {
-        enabled.set(false)
-    }
 }
