@@ -1,0 +1,29 @@
+[
+  {
+    "name": "io.micronaut.http.server.tck.tests.BodyTest$Point",
+    "allDeclaredMethods": true,
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "io.micronaut.http.server.tck.tests.ConsumesTest$Pojo",
+    "allDeclaredMethods": true,
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "io.micronaut.http.server.tck.tests.MissingBodyAnnotationTest$Dto",
+    "allDeclaredMethods": true,
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "io.micronaut.http.hateoas.JsonError",
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "io.micronaut.http.hateoas.Resource",
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "io.micronaut.http.hateoas.GenericResource",
+    "allDeclaredConstructors": true
+  }
+]

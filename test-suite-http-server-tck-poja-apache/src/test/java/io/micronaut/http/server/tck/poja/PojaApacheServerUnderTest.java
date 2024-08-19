@@ -50,7 +50,6 @@ public class PojaApacheServerUnderTest implements ServerUnderTest {
         properties.put("endpoints.health.service-ready-indicator-enabled", StringUtils.FALSE);
         properties.put("endpoints.refresh.enabled", StringUtils.FALSE);
         properties.put("micronaut.security.enabled", StringUtils.FALSE);
-        properties.put("micronaut.http.client.read-timeout", "30s");
         applicationContext = ApplicationContext
             .builder(Environment.FUNCTION, Environment.TEST)
             .eagerInitConfiguration(true)
