@@ -80,6 +80,7 @@ final class PojaBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body, T>
         final Argument<T> argument = context.getArgument();
         final Class<T> type = argument.getType();
         String name = argument.getAnnotationMetadata().stringValue(Body.class).orElse(null);
+
         if (source instanceof PojaHttpRequest<?, ?, ?> pojaHttpRequest) {
             if (CharSequence.class.isAssignableFrom(type) && name == null) {
                 return (BindingResult<T>) bindCharSequence(pojaHttpRequest, source);
@@ -94,27 +95,32 @@ final class PojaBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body, T>
                 final MediaTypeCodec codec = mediaTypeCodeRegistry
                         .findCodec(mediaType, type)
                         .orElse(null);
-
                 if (codec != null) {
-                    LOG.trace("Decoding function body with codec: {}", codec.getClass().getSimpleName());
-                    return pojaHttpRequest.consumeBody(inputStream -> {
-                        try {
-                            if (Publishers.isConvertibleToPublisher(type)) {
-                                return bindPublisher(argument, type, codec, inputStream);
-                            } else {
-                                return bindPojo(argument, type, codec, inputStream, name);
-                            }
-                        } catch (CodecException e) {
-                            LOG.trace("Error occurred decoding function body: {}", e.getMessage(), e);
-                            return new ConversionFailedBindingResult<>(e);
-                        }
-                    });
+                   return bindWithCodec(pojaHttpRequest, source, codec, argument, type, name);
                 }
-
             }
         }
         LOG.trace("Not a function request, falling back to default body decoding");
         return defaultBodyBinder.bind(context, source);
+    }
+
+    private BindingResult<T> bindWithCodec(
+            PojaHttpRequest<?, ?, ?> pojaHttpRequest, HttpRequest<?> source, MediaTypeCodec codec,
+            Argument<T> argument, Class<T> type, String name
+    ) {
+        LOG.trace("Decoding function body with codec: {}", codec.getClass().getSimpleName());
+        return pojaHttpRequest.consumeBody(inputStream -> {
+            try {
+                if (Publishers.isConvertibleToPublisher(type)) {
+                    return bindPublisher(argument, type, codec, inputStream);
+                } else {
+                    return bindPojo(argument, type, codec, inputStream, name);
+                }
+            } catch (CodecException e) {
+                LOG.trace("Error occurred decoding function body: {}", e.getMessage(), e);
+                return new ConversionFailedBindingResult<>(e);
+            }
+        });
     }
 
     private BindingResult<CharSequence> bindCharSequence(PojaHttpRequest<?, ?, ?> pojaHttpRequest, HttpRequest<?> source) {
