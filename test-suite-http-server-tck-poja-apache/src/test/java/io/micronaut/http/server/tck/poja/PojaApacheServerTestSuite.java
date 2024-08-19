@@ -33,8 +33,6 @@ import org.junit.platform.suite.api.SuiteDisplayName;
     "io.micronaut.http.server.tck.tests.hateoas.VndErrorTest",
     // See https://github.com/micronaut-projects/micronaut-oracle-cloud/issues/925
     "io.micronaut.http.server.tck.tests.constraintshandler.ControllerConstraintHandlerTest",
-    // Cors are not supported and should be handled by a proxy
-    "io.micronaut.http.server.tck.tests.cors.CorsSimpleRequestTest",
     // Proxying is probably not supported. There is no request concurrency
     "io.micronaut.http.server.tck.tests.FilterProxyTest",
 })
