@@ -141,9 +141,11 @@ public class TestingServerlessEmbeddedApplication implements EmbeddedServer {
                     String request = readInputStream(socket.getInputStream());
                     serverInput.write(request.getBytes());
                     serverInput.write(new byte[]{'\n'});
+                    serverInput.flush();
 
                     String response = readInputStream(serverOutput);
                     socket.getOutputStream().write(response.getBytes(StandardCharsets.ISO_8859_1));
+                    socket.getOutputStream().flush();
                 } catch (java.net.SocketException ignored) {
                     // Socket closed
                 } catch (IOException e) {
