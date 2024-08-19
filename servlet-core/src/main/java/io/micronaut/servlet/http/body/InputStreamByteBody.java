@@ -41,8 +41,10 @@ import java.util.concurrent.Executor;
  *
  * @since 4.9.0
  * @author Jonas Konrad
+ * @deprecated Use {@link io.micronaut.http.body.stream.InputStreamByteBody} from core instead
  */
 @Internal
+@Deprecated(forRemoval = true)
 public final class InputStreamByteBody extends AbstractServletByteBody {
     private final Context context;
     private ExtendedInputStream stream;

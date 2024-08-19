@@ -37,15 +37,16 @@ import io.micronaut.http.MutableHttpRequest;
 import io.micronaut.http.ServerHttpRequest;
 import io.micronaut.http.body.ByteBody;
 import io.micronaut.http.body.CloseableByteBody;
+import io.micronaut.http.body.stream.InputStreamByteBody;
 import io.micronaut.http.codec.MediaTypeCodecRegistry;
 import io.micronaut.http.cookie.Cookies;
 import io.micronaut.servlet.http.BodyBuilder;
+import io.micronaut.servlet.http.ByteArrayBufferFactory;
 import io.micronaut.servlet.http.ParsedBodyHolder;
 import io.micronaut.servlet.http.ServletExchange;
 import io.micronaut.servlet.http.ServletHttpRequest;
 import io.micronaut.servlet.http.ServletHttpResponse;
 import io.micronaut.servlet.http.StreamedServletMessage;
-import io.micronaut.servlet.http.body.InputStreamByteBody;
 import jakarta.servlet.AsyncContext;
 import jakarta.servlet.ReadListener;
 import jakarta.servlet.ServletInputStream;
@@ -135,7 +136,7 @@ public final class DefaultServletHttpRequest<B> implements
         this.delegate = delegate;
         this.codecRegistry = codecRegistry;
         long contentLengthLong = delegate.getContentLengthLong();
-        this.byteBody = InputStreamByteBody.create(new LazyDelegateInputStream(delegate), contentLengthLong < 0 ? OptionalLong.empty() : OptionalLong.of(contentLengthLong), ioExecutor);
+        this.byteBody = InputStreamByteBody.create(new LazyDelegateInputStream(delegate), contentLengthLong < 0 ? OptionalLong.empty() : OptionalLong.of(contentLengthLong), ioExecutor, ByteArrayBufferFactory.INSTANCE);
 
         String requestURI = delegate.getRequestURI();
 
