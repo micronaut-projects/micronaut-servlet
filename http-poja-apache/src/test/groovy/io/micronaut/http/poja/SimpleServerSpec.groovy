@@ -45,6 +45,23 @@ class SimpleServerSpec extends BaseServerlessApplicationSpec {
         {"_links":{"self":[{"href":"/invalid-test","templated":false}]},"_embedded":{"errors":[{"message":"Page Not Found"}]},"message":"Not Found"}""".stripIndent()
     }
 
+    void "test non-parseable GET method"() {
+        when:
+        app.write("""\
+        GET /test HTTP/1.1error
+        Host: h
+
+        """.stripIndent())
+
+        then:
+        app.read() == """\
+        HTTP/1.1 400 Bad Request
+        Content-Type: text/plain
+        Content-Length: 32
+
+        HTTP request could not be parsed""".stripIndent()
+    }
+
     void "test DELETE method"() {
         when:
         app.write("""\
