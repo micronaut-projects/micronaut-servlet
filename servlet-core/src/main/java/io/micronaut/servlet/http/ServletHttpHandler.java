@@ -46,6 +46,7 @@ import io.micronaut.http.context.ServerHttpRequestContext;
 import io.micronaut.http.context.event.HttpRequestReceivedEvent;
 import io.micronaut.http.context.event.HttpRequestTerminatedEvent;
 import io.micronaut.http.exceptions.HttpStatusException;
+import io.micronaut.http.hateoas.JsonError;
 import io.micronaut.http.server.RequestLifecycle;
 import io.micronaut.http.server.RouteExecutor;
 import io.micronaut.http.server.types.files.FileCustomizableResponseType;
@@ -420,7 +421,10 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
                 MessageBodyWriter<Object> messageBodyWriter = null;
                 if (!(body instanceof HttpStatus)) {
                     messageBodyWriter = routeInfoAttribute.map(RouteInfo::getMessageBodyWriter).orElse(null);
-                    if (messageBodyWriter == null) {
+                    if (messageBodyWriter == null
+                        // A special case because if an exception is thrown the message content type might change
+                        || (JsonError.class.isAssignableFrom(bodyType))
+                    ) {
                         MediaType finalMediaType = mediaType;
                         Argument<Object> finalBodyArgument = bodyArgument;
                         Optional<MessageBodyWriter<Object>> writer = messageBodyHandlerRegistry.findWriter(bodyArgument, List.of(mediaType));
