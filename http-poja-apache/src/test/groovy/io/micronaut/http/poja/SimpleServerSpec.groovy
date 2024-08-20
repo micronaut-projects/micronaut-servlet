@@ -21,8 +21,8 @@ class SimpleServerSpec extends BaseServerlessApplicationSpec {
         then:
         app.read() == """\
         HTTP/1.1 200 Ok
-        Content-Type: text/plain
         Content-Length: 32
+        Content-Type: text/plain
 
         Hello, Micronaut Without Netty!
         """.stripIndent()
@@ -39,8 +39,8 @@ class SimpleServerSpec extends BaseServerlessApplicationSpec {
         then:
         app.read() == """\
         HTTP/1.1 404 Not Found
-        Content-Type: application/json
         Content-Length: 140
+        Content-Type: application/json
 
         {"_links":{"self":[{"href":"/invalid-test","templated":false}]},"_embedded":{"errors":[{"message":"Page Not Found"}]},"message":"Not Found"}""".stripIndent()
     }
@@ -56,8 +56,8 @@ class SimpleServerSpec extends BaseServerlessApplicationSpec {
         then:
         app.read() == """\
         HTTP/1.1 400 Bad Request
-        Content-Type: text/plain
         Content-Length: 32
+        Content-Type: text/plain
 
         HTTP request could not be parsed""".stripIndent()
     }
@@ -89,8 +89,8 @@ class SimpleServerSpec extends BaseServerlessApplicationSpec {
         then:
         app.read() == """\
         HTTP/1.1 201 Created
-        Content-Type: text/plain
         Content-Length: 13
+        Content-Type: text/plain
 
         Hello, Dream
         """.stripIndent()
@@ -107,8 +107,8 @@ class SimpleServerSpec extends BaseServerlessApplicationSpec {
         then:
         app.read() == """\
         HTTP/1.1 200 Ok
-        Content-Type: text/plain
         Content-Length: 15
+        Content-Type: text/plain
 
         Hello, Dream1!
         """.stripIndent()
