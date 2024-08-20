@@ -17,16 +17,16 @@ plugins {
     id("io.micronaut.build.internal.servlet.base")
     id("application")
     id("groovy")
+    id 'org.graalvm.buildtools.native'
 }
 
 dependencies {
     implementation(projects.micronautHttpPojaApache)
     implementation(mnLogging.slf4j.simple)
-    implementation(mn.micronaut.jackson.databind)
+    implementation(mnSerde.micronaut.serde.jackson)
     annotationProcessor(mn.micronaut.inject.java)
 
     testImplementation(projects.micronautHttpPojaTest)
-    testImplementation(mn.micronaut.jackson.databind)
     testImplementation(mnTest.micronaut.test.spock)
 
     testImplementation(mn.micronaut.inject.groovy.test)
@@ -34,10 +34,20 @@ dependencies {
     testImplementation(mn.micronaut.inject.groovy)
 }
 
-run {
+application {
     mainClass.set("io.micronaut.http.poja.sample.Application")
+}
+
+run {
     standardInput = System.in
     standardOutput = System.out
+}
+
+graalvmNative {
+    binaries.all {
+        buildArgs.add("--gc=serial")
+        buildArgs.add("--install-exit-handlers")
+    }
 }
 
 test {
