@@ -6,7 +6,9 @@ import io.micronaut.http.HttpStatus
 import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.*
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
+import spock.lang.Stepwise
 
+@Stepwise
 @MicronautTest
 class SimpleServerSpec extends BaseServerlessApplicationSpec {
 
