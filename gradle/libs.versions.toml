@@ -16,7 +16,7 @@ managed-apache-http-core5 = "5.2.5"
 managed-jetty = '11.0.22'
 
 micronaut-reactor = "3.5.0"
-micronaut-security = "4.9.1"
+micronaut-security = "4.10.0"
 micronaut-serde = "2.11.0"
 micronaut-session = "4.3.0"
 micronaut-validation = "4.7.0"
