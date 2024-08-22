@@ -1,9 +1,0 @@
-plugins {
-    id("io.micronaut.build.internal.servlet.http-server-tck-module")
-}
-
-dependencies {
-    testRuntimeOnly(mnValidation.micronaut.validation)
-    testImplementation(projects.micronautHttpPojaApache)
-    testImplementation(projects.micronautHttpPojaTest)
-}
