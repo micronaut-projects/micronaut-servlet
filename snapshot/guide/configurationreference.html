@@ -46,7 +46,7 @@
         <div class="docs-content">
             <div class="project">
                 <h1>Configuration Reference</h1>
-                <p><strong>Version:</strong>4.10.1-SNAPSHOT</p>
+                <p><strong>Version:</strong>4.10.2-SNAPSHOT</p>
                 <p></p>
             </div>
 <div class="sect2">
@@ -743,9 +743,48 @@
 </div>
 <div class="sect2">
 <h3 id="_micronaut_servlet_engine_config_properties">Micronaut Servlet Engine Config Properties</h3>
+<a id="io.micronaut.servlet.engine.server.ServletStaticResourceConfiguration" href="#io.micronaut.servlet.engine.server.ServletStaticResourceConfiguration">&#128279;</a>
+<table class="tableblock frame-all grid-all stretch">
+<caption class="title">Table 8. Configuration Properties for <a href="../api/io/micronaut/servlet/engine/server/ServletStaticResourceConfiguration.html">ServletStaticResourceConfiguration</a></caption>
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 33.3333%;">
+<col style="width: 33.3334%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Property</th>
+<th class="tableblock halign-left valign-top">Type</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.router.static-resources.*.mapping</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.lang.String</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The mapping</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.router.static-resources.*.paths</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.util.List</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The paths</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.router.static-resources.*.enabled</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.router.static-resources.*.cache-control</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.lang.String</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">For Jetty based servers, allow configuring the cache control header for static resource mappings (defaults to "private,max-age=60").</p></td>
+</tr>
+</tbody>
+</table>
+<div style="page-break-after: always;"></div>
 <a id="io.micronaut.servlet.engine.MicronautServletConfiguration" href="#io.micronaut.servlet.engine.MicronautServletConfiguration">&#128279;</a>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 8. Configuration Properties for <a href="../api/io/micronaut/servlet/engine/MicronautServletConfiguration.html">MicronautServletConfiguration</a></caption>
+<caption class="title">Table 9. Configuration Properties for <a href="../api/io/micronaut/servlet/engine/MicronautServletConfiguration.html">MicronautServletConfiguration</a></caption>
 <colgroup>
 <col style="width: 33.3333%;">
 <col style="width: 33.3333%;">
@@ -798,45 +837,6 @@
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.servlet.max-threads</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">java.lang.Integer</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Specify the maximum number of threads in the created thread pool.</p></td>
-</tr>
-</tbody>
-</table>
-<div style="page-break-after: always;"></div>
-<a id="io.micronaut.servlet.engine.server.ServletStaticResourceConfiguration" href="#io.micronaut.servlet.engine.server.ServletStaticResourceConfiguration">&#128279;</a>
-<table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 9. Configuration Properties for <a href="../api/io/micronaut/servlet/engine/server/ServletStaticResourceConfiguration.html">ServletStaticResourceConfiguration</a></caption>
-<colgroup>
-<col style="width: 33.3333%;">
-<col style="width: 33.3333%;">
-<col style="width: 33.3334%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Property</th>
-<th class="tableblock halign-left valign-top">Type</th>
-<th class="tableblock halign-left valign-top">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.router.static-resources.*.mapping</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">java.lang.String</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">The mapping</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.router.static-resources.*.paths</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">java.util.List</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">The paths</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.router.static-resources.*.enabled</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
-<td class="tableblock halign-left valign-top"></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.router.static-resources.*.cache-control</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">java.lang.String</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">For Jetty based servers, allow configuring the cache control header for static resource mappings (defaults to "private,max-age=60").</p></td>
 </tr>
 </tbody>
 </table>
