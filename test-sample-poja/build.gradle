@@ -16,7 +16,6 @@
 plugins {
     id("io.micronaut.build.internal.servlet.base")
     id("application")
-    id("groovy")
     id 'org.graalvm.buildtools.native'
 }
 
@@ -27,11 +26,10 @@ dependencies {
     annotationProcessor(mn.micronaut.inject.java)
 
     testImplementation(projects.micronautHttpPojaTest)
-    testImplementation(mnTest.micronaut.test.spock)
+    testImplementation(mnTest.micronaut.test.junit5)
 
-    testImplementation(mn.micronaut.inject.groovy.test)
+    testAnnotationProcessor(mn.micronaut.inject.java.test)
     testImplementation(mn.micronaut.inject.java)
-    testImplementation(mn.micronaut.inject.groovy)
 }
 
 application {
