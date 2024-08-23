@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.http.poja.llhttp;
+package io.micronaut.http.poja.apache;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
@@ -30,7 +30,7 @@ import io.micronaut.http.codec.MediaTypeCodecRegistry;
 import io.micronaut.http.cookie.Cookie;
 import io.micronaut.http.cookie.Cookies;
 import io.micronaut.http.poja.PojaHttpRequest;
-import io.micronaut.http.poja.llhttp.exception.ApacheServletBadRequestException;
+import io.micronaut.http.poja.apache.exception.ApacheServletBadRequestException;
 import io.micronaut.http.poja.util.MultiValueHeaders;
 import io.micronaut.http.poja.util.MultiValuesQueryParameters;
 import io.micronaut.http.simple.cookies.SimpleCookies;

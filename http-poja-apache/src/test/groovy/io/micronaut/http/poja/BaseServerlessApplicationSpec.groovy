@@ -2,7 +2,7 @@ package io.micronaut.http.poja
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.context.annotation.Replaces
-import io.micronaut.http.poja.llhttp.ApacheServerlessApplication
+import io.micronaut.http.poja.apache.ApacheServerlessApplication
 import io.micronaut.runtime.ApplicationConfiguration
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
