@@ -18,32 +18,34 @@ package io.micronaut.http.poja.llhttp;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.convert.ConversionService;
+import io.micronaut.core.io.buffer.ByteBufferFactory;
 import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpMethod;
 import io.micronaut.http.MutableHttpHeaders;
 import io.micronaut.http.MutableHttpParameters;
 import io.micronaut.http.MutableHttpRequest;
 import io.micronaut.http.body.ByteBody;
+import io.micronaut.http.body.stream.InputStreamByteBody;
 import io.micronaut.http.codec.MediaTypeCodecRegistry;
 import io.micronaut.http.cookie.Cookie;
 import io.micronaut.http.cookie.Cookies;
 import io.micronaut.http.poja.PojaHttpRequest;
 import io.micronaut.http.poja.llhttp.exception.ApacheServletBadRequestException;
-import io.micronaut.http.poja.util.LimitingInputStream;
 import io.micronaut.http.poja.util.MultiValueHeaders;
 import io.micronaut.http.poja.util.MultiValuesQueryParameters;
 import io.micronaut.http.simple.cookies.SimpleCookies;
-import io.micronaut.servlet.http.body.InputStreamByteBody;
 import org.apache.hc.core5.http.ClassicHttpRequest;
 import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.apache.hc.core5.http.Header;
 import org.apache.hc.core5.http.HttpException;
 import org.apache.hc.core5.http.NameValuePair;
+import org.apache.hc.core5.http.impl.io.ChunkedInputStream;
+import org.apache.hc.core5.http.impl.io.ContentLengthInputStream;
 import org.apache.hc.core5.http.impl.io.DefaultHttpRequestParser;
 import org.apache.hc.core5.http.impl.io.SessionInputBufferImpl;
+import org.apache.hc.core5.http.io.entity.EmptyInputStream;
 import org.apache.hc.core5.net.URIBuilder;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -66,6 +68,8 @@ import java.util.stream.Collectors;
  */
 @Internal
 public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, ClassicHttpRequest, ClassicHttpResponse> {
+
+    private static final String TRANSFER_ENCODING_CHUNKED = "chunked";
 
     private final ClassicHttpRequest request;
 
@@ -92,6 +96,7 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
         ConversionService conversionService,
         MediaTypeCodecRegistry codecRegistry,
         ExecutorService ioExecutor,
+        ByteBufferFactory<?, ?> byteBufferFactory,
         ApacheServletHttpResponse<?> response,
         ApacheServletConfiguration configuration
     ) {
@@ -119,29 +124,33 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
 
         long contentLength = getContentLength();
         OptionalLong optionalContentLength = contentLength >= 0 ? OptionalLong.of(contentLength) : OptionalLong.empty();
-        try {
-            InputStream bodyStream = inputStream;
-            if (sessionInputBuffer.length() > 0) {
-                byte[] data = new byte[sessionInputBuffer.length()];
-                sessionInputBuffer.read(data, inputStream);
+        InputStream bodyStream = createBodyStream(inputStream, contentLength, sessionInputBuffer);
+        byteBody = InputStreamByteBody.create(
+            bodyStream, optionalContentLength, ioExecutor, byteBufferFactory
+        );
+    }
 
-                bodyStream = new CombinedInputStream(
-                    new ByteArrayInputStream(data),
-                    inputStream
-                );
-            }
-            if (contentLength > 0) {
-                bodyStream = new LimitingInputStream(bodyStream, contentLength);
-            } else {
-                // Empty
-                bodyStream = new ByteArrayInputStream(new byte[0]);
-            }
-            byteBody = InputStreamByteBody.create(
-                bodyStream, optionalContentLength, ioExecutor
-            );
-        } catch (IOException e) {
-            throw new ApacheServletBadRequestException("Could not parse request body", e);
+    /**
+     * Create body stream.
+     * Based on org.apache.hc.core5.http.impl.io.BHttpConnectionBase#createContentOutputStream.
+     *
+     * @param inputStream The input stream
+     * @param contentLength The content length
+     * @param sessionInputBuffer The input buffer
+     * @return The body stream
+     */
+    private InputStream createBodyStream(InputStream inputStream, long contentLength, SessionInputBufferImpl sessionInputBuffer) {
+        InputStream bodyStream;
+        if (contentLength > 0) {
+            bodyStream = new ContentLengthInputStream(sessionInputBuffer, inputStream, contentLength);
+        } else if (contentLength == 0) {
+            bodyStream = EmptyInputStream.INSTANCE;
+        } else if (TRANSFER_ENCODING_CHUNKED.equalsIgnoreCase(headers.get(HttpHeaders.TRANSFER_ENCODING))) {
+            bodyStream = new ChunkedInputStream(sessionInputBuffer, inputStream);
+        } else {
+            bodyStream = EmptyInputStream.INSTANCE;
         }
+        return bodyStream;
     }
 
     @Override

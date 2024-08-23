@@ -23,8 +23,10 @@ import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Delete;
 import io.micronaut.http.annotation.Get;
 import io.micronaut.http.annotation.Post;
+import io.micronaut.http.annotation.Produces;
 import io.micronaut.http.annotation.Put;
 import io.micronaut.http.annotation.Status;
+import io.micronaut.http.poja.sample.model.Cactus;
 
 /**
  * A controller for testing.
@@ -54,6 +56,12 @@ public class TestController {
     @Status(HttpStatus.OK)
     public final String update(@NonNull String name) {
         return "Hello, " + name + "!\n";
+    }
+
+    @Get("/cactus")
+    @Produces(MediaType.APPLICATION_JSON)
+    public final Cactus getCactus() {
+        return new Cactus("green", 1);
     }
 
 }

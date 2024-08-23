@@ -17,6 +17,7 @@ package io.micronaut.http.poja.llhttp;
 
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.convert.ConversionService;
+import io.micronaut.core.io.buffer.ByteBufferFactory;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.codec.MediaTypeCodecRegistry;
@@ -26,6 +27,7 @@ import io.micronaut.http.server.exceptions.HttpServerException;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.runtime.ApplicationConfiguration;
 import io.micronaut.scheduling.TaskExecutors;
+import io.micronaut.servlet.http.ByteArrayBufferFactory;
 import io.micronaut.servlet.http.ServletHttpHandler;
 import jakarta.inject.Singleton;
 import org.apache.hc.core5.http.ClassicHttpResponse;
@@ -53,6 +55,7 @@ public class ApacheServerlessApplication
     private final ConversionService conversionService;
     private final MediaTypeCodecRegistry codecRegistry;
     private final ExecutorService ioExecutor;
+    private final ByteBufferFactory<?, ?> byteBufferFactory;
     private final ApacheServletConfiguration configuration;
 
     /**
@@ -68,6 +71,7 @@ public class ApacheServerlessApplication
         codecRegistry = applicationContext.getBean(MediaTypeCodecRegistry.class);
         ioExecutor = applicationContext.getBean(ExecutorService.class, Qualifiers.byName(TaskExecutors.BLOCKING));
         configuration = applicationContext.getBean(ApacheServletConfiguration.class);
+        byteBufferFactory = ByteArrayBufferFactory.INSTANCE;
     }
 
     @Override
@@ -79,7 +83,7 @@ public class ApacheServerlessApplication
         ApacheServletHttpResponse<?> response = new ApacheServletHttpResponse<>(conversionService);
         try {
             ApacheServletHttpRequest exchange = new ApacheServletHttpRequest<>(
-                in, conversionService, codecRegistry, ioExecutor, response, configuration
+                in, conversionService, codecRegistry, ioExecutor, byteBufferFactory, response, configuration
             );
             servletHttpHandler.service(exchange);
         } catch (ApacheServletBadRequestException e) {

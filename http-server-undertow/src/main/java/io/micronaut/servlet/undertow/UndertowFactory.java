@@ -263,7 +263,7 @@ public class UndertowFactory extends ServletServerFactory {
      *
      * @param servletConfiguration The servlet configuration.
      * @return The deployment info
-     * @deprecated Use {@link ##deploymentInfo(MicronautServletConfiguration, Collection)}
+     * @deprecated Use {@link #deploymentInfo(MicronautServletConfiguration, Collection)}
      */
     @Deprecated(forRemoval = true, since = "4.8.0")
     protected DeploymentInfo deploymentInfo(MicronautServletConfiguration servletConfiguration) {
