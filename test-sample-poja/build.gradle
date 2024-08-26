@@ -20,13 +20,14 @@ plugins {
 }
 
 dependencies {
-    implementation(projects.micronautHttpPojaApache)
+    implementation(projects.micronautHttpPoja)
     implementation(mnLogging.slf4j.simple)
     implementation(mnSerde.micronaut.serde.jackson)
     annotationProcessor(mn.micronaut.inject.java)
 
     testImplementation(projects.micronautHttpPojaTest)
     testImplementation(mnTest.micronaut.test.junit5)
+    testImplementation(mn.micronaut.http.client)
 
     testAnnotationProcessor(mn.micronaut.inject.java.test)
     testImplementation(mn.micronaut.inject.java)
