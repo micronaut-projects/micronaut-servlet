@@ -111,4 +111,8 @@ public class ApacheServerlessApplication
         out.flush();
     }
 
+    @Override
+    protected boolean useInheritedChannel() {
+        return configuration.useInheritedChannel();
+    }
 }

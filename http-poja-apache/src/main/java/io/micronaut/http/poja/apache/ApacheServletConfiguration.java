@@ -25,6 +25,8 @@ import io.micronaut.core.bind.annotation.Bindable;
  *                        (in bytes). Default value is 8192 (8Kb).
  * @param outputBufferSize The size of the buffer that is used to write the HTTP response
  *                        (in bytes). Default value is 8192 (8Kb).
+ * @param useInheritedChannel When true, the inherited channel will be used by if present.
+ *                            Otherwise, STDIN and STDOUT will be used.
  * @author Andriy Dmytruk
  * @since 4.10.0
  */
@@ -33,7 +35,9 @@ public record ApacheServletConfiguration(
     @Bindable(defaultValue = "8192")
     int inputBufferSize,
     @Bindable(defaultValue = "8192")
-    int outputBufferSize
+    int outputBufferSize,
+    @Bindable(defaultValue = "true")
+    boolean useInheritedChannel
 ) {
 
 }
