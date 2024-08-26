@@ -20,7 +20,7 @@ plugins {
 }
 
 dependencies {
-    implementation(projects.micronautHttpPoja)
+    implementation(projects.micronautHttpPojaApache)
     implementation(mnLogging.slf4j.simple)
     implementation(mnSerde.micronaut.serde.jackson)
     annotationProcessor(mn.micronaut.inject.java)

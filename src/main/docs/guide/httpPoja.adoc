@@ -5,7 +5,7 @@ This feature allows creating simple applications that launch and respond on dema
 
 To use the HTTP POJA feature add the following dependencies:
 
-dependency:io.micronaut.servlet:micronaut-http-poja[]
+dependency:io.micronaut.servlet:micronaut-http-poja-apache[]
 
 dependency:io.micronaut.servlet:micronaut-http-poja-test[scope="test"]
 

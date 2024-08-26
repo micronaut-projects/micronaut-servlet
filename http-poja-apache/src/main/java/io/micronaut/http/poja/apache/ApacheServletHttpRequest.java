@@ -88,6 +88,7 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
      * @param conversionService The conversion service
      * @param codecRegistry The media codec registry
      * @param ioExecutor The executor service
+     * @param byteBufferFactory The byte buffer factory
      * @param response The response
      * @param configuration The configuration
      */
