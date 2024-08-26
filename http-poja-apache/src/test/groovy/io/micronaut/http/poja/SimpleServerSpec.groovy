@@ -179,9 +179,8 @@ class SimpleServerSpec extends Specification {
                 InputStream input = socket.getInputStream()
                 return new String(input.readAllBytes())
                         .replaceAll("Date:[^\r]+\r\n", "")
-            } catch (IOException ex) {
-                System.out.println("Could not exchange request with server: " + ex.getMessage());
-                ex.printStackTrace();
+            } catch (IOException e) {
+                throw new RuntimeException("Could not exchange request with server", e)
             }
         }
 
