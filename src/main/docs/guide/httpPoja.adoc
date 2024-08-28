@@ -1,7 +1,7 @@
 HTTP POJA allows creating Micronaut applications that consume respond to HTTP requests with streams. By default, the application will read requests from standard input stream and write responses to standard output. The requests can only be answered in a serial manner.
 Currently HTTP POJA is based on https://hc.apache.org/httpcomponents-core-5.2.x/[Apache HTTP Core library].
 
-This feature allows creating simple applications that launch and respond on demand with minimal overhead. The module is suitable for usage with `systemd` on Linux or `launchd` on MacOS.
+This feature allows creating simple applications that launch and respond on demand with minimal overhead. The module is suitable for usage with `systemd` on Linux or `launchd` on MacOS. Examples are given below.
 
 To use the HTTP POJA feature add the following dependencies:
 
@@ -12,3 +12,151 @@ dependency:io.micronaut.servlet:micronaut-http-poja-test[scope="test"]
 To customize the HTTP POJA you can use the following configuration properties:
 
 include::{includedir}configurationProperties/io.micronaut.http.poja.apache.ApacheServletConfiguration.adoc[]
+
+=== Use HTTP POJA with launchd on MacOS
+
+If you have built a HTTP POJA application as a native image executable, create the following `plist` file and
+replace `[executable]` with your executable path.
+
+NOTE: If you are unfamiliar with building native image executables refer to https://guides.micronaut.io/latest/micronaut-creating-first-graal-app[Micronaut Creating First Graal App] guide.
+
+NOTE: If you do not wish to use native image prepend `java` and `-jar` program arguments and use the jar instead.
+
+.~/Library/LaunchAgents/com.example.poja.plist
+[source,xml]
+----
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>Label</key>
+    <string>com.example.poja</string>
+
+    <key>Enabled</key>
+    <false/>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>[executable]</string>
+        <string>-Dpoja.apache.useInheritedChannel=false</string>
+    </array>
+
+    <key>Sockets</key>
+    <dict>
+      <key>Listeners</key>
+      <dict>
+        <key>SockServiceName</key>
+        <string>8080</string>
+        <key>SockType</key>
+        <string>stream</string>
+        <key>SockProtocol</key>
+        <string>TCP</string>
+      </dict>
+    </dict>
+
+    <key>StandardErrorPath</key>
+    <string>/tmp/com.example.poja.log</string>
+
+    <key>inetdCompatibility</key>
+    <dict>
+      <key>Wait</key>
+      <false/>
+    </dict>
+
+    <key>KeepAlive</key>
+    <false/>
+  </dict>
+</plist>
+----
+
+Load the `plist` file with launchd:
+[source, bash]
+----
+launchctl load ~/Library/LaunchAgents/com.example.poja.plist
+----
+
+Then the configured application will respond on port `8080`:
+[source, bash]
+----
+curl localhost:8080
+----
+
+=== Use HTTP POJA with systemd on Linux
+
+If you have built a HTTP POJA application as a native image executable, create the following files and
+replace `[executable]` with your executable path.
+
+NOTE: If you are unfamiliar with building native image executables refer to https://guides.micronaut.io/latest/micronaut-creating-first-graal-app[Micronaut Creating First Graal App] guide.
+
+NOTE: If you do not wish to use native image prepend `java` and `-jar` program arguments and use the jar instead.
+
+./etc/systemd/system/examplepoja.socket
+[source, toml]
+----
+[Unit]
+Description=Socket to launch poja example on incoming connection
+
+[Socket]
+ListenStream=127.0.0.1:8080
+Accept=yes
+
+[Install]
+WantedBy=sockets.target
+----
+
+
+./etc/systemd/system/examplepoja@.service
+[source, toml]
+----
+[Unit]
+Description=Example Poja Service
+Requires=examplepoja.socket
+
+[Service]
+Type=simple
+ExecStart=[executable] -Dpoja.apache.useInheritedChannel=false
+ExecStop=/bin/kill $MAINPID
+KillMode=process
+StandardInput=socket
+StandardOutput=socket
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
+----
+
+Change selinux policy to allow systemd to use executable in the desired location with:
+[source, bash]
+----
+chcon -R -t bin_t [executable parent directory]
+----
+
+Enable and start listening on the socket with systemctl:
+[source, bash]
+----
+sudo systemctl enable examplepoja.socket
+sudo systemctl start examplepoja.socket
+----
+
+Then the configured application will respond on port `8080`:
+[source, bash]
+----
+curl localhost:8080
+----
+
+==== Use HTTP POJA with `systemd-socket-activate` on Linux
+
+To test your application with `systemd-socket-activate` run:
+
+[source, bash]
+----
+systemd-socket-activate --inetd -a -l /tmp/http-poja.sock [executable]
+----
+
+In a separate terminal send a request to the socket:
+
+[source, bash]
+----
+curl --unix-socket /tmp/http-poja.sock http://localhost/
+----
+
