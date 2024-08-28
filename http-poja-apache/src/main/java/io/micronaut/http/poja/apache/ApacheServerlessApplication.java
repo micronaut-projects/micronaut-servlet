@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.http.poja.llhttp;
+package io.micronaut.http.poja.apache;
 
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.convert.ConversionService;
@@ -22,7 +22,7 @@ import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.codec.MediaTypeCodecRegistry;
 import io.micronaut.http.poja.PojaHttpServerlessApplication;
-import io.micronaut.http.poja.llhttp.exception.ApacheServletBadRequestException;
+import io.micronaut.http.poja.apache.exception.ApacheServletBadRequestException;
 import io.micronaut.http.server.exceptions.HttpServerException;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.runtime.ApplicationConfiguration;
@@ -111,4 +111,8 @@ public class ApacheServerlessApplication
         out.flush();
     }
 
+    @Override
+    protected boolean useInheritedChannel() {
+        return configuration.useInheritedChannel();
+    }
 }

@@ -1,0 +1,14 @@
+HTTP POJA allows creating Micronaut applications that consume respond to HTTP requests with streams. By default, the application will read requests from standard input stream and write responses to standard output. The requests can only be answered in a serial manner.
+Currently HTTP POJA is based on https://hc.apache.org/httpcomponents-core-5.2.x/[Apache HTTP Core library].
+
+This feature allows creating simple applications that launch and respond on demand with minimal overhead. The module is suitable for usage with `systemd` on Linux or `launchd` on MacOS.
+
+To use the HTTP POJA feature add the following dependencies:
+
+dependency:io.micronaut.servlet:micronaut-http-poja-apache[]
+
+dependency:io.micronaut.servlet:micronaut-http-poja-test[scope="test"]
+
+To customize the HTTP POJA you can use the following configuration properties:
+
+include::{includedir}configurationProperties/io.micronaut.http.poja.apache.ApacheServletConfiguration.adoc[]

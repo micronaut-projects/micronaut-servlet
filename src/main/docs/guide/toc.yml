@@ -10,6 +10,7 @@ warDeployment:
 jetty: Jetty Server
 tomcat: Tomcat Server
 undertow: Undertow Server
+httpPoja: HTTP POJA Application
 knownIssues: Known Issues
 faq: FAQ
 breaks: Breaking Changes

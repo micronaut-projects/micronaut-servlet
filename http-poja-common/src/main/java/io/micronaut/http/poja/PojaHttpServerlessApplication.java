@@ -99,7 +99,10 @@ public abstract class PojaHttpServerlessApplication<REQ, RES> implements Embedde
         try {
             // Default streams to streams based on System.inheritedChannel.
             // If not possible, use System.in/out.
-            Channel channel = System.inheritedChannel();
+            Channel channel = null;
+            if (useInheritedChannel()) {
+                channel = System.inheritedChannel();
+            }
             if (channel != null) {
                 try (InputStream in = Channels.newInputStream((ReadableByteChannel) channel);
                      OutputStream out = Channels.newOutputStream((WritableByteChannel) channel)) {
@@ -145,6 +148,16 @@ public abstract class PojaHttpServerlessApplication<REQ, RES> implements Embedde
             InputStream in,
             OutputStream out
     ) throws IOException;
+
+    /**
+     * Whether to use the inherited channel by default.
+     * If false, STDIN and STDOUT will be used directly instead.
+     *
+     * @return Whether to use the inherited channel
+     */
+    protected boolean useInheritedChannel() {
+        return true;
+    }
 
     @Override
     public @NonNull PojaHttpServerlessApplication<REQ, RES> stop() {

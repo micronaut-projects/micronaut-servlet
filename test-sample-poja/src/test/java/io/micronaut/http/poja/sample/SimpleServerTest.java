@@ -10,13 +10,16 @@ import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.poja.sample.model.Cactus;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
+import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @MicronautTest
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class SimpleServerTest {
 
     @Inject

@@ -20,8 +20,8 @@ plugins {
 dependencies {
     implementation(projects.micronautHttpPojaCommon)
     api(mn.micronaut.inject.java)
-    api(mn.micronaut.http.client)
 
+    testImplementation(mn.micronaut.http.client)
     testImplementation(mn.micronaut.jackson.databind)
     testImplementation(projects.micronautHttpPojaApache)
 }
