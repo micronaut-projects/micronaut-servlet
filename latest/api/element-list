@@ -1,6 +1,6 @@
 io.micronaut.http.poja
-io.micronaut.http.poja.llhttp
-io.micronaut.http.poja.llhttp.exception
+io.micronaut.http.poja.apache
+io.micronaut.http.poja.apache.exception
 io.micronaut.http.poja.test
 io.micronaut.http.poja.util
 io.micronaut.servlet.annotation.processor

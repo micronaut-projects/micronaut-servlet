@@ -60,13 +60,15 @@
                                 
                                 <div class="toc-item" style="margin-left:0"><a href="#undertow"><strong>8</strong><span>Undertow Server</span></a></div>
                                 
-                                <div class="toc-item" style="margin-left:0"><a href="#knownIssues"><strong>9</strong><span>Known Issues</span></a></div>
+                                <div class="toc-item" style="margin-left:0"><a href="#httpPoja"><strong>9</strong><span>HTTP POJA Application</span></a></div>
                                 
-                                <div class="toc-item" style="margin-left:0"><a href="#faq"><strong>10</strong><span>FAQ</span></a></div>
+                                <div class="toc-item" style="margin-left:0"><a href="#knownIssues"><strong>10</strong><span>Known Issues</span></a></div>
                                 
-                                <div class="toc-item" style="margin-left:0"><a href="#breaks"><strong>11</strong><span>Breaking Changes</span></a></div>
+                                <div class="toc-item" style="margin-left:0"><a href="#faq"><strong>11</strong><span>FAQ</span></a></div>
                                 
-                                <div class="toc-item" style="margin-left:0"><a href="#repository"><strong>12</strong><span>Repository</span></a></div>
+                                <div class="toc-item" style="margin-left:0"><a href="#breaks"><strong>12</strong><span>Breaking Changes</span></a></div>
+                                
+                                <div class="toc-item" style="margin-left:0"><a href="#repository"><strong>13</strong><span>Repository</span></a></div>
                                 
                             </div>
                         </div>
@@ -119,13 +121,15 @@
         
         <div class="toc-item" style="margin-left:0px" id="toc-item-undertow"><a href="#undertow"><strong>8</strong><span>Undertow Server</span></a></div>
         
-        <div class="toc-item" style="margin-left:0px" id="toc-item-knownIssues"><a href="#knownIssues"><strong>9</strong><span>Known Issues</span></a></div>
+        <div class="toc-item" style="margin-left:0px" id="toc-item-httpPoja"><a href="#httpPoja"><strong>9</strong><span>HTTP POJA Application</span></a></div>
         
-        <div class="toc-item" style="margin-left:0px" id="toc-item-faq"><a href="#faq"><strong>10</strong><span>FAQ</span></a></div>
+        <div class="toc-item" style="margin-left:0px" id="toc-item-knownIssues"><a href="#knownIssues"><strong>10</strong><span>Known Issues</span></a></div>
         
-        <div class="toc-item" style="margin-left:0px" id="toc-item-breaks"><a href="#breaks"><strong>11</strong><span>Breaking Changes</span></a></div>
+        <div class="toc-item" style="margin-left:0px" id="toc-item-faq"><a href="#faq"><strong>11</strong><span>FAQ</span></a></div>
         
-        <div class="toc-item" style="margin-left:0px" id="toc-item-repository"><a href="#repository"><strong>12</strong><span>Repository</span></a></div>
+        <div class="toc-item" style="margin-left:0px" id="toc-item-breaks"><a href="#breaks"><strong>12</strong><span>Breaking Changes</span></a></div>
+        
+        <div class="toc-item" style="margin-left:0px" id="toc-item-repository"><a href="#repository"><strong>13</strong><span>Repository</span></a></div>
         
         </div>
     </div>
@@ -135,7 +139,7 @@
         <h1>Micronaut Servlet</h1>
         <p></p>
         <p>Provides integration between Micronaut and the Servlet API</p>
-        <p><strong>Version:</strong> 4.11.0 </p>
+        <p><strong>Version:</strong> 4.11.1 </p>
     </div>
     
 <h1 id="introduction"><a class="anchor" href="#introduction"></a>1 Introduction</h1>
@@ -1447,7 +1451,302 @@ micronaut.server.undertow.accessLog.outputDirectory = "/var/logs"</code></pre>
 </div>
 </div>
 
-<h1 id="knownIssues"><a class="anchor" href="#knownIssues"></a>9 Known Issues</h1>
+<h1 id="httpPoja"><a class="anchor" href="#httpPoja"></a>9 HTTP POJA Application</h1>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/4.11.x/src/main/docs/guide/httpPoja.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>HTTP POJA allows creating Micronaut applications that consume respond to HTTP requests with streams. By default, the application will read requests from standard input stream and write responses to standard output. The requests can only be answered in a serial manner.
+Currently HTTP POJA is based on <a href="https://hc.apache.org/httpcomponents-core-5.2.x/">Apache HTTP Core library</a>.</p>
+</div>
+<div class="paragraph">
+<p>This feature allows creating simple applications that launch and respond on demand with minimal overhead. The module is suitable for usage with <code>systemd</code> on Linux or <code>launchd</code> on MacOS. Examples are given below.</p>
+</div>
+<div class="paragraph">
+<p>To use the HTTP POJA feature add the following dependencies:</p>
+</div>
+<div class="paragraph">
+<p>        <div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">implementation(<span class="hljs-string">"io.micronaut.servlet:micronaut-http-poja-apache")</span></code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
+    &lt;groupId&gt;io.micronaut.servlet&lt;/groupId&gt;
+    &lt;artifactId&gt;micronaut-http-poja-apache&lt;/artifactId&gt;
+&lt;/dependency&gt;</code></pre>
+</div>
+</div></p>
+</div>
+<div class="paragraph">
+<p>        <div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">testImplementation(<span class="hljs-string">"io.micronaut.servlet:micronaut-http-poja-test")</span></code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
+    &lt;groupId&gt;io.micronaut.servlet&lt;/groupId&gt;
+    &lt;artifactId&gt;micronaut-http-poja-test&lt;/artifactId&gt;
+    &lt;scope&gt;test&lt;/scope&gt;
+&lt;/dependency&gt;</code></pre>
+</div>
+</div></p>
+</div>
+<div class="paragraph">
+<p>To customize the HTTP POJA you can use the following configuration properties:</p>
+</div>
+<a id="io.micronaut.http.poja.apache.ApacheServletConfiguration" href="#io.micronaut.http.poja.apache.ApacheServletConfiguration">&#128279;</a>
+<table class="tableblock frame-all grid-all stretch">
+<caption class="title">Table 1. Configuration Properties for <a href="../api/io/micronaut/http/poja/apache/ApacheServletConfiguration.html">ApacheServletConfiguration</a></caption>
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 33.3333%;">
+<col style="width: 33.3334%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Property</th>
+<th class="tableblock halign-left valign-top">Type</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>poja.apache.input-buffer-size</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">int</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The size of the buffer that is used to read and parse the HTTP request
+                        (in bytes). Default value is 8192 (8Kb).</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>poja.apache.output-buffer-size</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">int</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The size of the buffer that is used to write the HTTP response
+                        (in bytes). Default value is 8192 (8Kb).</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>poja.apache.use-inherited-channel</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">When true, the inherited channel will be used by if present.
+                            Otherwise, STDIN and STDOUT will be used.</p></td>
+</tr>
+</tbody>
+</table>
+<div class="sect2">
+<h3 id="_use_http_poja_with_launchd_on_macos">Use HTTP POJA with launchd on MacOS</h3>
+<div class="paragraph">
+<p>If you have built a HTTP POJA application as a native image executable, create the following <code>plist</code> file and
+replace <code>[executable]</code> with your executable path.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+If you are unfamiliar with building native image executables refer to <a href="https://guides.micronaut.io/latest/micronaut-creating-first-graal-app">Micronaut Creating First Graal App</a> guide.
+</td>
+</tr>
+</table>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+If you do not wish to use native image prepend <code>java</code> and <code>-jar</code> program arguments and use the jar instead.
+</td>
+</tr>
+</table>
+</div>
+<div class="listingblock">
+<div class="title">~/Library/LaunchAgents/com.example.poja.plist</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"&gt;
+&lt;plist version="1.0"&gt;
+  &lt;dict&gt;
+    &lt;key&gt;Label&lt;/key&gt;
+    &lt;string&gt;com.example.poja&lt;/string&gt;
+
+    &lt;key&gt;Enabled&lt;/key&gt;
+    &lt;false/&gt;
+
+    &lt;key&gt;ProgramArguments&lt;/key&gt;
+    &lt;array&gt;
+        &lt;string&gt;[executable]&lt;/string&gt;
+        &lt;string&gt;-Dpoja.apache.useInheritedChannel=false&lt;/string&gt;
+    &lt;/array&gt;
+
+    &lt;key&gt;Sockets&lt;/key&gt;
+    &lt;dict&gt;
+      &lt;key&gt;Listeners&lt;/key&gt;
+      &lt;dict&gt;
+        &lt;key&gt;SockServiceName&lt;/key&gt;
+        &lt;string&gt;8080&lt;/string&gt;
+        &lt;key&gt;SockType&lt;/key&gt;
+        &lt;string&gt;stream&lt;/string&gt;
+        &lt;key&gt;SockProtocol&lt;/key&gt;
+        &lt;string&gt;TCP&lt;/string&gt;
+      &lt;/dict&gt;
+    &lt;/dict&gt;
+
+    &lt;key&gt;StandardErrorPath&lt;/key&gt;
+    &lt;string&gt;/tmp/com.example.poja.log&lt;/string&gt;
+
+    &lt;key&gt;inetdCompatibility&lt;/key&gt;
+    &lt;dict&gt;
+      &lt;key&gt;Wait&lt;/key&gt;
+      &lt;false/&gt;
+    &lt;/dict&gt;
+
+    &lt;key&gt;KeepAlive&lt;/key&gt;
+    &lt;false/&gt;
+  &lt;/dict&gt;
+&lt;/plist&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Load the <code>plist</code> file with launchd:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">launchctl load ~/Library/LaunchAgents/com.example.poja.plist</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Then the configured application will respond on port <code>8080</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">curl localhost:8080</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_use_http_poja_with_systemd_on_linux">Use HTTP POJA with systemd on Linux</h3>
+<div class="paragraph">
+<p>If you have built a HTTP POJA application as a native image executable, create the following files and
+replace <code>[executable]</code> with your executable path.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+If you are unfamiliar with building native image executables refer to <a href="https://guides.micronaut.io/latest/micronaut-creating-first-graal-app">Micronaut Creating First Graal App</a> guide.
+</td>
+</tr>
+</table>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+If you do not wish to use native image prepend <code>java</code> and <code>-jar</code> program arguments and use the jar instead.
+</td>
+</tr>
+</table>
+</div>
+<div class="listingblock">
+<div class="title">/etc/systemd/system/examplepoja.socket</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">[Unit]
+Description=Socket to launch poja example on incoming connection
+
+[Socket]
+ListenStream=127.0.0.1:8080
+Accept=yes
+
+[Install]
+WantedBy=sockets.target</code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="title">/etc/systemd/system/examplepoja@.service</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">[Unit]
+Description=Example Poja Service
+Requires=examplepoja.socket
+
+[Service]
+Type=simple
+ExecStart=[executable] -Dpoja.apache.useInheritedChannel=false
+ExecStop=/bin/kill $MAINPID
+KillMode=process
+StandardInput=socket
+StandardOutput=socket
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Change selinux policy to allow systemd to use executable in the desired location with:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">chcon -R -t bin_t [executable parent directory]</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Enable and start listening on the socket with systemctl:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">sudo systemctl enable examplepoja.socket
+sudo systemctl start examplepoja.socket</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Then the configured application will respond on port <code>8080</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">curl localhost:8080</code></pre>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_use_http_poja_with_systemd_socket_activate_on_linux">Use HTTP POJA with <code>systemd-socket-activate</code> on Linux</h4>
+<div class="paragraph">
+<p>To test your application with <code>systemd-socket-activate</code> run:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">systemd-socket-activate --inetd -a -l /tmp/http-poja.sock [executable]</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>In a separate terminal send a request to the socket:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">curl --unix-socket /tmp/http-poja.sock http://localhost/</code></pre>
+</div>
+</div>
+</div>
+</div>
+
+<h1 id="knownIssues"><a class="anchor" href="#knownIssues"></a>10 Known Issues</h1>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/4.11.x/src/main/docs/guide/knownIssues.adoc"'>
@@ -1473,7 +1772,7 @@ The body is read from the request input-stream and so attempting to reparse it f
 </div>
 </div>
 
-<h1 id="faq"><a class="anchor" href="#faq"></a>10 FAQ</h1>
+<h1 id="faq"><a class="anchor" href="#faq"></a>11 FAQ</h1>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/4.11.x/src/main/docs/guide/faq.adoc"'>
@@ -1510,7 +1809,7 @@ The body is read from the request input-stream and so attempting to reparse it f
 </div>
 </div>
 
-<h1 id="breaks"><a class="anchor" href="#breaks"></a>11 Breaking Changes</h1>
+<h1 id="breaks"><a class="anchor" href="#breaks"></a>12 Breaking Changes</h1>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/4.11.x/src/main/docs/guide/breaks.adoc"'>
@@ -1537,7 +1836,7 @@ To restore the original functionality, you need to configure <code>micronaut.ser
 </div>
 </div>
 
-<h1 id="repository"><a class="anchor" href="#repository"></a>12 Repository</h1>
+<h1 id="repository"><a class="anchor" href="#repository"></a>13 Repository</h1>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/4.11.x/src/main/docs/guide/repository.adoc"'>
