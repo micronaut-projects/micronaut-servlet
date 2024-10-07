@@ -25,7 +25,7 @@ kotlin = "1.9.25"
 micronaut-logging = "1.4.0"
 
 # Micronaut
-micronaut-gradle-plugin = "4.4.2"
+micronaut-gradle-plugin = "4.4.3"
 
 [libraries]
 # Core
