@@ -21,7 +21,7 @@ micronaut-serde = "2.11.0"
 micronaut-session = "4.4.0"
 micronaut-validation = "4.7.0"
 google-cloud-functions = '1.1.0'
-kotlin = "1.9.25"
+kotlin = "2.0.21"
 micronaut-logging = "1.4.0"
 
 # Micronaut
