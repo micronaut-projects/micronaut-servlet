@@ -42,7 +42,7 @@ import org.apache.hc.core5.http.NameValuePair;
 import org.apache.hc.core5.http.impl.io.ChunkedInputStream;
 import org.apache.hc.core5.http.impl.io.ContentLengthInputStream;
 import org.apache.hc.core5.http.impl.io.DefaultHttpRequestParser;
-import org.apache.hc.core5.http.impl.io.SessionInputBufferImpl;
+import org.apache.hc.core5.http.io.SessionInputBuffer;
 import org.apache.hc.core5.http.io.entity.EmptyInputStream;
 import org.apache.hc.core5.net.URIBuilder;
 
@@ -94,6 +94,7 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
      */
     public ApacheServletHttpRequest(
         InputStream inputStream,
+        SessionInputBuffer sessionInputBuffer,
         ConversionService conversionService,
         MediaTypeCodecRegistry codecRegistry,
         ExecutorService ioExecutor,
@@ -102,9 +103,6 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
         ApacheServletConfiguration configuration
     ) {
         super(conversionService, codecRegistry, response);
-
-        SessionInputBufferImpl sessionInputBuffer
-            = new SessionInputBufferImpl(configuration.inputBufferSize());
         DefaultHttpRequestParser parser = new DefaultHttpRequestParser();
 
         try {
@@ -140,7 +138,7 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
      * @param sessionInputBuffer The input buffer
      * @return The body stream
      */
-    private InputStream createBodyStream(InputStream inputStream, long contentLength, SessionInputBufferImpl sessionInputBuffer) {
+    private InputStream createBodyStream(InputStream inputStream, long contentLength, SessionInputBuffer sessionInputBuffer) {
         InputStream bodyStream;
         if (contentLength > 0) {
             bodyStream = new ContentLengthInputStream(sessionInputBuffer, inputStream, contentLength);

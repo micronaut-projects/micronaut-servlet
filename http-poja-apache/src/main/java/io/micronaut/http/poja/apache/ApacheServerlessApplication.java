@@ -34,7 +34,9 @@ import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.apache.hc.core5.http.HttpEntity;
 import org.apache.hc.core5.http.HttpException;
 import org.apache.hc.core5.http.impl.io.DefaultHttpResponseWriter;
+import org.apache.hc.core5.http.impl.io.SessionInputBufferImpl;
 import org.apache.hc.core5.http.impl.io.SessionOutputBufferImpl;
+import org.apache.hc.core5.http.io.SessionInputBuffer;
 import org.apache.hc.core5.http.io.SessionOutputBuffer;
 
 import java.io.IOException;
@@ -57,6 +59,7 @@ public class ApacheServerlessApplication
     private final ExecutorService ioExecutor;
     private final ByteBufferFactory<?, ?> byteBufferFactory;
     private final ApacheServletConfiguration configuration;
+    private SessionInputBuffer sessionInputBuffer;
 
     /**
      * Default constructor.
@@ -82,8 +85,12 @@ public class ApacheServerlessApplication
     ) throws IOException {
         ApacheServletHttpResponse<?> response = new ApacheServletHttpResponse<>(conversionService);
         try {
+            // The buffer is initialized only once
+            if (sessionInputBuffer == null) {
+                sessionInputBuffer = new SessionInputBufferImpl(configuration.inputBufferSize());
+            }
             ApacheServletHttpRequest exchange = new ApacheServletHttpRequest<>(
-                in, conversionService, codecRegistry, ioExecutor, byteBufferFactory, response, configuration
+                in, sessionInputBuffer, conversionService, codecRegistry, ioExecutor, byteBufferFactory, response, configuration
             );
             servletHttpHandler.service(exchange);
         } catch (ApacheServletBadRequestException e) {
