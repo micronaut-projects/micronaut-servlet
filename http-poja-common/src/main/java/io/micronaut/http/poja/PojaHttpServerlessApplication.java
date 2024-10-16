@@ -112,7 +112,7 @@ public abstract class PojaHttpServerlessApplication<REQ, RES> implements Embedde
                 return start(System.in, System.out);
             }
         } catch (IOException e) {
-            throw new RuntimeException();
+            throw new RuntimeException(e);
         }
     }
 
