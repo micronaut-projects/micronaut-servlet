@@ -46,6 +46,7 @@ graalvmNative {
     binaries.all {
         buildArgs.add("--gc=serial")
         buildArgs.add("--install-exit-handlers")
+        buildArgs.add("-Ob")
     }
 }
 

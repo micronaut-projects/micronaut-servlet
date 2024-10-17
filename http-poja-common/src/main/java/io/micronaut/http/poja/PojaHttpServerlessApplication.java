@@ -17,6 +17,7 @@ package io.micronaut.http.poja;
 
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.http.poja.exception.NoPojaRequestException;
 import io.micronaut.runtime.ApplicationConfiguration;
 import io.micronaut.runtime.EmbeddedApplication;
 import io.micronaut.servlet.http.ServletExchange;
@@ -90,6 +91,9 @@ public abstract class PojaHttpServerlessApplication<REQ, RES> implements Embedde
             runIndefinitely(servletHttpHandler, input, output);
         } catch (IOException e) {
             throw new RuntimeException(e);
+        } catch (NoPojaRequestException e) {
+            this.stop();
+            Thread.currentThread().interrupt();
         }
         return this;
     }
@@ -112,7 +116,7 @@ public abstract class PojaHttpServerlessApplication<REQ, RES> implements Embedde
                 return start(System.in, System.out);
             }
         } catch (IOException e) {
-            throw new RuntimeException();
+            throw new RuntimeException(e);
         }
     }
 

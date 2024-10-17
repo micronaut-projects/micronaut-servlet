@@ -31,6 +31,7 @@ import io.micronaut.http.cookie.Cookie;
 import io.micronaut.http.cookie.Cookies;
 import io.micronaut.http.poja.PojaHttpRequest;
 import io.micronaut.http.poja.apache.exception.ApacheServletBadRequestException;
+import io.micronaut.http.poja.exception.NoPojaRequestException;
 import io.micronaut.http.poja.util.MultiValueHeaders;
 import io.micronaut.http.poja.util.MultiValuesQueryParameters;
 import io.micronaut.http.simple.cookies.SimpleCookies;
@@ -42,7 +43,7 @@ import org.apache.hc.core5.http.NameValuePair;
 import org.apache.hc.core5.http.impl.io.ChunkedInputStream;
 import org.apache.hc.core5.http.impl.io.ContentLengthInputStream;
 import org.apache.hc.core5.http.impl.io.DefaultHttpRequestParser;
-import org.apache.hc.core5.http.impl.io.SessionInputBufferImpl;
+import org.apache.hc.core5.http.io.SessionInputBuffer;
 import org.apache.hc.core5.http.io.entity.EmptyInputStream;
 import org.apache.hc.core5.net.URIBuilder;
 
@@ -94,6 +95,7 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
      */
     public ApacheServletHttpRequest(
         InputStream inputStream,
+        SessionInputBuffer sessionInputBuffer,
         ConversionService conversionService,
         MediaTypeCodecRegistry codecRegistry,
         ExecutorService ioExecutor,
@@ -102,15 +104,15 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
         ApacheServletConfiguration configuration
     ) {
         super(conversionService, codecRegistry, response);
-
-        SessionInputBufferImpl sessionInputBuffer
-            = new SessionInputBufferImpl(configuration.inputBufferSize());
         DefaultHttpRequestParser parser = new DefaultHttpRequestParser();
 
         try {
             request = parser.parse(sessionInputBuffer, inputStream);
         } catch (HttpException | IOException e) {
             throw new ApacheServletBadRequestException("HTTP request could not be parsed", e);
+        }
+        if (request == null) {
+            throw new NoPojaRequestException();
         }
 
         method = HttpMethod.parse(request.getMethod());
@@ -140,7 +142,7 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
      * @param sessionInputBuffer The input buffer
      * @return The body stream
      */
-    private InputStream createBodyStream(InputStream inputStream, long contentLength, SessionInputBufferImpl sessionInputBuffer) {
+    private InputStream createBodyStream(InputStream inputStream, long contentLength, SessionInputBuffer sessionInputBuffer) {
         InputStream bodyStream;
         if (contentLength > 0) {
             bodyStream = new ContentLengthInputStream(sessionInputBuffer, inputStream, contentLength);
