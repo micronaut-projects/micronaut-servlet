@@ -13,23 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.http.poja.sample;
-
-import io.micronaut.context.ApplicationContext;
-import io.micronaut.runtime.Micronaut;
+package io.micronaut.http.poja.exception;
 
 /**
- * This program demonstrates how to use Micronaut HTTP Router without Netty.
- * It reads HTTP requests from stdin and writes HTTP responses to stdout.
- *
- * @author Sahoo.
+ * An exception to be thrown when no additional requests can be parsed.
+ * This can happen if the input stream is closed when waiting for a new request.
+ * This is not an error condition, therefore application can simply stop.
  */
-public class Application {
+public class NoPojaRequestException extends RuntimeException {
 
-    public static void main(String[] args) {
-        ApplicationContext context = Micronaut.run(Application.class, args);
-        context.stop();
+    /**
+     * Constructor for the exception.
+     */
+    public NoPojaRequestException() {
+        super("No new request was found in the input stream");
     }
 
 }
-

@@ -31,6 +31,7 @@ import io.micronaut.http.cookie.Cookie;
 import io.micronaut.http.cookie.Cookies;
 import io.micronaut.http.poja.PojaHttpRequest;
 import io.micronaut.http.poja.apache.exception.ApacheServletBadRequestException;
+import io.micronaut.http.poja.exception.NoPojaRequestException;
 import io.micronaut.http.poja.util.MultiValueHeaders;
 import io.micronaut.http.poja.util.MultiValuesQueryParameters;
 import io.micronaut.http.simple.cookies.SimpleCookies;
@@ -109,6 +110,9 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
             request = parser.parse(sessionInputBuffer, inputStream);
         } catch (HttpException | IOException e) {
             throw new ApacheServletBadRequestException("HTTP request could not be parsed", e);
+        }
+        if (request == null) {
+            throw new NoPojaRequestException();
         }
 
         method = HttpMethod.parse(request.getMethod());

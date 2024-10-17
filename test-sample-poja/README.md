@@ -37,3 +37,8 @@ Hello, Micronaut Without Netty!
 
 ```
 
+Alternatively redirect the input from a file:
+```shell
+gradle :micronaut-test-sample-poja:run --console=plain <test-sample-poja/test-request.txt
+```
+
