@@ -97,6 +97,8 @@ public class ApacheServerlessApplication
             response.status(HttpStatus.BAD_REQUEST);
             response.contentType(MediaType.TEXT_PLAIN_TYPE);
             response.getOutputStream().write(e.getMessage().getBytes());
+            writeResponse(response.getNativeResponse(), out);
+            throw e;
         }
         writeResponse(response.getNativeResponse(), out);
     }

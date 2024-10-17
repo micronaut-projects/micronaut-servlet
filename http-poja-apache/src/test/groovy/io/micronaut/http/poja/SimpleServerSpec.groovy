@@ -54,23 +54,6 @@ class SimpleServerSpec extends Specification {
         {"_links":{"self":[{"href":"/invalid-test","templated":false}]},"_embedded":{"errors":[{"message":"Page Not Found"}]},"message":"Not Found"}""")
     }
 
-    void "test non-parseable GET method"() {
-        when:
-        var response = client.exchange(unindent("""
-        GET /test HTTP/1.1error\r
-        Host: h\r
-        \r
-        """))
-
-        then:
-        response == unindent("""
-        HTTP/1.1 400 Bad Request\r
-        Content-Length: 32\r
-        Content-Type: text/plain\r
-        \r
-        HTTP request could not be parsed""")
-    }
-
     void "test DELETE method"() {
         when:
         var response = client.exchange(unindent("""
@@ -153,7 +136,7 @@ class SimpleServerSpec extends Specification {
 
     }
 
-    private String unindent(String value, int indentSpaces = 8) {
+    static String unindent(String value, int indentSpaces = 8) {
         while (value.charAt(0) == '\n' as char) {
             value = value.substring(1)
         }
