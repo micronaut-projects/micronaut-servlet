@@ -17,7 +17,7 @@ managed-jetty = '11.0.24'
 
 micronaut-reactor = "3.5.0"
 micronaut-security = "4.10.2"
-micronaut-serde = "2.11.0"
+micronaut-serde = "2.11.1"
 micronaut-session = "4.4.0"
 micronaut-validation = "4.7.0"
 google-cloud-functions = '1.1.0'
