@@ -12,7 +12,7 @@ undertow = '2.3.18.Final'
 tomcat = '10.1.31'
 bcpkix = "1.70"
 
-managed-apache-http-core5 = "5.2.5"
+managed-apache-http-core5 = "5.3.1"
 managed-jetty = '11.0.24'
 
 micronaut-reactor = "3.5.0"
