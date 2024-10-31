@@ -203,5 +203,16 @@
     "type": "io.micronaut.servlet.http.ServletBodyBinder",
     "member": "Implemented interface io.micronaut.http.bind.binders.BodyArgumentBinder",
     "reason": "Core API change to DefaultBodyAnnotationBinder for Micronaut 4"
-  }]
+  },
+  {
+    "type": "io.micronaut.servlet.engine.DefaultServletHttpHandler",
+    "member": "Constructor io.micronaut.servlet.engine.DefaultServletHttpHandler(io.micronaut.context.ApplicationContext)",
+    "reason": "Removed deprecated code for Micronaut Framework 5."
+  },
+  {
+    "type": "io.micronaut.servlet.http.ServletHttpHandler",
+    "member": "Constructor io.micronaut.servlet.http.ServletHttpHandler(io.micronaut.context.ApplicationContext)",
+    "reason": "Removed deprecated code for Micronaut Framework 5."
+  }
+]
 
