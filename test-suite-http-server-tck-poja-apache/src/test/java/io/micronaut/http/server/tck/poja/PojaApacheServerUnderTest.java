@@ -23,15 +23,13 @@ import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.client.BlockingHttpClient;
 import io.micronaut.http.client.HttpClient;
-import io.micronaut.http.client.HttpClientConfiguration;
 import io.micronaut.http.poja.test.TestingServerlessEmbeddedApplication;
 import io.micronaut.http.tck.ServerUnderTest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.URI;
 import java.util.Map;
 import java.util.Optional;
 
@@ -61,14 +59,7 @@ public class PojaApacheServerUnderTest implements ServerUnderTest {
             .orElseThrow(() -> new IllegalStateException("TestingServerlessApplication bean is required"));
         application.start();
         port = application.getPort();
-        try {
-            client = HttpClient.create(
-                    new URL("http://localhost:" + port),
-                    applicationContext.getBean(HttpClientConfiguration.class)
-            ).toBlocking();
-        } catch (MalformedURLException e) {
-            throw new RuntimeException("Could not create HttpClient", e);
-        }
+        client = applicationContext.createBean(HttpClient.class, URI.create("http://localhost:" + port)).toBlocking();
     }
 
     @Override
