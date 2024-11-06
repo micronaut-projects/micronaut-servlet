@@ -82,9 +82,9 @@ final class PojaBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body, T>
         String name = argument.getAnnotationMetadata().stringValue(Body.class).orElse(null);
 
         if (source instanceof PojaHttpRequest<?, ?, ?> pojaHttpRequest) {
-            if (CharSequence.class.isAssignableFrom(type) && name == null) {
+            if ((type == CharSequence.class || type == String.class) && name == null) {
                 return (BindingResult<T>) bindCharSequence(pojaHttpRequest, source);
-            } else if (argument.getType().isAssignableFrom(byte[].class) && name == null) {
+            } else if (type == byte[].class && name == null) {
                 return (BindingResult<T>) bindByteArray(pojaHttpRequest);
             } else {
                 final MediaType mediaType = source.getContentType().orElse(MediaType.APPLICATION_JSON_TYPE);

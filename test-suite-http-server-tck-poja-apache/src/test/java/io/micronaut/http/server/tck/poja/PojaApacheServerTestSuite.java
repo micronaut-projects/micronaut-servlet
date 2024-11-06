@@ -35,6 +35,7 @@ import org.junit.platform.suite.api.SuiteDisplayName;
     "io.micronaut.http.server.tck.tests.constraintshandler.ControllerConstraintHandlerTest",
     // Proxying is probably not supported. There is no request concurrency
     "io.micronaut.http.server.tck.tests.FilterProxyTest",
+    "io.micronaut.http.server.tck.tests.jsonview.JsonViewsTest", // Not serdeable
 })
 public class PojaApacheServerTestSuite {
 }
