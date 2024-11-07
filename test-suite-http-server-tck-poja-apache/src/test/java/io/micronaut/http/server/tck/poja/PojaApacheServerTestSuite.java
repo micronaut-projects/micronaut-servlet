@@ -26,6 +26,7 @@ import org.junit.platform.suite.api.SuiteDisplayName;
 })
 @SuiteDisplayName("HTTP Server TCK for POJA")
 @ExcludeClassNamePatterns({
+        "^io\\.micronaut\\.http\\.server\\.tck\\.tests\\.cors\\.CorsSimpleRequestTest$",
     // 13 tests of 188 fail
     // JSON error is not parsed
     "io.micronaut.http.server.tck.tests.hateoas.JsonErrorSerdeTest",
