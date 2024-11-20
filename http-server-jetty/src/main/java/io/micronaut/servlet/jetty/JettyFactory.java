@@ -38,29 +38,29 @@ import io.micronaut.servlet.engine.server.ServletStaticResourceConfiguration;
 import io.micronaut.web.router.Router;
 import jakarta.inject.Singleton;
 import jakarta.servlet.ServletContainerInitializer;
-import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Stream;
 import org.eclipse.jetty.alpn.server.ALPNServerConnectionFactory;
+import org.eclipse.jetty.ee10.servlet.ServletContextHandler;
 import org.eclipse.jetty.http.HttpVersion;
 import org.eclipse.jetty.http2.server.HTTP2CServerConnectionFactory;
 import org.eclipse.jetty.http2.server.HTTP2ServerConnectionFactory;
 import org.eclipse.jetty.server.ConnectionFactory;
 import org.eclipse.jetty.server.CustomRequestLog;
+import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.SslConnectionFactory;
 import org.eclipse.jetty.server.handler.ContextHandler;
-import org.eclipse.jetty.server.handler.HandlerList;
+import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.server.handler.ResourceHandler;
-import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.util.resource.Resource;
-import org.eclipse.jetty.util.resource.ResourceCollection;
+import org.eclipse.jetty.util.resource.ResourceFactory;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 
@@ -158,12 +158,14 @@ public class JettyFactory extends ServletServerFactory {
         });
 
         final ServletContextHandler contextHandler = newJettyContext(server, contextPath);
+        server.setHandler(contextHandler);
         configureServletInitializer(server, contextHandler, servletContainerInitializers);
+        ResourceFactory resourceFactory = ResourceFactory.of(server);
 
         final SslConfiguration sslConfiguration = getSslConfiguration();
         ServerConnector https = null;
         if (sslConfiguration.isEnabled()) {
-            https = newHttpsConnector(server, sslConfiguration, jettySslConfiguration);
+            https = newHttpsConnector(server, sslConfiguration, jettySslConfiguration, resourceFactory);
 
         }
         final ServerConnector http = newHttpConnector(server, host, port);
@@ -202,12 +204,13 @@ public class JettyFactory extends ServletServerFactory {
      * @param server                The server
      * @param sslConfiguration      The SSL configuration
      * @param jettySslConfiguration The Jetty SSL configuration
+     * @param resourceFactory
      * @return The server connector
      */
     protected @NonNull ServerConnector newHttpsConnector(
         @NonNull Server server,
         @NonNull SslConfiguration sslConfiguration,
-        @NonNull JettyConfiguration.JettySslConfiguration jettySslConfiguration) {
+        @NonNull JettyConfiguration.JettySslConfiguration jettySslConfiguration, ResourceFactory resourceFactory) {
         ServerConnector https;
         final HttpConfiguration httpConfig = jettyConfiguration.getHttpConfiguration();
         int securePort = sslConfiguration.getPort();
@@ -236,7 +239,7 @@ public class JettyFactory extends ServletServerFactory {
         keyStoreConfig.getPath().ifPresent(path -> {
             if (path.startsWith(ServletStaticResourceConfiguration.CLASSPATH_PREFIX)) {
                 String cp = path.substring(ServletStaticResourceConfiguration.CLASSPATH_PREFIX.length());
-                sslContextFactory.setKeyStorePath(Resource.newClassPathResource(cp).getURI().toString());
+                sslContextFactory.setKeyStorePath(resourceFactory.newClassLoaderResource(cp).getURI().toString());
             } else {
                 sslContextFactory.setKeyStorePath(path);
             }
@@ -249,7 +252,7 @@ public class JettyFactory extends ServletServerFactory {
         trustStore.getPath().ifPresent(path -> {
             if (path.startsWith(ServletStaticResourceConfiguration.CLASSPATH_PREFIX)) {
                 String cp = path.substring(ServletStaticResourceConfiguration.CLASSPATH_PREFIX.length());
-                sslContextFactory.setTrustStorePath(Resource.newClassPathResource(cp).getURI().toString());
+                sslContextFactory.setTrustStorePath(resourceFactory.newClassLoaderResource(cp).getURI().toString());
             } else {
                 sslContextFactory.setTrustStorePath(path);
             }
@@ -298,12 +301,14 @@ public class JettyFactory extends ServletServerFactory {
         }
 
         List<ContextHandler> resourceHandlers = Stream.concat(
-            getStaticResourceConfigurations().stream().map(this::toHandler),
+            getStaticResourceConfigurations().stream().map(servletStaticResourceConfiguration -> toHandler(servletStaticResourceConfiguration, ResourceFactory.of(contextHandler))),
             Stream.of(contextHandler)
         ).toList();
 
-        HandlerList handlerList = new HandlerList(resourceHandlers.toArray(new ContextHandler[0]));
-        server.setHandler(handlerList);
+        ContextHandlerCollection contextHandlerCollection = new ContextHandlerCollection(
+            resourceHandlers.toArray(new ContextHandler[0])
+        );
+        server.setHandler(contextHandlerCollection);
     }
 
     /**
@@ -314,7 +319,11 @@ public class JettyFactory extends ServletServerFactory {
      * @return The handler
      */
     protected @NonNull ServletContextHandler newJettyContext(@NonNull Server server, @NonNull String contextPath) {
-        return new ServletContextHandler(server, contextPath, false, false);
+        return new ServletContextHandler(
+            contextPath,
+            false,
+            false
+        );
     }
 
     /**
@@ -390,16 +399,17 @@ public class JettyFactory extends ServletServerFactory {
      * @param config The static resource configuration
      * @return the context handler
      */
-    private ContextHandler toHandler(ServletStaticResourceConfiguration config) {
+    private ContextHandler toHandler(ServletStaticResourceConfiguration config, ResourceFactory resourceFactory) {
+        ResourceHandler resourceHandler = new ResourceHandler();
         Resource[] resourceArray = config.getPaths().stream()
             .map(path -> {
                 if (path.startsWith(ServletStaticResourceConfiguration.CLASSPATH_PREFIX)) {
                     String cp = path.substring(ServletStaticResourceConfiguration.CLASSPATH_PREFIX.length());
-                    return Resource.newClassPathResource(cp);
+                    return resourceFactory.newClassLoaderResource(cp);
                 } else {
                     try {
-                        return Resource.newResource(path);
-                    } catch (IOException e) {
+                        return resourceFactory.newResource(path);
+                    } catch (Exception e) {
                         throw new ConfigurationException("Static resource path doesn't exist: " + path, e);
                     }
                 }
@@ -412,23 +422,14 @@ public class JettyFactory extends ServletServerFactory {
 
         final String mapping = path;
 
-        ResourceCollection mappedResourceCollection = new ResourceCollection(resourceArray) {
-            @Override
-            public Resource addPath(String path) throws IOException {
-                return super.addPath(path.substring(mapping.length()));
-            }
-        };
-
-        ResourceHandler resourceHandler = new ResourceHandler();
-        resourceHandler.setBaseResource(mappedResourceCollection);
+        Resource combined = ResourceFactory.combine(resourceArray);
+        resourceHandler.setBaseResource(combined);
         resourceHandler.setDirAllowed(false);
-        resourceHandler.setDirectoriesListed(false);
         if (!isEmpty(config.getCacheControl())) {
             resourceHandler.setCacheControl(config.getCacheControl());
         }
 
         ContextHandler contextHandler = new ContextHandler(path);
-        contextHandler.setContextPath("/");
         contextHandler.setHandler(resourceHandler);
         contextHandler.setDisplayName("Static Resources " + mapping);
 

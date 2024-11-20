@@ -50,8 +50,8 @@ kotlin-reflect = { module = 'org.jetbrains.kotlin:kotlin-reflect' }
 apache-http-core5 = { module = 'org.apache.httpcomponents.core5:httpcore5', version.ref = 'managed-apache-http-core5' }
 tomcat-embed-core = { module = 'org.apache.tomcat.embed:tomcat-embed-core', version.ref = 'tomcat' }
 undertow-servlet = { module = 'io.undertow:undertow-servlet', version.ref = 'undertow' }
-jetty-servlet = { module = 'org.eclipse.jetty:jetty-servlet', version.ref = 'managed-jetty' }
-jetty-http2-server = { module = 'org.eclipse.jetty.http2:http2-server', version.ref = 'managed-jetty' }
+jetty-servlet = { module = 'org.eclipse.jetty.ee10:jetty-ee10-servlet', version.ref = 'managed-jetty' }
+jetty-http2-server = { module = 'org.eclipse.jetty.http2:jetty-http2-server', version.ref = 'managed-jetty' }
 jetty-alpn-server = { module = 'org.eclipse.jetty:jetty-alpn-server', version.ref = 'managed-jetty' }
 jetty-alpn-conscrypt-server = { module = 'org.eclipse.jetty:jetty-alpn-conscrypt-server', version.ref = 'managed-jetty' }
 kotest-runner = { module = 'io.kotest:kotest-runner-junit5', version.ref = 'kotest-runner' }
