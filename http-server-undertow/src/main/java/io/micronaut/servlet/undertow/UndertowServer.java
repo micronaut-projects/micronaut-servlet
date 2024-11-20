@@ -20,12 +20,15 @@ import io.micronaut.http.server.exceptions.InternalServerException;
 import io.micronaut.runtime.ApplicationConfiguration;
 import io.micronaut.servlet.engine.server.AbstractServletServer;
 import io.undertow.Undertow;
-
 import jakarta.inject.Singleton;
-import java.net.*;
+
+import java.net.InetSocketAddress;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * Implementation of {@link AbstractServletServer} for Undertow.

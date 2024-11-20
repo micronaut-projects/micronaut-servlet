@@ -24,9 +24,9 @@ import io.micronaut.servlet.http.ServletConfiguration;
 import io.micronaut.servlet.http.ServletExchange;
 import io.micronaut.servlet.http.ServletResponseEncoder;
 import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import org.reactivestreams.Publisher;
 
-import jakarta.inject.Singleton;
 import java.io.File;
 
 /**
@@ -34,8 +34,10 @@ import java.io.File;
  *
  * @author graemerocher
  * @since 1.0.0
+ * @deprecated Now unused, use a normal {@link io.micronaut.http.body.ResponseBodyWriter}
  */
 @Singleton
+@Deprecated
 public class FileEncoder implements ServletResponseEncoder<File> {
     private final ServletConfiguration servletConfiguration;
 

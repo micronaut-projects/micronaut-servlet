@@ -4,7 +4,12 @@ package io.micronaut.http.poja
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.MediaType
-import io.micronaut.http.annotation.*
+import io.micronaut.http.annotation.Controller
+import io.micronaut.http.annotation.Delete
+import io.micronaut.http.annotation.Get
+import io.micronaut.http.annotation.Post
+import io.micronaut.http.annotation.Put
+import io.micronaut.http.annotation.Status
 import io.micronaut.runtime.server.EmbeddedServer
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
@@ -23,6 +28,7 @@ class SimpleServerSpec extends Specification {
         when:
         var response = client.exchange(unindent("""
         GET /test HTTP/1.1\r
+        Connection: close\r
         Host: h\r
         \r
         """))
@@ -41,6 +47,7 @@ class SimpleServerSpec extends Specification {
         when:
         var response = client.exchange(unindent("""
         GET /invalid-test HTTP/1.1\r
+        Connection: close\r
         Host: h\r
         \r
         """))
@@ -58,6 +65,7 @@ class SimpleServerSpec extends Specification {
         when:
         var response = client.exchange(unindent("""
         DELETE /test HTTP/1.1\r
+        Connection: close\r
         Host: h\r
         \r
         """))
@@ -74,6 +82,7 @@ class SimpleServerSpec extends Specification {
         when:
         var response = client.exchange(unindent("""
         POST /test/Dream HTTP/1.1\r
+        Connection: close\r
         Host: h\r
         \r
         """))
@@ -92,6 +101,7 @@ class SimpleServerSpec extends Specification {
         when:
         var response = client.exchange(unindent("""
         PUT /test/Dream1 HTTP/1.1\r
+        Connection: close\r
         Host: h\r
         \r
         """))

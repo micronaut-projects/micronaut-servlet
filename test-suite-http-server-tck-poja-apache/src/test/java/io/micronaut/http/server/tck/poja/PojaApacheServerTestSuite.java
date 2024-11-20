@@ -26,17 +26,10 @@ import org.junit.platform.suite.api.SuiteDisplayName;
 })
 @SuiteDisplayName("HTTP Server TCK for POJA")
 @ExcludeClassNamePatterns({
-        "^io\\.micronaut\\.http\\.server\\.tck\\.tests\\.cors\\.CorsSimpleRequestTest$",
-    // 13 tests of 188 fail
-    // JSON error is not parsed
-    "io.micronaut.http.server.tck.tests.hateoas.JsonErrorSerdeTest",
-    "io.micronaut.http.server.tck.tests.hateoas.JsonErrorTest",
-    "io.micronaut.http.server.tck.tests.hateoas.VndErrorTest",
     // See https://github.com/micronaut-projects/micronaut-oracle-cloud/issues/925
     "io.micronaut.http.server.tck.tests.constraintshandler.ControllerConstraintHandlerTest",
     // Proxying is probably not supported. There is no request concurrency
-    "io.micronaut.http.server.tck.tests.FilterProxyTest",
-    "io.micronaut.http.server.tck.tests.jsonview.JsonViewsTest", // Not serdeable
+    "io.micronaut.http.server.tck.tests.FilterProxyTest"
 })
 public class PojaApacheServerTestSuite {
 }

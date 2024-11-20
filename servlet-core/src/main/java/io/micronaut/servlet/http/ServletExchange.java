@@ -15,6 +15,10 @@
  */
 package io.micronaut.servlet.http;
 
+import io.micronaut.core.annotation.NonNull;
+
+import java.io.Closeable;
+
 /**
  * Represents an HTTP exchange in a serverless context.
  *
@@ -23,7 +27,7 @@ package io.micronaut.servlet.http;
  * @author graemerocher
  * @since 2.0.0
  */
-public interface ServletExchange<Req, Res> {
+public interface ServletExchange<Req, Res> extends Closeable {
 
     /**
      * @return The request object
@@ -31,7 +35,27 @@ public interface ServletExchange<Req, Res> {
     ServletHttpRequest<Req, ? super Object> getRequest();
 
     /**
+     * Get the current response, the last response created by {@link #createResponse()}.
+     *
      * @return The response object
      */
+    @NonNull
     ServletHttpResponse<Res, ?> getResponse();
+
+    /**
+     * Create a new, empty response for this exchange. Only the last response created for a request
+     * is fully backed by the servlet container response, meaning it can access
+     * {@link ServletHttpResponse#getOutputStream()} and similar methods.
+     *
+     * @return The response
+     * @since 4.13.0
+     */
+    @NonNull
+    default ServletHttpResponse<Res, ?> createResponse() {
+        return getResponse();
+    }
+
+    @Override
+    default void close() {
+    }
 }

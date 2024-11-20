@@ -23,10 +23,13 @@ class SimpleServerFailedParseSpec extends Specification {
         then:
         response == SimpleServerSpec.unindent("""
         HTTP/1.1 400 Bad Request\r
-        Content-Length: 32\r
-        Content-Type: text/plain\r
+        Transfer-Encoding: chunked\r
         \r
-        HTTP request could not be parsed""")
+        20\r
+        HTTP request could not be parsed\r
+        0\r
+        \r
+        """)
     }
 
 }

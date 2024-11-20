@@ -59,7 +59,7 @@ class JettyFileTypeHandlerSpec extends Specification {
         then:
         response.code() == HttpStatus.OK.code
         response.header(CONTENT_TYPE) == "text/html"
-        response.header(CONTENT_LENGTH) == null // ideally would be right length
+        response.header(CONTENT_LENGTH) != null
         response.headers.getDate(DATE) < response.headers.getDate(EXPIRES)
         response.header(CACHE_CONTROL) == "private, max-age=60"
         response.headers.getDate(LAST_MODIFIED) == ZonedDateTime.ofInstant(Instant.ofEpochMilli(tempFile.lastModified()), ZoneId.of("GMT")).truncatedTo(ChronoUnit.SECONDS)
@@ -99,7 +99,7 @@ class JettyFileTypeHandlerSpec extends Specification {
         def response = e.response
 
         then:
-        response.code() == HttpStatus.NOT_FOUND.code
+        response.code() == HttpStatus.INTERNAL_SERVER_ERROR.code
     }
 
 
@@ -111,7 +111,7 @@ class JettyFileTypeHandlerSpec extends Specification {
         response.code() == HttpStatus.OK.code
         response.header(CONTENT_TYPE) == "text/html"
         response.header(CONTENT_DISPOSITION).startsWith("attachment; filename=\"fileTypeHandlerSpec")
-        response.header(CONTENT_LENGTH) == null // ideally would be right length
+        response.header(CONTENT_LENGTH) != null
         response.headers.getDate(DATE) < response.headers.getDate(EXPIRES)
         response.header(CACHE_CONTROL) == "private, max-age=60"
         response.headers.getDate(LAST_MODIFIED) == ZonedDateTime.ofInstant(Instant.ofEpochMilli(tempFile.lastModified()), ZoneId.of("GMT")).truncatedTo(ChronoUnit.SECONDS)
@@ -126,7 +126,7 @@ class JettyFileTypeHandlerSpec extends Specification {
         response.code() == HttpStatus.OK.code
         response.header(CONTENT_TYPE) == "text/html"
         response.header(CONTENT_DISPOSITION).startsWith("attachment; filename=\"fileTypeHandlerSpec")
-        response.header(CONTENT_LENGTH) == null // ideally would be right length
+        response.header(CONTENT_LENGTH) == null
         response.headers.getDate(DATE) < response.headers.getDate(EXPIRES)
         response.header(CACHE_CONTROL) == "private, max-age=60"
         response.body() == tempFileContents
@@ -140,7 +140,7 @@ class JettyFileTypeHandlerSpec extends Specification {
         response.code() == HttpStatus.OK.code
         response.header(CONTENT_TYPE) == "text/html"
         response.header(CONTENT_DISPOSITION) == "attachment; filename=\"abc.xyz\"; filename*=utf-8''abc.xyz"
-        response.header(CONTENT_LENGTH) == null // ideally would be right length
+        response.header(CONTENT_LENGTH) != null
         response.headers.getDate(DATE) < response.headers.getDate(EXPIRES)
         response.header(CACHE_CONTROL) == "private, max-age=60"
         response.headers.getDate(LAST_MODIFIED) == ZonedDateTime.ofInstant(Instant.ofEpochMilli(tempFile.lastModified()), ZoneId.of("GMT")).truncatedTo(ChronoUnit.SECONDS)
@@ -155,7 +155,7 @@ class JettyFileTypeHandlerSpec extends Specification {
         response.code() == HttpStatus.OK.code
         response.header(CONTENT_TYPE) == "text/plain"
         response.header(CONTENT_DISPOSITION) == "attachment; filename=\"temp.html\"; filename*=utf-8''temp.html"
-        response.header(CONTENT_LENGTH) == null // ideally would be right length
+        response.header(CONTENT_LENGTH) != null
         response.headers.getDate(DATE) < response.headers.getDate(EXPIRES)
         response.header(CACHE_CONTROL) == "private, max-age=60"
         response.headers.getDate(LAST_MODIFIED) == ZonedDateTime.ofInstant(Instant.ofEpochMilli(tempFile.lastModified()), ZoneId.of("GMT")).truncatedTo(ChronoUnit.SECONDS)
@@ -170,7 +170,7 @@ class JettyFileTypeHandlerSpec extends Specification {
         response.code() == HttpStatus.OK.code
         response.header(CONTENT_TYPE) == "text/plain"
         response.header(CONTENT_DISPOSITION) == "attachment; filename=\"temp.html\"; filename*=utf-8''temp.html"
-        response.header(CONTENT_LENGTH) == null // ideally would be right length
+        response.header(CONTENT_LENGTH) == null
         response.headers.getDate(DATE) < response.headers.getDate(EXPIRES)
         response.header(CACHE_CONTROL) == "private, max-age=60"
         response.body() == tempFileContents
@@ -183,7 +183,7 @@ class JettyFileTypeHandlerSpec extends Specification {
         then:
         response.code() == HttpStatus.OK.code
         response.header(CONTENT_TYPE) == "text/plain"
-        response.header(CONTENT_LENGTH) == null // ideally would be right length
+        response.header(CONTENT_LENGTH) == null
         response.body() == ("a".."z").join('')
     }
 

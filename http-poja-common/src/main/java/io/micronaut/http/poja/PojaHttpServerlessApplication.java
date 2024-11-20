@@ -16,6 +16,7 @@
 package io.micronaut.http.poja;
 
 import io.micronaut.context.ApplicationContext;
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.http.poja.exception.NoPojaRequestException;
 import io.micronaut.runtime.ApplicationConfiguration;
@@ -40,6 +41,7 @@ import java.nio.channels.WritableByteChannel;
  * @author Andriy Dmytruk.
  * @since 4.10.0
  */
+@Internal
 public abstract class PojaHttpServerlessApplication<REQ, RES> implements EmbeddedApplication<PojaHttpServerlessApplication<REQ, RES>> {
 
     private final ApplicationContext applicationContext;
@@ -128,14 +130,16 @@ public abstract class PojaHttpServerlessApplication<REQ, RES> implements Embedde
      * @param out The output stream
      * @throws IOException IO exception
      */
-    @SuppressWarnings({"InfiniteLoopStatement", "java:S2189"})
+    @SuppressWarnings({"java:S2189"})
     protected void runIndefinitely(
             ServletHttpHandler<REQ, RES> servletHttpHandler,
             InputStream in,
             OutputStream out
     ) throws IOException {
         while (true) {
-            handleSingleRequest(servletHttpHandler, in, out);
+            if (!handleSingleRequest(servletHttpHandler, in, out)) {
+                break;
+            }
         }
     }
 
@@ -145,9 +149,11 @@ public abstract class PojaHttpServerlessApplication<REQ, RES> implements Embedde
      * @param servletHttpHandler The handler
      * @param in The input stream
      * @param out The output stream
+     * @return {@code true} iff more requests can come in, {@code false} when the connection should
+     * be closed
      * @throws IOException IO exception
      */
-    protected abstract void handleSingleRequest(
+    protected abstract boolean handleSingleRequest(
             ServletHttpHandler<REQ, RES> servletHttpHandler,
             InputStream in,
             OutputStream out

@@ -23,33 +23,30 @@ import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.MediaType;
+import io.micronaut.http.ServerHttpRequest;
 import io.micronaut.http.annotation.Part;
 import io.micronaut.http.bind.DefaultRequestBinderRegistry;
 import io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder;
 import io.micronaut.http.bind.binders.RequestArgumentBinder;
+import io.micronaut.http.body.AvailableByteBody;
 import io.micronaut.http.codec.MediaTypeCodecRegistry;
 import io.micronaut.http.multipart.CompletedPart;
 import io.micronaut.json.codec.MapperMediaTypeCodec;
 import io.micronaut.servlet.http.ServletBinderRegistry;
 import io.micronaut.servlet.http.ServletBodyBinder;
-import io.micronaut.servlet.http.StreamedServletMessage;
 import jakarta.inject.Singleton;
 import jakarta.servlet.ServletConfig;
 import jakarta.servlet.ServletContext;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.reactivestreams.Processor;
 import reactor.core.publisher.Flux;
 
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-import java.util.function.BiConsumer;
 
 /**
  * Replaces the {@link DefaultRequestBinderRegistry} with one capable of binding from servlet requests.
@@ -117,48 +114,27 @@ class DefaultServletBinderRegistry<T> extends ServletBinderRegistry<T> {
             Argument<?> argument = context.getArgument();
             Class<?> type = argument.getType();
             if (CompletionStage.class.isAssignableFrom(type)) {
-                StreamedServletMessage<?, byte[]> servletHttpRequest = (StreamedServletMessage<?, byte[]>) source;
-                CompletableFuture<Object> future = new CompletableFuture<>();
+                ServerHttpRequest<?> serverRequest = (ServerHttpRequest<?>) source;
+                CompletableFuture<?> future;
                 Argument<?> typeArgument = argument.getFirstTypeVariable().orElse(BYTE_ARRAY);
                 Class<?> javaArgument = typeArgument.getType();
-                Charset characterEncoding = servletHttpRequest.getCharacterEncoding();
+                Charset characterEncoding = source.getCharacterEncoding();
                 if (CharSequence.class.isAssignableFrom(javaArgument)) {
-                    Flux.from(servletHttpRequest).collect(StringBuilder::new, (stringBuilder, bytes) ->
-                            stringBuilder.append(new String(bytes, characterEncoding))
-                    ).subscribe(
-                            stringBuilder -> future.complete(stringBuilder.toString()),
-                            future::completeExceptionally
-                    );
+                    future = serverRequest.byteBody().buffer().thenApply(bb -> bb.toString(characterEncoding));
                 } else if (BYTE_ARRAY.getType().isAssignableFrom(type)) {
-                    BiConsumer<ByteArrayOutputStream, byte[]> uncheckedOutputStreamWrite = (stream, bytes) -> {
-                        try {
-                            stream.write(bytes);
-                        } catch (IOException ex) {
-                            throw new UncheckedIOException(ex);
-                        }
-                    };
-                    Flux.from(servletHttpRequest).collect(ByteArrayOutputStream::new, uncheckedOutputStreamWrite)
-                            .subscribe(
-                                    stream -> future.complete(stream.toByteArray()),
-                                    future::completeExceptionally
-                            );
+                    future = serverRequest.byteBody().buffer().thenApply(AvailableByteBody::toByteArray);
                 } else {
-                    MediaType mediaType = servletHttpRequest.getContentType().orElse(MediaType.APPLICATION_JSON_TYPE);
+                    MediaType mediaType = serverRequest.getContentType().orElse(MediaType.APPLICATION_JSON_TYPE);
                     MapperMediaTypeCodec codec = (MapperMediaTypeCodec) mediaTypeCodecRegistry.findCodec(mediaType, javaArgument).orElse(null);
 
                     if (codec == null) {
                         return super.bind(context, source);
                     } else {
-                        Processor<byte[], io.micronaut.json.tree.JsonNode> jsonProcessor = codec.getJsonMapper().createReactiveParser(servletHttpRequest::subscribe, false);
-                        Flux.from(jsonProcessor)
-                                .next()
-                                .subscribe((jsonNode) -> {
-                                    try {
-                                        future.complete(codec.decode(typeArgument, jsonNode));
-                                    } catch (Exception e) {
-                                        future.completeExceptionally(e);
-                                    }
-                                }, (future::completeExceptionally));
+                        Processor<byte[], io.micronaut.json.tree.JsonNode> jsonProcessor = codec.getJsonMapper().createReactiveParser(p -> serverRequest.byteBody().toByteArrayPublisher().subscribe(p), false);
+                        future = Flux.from(jsonProcessor)
+                            .next()
+                            .map(node -> codec.decode(typeArgument, node))
+                            .toFuture();
 
                     }
                 }
@@ -170,10 +146,10 @@ class DefaultServletBinderRegistry<T> extends ServletBinderRegistry<T> {
                     Argument<?> typeArgument = argument.getFirstTypeVariable().orElse(BYTE_ARRAY);
                     Class<?> javaArgument = typeArgument.getType();
 
-                    StreamedServletMessage<?, byte[]> servletHttpRequest = (StreamedServletMessage<?, byte[]>) source;
-                    Charset characterEncoding = servletHttpRequest.getCharacterEncoding();
+                    ServerHttpRequest<?> serverRequest = (ServerHttpRequest<?>) source;
+                    Charset characterEncoding = serverRequest.getCharacterEncoding();
                     if (CharSequence.class.isAssignableFrom(javaArgument)) {
-                        Flux<String> stringFlux = Flux.from(servletHttpRequest)
+                        Flux<String> stringFlux = Flux.from(serverRequest.byteBody().toByteArrayPublisher())
                                 .map(bytes -> new String(bytes, characterEncoding));
                         if (type.isInstance(stringFlux)) {
                             return () -> Optional.of(stringFlux);
@@ -182,12 +158,13 @@ class DefaultServletBinderRegistry<T> extends ServletBinderRegistry<T> {
                             return () -> Optional.of(converted);
                         }
                     } else if (byte[].class.isAssignableFrom(javaArgument)) {
-                        return () -> Optional.of(Flux.from(servletHttpRequest));
+                        Object converted = Publishers.convertPublisher(conversionService, Flux.from(serverRequest.byteBody().toByteArrayPublisher()), type);
+                        return () -> Optional.of(converted);
                     } else {
-                        MediaType mediaType = servletHttpRequest.getContentType().orElse(MediaType.APPLICATION_JSON_TYPE);
+                        MediaType mediaType = serverRequest.getContentType().orElse(MediaType.APPLICATION_JSON_TYPE);
                         MapperMediaTypeCodec codec = (MapperMediaTypeCodec) mediaTypeCodecRegistry.findCodec(mediaType, javaArgument).orElse(null);
                         if (codec != null) {
-                            Processor<byte[], io.micronaut.json.tree.JsonNode> jsonProcessor = codec.getJsonMapper().createReactiveParser(servletHttpRequest::subscribe, true);
+                            Processor<byte[], io.micronaut.json.tree.JsonNode> jsonProcessor = codec.getJsonMapper().createReactiveParser(p -> serverRequest.byteBody().toByteArrayPublisher().subscribe(p), true);
                             Object converted = Publishers.convertPublisher(
                                     conversionService,
                                     Flux.from(jsonProcessor)

@@ -17,31 +17,24 @@ package io.micronaut.http.poja.apache;
 
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.convert.ConversionService;
+import io.micronaut.core.io.buffer.ByteArrayBufferFactory;
 import io.micronaut.core.io.buffer.ByteBufferFactory;
 import io.micronaut.http.HttpStatus;
-import io.micronaut.http.MediaType;
 import io.micronaut.http.codec.MediaTypeCodecRegistry;
 import io.micronaut.http.poja.PojaHttpServerlessApplication;
-import io.micronaut.http.poja.apache.exception.ApacheServletBadRequestException;
-import io.micronaut.http.server.exceptions.HttpServerException;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.runtime.ApplicationConfiguration;
 import io.micronaut.scheduling.TaskExecutors;
-import io.micronaut.servlet.http.ByteArrayBufferFactory;
 import io.micronaut.servlet.http.ServletHttpHandler;
 import jakarta.inject.Singleton;
-import org.apache.hc.core5.http.ClassicHttpResponse;
-import org.apache.hc.core5.http.HttpEntity;
-import org.apache.hc.core5.http.HttpException;
-import org.apache.hc.core5.http.impl.io.DefaultHttpResponseWriter;
 import org.apache.hc.core5.http.impl.io.SessionInputBufferImpl;
-import org.apache.hc.core5.http.impl.io.SessionOutputBufferImpl;
 import org.apache.hc.core5.http.io.SessionInputBuffer;
-import org.apache.hc.core5.http.io.SessionOutputBuffer;
+import org.apache.hc.core5.http.message.BasicClassicHttpResponse;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ExecutorService;
 
 /**
@@ -78,46 +71,34 @@ public class ApacheServerlessApplication
     }
 
     @Override
-    protected void handleSingleRequest(
+    protected boolean handleSingleRequest(
             ServletHttpHandler<ApacheServletHttpRequest<?>, ApacheServletHttpResponse<?>> servletHttpHandler,
             InputStream in,
             OutputStream out
     ) throws IOException {
-        ApacheServletHttpResponse<?> response = new ApacheServletHttpResponse<>(conversionService);
-        try {
-            // The buffer is initialized only once
-            if (sessionInputBuffer == null) {
-                sessionInputBuffer = new SessionInputBufferImpl(configuration.inputBufferSize());
+        try (ApacheResponseContext responseContext = new ApacheResponseContext(configuration, out)) {
+            try {
+                // The buffer is initialized only once
+                if (sessionInputBuffer == null) {
+                    sessionInputBuffer = new SessionInputBufferImpl(configuration.inputBufferSize());
+                }
+                ApacheServletHttpRequest exchange = new ApacheServletHttpRequest<>(
+                    in, responseContext, sessionInputBuffer, conversionService, codecRegistry, ioExecutor, byteBufferFactory
+                );
+                servletHttpHandler.service(exchange);
+                if (!responseContext.isCommitted()) {
+                    responseContext.primaryResponse.getOutputStream(); // this causes the commit
+                }
+            } catch (Exception e) {
+                if (!responseContext.isCommitted()) {
+                    try (OutputStream os = responseContext.commit(new BasicClassicHttpResponse(HttpStatus.BAD_REQUEST.getCode()))) {
+                        os.write(e.getMessage().getBytes(StandardCharsets.UTF_8));
+                    }
+                }
+                throw e;
             }
-            ApacheServletHttpRequest exchange = new ApacheServletHttpRequest<>(
-                in, sessionInputBuffer, conversionService, codecRegistry, ioExecutor, byteBufferFactory, response, configuration
-            );
-            servletHttpHandler.service(exchange);
-        } catch (ApacheServletBadRequestException e) {
-            response.status(HttpStatus.BAD_REQUEST);
-            response.contentType(MediaType.TEXT_PLAIN_TYPE);
-            response.getOutputStream().write(e.getMessage().getBytes());
-            writeResponse(response.getNativeResponse(), out);
-            throw e;
+            return !responseContext.connectionClose;
         }
-        writeResponse(response.getNativeResponse(), out);
-    }
-
-    private void writeResponse(ClassicHttpResponse response, OutputStream out) throws IOException {
-        SessionOutputBuffer buffer = new SessionOutputBufferImpl(configuration.outputBufferSize());
-        DefaultHttpResponseWriter responseWriter = new DefaultHttpResponseWriter();
-        try {
-            responseWriter.write(response, buffer, out);
-        } catch (HttpException e) {
-            throw new HttpServerException("Could not write response body", e);
-        }
-        buffer.flush(out);
-
-        HttpEntity entity = response.getEntity();
-        if (entity != null) {
-            entity.writeTo(out);
-        }
-        out.flush();
     }
 
     @Override

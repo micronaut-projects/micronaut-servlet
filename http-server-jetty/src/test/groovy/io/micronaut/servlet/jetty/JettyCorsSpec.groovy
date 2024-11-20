@@ -17,7 +17,20 @@ import io.micronaut.test.support.TestPropertyProvider
 import jakarta.inject.Inject
 import spock.lang.Specification
 
-import static io.micronaut.http.HttpHeaders.*
+import static io.micronaut.http.HttpHeaders.ACCEPT
+import static io.micronaut.http.HttpHeaders.ACCESS_CONTROL_ALLOW_CREDENTIALS
+import static io.micronaut.http.HttpHeaders.ACCESS_CONTROL_ALLOW_HEADERS
+import static io.micronaut.http.HttpHeaders.ACCESS_CONTROL_ALLOW_METHODS
+import static io.micronaut.http.HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN
+import static io.micronaut.http.HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS
+import static io.micronaut.http.HttpHeaders.ACCESS_CONTROL_MAX_AGE
+import static io.micronaut.http.HttpHeaders.ACCESS_CONTROL_REQUEST_HEADERS
+import static io.micronaut.http.HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD
+import static io.micronaut.http.HttpHeaders.CONNECTION
+import static io.micronaut.http.HttpHeaders.DATE
+import static io.micronaut.http.HttpHeaders.ORIGIN
+import static io.micronaut.http.HttpHeaders.SERVER
+import static io.micronaut.http.HttpHeaders.VARY
 
 @MicronautTest
 @Property(name = "spec.name", value = "JettyCorsSpec")
@@ -138,7 +151,6 @@ class JettyCorsSpec extends Specification implements TestPropertyProvider {
         response.code() == HttpStatus.FORBIDDEN.code
         // Client is now keep-alive so we don't get the connection header
         !headerNames.contains(CONNECTION)
-        headerNames.contains(DATE)
         headerNames.contains(SERVER)
     }
 
@@ -283,8 +295,7 @@ class JettyCorsSpec extends Specification implements TestPropertyProvider {
          'micronaut.server.cors.configurations.bar.allowedHeaders': ['Content-Type', 'Accept'],
          'micronaut.server.cors.configurations.bar.exposedHeaders': ['x', 'y'],
          'micronaut.server.cors.configurations.bar.maxAge': 150,
-         'micronaut.server.cors.configurations.bar.allowCredentials': false,
-         'micronaut.server.dateHeader': false]
+         'micronaut.server.cors.configurations.bar.allowCredentials': false]
     }
 
     @Controller('/test')

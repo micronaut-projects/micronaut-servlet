@@ -43,8 +43,10 @@ import java.util.Arrays;
  *
  * @author graemerocher
  * @since 1.0.0
+ * @deprecated Now unused, use a normal {@link io.micronaut.http.body.ResponseBodyWriter}
  */
 @Singleton
+@Deprecated
 public class SystemFileEncoder extends AbstractFileEncoder<SystemFile> {
     private static final int BUFFER_SIZE = 1024;
 

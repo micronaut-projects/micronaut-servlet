@@ -21,6 +21,7 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.convert.value.MutableConvertibleValues;
+import io.micronaut.core.convert.value.MutableConvertibleValuesMap;
 import io.micronaut.core.io.buffer.ByteBuffer;
 import io.micronaut.core.io.buffer.ReferenceCounted;
 import io.micronaut.core.type.Argument;
@@ -33,9 +34,11 @@ import io.micronaut.http.MediaType;
 import io.micronaut.http.MutableHttpHeaders;
 import io.micronaut.http.MutableHttpResponse;
 import io.micronaut.http.annotation.Produces;
+import io.micronaut.http.body.CloseableByteBody;
 import io.micronaut.http.codec.MediaTypeCodec;
 import io.micronaut.http.cookie.Cookie;
 import io.micronaut.http.exceptions.HttpStatusException;
+import io.micronaut.http.simple.SimpleHttpHeaders;
 import io.micronaut.servlet.http.ServletHttpResponse;
 import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.WriteListener;
@@ -51,14 +54,17 @@ import reactor.core.publisher.FluxSink;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
@@ -69,18 +75,19 @@ import java.util.stream.Collectors;
  * @since 1.0.0
  */
 @Internal
-public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpServletResponse, B> {
+public final class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpServletResponse, B> {
+    private static volatile boolean writeBufferAvailable = true;
 
     private static final Logger LOG = LoggerFactory.getLogger(DefaultServletHttpResponse.class);
 
     private static final byte[] EMPTY_ARRAY = "[]".getBytes();
 
     private final ConversionService conversionService;
-    private final HttpServletResponse delegate;
+    private ResponseMetadata delegate;
     private final DefaultServletHttpRequest<?> request;
     private final ServletResponseHeaders headers;
+    private final MutableConvertibleValues<Object> attributes;
     private B body;
-    private int status = HttpStatus.OK.getCode();
     private String reason = HttpStatus.OK.getReason();
 
     /**
@@ -94,9 +101,18 @@ public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpSe
                                          DefaultServletHttpRequest<B> request,
                                          HttpServletResponse delegate) {
         this.conversionService = conversionService;
-        this.delegate = delegate;
+        this.delegate = new DelegateResponseMetadata(delegate);
+        this.attributes = new MutableConvertibleValuesMap<>(new LinkedHashMap<>(), conversionService);
         this.request = request;
         this.headers = new ServletResponseHeaders();
+    }
+
+    DefaultServletHttpResponse<?> createNewPrimaryResponse() {
+        HttpServletResponse nativeResponse = ((DelegateResponseMetadata) delegate).delegate;
+        DefaultServletHttpResponse<?> newPrimary = new DefaultServletHttpResponse<>(conversionService, request, nativeResponse);
+        delegate = new LocalResponseMetadata();
+        nativeResponse.reset();
+        return newPrimary;
     }
 
     @Override
@@ -263,6 +279,109 @@ public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpSe
     }
 
     @Override
+    public CompletableFuture<?> stream(CloseableByteBody body) {
+        CompletableFuture<?> completion = new CompletableFuture<>();
+        Subscriber<byte[]> subscriber = null;
+        try {
+            body.expectedLength().ifPresent(delegate::setContentLengthLong);
+            subscriber = new Subscriber<>() {
+                final ServletOutputStream outputStream = delegate.getOutputStream();
+                Subscription subscription;
+                java.nio.ByteBuffer internalBuffer;
+
+                @Override
+                public void onSubscribe(Subscription s) {
+                    this.subscription = s;
+                    outputStream.setWriteListener(new WriteListener() {
+                        @Override
+                        public void onWritePossible() throws IOException {
+                            if (internalBuffer == null) {
+                                s.request(1);
+                            } else {
+                                writeSome();
+                            }
+                        }
+
+                        @Override
+                        public void onError(Throwable t) {
+                            handleError(t);
+                        }
+                    });
+                }
+
+                private void writeSome() throws IOException {
+                    assert internalBuffer != null;
+
+                    // both are true at the start, ensured by caller. we can't assert this here
+                    // because isReady may have side effects
+                    boolean inputReady;
+                    boolean outputReady;
+                    do {
+                        boolean writeBuffer = writeBufferAvailable;
+                        if (writeBuffer) {
+                            try {
+                                outputStream.write(internalBuffer);
+                            } catch (NoSuchMethodError e) {
+                                writeBuffer = false;
+                                writeBufferAvailable = false;
+                            }
+                        }
+                        if (!writeBuffer) {
+                            outputStream.write(internalBuffer.array(), internalBuffer.arrayOffset() + internalBuffer.position(), internalBuffer.remaining());
+                            internalBuffer.position(internalBuffer.limit());
+                        }
+
+                        inputReady = internalBuffer.hasRemaining();
+                        outputReady = outputStream.isReady();
+                    } while (inputReady && outputReady);
+
+                    if (!inputReady) {
+                        internalBuffer = null;
+                        if (outputReady) {
+                            subscription.request(1);
+                        }
+                    }
+                }
+
+                @Override
+                public void onNext(byte[] bytes) {
+                    if (internalBuffer != null) {
+                        throw new IllegalStateException("Still have buffered data");
+                    }
+                    internalBuffer = java.nio.ByteBuffer.wrap(bytes);
+                    try {
+                        writeSome();
+                    } catch (IOException e) {
+                        handleError(e);
+                    }
+                }
+
+                @Override
+                public void onError(Throwable t) {
+                    handleError(t);
+                }
+
+                private void handleError(Throwable t) {
+                    completion.completeExceptionally(t);
+                }
+
+                @Override
+                public void onComplete() {
+                    completion.complete(null);
+                }
+            };
+        } catch (IOException e) {
+            return CompletableFuture.failedFuture(e);
+        } finally {
+            if (subscriber == null) {
+                body.close();
+            }
+        }
+        body.toByteArrayPublisher().subscribe(subscriber);
+        return completion;
+    }
+
+    @Override
     @NonNull
     public Optional<MediaType> getContentType() {
         return conversionService.convert(delegate.getContentType(), Argument.of(MediaType.class));
@@ -307,7 +426,6 @@ public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpSe
 
     @Override
     public MutableHttpResponse<B> status(int status) {
-        this.status = status;
         delegate.setStatus(status);
         return this;
     }
@@ -319,7 +437,7 @@ public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpSe
 
     @Override
     public HttpServletResponse getNativeResponse() {
-        return delegate;
+        return delegate.getNativeResponse();
     }
 
     @Override
@@ -370,7 +488,7 @@ public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpSe
     @NonNull
     @Override
     public MutableConvertibleValues<Object> getAttributes() {
-        return request.getAttributes();
+        return attributes;
     }
 
     @NonNull
@@ -409,7 +527,6 @@ public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpSe
 
     @Override
     public MutableHttpResponse<B> status(int status, CharSequence message) {
-        this.status = status;
         if (message == null) {
             this.reason = HttpStatus.getDefaultReason(status);
         } else {
@@ -438,10 +555,242 @@ public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpSe
         }
     }
 
+    private sealed interface ResponseMetadata {
+        HttpServletResponse getNativeResponse();
+
+        ServletOutputStream getOutputStream() throws IOException;
+
+        Writer getWriter() throws IOException;
+
+        Collection<String> getHeaders(String k);
+
+        Collection<String> getHeaderNames();
+
+        @Nullable String getHeader(String k);
+
+        void setHeader(String k, String v);
+
+        void addHeader(String k, String v);
+
+        boolean containsHeader(String k);
+
+        boolean isCommitted();
+
+        int getStatus();
+
+        void setStatus(int code);
+
+        void setContentLengthLong(long l);
+
+        String getContentType();
+
+        void setContentType(String contentType);
+
+        void setLocale(Locale locale);
+
+        void addCookie(jakarta.servlet.http.Cookie cookie);
+    }
+
+    private record DelegateResponseMetadata(HttpServletResponse delegate) implements ResponseMetadata {
+        @Override
+        public HttpServletResponse getNativeResponse() {
+            return delegate;
+        }
+
+        @Override
+        public ServletOutputStream getOutputStream() throws IOException {
+            return delegate.getOutputStream();
+        }
+
+        @Override
+        public Writer getWriter() throws IOException {
+            return delegate.getWriter();
+        }
+
+        @Override
+        public boolean containsHeader(String k) {
+            return delegate.containsHeader(k);
+        }
+
+        @Override
+        public String getHeader(String k) {
+            return delegate.getHeader(k);
+        }
+
+        @Override
+        public Collection<String> getHeaderNames() {
+            return delegate.getHeaderNames();
+        }
+
+        @Override
+        public Collection<String> getHeaders(String k) {
+            return delegate.getHeaders(k);
+        }
+
+        @Override
+        public void setHeader(String k, String v) {
+            delegate.setHeader(k, v);
+        }
+
+        @Override
+        public void addHeader(String k, String v) {
+            delegate.addHeader(k, v);
+        }
+
+        @Override
+        public boolean isCommitted() {
+            return delegate.isCommitted();
+        }
+
+        @Override
+        public int getStatus() {
+            return delegate.getStatus();
+        }
+
+        @Override
+        public void setStatus(int code) {
+            delegate.setStatus(code);
+        }
+
+        @Override
+        public void setContentLengthLong(long l) {
+            delegate.setContentLengthLong(l);
+        }
+
+        @Override
+        public String getContentType() {
+            return delegate.getContentType();
+        }
+
+        @Override
+        public void setContentType(String contentType) {
+            delegate.setContentType(contentType);
+        }
+
+        @Override
+        public void setLocale(Locale locale) {
+            delegate.setLocale(locale);
+        }
+
+        @Override
+        public void addCookie(jakarta.servlet.http.Cookie cookie) {
+            delegate.addCookie(cookie);
+        }
+    }
+
+    private final class LocalResponseMetadata implements ResponseMetadata {
+        private int code;
+        private final MutableHttpHeaders headers;
+
+        LocalResponseMetadata() {
+            headers = new SimpleHttpHeaders(conversionService);
+            for (String k : getHeaderNames()) {
+                for (String v : getHeaders(k)) {
+                    headers.add(k, v);
+                }
+            }
+            code = delegate.getStatus();
+        }
+
+        private static IllegalStateException unsupported() {
+            return new IllegalStateException("Another response was created for this request");
+        }
+
+        @Override
+        public HttpServletResponse getNativeResponse() {
+            throw unsupported();
+        }
+
+        @Override
+        public ServletOutputStream getOutputStream() throws IOException {
+            throw unsupported();
+        }
+
+        @Override
+        public Writer getWriter() throws IOException {
+            throw unsupported();
+        }
+
+        @Override
+        public Collection<String> getHeaders(String k) {
+            return headers.getAll(k);
+        }
+
+        @Override
+        public Collection<String> getHeaderNames() {
+            return headers.names();
+        }
+
+        @Override
+        public String getHeader(String k) {
+            return headers.get(k);
+        }
+
+        @Override
+        public void setHeader(String k, String v) {
+            headers.set(k, v);
+        }
+
+        @Override
+        public void addHeader(String k, String v) {
+            headers.add(k, v);
+        }
+
+        @Override
+        public boolean containsHeader(String k) {
+            return headers.contains(k);
+        }
+
+        @Override
+        public boolean isCommitted() {
+            return false;
+        }
+
+        @Override
+        public int getStatus() {
+            return code;
+        }
+
+        @Override
+        public void setStatus(int code) {
+            this.code = code;
+        }
+
+        @Override
+        public void setContentLengthLong(long l) {
+            setHeader(HttpHeaders.CONTENT_LENGTH, String.valueOf(l));
+        }
+
+        @Override
+        public String getContentType() {
+            return headers.getContentType().orElse(null);
+        }
+
+        @Override
+        public void setContentType(String contentType) {
+            setHeader(HttpHeaders.CONTENT_TYPE, contentType);
+        }
+
+        @Override
+        public void setLocale(Locale locale) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void addCookie(jakarta.servlet.http.Cookie cookie) {
+            throw new UnsupportedOperationException();
+        }
+    }
+
     /**
      * The response headers.
      */
     private class ServletResponseHeaders implements MutableHttpHeaders {
+        private static boolean isBanned(String name) {
+            // transfer-encoding cannot be cleared on tomcat, so we must never set it
+            return name.equalsIgnoreCase(HttpHeaders.TRANSFER_ENCODING) ||
+                name.equalsIgnoreCase(HttpHeaders.CONTENT_LENGTH);
+        }
 
         @Override
         public MutableHttpHeaders add(CharSequence header, CharSequence value) {
@@ -450,6 +799,10 @@ public class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpSe
 
             final String headerValue =
                     Objects.requireNonNull(value, "Header value cannot be null").toString();
+
+            if (isBanned(headerName)) {
+                return this;
+            }
 
             delegate.setHeader(
                     headerName,

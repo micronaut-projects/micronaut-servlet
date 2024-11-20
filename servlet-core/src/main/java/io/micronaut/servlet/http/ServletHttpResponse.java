@@ -15,12 +15,15 @@
  */
 package io.micronaut.servlet.http;
 
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.http.MutableHttpResponse;
+import io.micronaut.http.body.CloseableByteBody;
 import org.reactivestreams.Publisher;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Models a serverless HTTP response, allowing access to the native response.
@@ -65,8 +68,21 @@ public interface ServletHttpResponse<N, B> extends MutableHttpResponse<B> {
      *
      * @param dataPublisher The data publisher
      * @return Emits the response once the stream has completed
+     * @deprecated Use {@link #stream(CloseableByteBody)}
      */
+    @Deprecated
     default Publisher<MutableHttpResponse<?>> stream(Publisher<?> dataPublisher) {
+        throw new UnsupportedOperationException("Data streaming not supported by implementation");
+    }
+
+    /**
+     * Stream data from the given ByteBody.
+     *
+     * @param body The body to write
+     * @return A future that completes when the body is fully written
+     */
+    @NonNull
+    default CompletableFuture<?> stream(@NonNull CloseableByteBody body) {
         throw new UnsupportedOperationException("Data streaming not supported by implementation");
     }
 }

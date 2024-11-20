@@ -24,6 +24,8 @@ import org.reactivestreams.Publisher;
  * @since 1.0.0
  * @param <B> The body type
  * @param <BB> The byte buffer type
+ * @deprecated Use the {@link io.micronaut.http.ServerHttpRequest} API instead
  */
+@Deprecated
 public interface StreamedServletMessage<B, BB> extends HttpMessage<B>, Publisher<BB> {
 }

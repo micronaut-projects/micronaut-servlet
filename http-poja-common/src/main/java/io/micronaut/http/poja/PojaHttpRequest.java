@@ -15,6 +15,7 @@
  */
 package io.micronaut.http.poja;
 
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.convert.ConversionService;
@@ -37,7 +38,6 @@ import io.micronaut.http.codec.MediaTypeCodecRegistry;
 import io.micronaut.http.poja.util.QueryStringDecoder;
 import io.micronaut.servlet.http.ServletExchange;
 import io.micronaut.servlet.http.ServletHttpRequest;
-import io.micronaut.servlet.http.ServletHttpResponse;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -60,6 +60,7 @@ import java.util.function.Function;
  * @author Andriy
  * @since 4.10.0
  */
+@Internal
 public abstract class PojaHttpRequest<B, REQ, RES>
         implements ServletHttpRequest<REQ, B>, ServerHttpRequest<B>, ServletExchange<REQ, RES>, MutableHttpRequest<B> {
 
@@ -68,16 +69,13 @@ public abstract class PojaHttpRequest<B, REQ, RES>
     protected final ConversionService conversionService;
     protected final MediaTypeCodecRegistry codecRegistry;
     protected final MutableConvertibleValues<Object> attributes = new MutableConvertibleValuesMap<>();
-    protected final PojaHttpResponse<?, RES> response;
 
     public PojaHttpRequest(
             ConversionService conversionService,
-            MediaTypeCodecRegistry codecRegistry,
-            PojaHttpResponse<?, RES> response
+            MediaTypeCodecRegistry codecRegistry
     ) {
         this.conversionService = conversionService;
         this.codecRegistry = codecRegistry;
-        this.response = response;
     }
 
     @Override
@@ -177,11 +175,6 @@ public abstract class PojaHttpRequest<B, REQ, RES>
     @Override
     public ServletHttpRequest<REQ, ? super Object> getRequest() {
         return (ServletHttpRequest) this;
-    }
-
-    @Override
-    public ServletHttpResponse<RES, ?> getResponse() {
-        return response;
     }
 
     private ConvertibleMultiValues<CharSequence> parseFormData(String body) {

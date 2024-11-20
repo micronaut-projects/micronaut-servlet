@@ -1,6 +1,8 @@
 package io.micronaut.http.poja.util
 
-import io.micronaut.servlet.http.body.InputStreamByteBody
+import io.micronaut.core.io.buffer.ByteArrayBufferFactory
+import io.micronaut.http.body.ByteBodyFactory
+import io.micronaut.http.body.stream.InputStreamByteBody
 import spock.lang.Specification
 
 import java.util.concurrent.Executors
@@ -21,7 +23,7 @@ class LimitingInputStreamSpec extends Specification {
         var stream = new ByteArrayInputStream("Hello world!".bytes)
         var limiting = new LimitingInputStream(stream, 5)
         var executor = Executors.newFixedThreadPool(1)
-        var body = InputStreamByteBody.create(limiting, OptionalLong.empty(), executor)
+        var body = InputStreamByteBody.create(limiting, OptionalLong.empty(), executor, ByteBodyFactory.createDefault(ByteArrayBufferFactory.INSTANCE))
 
         then:
         new String(body.toInputStream().readAllBytes()) == "Hello"

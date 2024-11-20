@@ -9,11 +9,7 @@ import org.junit.platform.suite.api.SuiteDisplayName;
 @SelectPackages("io.micronaut.http.server.tck.tests")
 @SuiteDisplayName("HTTP Server TCK for Tomcat")
 @ExcludeClassNamePatterns({
-    "io.micronaut.http.server.tck.tests.staticresources.StaticResourceTest", // Graal fails to see /assets from the TCK as a resource https://ge.micronaut.io/s/ufuhtbe5sgmxi
-    "io.micronaut.http.server.tck.tests.filter.ClientResponseFilterTest", // responseFilterThrowableParameter fails under Graal https://ge.micronaut.io/s/ufuhtbe5sgmxi
     "io.micronaut.http.server.tck.tests.FilterProxyTest", // see https://github.com/micronaut-projects/micronaut-core/issues/9725
-    "io.micronaut.http.server.tck.tests.LocalErrorReadingBodyTest", // Cannot read body as text once stream is exhausted trying to read it as a different type See https://github.com/micronaut-projects/micronaut-servlet/pull/548
-    "io.micronaut.http.server.tck.tests.jsonview.JsonViewsTest", // Not serdeable
 })
 public class TomcatHttpServerTestSuite {
 }
