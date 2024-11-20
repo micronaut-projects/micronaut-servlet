@@ -65,6 +65,7 @@ public class JettyConfiguration extends HttpServerConfiguration {
     /**
      * Default constructor.
      * @param multipartConfiguration The multipart configuration.
+     * @param requestLog The request log configuration
      */
     @Inject
     public JettyConfiguration(@Nullable MultipartConfiguration multipartConfiguration, @Nullable JettyRequestLog requestLog) {
