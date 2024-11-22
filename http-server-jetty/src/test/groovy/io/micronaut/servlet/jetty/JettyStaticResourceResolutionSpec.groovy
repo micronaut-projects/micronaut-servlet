@@ -133,7 +133,10 @@ class JettyStaticResourceResolutionSpec extends Specification implements TestPro
         EmbeddedServer embeddedServer = ApplicationContext.run(EmbeddedServer, [
                 'micronaut.router.static-resources.default.paths': ['classpath:public', 'file:' + tempFile.parent],
                 'micronaut.router.static-resources.default.mapping': '/static/**'])
-        HttpClient rxClient = embeddedServer.applicationContext.createBean(HttpClient, embeddedServer.getURL())
+
+        def url = embeddedServer.getURL()
+        println("URL IS $url")
+        HttpClient rxClient = embeddedServer.applicationContext.createBean(HttpClient, url)
 
 
         when:

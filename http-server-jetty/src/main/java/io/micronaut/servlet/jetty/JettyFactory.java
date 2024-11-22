@@ -300,8 +300,8 @@ public class JettyFactory extends ServletServerFactory {
         }
 
         List<ContextHandler> resourceHandlers = Stream.concat(
-            getStaticResourceConfigurations().stream().map(servletStaticResourceConfiguration -> toHandler(servletStaticResourceConfiguration, ResourceFactory.of(contextHandler))),
-            Stream.of(contextHandler)
+            Stream.of(contextHandler),
+            getStaticResourceConfigurations().stream().map(servletStaticResourceConfiguration -> toHandler(servletStaticResourceConfiguration, ResourceFactory.of(contextHandler)))
         ).toList();
 
         ContextHandlerCollection contextHandlerCollection = new ContextHandlerCollection(
