@@ -35,7 +35,6 @@ import static io.micronaut.http.HttpHeaders.CONTENT_LENGTH
 import static io.micronaut.http.HttpHeaders.CONTENT_TYPE
 
 @MicronautTest
-@Property(name = "micronaut.servlet.async-supported", value = "false")
 class JettyStaticResourceResolutionSpec extends Specification implements TestPropertyProvider {
 
     private static Path tempDir
@@ -86,6 +85,7 @@ class JettyStaticResourceResolutionSpec extends Specification implements TestPro
         then:
         response.status == HttpStatus.OK
         response.header(CONTENT_TYPE) == "text/html"
+        Integer.parseInt(response.header(CONTENT_LENGTH)) > 0
         response.headers.contains(CACHE_CONTROL)
         response.header(CACHE_CONTROL) == "private,max-age=60"
         response.body() == "<html><head></head><body>HTML Page from static file</body></html>"
@@ -103,6 +103,7 @@ class JettyStaticResourceResolutionSpec extends Specification implements TestPro
         file.exists()
         response.status == HttpStatus.OK
         response.header(CONTENT_TYPE) == "text/html"
+        Integer.parseInt(response.header(CONTENT_LENGTH)) > 0
         response.headers.contains(CACHE_CONTROL)
         response.header(CACHE_CONTROL) == "private,max-age=60"
 
@@ -133,10 +134,7 @@ class JettyStaticResourceResolutionSpec extends Specification implements TestPro
         EmbeddedServer embeddedServer = ApplicationContext.run(EmbeddedServer, [
                 'micronaut.router.static-resources.default.paths': ['classpath:public', 'file:' + tempFile.parent],
                 'micronaut.router.static-resources.default.mapping': '/static/**'])
-
-        def url = embeddedServer.getURL()
-        println("URL IS $url")
-        HttpClient rxClient = embeddedServer.applicationContext.createBean(HttpClient, url)
+        HttpClient rxClient = embeddedServer.applicationContext.createBean(HttpClient, embeddedServer.getURL())
 
 
         when:
@@ -149,6 +147,7 @@ class JettyStaticResourceResolutionSpec extends Specification implements TestPro
         file.exists()
         response.code() == HttpStatus.OK.code
         response.header(CONTENT_TYPE) == "text/html"
+        Integer.parseInt(response.header(CONTENT_LENGTH)) > 0
         response.headers.contains(CACHE_CONTROL)
 
         response.body() == "<html><head></head><body>HTML Page from resources</body></html>"
@@ -181,6 +180,7 @@ class JettyStaticResourceResolutionSpec extends Specification implements TestPro
         file.exists()
         response.code() == HttpStatus.OK.code
         response.header(CONTENT_TYPE) == "text/html"
+        Integer.parseInt(response.header(CONTENT_LENGTH)) > 0
         response.headers.contains(CACHE_CONTROL)
 
         response.body() == "<html><head></head><body>HTML Page from resources</body></html>"
@@ -214,6 +214,7 @@ class JettyStaticResourceResolutionSpec extends Specification implements TestPro
         file.exists()
         response.code() == HttpStatus.OK.code
         response.header(CONTENT_TYPE) == "text/html"
+        Integer.parseInt(response.header(CONTENT_LENGTH)) > 0
         response.headers.contains(CACHE_CONTROL)
         response.body() == "<html><head></head><body>HTML Page from resources</body></html>"
 
@@ -242,6 +243,7 @@ class JettyStaticResourceResolutionSpec extends Specification implements TestPro
         file.exists()
         response.code() == HttpStatus.OK.code
         response.header(CONTENT_TYPE) == "text/html"
+        Integer.parseInt(response.header(CONTENT_LENGTH)) > 0
         response.body() == "<html><head></head><body>HTML Page from resources/foo</body></html>"
 
         and: 'the cache control header is not set'
@@ -289,11 +291,13 @@ class JettyStaticResourceResolutionSpec extends Specification implements TestPro
         with(nestResponse) {
             code() == HttpStatus.OK.code
             header(CONTENT_TYPE) == "text/html"
+            Integer.parseInt(header(CONTENT_LENGTH)) > 0
             body() == nestText
         }
 
         with(nestTestResponse) {
             code() == HttpStatus.OK.code
+            Integer.parseInt(header(CONTENT_LENGTH)) > 0
             body() == nestTestText
         }
 
@@ -331,12 +335,14 @@ class JettyStaticResourceResolutionSpec extends Specification implements TestPro
         with(nestResponse) {
             code() == HttpStatus.OK.code
             header(CONTENT_TYPE) == "text/html"
+            Integer.parseInt(header(CONTENT_LENGTH)) > 0
             body() == nestText
         }
 
         with(publicResponse) {
             code() == HttpStatus.OK.code
             header(CONTENT_TYPE) == "text/html"
+            Integer.parseInt(header(CONTENT_LENGTH)) > 0
             body() == publicText
         }
 
