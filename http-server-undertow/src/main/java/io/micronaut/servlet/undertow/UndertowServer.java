@@ -25,7 +25,6 @@ import jakarta.inject.Singleton;
 import java.net.*;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * Implementation of {@link AbstractServletServer} for Undertow.
