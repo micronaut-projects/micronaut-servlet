@@ -146,8 +146,8 @@ loadScripts(document, 'script');</script>
 <div class="block">Configures the server connectors.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#configureServletInitializer(org.eclipse.jetty.server.Server,org.eclipse.jetty.servlet.ServletContextHandler,java.util.Collection)" class="member-name-link">configureServletInitializer</a><wbr>(org.eclipse.jetty.server.Server&nbsp;server,
- org.eclipse.jetty.servlet.ServletContextHandler&nbsp;contextHandler,
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#configureServletInitializer(org.eclipse.jetty.server.Server,org.eclipse.jetty.ee10.servlet.ServletContextHandler,java.util.Collection)" class="member-name-link">configureServletInitializer</a><wbr>(org.eclipse.jetty.server.Server&nbsp;server,
+ org.eclipse.jetty.ee10.servlet.ServletContextHandler&nbsp;contextHandler,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;jakarta.servlet.ServletContainerInitializer&gt;&nbsp;servletContainerInitializers)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Configures the servlet initializer.</div>
@@ -175,13 +175,14 @@ loadScripts(document, 'script');</script>
 <div class="block">Create the HTTP connector.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected @NonNull org.eclipse.jetty.server.ServerConnector</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#newHttpsConnector(org.eclipse.jetty.server.Server,io.micronaut.http.ssl.SslConfiguration,io.micronaut.servlet.jetty.JettyConfiguration.JettySslConfiguration)" class="member-name-link">newHttpsConnector</a><wbr>(@NonNull org.eclipse.jetty.server.Server&nbsp;server,
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#newHttpsConnector(org.eclipse.jetty.server.Server,io.micronaut.http.ssl.SslConfiguration,io.micronaut.servlet.jetty.JettyConfiguration.JettySslConfiguration,org.eclipse.jetty.util.resource.ResourceFactory)" class="member-name-link">newHttpsConnector</a><wbr>(@NonNull org.eclipse.jetty.server.Server&nbsp;server,
  @NonNull io.micronaut.http.ssl.SslConfiguration&nbsp;sslConfiguration,
- <a href="JettyConfiguration.JettySslConfiguration.html" title="class in io.micronaut.servlet.jetty">JettyConfiguration.JettySslConfiguration</a>&nbsp;jettySslConfiguration)</code></div>
+ <a href="JettyConfiguration.JettySslConfiguration.html" title="class in io.micronaut.servlet.jetty">JettyConfiguration.JettySslConfiguration</a>&nbsp;jettySslConfiguration,
+ org.eclipse.jetty.util.resource.ResourceFactory&nbsp;resourceFactory)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Create the HTTPS connector.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected @NonNull org.eclipse.jetty.servlet.ServletContextHandler</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected @NonNull org.eclipse.jetty.ee10.servlet.ServletContextHandler</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#newJettyContext(org.eclipse.jetty.server.Server,java.lang.String)" class="member-name-link">newJettyContext</a><wbr>(@NonNull org.eclipse.jetty.server.Server&nbsp;server,
  @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;contextPath)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
@@ -325,7 +326,7 @@ loadScripts(document, 'script');</script>
 </section>
 </li>
 <li>
-<section class="detail" id="newHttpsConnector(org.eclipse.jetty.server.Server,io.micronaut.http.ssl.SslConfiguration,io.micronaut.servlet.jetty.JettyConfiguration.JettySslConfiguration)">
+<section class="detail" id="newHttpsConnector(org.eclipse.jetty.server.Server,io.micronaut.http.ssl.SslConfiguration,io.micronaut.servlet.jetty.JettyConfiguration.JettySslConfiguration,org.eclipse.jetty.util.resource.ResourceFactory)">
 <h3>newHttpsConnector</h3>
 <div class="member-signature"><span class="annotations">@NonNull
 </span><span class="modifiers">protected</span>&nbsp;<span class="return-type">@NonNull org.eclipse.jetty.server.ServerConnector</span>&nbsp;<span class="element-name">newHttpsConnector</span><wbr><span class="parameters">(@NonNull
@@ -333,23 +334,25 @@ loadScripts(document, 'script');</script>
  @NonNull
  @NonNull io.micronaut.http.ssl.SslConfiguration&nbsp;sslConfiguration,
  @NonNull
- <a href="JettyConfiguration.JettySslConfiguration.html" title="class in io.micronaut.servlet.jetty">JettyConfiguration.JettySslConfiguration</a>&nbsp;jettySslConfiguration)</span></div>
+ <a href="JettyConfiguration.JettySslConfiguration.html" title="class in io.micronaut.servlet.jetty">JettyConfiguration.JettySslConfiguration</a>&nbsp;jettySslConfiguration,
+ org.eclipse.jetty.util.resource.ResourceFactory&nbsp;resourceFactory)</span></div>
 <div class="block">Create the HTTPS connector.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>server</code> - The server</dd>
 <dd><code>sslConfiguration</code> - The SSL configuration</dd>
 <dd><code>jettySslConfiguration</code> - The Jetty SSL configuration</dd>
+<dd><code>resourceFactory</code> - </dd>
 <dt>Returns:</dt>
 <dd>The server connector</dd>
 </dl>
 </section>
 </li>
 <li>
-<section class="detail" id="configureServletInitializer(org.eclipse.jetty.server.Server,org.eclipse.jetty.servlet.ServletContextHandler,java.util.Collection)">
+<section class="detail" id="configureServletInitializer(org.eclipse.jetty.server.Server,org.eclipse.jetty.ee10.servlet.ServletContextHandler,java.util.Collection)">
 <h3>configureServletInitializer</h3>
 <div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">configureServletInitializer</span><wbr><span class="parameters">(org.eclipse.jetty.server.Server&nbsp;server,
- org.eclipse.jetty.servlet.ServletContextHandler&nbsp;contextHandler,
+ org.eclipse.jetty.ee10.servlet.ServletContextHandler&nbsp;contextHandler,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;jakarta.servlet.ServletContainerInitializer&gt;&nbsp;servletContainerInitializers)</span></div>
 <div class="block">Configures the servlet initializer.</div>
 <dl class="notes">
@@ -364,7 +367,7 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="newJettyContext(org.eclipse.jetty.server.Server,java.lang.String)">
 <h3>newJettyContext</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">@NonNull org.eclipse.jetty.servlet.ServletContextHandler</span>&nbsp;<span class="element-name">newJettyContext</span><wbr><span class="parameters">(@NonNull
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">@NonNull org.eclipse.jetty.ee10.servlet.ServletContextHandler</span>&nbsp;<span class="element-name">newJettyContext</span><wbr><span class="parameters">(@NonNull
  @NonNull org.eclipse.jetty.server.Server&nbsp;server,
  @NonNull
  @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;contextPath)</span></div>
