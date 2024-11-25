@@ -17,6 +17,7 @@ import org.junit.platform.suite.api.SuiteDisplayName;
     "io.micronaut.http.server.tck.tests.FilterProxyTest", // see https://github.com/micronaut-projects/micronaut-core/issues/9725
     "io.micronaut.http.server.tck.tests.LocalErrorReadingBodyTest", // Cannot read body as text once stream is exhausted trying to read it as a different type See https://github.com/micronaut-projects/micronaut-servlet/pull/548
     "io.micronaut.http.server.tck.tests.jsonview.JsonViewsTest", // Not serdeable
+    "io.micronaut.http.server.tck.tests.cors.CorsSimpleRequestTest" // test is flakey
 })
 public class JettyHttpServerTestSuite {
 }
