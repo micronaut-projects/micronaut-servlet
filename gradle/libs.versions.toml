@@ -21,7 +21,7 @@ micronaut-session = "4.5.0"
 micronaut-validation = "4.8.0"
 google-cloud-functions = '1.1.0'
 micronaut-logging = "1.5.0"
-
+sonatype-scan = "2.8.3"
 # Micronaut
 micronaut-gradle-plugin = "4.4.4"
 kotlin = "1.9.25"
@@ -55,8 +55,9 @@ jetty-alpn-server = { module = 'org.eclipse.jetty:jetty-alpn-server', version.re
 jetty-alpn-conscrypt-server = { module = 'org.eclipse.jetty:jetty-alpn-conscrypt-server', version.ref = 'managed-jetty' }
 kotest-runner = { module = 'io.kotest:kotest-runner-junit5', version.ref = 'kotest-runner' }
 bcpkix = { module = "org.bouncycastle:bcpkix-jdk15on", version.ref = "bcpkix" }
-
 google-cloud-functions = { module = 'com.google.cloud.functions:functions-framework-api', version.ref = 'google-cloud-functions' }
+sonatype-scan = { module = "org.sonatype.gradle.plugins:scan-gradle-plugin", version.ref = "sonatype-scan" }
+
 # Gradle
 gradle-micronaut = { module = "io.micronaut.gradle:micronaut-gradle-plugin", version.ref = "micronaut-gradle-plugin" }
 gradle-kotlin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
