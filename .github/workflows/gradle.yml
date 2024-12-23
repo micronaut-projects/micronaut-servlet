@@ -59,6 +59,7 @@ jobs:
           [ -f ./setup.sh ] && ./setup.sh || [ ! -f ./setup.sh ]
 
       - name: "🚔 Sonatype Scan"
+        if: matrix.java == '17'
         id: sonatypescan
         run: |
           ./gradlew ossIndexAudit --no-parallel
