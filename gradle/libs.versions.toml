@@ -21,7 +21,7 @@ micronaut-session = "4.5.0"
 micronaut-validation = "4.8.0"
 google-cloud-functions = '1.1.0'
 micronaut-logging = "1.5.1"
-sonatype-scan = "2.8.3"
+sonatype-scan = "3.0.0"
 # Micronaut
 micronaut-gradle-plugin = "4.4.5"
 kotlin = "1.9.25"
