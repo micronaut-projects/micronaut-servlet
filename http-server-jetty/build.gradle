@@ -6,7 +6,6 @@ dependencies {
     implementation libs.jetty.servlet
     implementation(libs.jetty.http2.server)
     implementation(libs.jetty.alpn.server)
-    implementation(mn.micronaut.management)
     testImplementation libs.bcpkix
     testImplementation(libs.jetty.alpn.conscrypt.server)
     testCompileOnly(mnValidation.micronaut.validation.processor)
