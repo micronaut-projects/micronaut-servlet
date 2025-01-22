@@ -94,7 +94,7 @@ class JettyManagementPortSpec extends Specification {
         server.stop()
     }
 
-    def 'management port can be configured different to main port and uses ssl if also configured'() {
+    def 'management port can be configured different to main port and doesnt use SSL even when its configured if exposed on another port'() {
         given:
         def port = SocketUtils.findAvailableTcpPort()
         EmbeddedServer server = ApplicationContext.run(EmbeddedServer, [
@@ -103,7 +103,7 @@ class JettyManagementPortSpec extends Specification {
                 'endpoints.all.port'   : port,
         ] + sslConfig())
         BlockingHttpClient mainClient = server.getApplicationContext().createBean(HttpClient, URI.create("https://localhost:$server.port/")).toBlocking()
-        BlockingHttpClient managementClient = server.getApplicationContext().createBean(HttpClient, URI.create("https://localhost:$port/")).toBlocking()
+        BlockingHttpClient managementClient = server.getApplicationContext().createBean(HttpClient, URI.create("http://localhost:$port/")).toBlocking()
 
         when:
         def mainResponse = mainClient.exchange('/management-port', String)

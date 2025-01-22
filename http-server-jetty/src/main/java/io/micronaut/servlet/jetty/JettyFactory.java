@@ -30,6 +30,7 @@ import io.micronaut.http.server.HttpServerConfiguration;
 import io.micronaut.http.ssl.ClientAuthentication;
 import io.micronaut.http.ssl.SslConfiguration;
 import io.micronaut.inject.qualifiers.Qualifiers;
+import io.micronaut.management.endpoint.EndpointDefaultConfiguration;
 import io.micronaut.scheduling.LoomSupport;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.servlet.engine.MicronautServletConfiguration;
@@ -76,6 +77,7 @@ public class JettyFactory extends ServletServerFactory {
 
     private final JettyConfiguration jettyConfiguration;
     private final Router router;
+    private final EndpointDefaultConfiguration endpointDefaultConfiguration;
 
     /**
      * Default constructor.
@@ -101,6 +103,7 @@ public class JettyFactory extends ServletServerFactory {
         );
         this.jettyConfiguration = serverConfiguration;
         this.router = applicationContext.findBean(Router.class).orElse(null);
+        this.endpointDefaultConfiguration = applicationContext.findBean(EndpointDefaultConfiguration.class).orElse(null);
     }
 
     /**
@@ -347,19 +350,24 @@ public class JettyFactory extends ServletServerFactory {
     }
 
     private void applyAdditionalPorts(Server server, ServerConnector serverConnector) {
-        if (router != null) {
-            Set<Integer> exposedPorts = router.getExposedPorts();
-            if (CollectionUtils.isNotEmpty(exposedPorts)) {
-                for (Integer exposedPort : exposedPorts) {
-                    if (!exposedPort.equals(serverConnector.getLocalPort())) {
-                        ServerConnector connector = new ServerConnector(
-                            server,
-                            serverConnector.getConnectionFactories().toArray(ConnectionFactory[]::new)
-                        );
-                        connector.setPort(exposedPort);
-                        connector.setHost(getConfiguredHost());
-                        server.addConnector(connector);
-                    }
+        Set<Integer> exposedPorts = router.getExposedPorts();
+        if (CollectionUtils.isNotEmpty(exposedPorts)) {
+            for (Integer exposedPort : exposedPorts) {
+                if (!exposedPort.equals(serverConnector.getLocalPort())) {
+                    ServerConnector connector = new ServerConnector(
+                        server,
+                        serverConnector.getConnectionFactories().toArray(ConnectionFactory[]::new)
+                    );
+
+                    if (exposedPort.equals(endpointDefaultConfiguration.getPort().orElse(-1))) {
+                        connector = new ServerConnector(
+                        server,
+                        serverConnector.getConnectionFactories().stream().filter(x -> !x.getProtocol().equals("SSL")).toArray(ConnectionFactory[]::new)
+                    );
+                }
+                connector.setPort(exposedPort);
+                connector.setHost(getConfiguredHost());
+                server.addConnector(connector);
                 }
             }
         }
