@@ -354,20 +354,20 @@ public class JettyFactory extends ServletServerFactory {
         if (CollectionUtils.isNotEmpty(exposedPorts)) {
             for (Integer exposedPort : exposedPorts) {
                 if (!exposedPort.equals(serverConnector.getLocalPort())) {
-                    ServerConnector connector = new ServerConnector(
-                        server,
-                        serverConnector.getConnectionFactories().toArray(ConnectionFactory[]::new)
-                    );
-
+                    ServerConnector connector;
                     if (exposedPort.equals(endpointDefaultConfiguration.getPort().orElse(-1))) {
                         connector = new ServerConnector(
                         server,
-                        serverConnector.getConnectionFactories().stream().filter(x -> !x.getProtocol().equals("SSL")).toArray(ConnectionFactory[]::new)
-                    );
-                }
-                connector.setPort(exposedPort);
-                connector.setHost(getConfiguredHost());
-                server.addConnector(connector);
+                        serverConnector.getConnectionFactories().stream().filter(x -> !x.getProtocol().equals("SSL")).toArray(ConnectionFactory[]::new));
+                    } else {
+                         connector = new ServerConnector(
+                            server,
+                            serverConnector.getConnectionFactories().toArray(ConnectionFactory[]::new)
+                        );
+                    }
+                    connector.setPort(exposedPort);
+                    connector.setHost(getConfiguredHost());
+                    server.addConnector(connector);
                 }
             }
         }
