@@ -13,7 +13,7 @@ tomcat = '11.0.2'
 bcpkix = "1.70"
 
 managed-apache-http-core5 = "5.3.2"
-managed-jetty = '12.0.15'
+managed-jetty = '12.0.16'
 micronaut-reactor = "3.6.0"
 micronaut-security = "4.11.2"
 micronaut-serde = "2.13.0"
