@@ -144,26 +144,7 @@ public class JettyServer extends AbstractServletServer<Server> {
                         .findFirst().orElse(null);
                     Collection<ConnectionFactory> connectionFactories = serverConnector.getConnectionFactories();
                     if (connectorConfiguration != null) {
-                        String defaultProtocol = connectorConfiguration.getDefaultProtocol();
-                        Collection<ConnectionFactory> resolvedFactories = new ArrayList<>(connectionFactories);
-                        if (!connectorConfiguration.isSslEnabled()) {
-                            // remove SSL if it is disabled
-                            resolvedFactories.removeIf(cf -> cf.getProtocol().equalsIgnoreCase("SSL"));
-                        }
-                        if (defaultProtocol != null && defaultProtocol.equalsIgnoreCase(HttpVersion.HTTP_1_1.name())) {
-                            if (resolvedFactories.stream()
-                                .noneMatch(cf -> cf.getProtocol().equalsIgnoreCase(HttpVersion.HTTP_1_1.name()))) {
-                                resolvedFactories.add(new HttpConnectionFactory(
-                                    jettyConfiguration.getHttpConfiguration()
-                                ));
-                            }
-                        }
-                        if (connectorConfiguration.getHost() == null) {
-                            connectorConfiguration.setHost(serverConnector.getHost());
-                        }
-
-                        connectorConfiguration.setConnectionFactories(resolvedFactories);
-                        server.addConnector(connectorConfiguration);
+                        handleConnectionConfiguration(jettyConfiguration, server, connectorConfiguration, connectionFactories, serverConnector);
                     } else {
                         ServerConnector connector = new ServerConnector(
                             server,
@@ -176,5 +157,28 @@ public class JettyServer extends AbstractServletServer<Server> {
                 }
             }
         }
+    }
+
+    private static void handleConnectionConfiguration(JettyConfiguration jettyConfiguration, Server server, JettyConfiguration.ConnectorConfiguration connectorConfiguration, Collection<ConnectionFactory> connectionFactories, ServerConnector serverConnector) {
+        String defaultProtocol = connectorConfiguration.getDefaultProtocol();
+        Collection<ConnectionFactory> resolvedFactories = new ArrayList<>(connectionFactories);
+        if (!connectorConfiguration.isSslEnabled()) {
+            // remove SSL if it is disabled
+            resolvedFactories.removeIf(cf -> cf.getProtocol().equalsIgnoreCase("SSL"));
+        }
+        if (defaultProtocol != null && defaultProtocol.equalsIgnoreCase(HttpVersion.HTTP_1_1.name())) {
+            if (resolvedFactories.stream()
+                .noneMatch(cf -> cf.getProtocol().equalsIgnoreCase(HttpVersion.HTTP_1_1.name()))) {
+                resolvedFactories.add(new HttpConnectionFactory(
+                    jettyConfiguration.getHttpConfiguration()
+                ));
+            }
+        }
+        if (connectorConfiguration.getHost() == null) {
+            connectorConfiguration.setHost(serverConnector.getHost());
+        }
+
+        connectorConfiguration.setConnectionFactories(resolvedFactories);
+        server.addConnector(connectorConfiguration);
     }
 }
