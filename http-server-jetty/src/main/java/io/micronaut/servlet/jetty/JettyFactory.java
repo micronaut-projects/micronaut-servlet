@@ -37,6 +37,7 @@ import io.micronaut.servlet.engine.MicronautServletConfiguration;
 import io.micronaut.servlet.engine.server.ServletServerFactory;
 import io.micronaut.servlet.engine.server.ServletStaticResourceConfiguration;
 import io.micronaut.web.router.Router;
+import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jakarta.servlet.ServletContainerInitializer;
 import java.util.Collection;
@@ -87,13 +88,36 @@ public class JettyFactory extends ServletServerFactory {
      * @param sslConfiguration             The SSL config
      * @param applicationContext           The app context
      * @param staticResourceConfigurations The static resource configs
+     * @deprecated Use {@link JettyFactory(ResourceResolver, JettyConfiguration, SslConfiguration, ApplicationContext, List, EndpointDefaultConfiguration)} instead.
      */
+    @Deprecated(forRemoval = true, since = "5.0.0")
     public JettyFactory(
         ResourceResolver resourceResolver,
         JettyConfiguration serverConfiguration,
         SslConfiguration sslConfiguration,
         ApplicationContext applicationContext,
         List<ServletStaticResourceConfiguration> staticResourceConfigurations) {
+        this(resourceResolver, serverConfiguration, sslConfiguration, applicationContext, staticResourceConfigurations, null);
+    }
+
+    /**
+     * Default constructor.
+     *
+     * @param resourceResolver             The resource resolver
+     * @param serverConfiguration          The server config
+     * @param sslConfiguration             The SSL config
+     * @param applicationContext           The app context
+     * @param staticResourceConfigurations The static resource configs
+     * @param endpointDefaultConfiguration Endpoint default configuration
+     */
+    @Inject
+    public JettyFactory(
+        ResourceResolver resourceResolver,
+        JettyConfiguration serverConfiguration,
+        SslConfiguration sslConfiguration,
+        ApplicationContext applicationContext,
+        List<ServletStaticResourceConfiguration> staticResourceConfigurations,
+        @Nullable EndpointDefaultConfiguration endpointDefaultConfiguration) {
         super(
             resourceResolver,
             serverConfiguration,
@@ -103,7 +127,7 @@ public class JettyFactory extends ServletServerFactory {
         );
         this.jettyConfiguration = serverConfiguration;
         this.router = applicationContext.findBean(Router.class).orElse(null);
-        this.endpointDefaultConfiguration = applicationContext.findBean(EndpointDefaultConfiguration.class).orElse(null);
+        this.endpointDefaultConfiguration = endpointDefaultConfiguration;
     }
 
     /**
