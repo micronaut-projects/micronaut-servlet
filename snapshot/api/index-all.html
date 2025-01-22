@@ -293,6 +293,8 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Configures the servlet initializer.</div>
 </dd>
+<dt><a href="io/micronaut/servlet/jetty/JettyConfiguration.ConnectorConfiguration.html#%3Cinit%3E(java.lang.String,org.eclipse.jetty.server.Server)" class="member-name-link">ConnectorConfiguration(String, Server)</a> - Constructor for class io.micronaut.servlet.jetty.<a href="io/micronaut/servlet/jetty/JettyConfiguration.ConnectorConfiguration.html" title="class in io.micronaut.servlet.jetty">JettyConfiguration.ConnectorConfiguration</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/http/poja/PojaHttpRequest.html#consumeBody(java.util.function.Function)" class="member-name-link">consumeBody(Function&lt;InputStream, T&gt;)</a> - Method in class io.micronaut.http.poja.<a href="io/micronaut/http/poja/PojaHttpRequest.html" title="class in io.micronaut.http.poja">PojaHttpRequest</a></dt>
 <dd>
 <div class="block">A utility method that allows consuming body.</div>
@@ -1014,6 +1016,10 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/engine/ServletCookieAdapter.html#isSecure()" class="member-name-link">isSecure()</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/ServletCookieAdapter.html" title="class in io.micronaut.servlet.engine">ServletCookieAdapter</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/jetty/JettyConfiguration.ConnectorConfiguration.html#isSslEnabled()" class="member-name-link">isSslEnabled()</a> - Method in class io.micronaut.servlet.jetty.<a href="io/micronaut/servlet/jetty/JettyConfiguration.ConnectorConfiguration.html" title="class in io.micronaut.servlet.jetty">JettyConfiguration.ConnectorConfiguration</a></dt>
+<dd>
+<div class="block">Whether SSL is enabled for the connector.</div>
+</dd>
 </dl>
 <h2 class="title" id="I:J">J</h2>
 <dl class="index">
@@ -1028,6 +1034,10 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/servlet/jetty/JettyConfiguration.html#%3Cinit%3E(io.micronaut.http.server.HttpServerConfiguration.MultipartConfiguration,io.micronaut.servlet.jetty.JettyConfiguration.JettyRequestLog)" class="member-name-link">JettyConfiguration(HttpServerConfiguration.MultipartConfiguration, JettyConfiguration.JettyRequestLog)</a> - Constructor for class io.micronaut.servlet.jetty.<a href="io/micronaut/servlet/jetty/JettyConfiguration.html" title="class in io.micronaut.servlet.jetty">JettyConfiguration</a></dt>
 <dd>
 <div class="block">Default constructor.</div>
+</dd>
+<dt><a href="io/micronaut/servlet/jetty/JettyConfiguration.ConnectorConfiguration.html" class="type-name-link" title="class in io.micronaut.servlet.jetty">JettyConfiguration.ConnectorConfiguration</a> - Class in <a href="io/micronaut/servlet/jetty/package-summary.html">io.micronaut.servlet.jetty</a></dt>
+<dd>
+<div class="block">Configuration for additional connectors.</div>
 </dd>
 <dt><a href="io/micronaut/servlet/jetty/JettyConfiguration.JettyRequestLog.html" class="type-name-link" title="class in io.micronaut.servlet.jetty">JettyConfiguration.JettyRequestLog</a> - Class in <a href="io/micronaut/servlet/jetty/package-summary.html">io.micronaut.servlet.jetty</a></dt>
 <dd>
@@ -1060,6 +1070,10 @@ loadScripts(document, 'script');</script>
 <div class="block">An implementation of the <code>EmbeddedServer</code> interface for Jetty.</div>
 </dd>
 <dt><a href="io/micronaut/servlet/jetty/JettyServer.html#%3Cinit%3E(io.micronaut.context.ApplicationContext,io.micronaut.runtime.ApplicationConfiguration,org.eclipse.jetty.server.Server)" class="member-name-link">JettyServer(ApplicationContext, ApplicationConfiguration, Server)</a> - Constructor for class io.micronaut.servlet.jetty.<a href="io/micronaut/servlet/jetty/JettyServer.html" title="class in io.micronaut.servlet.jetty">JettyServer</a></dt>
+<dd>
+<div class="deprecation-block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span></div>
+</dd>
+<dt><a href="io/micronaut/servlet/jetty/JettyServer.html#%3Cinit%3E(io.micronaut.context.ApplicationContext,io.micronaut.runtime.ApplicationConfiguration,org.eclipse.jetty.server.Server,io.micronaut.web.router.Router,io.micronaut.servlet.jetty.JettyConfiguration,java.util.List)" class="member-name-link">JettyServer(ApplicationContext, ApplicationConfiguration, Server, Router, JettyConfiguration, List&lt;JettyConfiguration.ConnectorConfiguration&gt;)</a> - Constructor for class io.micronaut.servlet.jetty.<a href="io/micronaut/servlet/jetty/JettyServer.html" title="class in io.micronaut.servlet.jetty">JettyServer</a></dt>
 <dd>
 <div class="block">Default constructor.</div>
 </dd>
@@ -1590,6 +1604,10 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/servlet/undertow/UndertowConfiguration.html#setSocketOptions(java.util.Map)" class="member-name-link">setSocketOptions(Map&lt;String, String&gt;)</a> - Method in class io.micronaut.servlet.undertow.<a href="io/micronaut/servlet/undertow/UndertowConfiguration.html" title="class in io.micronaut.servlet.undertow">UndertowConfiguration</a></dt>
 <dd>
 <div class="block">Sets the socket options.</div>
+</dd>
+<dt><a href="io/micronaut/servlet/jetty/JettyConfiguration.ConnectorConfiguration.html#setSslEnabled(boolean)" class="member-name-link">setSslEnabled(boolean)</a> - Method in class io.micronaut.servlet.jetty.<a href="io/micronaut/servlet/jetty/JettyConfiguration.ConnectorConfiguration.html" title="class in io.micronaut.servlet.jetty">JettyConfiguration.ConnectorConfiguration</a></dt>
+<dd>
+<div class="block">Set whether SSL should be used if configured.</div>
 </dd>
 <dt><a href="io/micronaut/servlet/engine/MicronautServletConfiguration.html#setTestAsyncSupported(java.lang.Boolean)" class="member-name-link">setTestAsyncSupported(Boolean)</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/MicronautServletConfiguration.html" title="class in io.micronaut.servlet.engine">MicronautServletConfiguration</a></dt>
 <dd>

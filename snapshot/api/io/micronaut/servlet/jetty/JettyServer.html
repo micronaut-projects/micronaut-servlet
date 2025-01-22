@@ -107,6 +107,15 @@ loadScripts(document, 'script');</script>
  io.micronaut.runtime.ApplicationConfiguration&nbsp;applicationConfiguration,
  org.eclipse.jetty.server.Server&nbsp;server)</code></div>
 <div class="col-last even-row-color">
+<div class="block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span></div>
+</div>
+<div class="col-constructor-name odd-row-color"><code><a href="#%3Cinit%3E(io.micronaut.context.ApplicationContext,io.micronaut.runtime.ApplicationConfiguration,org.eclipse.jetty.server.Server,io.micronaut.web.router.Router,io.micronaut.servlet.jetty.JettyConfiguration,java.util.List)" class="member-name-link">JettyServer</a><wbr>(io.micronaut.context.ApplicationContext&nbsp;applicationContext,
+ io.micronaut.runtime.ApplicationConfiguration&nbsp;applicationConfiguration,
+ org.eclipse.jetty.server.Server&nbsp;server,
+ io.micronaut.web.router.Router&nbsp;router,
+ <a href="JettyConfiguration.html" title="class in io.micronaut.servlet.jetty">JettyConfiguration</a>&nbsp;jettyConfiguration,
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="JettyConfiguration.ConnectorConfiguration.html" title="class in io.micronaut.servlet.jetty">JettyConfiguration.ConnectorConfiguration</a>&gt;&nbsp;connectors)</code></div>
+<div class="col-last odd-row-color">
 <div class="block">Default constructor.</div>
 </div>
 </div>
@@ -183,15 +192,40 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="&lt;init&gt;(io.micronaut.context.ApplicationContext,io.micronaut.runtime.ApplicationConfiguration,org.eclipse.jetty.server.Server)">
 <h3>JettyServer</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">JettyServer</span><wbr><span class="parameters">(io.micronaut.context.ApplicationContext&nbsp;applicationContext,
+<div class="member-signature"><span class="annotations"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Deprecated.html" title="class or interface in java.lang" class="external-link">@Deprecated</a>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Deprecated.html#forRemoval()" title="class or interface in java.lang" class="external-link">forRemoval</a>=true,
+            <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Deprecated.html#since()" title="class or interface in java.lang" class="external-link">since</a>="5.0")
+</span><span class="modifiers">public</span>&nbsp;<span class="element-name">JettyServer</span><wbr><span class="parameters">(io.micronaut.context.ApplicationContext&nbsp;applicationContext,
  io.micronaut.runtime.ApplicationConfiguration&nbsp;applicationConfiguration,
  org.eclipse.jetty.server.Server&nbsp;server)</span></div>
+<div class="deprecation-block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span></div>
 <div class="block">Default constructor.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>applicationContext</code> - The application context</dd>
 <dd><code>applicationConfiguration</code> - The application configuration</dd>
 <dd><code>server</code> - The jetty server</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="&lt;init&gt;(io.micronaut.context.ApplicationContext,io.micronaut.runtime.ApplicationConfiguration,org.eclipse.jetty.server.Server,io.micronaut.web.router.Router,io.micronaut.servlet.jetty.JettyConfiguration,java.util.List)">
+<h3>JettyServer</h3>
+<div class="member-signature"><span class="annotations">@Inject
+</span><span class="modifiers">public</span>&nbsp;<span class="element-name">JettyServer</span><wbr><span class="parameters">(io.micronaut.context.ApplicationContext&nbsp;applicationContext,
+ io.micronaut.runtime.ApplicationConfiguration&nbsp;applicationConfiguration,
+ org.eclipse.jetty.server.Server&nbsp;server,
+ io.micronaut.web.router.Router&nbsp;router,
+ <a href="JettyConfiguration.html" title="class in io.micronaut.servlet.jetty">JettyConfiguration</a>&nbsp;jettyConfiguration,
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="JettyConfiguration.ConnectorConfiguration.html" title="class in io.micronaut.servlet.jetty">JettyConfiguration.ConnectorConfiguration</a>&gt;&nbsp;connectors)</span></div>
+<div class="block">Default constructor.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>applicationContext</code> - The application context</dd>
+<dd><code>applicationConfiguration</code> - The application configuration</dd>
+<dd><code>server</code> - The jetty server</dd>
+<dd><code>router</code> - The router</dd>
+<dd><code>jettyConfiguration</code> - The jetty configuration</dd>
+<dd><code>connectors</code> - Additional connector configuration</dd>
 </dl>
 </section>
 </li>
