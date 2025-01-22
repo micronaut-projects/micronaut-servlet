@@ -19,7 +19,7 @@ micronaut-security = "4.11.2"
 micronaut-serde = "2.13.0"
 micronaut-session = "4.5.0"
 micronaut-validation = "4.8.0"
-google-cloud-functions = '1.1.0'
+google-cloud-functions = '1.1.4'
 micronaut-logging = "1.5.1"
 sonatype-scan = "3.0.0"
 # Micronaut
