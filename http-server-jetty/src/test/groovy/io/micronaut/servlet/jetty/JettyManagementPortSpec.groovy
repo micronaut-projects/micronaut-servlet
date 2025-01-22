@@ -94,11 +94,46 @@ class JettyManagementPortSpec extends Specification {
         server.stop()
     }
 
-    def 'management port can be configured different to main port and doesnt use SSL even when its configured if exposed on another port'() {
+    def 'management port can be configured different to main port and uses ssl if also configured'() {
         given:
         def port = SocketUtils.findAvailableTcpPort()
         EmbeddedServer server = ApplicationContext.run(EmbeddedServer, [
                 'spec.name'            : 'JettyManagementPortSpec',
+                'endpoints.all.enabled': true,
+                'endpoints.all.port'   : port,
+        ] + sslConfig())
+        BlockingHttpClient mainClient = server.getApplicationContext().createBean(HttpClient, URI.create("https://localhost:$server.port/")).toBlocking()
+        BlockingHttpClient managementClient = server.getApplicationContext().createBean(HttpClient, URI.create("https://localhost:$port/")).toBlocking()
+
+        when:
+        def mainResponse = mainClient.exchange('/management-port', String)
+        def healthResponse = managementClient.exchange('/health', String)
+
+        then:
+        mainResponse.body() == 'Hello world'
+        healthResponse.body() == '{"status":"UP"}'
+
+        when:
+        mainClient.exchange('/health', String)
+
+        then:
+        def e = thrown(HttpClientResponseException)
+        e.response.status() == HttpStatus.NOT_FOUND
+
+        cleanup:
+        mainClient.close()
+        managementClient.close()
+        server.stop()
+    }
+
+    def 'management port can be configured different to main port and does not use ssl if SSL enabled set to false'() {
+        given:
+        def port = SocketUtils.findAvailableTcpPort()
+        EmbeddedServer server = ApplicationContext.run(EmbeddedServer, [
+                'spec.name'            : 'JettyManagementPortSpec',
+                'micronaut.server.jetty.connectors.management.port': port,
+                'micronaut.server.jetty.connectors.management.default-protocol': 'HTTP/1.1',
+                'micronaut.server.jetty.connectors.management.ssl-enabled': false,
                 'endpoints.all.enabled': true,
                 'endpoints.all.port'   : port,
         ] + sslConfig())

@@ -25,24 +25,19 @@ import io.micronaut.context.exceptions.ConfigurationException;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.io.ResourceResolver;
-import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.http.server.HttpServerConfiguration;
 import io.micronaut.http.ssl.ClientAuthentication;
 import io.micronaut.http.ssl.SslConfiguration;
 import io.micronaut.inject.qualifiers.Qualifiers;
-import io.micronaut.management.endpoint.EndpointDefaultConfiguration;
 import io.micronaut.scheduling.LoomSupport;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.servlet.engine.MicronautServletConfiguration;
 import io.micronaut.servlet.engine.server.ServletServerFactory;
 import io.micronaut.servlet.engine.server.ServletStaticResourceConfiguration;
-import io.micronaut.web.router.Router;
-import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jakarta.servlet.ServletContainerInitializer;
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Stream;
 import org.eclipse.jetty.alpn.server.ALPNServerConnectionFactory;
@@ -50,7 +45,6 @@ import org.eclipse.jetty.ee10.servlet.ServletContextHandler;
 import org.eclipse.jetty.http.HttpVersion;
 import org.eclipse.jetty.http2.server.HTTP2CServerConnectionFactory;
 import org.eclipse.jetty.http2.server.HTTP2ServerConnectionFactory;
-import org.eclipse.jetty.server.ConnectionFactory;
 import org.eclipse.jetty.server.CustomRequestLog;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
@@ -77,8 +71,6 @@ public class JettyFactory extends ServletServerFactory {
     public static final String RESOURCE_BASE = "resourceBase";
 
     private final JettyConfiguration jettyConfiguration;
-    private final Router router;
-    private final EndpointDefaultConfiguration endpointDefaultConfiguration;
 
     /**
      * Default constructor.
@@ -88,36 +80,13 @@ public class JettyFactory extends ServletServerFactory {
      * @param sslConfiguration             The SSL config
      * @param applicationContext           The app context
      * @param staticResourceConfigurations The static resource configs
-     * @deprecated Use {@link JettyFactory(ResourceResolver, JettyConfiguration, SslConfiguration, ApplicationContext, List, EndpointDefaultConfiguration)} instead.
      */
-    @Deprecated(forRemoval = true, since = "5.0.0")
     public JettyFactory(
         ResourceResolver resourceResolver,
         JettyConfiguration serverConfiguration,
         SslConfiguration sslConfiguration,
         ApplicationContext applicationContext,
         List<ServletStaticResourceConfiguration> staticResourceConfigurations) {
-        this(resourceResolver, serverConfiguration, sslConfiguration, applicationContext, staticResourceConfigurations, null);
-    }
-
-    /**
-     * Default constructor.
-     *
-     * @param resourceResolver             The resource resolver
-     * @param serverConfiguration          The server config
-     * @param sslConfiguration             The SSL config
-     * @param applicationContext           The app context
-     * @param staticResourceConfigurations The static resource configs
-     * @param endpointDefaultConfiguration Endpoint default configuration
-     */
-    @Inject
-    public JettyFactory(
-        ResourceResolver resourceResolver,
-        JettyConfiguration serverConfiguration,
-        SslConfiguration sslConfiguration,
-        ApplicationContext applicationContext,
-        List<ServletStaticResourceConfiguration> staticResourceConfigurations,
-        @Nullable EndpointDefaultConfiguration endpointDefaultConfiguration) {
         super(
             resourceResolver,
             serverConfiguration,
@@ -126,8 +95,6 @@ public class JettyFactory extends ServletServerFactory {
             staticResourceConfigurations
         );
         this.jettyConfiguration = serverConfiguration;
-        this.router = applicationContext.findBean(Router.class).orElse(null);
-        this.endpointDefaultConfiguration = endpointDefaultConfiguration;
     }
 
     /**
@@ -366,30 +333,8 @@ public class JettyFactory extends ServletServerFactory {
             if (serverConfiguration.isDualProtocol()) {
                 server.addConnector(http);
             }
-            applyAdditionalPorts(server, https);
         } else {
             server.addConnector(http);
-            applyAdditionalPorts(server, http);
-        }
-    }
-
-    private void applyAdditionalPorts(Server server, ServerConnector serverConnector) {
-        if (router != null) {
-            Set<Integer> exposedPorts = router.getExposedPorts();
-            if (CollectionUtils.isNotEmpty(exposedPorts)) {
-                for (Integer exposedPort : exposedPorts) {
-                    if (!exposedPort.equals(serverConnector.getLocalPort())) {
-                        ServerConnector connector = new ServerConnector(server,
-                                exposedPort.equals(endpointDefaultConfiguration.getPort().orElse(-1))
-                                    ? serverConnector.getConnectionFactories().stream().filter(x -> !x.getProtocol().equals("SSL")).toArray(ConnectionFactory[]::new)
-                                    : serverConnector.getConnectionFactories().toArray(ConnectionFactory[]::new)
-                                );
-                        connector.setPort(exposedPort);
-                        connector.setHost(getConfiguredHost());
-                        server.addConnector(connector);
-                    }
-                }
-            }
         }
     }
 
