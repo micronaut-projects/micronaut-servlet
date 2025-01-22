@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Set;
 import org.eclipse.jetty.http.HttpVersion;
 import org.eclipse.jetty.server.ConnectionFactory;
+import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
@@ -83,7 +84,7 @@ public class JettyServer extends AbstractServletServer<Server> {
         List<JettyConfiguration.ConnectorConfiguration> connectors) {
         super(applicationContext, applicationConfiguration, server);
         this.router = router;
-        applyAdditionalPorts(jettyConfiguration, server, connectors);
+        applyConnectorConfiguration(jettyConfiguration, server, connectors);
     }
 
     @Override
@@ -132,10 +133,45 @@ public class JettyServer extends AbstractServletServer<Server> {
         return getServer().isRunning();
     }
 
-    private void applyAdditionalPorts(JettyConfiguration jettyConfiguration, Server server, List<JettyConfiguration.ConnectorConfiguration> configuredConnectors) {
+    private void applyConnectorConfiguration(JettyConfiguration jettyConfiguration, Server server, List<JettyConfiguration.ConnectorConfiguration> configuredConnectors) {
         // first connector
-        ServerConnector serverConnector = (ServerConnector) server.getConnectors()[0];
-        List<JettyConfiguration.ConnectorConfiguration> connectors = new ArrayList<>(configuredConnectors);
+        Connector[] serverConnectors = server.getConnectors();
+        ServerConnector serverConnector = (ServerConnector) serverConnectors[0];
+        List<JettyConfiguration.ConnectorConfiguration> connectorConfigurations = new ArrayList<>(configuredConnectors);
+        applyAdditionalPorts(jettyConfiguration, server, serverConnector, connectorConfigurations);
+
+        for (Connector connector : serverConnectors) {
+            if (connector instanceof ServerConnector sc) {
+                connectorConfigurations.stream()
+                    .filter(cc -> cc.getPort() == sc.getPort())
+                    .findFirst().ifPresent(connectorConfiguration -> configureExistingConnector(sc, connectorConfigurations, connectorConfiguration));
+            }
+        }
+        for (JettyConfiguration.ConnectorConfiguration connector : connectorConfigurations) {
+            server.addConnector(connector);
+        }
+    }
+
+    private static void configureExistingConnector(ServerConnector sc, List<JettyConfiguration.ConnectorConfiguration> connectorConfigurations, JettyConfiguration.ConnectorConfiguration connectorConfiguration) {
+        connectorConfigurations.remove(connectorConfiguration);
+        sc.setHost(connectorConfiguration.getHost());
+        sc.setAccepting(connectorConfiguration.isAccepting());
+        sc.setInheritChannel(connectorConfiguration.isInheritChannel());
+        sc.setAcceptedReceiveBufferSize(connectorConfiguration.getAcceptedReceiveBufferSize());
+        sc.setAcceptedTcpNoDelay(connectorConfiguration.getAcceptedTcpNoDelay());
+        sc.setAcceptedSendBufferSize(connectorConfiguration.getAcceptedSendBufferSize());
+        sc.setAcceptQueueSize(connectorConfiguration.getAcceptQueueSize());
+        sc.setReuseAddress(connectorConfiguration.getReuseAddress());
+        sc.setReusePort(connectorConfiguration.isReusePort());
+        sc.setAcceptorPriorityDelta(connectorConfiguration.getAcceptorPriorityDelta());
+        sc.setInheritChannel(connectorConfiguration.isInheritChannel());
+        sc.setAccepting(connectorConfiguration.isAccepting());
+        sc.setIdleTimeout(connectorConfiguration.getIdleTimeout());
+        sc.setShutdownIdleTimeout(connectorConfiguration.getShutdownIdleTimeout());
+        sc.setDefaultProtocol(connectorConfiguration.getDefaultProtocol());
+    }
+
+    private void applyAdditionalPorts(JettyConfiguration jettyConfiguration, Server server, ServerConnector serverConnector, List<JettyConfiguration.ConnectorConfiguration> connectors) {
         Set<Integer> exposedPorts = router.getExposedPorts();
         if (CollectionUtils.isNotEmpty(exposedPorts)) {
             for (Integer exposedPort : exposedPorts) {
@@ -144,6 +180,7 @@ public class JettyServer extends AbstractServletServer<Server> {
                         .findFirst().orElse(null);
                     Collection<ConnectionFactory> connectionFactories = serverConnector.getConnectionFactories();
                     if (connectorConfiguration != null) {
+                        connectors.remove(connectorConfiguration);
                         handleConnectionConfiguration(jettyConfiguration, server, connectorConfiguration, connectionFactories, serverConnector);
                     } else {
                         ServerConnector connector = new ServerConnector(

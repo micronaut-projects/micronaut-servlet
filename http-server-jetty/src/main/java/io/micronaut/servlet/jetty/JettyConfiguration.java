@@ -18,6 +18,7 @@ package io.micronaut.servlet.jetty;
 import io.micronaut.context.annotation.ConfigurationBuilder;
 import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.context.annotation.EachProperty;
+import io.micronaut.context.annotation.Parameter;
 import io.micronaut.context.annotation.Replaces;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.NonNull;
@@ -131,8 +132,9 @@ public class JettyConfiguration extends HttpServerConfiguration {
     public static class ConnectorConfiguration extends ServerConnector {
         private boolean sslEnabled = true;
 
-        public ConnectorConfiguration(Server server) {
+        public ConnectorConfiguration(@Parameter String name, Server server) {
             super(server, new ConnectionFactory[0]);
+            setName(name);
         }
 
         /**
