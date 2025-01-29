@@ -375,16 +375,21 @@ public class JettyFactory extends ServletServerFactory {
         ResourceHandler resourceHandler = new ResourceHandler();
         Resource[] resourceArray = config.getPaths().stream()
             .map(path -> {
+                Resource resource;
                 if (path.startsWith(ServletStaticResourceConfiguration.CLASSPATH_PREFIX)) {
                     String cp = path.substring(ServletStaticResourceConfiguration.CLASSPATH_PREFIX.length());
-                    return resourceFactory.newClassLoaderResource(cp);
+                    resource = resourceFactory.newClassLoaderResource(cp);
                 } else {
                     try {
-                        return resourceFactory.newResource(path);
+                        resource = resourceFactory.newResource(path);
                     } catch (Exception e) {
                         throw new ConfigurationException("Static resource path doesn't exist: " + path, e);
                     }
                 }
+                if (resource == null || !resource.exists()) {
+                    throw new ConfigurationException("Static resource path doesn't exist: " + path);
+                }
+                return resource;
             }).toArray(Resource[]::new);
 
         String path = config.getMapping();
