@@ -4,6 +4,7 @@ import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.AppenderBase
 import io.micronaut.context.ApplicationContext
+import io.micronaut.context.annotation.Property
 import io.micronaut.context.env.Environment
 import io.micronaut.context.exceptions.BeanInstantiationException
 import io.micronaut.http.HttpRequest
@@ -227,7 +228,7 @@ class JettyStaticResourceResolutionSpec extends Specification implements TestPro
         EmbeddedServer embeddedServer = ApplicationContext.run(EmbeddedServer, [
                 'micronaut.router.static-resources.default.paths': ['classpath:public'],
                 'micronaut.router.static-resources.default.mapping': '/static/**',
-                'micronaut.router.static-resources.default.cache-control': '', // clear the cache control header
+                'micronaut.router.static-resources.default.cache-control': 'no-cache', // clear the cache control header
         ])
         HttpClient rxClient = embeddedServer.applicationContext.createBean(HttpClient, embeddedServer.getURL())
 
@@ -246,7 +247,7 @@ class JettyStaticResourceResolutionSpec extends Specification implements TestPro
         response.body() == "<html><head></head><body>HTML Page from resources/foo</body></html>"
 
         and: 'the cache control header is not set'
-        !response.headers.contains(CACHE_CONTROL)
+        response.header(CACHE_CONTROL) == 'no-cache'
 
         cleanup:
         embeddedServer.stop()

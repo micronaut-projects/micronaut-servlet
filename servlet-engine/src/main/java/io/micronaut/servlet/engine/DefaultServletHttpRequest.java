@@ -50,11 +50,16 @@ import io.micronaut.servlet.http.ServletHttpRequest;
 import io.micronaut.servlet.http.ServletHttpResponse;
 import io.micronaut.servlet.http.StreamedServletMessage;
 import jakarta.servlet.AsyncContext;
+import jakarta.servlet.ReadListener;
+import jakarta.servlet.ServletInputStream;
+import jakarta.servlet.ServletRequest;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.reactivestreams.Subscriber;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Sinks;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -94,7 +99,6 @@ public final class DefaultServletHttpRequest<B> implements
     ServerHttpRequest<B>,
     ParsedBodyHolder<B> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(DefaultServletHttpRequest.class);
     private static final String NULL_KEY = "Attribute key cannot be null";
 
     private final ConversionService conversionService;
@@ -112,6 +116,7 @@ public final class DefaultServletHttpRequest<B> implements
 
     private boolean bodyIsReadAsync;
     private B parsedBody;
+    private AsyncContext asyncContext;
 
     /**
      * Default constructor.
@@ -171,7 +176,7 @@ public final class DefaultServletHttpRequest<B> implements
                 Objects.requireNonNull(name, NULL_KEY);
                 Object attribute = null;
                 try {
-                    attribute = delegate.getAttribute(name.toString());
+                    attribute = delegate().getAttribute(name.toString());
                 } catch (IllegalStateException e) {
                     // ignore, request not longer active
                 }
@@ -182,7 +187,8 @@ public final class DefaultServletHttpRequest<B> implements
             @Override
             public Set<String> names() {
                 try {
-                    return CollectionUtils.enumerationToSet(delegate.getAttributeNames());
+                    Enumeration<String> attributeNames = delegate().getAttributeNames();
+                    return CollectionUtils.enumerationToSet(attributeNames);
                 } catch (IllegalStateException e) {
                     // ignore, request no longer active
                     return Set.of();
@@ -192,7 +198,8 @@ public final class DefaultServletHttpRequest<B> implements
             @Override
             public Collection<Object> values() {
                 try {
-                    return names().stream().map(delegate::getAttribute).toList();
+                    ServletRequest request = delegate();
+                    return names().stream().map(request::getAttribute).toList();
                 } catch (IllegalStateException e) {
                     // ignore, request no longer active
                     return Collections.emptyList();
@@ -202,20 +209,21 @@ public final class DefaultServletHttpRequest<B> implements
             @Override
             public MutableConvertibleValues<Object> put(CharSequence key, @Nullable Object value) {
                 Objects.requireNonNull(key, NULL_KEY);
-                delegate.setAttribute(key.toString(), value);
+                delegate().setAttribute(key.toString(), value);
                 return this;
             }
 
             @Override
             public MutableConvertibleValues<Object> remove(CharSequence key) {
                 Objects.requireNonNull(key, NULL_KEY);
-                delegate.removeAttribute(key.toString());
+                delegate().removeAttribute(key.toString());
                 return this;
             }
 
             @Override
             public MutableConvertibleValues<Object> clear() {
-                names().forEach(delegate::removeAttribute);
+                ServletRequest request = delegate();
+                names().forEach(request::removeAttribute);
                 return this;
             }
         };
@@ -246,12 +254,15 @@ public final class DefaultServletHttpRequest<B> implements
 
     @Override
     public boolean isAsyncSupported() {
-        return delegate.isAsyncSupported();
+        return asyncContext != null || delegate.isAsyncSupported();
     }
 
     @Override
     public void executeAsync(AsyncExecutionCallback asyncExecutionCallback) {
-        AsyncContext asyncContext = delegate.startAsync();
+        if (asyncContext != null) {
+            throw new IllegalStateException("Async execution has already been started");
+        }
+        this.asyncContext = delegate.startAsync();
         asyncContext.start(() -> asyncExecutionCallback.run(asyncContext::complete));
     }
 
@@ -276,54 +287,61 @@ public final class DefaultServletHttpRequest<B> implements
 
     @Override
     public boolean isSecure() {
-        return delegate.isSecure();
+        return delegate().isSecure();
     }
 
     @NonNull
     @Override
     public Optional<MediaType> getContentType() {
-        return Optional.ofNullable(delegate.getContentType())
+        String contentType = delegate().getContentType();
+        return Optional.ofNullable(contentType)
             .map(MediaType::new);
     }
 
     @Override
     public long getContentLength() {
-        return delegate.getContentLength();
+        return delegate().getContentLength();
     }
 
     @NonNull
     @Override
     public InetSocketAddress getRemoteAddress() {
+        ServletRequest servletRequest = delegate();
         return new InetSocketAddress(
-            delegate.getRemoteHost(),
-            delegate.getRemotePort()
+            servletRequest.getRemoteHost(),
+            servletRequest.getRemotePort()
         );
+    }
+
+    private ServletRequest delegate() {
+        return asyncContext != null ? asyncContext.getRequest() : delegate;
     }
 
     @NonNull
     @Override
     public InetSocketAddress getServerAddress() {
         return new InetSocketAddress(
-            delegate.getServerPort()
+           delegate().getServerPort()
         );
     }
 
     @Nullable
     @Override
     public String getServerName() {
-        return delegate.getServerName();
+        return delegate().getServerName();
     }
 
     @Override
     @NonNull
     public Optional<Locale> getLocale() {
-        return Optional.ofNullable(delegate.getLocale());
+        return Optional.ofNullable(delegate().getLocale());
     }
 
     @NonNull
     @Override
     public Charset getCharacterEncoding() {
-        return Optional.ofNullable(delegate.getCharacterEncoding())
+        String characterEncoding = delegate().getCharacterEncoding();
+        return Optional.ofNullable(characterEncoding)
             .map(Charset::forName)
             .orElse(StandardCharsets.UTF_8);
     }

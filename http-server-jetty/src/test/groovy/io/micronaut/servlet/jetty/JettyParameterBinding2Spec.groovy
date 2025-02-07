@@ -97,7 +97,7 @@ class JettyParameterBinding2Spec extends Specification {
         expect:
         response.status() == HttpStatus.OK
         response.contentType.get() == MediaType.TEXT_PLAIN_TYPE
-        response.body() == 'Hello micronaut /'
+        response.body() == 'Hello micronaut ROOT'
     }
 
     void "test request and response"() {

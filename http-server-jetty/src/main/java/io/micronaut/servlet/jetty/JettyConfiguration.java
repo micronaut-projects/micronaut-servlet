@@ -17,6 +17,8 @@ package io.micronaut.servlet.jetty;
 
 import io.micronaut.context.annotation.ConfigurationBuilder;
 import io.micronaut.context.annotation.ConfigurationProperties;
+import io.micronaut.context.annotation.EachProperty;
+import io.micronaut.context.annotation.Parameter;
 import io.micronaut.context.annotation.Replaces;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.NonNull;
@@ -27,6 +29,7 @@ import io.micronaut.core.util.StringUtils;
 import io.micronaut.core.util.Toggleable;
 import io.micronaut.http.server.HttpServerConfiguration;
 import jakarta.inject.Inject;
+import org.eclipse.jetty.server.ConnectionFactory;
 import org.eclipse.jetty.server.CustomRequestLog;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.RequestLogWriter;
@@ -35,6 +38,8 @@ import org.eclipse.jetty.server.SecureRequestCustomizer;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
 
 /**
  * Configuration properties for Jetty.
@@ -113,6 +118,39 @@ public class JettyConfiguration extends HttpServerConfiguration {
             keyFormat = StringConvention.RAW) Map<String, String> initParameters) {
         if (initParameters != null) {
             this.initParameters = initParameters;
+        }
+    }
+
+    /**
+     * Configuration for additional connectors.
+     */
+    @EachProperty(
+        value = "connectors",
+        excludes = {"beans", "eventListeners", "connectionFactories"}
+    )
+    public static class ConnectorConfiguration extends ServerConnector {
+        private boolean sslEnabled = true;
+
+        public ConnectorConfiguration(@Parameter String name, Server server) {
+            super(server, new ConnectionFactory[0]);
+            setName(name);
+        }
+
+        /**
+         * Whether SSL is enabled for the connector. Defaults to true
+         * which means if SSL is configured it will be used.
+         * @return True if SSL should be used if configured
+         */
+        public boolean isSslEnabled() {
+            return sslEnabled;
+        }
+
+        /**
+         * Set whether SSL should be used if configured.
+         * @param sslEnabled Whether SSL is enabled.
+         */
+        public void setSslEnabled(boolean sslEnabled) {
+            this.sslEnabled = sslEnabled;
         }
     }
 

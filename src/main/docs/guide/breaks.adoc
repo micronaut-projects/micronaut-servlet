@@ -1,6 +1,16 @@
-This section documents breaking changes between versions.
+This section documents breaking changes between Micronaut Servlet versions:
 
-== 3.3.4
+== Micronaut Servlet 5.0.0
+
+=== Deprecations
+
+- The Singleton constructor `io.micronaut.servlet.engine.DefaultServletHttpHandler(ApplicationContext) deprecated previously has been removed.
+`DefaultServletHttpHandler(ApplicationContext, ConversionService)` is used instead.
+
+- The abstract class constructor `io.micronaut.servlet.http.ServletHttpHandler(ApplicationContext)` deprecated previously has been removed.
+`ServletHttpHandler(ApplicationContext, ConversionService)` is used instead.
+
+== Micronaut Servlet 3.3.4
 
 === Binding network interface
 
