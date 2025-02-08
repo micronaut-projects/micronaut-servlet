@@ -14,7 +14,7 @@ bcpkix = "1.70"
 
 managed-apache-http-core5 = "5.3.2"
 managed-jetty = '12.0.16'
-micronaut-reactor = "3.6.0"
+micronaut-reactor = "3.7.0"
 micronaut-security = "4.12.0"
 micronaut-serde = "2.14.0"
 micronaut-session = "4.5.0"
