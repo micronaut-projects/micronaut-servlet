@@ -3,9 +3,7 @@ package io.micronaut.servlet.jetty.filters
 import io.micronaut.context.annotation.Property
 import io.micronaut.context.annotation.Requires
 import io.micronaut.core.annotation.NonNull
-import io.micronaut.core.annotation.Nullable
 import io.micronaut.core.type.Argument
-import io.micronaut.core.type.Headers
 import io.micronaut.core.type.MutableHeaders
 import io.micronaut.http.HttpRequest
 import io.micronaut.http.HttpResponse
@@ -18,13 +16,13 @@ import io.micronaut.http.annotation.Header
 import io.micronaut.http.annotation.Post
 import io.micronaut.http.annotation.RequestFilter
 import io.micronaut.http.annotation.ServerFilter
-import io.micronaut.http.body.TypedMessageBodyHandler
 import io.micronaut.http.body.TypedMessageBodyWriter
 import io.micronaut.http.client.HttpClient
 import io.micronaut.http.client.annotation.Client
-import io.micronaut.http.client.exceptions.HttpClientResponseException
 import io.micronaut.http.codec.CodecException
 import io.micronaut.http.filter.FilterContinuation
+import io.micronaut.scheduling.TaskExecutors
+import io.micronaut.scheduling.annotation.ExecuteOn
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
@@ -62,7 +60,7 @@ class RequestFilterBodySpec extends Specification {
 
         then:
         response != null
-        response.status() == HttpStatus.BAD_REQUEST
+        response.status() == HttpStatus.UNAUTHORIZED
     }
 
     @ServerFilter
@@ -73,6 +71,7 @@ class RequestFilterBodySpec extends Specification {
         List<String> events = []
 
         @RequestFilter("/request-filter/binding")
+        @ExecuteOn(TaskExecutors.BLOCKING)
         void requestFilterBinding(
                 @Header String contentType,
                 @Body byte[] bytes,
