@@ -2,18 +2,28 @@ package io.micronaut.servlet.jetty.filters
 
 import io.micronaut.context.annotation.Property
 import io.micronaut.context.annotation.Requires
+import io.micronaut.core.annotation.NonNull
+import io.micronaut.core.annotation.Nullable
+import io.micronaut.core.type.Argument
+import io.micronaut.core.type.Headers
+import io.micronaut.core.type.MutableHeaders
 import io.micronaut.http.HttpRequest
 import io.micronaut.http.HttpResponse
+import io.micronaut.http.HttpStatus
 import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Controller
+import io.micronaut.http.annotation.Get
 import io.micronaut.http.annotation.Header
 import io.micronaut.http.annotation.Post
 import io.micronaut.http.annotation.RequestFilter
 import io.micronaut.http.annotation.ServerFilter
+import io.micronaut.http.body.TypedMessageBodyHandler
+import io.micronaut.http.body.TypedMessageBodyWriter
 import io.micronaut.http.client.HttpClient
 import io.micronaut.http.client.annotation.Client
 import io.micronaut.http.client.exceptions.HttpClientResponseException
+import io.micronaut.http.codec.CodecException
 import io.micronaut.http.filter.FilterContinuation
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
@@ -45,6 +55,16 @@ class RequestFilterBodySpec extends Specification {
         response == 'application/json {"foo":10}'
     }
 
+    void "test response body mutating filter"() {
+        when:
+        def post = HttpRequest.GET("/request-filter/mutating")
+        def response = client.toBlocking().exchange(post, String.class)
+
+        then:
+        response != null
+        response.status() == HttpStatus.BAD_REQUEST
+    }
+
     @ServerFilter
     @Singleton
     @Requires(property = "spec.name", value = RequestFilterBodySpec.SPEC_NAME)
@@ -60,6 +80,33 @@ class RequestFilterBodySpec extends Specification {
             events.add("binding " + contentType + " " + new String(bytes, StandardCharsets.UTF_8))
             continuation.proceed()
         }
+
+        @RequestFilter("/request-filter/mutating")
+        HttpResponse<?> mutatingFilter() {
+            return HttpResponse.unauthorized().body(
+                    new CustomException("something bad")
+            )
+        }
+    }
+
+    static class CustomException extends RuntimeException {
+        CustomException(String message) {
+            super(message)
+        }
+    }
+
+    @Requires(property = "spec.name", value = SPEC_NAME)
+    @Singleton
+    static class CustomExceptionWriter implements TypedMessageBodyWriter<CustomException> {
+        @Override
+        Argument<CustomException> getType() {
+            return Argument.of(CustomException.class)
+        }
+
+        @Override
+        void writeTo(@NonNull Argument<CustomException> type, @NonNull MediaType mediaType, CustomException object, @NonNull MutableHeaders outgoingHeaders, @NonNull OutputStream outputStream) throws CodecException {
+            outputStream.write(object.getMessage().getBytes(StandardCharsets.UTF_8))
+        }
     }
 
     @Controller
@@ -69,6 +116,11 @@ class RequestFilterBodySpec extends Specification {
         @Post("/request-filter/binding")
         String requestFilterBinding(@Header String contentType, @Body byte[] bytes) {
             contentType + " " + new String(bytes, StandardCharsets.UTF_8)
+        }
+
+        @Get("/request-filter/mutating")
+        String responseMutating() {
+            return "ok"
         }
     }
 }
