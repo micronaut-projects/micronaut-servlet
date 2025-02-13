@@ -19,6 +19,7 @@ import io.micronaut.http.annotation.ServerFilter
 import io.micronaut.http.body.TypedMessageBodyWriter
 import io.micronaut.http.client.HttpClient
 import io.micronaut.http.client.annotation.Client
+import io.micronaut.http.client.exceptions.HttpClientResponseException
 import io.micronaut.http.codec.CodecException
 import io.micronaut.http.filter.FilterContinuation
 import io.micronaut.scheduling.TaskExecutors
@@ -56,11 +57,11 @@ class RequestFilterBodySpec extends Specification {
     void "test response body mutating filter"() {
         when:
         def post = HttpRequest.GET("/request-filter/mutating")
-        def response = client.toBlocking().exchange(post, String.class)
+        client.toBlocking().exchange(post, String.class)
 
         then:
-        response != null
-        response.status() == HttpStatus.UNAUTHORIZED
+        def e = thrown HttpClientResponseException
+        e.status == HttpStatus.UNAUTHORIZED
     }
 
     @ServerFilter
