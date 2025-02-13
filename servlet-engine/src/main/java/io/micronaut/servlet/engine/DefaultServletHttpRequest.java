@@ -312,7 +312,7 @@ public final class DefaultServletHttpRequest<B> implements
     @Override
     public InetSocketAddress getServerAddress() {
         return new InetSocketAddress(
-           delegate().getServerPort()
+           delegate().getLocalPort()
         );
     }
 
