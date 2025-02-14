@@ -50,10 +50,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Paths;
@@ -191,10 +189,8 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
             onComplete.run();
         } else if (async) {
             servletResponse.stream(byteBodyResponse.byteBody().move()).whenComplete((ignored, t) -> {
-                if (t != null) {
-                    if (LOG.isWarnEnabled()) {
-                        LOG.warn("Error while writing response body", t);
-                    }
+                if (t != null && LOG.isWarnEnabled()) {
+                    LOG.warn("Error while writing response body", t);
                 }
                 onComplete.run();
             });
@@ -363,51 +359,6 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
         @Override
         protected @NonNull Executor ioExecutor() {
             return ioExecutor.get();
-        }
-    }
-
-    private static final class LazyOutputStream extends OutputStream {
-        private ServletHttpResponse<?, ?> response;
-        private OutputStream stream;
-
-        public LazyOutputStream(ServletHttpResponse<?, ?> response) {
-            this.response = response;
-        }
-
-        private OutputStream stream() throws IOException {
-            if (stream == null) {
-                stream = response.getOutputStream();
-                response = null;
-            }
-            return stream;
-        }
-
-        @Override
-        public void write(int b) throws IOException {
-            stream().write(b);
-        }
-
-        @Override
-        public void write(byte[] b, int off, int len) throws IOException {
-            stream().write(b, off, len);
-        }
-
-        @Override
-        public void close() throws IOException {
-            if (stream != null) {
-                stream.close();
-            }
-        }
-    }
-
-    private static final class UncloseableOutputStream extends FilterOutputStream {
-        public UncloseableOutputStream(OutputStream out) {
-            super(out);
-        }
-
-        @Override
-        public void close() throws IOException {
-            // do nothing
         }
     }
 }
