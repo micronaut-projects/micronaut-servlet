@@ -21,7 +21,6 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.convert.value.MutableConvertibleValues;
 import io.micronaut.core.convert.value.MutableConvertibleValuesMap;
-import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MutableHttpHeaders;
 import io.micronaut.http.MutableHttpResponse;
@@ -29,15 +28,13 @@ import io.micronaut.http.cookie.Cookie;
 import io.micronaut.http.poja.PojaHttpResponse;
 import io.micronaut.http.simple.SimpleHttpHeaders;
 import org.apache.hc.core5.http.ClassicHttpResponse;
-import org.apache.hc.core5.http.ContentType;
-import org.apache.hc.core5.http.io.entity.ByteArrayEntity;
 import org.apache.hc.core5.http.message.BasicClassicHttpResponse;
 
 import java.io.BufferedWriter;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.PrintWriter;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 
 /**
@@ -48,11 +45,12 @@ import java.util.Optional;
  * @since 4.10.0
  */
 @Internal
-public final class ApacheServletHttpResponse<T> extends PojaHttpResponse<T, ClassicHttpResponse> {
+final class ApacheServletHttpResponse<T> extends PojaHttpResponse<T, ClassicHttpResponse> {
+
+    private final ApacheResponseContext responseContext;
 
     private int code = HttpStatus.OK.getCode();
     private String reasonPhrase = HttpStatus.OK.getReason();
-    private final ByteArrayOutputStream out = new ByteArrayOutputStream();
 
     private final SimpleHttpHeaders headers;
     private final MutableConvertibleValues<Object> attributes = new MutableConvertibleValuesMap<>();
@@ -63,35 +61,27 @@ public final class ApacheServletHttpResponse<T> extends PojaHttpResponse<T, Clas
      *
      * @param conversionService The conversion service
      */
-    public ApacheServletHttpResponse(ConversionService conversionService) {
+    ApacheServletHttpResponse(ApacheResponseContext responseContext, ConversionService conversionService) {
+        this.responseContext = responseContext;
         this.headers = new SimpleHttpHeaders(conversionService);
+        responseContext.primaryResponse = this;
     }
 
     @Override
     public ClassicHttpResponse getNativeResponse() {
-        headers.remove(HttpHeaders.CONTENT_LENGTH);
-        headers.add(HttpHeaders.CONTENT_LENGTH, String.valueOf(out.size()));
-        if ("chunked".equalsIgnoreCase(headers.get(HttpHeaders.TRANSFER_ENCODING))) {
-            headers.remove(HttpHeaders.TRANSFER_ENCODING);
-        }
-
         BasicClassicHttpResponse response = new BasicClassicHttpResponse(code, reasonPhrase);
         headers.forEachValue(response::addHeader);
-        ContentType contentType = headers.getContentType().map(ContentType::parse)
-            .orElse(ContentType.APPLICATION_JSON);
-        ByteArrayEntity body = new ByteArrayEntity(out.toByteArray(), contentType);
-        response.setEntity(body);
         return response;
     }
 
     @Override
     public OutputStream getOutputStream() throws IOException {
-        return out;
+        return responseContext.commit(getNativeResponse());
     }
 
     @Override
     public BufferedWriter getWriter() throws IOException {
-        return new BufferedWriter(new PrintWriter(out));
+        return new BufferedWriter(new OutputStreamWriter(getOutputStream(), StandardCharsets.UTF_8));
     }
 
     @Override

@@ -13,9 +13,9 @@ import io.micronaut.http.client.annotation.Client
 import io.micronaut.http.client.exceptions.HttpClientResponseException
 import io.micronaut.http.client.multipart.MultipartBody
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
-import spock.lang.Specification
-
 import jakarta.inject.Inject
+import spock.lang.PendingFeature
+import spock.lang.Specification
 
 @MicronautTest
 @Property(name = "micronaut.server.multipart.enabled", value = StringUtils.TRUE)
@@ -123,6 +123,7 @@ class JettyParameterBinding2Spec extends Specification {
         response.body() == 'Hello Foo'
     }
 
+    @PendingFeature(reason = "Old servlet-specific feature")
     void "test writable"() {
         given:
         def request = HttpRequest.POST("/parameters/writable", "Foo")

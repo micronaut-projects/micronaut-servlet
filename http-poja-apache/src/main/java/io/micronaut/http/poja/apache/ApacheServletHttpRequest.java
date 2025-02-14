@@ -25,6 +25,7 @@ import io.micronaut.http.MutableHttpHeaders;
 import io.micronaut.http.MutableHttpParameters;
 import io.micronaut.http.MutableHttpRequest;
 import io.micronaut.http.body.ByteBody;
+import io.micronaut.http.body.ByteBodyFactory;
 import io.micronaut.http.body.stream.InputStreamByteBody;
 import io.micronaut.http.codec.MediaTypeCodecRegistry;
 import io.micronaut.http.cookie.Cookie;
@@ -35,6 +36,7 @@ import io.micronaut.http.poja.exception.NoPojaRequestException;
 import io.micronaut.http.poja.util.MultiValueHeaders;
 import io.micronaut.http.poja.util.MultiValuesQueryParameters;
 import io.micronaut.http.simple.cookies.SimpleCookies;
+import io.micronaut.servlet.http.ServletHttpResponse;
 import org.apache.hc.core5.http.ClassicHttpRequest;
 import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.apache.hc.core5.http.Header;
@@ -71,8 +73,10 @@ import java.util.stream.Collectors;
 public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, ClassicHttpRequest, ClassicHttpResponse> {
 
     private static final String TRANSFER_ENCODING_CHUNKED = "chunked";
+    private static final String CONNECTION_CLOSE = "close";
 
     private final ClassicHttpRequest request;
+    private final ApacheResponseContext responseContext;
 
     private final HttpMethod method;
     private URI uri;
@@ -82,28 +86,30 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
 
     private final ByteBody byteBody;
 
+    private ApacheServletHttpResponse<?> primaryResponse;
+
     /**
      * Create an Apache-based request.
      *
      * @param inputStream The input stream
+     * @param responseContext The response context
+     * @param sessionInputBuffer Input buffer for parsing
      * @param conversionService The conversion service
      * @param codecRegistry The media codec registry
      * @param ioExecutor The executor service
      * @param byteBufferFactory The byte buffer factory
-     * @param response The response
-     * @param configuration The configuration
      */
     public ApacheServletHttpRequest(
         InputStream inputStream,
+        ApacheResponseContext responseContext,
         SessionInputBuffer sessionInputBuffer,
         ConversionService conversionService,
         MediaTypeCodecRegistry codecRegistry,
         ExecutorService ioExecutor,
-        ByteBufferFactory<?, ?> byteBufferFactory,
-        ApacheServletHttpResponse<?> response,
-        ApacheServletConfiguration configuration
+        ByteBufferFactory<?, ?> byteBufferFactory
     ) {
-        super(conversionService, codecRegistry, response);
+        super(conversionService, codecRegistry);
+        this.responseContext = responseContext;
         DefaultHttpRequestParser parser = new DefaultHttpRequestParser();
 
         try {
@@ -125,12 +131,20 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
         queryParameters = parseQueryParameters(uri, conversionService);
         cookies = parseCookies(request, conversionService);
 
+        Header connection = request.getFirstHeader(HttpHeaders.CONNECTION);
+        if (connection != null && connection.getValue().equalsIgnoreCase(CONNECTION_CLOSE)) {
+            responseContext.connectionClose = true;
+        }
+
         long contentLength = getContentLength();
+        if (!getMethod().permitsRequestBody()) {
+            contentLength = 0;
+        }
         OptionalLong optionalContentLength = contentLength >= 0 ? OptionalLong.of(contentLength) : OptionalLong.empty();
         InputStream bodyStream = createBodyStream(inputStream, contentLength, sessionInputBuffer);
         byteBody = InputStreamByteBody.create(
-            bodyStream, optionalContentLength, ioExecutor, byteBufferFactory
-        );
+            bodyStream, optionalContentLength, ioExecutor, ByteBodyFactory.createDefault(byteBufferFactory));
+        primaryResponse = new ApacheServletHttpResponse<>(responseContext, conversionService);
     }
 
     /**
@@ -154,6 +168,18 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
             bodyStream = EmptyInputStream.INSTANCE;
         }
         return bodyStream;
+    }
+
+    @Override
+    public ServletHttpResponse<ClassicHttpResponse, ?> getResponse() {
+        return primaryResponse;
+    }
+
+    @Override
+    public ServletHttpResponse<ClassicHttpResponse, ?> createResponse() {
+        ApacheServletHttpResponse<Object> r = new ApacheServletHttpResponse<>(responseContext, conversionService);
+        primaryResponse = r;
+        return r;
     }
 
     @Override

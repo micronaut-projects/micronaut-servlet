@@ -53,7 +53,7 @@ public class ServletResponseFactory implements HttpResponseFactory {
     public <T> MutableHttpResponse<T> ok(T body) {
         final HttpRequest<Object> req = ServerRequestContext.currentRequest().orElse(null);
         if (req instanceof ServletExchange<?, ?> servletExchange) {
-            return servletExchange.getResponse().status(HttpStatus.OK).body(body);
+            return servletExchange.createResponse().status(HttpStatus.OK).body(body);
         } else {
             return ALTERNATE.ok(body);
         }
@@ -68,7 +68,7 @@ public class ServletResponseFactory implements HttpResponseFactory {
     public <T> MutableHttpResponse<T> status(int status, String reason) {
         final HttpRequest<Object> req = ServerRequestContext.currentRequest().orElse(null);
         if (req instanceof ServletExchange<?, ?> servletExchange) {
-            return (MutableHttpResponse<T>) servletExchange.getResponse().status(status, reason);
+            return (MutableHttpResponse<T>) servletExchange.createResponse().status(status, reason);
         } else {
             return ALTERNATE.status(status, reason);
         }
@@ -78,7 +78,7 @@ public class ServletResponseFactory implements HttpResponseFactory {
     public <T> MutableHttpResponse<T> status(HttpStatus status, T body) {
         final HttpRequest<Object> req = ServerRequestContext.currentRequest().orElse(null);
         if (req instanceof ServletExchange<?, ?> servletExchange) {
-            return servletExchange.getResponse().status(status).body(body);
+            return servletExchange.createResponse().status(status).body(body);
         } else {
             return ALTERNATE.status(status, body);
         }

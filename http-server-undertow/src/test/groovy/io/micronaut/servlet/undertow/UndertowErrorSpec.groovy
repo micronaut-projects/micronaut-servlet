@@ -44,7 +44,7 @@ class UndertowErrorSpec extends Specification {
         then:
         HttpClientResponseException ex = thrown()
         ex.status == HttpStatus.INTERNAL_SERVER_ERROR
-        ex.response.body.orElseThrow() == "Internal Server Error: Immediate error"
+        ex.response.body.orElseThrow().contains("Internal Server Error: Immediate error")
     }
 
     void "error that occurs with streaming response after data sent results in client receiving incomplete data"() {

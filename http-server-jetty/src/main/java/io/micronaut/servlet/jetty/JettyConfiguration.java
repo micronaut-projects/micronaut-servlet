@@ -22,6 +22,7 @@ import io.micronaut.context.annotation.Parameter;
 import io.micronaut.context.annotation.Replaces;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.format.MapFormat;
 import io.micronaut.core.naming.conventions.StringConvention;
 import io.micronaut.core.util.StringUtils;
@@ -31,8 +32,6 @@ import jakarta.inject.Inject;
 import org.eclipse.jetty.server.ConnectionFactory;
 import org.eclipse.jetty.server.CustomRequestLog;
 import org.eclipse.jetty.server.HttpConfiguration;
-
-import io.micronaut.core.annotation.Nullable;
 import org.eclipse.jetty.server.RequestLogWriter;
 import org.eclipse.jetty.server.SecureRequestCustomizer;
 
@@ -70,7 +69,7 @@ public class JettyConfiguration extends HttpServerConfiguration {
     /**
      * Default constructor.
      * @param multipartConfiguration The multipart configuration.
-     * @param requestLog The request log configuration
+     * @param requestLog Request log configuration.
      */
     @Inject
     public JettyConfiguration(@Nullable MultipartConfiguration multipartConfiguration, @Nullable JettyRequestLog requestLog) {

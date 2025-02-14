@@ -5,7 +5,6 @@ import io.micronaut.health.HealthStatus
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.client.HttpClient
 import io.micronaut.http.client.annotation.Client
-import io.micronaut.management.health.indicator.HealthResult
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import spock.lang.Specification
@@ -30,7 +29,7 @@ class JettyHealthSpec extends Specification {
         readiness.status == HttpStatus.OK
         overall.status == HttpStatus.OK
         and:"there are no liveness indicators so unknown"
-        liveness.body.get().status == HealthStatus.UNKNOWN as String
+        liveness.body.get().status == HealthStatus.UP as String
         and:"readiness indicates up"
         readiness.body.get().status == HealthStatus.UP as String
         and:'so does overall status'

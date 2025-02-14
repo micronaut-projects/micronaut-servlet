@@ -26,26 +26,13 @@ import io.micronaut.runtime.EmbeddedApplication;
 import io.micronaut.runtime.server.EmbeddedServer;
 import jakarta.inject.Singleton;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.net.MalformedURLException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URI;
 import java.net.URL;
-import java.nio.CharBuffer;
-import java.nio.channels.AsynchronousCloseException;
-import java.nio.channels.Channels;
-import java.nio.channels.Pipe;
-import java.nio.charset.StandardCharsets;
-import java.security.SecureRandom;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -63,19 +50,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Replaces(EmbeddedApplication.class)
 public class TestingServerlessEmbeddedApplication implements EmbeddedServer {
 
-    private static final SecureRandom RANDOM = new SecureRandom();
-
     private PojaHttpServerlessApplication<?, ?> application;
 
-    private AtomicBoolean isRunning = new AtomicBoolean(false);
-    private int port;
+    private final AtomicBoolean isRunning = new AtomicBoolean(false);
     private ServerSocket serverSocket;
-    private OutputStream serverInput;
-    private InputStream serverOutput;
-
-    private Pipe inputPipe;
-    private Pipe outputPipe;
-    private Thread serverThread;
+    private int port;
 
     /**
      * Default constructor.
@@ -89,17 +68,12 @@ public class TestingServerlessEmbeddedApplication implements EmbeddedServer {
     }
 
     private void createServerSocket() {
-        IOException exception = null;
-        for (int i = 0; i < 100; ++i) {
-            port = RANDOM.nextInt(10000, 20000);
-            try {
-                serverSocket = new ServerSocket(port);
-                return;
-            } catch (IOException e) {
-                exception = e;
-            }
+        try {
+            serverSocket = new ServerSocket(0);
+        } catch (IOException e) {
+            throw new UncheckedIOException("Could not bind", e);
         }
-        throw new RuntimeException("Could not bind to port " + port, exception);
+        port = serverSocket.getLocalPort();
     }
 
     @Override
@@ -109,43 +83,11 @@ public class TestingServerlessEmbeddedApplication implements EmbeddedServer {
         }
         createServerSocket();
 
-        try {
-            inputPipe = Pipe.open();
-            outputPipe = Pipe.open();
-            serverInput = Channels.newOutputStream(inputPipe.sink());
-            serverOutput = Channels.newInputStream(outputPipe.source());
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
-
-        // Run the request handling on a new thread
-        serverThread = new Thread(() -> {
-            try {
-                application.start(
-                    Channels.newInputStream(inputPipe.source()),
-                    Channels.newOutputStream(outputPipe.sink())
-                );
-            } catch (RuntimeException e) {
-                // The exception happens since socket is closed when context is destroyed
-                if (!(e.getCause() instanceof AsynchronousCloseException)) {
-                    throw e;
-                }
-            }
-        });
-        serverThread.start();
-
         // Run the thread that sends requests to the server
         new Thread(() -> {
             while (!serverSocket.isClosed()) {
                 try (Socket socket = serverSocket.accept()) {
-                    String request = readInputStream(socket.getInputStream());
-                    serverInput.write(request.getBytes());
-                    serverInput.write(new byte[]{'\n'});
-                    serverInput.flush();
-
-                    String response = readInputStream(serverOutput);
-                    socket.getOutputStream().write(response.getBytes(StandardCharsets.ISO_8859_1));
-                    socket.getOutputStream().flush();
+                    application.start(socket.getInputStream(), socket.getOutputStream());
                 } catch (java.net.SocketException ignored) {
                     // Socket closed
                 } catch (IOException e) {
@@ -162,11 +104,6 @@ public class TestingServerlessEmbeddedApplication implements EmbeddedServer {
         application.stop();
         try {
             serverSocket.close();
-            inputPipe.sink().close();
-            inputPipe.source().close();
-            outputPipe.sink().close();
-            outputPipe.source().close();
-            serverThread.interrupt();
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -209,78 +146,6 @@ public class TestingServerlessEmbeddedApplication implements EmbeddedServer {
     @Override
     public URI getURI() {
         return URI.create("http://localhost:" + getPort());
-    }
-
-    @SuppressWarnings("java:S3776" /* Reduce cognitive complexity warning */)
-    private String readInputStream(InputStream inputStream) {
-        // Read with non-UTF charset in case there is binary data and we need to write it back
-        BufferedReader input = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.ISO_8859_1));
-
-        StringBuilder result = new StringBuilder();
-
-        boolean body = false;
-        int expectedSize = -1;
-        int currentSize = 0;
-        CharBuffer buffer = CharBuffer.allocate(1024);
-        String lastLine = "";
-
-        while (expectedSize < 0 || currentSize < expectedSize) {
-            buffer.clear();
-            try {
-                int length = input.read(buffer);
-                if (length < 0) {
-                    break;
-                }
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
-            }
-            buffer.flip();
-
-            List<String> lines = split(buffer.toString());
-            for (int i = 0; i < lines.size(); ++i) {
-                String line = lines.get(i);
-                if (i != 0) {
-                    lastLine = line;
-                } else {
-                    lastLine = lastLine + line;
-                }
-                if (body) {
-                    currentSize += line.length();
-                }
-                result.append(line);
-                if (i < lines.size() - 1) {
-                    result.append("\n");
-                    if (body) {
-                        currentSize += 1;
-                    }
-                    if (lastLine.toLowerCase(Locale.ENGLISH).startsWith("content-length: ")) {
-                        expectedSize = Integer.parseInt(lastLine.substring("content-length: ".length()).trim());
-                    }
-                    if (lastLine.trim().isEmpty()) {
-                        body = true;
-                        if (expectedSize < 0) {
-                            expectedSize = 0;
-                        }
-                    }
-                }
-            }
-        }
-
-        return result.toString();
-    }
-
-    private List<String> split(String value) {
-        // Java split can remove empty lines, so we need this
-        List<String> result = new ArrayList<>();
-        int startI = 0;
-        for (int i = 0; i < value.length(); ++i) {
-            if (value.charAt(i) == (char) '\n') {
-                result.add(value.substring(startI, i));
-                startI = i + 1;
-            }
-        }
-        result.add(value.substring(startI));
-        return result;
     }
 
     @Override

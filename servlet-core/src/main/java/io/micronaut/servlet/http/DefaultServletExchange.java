@@ -24,7 +24,9 @@ import io.micronaut.core.util.ArgumentUtils;
  * @param <Res> The native response type
  * @author graemerocher
  * @since 2.0.0
+ * @deprecated Unused
  */
+@Deprecated(forRemoval = true, since = "5.1.0")
 public class DefaultServletExchange<Req, Res> implements ServletExchange<Req, Res> {
 
     private final ServletHttpRequest<Req, ? super Object> request;

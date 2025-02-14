@@ -22,6 +22,7 @@ import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.convert.value.MutableConvertibleValues;
+import io.micronaut.core.io.buffer.ByteArrayBufferFactory;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
@@ -36,26 +37,23 @@ import io.micronaut.http.MediaType;
 import io.micronaut.http.MutableHttpRequest;
 import io.micronaut.http.ServerHttpRequest;
 import io.micronaut.http.body.ByteBody;
+import io.micronaut.http.body.ByteBodyFactory;
+import io.micronaut.http.body.ByteBufferBodyAdapter;
 import io.micronaut.http.body.CloseableByteBody;
 import io.micronaut.http.body.stream.InputStreamByteBody;
 import io.micronaut.http.codec.MediaTypeCodecRegistry;
 import io.micronaut.http.cookie.Cookies;
 import io.micronaut.servlet.http.BodyBuilder;
-import io.micronaut.servlet.http.ByteArrayBufferFactory;
 import io.micronaut.servlet.http.ParsedBodyHolder;
 import io.micronaut.servlet.http.ServletExchange;
 import io.micronaut.servlet.http.ServletHttpRequest;
 import io.micronaut.servlet.http.ServletHttpResponse;
 import io.micronaut.servlet.http.StreamedServletMessage;
 import jakarta.servlet.AsyncContext;
-import jakarta.servlet.ReadListener;
-import jakarta.servlet.ServletInputStream;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.reactivestreams.Subscriber;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Sinks;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -103,7 +101,7 @@ public final class DefaultServletHttpRequest<B> implements
     private final HttpMethod method;
     private final ServletRequestHeaders headers;
     private final ServletParameters parameters;
-    private final DefaultServletHttpResponse<B> response;
+    private DefaultServletHttpResponse<B> primaryResponse;
     private final MediaTypeCodecRegistry codecRegistry;
     private final MutableConvertibleValues<Object> attributes;
     private final CloseableByteBody byteBody;
@@ -135,7 +133,12 @@ public final class DefaultServletHttpRequest<B> implements
         this.delegate = delegate;
         this.codecRegistry = codecRegistry;
         long contentLengthLong = delegate.getContentLengthLong();
-        this.byteBody = InputStreamByteBody.create(new LazyDelegateInputStream(delegate), contentLengthLong < 0 ? OptionalLong.empty() : OptionalLong.of(contentLengthLong), ioExecutor, ByteArrayBufferFactory.INSTANCE);
+        OptionalLong length = contentLengthLong < 0 ? OptionalLong.empty() : OptionalLong.of(contentLengthLong);
+        if (delegate.isAsyncSupported()) {
+            this.byteBody = ByteBufferBodyAdapter.adapt(new ServletStreamPublisher(delegate::getInputStream), length);
+        } else {
+            this.byteBody = InputStreamByteBody.create(new LazyDelegateInputStream(delegate), length, ioExecutor, ByteBodyFactory.createDefault(ByteArrayBufferFactory.INSTANCE));
+        }
 
         String requestURI = delegate.getRequestURI();
 
@@ -154,7 +157,7 @@ public final class DefaultServletHttpRequest<B> implements
         this.method = method;
         this.headers = new ServletRequestHeaders();
         this.parameters = new ServletParameters();
-        this.response = new DefaultServletHttpResponse<>(conversionService, this, response);
+        this.primaryResponse = new DefaultServletHttpResponse<>(conversionService, this, response);
         this.body = SupplierUtil.memoizedNonEmpty(() -> {
             B built = parsedBody != null ? parsedBody : (B) bodyBuilder.buildBody(this::getInputStream, this);
             return Optional.ofNullable(built);
@@ -239,7 +242,7 @@ public final class DefaultServletHttpRequest<B> implements
     /**
      * @return The codec registry.
      */
-    public MediaTypeCodecRegistry getCodecRegistry() {
+    MediaTypeCodecRegistry getCodecRegistry() {
         return codecRegistry;
     }
 
@@ -434,7 +437,14 @@ public final class DefaultServletHttpRequest<B> implements
 
     @Override
     public ServletHttpResponse<HttpServletResponse, ?> getResponse() {
-        return response;
+        return primaryResponse;
+    }
+
+    @Override
+    public ServletHttpResponse<HttpServletResponse, ?> createResponse() {
+        DefaultServletHttpResponse<B> r = (DefaultServletHttpResponse<B>) primaryResponse.createNewPrimaryResponse();
+        primaryResponse = r;
+        return r;
     }
 
     private boolean isFormSubmission(MediaType contentType) {
@@ -452,67 +462,17 @@ public final class DefaultServletHttpRequest<B> implements
     @Override
     public void subscribe(Subscriber<? super byte[]> s) {
         bodyIsReadAsync = true;
-        Sinks.Many<byte[]> emitter = Sinks.many().replay().all();
-        byte[] buffer = new byte[1024];
-        try {
-            ServletInputStream inputStream = delegate.getInputStream();
-            inputStream.setReadListener(new ReadListener() {
-                boolean complete = false;
-
-                @Override
-                public void onDataAvailable() {
-                    if (!complete) {
-                        try {
-                            do {
-                                if (inputStream.isReady()) {
-
-                                    int length = inputStream.read(buffer);
-                                    if (length == -1) {
-                                        complete = true;
-                                        emitter.emitComplete(Sinks.EmitFailureHandler.FAIL_FAST);
-                                        break;
-                                    } else {
-                                        if (buffer.length == length) {
-                                            emitter.emitNext(buffer, Sinks.EmitFailureHandler.FAIL_FAST);
-                                        } else {
-                                            emitter.emitNext(Arrays.copyOf(buffer, length), Sinks.EmitFailureHandler.FAIL_FAST);
-                                        }
-                                    }
-                                }
-                            } while (inputStream.isReady());
-                        } catch (IOException e) {
-                            complete = true;
-                            emitter.emitError(e, Sinks.EmitFailureHandler.FAIL_FAST);
-                        }
-                    }
-                }
-
-                @Override
-                public void onAllDataRead() {
-                    if (!complete) {
-                        complete = true;
-                        emitter.emitComplete(Sinks.EmitFailureHandler.FAIL_FAST);
-                    }
-                }
-
-                @Override
-                public void onError(Throwable t) {
-                    if (!complete) {
-                        complete = true;
-                        emitter.emitError(t, Sinks.EmitFailureHandler.FAIL_FAST);
-                    }
-                }
-            });
-        } catch (Exception e) {
-            emitter.emitError(e, Sinks.EmitFailureHandler.FAIL_FAST);
-        }
-        Flux<byte[]> bodyContent = emitter.asFlux();
-        bodyContent.subscribe(s);
+        byteBody().toByteArrayPublisher().subscribe(s);
     }
 
     @Override
     public @NonNull ByteBody byteBody() {
         return byteBody;
+    }
+
+    @Override
+    public void close() {
+        byteBody.close();
     }
 
     /**

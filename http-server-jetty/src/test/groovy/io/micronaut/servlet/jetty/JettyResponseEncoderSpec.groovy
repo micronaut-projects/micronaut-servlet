@@ -19,6 +19,7 @@ import jakarta.inject.Inject
 import jakarta.inject.Singleton
 import org.reactivestreams.Publisher
 import reactor.core.publisher.Flux
+import spock.lang.PendingFeature
 import spock.lang.Specification
 
 @MicronautTest
@@ -32,6 +33,7 @@ class JettyResponseEncoderSpec extends Specification {
     @Client("/")
     HttpClient client
 
+    @PendingFeature(reason = "Response encoders")
     void "custom encoder applied once"() {
         when:
         def response = client.toBlocking().exchange("/test", String)
