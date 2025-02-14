@@ -37,7 +37,7 @@ import java.time.temporal.ChronoUnit;
  * @since 1.0.0
  * @deprecated Now unused, use a normal {@link io.micronaut.http.body.ResponseBodyWriter}
  */
-@Deprecated
+@Deprecated(forRemoval = true, since = "5.1.0")
 public abstract class AbstractFileEncoder<T extends FileCustomizableResponseType> implements ServletResponseEncoder<T> {
 
     private static final String CHUNKED = "chunked";

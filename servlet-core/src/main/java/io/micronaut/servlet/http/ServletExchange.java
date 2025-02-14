@@ -48,7 +48,7 @@ public interface ServletExchange<Req, Res> extends Closeable {
      * {@link ServletHttpResponse#getOutputStream()} and similar methods.
      *
      * @return The response
-     * @since 4.13.0
+     * @since 5.1.0
      */
     @NonNull
     default ServletHttpResponse<Res, ?> createResponse() {

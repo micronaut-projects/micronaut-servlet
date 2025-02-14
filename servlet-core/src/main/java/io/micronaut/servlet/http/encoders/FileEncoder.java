@@ -37,7 +37,7 @@ import java.io.File;
  * @deprecated Now unused, use a normal {@link io.micronaut.http.body.ResponseBodyWriter}
  */
 @Singleton
-@Deprecated
+@Deprecated(forRemoval = true, since = "5.1.0")
 public class FileEncoder implements ServletResponseEncoder<File> {
     private final ServletConfiguration servletConfiguration;
 

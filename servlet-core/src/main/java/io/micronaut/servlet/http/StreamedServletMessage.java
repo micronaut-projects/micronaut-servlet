@@ -26,6 +26,6 @@ import org.reactivestreams.Publisher;
  * @param <BB> The byte buffer type
  * @deprecated Use the {@link io.micronaut.http.ServerHttpRequest} API instead
  */
-@Deprecated
+@Deprecated(forRemoval = true, since = "5.1.0")
 public interface StreamedServletMessage<B, BB> extends HttpMessage<B>, Publisher<BB> {
 }

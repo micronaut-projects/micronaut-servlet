@@ -31,7 +31,7 @@ import org.reactivestreams.Publisher;
  * @param <T> The response type
  * @deprecated Now unused, use a normal {@link io.micronaut.http.body.ResponseBodyWriter}
  */
-@Deprecated
+@Deprecated(forRemoval = true, since = "5.1.0")
 @Indexed(ServletResponseEncoder.class)
 public interface ServletResponseEncoder<T> {
 

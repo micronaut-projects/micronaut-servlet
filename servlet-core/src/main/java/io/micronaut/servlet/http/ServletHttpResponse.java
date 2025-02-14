@@ -70,7 +70,7 @@ public interface ServletHttpResponse<N, B> extends MutableHttpResponse<B> {
      * @return Emits the response once the stream has completed
      * @deprecated Use {@link #stream(CloseableByteBody)}
      */
-    @Deprecated
+    @Deprecated(forRemoval = true, since = "5.1.0")
     default Publisher<MutableHttpResponse<?>> stream(Publisher<?> dataPublisher) {
         throw new UnsupportedOperationException("Data streaming not supported by implementation");
     }
@@ -80,6 +80,7 @@ public interface ServletHttpResponse<N, B> extends MutableHttpResponse<B> {
      *
      * @param body The body to write
      * @return A future that completes when the body is fully written
+     * @since 5.1.0
      */
     @NonNull
     default CompletableFuture<?> stream(@NonNull CloseableByteBody body) {

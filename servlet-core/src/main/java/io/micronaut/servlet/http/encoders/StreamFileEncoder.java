@@ -45,7 +45,7 @@ import java.util.Arrays;
  * @deprecated Now unused, use a normal {@link io.micronaut.http.body.ResponseBodyWriter}
  */
 @Singleton
-@Deprecated
+@Deprecated(forRemoval = true, since = "5.1.0")
 public class StreamFileEncoder extends AbstractFileEncoder<StreamedFile> {
     private static final int BUFFER_SIZE = 1024;
     private final ServletConfiguration servletConfiguration;

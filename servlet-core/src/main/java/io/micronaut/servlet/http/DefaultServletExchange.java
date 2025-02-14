@@ -26,7 +26,7 @@ import io.micronaut.core.util.ArgumentUtils;
  * @since 2.0.0
  * @deprecated Unused
  */
-@Deprecated
+@Deprecated(forRemoval = true, since = "5.1.0")
 public class DefaultServletExchange<Req, Res> implements ServletExchange<Req, Res> {
 
     private final ServletHttpRequest<Req, ? super Object> request;

@@ -33,7 +33,7 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * A {@link ServletInputStream} as a {@link Publisher}.
  *
- * @since 4.13.0
+ * @since 5.1.0
  * @author Jonas Konrad
  */
 final class ServletStreamPublisher implements Publisher<ByteBuffer>, Subscription, ReadListener {
