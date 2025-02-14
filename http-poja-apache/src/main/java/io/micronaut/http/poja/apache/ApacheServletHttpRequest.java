@@ -73,6 +73,7 @@ import java.util.stream.Collectors;
 public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, ClassicHttpRequest, ClassicHttpResponse> {
 
     private static final String TRANSFER_ENCODING_CHUNKED = "chunked";
+    private static final String CONNECTION_CLOSE = "close";
 
     private final ClassicHttpRequest request;
     private final ApacheResponseContext responseContext;
@@ -131,7 +132,7 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
         cookies = parseCookies(request, conversionService);
 
         Header connection = request.getFirstHeader(HttpHeaders.CONNECTION);
-        if (connection != null && connection.getValue().equalsIgnoreCase("close")) {
+        if (connection != null && connection.getValue().equalsIgnoreCase(CONNECTION_CLOSE)) {
             responseContext.connectionClose = true;
         }
 
