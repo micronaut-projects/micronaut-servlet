@@ -83,14 +83,15 @@ loadScripts(document, 'script');</script>
 </dl>
 <dl class="notes">
 <dt>All Implemented Interfaces:</dt>
-<dd><code>io.micronaut.core.attr.AttributeHolder</code>, <code>io.micronaut.core.attr.MutableAttributeHolder</code>, <code>io.micronaut.core.convert.ConversionServiceAware</code>, <code>io.micronaut.http.HttpMessage&lt;B&gt;</code>, <code>io.micronaut.http.HttpRequest&lt;B&gt;</code>, <code>io.micronaut.http.MutableHttpMessage&lt;B&gt;</code>, <code>io.micronaut.http.MutableHttpRequest&lt;B&gt;</code>, <code>io.micronaut.http.ServerHttpRequest&lt;B&gt;</code>, <code><a href="../../servlet/http/ServletExchange.html" title="interface in io.micronaut.servlet.http">ServletExchange</a>&lt;REQ,<wbr>RES&gt;</code>, <code><a href="../../servlet/http/ServletHttpRequest.html" title="interface in io.micronaut.servlet.http">ServletHttpRequest</a>&lt;REQ,<wbr>B&gt;</code></dd>
+<dd><code>io.micronaut.core.attr.AttributeHolder</code>, <code>io.micronaut.core.attr.MutableAttributeHolder</code>, <code>io.micronaut.core.convert.ConversionServiceAware</code>, <code>io.micronaut.http.HttpMessage&lt;B&gt;</code>, <code>io.micronaut.http.HttpRequest&lt;B&gt;</code>, <code>io.micronaut.http.MutableHttpMessage&lt;B&gt;</code>, <code>io.micronaut.http.MutableHttpRequest&lt;B&gt;</code>, <code>io.micronaut.http.ServerHttpRequest&lt;B&gt;</code>, <code><a href="../../servlet/http/ServletExchange.html" title="interface in io.micronaut.servlet.http">ServletExchange</a>&lt;REQ,<wbr>RES&gt;</code>, <code><a href="../../servlet/http/ServletHttpRequest.html" title="interface in io.micronaut.servlet.http">ServletHttpRequest</a>&lt;REQ,<wbr>B&gt;</code>, <code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/Closeable.html" title="class or interface in java.io" class="external-link">Closeable</a></code>, <code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/AutoCloseable.html" title="class or interface in java.lang" class="external-link">AutoCloseable</a></code></dd>
 </dl>
 <dl class="notes">
 <dt>Direct Known Subclasses:</dt>
 <dd><code><a href="apache/ApacheServletHttpRequest.html" title="class in io.micronaut.http.poja.apache">ApacheServletHttpRequest</a></code></dd>
 </dl>
 <hr>
-<div class="type-signature"><span class="modifiers">public abstract class </span><span class="element-name type-name-label">PojaHttpRequest&lt;B,<wbr>REQ,<wbr>RES&gt;</span>
+<div class="type-signature"><span class="annotations">@Internal
+</span><span class="modifiers">public abstract class </span><span class="element-name type-name-label">PojaHttpRequest&lt;B,<wbr>REQ,<wbr>RES&gt;</span>
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>
 implements <a href="../../servlet/http/ServletHttpRequest.html" title="interface in io.micronaut.servlet.http">ServletHttpRequest</a>&lt;REQ,<wbr>B&gt;, io.micronaut.http.ServerHttpRequest&lt;B&gt;, <a href="../../servlet/http/ServletExchange.html" title="interface in io.micronaut.servlet.http">ServletExchange</a>&lt;REQ,<wbr>RES&gt;, io.micronaut.http.MutableHttpRequest&lt;B&gt;</span></div>
 <div class="block">A base class for serverless POJA requests that provides a number of common methods
@@ -134,9 +135,6 @@ implements <a href="../../servlet/http/ServletHttpRequest.html" title="interface
 <div class="col-first odd-row-color"><code>static final io.micronaut.core.type.Argument&lt;io.micronaut.core.convert.value.ConvertibleValues&gt;</code></div>
 <div class="col-second odd-row-color"><code><a href="#CONVERTIBLE_VALUES_ARGUMENT" class="member-name-link">CONVERTIBLE_VALUES_ARGUMENT</a></code></div>
 <div class="col-last odd-row-color">&nbsp;</div>
-<div class="col-first even-row-color"><code>protected final <a href="PojaHttpResponse.html" title="class in io.micronaut.http.poja">PojaHttpResponse</a>&lt;?,<wbr><a href="PojaHttpRequest.html" title="type parameter in PojaHttpRequest">RES</a>&gt;</code></div>
-<div class="col-second even-row-color"><code><a href="#response" class="member-name-link">response</a></code></div>
-<div class="col-last even-row-color">&nbsp;</div>
 </div>
 <div class="inherited-list">
 <h3 id="fields-inherited-from-class-io.micronaut.http.HttpRequest">Fields inherited from interface&nbsp;io.micronaut.http.HttpRequest</h3>
@@ -151,9 +149,8 @@ implements <a href="../../servlet/http/ServletHttpRequest.html" title="interface
 <div class="summary-table two-column-summary">
 <div class="table-header col-first">Constructor</div>
 <div class="table-header col-last">Description</div>
-<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(io.micronaut.core.convert.ConversionService,io.micronaut.http.codec.MediaTypeCodecRegistry,io.micronaut.http.poja.PojaHttpResponse)" class="member-name-link">PojaHttpRequest</a><wbr>(io.micronaut.core.convert.ConversionService&nbsp;conversionService,
- io.micronaut.http.codec.MediaTypeCodecRegistry&nbsp;codecRegistry,
- <a href="PojaHttpResponse.html" title="class in io.micronaut.http.poja">PojaHttpResponse</a>&lt;?,<wbr><a href="PojaHttpRequest.html" title="type parameter in PojaHttpRequest">RES</a>&gt;&nbsp;response)</code></div>
+<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(io.micronaut.core.convert.ConversionService,io.micronaut.http.codec.MediaTypeCodecRegistry)" class="member-name-link">PojaHttpRequest</a><wbr>(io.micronaut.core.convert.ConversionService&nbsp;conversionService,
+ io.micronaut.http.codec.MediaTypeCodecRegistry&nbsp;codecRegistry)</code></div>
 <div class="col-last even-row-color">&nbsp;</div>
 </div>
 </section>
@@ -201,12 +198,9 @@ implements <a href="../../servlet/http/ServletHttpRequest.html" title="interface
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../../servlet/http/ServletHttpRequest.html" title="interface in io.micronaut.servlet.http">ServletHttpRequest</a>&lt;<a href="PojaHttpRequest.html" title="type parameter in PojaHttpRequest">REQ</a>,<wbr>? super <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getRequest()" class="member-name-link">getRequest</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../../servlet/http/ServletHttpResponse.html" title="interface in io.micronaut.servlet.http">ServletHttpResponse</a>&lt;<a href="PojaHttpRequest.html" title="type parameter in PojaHttpRequest">RES</a>,<wbr>?&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getResponse()" class="member-name-link">getResponse</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isFormSubmission()" class="member-name-link">isFormSubmission</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isFormSubmission()" class="member-name-link">isFormSubmission</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Whether the request body is a form.</div>
 </div>
 </div>
@@ -226,7 +220,7 @@ implements <a href="../../servlet/http/ServletHttpRequest.html" title="interface
 <code>getBody, getBody, getBody, getBodyWriter, getCharacterEncoding, getContentLength, getContentType</code></div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-io.micronaut.http.HttpRequest">Methods inherited from interface&nbsp;io.micronaut.http.HttpRequest</h3>
-<code>accept, getCertificate, getCookies, getHttpVersion, getLocale, getMethod, getMethodName, getOrigin, getPath, getRemoteAddress, getServerAddress, getServerName, getSslSession, getUri, getUserPrincipal, getUserPrincipal, isSecure, mutate, setAttribute</code></div>
+<code>accept, getCertificate, getCookies, getHttpVersion, getLocale, getMethod, getMethodName, getOrigin, getPath, getRemoteAddress, getServerAddress, getServerName, getSslSession, getUri, getUserPrincipal, getUserPrincipal, isSecure, mutate, setAttribute, setUserPrincipal</code></div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-io.micronaut.core.attr.MutableAttributeHolder">Methods inherited from interface&nbsp;io.micronaut.core.attr.MutableAttributeHolder</h3>
 <code>removeAttribute</code></div>
@@ -236,6 +230,9 @@ implements <a href="../../servlet/http/ServletHttpRequest.html" title="interface
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-io.micronaut.http.MutableHttpRequest">Methods inherited from interface&nbsp;io.micronaut.http.MutableHttpRequest</h3>
 <code>accept, accept, basicAuth, bearerAuth, body, contentEncoding, contentLength, contentType, contentType, cookie, cookies, getHeaders, getParameters, header, headers, headers, toMutableRequest, uri, uri</code></div>
+<div class="inherited-list">
+<h3 id="methods-inherited-from-class-io.micronaut.servlet.http.ServletExchange">Methods inherited from interface&nbsp;io.micronaut.servlet.http.<a href="../../servlet/http/ServletExchange.html" title="interface in io.micronaut.servlet.http">ServletExchange</a></h3>
+<code><a href="../../servlet/http/ServletExchange.html#close()">close</a>, <a href="../../servlet/http/ServletExchange.html#createResponse()">createResponse</a>, <a href="../../servlet/http/ServletExchange.html#getResponse()">getResponse</a></code></div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-io.micronaut.servlet.http.ServletHttpRequest">Methods inherited from interface&nbsp;io.micronaut.servlet.http.<a href="../../servlet/http/ServletHttpRequest.html" title="interface in io.micronaut.servlet.http">ServletHttpRequest</a></h3>
 <code><a href="../../servlet/http/ServletHttpRequest.html#executeAsync(io.micronaut.servlet.http.ServletHttpRequest.AsyncExecutionCallback)">executeAsync</a>, <a href="../../servlet/http/ServletHttpRequest.html#getContextPath()">getContextPath</a>, <a href="../../servlet/http/ServletHttpRequest.html#getNativeRequest()">getNativeRequest</a>, <a href="../../servlet/http/ServletHttpRequest.html#isAsyncSupported()">isAsyncSupported</a></code></div>
@@ -274,12 +271,6 @@ implements <a href="../../servlet/http/ServletHttpRequest.html" title="interface
 <div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type">io.micronaut.core.convert.value.MutableConvertibleValues&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</span>&nbsp;<span class="element-name">attributes</span></div>
 </section>
 </li>
-<li>
-<section class="detail" id="response">
-<h3>response</h3>
-<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type"><a href="PojaHttpResponse.html" title="class in io.micronaut.http.poja">PojaHttpResponse</a>&lt;?,<wbr><a href="PojaHttpRequest.html" title="type parameter in PojaHttpRequest">RES</a>&gt;</span>&nbsp;<span class="element-name">response</span></div>
-</section>
-</li>
 </ul>
 </section>
 </li>
@@ -289,11 +280,10 @@ implements <a href="../../servlet/http/ServletHttpRequest.html" title="interface
 <h2>Constructor Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="&lt;init&gt;(io.micronaut.core.convert.ConversionService,io.micronaut.http.codec.MediaTypeCodecRegistry,io.micronaut.http.poja.PojaHttpResponse)">
+<section class="detail" id="&lt;init&gt;(io.micronaut.core.convert.ConversionService,io.micronaut.http.codec.MediaTypeCodecRegistry)">
 <h3>PojaHttpRequest</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">PojaHttpRequest</span><wbr><span class="parameters">(io.micronaut.core.convert.ConversionService&nbsp;conversionService,
- io.micronaut.http.codec.MediaTypeCodecRegistry&nbsp;codecRegistry,
- <a href="PojaHttpResponse.html" title="class in io.micronaut.http.poja">PojaHttpResponse</a>&lt;?,<wbr><a href="PojaHttpRequest.html" title="type parameter in PojaHttpRequest">RES</a>&gt;&nbsp;response)</span></div>
+ io.micronaut.http.codec.MediaTypeCodecRegistry&nbsp;codecRegistry)</span></div>
 </section>
 </li>
 </ul>
@@ -417,18 +407,6 @@ implements <a href="../../servlet/http/ServletHttpRequest.html" title="interface
 <dd><code><a href="../../servlet/http/ServletExchange.html#getRequest()">getRequest</a></code>&nbsp;in interface&nbsp;<code><a href="../../servlet/http/ServletExchange.html" title="interface in io.micronaut.servlet.http">ServletExchange</a>&lt;<a href="PojaHttpRequest.html" title="type parameter in PojaHttpRequest">B</a>,<wbr><a href="PojaHttpRequest.html" title="type parameter in PojaHttpRequest">REQ</a>&gt;</code></dd>
 <dt>Returns:</dt>
 <dd>The request object</dd>
-</dl>
-</section>
-</li>
-<li>
-<section class="detail" id="getResponse()">
-<h3>getResponse</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../../servlet/http/ServletHttpResponse.html" title="interface in io.micronaut.servlet.http">ServletHttpResponse</a>&lt;<a href="PojaHttpRequest.html" title="type parameter in PojaHttpRequest">RES</a>,<wbr>?&gt;</span>&nbsp;<span class="element-name">getResponse</span>()</div>
-<dl class="notes">
-<dt>Specified by:</dt>
-<dd><code><a href="../../servlet/http/ServletExchange.html#getResponse()">getResponse</a></code>&nbsp;in interface&nbsp;<code><a href="../../servlet/http/ServletExchange.html" title="interface in io.micronaut.servlet.http">ServletExchange</a>&lt;<a href="PojaHttpRequest.html" title="type parameter in PojaHttpRequest">B</a>,<wbr><a href="PojaHttpRequest.html" title="type parameter in PojaHttpRequest">REQ</a>&gt;</code></dd>
-<dt>Returns:</dt>
-<dd>The response object</dd>
 </dl>
 </section>
 </li>

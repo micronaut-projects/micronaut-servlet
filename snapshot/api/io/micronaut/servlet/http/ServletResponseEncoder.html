@@ -81,8 +81,13 @@ loadScripts(document, 'script');</script>
 <dd><code><a href="encoders/AbstractFileEncoder.html" title="class in io.micronaut.servlet.http.encoders">AbstractFileEncoder</a></code>, <code><a href="encoders/FileEncoder.html" title="class in io.micronaut.servlet.http.encoders">FileEncoder</a></code>, <code><a href="encoders/StreamFileEncoder.html" title="class in io.micronaut.servlet.http.encoders">StreamFileEncoder</a></code>, <code><a href="encoders/SystemFileEncoder.html" title="class in io.micronaut.servlet.http.encoders">SystemFileEncoder</a></code></dd>
 </dl>
 <hr>
-<div class="type-signature"><span class="annotations">@Indexed(<a href="ServletResponseEncoder.html" title="interface in io.micronaut.servlet.http">ServletResponseEncoder.class</a>)
+<div class="type-signature"><span class="annotations"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Deprecated.html" title="class or interface in java.lang" class="external-link">@Deprecated</a>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Deprecated.html#forRemoval()" title="class or interface in java.lang" class="external-link">forRemoval</a>=true,
+            <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Deprecated.html#since()" title="class or interface in java.lang" class="external-link">since</a>="5.1.0")
+@Indexed(<a href="ServletResponseEncoder.html" title="interface in io.micronaut.servlet.http">ServletResponseEncoder.class</a>)
 </span><span class="modifiers">public interface </span><span class="element-name type-name-label">ServletResponseEncoder&lt;T&gt;</span></div>
+<div class="deprecation-block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span>
+<div class="deprecation-comment">Now unused, use a normal <code>ResponseBodyWriter</code></div>
+</div>
 <div class="block">An interface for custom encoding of the HTTP response.</div>
 <dl class="notes">
 <dt>Since:</dt>
@@ -98,22 +103,25 @@ loadScripts(document, 'script');</script>
 <section class="method-summary" id="method-summary">
 <h2>Method Summary</h2>
 <div id="method-summary-table">
-<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="method-summary-table-tab0" role="tab" aria-selected="true" aria-controls="method-summary-table.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table', 3)" class="active-table-tab">All Methods</button><button id="method-summary-table-tab2" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab2', 3)" class="table-tab">Instance Methods</button><button id="method-summary-table-tab3" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab3', 3)" class="table-tab">Abstract Methods</button></div>
+<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="method-summary-table-tab0" role="tab" aria-selected="true" aria-controls="method-summary-table.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table', 3)" class="active-table-tab">All Methods</button><button id="method-summary-table-tab2" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab2', 3)" class="table-tab">Instance Methods</button><button id="method-summary-table-tab3" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab3', 3)" class="table-tab">Abstract Methods</button><button id="method-summary-table-tab6" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab6', 3)" class="table-tab">Deprecated Methods</button></div>
 <div id="method-summary-table.tabpanel" role="tabpanel">
 <div class="summary-table three-column-summary" aria-labelledby="method-summary-table-tab0">
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>org.reactivestreams.Publisher&lt;io.micronaut.http.MutableHttpResponse&lt;?&gt;&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#encode(io.micronaut.servlet.http.ServletExchange,io.micronaut.core.annotation.AnnotationMetadata,T)" class="member-name-link">encode</a><wbr>(@NonNull <a href="ServletExchange.html" title="interface in io.micronaut.servlet.http">ServletExchange</a>&lt;?,<wbr>?&gt;&nbsp;exchange,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3 method-summary-table-tab6"><code>org.reactivestreams.Publisher&lt;io.micronaut.http.MutableHttpResponse&lt;?&gt;&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3 method-summary-table-tab6"><code><a href="#encode(io.micronaut.servlet.http.ServletExchange,io.micronaut.core.annotation.AnnotationMetadata,T)" class="member-name-link">encode</a><wbr>(@NonNull <a href="ServletExchange.html" title="interface in io.micronaut.servlet.http">ServletExchange</a>&lt;?,<wbr>?&gt;&nbsp;exchange,
  io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
  <a href="ServletResponseEncoder.html" title="type parameter in ServletResponseEncoder">T</a>&nbsp;value)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3 method-summary-table-tab6">
+<div class="block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span></div>
 <div class="block">Encode the given value.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;<a href="ServletResponseEncoder.html" title="type parameter in ServletResponseEncoder">T</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getResponseType()" class="member-name-link">getResponseType</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3 method-summary-table-tab6"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;<a href="ServletResponseEncoder.html" title="type parameter in ServletResponseEncoder">T</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3 method-summary-table-tab6"><code><a href="#getResponseType()" class="member-name-link">getResponseType</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3 method-summary-table-tab6">
+<div class="block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span></div>
+&nbsp;</div>
 </div>
 </div>
 </div>
@@ -132,6 +140,7 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="getResponseType()">
 <h3>getResponseType</h3>
 <div class="member-signature"><span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;<a href="ServletResponseEncoder.html" title="type parameter in ServletResponseEncoder">T</a>&gt;</span>&nbsp;<span class="element-name">getResponseType</span>()</div>
+<div class="deprecation-block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span></div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>The response type.</dd>
@@ -146,6 +155,7 @@ loadScripts(document, 'script');</script>
  io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
  @NonNull
  <a href="ServletResponseEncoder.html" title="type parameter in ServletResponseEncoder">T</a>&nbsp;value)</span></div>
+<div class="deprecation-block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span></div>
 <div class="block">Encode the given value.</div>
 <dl class="notes">
 <dt>Parameters:</dt>

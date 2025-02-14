@@ -52,6 +52,7 @@ loadScripts(document, 'script');</script>
 <h2 title="Contents">Contents</h2>
 <ul>
 <li><a href="#for-removal">Terminally Deprecated</a></li>
+<li><a href="#interface">Interfaces</a></li>
 <li><a href="#class">Classes</a></li>
 <li><a href="#method">Methods</a></li>
 <li><a href="#constructor">Constructors</a></li>
@@ -68,13 +69,37 @@ loadScripts(document, 'script');</script>
 <div class="col-last even-row-color">
 <div class="deprecation-comment">Use <a href="io/micronaut/servlet/engine/MicronautServletConfiguration.html#setAsyncSupported(boolean)"><code>MicronautServletConfiguration.setAsyncSupported(boolean)</code></a> instead</div>
 </div>
-<div class="col-summary-item-name odd-row-color"><a href="io/micronaut/servlet/http/body/AvailableByteArrayBody.html" title="class in io.micronaut.servlet.http.body">io.micronaut.servlet.http.body.AvailableByteArrayBody</a></div>
+<div class="col-summary-item-name odd-row-color"><a href="io/micronaut/servlet/http/DefaultServletExchange.html" title="class in io.micronaut.servlet.http">io.micronaut.servlet.http.DefaultServletExchange</a></div>
 <div class="col-last odd-row-color">
-<div class="deprecation-comment">Use <code>AvailableByteArrayBody</code> from core instead</div>
+<div class="deprecation-comment">Unused</div>
 </div>
-<div class="col-summary-item-name even-row-color"><a href="io/micronaut/servlet/http/body/InputStreamByteBody.html" title="class in io.micronaut.servlet.http.body">io.micronaut.servlet.http.body.InputStreamByteBody</a></div>
+<div class="col-summary-item-name even-row-color"><a href="io/micronaut/servlet/http/encoders/AbstractFileEncoder.html" title="class in io.micronaut.servlet.http.encoders">io.micronaut.servlet.http.encoders.AbstractFileEncoder</a></div>
 <div class="col-last even-row-color">
-<div class="deprecation-comment">Use <code>InputStreamByteBody</code> from core instead</div>
+<div class="deprecation-comment">Now unused, use a normal <code>ResponseBodyWriter</code></div>
+</div>
+<div class="col-summary-item-name odd-row-color"><a href="io/micronaut/servlet/http/encoders/FileEncoder.html" title="class in io.micronaut.servlet.http.encoders">io.micronaut.servlet.http.encoders.FileEncoder</a></div>
+<div class="col-last odd-row-color">
+<div class="deprecation-comment">Now unused, use a normal <code>ResponseBodyWriter</code></div>
+</div>
+<div class="col-summary-item-name even-row-color"><a href="io/micronaut/servlet/http/encoders/StreamFileEncoder.html" title="class in io.micronaut.servlet.http.encoders">io.micronaut.servlet.http.encoders.StreamFileEncoder</a></div>
+<div class="col-last even-row-color">
+<div class="deprecation-comment">Now unused, use a normal <code>ResponseBodyWriter</code></div>
+</div>
+<div class="col-summary-item-name odd-row-color"><a href="io/micronaut/servlet/http/encoders/SystemFileEncoder.html" title="class in io.micronaut.servlet.http.encoders">io.micronaut.servlet.http.encoders.SystemFileEncoder</a></div>
+<div class="col-last odd-row-color">
+<div class="deprecation-comment">Now unused, use a normal <code>ResponseBodyWriter</code></div>
+</div>
+<div class="col-summary-item-name even-row-color"><a href="io/micronaut/servlet/http/ServletHttpResponse.html#stream(org.reactivestreams.Publisher)">io.micronaut.servlet.http.ServletHttpResponse.stream<wbr>(Publisher&lt;?&gt;)</a></div>
+<div class="col-last even-row-color">
+<div class="deprecation-comment">Use <a href="io/micronaut/servlet/http/ServletHttpResponse.html#stream(io.micronaut.http.body.CloseableByteBody)"><code>ServletHttpResponse.stream(CloseableByteBody)</code></a></div>
+</div>
+<div class="col-summary-item-name odd-row-color"><a href="io/micronaut/servlet/http/ServletResponseEncoder.html" title="interface in io.micronaut.servlet.http">io.micronaut.servlet.http.ServletResponseEncoder</a></div>
+<div class="col-last odd-row-color">
+<div class="deprecation-comment">Now unused, use a normal <code>ResponseBodyWriter</code></div>
+</div>
+<div class="col-summary-item-name even-row-color"><a href="io/micronaut/servlet/http/StreamedServletMessage.html" title="interface in io.micronaut.servlet.http">io.micronaut.servlet.http.StreamedServletMessage</a></div>
+<div class="col-last even-row-color">
+<div class="deprecation-comment">Use the <code>ServerHttpRequest</code> API instead</div>
 </div>
 <div class="col-summary-item-name odd-row-color"><a href="io/micronaut/servlet/jetty/JettyServer.html#%3Cinit%3E(io.micronaut.context.ApplicationContext,io.micronaut.runtime.ApplicationConfiguration,org.eclipse.jetty.server.Server)">io.micronaut.servlet.jetty.JettyServer<wbr>(ApplicationContext, ApplicationConfiguration, Server)</a></div>
 <div class="col-last odd-row-color"></div>
@@ -88,18 +113,49 @@ loadScripts(document, 'script');</script>
 </ul>
 <ul class="block-list">
 <li>
+<div id="interface">
+<div class="caption"><span>Deprecated Interfaces</span></div>
+<div class="summary-table two-column-summary">
+<div class="table-header col-first">Interface</div>
+<div class="table-header col-last">Description</div>
+<div class="col-summary-item-name even-row-color"><a href="io/micronaut/servlet/http/ServletResponseEncoder.html" title="interface in io.micronaut.servlet.http">io.micronaut.servlet.http.ServletResponseEncoder</a></div>
+<div class="col-last even-row-color">
+<div class="deprecation-comment">Now unused, use a normal <code>ResponseBodyWriter</code></div>
+</div>
+<div class="col-summary-item-name odd-row-color"><a href="io/micronaut/servlet/http/StreamedServletMessage.html" title="interface in io.micronaut.servlet.http">io.micronaut.servlet.http.StreamedServletMessage</a></div>
+<div class="col-last odd-row-color">
+<div class="deprecation-comment">Use the <code>ServerHttpRequest</code> API instead</div>
+</div>
+</div>
+</div>
+</li>
+</ul>
+<ul class="block-list">
+<li>
 <div id="class">
 <div class="caption"><span>Deprecated Classes</span></div>
 <div class="summary-table two-column-summary">
 <div class="table-header col-first">Class</div>
 <div class="table-header col-last">Description</div>
-<div class="col-summary-item-name even-row-color"><a href="io/micronaut/servlet/http/body/AvailableByteArrayBody.html" title="class in io.micronaut.servlet.http.body">io.micronaut.servlet.http.body.AvailableByteArrayBody</a></div>
+<div class="col-summary-item-name even-row-color"><a href="io/micronaut/servlet/http/DefaultServletExchange.html" title="class in io.micronaut.servlet.http">io.micronaut.servlet.http.DefaultServletExchange</a></div>
 <div class="col-last even-row-color">
-<div class="deprecation-comment">Use <code>AvailableByteArrayBody</code> from core instead</div>
+<div class="deprecation-comment">Unused</div>
 </div>
-<div class="col-summary-item-name odd-row-color"><a href="io/micronaut/servlet/http/body/InputStreamByteBody.html" title="class in io.micronaut.servlet.http.body">io.micronaut.servlet.http.body.InputStreamByteBody</a></div>
+<div class="col-summary-item-name odd-row-color"><a href="io/micronaut/servlet/http/encoders/AbstractFileEncoder.html" title="class in io.micronaut.servlet.http.encoders">io.micronaut.servlet.http.encoders.AbstractFileEncoder</a></div>
 <div class="col-last odd-row-color">
-<div class="deprecation-comment">Use <code>InputStreamByteBody</code> from core instead</div>
+<div class="deprecation-comment">Now unused, use a normal <code>ResponseBodyWriter</code></div>
+</div>
+<div class="col-summary-item-name even-row-color"><a href="io/micronaut/servlet/http/encoders/FileEncoder.html" title="class in io.micronaut.servlet.http.encoders">io.micronaut.servlet.http.encoders.FileEncoder</a></div>
+<div class="col-last even-row-color">
+<div class="deprecation-comment">Now unused, use a normal <code>ResponseBodyWriter</code></div>
+</div>
+<div class="col-summary-item-name odd-row-color"><a href="io/micronaut/servlet/http/encoders/StreamFileEncoder.html" title="class in io.micronaut.servlet.http.encoders">io.micronaut.servlet.http.encoders.StreamFileEncoder</a></div>
+<div class="col-last odd-row-color">
+<div class="deprecation-comment">Now unused, use a normal <code>ResponseBodyWriter</code></div>
+</div>
+<div class="col-summary-item-name even-row-color"><a href="io/micronaut/servlet/http/encoders/SystemFileEncoder.html" title="class in io.micronaut.servlet.http.encoders">io.micronaut.servlet.http.encoders.SystemFileEncoder</a></div>
+<div class="col-last even-row-color">
+<div class="deprecation-comment">Now unused, use a normal <code>ResponseBodyWriter</code></div>
 </div>
 </div>
 </div>
@@ -116,8 +172,12 @@ loadScripts(document, 'script');</script>
 <div class="col-last even-row-color">
 <div class="deprecation-comment">Use <a href="io/micronaut/servlet/engine/MicronautServletConfiguration.html#setAsyncSupported(boolean)"><code>MicronautServletConfiguration.setAsyncSupported(boolean)</code></a> instead</div>
 </div>
-<div class="col-summary-item-name odd-row-color"><a href="io/micronaut/servlet/undertow/UndertowFactory.html#deploymentInfo(io.micronaut.servlet.engine.MicronautServletConfiguration)">io.micronaut.servlet.undertow.UndertowFactory.deploymentInfo<wbr>(MicronautServletConfiguration)</a></div>
+<div class="col-summary-item-name odd-row-color"><a href="io/micronaut/servlet/http/ServletHttpResponse.html#stream(org.reactivestreams.Publisher)">io.micronaut.servlet.http.ServletHttpResponse.stream<wbr>(Publisher&lt;?&gt;)</a></div>
 <div class="col-last odd-row-color">
+<div class="deprecation-comment">Use <a href="io/micronaut/servlet/http/ServletHttpResponse.html#stream(io.micronaut.http.body.CloseableByteBody)"><code>ServletHttpResponse.stream(CloseableByteBody)</code></a></div>
+</div>
+<div class="col-summary-item-name even-row-color"><a href="io/micronaut/servlet/undertow/UndertowFactory.html#deploymentInfo(io.micronaut.servlet.engine.MicronautServletConfiguration)">io.micronaut.servlet.undertow.UndertowFactory.deploymentInfo<wbr>(MicronautServletConfiguration)</a></div>
+<div class="col-last even-row-color">
 <div class="deprecation-comment">Use <a href="io/micronaut/servlet/undertow/UndertowFactory.html#deploymentInfo(io.micronaut.servlet.engine.MicronautServletConfiguration,java.util.Collection)"><code>UndertowFactory.deploymentInfo(MicronautServletConfiguration, Collection)</code></a></div>
 </div>
 </div>

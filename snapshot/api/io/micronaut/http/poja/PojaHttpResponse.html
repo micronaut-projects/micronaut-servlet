@@ -80,10 +80,6 @@ loadScripts(document, 'script');</script>
 <dt>All Implemented Interfaces:</dt>
 <dd><code>io.micronaut.core.attr.AttributeHolder</code>, <code>io.micronaut.core.attr.MutableAttributeHolder</code>, <code>io.micronaut.http.HttpMessage&lt;T&gt;</code>, <code>io.micronaut.http.HttpResponse&lt;T&gt;</code>, <code>io.micronaut.http.MutableHttpMessage&lt;T&gt;</code>, <code>io.micronaut.http.MutableHttpResponse&lt;T&gt;</code>, <code><a href="../../servlet/http/ServletHttpResponse.html" title="interface in io.micronaut.servlet.http">ServletHttpResponse</a>&lt;RES,<wbr>T&gt;</code></dd>
 </dl>
-<dl class="notes">
-<dt>Direct Known Subclasses:</dt>
-<dd><code><a href="apache/ApacheServletHttpResponse.html" title="class in io.micronaut.http.poja.apache">ApacheServletHttpResponse</a></code></dd>
-</dl>
 <hr>
 <div class="type-signature"><span class="modifiers">public abstract class </span><span class="element-name type-name-label">PojaHttpResponse&lt;T,<wbr>RES&gt;</span>
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>
@@ -138,7 +134,7 @@ implements <a href="../../servlet/http/ServletHttpResponse.html" title="interfac
 <code>attribute, body, characterEncoding, characterEncoding, contentEncoding, contentLength, contentType, contentType, cookie, cookies, header, headers, headers, locale, status, status, status, status, toMutableResponse</code></div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-io.micronaut.servlet.http.ServletHttpResponse">Methods inherited from interface&nbsp;io.micronaut.servlet.http.<a href="../../servlet/http/ServletHttpResponse.html" title="interface in io.micronaut.servlet.http">ServletHttpResponse</a></h3>
-<code><a href="../../servlet/http/ServletHttpResponse.html#getNativeResponse()">getNativeResponse</a>, <a href="../../servlet/http/ServletHttpResponse.html#getOutputStream()">getOutputStream</a>, <a href="../../servlet/http/ServletHttpResponse.html#getWriter()">getWriter</a>, <a href="../../servlet/http/ServletHttpResponse.html#stream(org.reactivestreams.Publisher)">stream</a></code></div>
+<code><a href="../../servlet/http/ServletHttpResponse.html#getNativeResponse()">getNativeResponse</a>, <a href="../../servlet/http/ServletHttpResponse.html#getOutputStream()">getOutputStream</a>, <a href="../../servlet/http/ServletHttpResponse.html#getWriter()">getWriter</a>, <a href="../../servlet/http/ServletHttpResponse.html#stream(io.micronaut.http.body.CloseableByteBody)">stream</a>, <a href="../../servlet/http/ServletHttpResponse.html#stream(org.reactivestreams.Publisher)">stream</a></code></div>
 </section>
 </li>
 </ul>

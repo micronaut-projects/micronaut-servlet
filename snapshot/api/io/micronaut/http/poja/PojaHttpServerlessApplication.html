@@ -89,7 +89,8 @@ loadScripts(document, 'script');</script>
 <dd><code><a href="apache/ApacheServerlessApplication.html" title="class in io.micronaut.http.poja.apache">ApacheServerlessApplication</a></code></dd>
 </dl>
 <hr>
-<div class="type-signature"><span class="modifiers">public abstract class </span><span class="element-name type-name-label">PojaHttpServerlessApplication&lt;REQ,<wbr>RES&gt;</span>
+<div class="type-signature"><span class="annotations">@Internal
+</span><span class="modifiers">public abstract class </span><span class="element-name type-name-label">PojaHttpServerlessApplication&lt;REQ,<wbr>RES&gt;</span>
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>
 implements io.micronaut.runtime.EmbeddedApplication&lt;<a href="PojaHttpServerlessApplication.html" title="class in io.micronaut.http.poja">PojaHttpServerlessApplication</a>&lt;REQ,<wbr>RES&gt;&gt;</span></div>
 <div class="block">A base class for POJA serverless applications.
@@ -136,7 +137,7 @@ implements io.micronaut.runtime.EmbeddedApplication&lt;<a href="PojaHttpServerle
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>io.micronaut.context.ApplicationContext</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getApplicationContext()" class="member-name-link">getApplicationContext</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>protected abstract void</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>protected abstract boolean</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#handleSingleRequest(io.micronaut.servlet.http.ServletHttpHandler,java.io.InputStream,java.io.OutputStream)" class="member-name-link">handleSingleRequest</a><wbr>(<a href="../../servlet/http/ServletHttpHandler.html" title="class in io.micronaut.servlet.http">ServletHttpHandler</a>&lt;<a href="PojaHttpServerlessApplication.html" title="type parameter in PojaHttpServerlessApplication">REQ</a>,<wbr><a href="PojaHttpServerlessApplication.html" title="type parameter in PojaHttpServerlessApplication">RES</a>&gt;&nbsp;servletHttpHandler,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/InputStream.html" title="class or interface in java.io" class="external-link">InputStream</a>&nbsp;in,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/OutputStream.html" title="class or interface in java.io" class="external-link">OutputStream</a>&nbsp;out)</code></div>
@@ -296,16 +297,19 @@ implements io.micronaut.runtime.EmbeddedApplication&lt;<a href="PojaHttpServerle
 <li>
 <section class="detail" id="handleSingleRequest(io.micronaut.servlet.http.ServletHttpHandler,java.io.InputStream,java.io.OutputStream)">
 <h3>handleSingleRequest</h3>
-<div class="member-signature"><span class="modifiers">protected abstract</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">handleSingleRequest</span><wbr><span class="parameters">(<a href="../../servlet/http/ServletHttpHandler.html" title="class in io.micronaut.servlet.http">ServletHttpHandler</a>&lt;<a href="PojaHttpServerlessApplication.html" title="type parameter in PojaHttpServerlessApplication">REQ</a>,<wbr><a href="PojaHttpServerlessApplication.html" title="type parameter in PojaHttpServerlessApplication">RES</a>&gt;&nbsp;servletHttpHandler,
+<div class="member-signature"><span class="modifiers">protected abstract</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">handleSingleRequest</span><wbr><span class="parameters">(<a href="../../servlet/http/ServletHttpHandler.html" title="class in io.micronaut.servlet.http">ServletHttpHandler</a>&lt;<a href="PojaHttpServerlessApplication.html" title="type parameter in PojaHttpServerlessApplication">REQ</a>,<wbr><a href="PojaHttpServerlessApplication.html" title="type parameter in PojaHttpServerlessApplication">RES</a>&gt;&nbsp;servletHttpHandler,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/InputStream.html" title="class or interface in java.io" class="external-link">InputStream</a>&nbsp;in,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/OutputStream.html" title="class or interface in java.io" class="external-link">OutputStream</a>&nbsp;out)</span>
-                                     throws <span class="exceptions"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/IOException.html" title="class or interface in java.io" class="external-link">IOException</a></span></div>
+                                        throws <span class="exceptions"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/IOException.html" title="class or interface in java.io" class="external-link">IOException</a></span></div>
 <div class="block">Handle a single request.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>servletHttpHandler</code> - The handler</dd>
 <dd><code>in</code> - The input stream</dd>
 <dd><code>out</code> - The output stream</dd>
+<dt>Returns:</dt>
+<dd><code>true</code> iff more requests can come in, <code>false</code> when the connection should
+ be closed</dd>
 <dt>Throws:</dt>
 <dd><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/IOException.html" title="class or interface in java.io" class="external-link">IOException</a></code> - IO exception</dd>
 </dl>

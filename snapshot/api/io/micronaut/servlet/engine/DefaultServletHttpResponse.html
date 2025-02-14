@@ -85,7 +85,7 @@ loadScripts(document, 'script');</script>
 </dl>
 <hr>
 <div class="type-signature"><span class="annotations">@Internal
-</span><span class="modifiers">public class </span><span class="element-name type-name-label">DefaultServletHttpResponse&lt;B&gt;</span>
+</span><span class="modifiers">public final class </span><span class="element-name type-name-label">DefaultServletHttpResponse&lt;B&gt;</span>
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>
 implements <a href="../http/ServletHttpResponse.html" title="interface in io.micronaut.servlet.http">ServletHttpResponse</a>&lt;jakarta.servlet.http.HttpServletResponse,<wbr>B&gt;</span></div>
 <div class="block">Implementation of <a href="../http/ServletHttpResponse.html" title="interface in io.micronaut.servlet.http"><code>ServletHttpResponse</code></a> for the Servlet API.</div>
@@ -191,9 +191,14 @@ implements <a href="../http/ServletHttpResponse.html" title="interface in io.mic
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>io.micronaut.http.MutableHttpResponse&lt;<a href="DefaultServletHttpResponse.html" title="type parameter in DefaultServletHttpResponse">B</a>&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#status(io.micronaut.http.HttpStatus)" class="member-name-link">status</a><wbr>(io.micronaut.http.HttpStatus&nbsp;status)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>org.reactivestreams.Publisher&lt;io.micronaut.http.MutableHttpResponse&lt;?&gt;&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#stream(org.reactivestreams.Publisher)" class="member-name-link">stream</a><wbr>(org.reactivestreams.Publisher&lt;?&gt;&nbsp;dataPublisher)</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/CompletableFuture.html" title="class or interface in java.util.concurrent" class="external-link">CompletableFuture</a>&lt;?&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#stream(io.micronaut.http.body.CloseableByteBody)" class="member-name-link">stream</a><wbr>(io.micronaut.http.body.CloseableByteBody&nbsp;body)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Stream data from the given ByteBody.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>org.reactivestreams.Publisher&lt;io.micronaut.http.MutableHttpResponse&lt;?&gt;&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#stream(org.reactivestreams.Publisher)" class="member-name-link">stream</a><wbr>(org.reactivestreams.Publisher&lt;?&gt;&nbsp;dataPublisher)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Streams data using the given data publisher.</div>
 </div>
 </div>
@@ -267,6 +272,22 @@ implements <a href="../http/ServletHttpResponse.html" title="interface in io.mic
 <dd><code>dataPublisher</code> - The data publisher</dd>
 <dt>Returns:</dt>
 <dd>Emits the response once the stream has completed</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="stream(io.micronaut.http.body.CloseableByteBody)">
+<h3>stream</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/CompletableFuture.html" title="class or interface in java.util.concurrent" class="external-link">CompletableFuture</a>&lt;?&gt;</span>&nbsp;<span class="element-name">stream</span><wbr><span class="parameters">(io.micronaut.http.body.CloseableByteBody&nbsp;body)</span></div>
+<div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../http/ServletHttpResponse.html#stream(io.micronaut.http.body.CloseableByteBody)">ServletHttpResponse</a></code></span></div>
+<div class="block">Stream data from the given ByteBody.</div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code><a href="../http/ServletHttpResponse.html#stream(io.micronaut.http.body.CloseableByteBody)">stream</a></code>&nbsp;in interface&nbsp;<code><a href="../http/ServletHttpResponse.html" title="interface in io.micronaut.servlet.http">ServletHttpResponse</a>&lt;jakarta.servlet.http.HttpServletResponse,<wbr><a href="DefaultServletHttpResponse.html" title="type parameter in DefaultServletHttpResponse">B</a>&gt;</code></dd>
+<dt>Parameters:</dt>
+<dd><code>body</code> - The body to write</dd>
+<dt>Returns:</dt>
+<dd>A future that completes when the body is fully written</dd>
 </dl>
 </section>
 </li>

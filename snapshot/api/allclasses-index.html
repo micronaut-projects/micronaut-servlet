@@ -61,8 +61,8 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-first">Class</div>
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/http/encoders/AbstractFileEncoder.html" title="class in io.micronaut.servlet.http.encoders">AbstractFileEncoder</a>&lt;<a href="io/micronaut/servlet/http/encoders/AbstractFileEncoder.html" title="type parameter in AbstractFileEncoder">T</a> extends io.micronaut.http.server.types.files.FileCustomizableResponseType&gt;</div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
-<div class="block">Abstract file encoder implementation.</div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">Deprecated, for removal: This API element is subject to removal in a future version.
+<div class="deprecation-comment">Now unused, use a normal <code>ResponseBodyWriter</code></div>
 </div>
 <div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/engine/server/AbstractServletServer.html" title="class in io.micronaut.servlet.engine.server">AbstractServletServer</a>&lt;<a href="io/micronaut/servlet/engine/server/AbstractServletServer.html" title="type parameter in AbstractServletServer">T</a>&gt;</div>
 <div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
@@ -84,61 +84,45 @@ loadScripts(document, 'script');</script>
 <div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
 <div class="block">An implementation of the POJA Http Request based on Apache.</div>
 </div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/http/poja/apache/ApacheServletHttpResponse.html" title="class in io.micronaut.http.poja.apache">ApacheServletHttpResponse</a>&lt;<a href="io/micronaut/http/poja/apache/ApacheServletHttpResponse.html" title="type parameter in ApacheServletHttpResponse">T</a>&gt;</div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
-<div class="block">An implementation of the POJA HTTP response based on Apache.</div>
-</div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/http/body/AvailableByteArrayBody.html" title="class in io.micronaut.servlet.http.body">AvailableByteArrayBody</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">Deprecated, for removal: This API element is subject to removal in a future version.
-<div class="deprecation-comment">Use <code>AvailableByteArrayBody</code> from core instead</div>
-</div>
 <div class="col-first even-row-color all-classes-table all-classes-table-tab1"><a href="io/micronaut/servlet/http/BodyBuilder.html" title="interface in io.micronaut.servlet.http">BodyBuilder</a></div>
 <div class="col-last even-row-color all-classes-table all-classes-table-tab1">
 <div class="block">API to Read the Body of an HTTP Request where the body is supplied as an InputStream.</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/http/ByteArrayBufferFactory.html" title="class in io.micronaut.servlet.http">ByteArrayBufferFactory</a></div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html" title="class in io.micronaut.servlet.http">ByteArrayByteBuffer</a>&lt;<a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html" title="type parameter in ByteArrayByteBuffer">T</a>&gt;</div>
 <div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
-<div class="block"><code>ByteBufferFactory</code> implementation based on simple byte arrays.</div>
-</div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html" title="class in io.micronaut.servlet.http">ByteArrayByteBuffer</a>&lt;<a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html" title="type parameter in ByteArrayByteBuffer">T</a>&gt;</div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
 <div class="block">A <code>ByteBuffer</code> implementation that is backed by a byte array.</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/http/DefaultBodyBuilder.html" title="class in io.micronaut.servlet.http">DefaultBodyBuilder</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/http/DefaultBodyBuilder.html" title="class in io.micronaut.servlet.http">DefaultBodyBuilder</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
 <div class="block">Default implementation of <a href="io/micronaut/servlet/http/BodyBuilder.html" title="interface in io.micronaut.servlet.http"><code>BodyBuilder</code></a>.</div>
 </div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/engine/DefaultMicronautServlet.html" title="class in io.micronaut.servlet.engine">DefaultMicronautServlet</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/engine/DefaultMicronautServlet.html" title="class in io.micronaut.servlet.engine">DefaultMicronautServlet</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
 <div class="block">A servlet that initializes Micronaut and serves requests.</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/engine/DefaultServletCookies.html" title="class in io.micronaut.servlet.engine">DefaultServletCookies</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/engine/DefaultServletCookies.html" title="class in io.micronaut.servlet.engine">DefaultServletCookies</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
 <div class="block">Implementation of <code>Cookies</code> ontop of the Servlet API.</div>
 </div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/http/DefaultServletExchange.html" title="class in io.micronaut.servlet.http">DefaultServletExchange</a>&lt;<a href="io/micronaut/servlet/http/DefaultServletExchange.html" title="type parameter in DefaultServletExchange">Req</a>,<wbr><a href="io/micronaut/servlet/http/DefaultServletExchange.html" title="type parameter in DefaultServletExchange">Res</a>&gt;</div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
-<div class="block">Represents an HTTP exchange in a Serverless context.</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/http/DefaultServletExchange.html" title="class in io.micronaut.servlet.http">DefaultServletExchange</a>&lt;<a href="io/micronaut/servlet/http/DefaultServletExchange.html" title="type parameter in DefaultServletExchange">Req</a>,<wbr><a href="io/micronaut/servlet/http/DefaultServletExchange.html" title="type parameter in DefaultServletExchange">Res</a>&gt;</div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">Deprecated, for removal: This API element is subject to removal in a future version.
+<div class="deprecation-comment">Unused</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/engine/DefaultServletHttpHandler.html" title="class in io.micronaut.servlet.engine">DefaultServletHttpHandler</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/engine/DefaultServletHttpHandler.html" title="class in io.micronaut.servlet.engine">DefaultServletHttpHandler</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
 <div class="block">Default implementation of <a href="io/micronaut/servlet/http/ServletHttpHandler.html" title="class in io.micronaut.servlet.http"><code>ServletHttpHandler</code></a> for the Servlet API.</div>
 </div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html" title="class in io.micronaut.servlet.engine">DefaultServletHttpRequest</a>&lt;<a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html" title="type parameter in DefaultServletHttpRequest">B</a>&gt;</div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html" title="class in io.micronaut.servlet.engine">DefaultServletHttpRequest</a>&lt;<a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html" title="type parameter in DefaultServletHttpRequest">B</a>&gt;</div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
 <div class="block">Implementation of <code>HttpRequest</code> ontop of the Servlet API.</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/engine/DefaultServletHttpResponse.html" title="class in io.micronaut.servlet.engine">DefaultServletHttpResponse</a>&lt;<a href="io/micronaut/servlet/engine/DefaultServletHttpResponse.html" title="type parameter in DefaultServletHttpResponse">B</a>&gt;</div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/engine/DefaultServletHttpResponse.html" title="class in io.micronaut.servlet.engine">DefaultServletHttpResponse</a>&lt;<a href="io/micronaut/servlet/engine/DefaultServletHttpResponse.html" title="type parameter in DefaultServletHttpResponse">B</a>&gt;</div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
 <div class="block">Implementation of <a href="io/micronaut/servlet/http/ServletHttpResponse.html" title="interface in io.micronaut.servlet.http"><code>ServletHttpResponse</code></a> for the Servlet API.</div>
 </div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/http/encoders/FileEncoder.html" title="class in io.micronaut.servlet.http.encoders">FileEncoder</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
-<div class="block">Handles <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link"><code>File</code></a>.</div>
-</div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/http/body/InputStreamByteBody.html" title="class in io.micronaut.servlet.http.body">InputStreamByteBody</a></div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/http/encoders/FileEncoder.html" title="class in io.micronaut.servlet.http.encoders">FileEncoder</a></div>
 <div class="col-last odd-row-color all-classes-table all-classes-table-tab2">Deprecated, for removal: This API element is subject to removal in a future version.
-<div class="deprecation-comment">Use <code>InputStreamByteBody</code> from core instead</div>
+<div class="deprecation-comment">Now unused, use a normal <code>ResponseBodyWriter</code></div>
 </div>
 <div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/jetty/JettyConfiguration.html" title="class in io.micronaut.servlet.jetty">JettyConfiguration</a></div>
 <div class="col-last even-row-color all-classes-table all-classes-table-tab2">
@@ -288,8 +272,8 @@ loadScripts(document, 'script');</script>
 <div class="block">A binder capable of binding the servlet response.</div>
 </div>
 <div class="col-first odd-row-color all-classes-table all-classes-table-tab1"><a href="io/micronaut/servlet/http/ServletResponseEncoder.html" title="interface in io.micronaut.servlet.http">ServletResponseEncoder</a>&lt;<a href="io/micronaut/servlet/http/ServletResponseEncoder.html" title="type parameter in ServletResponseEncoder">T</a>&gt;</div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab1">
-<div class="block">An interface for custom encoding of the HTTP response.</div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab1">Deprecated, for removal: This API element is subject to removal in a future version.
+<div class="deprecation-comment">Now unused, use a normal <code>ResponseBodyWriter</code></div>
 </div>
 <div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/http/ServletResponseFactory.html" title="class in io.micronaut.servlet.http">ServletResponseFactory</a></div>
 <div class="col-last even-row-color all-classes-table all-classes-table-tab2">
@@ -305,16 +289,16 @@ loadScripts(document, 'script');</script>
 <div class="block">Configuration for static resources for servlet engines.</div>
 </div>
 <div class="col-first odd-row-color all-classes-table all-classes-table-tab1"><a href="io/micronaut/servlet/http/StreamedServletMessage.html" title="interface in io.micronaut.servlet.http">StreamedServletMessage</a>&lt;<a href="io/micronaut/servlet/http/StreamedServletMessage.html" title="type parameter in StreamedServletMessage">B</a>,<wbr><a href="io/micronaut/servlet/http/StreamedServletMessage.html" title="type parameter in StreamedServletMessage">BB</a>&gt;</div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab1">
-<div class="block">Represents a streamed HTTP message.</div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab1">Deprecated, for removal: This API element is subject to removal in a future version.
+<div class="deprecation-comment">Use the <code>ServerHttpRequest</code> API instead</div>
 </div>
 <div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/http/encoders/StreamFileEncoder.html" title="class in io.micronaut.servlet.http.encoders">StreamFileEncoder</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
-<div class="block">A <a href="io/micronaut/servlet/http/ServletResponseEncoder.html" title="interface in io.micronaut.servlet.http"><code>ServletResponseEncoder</code></a> for <code>StreamedFile</code>.</div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">Deprecated, for removal: This API element is subject to removal in a future version.
+<div class="deprecation-comment">Now unused, use a normal <code>ResponseBodyWriter</code></div>
 </div>
 <div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/http/encoders/SystemFileEncoder.html" title="class in io.micronaut.servlet.http.encoders">SystemFileEncoder</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
-<div class="block">A <a href="io/micronaut/servlet/http/ServletResponseEncoder.html" title="interface in io.micronaut.servlet.http"><code>ServletResponseEncoder</code></a> for <code>SystemFile</code>.</div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">Deprecated, for removal: This API element is subject to removal in a future version.
+<div class="deprecation-comment">Now unused, use a normal <code>ResponseBodyWriter</code></div>
 </div>
 <div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/http/poja/test/TestingServerlessEmbeddedApplication.html" title="class in io.micronaut.http.poja.test">TestingServerlessEmbeddedApplication</a></div>
 <div class="col-last even-row-color all-classes-table all-classes-table-tab2">

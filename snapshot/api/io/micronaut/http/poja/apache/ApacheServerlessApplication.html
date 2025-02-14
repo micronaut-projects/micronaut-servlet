@@ -72,19 +72,19 @@ loadScripts(document, 'script');</script>
 <h1 title="Class ApacheServerlessApplication" class="title">Class ApacheServerlessApplication</h1>
 </div>
 <div class="inheritance" title="Inheritance Tree"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">java.lang.Object</a>
-<div class="inheritance"><a href="../PojaHttpServerlessApplication.html" title="class in io.micronaut.http.poja">io.micronaut.http.poja.PojaHttpServerlessApplication</a>&lt;<a href="ApacheServletHttpRequest.html" title="class in io.micronaut.http.poja.apache">ApacheServletHttpRequest</a>&lt;?&gt;,<wbr><a href="ApacheServletHttpResponse.html" title="class in io.micronaut.http.poja.apache">ApacheServletHttpResponse</a>&lt;?&gt;&gt;
+<div class="inheritance"><a href="../PojaHttpServerlessApplication.html" title="class in io.micronaut.http.poja">io.micronaut.http.poja.PojaHttpServerlessApplication</a>&lt;<a href="ApacheServletHttpRequest.html" title="class in io.micronaut.http.poja.apache">ApacheServletHttpRequest</a>&lt;?&gt;,<wbr>io.micronaut.http.poja.apache.ApacheServletHttpResponse&lt;?&gt;&gt;
 <div class="inheritance">io.micronaut.http.poja.apache.ApacheServerlessApplication</div>
 </div>
 </div>
 <section class="class-description" id="class-description">
 <dl class="notes">
 <dt>All Implemented Interfaces:</dt>
-<dd><code>io.micronaut.context.ApplicationContextLifeCycle&lt;<a href="../PojaHttpServerlessApplication.html" title="class in io.micronaut.http.poja">PojaHttpServerlessApplication</a>&lt;<a href="ApacheServletHttpRequest.html" title="class in io.micronaut.http.poja.apache">ApacheServletHttpRequest</a>&lt;?&gt;,<wbr><a href="ApacheServletHttpResponse.html" title="class in io.micronaut.http.poja.apache">ApacheServletHttpResponse</a>&lt;?&gt;&gt;&gt;</code>, <code>io.micronaut.context.ApplicationContextProvider</code>, <code>io.micronaut.context.LifeCycle</code>, <code>io.micronaut.runtime.EmbeddedApplication&lt;<a href="../PojaHttpServerlessApplication.html" title="class in io.micronaut.http.poja">PojaHttpServerlessApplication</a>&lt;<a href="ApacheServletHttpRequest.html" title="class in io.micronaut.http.poja.apache">ApacheServletHttpRequest</a>&lt;?&gt;,<wbr><a href="ApacheServletHttpResponse.html" title="class in io.micronaut.http.poja.apache">ApacheServletHttpResponse</a>&lt;?&gt;&gt;&gt;</code>, <code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/Closeable.html" title="class or interface in java.io" class="external-link">Closeable</a></code>, <code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/AutoCloseable.html" title="class or interface in java.lang" class="external-link">AutoCloseable</a></code></dd>
+<dd><code>io.micronaut.context.ApplicationContextLifeCycle&lt;<a href="../PojaHttpServerlessApplication.html" title="class in io.micronaut.http.poja">PojaHttpServerlessApplication</a>&lt;<a href="ApacheServletHttpRequest.html" title="class in io.micronaut.http.poja.apache">ApacheServletHttpRequest</a>&lt;?&gt;,<wbr>io.micronaut.http.poja.apache.ApacheServletHttpResponse&lt;?&gt;&gt;&gt;</code>, <code>io.micronaut.context.ApplicationContextProvider</code>, <code>io.micronaut.context.LifeCycle</code>, <code>io.micronaut.runtime.EmbeddedApplication&lt;<a href="../PojaHttpServerlessApplication.html" title="class in io.micronaut.http.poja">PojaHttpServerlessApplication</a>&lt;<a href="ApacheServletHttpRequest.html" title="class in io.micronaut.http.poja.apache">ApacheServletHttpRequest</a>&lt;?&gt;,<wbr>io.micronaut.http.poja.apache.ApacheServletHttpResponse&lt;?&gt;&gt;&gt;</code>, <code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/Closeable.html" title="class or interface in java.io" class="external-link">Closeable</a></code>, <code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/AutoCloseable.html" title="class or interface in java.lang" class="external-link">AutoCloseable</a></code></dd>
 </dl>
 <hr>
 <div class="type-signature"><span class="annotations">@Singleton
 </span><span class="modifiers">public class </span><span class="element-name type-name-label">ApacheServerlessApplication</span>
-<span class="extends-implements">extends <a href="../PojaHttpServerlessApplication.html" title="class in io.micronaut.http.poja">PojaHttpServerlessApplication</a>&lt;<a href="ApacheServletHttpRequest.html" title="class in io.micronaut.http.poja.apache">ApacheServletHttpRequest</a>&lt;?&gt;,<wbr><a href="ApacheServletHttpResponse.html" title="class in io.micronaut.http.poja.apache">ApacheServletHttpResponse</a>&lt;?&gt;&gt;</span></div>
+<span class="extends-implements">extends <a href="../PojaHttpServerlessApplication.html" title="class in io.micronaut.http.poja">PojaHttpServerlessApplication</a>&lt;<a href="ApacheServletHttpRequest.html" title="class in io.micronaut.http.poja.apache">ApacheServletHttpRequest</a>&lt;?&gt;,<wbr>io.micronaut.http.poja.apache.ApacheServletHttpResponse&lt;?&gt;&gt;</span></div>
 <div class="block">Implementation of <a href="../PojaHttpServerlessApplication.html" title="class in io.micronaut.http.poja"><code>PojaHttpServerlessApplication</code></a> for Apache.</div>
 <dl class="notes">
 <dt>Since:</dt>
@@ -122,8 +122,8 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#handleSingleRequest(io.micronaut.servlet.http.ServletHttpHandler,java.io.InputStream,java.io.OutputStream)" class="member-name-link">handleSingleRequest</a><wbr>(<a href="../../../servlet/http/ServletHttpHandler.html" title="class in io.micronaut.servlet.http">ServletHttpHandler</a>&lt;<a href="ApacheServletHttpRequest.html" title="class in io.micronaut.http.poja.apache">ApacheServletHttpRequest</a>&lt;?&gt;,<wbr><a href="ApacheServletHttpResponse.html" title="class in io.micronaut.http.poja.apache">ApacheServletHttpResponse</a>&lt;?&gt;&gt;&nbsp;servletHttpHandler,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#handleSingleRequest(io.micronaut.servlet.http.ServletHttpHandler,java.io.InputStream,java.io.OutputStream)" class="member-name-link">handleSingleRequest</a><wbr>(<a href="../../../servlet/http/ServletHttpHandler.html" title="class in io.micronaut.servlet.http">ServletHttpHandler</a>&lt;<a href="ApacheServletHttpRequest.html" title="class in io.micronaut.http.poja.apache">ApacheServletHttpRequest</a>&lt;?&gt;,<wbr>io.micronaut.http.poja.apache.ApacheServletHttpResponse&lt;?&gt;&gt;&nbsp;servletHttpHandler,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/InputStream.html" title="class or interface in java.io" class="external-link">InputStream</a>&nbsp;in,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/OutputStream.html" title="class or interface in java.io" class="external-link">OutputStream</a>&nbsp;out)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
@@ -184,19 +184,22 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="handleSingleRequest(io.micronaut.servlet.http.ServletHttpHandler,java.io.InputStream,java.io.OutputStream)">
 <h3>handleSingleRequest</h3>
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">handleSingleRequest</span><wbr><span class="parameters">(<a href="../../../servlet/http/ServletHttpHandler.html" title="class in io.micronaut.servlet.http">ServletHttpHandler</a>&lt;<a href="ApacheServletHttpRequest.html" title="class in io.micronaut.http.poja.apache">ApacheServletHttpRequest</a>&lt;?&gt;,<wbr><a href="ApacheServletHttpResponse.html" title="class in io.micronaut.http.poja.apache">ApacheServletHttpResponse</a>&lt;?&gt;&gt;&nbsp;servletHttpHandler,
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">handleSingleRequest</span><wbr><span class="parameters">(<a href="../../../servlet/http/ServletHttpHandler.html" title="class in io.micronaut.servlet.http">ServletHttpHandler</a>&lt;<a href="ApacheServletHttpRequest.html" title="class in io.micronaut.http.poja.apache">ApacheServletHttpRequest</a>&lt;?&gt;,<wbr>io.micronaut.http.poja.apache.ApacheServletHttpResponse&lt;?&gt;&gt;&nbsp;servletHttpHandler,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/InputStream.html" title="class or interface in java.io" class="external-link">InputStream</a>&nbsp;in,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/OutputStream.html" title="class or interface in java.io" class="external-link">OutputStream</a>&nbsp;out)</span>
-                            throws <span class="exceptions"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/IOException.html" title="class or interface in java.io" class="external-link">IOException</a></span></div>
+                               throws <span class="exceptions"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/IOException.html" title="class or interface in java.io" class="external-link">IOException</a></span></div>
 <div class="block"><span class="descfrm-type-label">Description copied from class:&nbsp;<code><a href="../PojaHttpServerlessApplication.html#handleSingleRequest(io.micronaut.servlet.http.ServletHttpHandler,java.io.InputStream,java.io.OutputStream)">PojaHttpServerlessApplication</a></code></span></div>
 <div class="block">Handle a single request.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
-<dd><code><a href="../PojaHttpServerlessApplication.html#handleSingleRequest(io.micronaut.servlet.http.ServletHttpHandler,java.io.InputStream,java.io.OutputStream)">handleSingleRequest</a></code>&nbsp;in class&nbsp;<code><a href="../PojaHttpServerlessApplication.html" title="class in io.micronaut.http.poja">PojaHttpServerlessApplication</a>&lt;<a href="ApacheServletHttpRequest.html" title="class in io.micronaut.http.poja.apache">ApacheServletHttpRequest</a>&lt;?&gt;,<wbr><a href="ApacheServletHttpResponse.html" title="class in io.micronaut.http.poja.apache">ApacheServletHttpResponse</a>&lt;?&gt;&gt;</code></dd>
+<dd><code><a href="../PojaHttpServerlessApplication.html#handleSingleRequest(io.micronaut.servlet.http.ServletHttpHandler,java.io.InputStream,java.io.OutputStream)">handleSingleRequest</a></code>&nbsp;in class&nbsp;<code><a href="../PojaHttpServerlessApplication.html" title="class in io.micronaut.http.poja">PojaHttpServerlessApplication</a>&lt;<a href="ApacheServletHttpRequest.html" title="class in io.micronaut.http.poja.apache">ApacheServletHttpRequest</a>&lt;?&gt;,<wbr>io.micronaut.http.poja.apache.ApacheServletHttpResponse&lt;?&gt;&gt;</code></dd>
 <dt>Parameters:</dt>
 <dd><code>servletHttpHandler</code> - The handler</dd>
 <dd><code>in</code> - The input stream</dd>
 <dd><code>out</code> - The output stream</dd>
+<dt>Returns:</dt>
+<dd><code>true</code> iff more requests can come in, <code>false</code> when the connection should
+ be closed</dd>
 <dt>Throws:</dt>
 <dd><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/IOException.html" title="class or interface in java.io" class="external-link">IOException</a></code> - IO exception</dd>
 </dl>
@@ -211,7 +214,7 @@ loadScripts(document, 'script');</script>
  If false, STDIN and STDOUT will be used directly instead.</div>
 <dl class="notes">
 <dt>Overrides:</dt>
-<dd><code><a href="../PojaHttpServerlessApplication.html#useInheritedChannel()">useInheritedChannel</a></code>&nbsp;in class&nbsp;<code><a href="../PojaHttpServerlessApplication.html" title="class in io.micronaut.http.poja">PojaHttpServerlessApplication</a>&lt;<a href="ApacheServletHttpRequest.html" title="class in io.micronaut.http.poja.apache">ApacheServletHttpRequest</a>&lt;?&gt;,<wbr><a href="ApacheServletHttpResponse.html" title="class in io.micronaut.http.poja.apache">ApacheServletHttpResponse</a>&lt;?&gt;&gt;</code></dd>
+<dd><code><a href="../PojaHttpServerlessApplication.html#useInheritedChannel()">useInheritedChannel</a></code>&nbsp;in class&nbsp;<code><a href="../PojaHttpServerlessApplication.html" title="class in io.micronaut.http.poja">PojaHttpServerlessApplication</a>&lt;<a href="ApacheServletHttpRequest.html" title="class in io.micronaut.http.poja.apache">ApacheServletHttpRequest</a>&lt;?&gt;,<wbr>io.micronaut.http.poja.apache.ApacheServletHttpResponse&lt;?&gt;&gt;</code></dd>
 <dt>Returns:</dt>
 <dd>Whether to use the inherited channel</dd>
 </dl>

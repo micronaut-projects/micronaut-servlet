@@ -65,7 +65,6 @@ loadScripts(document, 'script');</script>
 <li><a href="io/micronaut/servlet/engine/initializer/package-tree.html">io.micronaut.servlet.engine.initializer</a>, </li>
 <li><a href="io/micronaut/servlet/engine/server/package-tree.html">io.micronaut.servlet.engine.server</a>, </li>
 <li><a href="io/micronaut/servlet/http/package-tree.html">io.micronaut.servlet.http</a>, </li>
-<li><a href="io/micronaut/servlet/http/body/package-tree.html">io.micronaut.servlet.http.body</a>, </li>
 <li><a href="io/micronaut/servlet/http/encoders/package-tree.html">io.micronaut.servlet.http.encoders</a>, </li>
 <li><a href="io/micronaut/servlet/jetty/package-tree.html">io.micronaut.servlet.jetty</a>, </li>
 <li><a href="io/micronaut/servlet/tomcat/package-tree.html">io.micronaut.servlet.tomcat</a>, </li>
@@ -111,8 +110,6 @@ loadScripts(document, 'script');</script>
 <li class="circle">io.micronaut.servlet.undertow.<a href="io/micronaut/servlet/undertow/UndertowServer.html" class="type-name-link" title="class in io.micronaut.servlet.undertow">UndertowServer</a></li>
 </ul>
 </li>
-<li class="circle">io.micronaut.servlet.http.body.<a href="io/micronaut/servlet/http/body/AvailableByteArrayBody.html" class="type-name-link" title="class in io.micronaut.servlet.http.body">AvailableByteArrayBody</a> (implements io.micronaut.http.body.CloseableAvailableByteBody)</li>
-<li class="circle">io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ByteArrayBufferFactory.html" class="type-name-link" title="class in io.micronaut.servlet.http">ByteArrayBufferFactory</a> (implements io.micronaut.core.io.buffer.ByteBufferFactory&lt;T,<wbr>B&gt;)</li>
 <li class="circle">io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html" class="type-name-link" title="class in io.micronaut.servlet.http">ByteArrayByteBuffer</a>&lt;T&gt; (implements io.micronaut.core.io.buffer.ByteBuffer&lt;T&gt;)</li>
 <li class="circle">io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/DefaultBodyBuilder.html" class="type-name-link" title="class in io.micronaut.servlet.http">DefaultBodyBuilder</a> (implements io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/BodyBuilder.html" title="interface in io.micronaut.servlet.http">BodyBuilder</a>)</li>
 <li class="circle">io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/DefaultServletCookies.html" class="type-name-link" title="class in io.micronaut.servlet.engine">DefaultServletCookies</a> (implements io.micronaut.http.cookie.Cookies)</li>
@@ -141,7 +138,6 @@ loadScripts(document, 'script');</script>
 <li class="circle">io.micronaut.http.poja.util.<a href="io/micronaut/http/poja/util/LimitingInputStream.html" class="type-name-link" title="class in io.micronaut.http.poja.util">LimitingInputStream</a></li>
 </ul>
 </li>
-<li class="circle">io.micronaut.servlet.http.body.<a href="io/micronaut/servlet/http/body/InputStreamByteBody.html" class="type-name-link" title="class in io.micronaut.servlet.http.body">InputStreamByteBody</a></li>
 <li class="circle">io.micronaut.servlet.jetty.<a href="io/micronaut/servlet/jetty/JettyConfiguration.JettyRequestLog.html" class="type-name-link" title="class in io.micronaut.servlet.jetty">JettyConfiguration.JettyRequestLog</a> (implements io.micronaut.core.util.Toggleable)</li>
 <li class="circle">org.apache.catalina.util.LifecycleBase (implements org.apache.catalina.Lifecycle)
 <ul>
@@ -175,11 +171,7 @@ loadScripts(document, 'script');</script>
 <li class="circle">io.micronaut.http.poja.apache.<a href="io/micronaut/http/poja/apache/ApacheServletHttpRequest.html" class="type-name-link" title="class in io.micronaut.http.poja.apache">ApacheServletHttpRequest</a>&lt;B&gt;</li>
 </ul>
 </li>
-<li class="circle">io.micronaut.http.poja.<a href="io/micronaut/http/poja/PojaHttpResponse.html" class="type-name-link" title="class in io.micronaut.http.poja">PojaHttpResponse</a>&lt;T,<wbr>RES&gt; (implements io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletHttpResponse.html" title="interface in io.micronaut.servlet.http">ServletHttpResponse</a>&lt;N,<wbr>B&gt;)
-<ul>
-<li class="circle">io.micronaut.http.poja.apache.<a href="io/micronaut/http/poja/apache/ApacheServletHttpResponse.html" class="type-name-link" title="class in io.micronaut.http.poja.apache">ApacheServletHttpResponse</a>&lt;T&gt;</li>
-</ul>
-</li>
+<li class="circle">io.micronaut.http.poja.<a href="io/micronaut/http/poja/PojaHttpResponse.html" class="type-name-link" title="class in io.micronaut.http.poja">PojaHttpResponse</a>&lt;T,<wbr>RES&gt; (implements io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletHttpResponse.html" title="interface in io.micronaut.servlet.http">ServletHttpResponse</a>&lt;N,<wbr>B&gt;)</li>
 <li class="circle">io.micronaut.http.poja.<a href="io/micronaut/http/poja/PojaHttpServerlessApplication.html" class="type-name-link" title="class in io.micronaut.http.poja">PojaHttpServerlessApplication</a>&lt;REQ,<wbr>RES&gt; (implements io.micronaut.runtime.EmbeddedApplication&lt;T&gt;)
 <ul>
 <li class="circle">io.micronaut.http.poja.apache.<a href="io/micronaut/http/poja/apache/ApacheServerlessApplication.html" class="type-name-link" title="class in io.micronaut.http.poja.apache">ApacheServerlessApplication</a></li>
@@ -308,6 +300,15 @@ loadScripts(document, 'script');</script>
 </li>
 </ul>
 </li>
+<li class="circle">java.lang.<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/AutoCloseable.html" class="type-name-link external-link" title="class or interface in java.lang">AutoCloseable</a>
+<ul>
+<li class="circle">java.io.<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/Closeable.html" class="type-name-link external-link" title="class or interface in java.io">Closeable</a>
+<ul>
+<li class="circle">io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletExchange.html" class="type-name-link" title="interface in io.micronaut.servlet.http">ServletExchange</a>&lt;Req,<wbr>Res&gt;</li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="circle">io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/BodyBuilder.html" class="type-name-link" title="interface in io.micronaut.servlet.http">BodyBuilder</a></li>
 <li class="circle">io.micronaut.core.convert.ConversionServiceAware
 <ul>
@@ -325,7 +326,6 @@ loadScripts(document, 'script');</script>
 </ul>
 </li>
 <li class="circle">io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletConfiguration.html" class="type-name-link" title="interface in io.micronaut.servlet.http">ServletConfiguration</a></li>
-<li class="circle">io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletExchange.html" class="type-name-link" title="interface in io.micronaut.servlet.http">ServletExchange</a>&lt;Req,<wbr>Res&gt;</li>
 <li class="circle">io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletHttpRequest.AsyncExecution.html" class="type-name-link" title="interface in io.micronaut.servlet.http">ServletHttpRequest.AsyncExecution</a></li>
 <li class="circle">io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletHttpRequest.AsyncExecutionCallback.html" class="type-name-link" title="interface in io.micronaut.servlet.http">ServletHttpRequest.AsyncExecutionCallback</a></li>
 <li class="circle">io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletResponseEncoder.html" class="type-name-link" title="interface in io.micronaut.servlet.http">ServletResponseEncoder</a>&lt;T&gt;</li>

@@ -88,9 +88,14 @@ loadScripts(document, 'script');</script>
 <dd><code><a href="StreamFileEncoder.html" title="class in io.micronaut.servlet.http.encoders">StreamFileEncoder</a></code>, <code><a href="SystemFileEncoder.html" title="class in io.micronaut.servlet.http.encoders">SystemFileEncoder</a></code></dd>
 </dl>
 <hr>
-<div class="type-signature"><span class="modifiers">public abstract class </span><span class="element-name type-name-label">AbstractFileEncoder&lt;T extends io.micronaut.http.server.types.files.FileCustomizableResponseType&gt;</span>
+<div class="type-signature"><span class="annotations"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Deprecated.html" title="class or interface in java.lang" class="external-link">@Deprecated</a>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Deprecated.html#forRemoval()" title="class or interface in java.lang" class="external-link">forRemoval</a>=true,
+            <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Deprecated.html#since()" title="class or interface in java.lang" class="external-link">since</a>="5.1.0")
+</span><span class="modifiers">public abstract class </span><span class="element-name type-name-label">AbstractFileEncoder&lt;T extends io.micronaut.http.server.types.files.FileCustomizableResponseType&gt;</span>
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>
 implements <a href="../ServletResponseEncoder.html" title="interface in io.micronaut.servlet.http">ServletResponseEncoder</a>&lt;T&gt;</span></div>
+<div class="deprecation-block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span>
+<div class="deprecation-comment">Now unused, use a normal <code>ResponseBodyWriter</code></div>
+</div>
 <div class="block">Abstract file encoder implementation.</div>
 <dl class="notes">
 <dt>Since:</dt>
@@ -110,7 +115,9 @@ implements <a href="../ServletResponseEncoder.html" title="interface in io.micro
 <div class="table-header col-first">Constructor</div>
 <div class="table-header col-last">Description</div>
 <div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E()" class="member-name-link">AbstractFileEncoder</a>()</code></div>
-<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-last even-row-color">
+<div class="block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span></div>
+&nbsp;</div>
 </div>
 </section>
 </li>
@@ -119,26 +126,31 @@ implements <a href="../ServletResponseEncoder.html" title="interface in io.micro
 <section class="method-summary" id="method-summary">
 <h2>Method Summary</h2>
 <div id="method-summary-table">
-<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="method-summary-table-tab0" role="tab" aria-selected="true" aria-controls="method-summary-table.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table', 3)" class="active-table-tab">All Methods</button><button id="method-summary-table-tab2" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab2', 3)" class="table-tab">Instance Methods</button><button id="method-summary-table-tab4" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab4', 3)" class="table-tab">Concrete Methods</button></div>
+<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="method-summary-table-tab0" role="tab" aria-selected="true" aria-controls="method-summary-table.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table', 3)" class="active-table-tab">All Methods</button><button id="method-summary-table-tab2" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab2', 3)" class="table-tab">Instance Methods</button><button id="method-summary-table-tab4" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab4', 3)" class="table-tab">Concrete Methods</button><button id="method-summary-table-tab6" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab6', 3)" class="table-tab">Deprecated Methods</button></div>
 <div id="method-summary-table.tabpanel" role="tabpanel">
 <div class="summary-table three-column-summary" aria-labelledby="method-summary-table-tab0">
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#ifNotModified(T,io.micronaut.servlet.http.ServletHttpRequest,io.micronaut.servlet.http.ServletHttpResponse)" class="member-name-link">ifNotModified</a><wbr>(<a href="AbstractFileEncoder.html" title="type parameter in AbstractFileEncoder">T</a>&nbsp;value,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4 method-summary-table-tab6"><code>protected boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4 method-summary-table-tab6"><code><a href="#ifNotModified(T,io.micronaut.servlet.http.ServletHttpRequest,io.micronaut.servlet.http.ServletHttpResponse)" class="member-name-link">ifNotModified</a><wbr>(<a href="AbstractFileEncoder.html" title="type parameter in AbstractFileEncoder">T</a>&nbsp;value,
  <a href="../ServletHttpRequest.html" title="interface in io.micronaut.servlet.http">ServletHttpRequest</a>&lt;?,<wbr>? super <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;request,
  <a href="../ServletHttpResponse.html" title="interface in io.micronaut.servlet.http">ServletHttpResponse</a>&lt;?,<wbr>?&gt;&nbsp;response)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4 method-summary-table-tab6">
+<div class="block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span></div>
 <div class="block">Performs if not modified handling.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setDateAndCacheHeaders(io.micronaut.http.MutableHttpResponse,long)" class="member-name-link">setDateAndCacheHeaders</a><wbr>(io.micronaut.http.MutableHttpResponse&nbsp;response,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4 method-summary-table-tab6"><code>protected void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4 method-summary-table-tab6"><code><a href="#setDateAndCacheHeaders(io.micronaut.http.MutableHttpResponse,long)" class="member-name-link">setDateAndCacheHeaders</a><wbr>(io.micronaut.http.MutableHttpResponse&nbsp;response,
  long&nbsp;lastModified)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected io.micronaut.http.MutableHttpResponse&lt;?&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setDateHeader(io.micronaut.http.MutableHttpResponse)" class="member-name-link">setDateHeader</a><wbr>(io.micronaut.http.MutableHttpResponse&lt;?&gt;&nbsp;response)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4 method-summary-table-tab6">
+<div class="block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span></div>
+&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4 method-summary-table-tab6"><code>protected io.micronaut.http.MutableHttpResponse&lt;?&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4 method-summary-table-tab6"><code><a href="#setDateHeader(io.micronaut.http.MutableHttpResponse)" class="member-name-link">setDateHeader</a><wbr>(io.micronaut.http.MutableHttpResponse&lt;?&gt;&nbsp;response)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4 method-summary-table-tab6">
+<div class="block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span></div>
+&nbsp;</div>
 </div>
 </div>
 </div>
@@ -163,6 +175,7 @@ implements <a href="../ServletResponseEncoder.html" title="interface in io.micro
 <section class="detail" id="&lt;init&gt;()">
 <h3>AbstractFileEncoder</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">AbstractFileEncoder</span>()</div>
+<div class="deprecation-block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span></div>
 </section>
 </li>
 </ul>
@@ -177,6 +190,7 @@ implements <a href="../ServletResponseEncoder.html" title="interface in io.micro
 <section class="detail" id="setDateHeader(io.micronaut.http.MutableHttpResponse)">
 <h3>setDateHeader</h3>
 <div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">io.micronaut.http.MutableHttpResponse&lt;?&gt;</span>&nbsp;<span class="element-name">setDateHeader</span><wbr><span class="parameters">(io.micronaut.http.MutableHttpResponse&lt;?&gt;&nbsp;response)</span></div>
+<div class="deprecation-block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span></div>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>response</code> - The Http response</dd>
@@ -190,6 +204,7 @@ implements <a href="../ServletResponseEncoder.html" title="interface in io.micro
 <h3>setDateAndCacheHeaders</h3>
 <div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">setDateAndCacheHeaders</span><wbr><span class="parameters">(io.micronaut.http.MutableHttpResponse&nbsp;response,
  long&nbsp;lastModified)</span></div>
+<div class="deprecation-block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span></div>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>response</code> - The Http response</dd>
@@ -204,6 +219,7 @@ implements <a href="../ServletResponseEncoder.html" title="interface in io.micro
  <a href="AbstractFileEncoder.html" title="type parameter in AbstractFileEncoder">T</a>&nbsp;value,
  <a href="../ServletHttpRequest.html" title="interface in io.micronaut.servlet.http">ServletHttpRequest</a>&lt;?,<wbr>? super <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;request,
  <a href="../ServletHttpResponse.html" title="interface in io.micronaut.servlet.http">ServletHttpResponse</a>&lt;?,<wbr>?&gt;&nbsp;response)</span></div>
+<div class="deprecation-block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span></div>
 <div class="block">Performs if not modified handling.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
