@@ -171,7 +171,7 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
             HttpHeaders sourceHeaders = byteBodyResponse.getHeaders();
             MutableHttpHeaders targetHeaders = servletResponse.getHeaders();
             Set<String> sourceNames = new LinkedHashSet<>(sourceHeaders.names());
-            for (String k : targetHeaders.names()) {
+            for (String k : List.copyOf(targetHeaders.names())) {
                 if (sourceNames.remove(k)) {
                     List<String> all = sourceHeaders.getAll(k);
                     targetHeaders.remove(k);
