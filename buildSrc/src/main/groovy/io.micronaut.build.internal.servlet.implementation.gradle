@@ -15,7 +15,7 @@ dependencies {
     testImplementation mn.micronaut.http.client
     testImplementation(mnSession.micronaut.session)
     testImplementation(mnReactor.micronaut.reactor)
-    testImplementation (mnSecurity.micronaut.security)
-    testImplementation mn.micronaut.management
-    testImplementation mn.groovy.json
+    testImplementation(mnSecurity.micronaut.security)
+    testImplementation(mn.micronaut.management)
+    testImplementation(mn.groovy.json)
 }
