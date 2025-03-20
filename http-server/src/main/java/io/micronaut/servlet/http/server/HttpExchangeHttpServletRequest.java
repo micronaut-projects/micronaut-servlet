@@ -59,11 +59,6 @@ class HttpExchangeHttpServletRequest implements HttpServletRequest {
     }
 
     @Override
-    public String getAuthType() {
-        throw new UnsupportedOperationException("Not implemented");
-    }
-
-    @Override
     public Cookie[] getCookies() {
         String cookieValue = exchange.getRequestHeaders().getFirst(HttpHeaders.COOKIE);
         if (StringUtils.isEmpty(cookieValue)) {
@@ -89,11 +84,6 @@ class HttpExchangeHttpServletRequest implements HttpServletRequest {
         c.setSecure(cookie.isSecure());
         c.setMaxAge((int) cookie.getMaxAge());
         return c;
-    }
-
-    @Override
-    public long getDateHeader(String name) {
-        throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override
@@ -127,43 +117,8 @@ class HttpExchangeHttpServletRequest implements HttpServletRequest {
     }
 
     @Override
-    public String getPathInfo() {
-        throw new UnsupportedOperationException("Not implemented");
-    }
-
-    @Override
-    public String getPathTranslated() {
-        throw new UnsupportedOperationException("Not implemented");
-    }
-
-    @Override
-    public String getContextPath() {
-        throw new UnsupportedOperationException("Not implemented");
-    }
-
-    @Override
     public String getQueryString() {
         return exchange.getRequestURI().getQuery();
-    }
-
-    @Override
-    public String getRemoteUser() {
-        throw new UnsupportedOperationException("Not implemented");
-    }
-
-    @Override
-    public boolean isUserInRole(String role) {
-        throw new UnsupportedOperationException("Not implemented");
-    }
-
-    @Override
-    public Principal getUserPrincipal() {
-        throw new UnsupportedOperationException("Not implemented");
-    }
-
-    @Override
-    public String getRequestedSessionId() {
-        throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override
@@ -174,71 +129,6 @@ class HttpExchangeHttpServletRequest implements HttpServletRequest {
     @Override
     public StringBuffer getRequestURL() {
         return new StringBuffer(exchange.getRequestURI().toString());
-    }
-
-    @Override
-    public String getServletPath() {
-        throw new UnsupportedOperationException("Not implemented");
-    }
-
-    @Override
-    public HttpSession getSession(boolean create) {
-        throw new UnsupportedOperationException("Not implemented");
-    }
-
-    @Override
-    public HttpSession getSession() {
-        throw new UnsupportedOperationException("Not implemented");
-    }
-
-    @Override
-    public String changeSessionId() {
-        throw new UnsupportedOperationException("Not implemented");
-    }
-
-    @Override
-    public boolean isRequestedSessionIdValid() {
-        throw new UnsupportedOperationException("Not implemented");
-    }
-
-    @Override
-    public boolean isRequestedSessionIdFromCookie() {
-        throw new UnsupportedOperationException("Not implemented");
-    }
-
-    @Override
-    public boolean isRequestedSessionIdFromURL() {
-        throw new UnsupportedOperationException("Not implemented");
-    }
-
-    @Override
-    public boolean authenticate(HttpServletResponse httpServletResponse) throws IOException, ServletException {
-        throw new UnsupportedOperationException("Not implemented");
-    }
-
-    @Override
-    public void login(String s, String s1) throws ServletException {
-        throw new UnsupportedOperationException("Not implemented");
-    }
-
-    @Override
-    public void logout() throws ServletException {
-        throw new UnsupportedOperationException("Not implemented");
-    }
-
-    @Override
-    public Collection<Part> getParts() throws IOException, ServletException {
-        throw new UnsupportedOperationException("Not implemented");
-    }
-
-    @Override
-    public Part getPart(String s) throws IOException, ServletException {
-        throw new UnsupportedOperationException("Not implemented");
-    }
-
-    @Override
-    public <T extends HttpUpgradeHandler> T upgrade(Class<T> aClass) throws IOException, ServletException {
-        throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override
@@ -254,11 +144,6 @@ class HttpExchangeHttpServletRequest implements HttpServletRequest {
     @Override
     public String getCharacterEncoding() {
         return exchange.getRequestHeaders().getFirst(HttpHeaders.CONTENT_ENCODING);
-    }
-
-    @Override
-    public void setCharacterEncoding(String env) throws UnsupportedEncodingException {
-        throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override
@@ -381,18 +266,8 @@ class HttpExchangeHttpServletRequest implements HttpServletRequest {
     }
 
     @Override
-    public Enumeration<Locale> getLocales() {
-        throw new UnsupportedOperationException("Not implemented");
-    }
-
-    @Override
     public boolean isSecure() {
         return "https".equalsIgnoreCase(exchange.getRequestURI().getScheme());
-    }
-
-    @Override
-    public RequestDispatcher getRequestDispatcher(String path) {
-        throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override
@@ -416,6 +291,136 @@ class HttpExchangeHttpServletRequest implements HttpServletRequest {
     }
 
     @Override
+    public boolean isAsyncSupported() {
+        return false;
+    }
+    
+    @Override
+    public String getAuthType() {
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+    @Override
+    public Enumeration<Locale> getLocales() {
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+    @Override
+    public RequestDispatcher getRequestDispatcher(String path) {
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+    @Override
+    public long getDateHeader(String name) {
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+    @Override
+    public String getPathInfo() {
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+    @Override
+    public String getPathTranslated() {
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+    @Override
+    public String getContextPath() {
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+    @Override
+    public String getRemoteUser() {
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+    @Override
+    public boolean isUserInRole(String role) {
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+    @Override
+    public Principal getUserPrincipal() {
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+    @Override
+    public String getRequestedSessionId() {
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+    @Override
+    public String getServletPath() {
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+    @Override
+    public HttpSession getSession(boolean create) {
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+    @Override
+    public HttpSession getSession() {
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+    @Override
+    public String changeSessionId() {
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+    @Override
+    public boolean isRequestedSessionIdValid() {
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+    @Override
+    public boolean isRequestedSessionIdFromCookie() {
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+    @Override
+    public boolean isRequestedSessionIdFromURL() {
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+    @Override
+    public boolean authenticate(HttpServletResponse httpServletResponse) throws IOException, ServletException {
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+    @Override
+    public void login(String s, String s1) throws ServletException {
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+    @Override
+    public void logout() throws ServletException {
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+    @Override
+    public Collection<Part> getParts() throws IOException, ServletException {
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+    @Override
+    public Part getPart(String s) throws IOException, ServletException {
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+    @Override
+    public <T extends HttpUpgradeHandler> T upgrade(Class<T> aClass) throws IOException, ServletException {
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+    @Override
+    public void setCharacterEncoding(String env) throws UnsupportedEncodingException {
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+    @Override
     public ServletContext getServletContext() {
         throw new UnsupportedOperationException("Not implemented");
     }
@@ -436,18 +441,13 @@ class HttpExchangeHttpServletRequest implements HttpServletRequest {
     }
 
     @Override
-    public boolean isAsyncSupported() {
-        return false;
-    }
-
-    @Override
     public AsyncContext getAsyncContext() {
         throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override
     public DispatcherType getDispatcherType() {
-        return DispatcherType.REQUEST;
+        throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override
