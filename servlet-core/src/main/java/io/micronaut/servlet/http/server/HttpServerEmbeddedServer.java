@@ -18,6 +18,7 @@ package io.micronaut.servlet.http.server;
 import com.sun.net.httpserver.HttpServer;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.ApplicationContextProvider;
+import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.env.CachedEnvironment;
 import io.micronaut.context.env.Environment;
 import io.micronaut.context.event.ApplicationEventPublisher;
@@ -38,6 +39,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 @Internal
 @Experimental
+@Requires(beans = HttpServer.class)
 @Singleton
 class HttpServerEmbeddedServer extends AbstractServletServer<HttpServer> {
     private static final String SCHEME_HTTP = "http";

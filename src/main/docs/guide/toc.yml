@@ -1,5 +1,6 @@
 introduction: Introduction
 releaseHistory: Release History
+httpServer: Built-In Java HTTP Server Runtime
 servletApi: Working with the Servlet API
 servletAnnotation: Servlet Annotation Support
 warDeployment:

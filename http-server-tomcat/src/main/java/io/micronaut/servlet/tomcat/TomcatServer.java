@@ -49,6 +49,7 @@ public class TomcatServer extends AbstractServletServer<Tomcat> {
      *
      * @param applicationContext       The context
      * @param applicationConfiguration The configuration
+     * @param serverShutdownEventPublisher {@link ApplicationEventPublisher} for the {@link ServerShutdownEvent} event.
      * @param tomcat                   The tomcat instance
      */
     @Inject

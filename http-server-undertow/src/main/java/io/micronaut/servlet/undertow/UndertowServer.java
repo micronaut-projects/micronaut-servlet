@@ -49,6 +49,7 @@ public class UndertowServer extends AbstractServletServer<Undertow> {
      * Default constructor.
      * @param applicationContext The app context
      * @param applicationConfiguration The app config
+     * @param serverShutdownEventPublisher {@link ApplicationEventPublisher} for the {@link ServerShutdownEvent} event.
      * @param undertow The undertow instance
      */
     @Inject

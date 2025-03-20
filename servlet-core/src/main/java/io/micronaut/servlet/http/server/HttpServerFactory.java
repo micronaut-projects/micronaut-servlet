@@ -18,6 +18,7 @@ package io.micronaut.servlet.http.server;
 import com.sun.net.httpserver.HttpServer;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Factory;
+import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.http.server.HttpServerConfiguration;
@@ -42,6 +43,7 @@ public class HttpServerFactory {
      * @return An HTTP Server
      * @throws IOException If an error occurs creating the server
      */
+    @Requires(beans = HttpHandlerPath.class)
     @Singleton
     HttpServer createHttpServer(ApplicationContext applicationContext,
                                 HttpServerConfiguration httpServerConfiguration,

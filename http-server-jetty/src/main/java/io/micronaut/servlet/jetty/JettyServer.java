@@ -18,7 +18,6 @@ package io.micronaut.servlet.jetty;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.http.server.exceptions.HttpServerException;
 import io.micronaut.runtime.ApplicationConfiguration;
@@ -60,6 +59,7 @@ public class JettyServer extends AbstractServletServer<Server> {
      * @param server                   The jetty server
      * @param router                   The router
      * @param jettyConfiguration       The jetty configuration
+     * @param serverShutdownEventPublisher {@link ApplicationEventPublisher} for the {@link ServerShutdownEvent} event.
      * @param connectors               Additional connector configuration
      */
     @Inject
@@ -75,6 +75,7 @@ public class JettyServer extends AbstractServletServer<Server> {
         this.router = router;
         applyConnectorConfiguration(jettyConfiguration, server, connectors);
     }
+
     /**
      * Default constructor.
      *

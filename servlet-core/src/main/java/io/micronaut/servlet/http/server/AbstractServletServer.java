@@ -46,6 +46,7 @@ public abstract class AbstractServletServer<T> implements EmbeddedServer {
      *
      * @param applicationContext       The application context
      * @param applicationConfiguration The application configuration
+     * @param serverShutdownEventPublisher {@link ApplicationEventPublisher} for the {@link ServerShutdownEvent} event.
      * @param server                   The server object
      */
     protected AbstractServletServer(
