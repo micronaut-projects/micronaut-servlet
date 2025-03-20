@@ -18,7 +18,7 @@ package io.micronaut.servlet.tomcat;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.http.server.exceptions.InternalServerException;
 import io.micronaut.runtime.ApplicationConfiguration;
-import io.micronaut.servlet.engine.server.AbstractServletServer;
+import io.micronaut.servlet.http.server.AbstractServletServer;
 import org.apache.catalina.connector.Connector;
 import org.apache.catalina.startup.Tomcat;
 

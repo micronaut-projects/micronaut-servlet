@@ -19,7 +19,7 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.http.server.exceptions.HttpServerException;
 import io.micronaut.runtime.ApplicationConfiguration;
-import io.micronaut.servlet.engine.server.AbstractServletServer;
+import io.micronaut.servlet.http.server.AbstractServletServer;
 import io.micronaut.web.router.Router;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;

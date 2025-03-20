@@ -18,7 +18,7 @@ package io.micronaut.servlet.undertow;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.http.server.exceptions.InternalServerException;
 import io.micronaut.runtime.ApplicationConfiguration;
-import io.micronaut.servlet.engine.server.AbstractServletServer;
+import io.micronaut.servlet.http.server.AbstractServletServer;
 import io.undertow.Undertow;
 import jakarta.inject.Singleton;
 
