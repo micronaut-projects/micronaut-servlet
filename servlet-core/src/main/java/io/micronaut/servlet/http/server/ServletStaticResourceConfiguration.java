@@ -26,9 +26,6 @@ import java.util.List;
 
 /**
  * Configuration for static resources for servlet engines.
- *
- * @author graemerocher
- * @since 1.0.0
  */
 @EachProperty(StaticResourceConfiguration.PREFIX)
 @Indexed(ServletStaticResourceConfiguration.class)

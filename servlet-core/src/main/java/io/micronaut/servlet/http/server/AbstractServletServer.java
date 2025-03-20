@@ -29,8 +29,6 @@ import io.micronaut.runtime.server.event.ServerStartupEvent;
  * Abstract base class for servlet embedded servers.
  *
  * @param <T> The server type
- * @author graemerocher
- * @since 1.0.0
  */
 @Internal
 public abstract class AbstractServletServer<T> implements EmbeddedServer {

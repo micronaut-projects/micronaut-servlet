@@ -36,9 +36,6 @@ import java.util.stream.Collectors;
 
 /**
  * Parent factory class for servlet-based servers.
- *
- * @author graemerocher
- * @since 1.0.0
  */
 @Internal
 public abstract class ServletServerFactory extends SslBuilder<SSLContext> {
