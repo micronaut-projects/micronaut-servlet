@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.servlet.engine.server;
+package io.micronaut.servlet.http.server;
 
+import io.micronaut.context.annotation.EachProperty;
+import io.micronaut.core.annotation.Indexed;
 import io.micronaut.core.bind.annotation.Bindable;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.core.util.Toggleable;
@@ -27,9 +29,9 @@ import java.util.List;
  *
  * @author graemerocher
  * @since 1.0.0
- * @deprecated Use {@link io.micronaut.servlet.http.server.ServletStaticResourceConfiguration} instead
  */
-@Deprecated(forRemoval = true, since = "5.2.0")
+@EachProperty(StaticResourceConfiguration.PREFIX)
+@Indexed(ServletStaticResourceConfiguration.class)
 public interface ServletStaticResourceConfiguration extends Toggleable {
 
     String CLASSPATH_PREFIX = "classpath:";

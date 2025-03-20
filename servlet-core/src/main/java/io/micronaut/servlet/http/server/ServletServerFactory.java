@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.servlet.engine.server;
+package io.micronaut.servlet.http.server;
 
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
 import io.micronaut.context.exceptions.ConfigurationException;
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.io.ResourceResolver;
 import io.micronaut.core.io.socket.SocketUtils;
 import io.micronaut.http.HttpVersion;
@@ -38,9 +39,8 @@ import java.util.stream.Collectors;
  *
  * @author graemerocher
  * @since 1.0.0
- * @deprecated Use {@link io.micronaut.servlet.http.server.ServletServerFactory} instead
  */
-@Deprecated(forRemoval = true, since = "5.2.0")
+@Internal
 public abstract class ServletServerFactory extends SslBuilder<SSLContext> {
     private final HttpServerConfiguration serverConfiguration;
     private final SslConfiguration sslConfiguration;

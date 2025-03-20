@@ -13,11 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.servlet.engine.server;
+package io.micronaut.servlet.http.server;
 
 import io.micronaut.context.ApplicationContext;
-import io.micronaut.discovery.ServiceInstance;
-import io.micronaut.discovery.event.ServiceReadyEvent;
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.http.server.exceptions.HttpServerException;
 import io.micronaut.runtime.ApplicationConfiguration;
 import io.micronaut.runtime.server.EmbeddedServer;
@@ -30,9 +29,8 @@ import io.micronaut.runtime.server.event.ServerStartupEvent;
  * @param <T> The server type
  * @author graemerocher
  * @since 1.0.0
- * @deprecated Use {@link io.micronaut.servlet.http.server.AbstractServletServer} instead
  */
-@Deprecated(forRemoval = true, since = "5.2.0")
+@Internal
 public abstract class AbstractServletServer<T> implements EmbeddedServer {
 
     private final ApplicationContext applicationContext;
@@ -80,15 +78,6 @@ public abstract class AbstractServletServer<T> implements EmbeddedServer {
             }
             startServer();
             applicationContext.publishEvent(new ServerStartupEvent(this));
-            applicationConfiguration.getName().ifPresent((name) -> {
-                ServiceInstance.Builder builder = ServiceInstance.builder(name, getURI());
-                ApplicationConfiguration.InstanceConfiguration instance = applicationConfiguration.getInstance();
-                instance.getGroup().ifPresent(builder::group);
-                instance.getZone().ifPresent(builder::zone);
-                builder.metadata(instance.getMetadata());
-                instance.getId().ifPresent(builder::instanceId);
-                applicationContext.publishEvent(new ServiceReadyEvent(builder.build()));
-            });
         } catch (Exception e) {
             throw new HttpServerException(
                     "Error starting HTTP server: " + e.getMessage(), e
