@@ -16,14 +16,20 @@
 package io.micronaut.servlet.http.server;
 
 import com.sun.net.httpserver.HttpServer;
+import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.ApplicationContextProvider;
 import io.micronaut.context.env.CachedEnvironment;
 import io.micronaut.context.env.Environment;
+import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.io.socket.SocketUtils;
 import io.micronaut.http.server.HttpServerConfiguration;
 import io.micronaut.http.server.exceptions.HttpServerException;
 import io.micronaut.runtime.ApplicationConfiguration;
+import io.micronaut.runtime.server.event.ServerShutdownEvent;
+import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 
 import java.net.*;
@@ -44,11 +50,13 @@ class HttpServerEmbeddedServer extends AbstractServletServer<HttpServer> {
      * @param applicationConfiguration The application configuration
      * @param server                   The server object
      */
-    protected HttpServerEmbeddedServer(HttpServerApplicationContextProvider applicationContextProvider,
+    protected HttpServerEmbeddedServer(ApplicationContext applicationContext,
+                                       @Nullable @Named("HttpServer") ApplicationContextProvider applicationContextProvider,
                                        ApplicationConfiguration applicationConfiguration,
                                        HttpServerConfiguration httpServerConfiguration,
+                                       @Nullable ApplicationEventPublisher<ServerShutdownEvent> serverShutdownEventPublisher,
                                        HttpServer server) {
-        super(applicationContextProvider.getApplicationContext(), applicationConfiguration, server);
+        super(applicationContextProvider != null ? applicationContextProvider.getApplicationContext() : applicationContext, applicationConfiguration, serverShutdownEventPublisher, server);
         this.httpServerConfiguration = httpServerConfiguration;
     }
 

@@ -16,9 +16,13 @@
 package io.micronaut.servlet.jetty;
 
 import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.event.ApplicationEventPublisher;
+import io.micronaut.core.annotation.Nullable;
+import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.http.server.exceptions.HttpServerException;
 import io.micronaut.runtime.ApplicationConfiguration;
+import io.micronaut.runtime.server.event.ServerShutdownEvent;
 import io.micronaut.servlet.http.server.AbstractServletServer;
 import io.micronaut.web.router.Router;
 import jakarta.inject.Inject;
@@ -54,14 +58,40 @@ public class JettyServer extends AbstractServletServer<Server> {
      * @param applicationContext       The application context
      * @param applicationConfiguration The application configuration
      * @param server                   The jetty server
+     * @param router                   The router
+     * @param jettyConfiguration       The jetty configuration
+     * @param connectors               Additional connector configuration
+     */
+    @Inject
+    public JettyServer(
+        ApplicationContext applicationContext,
+        ApplicationConfiguration applicationConfiguration,
+        Server server,
+        Router router,
+        JettyConfiguration jettyConfiguration,
+        List<JettyConfiguration.ConnectorConfiguration> connectors,
+        @Nullable ApplicationEventPublisher<ServerShutdownEvent> serverShutdownEventPublisher) {
+        super(applicationContext, applicationConfiguration, serverShutdownEventPublisher, server);
+        this.router = router;
+        applyConnectorConfiguration(jettyConfiguration, server, connectors);
+    }
+    /**
+     * Default constructor.
+     *
+     * @param applicationContext       The application context
+     * @param applicationConfiguration The application configuration
+     * @param server                   The jetty server
      */
     @Deprecated(forRemoval = true, since = "5.0")
     public JettyServer(
             ApplicationContext applicationContext,
             ApplicationConfiguration applicationConfiguration,
             Server server) {
-        super(applicationContext, applicationConfiguration, server);
-        this.router = applicationContext.getBean(Router.class);
+        this(applicationContext, applicationConfiguration, server,
+            applicationContext.getBean(Router.class),
+            applicationContext.getBean(JettyConfiguration.class),
+            new ArrayList<>(applicationContext.getBeansOfType(JettyConfiguration.ConnectorConfiguration.class)),
+            null);
     }
 
     /**
@@ -74,7 +104,7 @@ public class JettyServer extends AbstractServletServer<Server> {
      * @param jettyConfiguration       The jetty configuration
      * @param connectors               Additional connector configuration
      */
-    @Inject
+    @Deprecated
     public JettyServer(
         ApplicationContext applicationContext,
         ApplicationConfiguration applicationConfiguration,
@@ -82,9 +112,7 @@ public class JettyServer extends AbstractServletServer<Server> {
         Router router,
         JettyConfiguration jettyConfiguration,
         List<JettyConfiguration.ConnectorConfiguration> connectors) {
-        super(applicationContext, applicationConfiguration, server);
-        this.router = router;
-        applyConnectorConfiguration(jettyConfiguration, server, connectors);
+        this(applicationContext, applicationConfiguration, server, router, jettyConfiguration, connectors, null);
     }
 
     @Override

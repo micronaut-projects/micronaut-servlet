@@ -16,7 +16,9 @@
 package io.micronaut.servlet.http.server;
 
 import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.server.exceptions.HttpServerException;
 import io.micronaut.runtime.ApplicationConfiguration;
 import io.micronaut.runtime.server.EmbeddedServer;
@@ -35,6 +37,8 @@ public abstract class AbstractServletServer<T> implements EmbeddedServer {
 
     private final ApplicationContext applicationContext;
     private final ApplicationConfiguration applicationConfiguration;
+    @Nullable
+    private final ApplicationEventPublisher<ServerShutdownEvent> serverShutdownEventPublisher;
     private final T server;
 
     /**
@@ -47,9 +51,11 @@ public abstract class AbstractServletServer<T> implements EmbeddedServer {
     protected AbstractServletServer(
             ApplicationContext applicationContext,
             ApplicationConfiguration applicationConfiguration,
+            @Nullable ApplicationEventPublisher<ServerShutdownEvent> serverShutdownEventPublisher,
             T server) {
         this.applicationContext = applicationContext;
         this.applicationConfiguration = applicationConfiguration;
+        this.serverShutdownEventPublisher = serverShutdownEventPublisher;
         this.server = server;
     }
 
@@ -91,7 +97,9 @@ public abstract class AbstractServletServer<T> implements EmbeddedServer {
         if (isRunning()) {
             try {
                 stopServer();
-                applicationContext.publishEvent(new ServerShutdownEvent(this));
+                if (serverShutdownEventPublisher != null) {
+                    serverShutdownEventPublisher.publishEvent(new ServerShutdownEvent(this));
+                }
                 if (applicationContext.isRunning()) {
                     applicationContext.stop();
                 }

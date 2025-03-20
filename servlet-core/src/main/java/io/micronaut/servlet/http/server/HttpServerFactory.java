@@ -18,10 +18,8 @@ package io.micronaut.servlet.http.server;
 import com.sun.net.httpserver.HttpServer;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Factory;
-import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.http.server.HttpServerConfiguration;
 import jakarta.inject.Singleton;
 
@@ -30,28 +28,12 @@ import java.net.InetSocketAddress;
 import java.util.List;
 
 /**
- * Factory for creating beans of type {@link HttpServer} and {@link HttpServerApplicationContextProvider}.
+ * Factory for creating beans of type {@link HttpServer}.
  */
 @Experimental
 @Internal
 @Factory
 public class HttpServerFactory {
-    /**
-     *
-     * @param applicationContext Application Context
-     * @return A bean of type {@link HttpServerApplicationContextProvider} which simply wraps the application context.
-     */
-    @Requires(missingBeans = HttpServerApplicationContextProvider.class)
-    @Singleton
-    HttpServerApplicationContextProvider httpServerApplicationContextProvider(ApplicationContext applicationContext) {
-        return new HttpServerApplicationContextProvider() {
-            @Override
-            public @NonNull ApplicationContext getApplicationContext() {
-                return applicationContext;
-            }
-        };
-    }
-
     /**
      *
      * @param applicationContext Application Context
