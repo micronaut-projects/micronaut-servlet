@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.http.poja.util;
+package io.micronaut.servlet.http.utils;
 
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.StringUtils;
 
@@ -58,10 +59,9 @@ import java.util.Map;
  *     QueryStringDecoder.java
  * </a>.
  * </p>
- * @deprecated Use {@link io.micronaut.servlet.http.utils.QueryStringDecoder} instead.
  */
+@Internal
 @SuppressWarnings("java:S3776" /* Reduce cognitive complexity warning */)
-@Deprecated(forRemoval = true, since="5.2.0")
 public class QueryStringDecoder {
 
     private static final Charset DEFAULT_CHARSET = StandardCharsets.UTF_8;
@@ -79,6 +79,7 @@ public class QueryStringDecoder {
     /**
      * Creates a new decoder that decodes the specified URI. The decoder will
      * assume that the query string is encoded in UTF-8.
+     * @param uri URI
      */
     public QueryStringDecoder(String uri) {
         this(uri, DEFAULT_CHARSET);
@@ -87,6 +88,8 @@ public class QueryStringDecoder {
     /**
      * Creates a new decoder that decodes the specified URI encoded in the
      * specified charset.
+     * @param uri URI
+     * @param hasPath whether it has path
      */
     public QueryStringDecoder(String uri, boolean hasPath) {
         this(uri, DEFAULT_CHARSET, hasPath);
@@ -95,6 +98,8 @@ public class QueryStringDecoder {
     /**
      * Creates a new decoder that decodes the specified URI encoded in the
      * specified charset.
+     * @param uri uri
+     * @param charset charset
      */
     public QueryStringDecoder(String uri, Charset charset) {
         this(uri, charset, true);
@@ -103,6 +108,9 @@ public class QueryStringDecoder {
     /**
      * Creates a new decoder that decodes the specified URI encoded in the
      * specified charset.
+     * @param uri uri
+     * @param charset Charset
+     * @param hasPath whether it has path
      */
     public QueryStringDecoder(String uri, Charset charset, boolean hasPath) {
         this(uri, charset, hasPath, DEFAULT_MAX_PARAMS);
@@ -111,6 +119,10 @@ public class QueryStringDecoder {
     /**
      * Creates a new decoder that decodes the specified URI encoded in the
      * specified charset.
+     * @param uri uri
+     * @param charset charset
+     * @param hasPath Whether it has path
+     * @param maxParams maximum number of parameters
      */
     public QueryStringDecoder(String uri, Charset charset, boolean hasPath, int maxParams) {
         this(uri, charset, hasPath, maxParams, false);
@@ -119,6 +131,11 @@ public class QueryStringDecoder {
     /**
      * Creates a new decoder that decodes the specified URI encoded in the
      * specified charset.
+     * @param uri uri
+     * @param charset charset
+     * @param hasPath Whether it has path
+     * @param maxParams maximum number of parameters
+     * @param semicolonIsNormalChar whether semicolon is normal char
      */
     public QueryStringDecoder(String uri, Charset charset, boolean hasPath,
                               int maxParams, boolean semicolonIsNormalChar) {
@@ -134,6 +151,7 @@ public class QueryStringDecoder {
     /**
      * Creates a new decoder that decodes the specified URI. The decoder will
      * assume that the query string is encoded in UTF-8.
+     * @param uri uri
      */
     public QueryStringDecoder(URI uri) {
         this(uri, DEFAULT_CHARSET);
@@ -142,6 +160,8 @@ public class QueryStringDecoder {
     /**
      * Creates a new decoder that decodes the specified URI encoded in the
      * specified charset.
+     * @param uri uri
+     * @param charset Charset
      */
     public QueryStringDecoder(URI uri, Charset charset) {
         this(uri, charset, DEFAULT_MAX_PARAMS);
@@ -150,6 +170,9 @@ public class QueryStringDecoder {
     /**
      * Creates a new decoder that decodes the specified URI encoded in the
      * specified charset.
+     * @param uri uri
+     * @param charset Charset
+     * @param maxParams maximum number of parameters
      */
     public QueryStringDecoder(URI uri, Charset charset, int maxParams) {
         this(uri, charset, maxParams, false);
@@ -158,6 +181,10 @@ public class QueryStringDecoder {
     /**
      * Creates a new decoder that decodes the specified URI encoded in the
      * specified charset.
+     * @param uri uri
+     * @param charset charset
+     * @param maxParams maximum number of parameters
+     * @param semicolonIsNormalChar whether semicolon is normal char
      */
     public QueryStringDecoder(URI uri, Charset charset, int maxParams, boolean semicolonIsNormalChar) {
         String rawPath = uri.getRawPath();
@@ -166,7 +193,7 @@ public class QueryStringDecoder {
         }
         String rawQuery = uri.getRawQuery();
         // Also take care of cut of things like "http://localhost"
-        this.uri = rawQuery == null? rawPath : rawPath + '?' + rawQuery;
+        this.uri = rawQuery == null ? rawPath : rawPath + '?' + rawQuery;
         this.charset = ArgumentUtils.requireNonNull("charset", charset);
         this.maxParams = ArgumentUtils.requirePositive("maxParams", maxParams);
         this.semicolonIsNormalChar = semicolonIsNormalChar;
@@ -179,14 +206,16 @@ public class QueryStringDecoder {
     }
 
     /**
-     * Returns the uri used to initialize this {@link QueryStringDecoder}.
+     *
+     * @return Returns the uri used to initialize this {@link QueryStringDecoder}.
      */
     public String uri() {
         return uri;
     }
 
     /**
-     * Returns the decoded path string of the URI.
+     *
+     * @return Returns the decoded path string of the URI.
      */
     public String path() {
         if (path == null) {
@@ -196,7 +225,7 @@ public class QueryStringDecoder {
     }
 
     /**
-     * Returns the decoded key-value parameter pairs of the URI.
+     * @return Returns the decoded key-value parameter pairs of the URI.
      */
     public Map<String, List<String>> parameters() {
         if (params == null) {
@@ -206,14 +235,14 @@ public class QueryStringDecoder {
     }
 
     /**
-     * Returns the raw path string of the URI.
+     * @return Returns the raw path string of the URI.
      */
     public String rawPath() {
         return uri.substring(0, pathEndIdx());
     }
 
     /**
-     * Returns raw query string of the URI.
+     * @return raw query string of the URI.
      */
     public String rawQuery() {
         int start = pathEndIdx() + 1;
@@ -365,7 +394,7 @@ public class QueryStringDecoder {
         for (int i = firstEscaped; i < toExcluded; i++) {
             char c = s.charAt(i);
             if (c != '%') {
-                strBuf.append(c != '+' || isPath? c : StringUtils.SPACE);
+                strBuf.append(c != '+' || isPath ? c : StringUtils.SPACE);
                 continue;
             }
 
@@ -411,7 +440,7 @@ public class QueryStringDecoder {
         int hi = decodeHexNibble(s.charAt(pos));
         int lo = decodeHexNibble(s.charAt(pos + 1));
         if (hi != -1 && lo != -1) {
-            return (byte)((hi << 4) + lo);
+            return (byte) ((hi << 4) + lo);
         } else {
             throw new IllegalArgumentException(String.format("invalid hex byte '%s' at index %d of '%s'", s.subSequence(pos, pos + 2), pos, s));
         }

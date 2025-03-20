@@ -13,7 +13,8 @@
  * License for the specific language governing permissions and limitations
  * under the License.
  */
-package io.micronaut.http.poja.util
+package io.micronaut.servlet.http.utils
+
 
 import spock.lang.Specification
 
