@@ -3,7 +3,6 @@ plugins {
 }
 
 dependencies {
-    testRuntimeOnly(mnValidation.micronaut.validation)
     testImplementation(projects.micronautHttpPojaApache)
     testImplementation(projects.micronautHttpPojaTest)
 }
