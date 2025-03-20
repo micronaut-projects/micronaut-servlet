@@ -104,8 +104,9 @@ public class JettyServer extends AbstractServletServer<Server> {
      * @param router                   The router
      * @param jettyConfiguration       The jetty configuration
      * @param connectors               Additional connector configuration
+     * @deprecated Use {@link JettyServer(ApplicationContext, ApplicationConfiguration, Server, Router, JettyConfiguration, List, ApplicationEventPublisher)} instead.
      */
-    @Deprecated
+    @Deprecated(forRemoval = true, since = "5.2.0")
     public JettyServer(
         ApplicationContext applicationContext,
         ApplicationConfiguration applicationConfiguration,
