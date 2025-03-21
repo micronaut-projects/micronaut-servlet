@@ -1,4 +1,4 @@
-package io.micronaut.servlet.http.server;
+package io.micronaut.servlet.http.server.jdk;
 
 import io.micronaut.context.annotation.Property;
 import io.micronaut.context.annotation.Requires;

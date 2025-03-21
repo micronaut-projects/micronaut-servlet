@@ -1,4 +1,4 @@
-package io.micronaut.servlet.http.server.tests;
+package io.micronaut.servlet.http.server.jdk.tests;
 
 import org.junit.platform.suite.api.*;
 

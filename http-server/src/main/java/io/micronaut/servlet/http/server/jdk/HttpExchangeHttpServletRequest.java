@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.servlet.http.server;
+package io.micronaut.servlet.http.server.jdk;
 
 import com.sun.net.httpserver.HttpExchange;
 import io.micronaut.core.annotation.Experimental;
@@ -294,7 +294,7 @@ class HttpExchangeHttpServletRequest implements HttpServletRequest {
     public boolean isAsyncSupported() {
         return false;
     }
-    
+
     @Override
     public String getAuthType() {
         throw new UnsupportedOperationException("Not implemented");
