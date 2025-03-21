@@ -1,6 +1,5 @@
 introduction: Introduction
 releaseHistory: Release History
-httpServer: Built-In Java HTTP Server Runtime
 servletApi: Working with the Servlet API
 servletAnnotation: Servlet Annotation Support
 warDeployment:
@@ -11,6 +10,7 @@ warDeployment:
 jetty: Jetty Server
 tomcat: Tomcat Server
 undertow: Undertow Server
+httpServer: Built-In Java HTTP Server Runtime
 httpPoja: HTTP POJA Application
 knownIssues: Known Issues
 faq: FAQ
