@@ -26,8 +26,8 @@ import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.cookie.ServerCookieDecoder;
 import io.micronaut.http.form.FormUrlEncodedDecoder;
+import io.micronaut.http.uri.QueryStringDecoder;
 import io.micronaut.http.util.HttpHeadersUtil;
-import io.micronaut.servlet.http.utils.QueryStringDecoder;
 
 import jakarta.servlet.AsyncContext;
 import jakarta.servlet.DispatcherType;

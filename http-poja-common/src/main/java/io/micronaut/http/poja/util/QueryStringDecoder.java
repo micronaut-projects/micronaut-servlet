@@ -58,7 +58,8 @@ import java.util.Map;
  *     QueryStringDecoder.java
  * </a>.
  * </p>
- * @deprecated Use {@link io.micronaut.servlet.http.utils.QueryStringDecoder} instead.
+ * 
+ * @deprecated Use {@link io.micronaut.http.uri.QueryStringDecoder} instead.
  */
 @SuppressWarnings("java:S3776" /* Reduce cognitive complexity warning */)
 @Deprecated(forRemoval = true, since="5.2.0")
