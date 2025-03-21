@@ -29,7 +29,7 @@ import java.io.InputStream;
  */
 @Internal
 @Experimental
-class HttpExchangeServletInputStream extends ServletInputStream {
+final class HttpExchangeServletInputStream extends ServletInputStream {
     private final HttpExchange httpExchange;
     private InputStream inputStream;
 

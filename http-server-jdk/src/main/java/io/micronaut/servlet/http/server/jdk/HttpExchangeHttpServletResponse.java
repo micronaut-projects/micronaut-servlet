@@ -40,7 +40,7 @@ import java.util.Map;
  */
 @Experimental
 @Internal
-class HttpExchangeHttpServletResponse implements HttpServletResponse {
+final class HttpExchangeHttpServletResponse implements HttpServletResponse {
     private static final int DEFAULT_STATUS = HttpStatus.OK.getCode();
     private Map<String, List<Object>> headers = new LinkedHashMap<>();
     private ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();

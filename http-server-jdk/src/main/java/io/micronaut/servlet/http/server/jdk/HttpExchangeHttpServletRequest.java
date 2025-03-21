@@ -64,7 +64,7 @@ import java.util.Optional;
  */
 @Experimental
 @Internal
-class HttpExchangeHttpServletRequest implements HttpServletRequest {
+final class HttpExchangeHttpServletRequest implements HttpServletRequest {
     private static final Logger LOG = LoggerFactory.getLogger(HttpExchangeHttpServletRequest.class);
     private final HttpExchange exchange;
     private final ServletInputStream inputStream;

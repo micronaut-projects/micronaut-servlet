@@ -37,7 +37,7 @@ import java.util.ArrayList;
 @Experimental
 @Requires(missingBeans = HttpHandler.class)
 @Singleton
-class ServletApiHttpHandler implements HttpHandler {
+final class ServletApiHttpHandler implements HttpHandler {
     private final ServletHttpHandler<HttpServletRequest, HttpServletResponse> httpHandler;
     private final FormUrlEncodedDecoder formUrlEncodedDecoder;
 

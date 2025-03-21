@@ -25,7 +25,7 @@ import java.io.OutputStream;
 
 @Internal
 @Experimental
-class HttpExchangeServletOutputStream extends ServletOutputStream {
+final class HttpExchangeServletOutputStream extends ServletOutputStream {
 
     private final OutputStream outputStream;
 
