@@ -18,6 +18,8 @@ package io.micronaut.servlet.http.server.jdk;
 import com.sun.net.httpserver.HttpExchange;
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.http.HttpHeaders;
@@ -48,7 +50,9 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.charset.UnsupportedCharsetException;
 import java.security.Principal;
 import java.util.Collection;
 import java.util.Collections;
@@ -164,7 +168,7 @@ final class HttpExchangeHttpServletRequest implements HttpServletRequest {
 
     @Override
     public String getCharacterEncoding() {
-        return exchange.getRequestHeaders().getFirst(HttpHeaders.CONTENT_ENCODING);
+        return parseCharacterEncoding(getHeader(HttpHeaders.CONTENT_TYPE), getHeader(HttpHeaders.ACCEPT_CHARSET)).toString();
     }
 
     @Override
@@ -541,5 +545,69 @@ final class HttpExchangeHttpServletRequest implements HttpServletRequest {
         }
 
         return mergedMap;
+    }
+
+
+    // Delete the following methods once this PR is merged in core: https://github.com/micronaut-projects/micronaut-core/pull/11670
+    /**
+     * Resolve the {@link Charset} to use for request identified by the Content-Type HTTP Header value and the Accept-Charset HTTP Header value.
+     *
+     * @param contentTypeHeaderValue Content-Type HTTP Header Value
+     * @param acceptCharsetHeaderValue Accept-Charset HTTP Header Value
+     * @return A {@link Charset}
+     * @since 4.8.8
+     */
+    @NonNull
+    public static Charset parseCharacterEncoding(@Nullable String contentTypeHeaderValue, @Nullable String acceptCharsetHeaderValue) {
+        MediaType contentType = contentTypeHeaderValue == null ? null : MediaType.of(contentTypeHeaderValue);
+        Charset charset = acceptCharsetHeaderValue != null ? parseAcceptCharset(acceptCharsetHeaderValue) : StandardCharsets.UTF_8;
+        return parseCharacterEncoding(contentType, charset);
+    }
+
+    /**
+     * Resolve the {@link Charset} to use for the request.
+     *
+     * @param contentType ContenType
+     * @return An {@link Optional} of {@link Charset}
+     * @since 4.8.8
+     */
+    @NonNull
+    public static Charset parseCharacterEncoding(@Nullable MediaType contentType,
+                                                 @NonNull Charset acceptCharset) {
+        try {
+
+            if (contentType != null) {
+                String charset = contentType.getParametersMap().get(MediaType.CHARSET_PARAMETER);
+                if (charset != null) {
+                    try {
+                        return Charset.forName(charset);
+                    } catch (Exception e) {
+                        // unsupported charset, default to UTF-8
+                        return Charset.defaultCharset();
+                    }
+                }
+            }
+        } catch (UnsupportedCharsetException e) {
+            return StandardCharsets.UTF_8;
+        }
+        return acceptCharset;
+    }
+
+    /**
+     *
+     * @param acceptCharsetHeaderValue Accept-Charset HeaderValue
+     * @return Accept Charset
+     * @since 4.8.8
+     */
+    @NonNull
+    public static Charset parseAcceptCharset(@NonNull String acceptCharsetHeaderValue) {
+        String text = HttpHeadersUtil.splitAcceptHeader(acceptCharsetHeaderValue);
+        if (text != null) {
+            try {
+                return Charset.forName(text);
+            } catch (Exception ignored) {
+            }
+        }
+        return StandardCharsets.UTF_8;
     }
 }
