@@ -15,22 +15,22 @@
  */
 package io.micronaut.servlet.http.server.jdk;
 
+import com.sun.net.httpserver.HttpExchange;
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.Internal;
 import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.WriteListener;
 
 import java.io.IOException;
-import java.io.OutputStream;
 
 @Internal
 @Experimental
 final class HttpExchangeServletOutputStream extends ServletOutputStream {
 
-    private final OutputStream outputStream;
+    private final HttpExchange httpExchange;
 
-    HttpExchangeServletOutputStream(OutputStream outputStream) {
-        this.outputStream = outputStream;
+    HttpExchangeServletOutputStream(HttpExchange httpExchange) {
+        this.httpExchange = httpExchange;
     }
 
     @Override
@@ -46,17 +46,23 @@ final class HttpExchangeServletOutputStream extends ServletOutputStream {
     @Override
     public void close() throws IOException {
         super.close();
-        outputStream.close();
+        if (httpExchange.getResponseBody() != null) {
+            httpExchange.getResponseBody().close();
+        }
     }
 
     @Override
     public void write(int b) throws IOException {
-        outputStream.write(b);
+        if (httpExchange.getResponseBody() != null) {
+            httpExchange.getResponseBody().write(b);
+        }
     }
 
     @Override
     public void flush() throws IOException {
         super.flush();
-        outputStream.flush();
+        if (httpExchange.getResponseBody() != null) {
+            httpExchange.getResponseBody().flush();
+        }
     }
 }

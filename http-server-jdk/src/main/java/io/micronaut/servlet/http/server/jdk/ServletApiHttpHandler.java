@@ -19,16 +19,15 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Experimental;
-import io.micronaut.core.util.StringUtils;
-import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.form.FormUrlEncodedDecoder;
 import io.micronaut.servlet.http.ServletHttpHandler;
 import jakarta.inject.Singleton;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.io.OutputStream;
 import java.util.ArrayList;
 
 /**
@@ -38,8 +37,10 @@ import java.util.ArrayList;
 @Requires(missingBeans = HttpHandler.class)
 @Singleton
 final class ServletApiHttpHandler implements HttpHandler {
+    private static final Logger LOG = LoggerFactory.getLogger(ServletApiHttpHandler.class);
     private final ServletHttpHandler<HttpServletRequest, HttpServletResponse> httpHandler;
     private final FormUrlEncodedDecoder formUrlEncodedDecoder;
+    private boolean headersSent = false;
 
     ServletApiHttpHandler(ServletHttpHandler<HttpServletRequest,
         HttpServletResponse> httpHandler,
@@ -50,44 +51,31 @@ final class ServletApiHttpHandler implements HttpHandler {
 
     @Override
     public void handle(HttpExchange httpExchange) throws IOException {
-        HttpExchangeHttpServletResponse response = new HttpExchangeHttpServletResponse();
+        HttpExchangeHttpServletResponse response = new HttpExchangeHttpServletResponse(httpExchange, rsp -> {
+            try {
+                populateAndSendResponseHeaders(rsp, httpExchange);
+            } catch (IOException e) {
+                LOG.error(e.getMessage(), e);
+            }
+            headersSent = true;
+        });
         HttpServletRequest request = new HttpExchangeHttpServletRequest(httpExchange, formUrlEncodedDecoder);
         httpHandler.exchange(request, response);
-        byte[] responseBody = response.getBody();
-        int contentLength = populateAndRetrieveContentLength(response, responseBody);
-        populateAndSendResponseHeaders(response, httpExchange, contentLength);
+        if (!headersSent) {
+            // if the headers have not been sent, e.g. nothing was written to the outpustream and hence no callback, then send them now
+            populateAndSendResponseHeaders(response, httpExchange);
+        }
         response.setCommitted(true);
-        writeBody(httpExchange, responseBody);
         httpExchange.close();
     }
 
-    void writeBody(HttpExchange exchange, byte[] body) throws IOException {
-        if (body.length > 0) {
-            OutputStream outputStream = exchange.getResponseBody();
-            outputStream.write(body);
-            outputStream.flush();
-            outputStream.close();
-        }
-    }
-
     void populateAndSendResponseHeaders(HttpServletResponse response,
-                                        HttpExchange exchange,
-                                        int contentLength) throws IOException {
+                                        HttpExchange exchange) throws IOException {
         for (String headerName : response.getHeaderNames()) {
             exchange.getResponseHeaders().put(headerName, new ArrayList<>(response.getHeaders(headerName)));
         }
+        int contentLength = 0; // If == 0, then chunked encoding is used, and an arbitrary number of bytes may be written.
         exchange.sendResponseHeaders(response.getStatus(), contentLength);
     }
 
-    int populateAndRetrieveContentLength(HttpServletResponse response, byte[] body) {
-        String contentLengthObject = response.getHeader(HttpHeaders.CONTENT_LENGTH);
-        int contentLength = 0;
-        if (StringUtils.isEmpty(contentLengthObject)) {
-            contentLength = body.length;
-            response.setContentLength(contentLength);
-        } else {
-            contentLength = Integer.valueOf(contentLengthObject);
-        }
-        return contentLength;
-    }
 }

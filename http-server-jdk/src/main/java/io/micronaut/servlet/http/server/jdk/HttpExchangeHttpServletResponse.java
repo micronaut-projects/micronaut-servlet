@@ -15,6 +15,7 @@
  */
 package io.micronaut.servlet.http.server.jdk;
 
+import com.sun.net.httpserver.HttpExchange;
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.util.CollectionUtils;
@@ -29,7 +30,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -43,17 +43,14 @@ import java.util.Map;
 final class HttpExchangeHttpServletResponse implements HttpServletResponse {
     private static final int DEFAULT_STATUS = HttpStatus.OK.getCode();
     private Map<String, List<Object>> headers = new LinkedHashMap<>();
-    private ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-    private ServletOutputStream servletOutputStream;
+    private final OutputStreamRequestedCallback callback;
+    private final ServletOutputStream outputStream;
     private int status = DEFAULT_STATUS;
     private boolean committed = false;
 
-    /**
-     *
-     * @return The HTTP Body bytes
-     */
-    public byte[] getBody() {
-        return byteArrayOutputStream.toByteArray();
+    HttpExchangeHttpServletResponse(HttpExchange httpExchange, OutputStreamRequestedCallback callback) {
+        this.outputStream = new HttpExchangeServletOutputStream(httpExchange);
+        this.callback = callback;
     }
 
     @Override
@@ -87,11 +84,8 @@ final class HttpExchangeHttpServletResponse implements HttpServletResponse {
 
     @Override
     public ServletOutputStream getOutputStream() {
-        if (servletOutputStream == null) {
-            this.byteArrayOutputStream = new ByteArrayOutputStream();
-            this.servletOutputStream = new HttpExchangeServletOutputStream(byteArrayOutputStream);
-        }
-        return servletOutputStream;
+        callback.onOutputStreamRequested(this);
+        return outputStream;
     }
 
     @Override
