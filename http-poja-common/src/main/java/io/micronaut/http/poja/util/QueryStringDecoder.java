@@ -58,8 +58,11 @@ import java.util.Map;
  *     QueryStringDecoder.java
  * </a>.
  * </p>
+ * 
+ * @deprecated Use {@link io.micronaut.http.uri.QueryStringDecoder} instead.
  */
 @SuppressWarnings("java:S3776" /* Reduce cognitive complexity warning */)
+@Deprecated(forRemoval = true, since="5.2.0")
 public class QueryStringDecoder {
 
     private static final Charset DEFAULT_CHARSET = StandardCharsets.UTF_8;

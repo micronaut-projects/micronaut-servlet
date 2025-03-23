@@ -16,10 +16,14 @@
 package io.micronaut.servlet.undertow;
 
 import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.event.ApplicationEventPublisher;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.server.exceptions.InternalServerException;
 import io.micronaut.runtime.ApplicationConfiguration;
-import io.micronaut.servlet.engine.server.AbstractServletServer;
+import io.micronaut.runtime.server.event.ServerShutdownEvent;
+import io.micronaut.servlet.http.server.AbstractServletServer;
 import io.undertow.Undertow;
+import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 import java.net.InetSocketAddress;
@@ -45,13 +49,31 @@ public class UndertowServer extends AbstractServletServer<Undertow> {
      * Default constructor.
      * @param applicationContext The app context
      * @param applicationConfiguration The app config
+     * @param serverShutdownEventPublisher {@link ApplicationEventPublisher} for the {@link ServerShutdownEvent} event.
      * @param undertow The undertow instance
      */
+    @Inject
     public UndertowServer(
             ApplicationContext applicationContext,
             ApplicationConfiguration applicationConfiguration,
+            @Nullable ApplicationEventPublisher<ServerShutdownEvent> serverShutdownEventPublisher,
             Undertow undertow) {
-        super(applicationContext, applicationConfiguration, undertow);
+        super(applicationContext, applicationConfiguration, serverShutdownEventPublisher, undertow);
+    }
+
+    /**
+     * Default constructor.
+     * @param applicationContext The app context
+     * @param applicationConfiguration The app config
+     * @param undertow The undertow instance
+     * @deprecated Use {@link #UndertowServer(ApplicationContext, ApplicationConfiguration, ApplicationEventPublisher, Undertow)} instead
+     */
+    @Deprecated(forRemoval = true, since = "5.2.0")
+    public UndertowServer(
+        ApplicationContext applicationContext,
+        ApplicationConfiguration applicationConfiguration,
+        Undertow undertow) {
+        this(applicationContext, applicationConfiguration, null, undertow);
     }
 
     @Override

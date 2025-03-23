@@ -3,5 +3,4 @@ plugins {
 }
 dependencies {
     testImplementation(projects.micronautHttpServerUndertow)
-    testImplementation(mnValidation.micronaut.validation)
 }

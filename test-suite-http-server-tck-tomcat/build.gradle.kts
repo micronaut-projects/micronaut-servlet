@@ -4,5 +4,4 @@ plugins {
 
 dependencies {
     testImplementation(projects.micronautHttpServerTomcat)
-    testImplementation(mnValidation.micronaut.validation)
 }

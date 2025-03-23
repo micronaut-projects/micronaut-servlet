@@ -38,7 +38,9 @@ import java.util.stream.Collectors;
  *
  * @author graemerocher
  * @since 1.0.0
+ * @deprecated Use {@link io.micronaut.servlet.http.server.ServletServerFactory} instead
  */
+@Deprecated(forRemoval = true, since = "5.2.0")
 public abstract class ServletServerFactory extends SslBuilder<SSLContext> {
     private final HttpServerConfiguration serverConfiguration;
     private final SslConfiguration sslConfiguration;

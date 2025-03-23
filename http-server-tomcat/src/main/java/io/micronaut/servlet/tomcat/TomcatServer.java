@@ -16,9 +16,13 @@
 package io.micronaut.servlet.tomcat;
 
 import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.event.ApplicationEventPublisher;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.server.exceptions.InternalServerException;
 import io.micronaut.runtime.ApplicationConfiguration;
-import io.micronaut.servlet.engine.server.AbstractServletServer;
+import io.micronaut.runtime.server.event.ServerShutdownEvent;
+import io.micronaut.servlet.http.server.AbstractServletServer;
+import jakarta.inject.Inject;
 import org.apache.catalina.connector.Connector;
 import org.apache.catalina.startup.Tomcat;
 
@@ -45,13 +49,32 @@ public class TomcatServer extends AbstractServletServer<Tomcat> {
      *
      * @param applicationContext       The context
      * @param applicationConfiguration The configuration
+     * @param serverShutdownEventPublisher {@link ApplicationEventPublisher} for the {@link ServerShutdownEvent} event.
      * @param tomcat                   The tomcat instance
      */
+    @Inject
     public TomcatServer(
             ApplicationContext applicationContext,
             ApplicationConfiguration applicationConfiguration,
+            @Nullable ApplicationEventPublisher<ServerShutdownEvent> serverShutdownEventPublisher,
             Tomcat tomcat) {
-        super(applicationContext, applicationConfiguration, tomcat);
+        super(applicationContext, applicationConfiguration, serverShutdownEventPublisher, tomcat);
+    }
+
+    /**
+     * Default constructor.
+     *
+     * @param applicationContext       The context
+     * @param applicationConfiguration The configuration
+     * @param tomcat                   The tomcat instance
+     * @deprecated Use {@link TomcatServer(ApplicationContext, ApplicationConfiguration, ApplicationEventPublisher, Tomcat)} instead.
+     */
+    @Deprecated(forRemoval = true, since = "5.2.0")
+    public TomcatServer(
+        ApplicationContext applicationContext,
+        ApplicationConfiguration applicationConfiguration,
+        Tomcat tomcat) {
+        this(applicationContext, applicationConfiguration, null, tomcat);
     }
 
     @Override

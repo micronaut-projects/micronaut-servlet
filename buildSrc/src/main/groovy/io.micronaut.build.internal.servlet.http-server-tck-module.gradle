@@ -19,6 +19,7 @@ dependencies {
     testImplementation(libs.junit.platform.engine)
     testImplementation(libs.junit.jupiter.engine)
     testRuntimeOnly(mnLogging.logback.classic)
+    testRuntimeOnly(mnValidation.micronaut.validation)
 }
 
 java {

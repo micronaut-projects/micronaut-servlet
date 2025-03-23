@@ -30,7 +30,9 @@ import io.micronaut.runtime.server.event.ServerStartupEvent;
  * @param <T> The server type
  * @author graemerocher
  * @since 1.0.0
+ * @deprecated Use {@link io.micronaut.servlet.http.server.AbstractServletServer} instead
  */
+@Deprecated(forRemoval = true, since = "5.2.0")
 public abstract class AbstractServletServer<T> implements EmbeddedServer {
 
     private final ApplicationContext applicationContext;
