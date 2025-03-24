@@ -29,6 +29,11 @@ import io.micronaut.discovery.event.ServiceReadyEvent;
  * Publishes a {@link ServiceReadyEvent} when the server starts if there is an {@link ApplicationConfiguration#getName()} set.
  */
 @Requires(classes = { ServiceInstance.class, ServiceReadyEvent.class })
+@Requires(beans = {
+    ApplicationConfiguration.class,
+    EmbeddedServer.class,
+    ApplicationEventPublisher.class
+})
 @Singleton
 public class DiscoveryServerStartedEventPublisher implements ApplicationEventListener<ServerStartupEvent> {
     private final ApplicationConfiguration applicationConfiguration;
