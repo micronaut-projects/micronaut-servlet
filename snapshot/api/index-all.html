@@ -390,6 +390,10 @@ loadScripts(document, 'script');</script>
 </dd>
 <dt><a href="io/micronaut/servlet/engine/DefaultServletHttpHandler.html#%3Cinit%3E(io.micronaut.context.ApplicationContext,io.micronaut.core.convert.ConversionService,java.util.concurrent.Executor)" class="member-name-link">DefaultServletHttpHandler(ApplicationContext, ConversionService, Executor)</a> - Constructor for class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/DefaultServletHttpHandler.html" title="class in io.micronaut.servlet.engine">DefaultServletHttpHandler</a></dt>
 <dd>
+<div class="deprecation-block"><span class="deprecated-label">Deprecated.</span></div>
+</dd>
+<dt><a href="io/micronaut/servlet/engine/DefaultServletHttpHandler.html#%3Cinit%3E(io.micronaut.context.ApplicationContext,io.micronaut.core.convert.ConversionService,java.util.concurrent.Executor,io.micronaut.servlet.http.SSLSessionProvider)" class="member-name-link">DefaultServletHttpHandler(ApplicationContext, ConversionService, Executor, SSLSessionProvider)</a> - Constructor for class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/DefaultServletHttpHandler.html" title="class in io.micronaut.servlet.engine">DefaultServletHttpHandler</a></dt>
+<dd>
 <div class="block">Default constructor.</div>
 </dd>
 <dt><a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html" class="type-name-link" title="class in io.micronaut.servlet.engine">DefaultServletHttpRequest</a>&lt;<a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html" title="type parameter in DefaultServletHttpRequest">B</a>&gt; - Class in <a href="io/micronaut/servlet/engine/package-summary.html">io.micronaut.servlet.engine</a></dt>
@@ -397,6 +401,10 @@ loadScripts(document, 'script');</script>
 <div class="block">Implementation of <code>HttpRequest</code> ontop of the Servlet API.</div>
 </dd>
 <dt><a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html#%3Cinit%3E(io.micronaut.core.convert.ConversionService,jakarta.servlet.http.HttpServletRequest,jakarta.servlet.http.HttpServletResponse,io.micronaut.http.codec.MediaTypeCodecRegistry,io.micronaut.servlet.http.BodyBuilder,java.util.concurrent.Executor)" class="member-name-link">DefaultServletHttpRequest(ConversionService, HttpServletRequest, HttpServletResponse, MediaTypeCodecRegistry, BodyBuilder, Executor)</a> - Constructor for class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html" title="class in io.micronaut.servlet.engine">DefaultServletHttpRequest</a></dt>
+<dd>
+<div class="block">Default constructor.</div>
+</dd>
+<dt><a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html#%3Cinit%3E(io.micronaut.core.convert.ConversionService,jakarta.servlet.http.HttpServletRequest,jakarta.servlet.http.HttpServletResponse,io.micronaut.http.codec.MediaTypeCodecRegistry,io.micronaut.servlet.http.BodyBuilder,java.util.concurrent.Executor,io.micronaut.servlet.http.SSLSessionProvider)" class="member-name-link">DefaultServletHttpRequest(ConversionService, HttpServletRequest, HttpServletResponse, MediaTypeCodecRegistry, BodyBuilder, Executor, SSLSessionProvider)</a> - Constructor for class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html" title="class in io.micronaut.servlet.engine">DefaultServletHttpRequest</a></dt>
 <dd>
 <div class="block">Default constructor.</div>
 </dd>
@@ -878,6 +886,12 @@ loadScripts(document, 'script');</script>
 &nbsp;</dd>
 <dt><a href="io/micronaut/servlet/http/server/ServletServerFactory.html#getSslConfiguration()" class="member-name-link">getSslConfiguration()</a> - Method in class io.micronaut.servlet.http.server.<a href="io/micronaut/servlet/http/server/ServletServerFactory.html" title="class in io.micronaut.servlet.http.server">ServletServerFactory</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html#getSslSession()" class="member-name-link">getSslSession()</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html" title="class in io.micronaut.servlet.engine">DefaultServletHttpRequest</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/http/SSLSessionProvider.html#getSSLSession(io.micronaut.core.attr.AttributeHolder)" class="member-name-link">getSSLSession(AttributeHolder)</a> - Method in interface io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/SSLSessionProvider.html" title="interface in io.micronaut.servlet.http">SSLSessionProvider</a></dt>
+<dd>
+<div class="block">Extracts the <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/javax/net/ssl/SSLSession.html" title="class or interface in javax.net.ssl" class="external-link"><code>SSLSession</code></a> from attributes.</div>
+</dd>
 <dt><a href="io/micronaut/servlet/engine/server/ServletServerFactory.html#getStaticResourceConfigurations()" class="member-name-link">getStaticResourceConfigurations()</a> - Method in class io.micronaut.servlet.engine.server.<a href="io/micronaut/servlet/engine/server/ServletServerFactory.html" title="class in io.micronaut.servlet.engine.server">ServletServerFactory</a></dt>
 <dd>
 <div class="deprecation-block"><span class="deprecated-label">Deprecated.</span></div>
@@ -1734,6 +1748,10 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/servlet/tomcat/TomcatFactory.html#sslConnector(io.micronaut.http.ssl.SslConfiguration)" class="member-name-link">sslConnector(SslConfiguration)</a> - Method in class io.micronaut.servlet.tomcat.<a href="io/micronaut/servlet/tomcat/TomcatFactory.html" title="class in io.micronaut.servlet.tomcat">TomcatFactory</a></dt>
 <dd>
 <div class="block">The HTTPS connector.</div>
+</dd>
+<dt><a href="io/micronaut/servlet/http/SSLSessionProvider.html" class="type-name-link" title="interface in io.micronaut.servlet.http">SSLSessionProvider</a> - Interface in <a href="io/micronaut/servlet/http/package-summary.html">io.micronaut.servlet.http</a></dt>
+<dd>
+<div class="block">This interface helps micronaut to extract <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/javax/net/ssl/SSLSession.html" title="class or interface in javax.net.ssl" class="external-link"><code>SSLSession</code></a> from different servlet frameworks.</div>
 </dd>
 <dt><a href="io/micronaut/http/poja/PojaHttpServerlessApplication.html#start()" class="member-name-link">start()</a> - Method in class io.micronaut.http.poja.<a href="io/micronaut/http/poja/PojaHttpServerlessApplication.html" title="class in io.micronaut.http.poja">PojaHttpServerlessApplication</a></dt>
 <dd>&nbsp;</dd>

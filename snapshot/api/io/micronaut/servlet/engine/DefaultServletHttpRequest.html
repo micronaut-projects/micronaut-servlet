@@ -135,6 +135,17 @@ implements <a href="../http/ServletHttpRequest.html" title="interface in io.micr
 <div class="col-last even-row-color">
 <div class="block">Default constructor.</div>
 </div>
+<div class="col-first odd-row-color"><code>protected </code></div>
+<div class="col-constructor-name odd-row-color"><code><a href="#%3Cinit%3E(io.micronaut.core.convert.ConversionService,jakarta.servlet.http.HttpServletRequest,jakarta.servlet.http.HttpServletResponse,io.micronaut.http.codec.MediaTypeCodecRegistry,io.micronaut.servlet.http.BodyBuilder,java.util.concurrent.Executor,io.micronaut.servlet.http.SSLSessionProvider)" class="member-name-link">DefaultServletHttpRequest</a><wbr>(io.micronaut.core.convert.ConversionService&nbsp;conversionService,
+ jakarta.servlet.http.HttpServletRequest&nbsp;delegate,
+ jakarta.servlet.http.HttpServletResponse&nbsp;response,
+ io.micronaut.http.codec.MediaTypeCodecRegistry&nbsp;codecRegistry,
+ <a href="../http/BodyBuilder.html" title="interface in io.micronaut.servlet.http">BodyBuilder</a>&nbsp;bodyBuilder,
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/Executor.html" title="class or interface in java.util.concurrent" class="external-link">Executor</a>&nbsp;ioExecutor,
+ @Nullable <a href="../http/SSLSessionProvider.html" title="interface in io.micronaut.servlet.http">SSLSessionProvider</a>&nbsp;sslSessionProvider)</code></div>
+<div class="col-last odd-row-color">
+<div class="block">Default constructor.</div>
+</div>
 </div>
 </section>
 </li>
@@ -241,31 +252,34 @@ implements <a href="../http/ServletHttpRequest.html" title="interface in io.micr
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getServerName()" class="member-name-link">getServerName</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/net/URI.html" title="class or interface in java.net" class="external-link">URI</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getUri()" class="member-name-link">getUri</a>()</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/javax/net/ssl/SSLSession.html" title="class or interface in javax.net.ssl" class="external-link">SSLSession</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getSslSession()" class="member-name-link">getSslSession</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/security/Principal.html" title="class or interface in java.security" class="external-link">Principal</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getUserPrincipal()" class="member-name-link">getUserPrincipal</a>()</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/net/URI.html" title="class or interface in java.net" class="external-link">URI</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getUri()" class="member-name-link">getUri</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isAsyncSupported()" class="member-name-link">isAsyncSupported</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/security/Principal.html" title="class or interface in java.security" class="external-link">Principal</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getUserPrincipal()" class="member-name-link">getUserPrincipal</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isAsyncSupported()" class="member-name-link">isAsyncSupported</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Checks if this request supports asynchronous operation.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isSecure()" class="member-name-link">isSecure</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>io.micronaut.http.MutableHttpRequest&lt;<a href="DefaultServletHttpRequest.html" title="type parameter in DefaultServletHttpRequest">B</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#mutate()" class="member-name-link">mutate</a>()</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isSecure()" class="member-name-link">isSecure</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setParsedBody(B)" class="member-name-link">setParsedBody</a><wbr>(<a href="DefaultServletHttpRequest.html" title="type parameter in DefaultServletHttpRequest">B</a>&nbsp;body)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>io.micronaut.http.MutableHttpRequest&lt;<a href="DefaultServletHttpRequest.html" title="type parameter in DefaultServletHttpRequest">B</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#mutate()" class="member-name-link">mutate</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setParsedBody(B)" class="member-name-link">setParsedBody</a><wbr>(<a href="DefaultServletHttpRequest.html" title="type parameter in DefaultServletHttpRequest">B</a>&nbsp;body)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Set the parsed body.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#subscribe(org.reactivestreams.Subscriber)" class="member-name-link">subscribe</a><wbr>(org.reactivestreams.Subscriber&lt;? super byte[]&gt;&nbsp;s)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#subscribe(org.reactivestreams.Subscriber)" class="member-name-link">subscribe</a><wbr>(org.reactivestreams.Subscriber&lt;? super byte[]&gt;&nbsp;s)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 </div>
 </div>
 </div>
@@ -280,7 +294,7 @@ implements <a href="../http/ServletHttpRequest.html" title="interface in io.micr
 <code>getBody, getBody, getBodyWriter</code></div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-io.micronaut.http.HttpRequest">Methods inherited from interface&nbsp;io.micronaut.http.HttpRequest</h3>
-<code>accept, getCertificate, getOrigin, getPath, getSslSession, getUserPrincipal, setAttribute, setUserPrincipal, toMutableRequest</code></div>
+<code>accept, getCertificate, getOrigin, getPath, getUserPrincipal, setAttribute, setUserPrincipal, toMutableRequest</code></div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-io.micronaut.core.attr.MutableAttributeHolder">Methods inherited from interface&nbsp;io.micronaut.core.attr.MutableAttributeHolder</h3>
 <code>removeAttribute</code></div>
@@ -313,6 +327,30 @@ implements <a href="../http/ServletHttpRequest.html" title="interface in io.micr
 <dd><code>codecRegistry</code> - The codec registry</dd>
 <dd><code>bodyBuilder</code> - Body Builder</dd>
 <dd><code>ioExecutor</code> - Executor for blocking operations</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="&lt;init&gt;(io.micronaut.core.convert.ConversionService,jakarta.servlet.http.HttpServletRequest,jakarta.servlet.http.HttpServletResponse,io.micronaut.http.codec.MediaTypeCodecRegistry,io.micronaut.servlet.http.BodyBuilder,java.util.concurrent.Executor,io.micronaut.servlet.http.SSLSessionProvider)">
+<h3>DefaultServletHttpRequest</h3>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="element-name">DefaultServletHttpRequest</span><wbr><span class="parameters">(io.micronaut.core.convert.ConversionService&nbsp;conversionService,
+ jakarta.servlet.http.HttpServletRequest&nbsp;delegate,
+ jakarta.servlet.http.HttpServletResponse&nbsp;response,
+ io.micronaut.http.codec.MediaTypeCodecRegistry&nbsp;codecRegistry,
+ <a href="../http/BodyBuilder.html" title="interface in io.micronaut.servlet.http">BodyBuilder</a>&nbsp;bodyBuilder,
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/Executor.html" title="class or interface in java.util.concurrent" class="external-link">Executor</a>&nbsp;ioExecutor,
+ @Nullable
+ @Nullable <a href="../http/SSLSessionProvider.html" title="interface in io.micronaut.servlet.http">SSLSessionProvider</a>&nbsp;sslSessionProvider)</span></div>
+<div class="block">Default constructor.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>conversionService</code> - The servlet request</dd>
+<dd><code>delegate</code> - The servlet request</dd>
+<dd><code>response</code> - The servlet response</dd>
+<dd><code>codecRegistry</code> - The codec registry</dd>
+<dd><code>bodyBuilder</code> - Body Builder</dd>
+<dd><code>ioExecutor</code> - Executor for blocking operations</dd>
+<dd><code>sslSessionProvider</code> - The <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/javax/net/ssl/SSLSession.html" title="class or interface in javax.net.ssl" class="external-link"><code>SSLSession</code></a> provider from attribute</dd>
 </dl>
 </section>
 </li>
@@ -741,6 +779,16 @@ implements <a href="../http/ServletHttpRequest.html" title="interface in io.micr
 <dd><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/Closeable.html#close()" title="class or interface in java.io" class="external-link">close</a></code>&nbsp;in interface&nbsp;<code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/Closeable.html" title="class or interface in java.io" class="external-link">Closeable</a></code></dd>
 <dt>Specified by:</dt>
 <dd><code><a href="../http/ServletExchange.html#close()">close</a></code>&nbsp;in interface&nbsp;<code><a href="../http/ServletExchange.html" title="interface in io.micronaut.servlet.http">ServletExchange</a>&lt;jakarta.servlet.http.HttpServletRequest,<wbr>jakarta.servlet.http.HttpServletResponse&gt;</code></dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="getSslSession()">
+<h3>getSslSession</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/javax/net/ssl/SSLSession.html" title="class or interface in javax.net.ssl" class="external-link">SSLSession</a>&gt;</span>&nbsp;<span class="element-name">getSslSession</span>()</div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code>getSslSession</code>&nbsp;in interface&nbsp;<code>io.micronaut.http.HttpRequest&lt;<a href="DefaultServletHttpRequest.html" title="type parameter in DefaultServletHttpRequest">B</a>&gt;</code></dd>
 </dl>
 </section>
 </li>
