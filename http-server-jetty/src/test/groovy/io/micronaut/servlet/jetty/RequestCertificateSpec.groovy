@@ -1,0 +1,97 @@
+package io.micronaut.servlet.jetty
+
+import io.micronaut.context.annotation.Requires
+import io.micronaut.http.HttpRequest
+import io.micronaut.http.HttpStatus
+import io.micronaut.http.annotation.Controller
+import io.micronaut.http.annotation.Get
+import io.netty.handler.ssl.util.SelfSignedCertificate
+import reactor.core.publisher.Flux
+import io.micronaut.context.ApplicationContext
+import io.micronaut.http.client.HttpClient
+import io.micronaut.runtime.server.EmbeddedServer
+import spock.lang.AutoCleanup
+import spock.lang.Shared
+
+import java.nio.file.Files
+import java.nio.file.Path
+import java.security.KeyStore
+import java.security.cert.Certificate
+import java.security.cert.X509Certificate
+import spock.lang.Specification
+
+
+class RequestCertificateSpec extends Specification {
+
+    @Shared Path keyStorePath
+    @Shared Path trustStorePath
+
+    @Shared EmbeddedServer embeddedServer = ApplicationContext.run(EmbeddedServer,
+            getConfiguration() << [('spec.name'):getClass().simpleName]
+    )
+    @Shared URL server = embeddedServer.getURL()
+    @Shared @AutoCleanup ApplicationContext applicationContext = embeddedServer.applicationContext
+    @Shared @AutoCleanup HttpClient httpClient = applicationContext.createBean(HttpClient, "https://localhost:"+server.getPort())
+
+    void "test certificate extraction"() {
+        when:
+        def response = Flux.from(httpClient
+                .exchange('/ssl', String))
+                .blockFirst()
+        then:
+        response.code() == HttpStatus.OK.code
+        response.body() == "CN=localhost"
+    }
+
+    void cleanupSpec() {
+        Files.deleteIfExists(keyStorePath)
+        Files.deleteIfExists(trustStorePath)
+    }
+
+    Map<String, Object> getConfiguration() {
+        def certificate = new SelfSignedCertificate()
+
+        keyStorePath = Files.createTempFile("micronaut-test-key-store", "pkcs12")
+        trustStorePath = Files.createTempFile("micronaut-test-trust-store", "pkcs12")
+
+        KeyStore ks = KeyStore.getInstance("PKCS12")
+        ks.load(null, null)
+        ks.setKeyEntry("key", certificate.key(), "".toCharArray(), new Certificate[]{certificate.cert()})
+        try (OutputStream os = Files.newOutputStream(keyStorePath)) {
+            ks.store(os, "".toCharArray())
+        }
+
+        KeyStore ts = KeyStore.getInstance("JKS")
+        ts.load(null, null)
+        ts.setCertificateEntry("cert", certificate.cert())
+        try (OutputStream os = Files.newOutputStream(trustStorePath)) {
+            ts.store(os, "123456".toCharArray())
+        }
+        [
+            "micronaut.server.host": "localhost",
+            "micronaut.http.client.read-timeout": "15s",
+            'micronaut.ssl.enabled': true,
+            'micronaut.ssl.client-authentication': 'NEED',
+            'micronaut.server.ssl.port': -1,
+            // Cannot be true!
+            'micronaut.server.ssl.buildSelfSigned': false,
+            'micronaut.ssl.key-store.path': 'file://' + keyStorePath.toString(),
+            'micronaut.ssl.key-store.type': 'PKCS12',
+            'micronaut.ssl.key-store.password': '',
+            'micronaut.ssl.trust-store.path': 'file://' + trustStorePath.toString(),
+            'micronaut.ssl.trust-store.type': 'JKS',
+            'micronaut.ssl.trust-store.password': '123456',
+        ] as Map<String, Object>
+    }
+
+    @Requires(property = 'spec.name', value = 'RequestCertificateSpec')
+    @Controller
+    static class TestController {
+
+        @Get('/ssl')
+        String html(HttpRequest<?> request) {
+            def cert = request.getCertificate().get() as X509Certificate
+            cert.issuerX500Principal.name
+        }
+    }
+}

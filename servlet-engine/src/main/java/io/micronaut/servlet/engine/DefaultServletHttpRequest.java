@@ -45,6 +45,7 @@ import io.micronaut.http.codec.MediaTypeCodecRegistry;
 import io.micronaut.http.cookie.Cookies;
 import io.micronaut.servlet.http.BodyBuilder;
 import io.micronaut.servlet.http.ParsedBodyHolder;
+import io.micronaut.servlet.http.SSLSessionProviderFromAttribute;
 import io.micronaut.servlet.http.ServletExchange;
 import io.micronaut.servlet.http.ServletHttpRequest;
 import io.micronaut.servlet.http.ServletHttpResponse;
@@ -55,6 +56,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.reactivestreams.Subscriber;
 
+import javax.net.ssl.SSLSession;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -105,6 +107,7 @@ public final class DefaultServletHttpRequest<B> implements
     private final MediaTypeCodecRegistry codecRegistry;
     private final MutableConvertibleValues<Object> attributes;
     private final CloseableByteBody byteBody;
+    private final SSLSessionProviderFromAttribute sslSessionProviderFromAttribute;
     private DefaultServletCookies cookies;
     private Supplier<Optional<B>> body;
 
@@ -115,23 +118,26 @@ public final class DefaultServletHttpRequest<B> implements
     /**
      * Default constructor.
      *
-     * @param conversionService The servlet request
-     * @param delegate          The servlet request
-     * @param response          The servlet response
-     * @param codecRegistry     The codec registry
-     * @param bodyBuilder       Body Builder
-     * @param ioExecutor        Executor for blocking operations
+     * @param conversionService               The servlet request
+     * @param delegate                        The servlet request
+     * @param response                        The servlet response
+     * @param codecRegistry                   The codec registry
+     * @param bodyBuilder                     Body Builder
+     * @param ioExecutor                      Executor for blocking operations
+     * @param sslSessionProviderFromAttribute The {@link SSLSession} provider from attribute
      */
     protected DefaultServletHttpRequest(ConversionService conversionService,
                                         HttpServletRequest delegate,
                                         HttpServletResponse response,
                                         MediaTypeCodecRegistry codecRegistry,
                                         BodyBuilder bodyBuilder,
-                                        Executor ioExecutor) {
+                                        Executor ioExecutor,
+                                        SSLSessionProviderFromAttribute sslSessionProviderFromAttribute) {
         super();
         this.conversionService = conversionService;
         this.delegate = delegate;
         this.codecRegistry = codecRegistry;
+        this.sslSessionProviderFromAttribute = sslSessionProviderFromAttribute;
         long contentLengthLong = delegate.getContentLengthLong();
         OptionalLong length = contentLengthLong < 0 ? OptionalLong.empty() : OptionalLong.of(contentLengthLong);
         if (delegate.isAsyncSupported()) {
@@ -591,5 +597,13 @@ public final class DefaultServletHttpRequest<B> implements
             }
             return Optional.empty();
         }
+    }
+
+    @Override
+    public Optional<SSLSession> getSslSession() {
+        if (sslSessionProviderFromAttribute != null) {
+            return sslSessionProviderFromAttribute.getSSLSession(this);
+        }
+        return ServletHttpRequest.super.getSslSession();
     }
 }
