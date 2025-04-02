@@ -24,6 +24,9 @@ import java.util.Optional;
 
 /**
  * This interface helps micronaut to extract {@link SSLSession} from different servlet frameworks.
+ *
+ * @author Nemanja Mikic.
+ * @since 5.2.2
  */
 @Internal
 public interface SSLSessionProvider {
