@@ -16,6 +16,7 @@
 package io.micronaut.servlet.http;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.attr.AttributeHolder;
 
 import javax.net.ssl.SSLSession;
@@ -25,7 +26,7 @@ import java.util.Optional;
  * This interface helps micronaut to extract {@link SSLSession} from different servlet frameworks.
  */
 @Internal
-public interface SSLSessionProviderFromAttribute {
+public interface SSLSessionProvider {
 
     /**
      * Extracts the {@link SSLSession} from attributes.
@@ -33,5 +34,5 @@ public interface SSLSessionProviderFromAttribute {
      * @param attributeHolder the attribute holder
      * @return the {@link SSLSession} if found otherwise empty.
      */
-    Optional<SSLSession> getSSLSession(AttributeHolder attributeHolder);
+    Optional<SSLSession> getSSLSession(@NonNull AttributeHolder attributeHolder);
 }

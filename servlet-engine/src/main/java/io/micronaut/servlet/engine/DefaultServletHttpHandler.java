@@ -20,9 +20,10 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.servlet.http.BodyBuilder;
-import io.micronaut.servlet.http.SSLSessionProviderFromAttribute;
+import io.micronaut.servlet.http.SSLSessionProvider;
 import io.micronaut.servlet.http.ServletExchange;
 import io.micronaut.servlet.http.ServletHttpHandler;
+import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import jakarta.servlet.http.HttpServletRequest;
@@ -42,20 +43,21 @@ import java.util.concurrent.ForkJoinPool;
 public class DefaultServletHttpHandler extends ServletHttpHandler<HttpServletRequest, HttpServletResponse> {
 
     private final Executor ioExecutor;
-    private final SSLSessionProviderFromAttribute sslSessionProviderFromAttribute;
+    private final SSLSessionProvider sslSessionProvider;
 
     /**
      * Default constructor.
      *
-     * @param applicationContext              The application context
-     * @param conversionService               The conversion service
-     * @param ioExecutor                      Executor to use for blocking IO operations
-     * @param sslSessionProviderFromAttribute The {@link SSLSession} provider from attribute
+     * @param applicationContext   The application context
+     * @param conversionService    The conversion service
+     * @param ioExecutor           Executor to use for blocking IO operations
+     * @param sslSessionProvider   The {@link SSLSession} provider from attribute
      */
-    public DefaultServletHttpHandler(ApplicationContext applicationContext, ConversionService conversionService, @Named(TaskExecutors.BLOCKING) Executor ioExecutor, @Nullable SSLSessionProviderFromAttribute sslSessionProviderFromAttribute) {
+    @Inject
+    public DefaultServletHttpHandler(ApplicationContext applicationContext, ConversionService conversionService, @Named(TaskExecutors.BLOCKING) Executor ioExecutor, @Nullable SSLSessionProvider sslSessionProvider) {
         super(applicationContext, conversionService);
         this.ioExecutor = ioExecutor;
-        this.sslSessionProviderFromAttribute = sslSessionProviderFromAttribute;
+        this.sslSessionProvider = sslSessionProvider;
     }
 
     /**
@@ -67,7 +69,7 @@ public class DefaultServletHttpHandler extends ServletHttpHandler<HttpServletReq
      */
     @Deprecated
     public DefaultServletHttpHandler(ApplicationContext applicationContext, ConversionService conversionService, @Named(TaskExecutors.BLOCKING) Executor ioExecutor) {
-        this(applicationContext, conversionService, ForkJoinPool.commonPool(), null);
+        this(applicationContext, conversionService, ioExecutor, null);
     }
 
     /**
@@ -97,7 +99,7 @@ public class DefaultServletHttpHandler extends ServletHttpHandler<HttpServletReq
     protected ServletExchange<HttpServletRequest, HttpServletResponse> createExchange(
             HttpServletRequest request,
             HttpServletResponse response) {
-        return new DefaultServletHttpRequest<>(applicationContext.getConversionService(), request, response, getMediaTypeCodecRegistry(), applicationContext.getBean(BodyBuilder.class), ioExecutor, sslSessionProviderFromAttribute);
+        return new DefaultServletHttpRequest<>(applicationContext.getConversionService(), request, response, getMediaTypeCodecRegistry(), applicationContext.getBean(BodyBuilder.class), ioExecutor, sslSessionProvider);
     }
 
     @Override

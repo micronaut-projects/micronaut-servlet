@@ -16,8 +16,9 @@
 package io.micronaut.servlet.jetty;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.attr.AttributeHolder;
-import io.micronaut.servlet.http.SSLSessionProviderFromAttribute;
+import io.micronaut.servlet.http.SSLSessionProvider;
 import jakarta.inject.Singleton;
 import org.eclipse.jetty.io.EndPoint;
 
@@ -26,10 +27,10 @@ import java.util.Optional;
 
 @Singleton
 @Internal
-public final class JettySSLSessionProviderFromAttribute implements SSLSessionProviderFromAttribute {
+final class JettySSLSessionProvider implements SSLSessionProvider {
 
     @Override
-    public Optional<SSLSession> getSSLSession(AttributeHolder attributeHolder) {
+    public Optional<SSLSession> getSSLSession(@NonNull AttributeHolder attributeHolder) {
         Optional<Object> attribute = attributeHolder.getAttribute(EndPoint.SslSessionData.ATTRIBUTE);
 
         if (attribute.isPresent() && attribute.get() instanceof EndPoint.SslSessionData sslSessionData) {

@@ -45,7 +45,7 @@ import io.micronaut.http.codec.MediaTypeCodecRegistry;
 import io.micronaut.http.cookie.Cookies;
 import io.micronaut.servlet.http.BodyBuilder;
 import io.micronaut.servlet.http.ParsedBodyHolder;
-import io.micronaut.servlet.http.SSLSessionProviderFromAttribute;
+import io.micronaut.servlet.http.SSLSessionProvider;
 import io.micronaut.servlet.http.ServletExchange;
 import io.micronaut.servlet.http.ServletHttpRequest;
 import io.micronaut.servlet.http.ServletHttpResponse;
@@ -107,7 +107,7 @@ public final class DefaultServletHttpRequest<B> implements
     private final MediaTypeCodecRegistry codecRegistry;
     private final MutableConvertibleValues<Object> attributes;
     private final CloseableByteBody byteBody;
-    private final SSLSessionProviderFromAttribute sslSessionProviderFromAttribute;
+    private final SSLSessionProvider sslSessionProvider;
     private DefaultServletCookies cookies;
     private Supplier<Optional<B>> body;
 
@@ -118,13 +118,32 @@ public final class DefaultServletHttpRequest<B> implements
     /**
      * Default constructor.
      *
-     * @param conversionService               The servlet request
-     * @param delegate                        The servlet request
-     * @param response                        The servlet response
-     * @param codecRegistry                   The codec registry
-     * @param bodyBuilder                     Body Builder
-     * @param ioExecutor                      Executor for blocking operations
-     * @param sslSessionProviderFromAttribute The {@link SSLSession} provider from attribute
+     * @param conversionService  The servlet request
+     * @param delegate           The servlet request
+     * @param response           The servlet response
+     * @param codecRegistry      The codec registry
+     * @param bodyBuilder        Body Builder
+     * @param ioExecutor         Executor for blocking operations
+     */
+    protected DefaultServletHttpRequest(ConversionService conversionService,
+                                        HttpServletRequest delegate,
+                                        HttpServletResponse response,
+                                        MediaTypeCodecRegistry codecRegistry,
+                                        BodyBuilder bodyBuilder,
+                                        Executor ioExecutor) {
+        this(conversionService, delegate, response, codecRegistry, bodyBuilder, ioExecutor, null);
+    }
+
+    /**
+     * Default constructor.
+     *
+     * @param conversionService  The servlet request
+     * @param delegate           The servlet request
+     * @param response           The servlet response
+     * @param codecRegistry      The codec registry
+     * @param bodyBuilder        Body Builder
+     * @param ioExecutor         Executor for blocking operations
+     * @param sslSessionProvider The {@link SSLSession} provider from attribute
      */
     protected DefaultServletHttpRequest(ConversionService conversionService,
                                         HttpServletRequest delegate,
@@ -132,12 +151,12 @@ public final class DefaultServletHttpRequest<B> implements
                                         MediaTypeCodecRegistry codecRegistry,
                                         BodyBuilder bodyBuilder,
                                         Executor ioExecutor,
-                                        SSLSessionProviderFromAttribute sslSessionProviderFromAttribute) {
+                                        @Nullable SSLSessionProvider sslSessionProvider) {
         super();
         this.conversionService = conversionService;
         this.delegate = delegate;
         this.codecRegistry = codecRegistry;
-        this.sslSessionProviderFromAttribute = sslSessionProviderFromAttribute;
+        this.sslSessionProvider = sslSessionProvider;
         long contentLengthLong = delegate.getContentLengthLong();
         OptionalLong length = contentLengthLong < 0 ? OptionalLong.empty() : OptionalLong.of(contentLengthLong);
         if (delegate.isAsyncSupported()) {
@@ -601,8 +620,8 @@ public final class DefaultServletHttpRequest<B> implements
 
     @Override
     public Optional<SSLSession> getSslSession() {
-        if (sslSessionProviderFromAttribute != null) {
-            return sslSessionProviderFromAttribute.getSSLSession(this);
+        if (sslSessionProvider != null) {
+            return sslSessionProvider.getSSLSession(this);
         }
         return ServletHttpRequest.super.getSslSession();
     }
