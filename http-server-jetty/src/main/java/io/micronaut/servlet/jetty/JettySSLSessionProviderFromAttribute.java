@@ -31,12 +31,8 @@ public final class JettySSLSessionProviderFromAttribute implements SSLSessionPro
     @Override
     public Optional<SSLSession> getSSLSession(AttributeHolder attributeHolder) {
         Optional<Object> attribute = attributeHolder.getAttribute(EndPoint.SslSessionData.ATTRIBUTE);
-        if (attribute.isPresent() && attribute.get() instanceof SSLSession sslSession) {
-            return Optional.of(sslSession);
-        }
 
-        if (attribute.isPresent()
-            && attribute.get() instanceof EndPoint.SslSessionData sslSessionData) {
+        if (attribute.isPresent() && attribute.get() instanceof EndPoint.SslSessionData sslSessionData) {
             return Optional.of(sslSessionData.sslSession());
         }
 
