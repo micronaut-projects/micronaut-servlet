@@ -25,6 +25,7 @@ import io.micronaut.core.convert.value.MutableConvertibleValuesMap;
 import io.micronaut.core.io.buffer.ByteBuffer;
 import io.micronaut.core.io.buffer.ReferenceCounted;
 import io.micronaut.core.type.Argument;
+import io.micronaut.core.type.MutableHeaders;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpResponse;
@@ -821,6 +822,25 @@ public final class DefaultServletHttpResponse<B> implements ServletHttpResponse<
         }
 
         @Override
+        public MutableHeaders set(CharSequence header, CharSequence value) {
+            final String headerName =
+                Objects.requireNonNull(header, "Header name cannot be null").toString();
+
+            final String headerValue =
+                Objects.requireNonNull(value, "Header value cannot be null").toString();
+
+            if (isBanned(headerName)) {
+                return this;
+            }
+
+            delegate.setHeader(
+                headerName,
+                headerValue
+            );
+            return this;
+        }
+
+        @Override
         public MutableHttpHeaders add(CharSequence header, CharSequence value) {
             final String headerName =
                     Objects.requireNonNull(header, "Header name cannot be null").toString();
@@ -832,7 +852,7 @@ public final class DefaultServletHttpResponse<B> implements ServletHttpResponse<
                 return this;
             }
 
-            delegate.setHeader(
+            delegate.addHeader(
                     headerName,
                     headerValue
             );

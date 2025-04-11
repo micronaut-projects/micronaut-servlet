@@ -185,14 +185,24 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
             for (String servletResponseHeader : List.copyOf(servletResponseHeaders.names())) {
                 if (sourceNames.remove(servletResponseHeader)) {
                     List<String> all = sourceHeaders.getAll(servletResponseHeader);
-                    servletResponseHeaders.remove(servletResponseHeader);
-                    all.forEach(v -> servletResponseHeaders.add(servletResponseHeader, v));
-                } else if (debugEnabled) {
-                    LOG.debug("Request [{} - {}] custom native response header '{}': '{}'",
-                        exchange.getRequest().getMethodName(),
-                        exchange.getRequest().getUri(),
-                        servletResponseHeader,
-                        servletResponseHeaders.get(servletResponseHeader));
+                    boolean previouslyRemovedCalled = false;
+                    for (String v : all) {
+                        if (!previouslyRemovedCalled) {
+                            // Servlet API doesn't have the remove header function so we need to replace all headers first
+                            servletResponseHeaders.set(servletResponseHeader, v);
+                            previouslyRemovedCalled = true;
+                        } else {
+                            servletResponseHeaders.add(servletResponseHeader, v);
+                        }
+                    }
+                } else {
+                    if (debugEnabled) {
+                        LOG.debug("Request [{} - {}] custom native response header '{}': '{}'",
+                            exchange.getRequest().getMethodName(),
+                            exchange.getRequest().getUri(),
+                            servletResponseHeader,
+                            servletResponseHeaders.get(servletResponseHeader));
+                    }
                 }
             }
             for (String k : sourceNames) {
