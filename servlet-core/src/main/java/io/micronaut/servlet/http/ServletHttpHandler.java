@@ -188,7 +188,7 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
                     boolean previouslyRemovedCalled = false;
                     for (String v : all) {
                         if (!previouslyRemovedCalled) {
-                            // Servlet API doesn't have the remove header function so we need to replace all headers first
+                            // Some implementations don't like to remove some headers so we don't use remove method
                             servletResponseHeaders.set(servletResponseHeader, v);
                             previouslyRemovedCalled = true;
                         } else {
