@@ -862,9 +862,7 @@ public final class DefaultServletHttpResponse<B> implements ServletHttpResponse<
         @Override
         public MutableHttpHeaders remove(CharSequence header) {
             final String headerName = Objects.requireNonNull(header, "Header name cannot be null").toString();
-            if (delegate.containsHeader(headerName)) {
-                delegate.setHeader(headerName, "");
-            }
+            delegate.setHeader(headerName, null);
             return this;
         }
 
