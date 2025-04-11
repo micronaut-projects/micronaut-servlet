@@ -125,12 +125,12 @@ public final class DefaultServletHttpRequest<B> implements
      * @param bodyBuilder        Body Builder
      * @param ioExecutor         Executor for blocking operations
      */
-    protected DefaultServletHttpRequest(ConversionService conversionService,
-                                        HttpServletRequest delegate,
-                                        HttpServletResponse response,
-                                        MediaTypeCodecRegistry codecRegistry,
-                                        BodyBuilder bodyBuilder,
-                                        Executor ioExecutor) {
+    private DefaultServletHttpRequest(ConversionService conversionService,
+                                      HttpServletRequest delegate,
+                                      HttpServletResponse response,
+                                      MediaTypeCodecRegistry codecRegistry,
+                                      BodyBuilder bodyBuilder,
+                                      Executor ioExecutor) {
         this(conversionService, delegate, response, codecRegistry, bodyBuilder, ioExecutor, null);
     }
 
@@ -145,13 +145,13 @@ public final class DefaultServletHttpRequest<B> implements
      * @param ioExecutor         Executor for blocking operations
      * @param sslSessionProvider The {@link SSLSession} provider from attribute
      */
-    protected DefaultServletHttpRequest(ConversionService conversionService,
-                                        HttpServletRequest delegate,
-                                        HttpServletResponse response,
-                                        MediaTypeCodecRegistry codecRegistry,
-                                        BodyBuilder bodyBuilder,
-                                        Executor ioExecutor,
-                                        @Nullable SSLSessionProvider sslSessionProvider) {
+    DefaultServletHttpRequest(ConversionService conversionService,
+                              HttpServletRequest delegate,
+                              HttpServletResponse response,
+                              MediaTypeCodecRegistry codecRegistry,
+                              BodyBuilder bodyBuilder,
+                              Executor ioExecutor,
+                              @Nullable SSLSessionProvider sslSessionProvider) {
         super();
         this.conversionService = conversionService;
         this.delegate = delegate;
@@ -470,10 +470,6 @@ public final class DefaultServletHttpRequest<B> implements
         DefaultServletHttpResponse<B> r = (DefaultServletHttpResponse<B>) primaryResponse.createNewPrimaryResponse();
         primaryResponse = r;
         return r;
-    }
-
-    private boolean isFormSubmission(MediaType contentType) {
-        return MediaType.APPLICATION_FORM_URLENCODED_TYPE.equals(contentType) || MediaType.MULTIPART_FORM_DATA_TYPE.equals(contentType);
     }
 
     private <T> List<T> enumerationToList(Enumeration<T> enumeration) {

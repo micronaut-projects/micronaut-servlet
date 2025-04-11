@@ -97,22 +97,41 @@ public final class DefaultServletHttpResponse<B> implements ServletHttpResponse<
      * @param request           The servlet request
      * @param delegate          The servlet response
      */
-    protected DefaultServletHttpResponse(ConversionService conversionService,
-                                         DefaultServletHttpRequest<B> request,
-                                         HttpServletResponse delegate) {
+    DefaultServletHttpResponse(ConversionService conversionService,
+                               DefaultServletHttpRequest<B> request,
+                               HttpServletResponse delegate) {
+        this(conversionService, request, delegate, new ServletResponseHeaders(delegate, conversionService));
+    }
+
+    /**
+     * Default constructor.
+     *
+     * @param conversionService The conversion service
+     * @param request           The servlet request
+     * @param delegate          The servlet response
+     */
+    DefaultServletHttpResponse(ConversionService conversionService,
+                               DefaultServletHttpRequest<B> request,
+                               HttpServletResponse delegate,
+                               ServletResponseHeaders headers) {
         this.conversionService = conversionService;
         this.delegate = new DelegateResponseMetadata(delegate);
         this.attributes = new MutableConvertibleValuesMap<>(new LinkedHashMap<>(), conversionService);
         this.request = request;
-        this.headers = new ServletResponseHeaders();
+        this.headers = headers;
     }
 
     DefaultServletHttpResponse<?> createNewPrimaryResponse() {
         HttpServletResponse nativeResponse = ((DelegateResponseMetadata) delegate).delegate;
-        DefaultServletHttpResponse<?> newPrimary = new DefaultServletHttpResponse<>(conversionService, request, nativeResponse);
+        DefaultServletHttpResponse<?> newPrimary = new DefaultServletHttpResponse<>(conversionService, request, nativeResponse, headers);
         delegate = new LocalResponseMetadata();
         nativeResponse.reset();
         return newPrimary;
+    }
+
+    @Override
+    public boolean isCommitted() {
+        return delegate.isCommitted();
     }
 
     @Override
@@ -785,7 +804,16 @@ public final class DefaultServletHttpResponse<B> implements ServletHttpResponse<
     /**
      * The response headers.
      */
-    private class ServletResponseHeaders implements MutableHttpHeaders {
+    private static final class ServletResponseHeaders implements MutableHttpHeaders {
+
+        private final HttpServletResponse delegate;
+        private final ConversionService conversionService;
+
+        private ServletResponseHeaders(HttpServletResponse delegate, ConversionService conversionService) {
+            this.delegate = delegate;
+            this.conversionService = conversionService;
+        }
+
         private static boolean isBanned(String name) {
             // transfer-encoding cannot be cleared on tomcat, so we must never set it
             return name.equalsIgnoreCase(HttpHeaders.TRANSFER_ENCODING) ||

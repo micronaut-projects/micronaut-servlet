@@ -21,6 +21,7 @@ import io.micronaut.http.HttpRequest;
 import io.micronaut.http.bind.binders.TypedRequestArgumentBinder;
 import io.micronaut.servlet.http.ServletExchange;
 
+import io.micronaut.servlet.http.ServletHttpResponse;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.Optional;
 
@@ -42,10 +43,13 @@ public class ServletResponseBinder implements TypedRequestArgumentBinder<HttpSer
 
     @Override
     public BindingResult<HttpServletResponse> bind(ArgumentConversionContext<HttpServletResponse> context, HttpRequest<?> source) {
-        if (source instanceof ServletExchange) {
-            ServletExchange servletRequest = (ServletExchange) source;
-            return () -> Optional.of((HttpServletResponse) servletRequest.getResponse().getNativeResponse());
+        if (source instanceof ServletExchange<?, ?> servletExchange) {
+            return () -> {
+                ServletHttpResponse<?, ?> response = servletExchange.getResponse();
+                Object nativeResponse = response.getNativeResponse();
+                return Optional.of((HttpServletResponse) nativeResponse);
+            };
         }
-        return BindingResult.UNSATISFIED;
+        return BindingResult.unsatisfied();
     }
 }

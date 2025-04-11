@@ -43,10 +43,9 @@ public class ServletRequestBinder implements TypedRequestArgumentBinder<HttpServ
     public BindingResult<HttpServletRequest> bind(
             ArgumentConversionContext<HttpServletRequest> context,
             HttpRequest<?> source) {
-        if (source instanceof ServletHttpRequest) {
-            ServletHttpRequest servletRequest = (ServletHttpRequest) source;
-            return () -> Optional.of((HttpServletRequest) servletRequest.getNativeRequest());
+        if (source instanceof ServletHttpRequest<?, ?> servletHttpRequest) {
+            return () -> Optional.of((HttpServletRequest) servletHttpRequest.getNativeRequest());
         }
-        return BindingResult.UNSATISFIED;
+        return BindingResult.unsatisfied();
     }
 }

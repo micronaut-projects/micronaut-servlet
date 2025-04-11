@@ -41,6 +41,15 @@ public interface ServletHttpResponse<N, B> extends MutableHttpResponse<B> {
     N getNativeResponse();
 
     /**
+     * If native response is commited and cannot be modified anymore.
+     *
+     * @return Is commited native response
+     */
+    default boolean isCommitted() {
+        return false;
+    }
+
+    /**
      * Returns an {@link OutputStream} that can be used to write the body of the response.
      * This method is typically used to write binary data. If the body is text, the
      * {@link #getWriter()} method is more appropriate.
