@@ -25,6 +25,7 @@ import io.micronaut.core.convert.value.MutableConvertibleValuesMap;
 import io.micronaut.core.io.buffer.ByteBuffer;
 import io.micronaut.core.io.buffer.ReferenceCounted;
 import io.micronaut.core.type.Argument;
+import io.micronaut.core.type.MutableHeaders;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpResponse;
@@ -97,22 +98,41 @@ public final class DefaultServletHttpResponse<B> implements ServletHttpResponse<
      * @param request           The servlet request
      * @param delegate          The servlet response
      */
-    protected DefaultServletHttpResponse(ConversionService conversionService,
-                                         DefaultServletHttpRequest<B> request,
-                                         HttpServletResponse delegate) {
+    DefaultServletHttpResponse(ConversionService conversionService,
+                               DefaultServletHttpRequest<B> request,
+                               HttpServletResponse delegate) {
+        this(conversionService, request, delegate, new ServletResponseHeaders(delegate, conversionService));
+    }
+
+    /**
+     * Default constructor.
+     *
+     * @param conversionService The conversion service
+     * @param request           The servlet request
+     * @param delegate          The servlet response
+     */
+    DefaultServletHttpResponse(ConversionService conversionService,
+                               DefaultServletHttpRequest<B> request,
+                               HttpServletResponse delegate,
+                               ServletResponseHeaders headers) {
         this.conversionService = conversionService;
         this.delegate = new DelegateResponseMetadata(delegate);
         this.attributes = new MutableConvertibleValuesMap<>(new LinkedHashMap<>(), conversionService);
         this.request = request;
-        this.headers = new ServletResponseHeaders();
+        this.headers = headers;
     }
 
     DefaultServletHttpResponse<?> createNewPrimaryResponse() {
         HttpServletResponse nativeResponse = ((DelegateResponseMetadata) delegate).delegate;
-        DefaultServletHttpResponse<?> newPrimary = new DefaultServletHttpResponse<>(conversionService, request, nativeResponse);
+        DefaultServletHttpResponse<?> newPrimary = new DefaultServletHttpResponse<>(conversionService, request, nativeResponse, headers);
         delegate = new LocalResponseMetadata();
         nativeResponse.reset();
         return newPrimary;
+    }
+
+    @Override
+    public boolean isCommitted() {
+        return delegate.isCommitted();
     }
 
     @Override
@@ -785,11 +805,39 @@ public final class DefaultServletHttpResponse<B> implements ServletHttpResponse<
     /**
      * The response headers.
      */
-    private class ServletResponseHeaders implements MutableHttpHeaders {
+    private static final class ServletResponseHeaders implements MutableHttpHeaders {
+
+        private final HttpServletResponse delegate;
+        private final ConversionService conversionService;
+
+        private ServletResponseHeaders(HttpServletResponse delegate, ConversionService conversionService) {
+            this.delegate = delegate;
+            this.conversionService = conversionService;
+        }
+
         private static boolean isBanned(String name) {
             // transfer-encoding cannot be cleared on tomcat, so we must never set it
             return name.equalsIgnoreCase(HttpHeaders.TRANSFER_ENCODING) ||
                 name.equalsIgnoreCase(HttpHeaders.CONTENT_LENGTH);
+        }
+
+        @Override
+        public MutableHeaders set(CharSequence header, CharSequence value) {
+            final String headerName =
+                Objects.requireNonNull(header, "Header name cannot be null").toString();
+
+            final String headerValue =
+                Objects.requireNonNull(value, "Header value cannot be null").toString();
+
+            if (isBanned(headerName)) {
+                return this;
+            }
+
+            delegate.setHeader(
+                headerName,
+                headerValue
+            );
+            return this;
         }
 
         @Override
@@ -804,7 +852,7 @@ public final class DefaultServletHttpResponse<B> implements ServletHttpResponse<
                 return this;
             }
 
-            delegate.setHeader(
+            delegate.addHeader(
                     headerName,
                     headerValue
             );

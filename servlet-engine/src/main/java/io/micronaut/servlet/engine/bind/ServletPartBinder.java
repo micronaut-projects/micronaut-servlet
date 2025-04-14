@@ -66,8 +66,7 @@ public class ServletPartBinder<T> implements AnnotatedRequestArgumentBinder<Part
 
     @Override
     public BindingResult<T> bind(ArgumentConversionContext<T> context, HttpRequest<?> source) {
-        if (source instanceof ServletExchange) {
-            ServletExchange<?, ?> exchange = (ServletExchange<?, ?>) source;
+        if (source instanceof ServletExchange<?, ?> exchange) {
             final HttpServletRequest nativeRequest = (HttpServletRequest) exchange.getRequest().getNativeRequest();
             final Argument<T> argument = context.getArgument();
             final String partName = context.getAnnotationMetadata().stringValue(Part.class).orElse(argument.getName());

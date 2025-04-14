@@ -18,6 +18,7 @@ package io.micronaut.servlet.http;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.LifeCycle;
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.execution.ExecutionFlow;
 import io.micronaut.core.io.buffer.ByteArrayBufferFactory;
@@ -60,7 +61,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.function.Supplier;
 
@@ -159,29 +159,54 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
         return getApplicationContext().isRunning();
     }
 
-    private static void transfer(ByteBodyHttpResponse<?> byteBodyResponse, ServletExchange<?, ?> exchange, boolean async, Runnable onComplete) {
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Request [{} - {}] completed successfully", exchange.getRequest().getMethodName(), exchange.getRequest().getUri());
+    private static void transfer(ExecutionResult executionResult, ServletExchange<?, ?> exchange, boolean async, Runnable onComplete) {
+        ByteBodyHttpResponse<?> byteBodyResponse = executionResult.byteBodyHttpResponse;
+        boolean debugEnabled = LOG.isDebugEnabled();
+        if (debugEnabled) {
+            if (byteBodyResponse == null) {
+                LOG.debug("Request [{} - {}] completed commited manually", exchange.getRequest().getMethodName(), exchange.getRequest().getUri());
+            } else {
+                LOG.debug("Request [{} - {}] completed successfully", exchange.getRequest().getMethodName(), exchange.getRequest().getUri());
+            }
         }
+        if (byteBodyResponse == null) {
+            onComplete.run();
+            return;
+        }
+
         traceHeaders(byteBodyResponse.getHeaders());
 
         ServletHttpResponse<?, ?> servletResponse = exchange.getResponse();
         if (byteBodyResponse.getHeaders() != exchange.getResponse().getHeaders()) {
             servletResponse.status(byteBodyResponse.code(), byteBodyResponse.reason());
             HttpHeaders sourceHeaders = byteBodyResponse.getHeaders();
-            MutableHttpHeaders targetHeaders = servletResponse.getHeaders();
+            MutableHttpHeaders servletResponseHeaders = servletResponse.getHeaders();
             Set<String> sourceNames = new LinkedHashSet<>(sourceHeaders.names());
-            for (String k : List.copyOf(targetHeaders.names())) {
-                if (sourceNames.remove(k)) {
-                    List<String> all = sourceHeaders.getAll(k);
-                    targetHeaders.remove(k);
-                    all.forEach(v -> targetHeaders.add(k, v));
+            for (String servletResponseHeader : List.copyOf(servletResponseHeaders.names())) {
+                if (sourceNames.remove(servletResponseHeader)) {
+                    List<String> all = sourceHeaders.getAll(servletResponseHeader);
+                    boolean previouslyRemovedCalled = false;
+                    for (String v : all) {
+                        if (!previouslyRemovedCalled) {
+                            // Some implementations don't like to remove some headers so we don't use remove method
+                            servletResponseHeaders.set(servletResponseHeader, v);
+                            previouslyRemovedCalled = true;
+                        } else {
+                            servletResponseHeaders.add(servletResponseHeader, v);
+                        }
+                    }
                 } else {
-                    targetHeaders.remove(k);
+                    if (debugEnabled) {
+                        LOG.debug("Request [{} - {}] custom native response header '{}': '{}'",
+                            exchange.getRequest().getMethodName(),
+                            exchange.getRequest().getUri(),
+                            servletResponseHeader,
+                            servletResponseHeaders.get(servletResponseHeader));
+                    }
                 }
             }
             for (String k : sourceNames) {
-                sourceHeaders.getAll(k).forEach(v -> targetHeaders.add(k, v));
+                sourceHeaders.getAll(k).forEach(v -> servletResponseHeaders.add(k, v));
             }
         }
         if (byteBodyResponse.byteBody() instanceof AvailableByteBody available && available.length() == 0) {
@@ -235,7 +260,7 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
             exchange.getRequest().executeAsync(ctx -> {
                 try (PropagatedContext.Scope ignore = PropagatedContext.getOrEmpty().plus(new ServerHttpRequestContext(req)).propagate()) {
                     lc.handleNormal(req)
-                        .flatMap(response -> new ServletResponseLifecycle().encodeHttpResponseSafe(req, response))
+                        .flatMap(response -> process(response, req, exchange.getResponse()))
                         .onComplete((bbhr, t) -> {
                             if (t == null) {
                                 transfer(bbhr, exchange, true, () -> {
@@ -250,19 +275,28 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
                 }
             });
         } else {
-            ByteBodyHttpResponse<?> bbhr;
+            ExecutionResult executionResult;
             try (PropagatedContext.Scope ignore = PropagatedContext.getOrEmpty().plus(new ServerHttpRequestContext(req)).propagate()) {
-                bbhr = lc.handleNormal(req)
-                    .flatMap(response -> new ServletResponseLifecycle().encodeHttpResponseSafe(req, response)).toCompletableFuture().get();
+                executionResult = lc.handleNormal(req)
+                    .flatMap(response -> process(response, req, exchange.getResponse())).toCompletableFuture().get();
             } catch (InterruptedException ie) {
                 Thread.currentThread().interrupt();
                 return;
-            } catch (ExecutionException ee) {
+            } catch (Throwable ee) {
                 handleFallback(exchange.getResponse(), ee.getCause());
                 return;
             }
-            transfer(bbhr, exchange, false, requestTerminated);
+            transfer(executionResult, exchange, false, requestTerminated);
         }
+    }
+
+    private ExecutionFlow<ExecutionResult> process(HttpResponse<?> response,
+                                                   HttpRequest<Object> req,
+                                                   ServletHttpResponse<?, ?> shr) {
+        if (shr.isCommitted()) {
+            return ExecutionFlow.just(new ExecutionResult(null));
+        }
+        return new ServletResponseLifecycle().encodeHttpResponseSafe(req, response).map(ExecutionResult::new);
     }
 
     private static void handleFallback(ServletHttpResponse<?, ?> shr, Throwable t) {
@@ -360,5 +394,8 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
         protected @NonNull Executor ioExecutor() {
             return ioExecutor.get();
         }
+    }
+
+    private record ExecutionResult(@Nullable ByteBodyHttpResponse<?> byteBodyHttpResponse) {
     }
 }
