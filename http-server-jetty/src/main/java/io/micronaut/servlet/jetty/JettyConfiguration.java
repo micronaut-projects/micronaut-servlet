@@ -21,7 +21,6 @@ import io.micronaut.context.annotation.EachProperty;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.context.annotation.Replaces;
 import io.micronaut.context.annotation.Requires;
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.format.MapFormat;
 import io.micronaut.core.naming.conventions.StringConvention;
@@ -30,9 +29,7 @@ import io.micronaut.core.util.Toggleable;
 import io.micronaut.http.server.HttpServerConfiguration;
 import jakarta.inject.Inject;
 import org.eclipse.jetty.server.ConnectionFactory;
-import org.eclipse.jetty.server.CustomRequestLog;
 import org.eclipse.jetty.server.HttpConfiguration;
-import org.eclipse.jetty.server.RequestLogWriter;
 import org.eclipse.jetty.server.SecureRequestCustomizer;
 
 import java.util.Collections;
@@ -168,44 +165,60 @@ public class JettyConfiguration extends HttpServerConfiguration {
      */
     @ConfigurationProperties(JettyRequestLog.ACCESS_LOG)
     @Requires(property = JettyRequestLog.ENABLED_PROPERTY, value = StringUtils.TRUE)
-    public static class JettyRequestLog implements Toggleable {
+    public static final class JettyRequestLog implements Toggleable {
         public static final String ACCESS_LOG = "access-log";
         public static final String ENABLED_PROPERTY = HttpServerConfiguration.PREFIX + ".jetty." + ACCESS_LOG + ".enabled";
-        @ConfigurationBuilder(prefixes = "set", excludes = "eventListeners")
-        RequestLogWriter requestLogWriter = new RequestLogWriter();
 
         private boolean enabled = true;
-        private String pattern = CustomRequestLog.EXTENDED_NCSA_FORMAT;
+        private String fileName;
+        private String resourcePath = "/logback-access.xml";
+        private boolean quiet = true;
+
+        public String getFileName() {
+            return fileName;
+        }
+
+        /**
+         * @param fileName sets the fileName attribute for {@link ch.qos.logback.access.jetty.RequestLogImpl}.
+         */
+        public void setFileName(String fileName) {
+            this.fileName = fileName;
+        }
 
         @Override
         public boolean isEnabled() {
             return enabled;
         }
 
+        public String getResourcePath() {
+            return resourcePath;
+        }
+
+        /**
+         * @param resourcePath sets the resourcePath attribute for {@link ch.qos.logback.access.jetty.RequestLogImpl}.
+         */
+        public void setResourcePath(String resourcePath) {
+            this.resourcePath = resourcePath;
+        }
+
+        public boolean isQuiet() {
+            return quiet;
+        }
+
+        /**
+         * @param quiet sets the quiet attribute for {@link ch.qos.logback.access.jetty.RequestLogImpl}.
+         */
+        public void setQuiet(boolean quiet) {
+            this.quiet = quiet;
+        }
+
         /**
          * Whether access log is enabled.
+         *
          * @param enabled True if it is enabled.
          */
         public void setEnabled(boolean enabled) {
             this.enabled = enabled;
-        }
-
-        /**
-         * The pattern to use for the access log. Defaults to {@code EXTENDED_NCSA_FORMAT}.
-         *
-         * @return The pattern.
-         */
-        public @NonNull String getPattern() {
-            return pattern;
-        }
-
-        /**
-         * Sets the pattern to use for the access log. Defaults to CustomRequestLog.EXTENDED_NCSA_FORMAT.
-         *
-         * @param pattern The pattern
-         */
-        public void setPattern(String pattern) {
-            this.pattern = pattern;
         }
     }
 }
