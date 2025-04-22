@@ -27,15 +27,16 @@ class JettyAccessLogbackConfigSpec extends Specification implements TestProperty
         server.requestLog != null
         requestLog.resourcePath == "/logback-test-access.xml"
         !requestLog.quiet
-        requestLog.fileName == "test123"
+        requestLog.fileName.endsWith("logback-access.xml")
     }
 
     @Override
     Map<String, String> getProperties() {
+        def path = getClass().getResource("/logback-access.xml").getPath()
         return [
                 "spec.name": "JettyAccessLogbackSpec",
                 "micronaut.server.jetty.access-log.enabled": true,
-                "micronaut.server.jetty.access-log.file-name": "test123",
+                "micronaut.server.jetty.access-log.file-name": path,
                 "micronaut.server.jetty.access-log.resource-path": "/logback-test-access.xml",
                 "micronaut.server.jetty.access-log.quiet": false,
         ]
