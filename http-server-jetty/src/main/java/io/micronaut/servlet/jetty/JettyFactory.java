@@ -48,6 +48,7 @@ import org.eclipse.jetty.ee10.servlet.ServletContextHandler;
 import org.eclipse.jetty.http.HttpVersion;
 import org.eclipse.jetty.http2.server.HTTP2CServerConnectionFactory;
 import org.eclipse.jetty.http2.server.HTTP2ServerConnectionFactory;
+import org.eclipse.jetty.server.CustomRequestLog;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.RequestLog;
@@ -193,11 +194,26 @@ public class JettyFactory extends ServletServerFactory {
 
     /**
      * @param jettyRequestLog the jetty request log configuration.
-     * @return {@link RequestLog} logback-access impl.
+     * @return {@link CustomRequestLog}.
      */
     @Singleton
     @Requires(property = JettyConfiguration.JettyRequestLog.ENABLED_PROPERTY, value = StringUtils.TRUE)
     RequestLog requestLog(JettyConfiguration.JettyRequestLog jettyRequestLog) {
+        return new CustomRequestLog(
+            jettyRequestLog.requestLogWriter,
+            jettyRequestLog.getPattern()
+        );
+    }
+
+    /**
+     * @param jettyRequestLog the jetty request log configuration.
+     * @return {@link RequestLog} logback-access impl.
+     */
+    @Singleton
+    @Primary
+    @Requires(property = JettyConfiguration.JettyRequestLog.ENABLED_PROPERTY, value = StringUtils.TRUE)
+    @Requires(classes = RequestLogImpl.class)
+    RequestLog requestLogImpl(JettyConfiguration.JettyRequestLog jettyRequestLog) {
         RequestLogImpl requestLog = new RequestLogImpl();
         requestLog.setResource(jettyRequestLog.getResourcePath());
         requestLog.setQuiet(jettyRequestLog.isQuiet());

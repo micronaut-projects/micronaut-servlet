@@ -16,7 +16,7 @@ import java.nio.file.Paths
 
 
 @MicronautTest
-class JettyAccessLogSpec extends Specification implements TestPropertyProvider {
+class JettyAccessLogbackSpec extends Specification implements TestPropertyProvider {
 
     @Inject
     JettyConfiguration.JettyRequestLog requestLog
@@ -37,7 +37,7 @@ class JettyAccessLogSpec extends Specification implements TestPropertyProvider {
 
         then:
         def exception = thrown(HttpClientResponseException)
-        exception.code() == 404
+        exception.code() == 401
 
         when:
         Path logPath = Paths.get("logs/test-access.log")
@@ -45,13 +45,14 @@ class JettyAccessLogSpec extends Specification implements TestPropertyProvider {
 
         then:
         !lines.isEmpty()
-        lines.get(0).contains("\"GET /test HTTP/1.1\" 404")
+        lines.get(0).contains("\"GET /test HTTP/1.1\" 401")
+        lines.get(0).contains("logback")
     }
 
     @Override
     Map<String, String> getProperties() {
         return [
-                "spec.name": "JettyAccessLogSpec",
+                "spec.name": "JettyAccessLogbackSpec",
                 "micronaut.server.jetty.access-log.enabled": true,
         ]
     }

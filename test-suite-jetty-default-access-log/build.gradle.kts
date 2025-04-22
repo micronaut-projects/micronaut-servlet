@@ -3,16 +3,20 @@ plugins {
 }
 
 dependencies {
-    implementation(libs.jetty.servlet)
-    implementation(libs.jetty.http2.server)
-    implementation(libs.jetty.alpn.server)
-    compileOnly(libs.logback.access.jetty12)
-    testImplementation(libs.bcpkix)
-    testImplementation(libs.jetty.alpn.conscrypt.server)
-    testCompileOnly(mnValidation.micronaut.validation.processor)
     testAnnotationProcessor(mnValidation.micronaut.validation.processor)
     testAnnotationProcessor(projects.micronautServletProcessor)
+    testImplementation(projects.micronautHttpServerJetty)
+    testImplementation(libs.jetty.servlet)
+    testImplementation(libs.bcpkix)
+    testImplementation(libs.jetty.alpn.conscrypt.server)
     testImplementation(mnValidation.micronaut.validation)
     testImplementation(mnSerde.micronaut.serde.jackson)
     testImplementation(mnLogging.logback.classic)
+    testCompileOnly(mnValidation.micronaut.validation.processor)
+}
+
+micronautBuild {
+    binaryCompatibility {
+        enabled = false
+    }
 }

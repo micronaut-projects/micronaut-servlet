@@ -1,0 +1,12 @@
+[
+  {
+    "name": "io.micronaut.http.server.tck.tests.BodyTest$Point",
+    "allDeclaredMethods": true,
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "io.micronaut.http.server.tck.tests.ConsumesTest$Pojo",
+    "allDeclaredMethods": true,
+    "allDeclaredConstructors": true
+  }
+]
