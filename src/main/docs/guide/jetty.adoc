@@ -23,7 +23,7 @@ include::http-server-jetty/src/test/java/io/micronaut/servlet/jetty/docs/JettySe
 
 === Access Log Configuration
 
-To configure the https://eclipse.dev/jetty/documentation/jetty-11/programming-guide/index.html#pg-server-http-request-logging[Jetty Access Log]:
+To configure the https://eclipse.dev/jetty/documentation/jetty-12/programming-guide/index.html#pg-server-http-request-logging[Jetty Access Log]:
 
 .Jetty Access Log Configuration
 [configuration]
@@ -34,3 +34,11 @@ micronaut.server.jetty.access-log.retain-days: 10
 micronaut.server.jetty.access-log.pattern: >
     %{client}a - %u %t "%r" %s %O
 ----
+
+== Jetty support for https://logback.qos.ch/access.html[Logback access]
+
+If you want to use https://logback.qos.ch/access.html[Logback access] library with jetty you have to provide logback dependency on classpath:
+
+dependency:ch.qos.logback.access:logback-access-common[]
+
+By default, it will check for logback-access.xml in resources folder.

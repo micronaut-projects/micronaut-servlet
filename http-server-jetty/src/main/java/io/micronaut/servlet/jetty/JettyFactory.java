@@ -17,14 +17,17 @@ package io.micronaut.servlet.jetty;
 
 import static io.micronaut.core.util.StringUtils.isEmpty;
 
+import ch.qos.logback.access.jetty.RequestLogImpl;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Primary;
+import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.env.Environment;
 import io.micronaut.context.exceptions.ConfigurationException;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.io.ResourceResolver;
+import io.micronaut.core.util.StringUtils;
 import io.micronaut.http.server.HttpServerConfiguration;
 import io.micronaut.http.ssl.ClientAuthentication;
 import io.micronaut.http.ssl.SslConfiguration;
@@ -48,6 +51,7 @@ import org.eclipse.jetty.http2.server.HTTP2ServerConnectionFactory;
 import org.eclipse.jetty.server.CustomRequestLog;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
+import org.eclipse.jetty.server.RequestLog;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.SslConnectionFactory;
@@ -127,13 +131,39 @@ public class JettyFactory extends ServletServerFactory {
      * @param servletContainerInitializers The micronaut servlet initializer
      * @return The Jetty server bean
      */
+    protected Server jettyServer(
+        ApplicationContext applicationContext,
+        MicronautServletConfiguration configuration,
+        JettyConfiguration.JettySslConfiguration jettySslConfiguration,
+        Collection<ServletContainerInitializer> servletContainerInitializers
+    ) {
+        return jettyServer(
+            applicationContext,
+            configuration,
+            jettySslConfiguration,
+            applicationContext.getBeansOfType(ServletContainerInitializer.class),
+            null
+        );
+    }
+
+    /**
+     * Builds the Jetty server bean.
+     *
+     * @param applicationContext          This application context
+     * @param configuration               The servlet configuration
+     * @param jettySslConfiguration       The Jetty SSL config
+     * @param servletContainerInitializers The micronaut servlet initializer
+     * @param requestLog                  The access log
+     * @return The Jetty server bean
+     */
     @Singleton
     @Primary
     protected Server jettyServer(
         ApplicationContext applicationContext,
         MicronautServletConfiguration configuration,
         JettyConfiguration.JettySslConfiguration jettySslConfiguration,
-        Collection<ServletContainerInitializer> servletContainerInitializers
+        Collection<ServletContainerInitializer> servletContainerInitializers,
+        @Nullable RequestLog requestLog
     ) {
         final String host = getConfiguredHost();
         final Integer port = getConfiguredPort();
@@ -141,14 +171,9 @@ public class JettyFactory extends ServletServerFactory {
 
         Server server = newServer(applicationContext, configuration);
 
-        jettyConfiguration.getRequestLog().ifPresent(requestLog -> {
-            if (requestLog.isEnabled()) {
-                server.setRequestLog(new CustomRequestLog(
-                    requestLog.requestLogWriter,
-                    requestLog.getPattern()
-                ));
-            }
-        });
+        if (requestLog != null) {
+            server.setRequestLog(requestLog);
+        }
 
         final ServletContextHandler contextHandler = newJettyContext(server, contextPath);
         server.setHandler(contextHandler);
@@ -165,6 +190,35 @@ public class JettyFactory extends ServletServerFactory {
         configureConnectors(server, http, https);
 
         return server;
+    }
+
+    /**
+     * @param jettyRequestLog the jetty request log configuration.
+     * @return {@link CustomRequestLog}.
+     */
+    @Singleton
+    @Requires(property = JettyConfiguration.JettyRequestLog.ENABLED_PROPERTY, value = StringUtils.TRUE)
+    RequestLog requestLog(JettyConfiguration.JettyRequestLog jettyRequestLog) {
+        return new CustomRequestLog(
+            jettyRequestLog.requestLogWriter,
+            jettyRequestLog.getPattern()
+        );
+    }
+
+    /**
+     * @param jettyRequestLog the jetty request log configuration.
+     * @return {@link RequestLog} logback-access impl.
+     */
+    @Singleton
+    @Primary
+    @Requires(property = JettyConfiguration.JettyRequestLog.ENABLED_PROPERTY, value = StringUtils.TRUE)
+    @Requires(classes = RequestLogImpl.class)
+    RequestLog requestLogImpl(JettyConfiguration.JettyRequestLog jettyRequestLog) {
+        RequestLogImpl requestLog = new RequestLogImpl();
+        requestLog.setResource(jettyRequestLog.getResourcePath());
+        requestLog.setQuiet(jettyRequestLog.isQuiet());
+        requestLog.setFileName(jettyRequestLog.getFileName());
+        return requestLog;
     }
 
     /**

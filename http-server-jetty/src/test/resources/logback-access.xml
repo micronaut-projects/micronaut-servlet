@@ -1,0 +1,18 @@
+<configuration debug="false">
+    <!-- Disable console logging by commenting out statusListener -->
+    <!-- <statusListener class="ch.qos.logback.core.status.OnConsoleStatusListener" /> -->
+
+    <!-- File appender to store access logs -->
+    <appender name="FILE" class="ch.qos.logback.core.FileAppender">
+        <!-- Change this path as needed, for test isolation you can use a temp directory -->
+        <file>logs/test-access.log</file>
+        <append>false</append> <!-- Overwrite on each run -->
+        <immediateFlush>true</immediateFlush>
+        <encoder>
+            <pattern>%h %l %u [%t] "%r" %s %b "%i{Referer}" "%i{User-Agent}"</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Use the FILE appender instead of STDOUT -->
+    <appender-ref ref="FILE" />
+</configuration>

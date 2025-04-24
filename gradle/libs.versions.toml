@@ -24,6 +24,7 @@ micronaut-logging = "1.6.1"
 sonatype-scan = "3.0.0"
 # Micronaut
 micronaut-gradle-plugin = "4.5.2"
+logback-access = "2.0.6"
 kotlin = "1.9.25"
 
 [libraries]
@@ -57,6 +58,7 @@ kotest-runner = { module = 'io.kotest:kotest-runner-junit5', version.ref = 'kote
 bcpkix = { module = "org.bouncycastle:bcpkix-jdk15on", version.ref = "bcpkix" }
 google-cloud-functions = { module = 'com.google.cloud.functions:functions-framework-api', version.ref = 'google-cloud-functions' }
 sonatype-scan = { module = "org.sonatype.gradle.plugins:scan-gradle-plugin", version.ref = "sonatype-scan" }
+logback-access-jetty12 = { module = "ch.qos.logback.access:logback-access-jetty12", version.ref = "logback-access" }
 
 # Gradle
 gradle-micronaut = { module = "io.micronaut.gradle:micronaut-gradle-plugin", version.ref = "micronaut-gradle-plugin" }
