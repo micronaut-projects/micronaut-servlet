@@ -654,6 +654,8 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/engine/ServletCompletedFileUpload.html#getFilename()" class="member-name-link">getFilename()</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/ServletCompletedFileUpload.html" title="class in io.micronaut.servlet.engine">ServletCompletedFileUpload</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/jetty/JettyConfiguration.JettyRequestLog.html#getFileName()" class="member-name-link">getFileName()</a> - Method in class io.micronaut.servlet.jetty.<a href="io/micronaut/servlet/jetty/JettyConfiguration.JettyRequestLog.html" title="class in io.micronaut.servlet.jetty">JettyConfiguration.JettyRequestLog</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/http/poja/PojaHttpRequest.html#getFormData()" class="member-name-link">getFormData()</a> - Method in class io.micronaut.http.poja.<a href="io/micronaut/http/poja/PojaHttpRequest.html" title="class in io.micronaut.http.poja">PojaHttpRequest</a></dt>
 <dd>
 <div class="block">A method used for retrieving form data.</div>
@@ -805,6 +807,8 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/servlet/http/ServletExchange.html#getRequest()" class="member-name-link">getRequest()</a> - Method in interface io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletExchange.html" title="interface in io.micronaut.servlet.http">ServletExchange</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/jetty/JettyConfiguration.html#getRequestLog()" class="member-name-link">getRequestLog()</a> - Method in class io.micronaut.servlet.jetty.<a href="io/micronaut/servlet/jetty/JettyConfiguration.html" title="class in io.micronaut.servlet.jetty">JettyConfiguration</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/jetty/JettyConfiguration.JettyRequestLog.html#getResourcePath()" class="member-name-link">getResourcePath()</a> - Method in class io.micronaut.servlet.jetty.<a href="io/micronaut/servlet/jetty/JettyConfiguration.JettyRequestLog.html" title="class in io.micronaut.servlet.jetty">JettyConfiguration.JettyRequestLog</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/http/poja/apache/ApacheServletHttpRequest.html#getResponse()" class="member-name-link">getResponse()</a> - Method in class io.micronaut.http.poja.apache.<a href="io/micronaut/http/poja/apache/ApacheServletHttpRequest.html" title="class in io.micronaut.http.poja.apache">ApacheServletHttpRequest</a></dt>
 <dd>&nbsp;</dd>
@@ -1077,6 +1081,8 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/engine/ServletCookieAdapter.html#isHttpOnly()" class="member-name-link">isHttpOnly()</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/ServletCookieAdapter.html" title="class in io.micronaut.servlet.engine">ServletCookieAdapter</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/jetty/JettyConfiguration.JettyRequestLog.html#isQuiet()" class="member-name-link">isQuiet()</a> - Method in class io.micronaut.servlet.jetty.<a href="io/micronaut/servlet/jetty/JettyConfiguration.JettyRequestLog.html" title="class in io.micronaut.servlet.jetty">JettyConfiguration.JettyRequestLog</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/http/poja/PojaHttpServerlessApplication.html#isRunning()" class="member-name-link">isRunning()</a> - Method in class io.micronaut.http.poja.<a href="io/micronaut/http/poja/PojaHttpServerlessApplication.html" title="class in io.micronaut.http.poja">PojaHttpServerlessApplication</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/http/poja/test/TestingServerlessEmbeddedApplication.html#isRunning()" class="member-name-link">isRunning()</a> - Method in class io.micronaut.http.poja.test.<a href="io/micronaut/http/poja/test/TestingServerlessEmbeddedApplication.html" title="class in io.micronaut.http.poja.test">TestingServerlessEmbeddedApplication</a></dt>
@@ -1141,6 +1147,10 @@ loadScripts(document, 'script');</script>
 <div class="block">Builds the Jetty server bean.</div>
 </dd>
 <dt><a href="io/micronaut/servlet/jetty/JettyFactory.html#jettyServer(io.micronaut.context.ApplicationContext,io.micronaut.servlet.engine.MicronautServletConfiguration,io.micronaut.servlet.jetty.JettyConfiguration.JettySslConfiguration,java.util.Collection)" class="member-name-link">jettyServer(ApplicationContext, MicronautServletConfiguration, JettyConfiguration.JettySslConfiguration, Collection&lt;ServletContainerInitializer&gt;)</a> - Method in class io.micronaut.servlet.jetty.<a href="io/micronaut/servlet/jetty/JettyFactory.html" title="class in io.micronaut.servlet.jetty">JettyFactory</a></dt>
+<dd>
+<div class="block">Builds the Jetty server bean.</div>
+</dd>
+<dt><a href="io/micronaut/servlet/jetty/JettyFactory.html#jettyServer(io.micronaut.context.ApplicationContext,io.micronaut.servlet.engine.MicronautServletConfiguration,io.micronaut.servlet.jetty.JettyConfiguration.JettySslConfiguration,java.util.Collection,org.eclipse.jetty.server.RequestLog)" class="member-name-link">jettyServer(ApplicationContext, MicronautServletConfiguration, JettyConfiguration.JettySslConfiguration, Collection&lt;ServletContainerInitializer&gt;, RequestLog)</a> - Method in class io.micronaut.servlet.jetty.<a href="io/micronaut/servlet/jetty/JettyFactory.html" title="class in io.micronaut.servlet.jetty">JettyFactory</a></dt>
 <dd>
 <div class="block">Builds the Jetty server bean.</div>
 </dd>
@@ -1680,6 +1690,8 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Whether virtual threads are enabled.</div>
 </dd>
+<dt><a href="io/micronaut/servlet/jetty/JettyConfiguration.JettyRequestLog.html#setFileName(java.lang.String)" class="member-name-link">setFileName(String)</a> - Method in class io.micronaut.servlet.jetty.<a href="io/micronaut/servlet/jetty/JettyConfiguration.JettyRequestLog.html" title="class in io.micronaut.servlet.jetty">JettyConfiguration.JettyRequestLog</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/jetty/JettyConfiguration.html#setInitParameters(java.util.Map)" class="member-name-link">setInitParameters(Map&lt;String, String&gt;)</a> - Method in class io.micronaut.servlet.jetty.<a href="io/micronaut/servlet/jetty/JettyConfiguration.html" title="class in io.micronaut.servlet.jetty">JettyConfiguration</a></dt>
 <dd>
 <div class="block">Sets the servlet init parameters.</div>
@@ -1707,6 +1719,10 @@ loadScripts(document, 'script');</script>
 <div class="block">Sets the underlow log pattern.</div>
 </dd>
 <dt><a href="io/micronaut/servlet/tomcat/TomcatConfiguration.html#setProtocol(java.lang.String)" class="member-name-link">setProtocol(String)</a> - Method in class io.micronaut.servlet.tomcat.<a href="io/micronaut/servlet/tomcat/TomcatConfiguration.html" title="class in io.micronaut.servlet.tomcat">TomcatConfiguration</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/jetty/JettyConfiguration.JettyRequestLog.html#setQuiet(boolean)" class="member-name-link">setQuiet(boolean)</a> - Method in class io.micronaut.servlet.jetty.<a href="io/micronaut/servlet/jetty/JettyConfiguration.JettyRequestLog.html" title="class in io.micronaut.servlet.jetty">JettyConfiguration.JettyRequestLog</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/jetty/JettyConfiguration.JettyRequestLog.html#setResourcePath(java.lang.String)" class="member-name-link">setResourcePath(String)</a> - Method in class io.micronaut.servlet.jetty.<a href="io/micronaut/servlet/jetty/JettyConfiguration.JettyRequestLog.html" title="class in io.micronaut.servlet.jetty">JettyConfiguration.JettyRequestLog</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/undertow/UndertowConfiguration.html#setServerOptions(java.util.Map)" class="member-name-link">setServerOptions(Map&lt;String, String&gt;)</a> - Method in class io.micronaut.servlet.undertow.<a href="io/micronaut/servlet/undertow/UndertowConfiguration.html" title="class in io.micronaut.servlet.undertow">UndertowConfiguration</a></dt>
 <dd>&nbsp;</dd>

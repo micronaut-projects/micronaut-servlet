@@ -907,7 +907,7 @@ public class JettyServerCustomizer implements BeanCreatedEventListener&lt;Server
 <div class="sect2">
 <h3 id="_access_log_configuration">Access Log Configuration</h3>
 <div class="paragraph">
-<p>To configure the <a href="https://eclipse.dev/jetty/documentation/jetty-11/programming-guide/index.html#pg-server-http-request-logging">Jetty Access Log</a>:</p>
+<p>To configure the <a href="https://eclipse.dev/jetty/documentation/jetty-12/programming-guide/index.html#pg-server-http-request-logging">Jetty Access Log</a>:</p>
 </div>
 <div class="openblock">
 <div class="title">Jetty Access Log Configuration</div>
@@ -965,6 +965,33 @@ micronaut.server.jetty.accessLog.pattern = "%{client}a - %u %t \"%r\" %s %O"</co
 }</code></pre>
 </div>
 </div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_jetty_support_for_logback_access">Jetty support for <a href="https://logback.qos.ch/access.html">Logback access</a></h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>If you want to use <a href="https://logback.qos.ch/access.html">Logback access</a> library with jetty you have to provide logback dependency on classpath:</p>
+</div>
+<div class="paragraph">
+<p>        <div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">implementation(<span class="hljs-string">"ch.qos.logback.access:logback-access-common")</span></code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
+    &lt;groupId&gt;ch.qos.logback.access&lt;/groupId&gt;
+    &lt;artifactId&gt;logback-access-common&lt;/artifactId&gt;
+&lt;/dependency&gt;</code></pre>
+</div>
+</div></p>
+</div>
+<div class="paragraph">
+<p>By default, it will check for logback-access.xml in resources folder.</p>
 </div>
 </div>
 </div>
