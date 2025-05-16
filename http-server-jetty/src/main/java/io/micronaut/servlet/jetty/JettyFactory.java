@@ -280,7 +280,7 @@ public class JettyFactory extends ServletServerFactory {
 
         sslConfiguration.getProtocol().ifPresent(sslContextFactory::setProtocol);
         sslConfiguration.getProtocols().ifPresent(sslContextFactory::setIncludeProtocols);
-        sslConfiguration.getCiphers().ifPresent(sslConfiguration::setCiphers);
+        sslConfiguration.getCiphers().ifPresent(sslContextFactory::setIncludeCipherSuites);
         final SslConfiguration.KeyStoreConfiguration keyStoreConfig = sslConfiguration.getKeyStore();
         keyStoreConfig.getPassword().ifPresent(sslContextFactory::setKeyStorePassword);
         keyStoreConfig.getPath().ifPresent(path -> {
