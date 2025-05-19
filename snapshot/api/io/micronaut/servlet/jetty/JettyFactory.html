@@ -45,13 +45,13 @@ loadScripts(document, 'script');</script>
 <ul class="sub-nav-list">
 <li>Summary:&nbsp;</li>
 <li>Nested&nbsp;|&nbsp;</li>
-<li><a href="#field-summary">Field</a>&nbsp;|&nbsp;</li>
+<li>Field&nbsp;|&nbsp;</li>
 <li><a href="#constructor-summary">Constr</a>&nbsp;|&nbsp;</li>
 <li><a href="#method-summary">Method</a></li>
 </ul>
 <ul class="sub-nav-list">
 <li>Detail:&nbsp;</li>
-<li><a href="#field-detail">Field</a>&nbsp;|&nbsp;</li>
+<li>Field&nbsp;|&nbsp;</li>
 <li><a href="#constructor-detail">Constr</a>&nbsp;|&nbsp;</li>
 <li><a href="#method-detail">Method</a></li>
 </ul>
@@ -93,21 +93,6 @@ loadScripts(document, 'script');</script>
 </section>
 <section class="summary">
 <ul class="summary-list">
-<!-- =========== FIELD SUMMARY =========== -->
-<li>
-<section class="field-summary" id="field-summary">
-<h2>Field Summary</h2>
-<div class="caption"><span>Fields</span></div>
-<div class="summary-table three-column-summary">
-<div class="table-header col-first">Modifier and Type</div>
-<div class="table-header col-second">Field</div>
-<div class="table-header col-last">Description</div>
-<div class="col-first even-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color"><code><a href="#RESOURCE_BASE" class="member-name-link">RESOURCE_BASE</a></code></div>
-<div class="col-last even-row-color">&nbsp;</div>
-</div>
-</section>
-</li>
 <!-- ======== CONSTRUCTOR SUMMARY ======== -->
 <li>
 <section class="constructor-summary" id="constructor-summary">
@@ -146,11 +131,25 @@ loadScripts(document, 'script');</script>
 <div class="block">Configures the server connectors.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#configureServletInitializer(org.eclipse.jetty.server.Server,org.eclipse.jetty.ee10.servlet.ServletContextHandler,java.util.Collection)" class="member-name-link">configureServletInitializer</a><wbr>(org.eclipse.jetty.server.Server&nbsp;server,
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#configureKeyStore(io.micronaut.http.ssl.SslConfiguration.KeyStoreConfiguration,org.eclipse.jetty.util.ssl.SslContextFactory.Server,org.eclipse.jetty.util.resource.ResourceFactory)" class="member-name-link">configureKeyStore</a><wbr>(io.micronaut.http.ssl.SslConfiguration.KeyStoreConfiguration&nbsp;keyStoreConfig,
+ org.eclipse.jetty.util.ssl.SslContextFactory.Server&nbsp;sslContextFactory,
+ org.eclipse.jetty.util.resource.ResourceFactory&nbsp;resourceFactory)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Configures key store.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#configureServletInitializer(org.eclipse.jetty.server.Server,org.eclipse.jetty.ee10.servlet.ServletContextHandler,java.util.Collection)" class="member-name-link">configureServletInitializer</a><wbr>(org.eclipse.jetty.server.Server&nbsp;server,
  org.eclipse.jetty.ee10.servlet.ServletContextHandler&nbsp;contextHandler,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;jakarta.servlet.ServletContainerInitializer&gt;&nbsp;servletContainerInitializers)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Configures the servlet initializer.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#configureTrustStore(io.micronaut.http.ssl.SslConfiguration.TrustStoreConfiguration,org.eclipse.jetty.util.ssl.SslContextFactory.Server,org.eclipse.jetty.util.resource.ResourceFactory)" class="member-name-link">configureTrustStore</a><wbr>(io.micronaut.http.ssl.SslConfiguration.TrustStoreConfiguration&nbsp;trustStore,
+ org.eclipse.jetty.util.ssl.SslContextFactory.Server&nbsp;sslContextFactory,
+ org.eclipse.jetty.util.resource.ResourceFactory&nbsp;resourceFactory)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Configures trust store.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected org.eclipse.jetty.server.Server</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#jettyServer(io.micronaut.context.ApplicationContext,io.micronaut.servlet.engine.MicronautServletConfiguration,io.micronaut.servlet.jetty.JettyConfiguration.JettySslConfiguration)" class="member-name-link">jettyServer</a><wbr>(io.micronaut.context.ApplicationContext&nbsp;applicationContext,
@@ -221,28 +220,6 @@ loadScripts(document, 'script');</script>
 </section>
 <section class="details">
 <ul class="details-list">
-<!-- ============ FIELD DETAIL =========== -->
-<li>
-<section class="field-details" id="field-detail">
-<h2>Field Details</h2>
-<ul class="member-list">
-<li>
-<section class="detail" id="RESOURCE_BASE">
-<h3>RESOURCE_BASE</h3>
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">RESOURCE_BASE</span></div>
-<dl class="notes">
-<dt>See Also:</dt>
-<dd>
-<ul class="see-list">
-<li><a href="../../../../constant-values.html#io.micronaut.servlet.jetty.JettyFactory.RESOURCE_BASE">Constant Field Values</a></li>
-</ul>
-</dd>
-</dl>
-</section>
-</li>
-</ul>
-</section>
-</li>
 <!-- ========= CONSTRUCTOR DETAIL ======== -->
 <li>
 <section class="constructor-details" id="constructor-detail">
@@ -376,6 +353,36 @@ loadScripts(document, 'script');</script>
 <dd><code>resourceFactory</code> - </dd>
 <dt>Returns:</dt>
 <dd>The server connector</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="configureKeyStore(io.micronaut.http.ssl.SslConfiguration.KeyStoreConfiguration,org.eclipse.jetty.util.ssl.SslContextFactory.Server,org.eclipse.jetty.util.resource.ResourceFactory)">
+<h3>configureKeyStore</h3>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">configureKeyStore</span><wbr><span class="parameters">(io.micronaut.http.ssl.SslConfiguration.KeyStoreConfiguration&nbsp;keyStoreConfig,
+ org.eclipse.jetty.util.ssl.SslContextFactory.Server&nbsp;sslContextFactory,
+ org.eclipse.jetty.util.resource.ResourceFactory&nbsp;resourceFactory)</span></div>
+<div class="block">Configures key store.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>keyStoreConfig</code> - the SslConfiguration.TrustStoreConfiguration</dd>
+<dd><code>sslContextFactory</code> - the SslContextFactory.Server</dd>
+<dd><code>resourceFactory</code> - the ResourceFactory</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="configureTrustStore(io.micronaut.http.ssl.SslConfiguration.TrustStoreConfiguration,org.eclipse.jetty.util.ssl.SslContextFactory.Server,org.eclipse.jetty.util.resource.ResourceFactory)">
+<h3>configureTrustStore</h3>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">configureTrustStore</span><wbr><span class="parameters">(io.micronaut.http.ssl.SslConfiguration.TrustStoreConfiguration&nbsp;trustStore,
+ org.eclipse.jetty.util.ssl.SslContextFactory.Server&nbsp;sslContextFactory,
+ org.eclipse.jetty.util.resource.ResourceFactory&nbsp;resourceFactory)</span></div>
+<div class="block">Configures trust store.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>trustStore</code> - the SslConfiguration.TrustStoreConfiguration</dd>
+<dd><code>sslContextFactory</code> - the SslContextFactory.Server</dd>
+<dd><code>resourceFactory</code> - the ResourceFactory</dd>
 </dl>
 </section>
 </li>
