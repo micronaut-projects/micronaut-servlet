@@ -321,16 +321,16 @@ public class JettyFactory extends ServletServerFactory {
      * @param resourceFactory the {@link ResourceFactory}
      */
     protected void configureKeyStore(SslConfiguration sslConfiguration, SslContextFactory.Server sslContextFactory, ResourceFactory resourceFactory) throws Exception {
-        SslConfiguration.KeyStoreConfiguration keyStoreConfig = sslConfiguration.getKeyStore();
-        keyStoreConfig.getPassword().ifPresent(sslContextFactory::setKeyStorePassword);
         Optional<KeyStore> keyStore = getKeyStore(sslConfiguration);
         if (keyStore.isPresent()) {
             sslContextFactory.setKeyStore(keyStore.get());
         } else {
+            SslConfiguration.KeyStoreConfiguration keyStoreConfig = sslConfiguration.getKeyStore();
+            keyStoreConfig.getPassword().ifPresent(sslContextFactory::setKeyStorePassword);
             keyStoreConfig.getPath().ifPresent(path -> sslContextFactory.setKeyStorePath(resolveStorePath(path, resourceFactory)));
+            keyStoreConfig.getProvider().ifPresent(sslContextFactory::setKeyStoreProvider);
+            keyStoreConfig.getType().ifPresent(sslContextFactory::setKeyStoreType);
         }
-        keyStoreConfig.getProvider().ifPresent(sslContextFactory::setKeyStoreProvider);
-        keyStoreConfig.getType().ifPresent(sslContextFactory::setKeyStoreType);
     }
 
     /**
@@ -340,18 +340,16 @@ public class JettyFactory extends ServletServerFactory {
      * @param resourceFactory the {@link ResourceFactory}
      */
     protected void configureTrustStore(SslConfiguration sslConfiguration, SslContextFactory.Server sslContextFactory, ResourceFactory resourceFactory) throws Exception {
-        SslConfiguration.TrustStoreConfiguration trustStoreConfig = sslConfiguration.getTrustStore();
-        trustStoreConfig.getPassword().ifPresent(sslContextFactory::setTrustStorePassword);
-        trustStoreConfig.getType().ifPresent(sslContextFactory::setTrustStoreType);
         Optional<KeyStore> trustStore = getTrustStore(sslConfiguration);
-
         if (trustStore.isPresent()) {
             sslContextFactory.setTrustStore(trustStore.get());
         } else {
+            SslConfiguration.TrustStoreConfiguration trustStoreConfig = sslConfiguration.getTrustStore();
+            trustStoreConfig.getPassword().ifPresent(sslContextFactory::setTrustStorePassword);
             trustStoreConfig.getPath().ifPresent(path -> sslContextFactory.setTrustStorePath(resolveStorePath(path, resourceFactory)));
+            trustStoreConfig.getProvider().ifPresent(sslContextFactory::setTrustStoreProvider);
+            trustStoreConfig.getType().ifPresent(sslContextFactory::setTrustStoreType);
         }
-
-        trustStoreConfig.getProvider().ifPresent(sslContextFactory::setTrustStoreProvider);
     }
 
     /**
