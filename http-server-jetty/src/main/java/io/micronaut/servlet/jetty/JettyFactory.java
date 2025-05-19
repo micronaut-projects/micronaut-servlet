@@ -39,8 +39,11 @@ import io.micronaut.servlet.http.server.ServletServerFactory;
 import io.micronaut.servlet.http.server.ServletStaticResourceConfiguration;
 import jakarta.inject.Singleton;
 import jakarta.servlet.ServletContainerInitializer;
+
+import java.security.KeyStore;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Stream;
 import org.eclipse.jetty.alpn.server.ALPNServerConnectionFactory;
@@ -111,7 +114,7 @@ public class JettyFactory extends ServletServerFactory {
         ApplicationContext applicationContext,
         MicronautServletConfiguration configuration,
         JettyConfiguration.JettySslConfiguration jettySslConfiguration
-    ) {
+    ) throws Exception {
         return jettyServer(
             applicationContext,
             configuration,
@@ -134,7 +137,7 @@ public class JettyFactory extends ServletServerFactory {
         MicronautServletConfiguration configuration,
         JettyConfiguration.JettySslConfiguration jettySslConfiguration,
         Collection<ServletContainerInitializer> servletContainerInitializers
-    ) {
+    ) throws Exception {
         return jettyServer(
             applicationContext,
             configuration,
@@ -162,7 +165,7 @@ public class JettyFactory extends ServletServerFactory {
         JettyConfiguration.JettySslConfiguration jettySslConfiguration,
         Collection<ServletContainerInitializer> servletContainerInitializers,
         @Nullable RequestLog requestLog
-    ) {
+    ) throws Exception {
         final String host = getConfiguredHost();
         final Integer port = getConfiguredPort();
         String contextPath = getContextPath();
@@ -249,13 +252,13 @@ public class JettyFactory extends ServletServerFactory {
      * @param server                The server
      * @param sslConfiguration      The SSL configuration
      * @param jettySslConfiguration The Jetty SSL configuration
-     * @param resourceFactory
+     * @param resourceFactory       The Resource factory
      * @return The server connector
      */
     protected @NonNull ServerConnector newHttpsConnector(
         @NonNull Server server,
         @NonNull SslConfiguration sslConfiguration,
-        @NonNull JettyConfiguration.JettySslConfiguration jettySslConfiguration, ResourceFactory resourceFactory) {
+        @NonNull JettyConfiguration.JettySslConfiguration jettySslConfiguration, ResourceFactory resourceFactory) throws Exception {
         ServerConnector https;
         final HttpConfiguration httpConfig = jettyConfiguration.getHttpConfiguration();
         int securePort = sslConfiguration.getPort();
@@ -279,8 +282,8 @@ public class JettyFactory extends ServletServerFactory {
         sslConfiguration.getProtocol().ifPresent(sslContextFactory::setProtocol);
         sslConfiguration.getProtocols().ifPresent(sslContextFactory::setIncludeProtocols);
         sslConfiguration.getCiphers().ifPresent(sslContextFactory::setIncludeCipherSuites);
-        configureKeyStore(sslConfiguration.getKeyStore(), sslContextFactory, resourceFactory);
-        configureTrustStore(sslConfiguration.getTrustStore(), sslContextFactory, resourceFactory);
+        configureKeyStore(sslConfiguration, sslContextFactory, resourceFactory);
+        configureTrustStore(sslConfiguration, sslContextFactory, resourceFactory);
 
         HttpConfiguration httpsConfig = new HttpConfiguration(httpConfig);
         httpsConfig.addCustomizer(jettySslConfiguration);
@@ -313,42 +316,42 @@ public class JettyFactory extends ServletServerFactory {
 
     /**
      * Configures key store.
-     * @param keyStoreConfig the SslConfiguration.TrustStoreConfiguration
-     * @param sslContextFactory the SslContextFactory.Server
-     * @param resourceFactory the ResourceFactory
+     * @param sslConfiguration the {@link SslConfiguration}
+     * @param sslContextFactory the {@link SslContextFactory.Server}
+     * @param resourceFactory the {@link ResourceFactory}
      */
-    protected void configureKeyStore(SslConfiguration.KeyStoreConfiguration keyStoreConfig, SslContextFactory.Server sslContextFactory, ResourceFactory resourceFactory) {
+    protected void configureKeyStore(SslConfiguration sslConfiguration, SslContextFactory.Server sslContextFactory, ResourceFactory resourceFactory) throws Exception {
+        SslConfiguration.KeyStoreConfiguration keyStoreConfig = sslConfiguration.getKeyStore();
         keyStoreConfig.getPassword().ifPresent(sslContextFactory::setKeyStorePassword);
-        keyStoreConfig.getPath().ifPresent(path -> {
-            if (path.startsWith(ServletStaticResourceConfiguration.CLASSPATH_PREFIX)) {
-                String cp = path.substring(ServletStaticResourceConfiguration.CLASSPATH_PREFIX.length());
-                sslContextFactory.setKeyStorePath(resourceFactory.newClassLoaderResource(cp).getURI().toString());
-            } else {
-                sslContextFactory.setKeyStorePath(path);
-            }
-        });
+        Optional<KeyStore> keyStore = getKeyStore(sslConfiguration);
+        if (keyStore.isPresent()) {
+            sslContextFactory.setKeyStore(keyStore.get());
+        } else {
+            keyStoreConfig.getPath().ifPresent(path -> sslContextFactory.setKeyStorePath(resolveStorePath(path, resourceFactory)));
+        }
         keyStoreConfig.getProvider().ifPresent(sslContextFactory::setKeyStoreProvider);
         keyStoreConfig.getType().ifPresent(sslContextFactory::setKeyStoreType);
     }
 
     /**
      * Configures trust store.
-     * @param trustStore the SslConfiguration.TrustStoreConfiguration
-     * @param sslContextFactory the SslContextFactory.Server
-     * @param resourceFactory the ResourceFactory
+     * @param sslConfiguration the {@link SslConfiguration}
+     * @param sslContextFactory the {@link SslContextFactory.Server}
+     * @param resourceFactory the {@link ResourceFactory}
      */
-    protected void configureTrustStore(SslConfiguration.TrustStoreConfiguration trustStore, SslContextFactory.Server sslContextFactory, ResourceFactory resourceFactory) {
-        trustStore.getPassword().ifPresent(sslContextFactory::setTrustStorePassword);
-        trustStore.getType().ifPresent(sslContextFactory::setTrustStoreType);
-        trustStore.getPath().ifPresent(path -> {
-            if (path.startsWith(ServletStaticResourceConfiguration.CLASSPATH_PREFIX)) {
-                String cp = path.substring(ServletStaticResourceConfiguration.CLASSPATH_PREFIX.length());
-                sslContextFactory.setTrustStorePath(resourceFactory.newClassLoaderResource(cp).getURI().toString());
-            } else {
-                sslContextFactory.setTrustStorePath(path);
-            }
-        });
-        trustStore.getProvider().ifPresent(sslContextFactory::setTrustStoreProvider);
+    protected void configureTrustStore(SslConfiguration sslConfiguration, SslContextFactory.Server sslContextFactory, ResourceFactory resourceFactory) throws Exception {
+        SslConfiguration.TrustStoreConfiguration trustStoreConfig = sslConfiguration.getTrustStore();
+        trustStoreConfig.getPassword().ifPresent(sslContextFactory::setTrustStorePassword);
+        trustStoreConfig.getType().ifPresent(sslContextFactory::setTrustStoreType);
+        Optional<KeyStore> trustStore = getTrustStore(sslConfiguration);
+
+        if (trustStore.isPresent()) {
+            sslContextFactory.setTrustStore(trustStore.get());
+        } else {
+            trustStoreConfig.getPath().ifPresent(path -> sslContextFactory.setTrustStorePath(resolveStorePath(path, resourceFactory)));
+        }
+
+        trustStoreConfig.getProvider().ifPresent(sslContextFactory::setTrustStoreProvider);
     }
 
     /**
@@ -481,5 +484,14 @@ public class JettyFactory extends ServletServerFactory {
         contextHandler.setDisplayName("Static Resources " + mapping);
 
         return contextHandler;
+    }
+
+    private String resolveStorePath(String path, ResourceFactory resourceFactory) {
+        if (path.startsWith(ServletStaticResourceConfiguration.CLASSPATH_PREFIX)) {
+            String cp = path.substring(ServletStaticResourceConfiguration.CLASSPATH_PREFIX.length());
+            return resourceFactory.newClassLoaderResource(cp).getURI().toString();
+        } else {
+            return path;
+        }
     }
 }
