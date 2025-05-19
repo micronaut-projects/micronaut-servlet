@@ -25,7 +25,7 @@ sonatype-scan = "3.0.0"
 # Micronaut
 micronaut-gradle-plugin = "4.5.3"
 logback-access = "2.0.6"
-kotlin = "1.9.25"
+kotlin = "2.1.21"
 
 [libraries]
 # Core
