@@ -131,7 +131,7 @@ loadScripts(document, 'script');</script>
 <div class="block">Configures the server connectors.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#configureKeyStore(io.micronaut.http.ssl.SslConfiguration.KeyStoreConfiguration,org.eclipse.jetty.util.ssl.SslContextFactory.Server,org.eclipse.jetty.util.resource.ResourceFactory)" class="member-name-link">configureKeyStore</a><wbr>(io.micronaut.http.ssl.SslConfiguration.KeyStoreConfiguration&nbsp;keyStoreConfig,
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#configureKeyStore(io.micronaut.http.ssl.SslConfiguration,org.eclipse.jetty.util.ssl.SslContextFactory.Server,org.eclipse.jetty.util.resource.ResourceFactory)" class="member-name-link">configureKeyStore</a><wbr>(io.micronaut.http.ssl.SslConfiguration&nbsp;sslConfiguration,
  org.eclipse.jetty.util.ssl.SslContextFactory.Server&nbsp;sslContextFactory,
  org.eclipse.jetty.util.resource.ResourceFactory&nbsp;resourceFactory)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
@@ -145,7 +145,7 @@ loadScripts(document, 'script');</script>
 <div class="block">Configures the servlet initializer.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#configureTrustStore(io.micronaut.http.ssl.SslConfiguration.TrustStoreConfiguration,org.eclipse.jetty.util.ssl.SslContextFactory.Server,org.eclipse.jetty.util.resource.ResourceFactory)" class="member-name-link">configureTrustStore</a><wbr>(io.micronaut.http.ssl.SslConfiguration.TrustStoreConfiguration&nbsp;trustStore,
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#configureTrustStore(io.micronaut.http.ssl.SslConfiguration,org.eclipse.jetty.util.ssl.SslContextFactory.Server,org.eclipse.jetty.util.resource.ResourceFactory)" class="member-name-link">configureTrustStore</a><wbr>(io.micronaut.http.ssl.SslConfiguration&nbsp;sslConfiguration,
  org.eclipse.jetty.util.ssl.SslContextFactory.Server&nbsp;sslContextFactory,
  org.eclipse.jetty.util.resource.ResourceFactory&nbsp;resourceFactory)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
@@ -257,7 +257,8 @@ loadScripts(document, 'script');</script>
 <h3>jettyServer</h3>
 <div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">org.eclipse.jetty.server.Server</span>&nbsp;<span class="element-name">jettyServer</span><wbr><span class="parameters">(io.micronaut.context.ApplicationContext&nbsp;applicationContext,
  <a href="../engine/MicronautServletConfiguration.html" title="class in io.micronaut.servlet.engine">MicronautServletConfiguration</a>&nbsp;configuration,
- <a href="JettyConfiguration.JettySslConfiguration.html" title="class in io.micronaut.servlet.jetty">JettyConfiguration.JettySslConfiguration</a>&nbsp;jettySslConfiguration)</span></div>
+ <a href="JettyConfiguration.JettySslConfiguration.html" title="class in io.micronaut.servlet.jetty">JettyConfiguration.JettySslConfiguration</a>&nbsp;jettySslConfiguration)</span>
+                                               throws <span class="exceptions"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Exception.html" title="class or interface in java.lang" class="external-link">Exception</a></span></div>
 <div class="block">Builds the Jetty server bean.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -266,6 +267,8 @@ loadScripts(document, 'script');</script>
 <dd><code>jettySslConfiguration</code> - The Jetty SSL config</dd>
 <dt>Returns:</dt>
 <dd>The Jetty server bean</dd>
+<dt>Throws:</dt>
+<dd><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Exception.html" title="class or interface in java.lang" class="external-link">Exception</a></code></dd>
 </dl>
 </section>
 </li>
@@ -275,7 +278,8 @@ loadScripts(document, 'script');</script>
 <div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">org.eclipse.jetty.server.Server</span>&nbsp;<span class="element-name">jettyServer</span><wbr><span class="parameters">(io.micronaut.context.ApplicationContext&nbsp;applicationContext,
  <a href="../engine/MicronautServletConfiguration.html" title="class in io.micronaut.servlet.engine">MicronautServletConfiguration</a>&nbsp;configuration,
  <a href="JettyConfiguration.JettySslConfiguration.html" title="class in io.micronaut.servlet.jetty">JettyConfiguration.JettySslConfiguration</a>&nbsp;jettySslConfiguration,
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;jakarta.servlet.ServletContainerInitializer&gt;&nbsp;servletContainerInitializers)</span></div>
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;jakarta.servlet.ServletContainerInitializer&gt;&nbsp;servletContainerInitializers)</span>
+                                               throws <span class="exceptions"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Exception.html" title="class or interface in java.lang" class="external-link">Exception</a></span></div>
 <div class="block">Builds the Jetty server bean.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -285,6 +289,8 @@ loadScripts(document, 'script');</script>
 <dd><code>servletContainerInitializers</code> - The micronaut servlet initializer</dd>
 <dt>Returns:</dt>
 <dd>The Jetty server bean</dd>
+<dt>Throws:</dt>
+<dd><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Exception.html" title="class or interface in java.lang" class="external-link">Exception</a></code></dd>
 </dl>
 </section>
 </li>
@@ -298,7 +304,8 @@ loadScripts(document, 'script');</script>
  <a href="JettyConfiguration.JettySslConfiguration.html" title="class in io.micronaut.servlet.jetty">JettyConfiguration.JettySslConfiguration</a>&nbsp;jettySslConfiguration,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;jakarta.servlet.ServletContainerInitializer&gt;&nbsp;servletContainerInitializers,
  @Nullable
- @Nullable org.eclipse.jetty.server.RequestLog&nbsp;requestLog)</span></div>
+ @Nullable org.eclipse.jetty.server.RequestLog&nbsp;requestLog)</span>
+                                               throws <span class="exceptions"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Exception.html" title="class or interface in java.lang" class="external-link">Exception</a></span></div>
 <div class="block">Builds the Jetty server bean.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -309,6 +316,8 @@ loadScripts(document, 'script');</script>
 <dd><code>requestLog</code> - The access log</dd>
 <dt>Returns:</dt>
 <dd>The Jetty server bean</dd>
+<dt>Throws:</dt>
+<dd><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Exception.html" title="class or interface in java.lang" class="external-link">Exception</a></code></dd>
 </dl>
 </section>
 </li>
@@ -343,46 +352,55 @@ loadScripts(document, 'script');</script>
  @NonNull io.micronaut.http.ssl.SslConfiguration&nbsp;sslConfiguration,
  @NonNull
  <a href="JettyConfiguration.JettySslConfiguration.html" title="class in io.micronaut.servlet.jetty">JettyConfiguration.JettySslConfiguration</a>&nbsp;jettySslConfiguration,
- org.eclipse.jetty.util.resource.ResourceFactory&nbsp;resourceFactory)</span></div>
+ org.eclipse.jetty.util.resource.ResourceFactory&nbsp;resourceFactory)</span>
+                                                                       throws <span class="exceptions"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Exception.html" title="class or interface in java.lang" class="external-link">Exception</a></span></div>
 <div class="block">Create the HTTPS connector.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>server</code> - The server</dd>
 <dd><code>sslConfiguration</code> - The SSL configuration</dd>
 <dd><code>jettySslConfiguration</code> - The Jetty SSL configuration</dd>
-<dd><code>resourceFactory</code> - </dd>
+<dd><code>resourceFactory</code> - The Resource factory</dd>
 <dt>Returns:</dt>
 <dd>The server connector</dd>
+<dt>Throws:</dt>
+<dd><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Exception.html" title="class or interface in java.lang" class="external-link">Exception</a></code></dd>
 </dl>
 </section>
 </li>
 <li>
-<section class="detail" id="configureKeyStore(io.micronaut.http.ssl.SslConfiguration.KeyStoreConfiguration,org.eclipse.jetty.util.ssl.SslContextFactory.Server,org.eclipse.jetty.util.resource.ResourceFactory)">
+<section class="detail" id="configureKeyStore(io.micronaut.http.ssl.SslConfiguration,org.eclipse.jetty.util.ssl.SslContextFactory.Server,org.eclipse.jetty.util.resource.ResourceFactory)">
 <h3>configureKeyStore</h3>
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">configureKeyStore</span><wbr><span class="parameters">(io.micronaut.http.ssl.SslConfiguration.KeyStoreConfiguration&nbsp;keyStoreConfig,
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">configureKeyStore</span><wbr><span class="parameters">(io.micronaut.http.ssl.SslConfiguration&nbsp;sslConfiguration,
  org.eclipse.jetty.util.ssl.SslContextFactory.Server&nbsp;sslContextFactory,
- org.eclipse.jetty.util.resource.ResourceFactory&nbsp;resourceFactory)</span></div>
+ org.eclipse.jetty.util.resource.ResourceFactory&nbsp;resourceFactory)</span>
+                          throws <span class="exceptions"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Exception.html" title="class or interface in java.lang" class="external-link">Exception</a></span></div>
 <div class="block">Configures key store.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
-<dd><code>keyStoreConfig</code> - the SslConfiguration.TrustStoreConfiguration</dd>
-<dd><code>sslContextFactory</code> - the SslContextFactory.Server</dd>
-<dd><code>resourceFactory</code> - the ResourceFactory</dd>
+<dd><code>sslConfiguration</code> - the <code>SslConfiguration</code></dd>
+<dd><code>sslContextFactory</code> - the <code>SslContextFactory.Server</code></dd>
+<dd><code>resourceFactory</code> - the <code>ResourceFactory</code></dd>
+<dt>Throws:</dt>
+<dd><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Exception.html" title="class or interface in java.lang" class="external-link">Exception</a></code></dd>
 </dl>
 </section>
 </li>
 <li>
-<section class="detail" id="configureTrustStore(io.micronaut.http.ssl.SslConfiguration.TrustStoreConfiguration,org.eclipse.jetty.util.ssl.SslContextFactory.Server,org.eclipse.jetty.util.resource.ResourceFactory)">
+<section class="detail" id="configureTrustStore(io.micronaut.http.ssl.SslConfiguration,org.eclipse.jetty.util.ssl.SslContextFactory.Server,org.eclipse.jetty.util.resource.ResourceFactory)">
 <h3>configureTrustStore</h3>
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">configureTrustStore</span><wbr><span class="parameters">(io.micronaut.http.ssl.SslConfiguration.TrustStoreConfiguration&nbsp;trustStore,
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">configureTrustStore</span><wbr><span class="parameters">(io.micronaut.http.ssl.SslConfiguration&nbsp;sslConfiguration,
  org.eclipse.jetty.util.ssl.SslContextFactory.Server&nbsp;sslContextFactory,
- org.eclipse.jetty.util.resource.ResourceFactory&nbsp;resourceFactory)</span></div>
+ org.eclipse.jetty.util.resource.ResourceFactory&nbsp;resourceFactory)</span>
+                            throws <span class="exceptions"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Exception.html" title="class or interface in java.lang" class="external-link">Exception</a></span></div>
 <div class="block">Configures trust store.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
-<dd><code>trustStore</code> - the SslConfiguration.TrustStoreConfiguration</dd>
-<dd><code>sslContextFactory</code> - the SslContextFactory.Server</dd>
-<dd><code>resourceFactory</code> - the ResourceFactory</dd>
+<dd><code>sslConfiguration</code> - the <code>SslConfiguration</code></dd>
+<dd><code>sslContextFactory</code> - the <code>SslContextFactory.Server</code></dd>
+<dd><code>resourceFactory</code> - the <code>ResourceFactory</code></dd>
+<dt>Throws:</dt>
+<dd><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Exception.html" title="class or interface in java.lang" class="external-link">Exception</a></code></dd>
 </dl>
 </section>
 </li>
