@@ -3,7 +3,7 @@ micronaut = "4.9.2"
 micronaut-docs = "2.0.0"
 micronaut-test = "4.7.0"
 
-groovy = "4.0.22"
+groovy = "4.0.27"
 spock = "2.3-groovy-4.0"
 
 managed-servlet-api = '6.1.0'
