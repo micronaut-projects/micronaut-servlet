@@ -79,10 +79,13 @@ public class JettySslContextReload implements RefreshEventListener {
             SslContextFactory.Server sslContextFactory = sslConnectionFactory.getSslContextFactory();
             try {
                 jettyFactory.updateSslContextFactory(sslContextFactory, ResourceFactory.of(server));
+                LOG.debug("Reloading ssl context");
                 sslContextFactory.reload(factory -> { });
             } catch (Exception e) {
                 LOG.error("Failed to reload ssl context", e);
             }
+        } else {
+            LOG.warn("Ssl connection factory not found");
         }
     }
 }
