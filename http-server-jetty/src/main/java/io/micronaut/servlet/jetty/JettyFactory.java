@@ -268,22 +268,7 @@ public class JettyFactory extends ServletServerFactory {
         httpConfig.setSecurePort(securePort);
 
         SslContextFactory.Server sslContextFactory = new SslContextFactory.Server();
-
-        ClientAuthentication clientAuth = sslConfiguration.getClientAuthentication().orElse(ClientAuthentication.NEED);
-        switch (clientAuth) {
-            case WANT:
-                sslContextFactory.setWantClientAuth(true);
-                break;
-            case NEED:
-            default:
-                sslContextFactory.setNeedClientAuth(true);
-        }
-
-        sslConfiguration.getProtocol().ifPresent(sslContextFactory::setProtocol);
-        sslConfiguration.getProtocols().ifPresent(sslContextFactory::setIncludeProtocols);
-        sslConfiguration.getCiphers().ifPresent(sslContextFactory::setIncludeCipherSuites);
-        configureKeyStore(sslConfiguration, sslContextFactory, resourceFactory);
-        configureTrustStore(sslConfiguration, sslContextFactory, resourceFactory);
+        updateSslContextFactory(sslContextFactory, resourceFactory, sslConfiguration);
 
         HttpConfiguration httpsConfig = new HttpConfiguration(httpConfig);
         httpsConfig.addCustomizer(jettySslConfiguration);
@@ -312,6 +297,38 @@ public class JettyFactory extends ServletServerFactory {
 
         https.setPort(securePort);
         return https;
+    }
+
+    /**
+     * Updates given ssl context factory with values from ssl configuration.
+     *
+     * @param sslContextFactory the ssl context factory
+     * @param resourceFactory the resource factory
+     * @throws Exception an exception
+     */
+    void updateSslContextFactory(SslContextFactory.Server sslContextFactory, ResourceFactory resourceFactory) throws Exception {
+        SslConfiguration sslConfiguration = getSslConfiguration();
+        updateSslContextFactory(sslContextFactory, resourceFactory, sslConfiguration);
+    }
+
+    /**
+     * Updates given ssl context factory with values from ssl configuration.
+     *
+     * @param sslContextFactory the ssl context factory
+     * @param resourceFactory the resource factory
+     * @param sslConfiguration the ssl configuration
+     * @throws Exception an exception
+     */
+    void updateSslContextFactory(SslContextFactory.Server sslContextFactory, ResourceFactory resourceFactory, SslConfiguration sslConfiguration) throws Exception {
+        ClientAuthentication clientAuth = sslConfiguration.getClientAuthentication().orElse(ClientAuthentication.NEED);
+        sslContextFactory.setWantClientAuth(clientAuth == ClientAuthentication.WANT);
+        sslContextFactory.setNeedClientAuth(clientAuth == ClientAuthentication.NEED);
+
+        sslConfiguration.getProtocol().ifPresent(sslContextFactory::setProtocol);
+        sslConfiguration.getProtocols().ifPresent(sslContextFactory::setIncludeProtocols);
+        sslConfiguration.getCiphers().ifPresent(sslContextFactory::setIncludeCipherSuites);
+        configureKeyStore(sslConfiguration, sslContextFactory, resourceFactory);
+        configureTrustStore(sslConfiguration, sslContextFactory, resourceFactory);
     }
 
     /**
