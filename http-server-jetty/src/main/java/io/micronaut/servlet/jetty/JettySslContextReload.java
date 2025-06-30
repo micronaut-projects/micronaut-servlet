@@ -22,7 +22,6 @@ import io.micronaut.http.ssl.SslConfiguration;
 import io.micronaut.runtime.context.scope.refresh.RefreshEvent;
 import io.micronaut.runtime.context.scope.refresh.RefreshEventListener;
 import jakarta.inject.Singleton;
-import org.eclipse.jetty.server.ConnectionFactory;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.SslConnectionFactory;
@@ -32,7 +31,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
-import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -68,24 +66,24 @@ public class JettySslContextReload implements RefreshEventListener {
     @Override
     public void onApplicationEvent(RefreshEvent event) {
         Connector[] connectors = server.getConnectors();
-
-        Optional<ConnectionFactory> connectionFactoryOpt = Arrays.stream(connectors)
-            .flatMap(connector -> connector.getConnectionFactories().stream())
-            .filter(connectionFactory -> connectionFactory instanceof SslConnectionFactory)
-            .findFirst();
-
-        if (connectionFactoryOpt.isPresent()) {
-            SslConnectionFactory sslConnectionFactory = (SslConnectionFactory) connectionFactoryOpt.get();
-            SslContextFactory.Server sslContextFactory = sslConnectionFactory.getSslContextFactory();
-            try {
-                jettyFactory.updateSslContextFactory(sslContextFactory, ResourceFactory.of(server));
-                LOG.debug("Reloading ssl context");
-                sslContextFactory.reload(factory -> { });
-            } catch (Exception e) {
-                LOG.error("Failed to reload ssl context", e);
-            }
-        } else {
-            LOG.warn("Ssl connection factory not found");
+        if (connectors == null) {
+            LOG.warn("Server connectors not found");
+            return;
         }
+
+        Arrays.stream(connectors)
+            .flatMap(connector -> connector.getConnectionFactories().stream())
+            .forEach(connectionFactory -> {
+                if (connectionFactory instanceof SslConnectionFactory sslConnectionFactory) {
+                    SslContextFactory.Server sslContextFactory = sslConnectionFactory.getSslContextFactory();
+                    try {
+                        jettyFactory.updateSslContextFactory(sslContextFactory, ResourceFactory.of(server));
+                        LOG.debug("Reloading ssl context, sslConnectionFactory={}", sslConnectionFactory);
+                        sslContextFactory.reload(factory -> { });
+                    } catch (Exception e) {
+                        LOG.error("Failed to reload ssl context, sslConnectionFactory={}", sslConnectionFactory, e);
+                    }
+                }
+            });
     }
 }
