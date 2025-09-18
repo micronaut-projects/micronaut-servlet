@@ -358,12 +358,11 @@ public final class DefaultServletHttpResponse<B> implements ServletHttpResponse<
 
                     if (!inputReady) {
                         internalBuffer = null;
-                        if (outputReady) {
+                        if (upstreamComplete) {
+                            completion.complete(null);
+                        } else if (outputReady) {
                             subscription.request(1);
                         }
-                    }
-                    if (internalBuffer == null && upstreamComplete) {
-                        completion.complete(null);
                     }
                 }
 
