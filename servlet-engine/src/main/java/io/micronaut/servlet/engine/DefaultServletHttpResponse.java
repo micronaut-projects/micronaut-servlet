@@ -308,6 +308,7 @@ public final class DefaultServletHttpResponse<B> implements ServletHttpResponse<
                 final ServletOutputStream outputStream = delegate.getOutputStream();
                 Subscription subscription;
                 java.nio.ByteBuffer internalBuffer;
+                boolean upstreamComplete = false;
 
                 @Override
                 public void onSubscribe(Subscription s) {
@@ -361,6 +362,9 @@ public final class DefaultServletHttpResponse<B> implements ServletHttpResponse<
                             subscription.request(1);
                         }
                     }
+                    if (internalBuffer == null && upstreamComplete) {
+                        completion.complete(null);
+                    }
                 }
 
                 @Override
@@ -387,7 +391,10 @@ public final class DefaultServletHttpResponse<B> implements ServletHttpResponse<
 
                 @Override
                 public void onComplete() {
-                    completion.complete(null);
+                    upstreamComplete = true;
+                    if (internalBuffer == null) {
+                        completion.complete(null);
+                    }
                 }
             };
         } catch (IOException e) {
