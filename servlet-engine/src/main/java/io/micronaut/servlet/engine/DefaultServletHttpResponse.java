@@ -67,6 +67,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 /**
@@ -306,9 +307,10 @@ public final class DefaultServletHttpResponse<B> implements ServletHttpResponse<
             body.expectedLength().ifPresent(delegate::setContentLengthLong);
             subscriber = new Subscriber<>() {
                 final ServletOutputStream outputStream = delegate.getOutputStream();
+                final AtomicReference<CloseState> closeState = new AtomicReference<>(CloseState.IDLE);
+                Throwable failure;
                 Subscription subscription;
                 java.nio.ByteBuffer internalBuffer;
-                boolean upstreamComplete = false;
 
                 @Override
                 public void onSubscribe(Subscription s) {
@@ -358,8 +360,12 @@ public final class DefaultServletHttpResponse<B> implements ServletHttpResponse<
 
                     if (!inputReady) {
                         internalBuffer = null;
-                        if (upstreamComplete) {
-                            completion.complete(null);
+                        if (closeState.getAndSet(CloseState.IDLE) == CloseState.INPUT_CLOSED) {
+                            if (failure == null) {
+                                completion.complete(null);
+                            } else {
+                                completion.completeExceptionally(failure);
+                            }
                         } else if (outputReady) {
                             subscription.request(1);
                         }
@@ -372,6 +378,7 @@ public final class DefaultServletHttpResponse<B> implements ServletHttpResponse<
                         throw new IllegalStateException("Still have buffered data");
                     }
                     internalBuffer = java.nio.ByteBuffer.wrap(bytes);
+                    closeState.set(CloseState.UNPROCESSED_DATA);
                     try {
                         writeSome();
                     } catch (IOException e) {
@@ -385,15 +392,36 @@ public final class DefaultServletHttpResponse<B> implements ServletHttpResponse<
                 }
 
                 private void handleError(Throwable t) {
-                    completion.completeExceptionally(t);
+                    failure = t;
+                    if (closeState.getAndSet(CloseState.INPUT_CLOSED) == CloseState.IDLE) {
+                        completion.completeExceptionally(t);
+                    }
                 }
 
                 @Override
                 public void onComplete() {
-                    upstreamComplete = true;
-                    if (internalBuffer == null) {
+                    if (closeState.getAndSet(CloseState.INPUT_CLOSED) == CloseState.IDLE) {
                         completion.complete(null);
                     }
+                }
+
+                enum CloseState {
+                    /**
+                     * We're waiting for an onNext or onComplete call. If onComplete is called in
+                     * this state, we can complete the future immediately.
+                     */
+                    IDLE,
+                    /**
+                     * We have some unprocessed data from an onNext call. If onComplete is called
+                     * in this state, we transition to INPUT_CLOSED but don't complete the future
+                     * yet.
+                     */
+                    UNPROCESSED_DATA,
+                    /**
+                     * We've received an onComplete call. If the processor sees this when trying
+                     * to switch back to IDLE, it completes the future.
+                     */
+                    INPUT_CLOSED,
                 }
             };
         } catch (IOException e) {
