@@ -327,7 +327,7 @@ public final class DefaultServletHttpResponse<B> implements ServletHttpResponse<
 
                         @Override
                         public void onError(Throwable t) {
-                            handleError(t);
+                            completion.completeExceptionally(t);
                         }
                     });
                 }
@@ -335,11 +335,11 @@ public final class DefaultServletHttpResponse<B> implements ServletHttpResponse<
                 private void writeSome() throws IOException {
                     assert internalBuffer != null;
 
-                    // both are true at the start, ensured by caller. we can't assert this here
-                    // because isReady may have side effects
-                    boolean inputReady;
-                    boolean outputReady;
-                    do {
+                    // isReady at the start, ensured by caller. we can't assert this here because
+                    // isReady may have side effects
+
+                    while (internalBuffer.hasRemaining()) { // hasRemaining is only legal when isReady!
+
                         boolean writeBuffer = writeBufferAvailable;
                         if (writeBuffer) {
                             try {
@@ -354,21 +354,21 @@ public final class DefaultServletHttpResponse<B> implements ServletHttpResponse<
                             internalBuffer.position(internalBuffer.limit());
                         }
 
-                        inputReady = internalBuffer.hasRemaining();
-                        outputReady = outputStream.isReady();
-                    } while (inputReady && outputReady);
-
-                    if (!inputReady) {
-                        internalBuffer = null;
-                        if (closeState.getAndSet(CloseState.IDLE) == CloseState.INPUT_CLOSED) {
-                            if (failure == null) {
-                                completion.complete(null);
-                            } else {
-                                completion.completeExceptionally(failure);
-                            }
-                        } else if (outputReady) {
-                            subscription.request(1);
+                        if (!outputStream.isReady()) {
+                            // wait for onWritePossible
+                            return;
                         }
+                    }
+
+                    internalBuffer = null;
+                    if (closeState.getAndSet(CloseState.IDLE) == CloseState.INPUT_CLOSED) {
+                        if (failure == null) {
+                            completion.complete(null);
+                        } else {
+                            completion.completeExceptionally(failure);
+                        }
+                    } else {
+                        subscription.request(1);
                     }
                 }
 
@@ -382,16 +382,12 @@ public final class DefaultServletHttpResponse<B> implements ServletHttpResponse<
                     try {
                         writeSome();
                     } catch (IOException e) {
-                        handleError(e);
+                        completion.completeExceptionally(e);
                     }
                 }
 
                 @Override
                 public void onError(Throwable t) {
-                    handleError(t);
-                }
-
-                private void handleError(Throwable t) {
                     failure = t;
                     if (closeState.getAndSet(CloseState.INPUT_CLOSED) == CloseState.IDLE) {
                         completion.completeExceptionally(t);
