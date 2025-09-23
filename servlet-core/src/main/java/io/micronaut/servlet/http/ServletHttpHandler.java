@@ -50,6 +50,7 @@ import io.micronaut.web.router.resource.StaticResourceResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -214,8 +215,16 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
             onComplete.run();
         } else if (async) {
             servletResponse.stream(byteBodyResponse.byteBody().move()).whenComplete((ignored, t) -> {
-                if (t != null && LOG.isWarnEnabled()) {
-                    LOG.warn("Error while writing response body", t);
+                if (t != null) {
+                    if (t instanceof EOFException) {
+                        if (LOG.isDebugEnabled()) {
+                            LOG.debug("Error while writing response body", t);
+                        }
+                    } else {
+                        if (LOG.isWarnEnabled()) {
+                            LOG.warn("Error while writing response body", t);
+                        }
+                    }
                 }
                 onComplete.run();
             });
