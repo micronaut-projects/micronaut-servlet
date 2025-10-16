@@ -11,7 +11,7 @@ repositories {
 dependencies {
     kaptTest mn.micronaut.inject.java
 
-    testRuntimeOnly libs.junit.jupiter.engine
+    testRuntimeOnly mnTest.junit.jupiter.engine
 
     testImplementation libs.kotlin.stdlib.jdk8
     testImplementation libs.kotlin.reflect
