@@ -1,6 +1,6 @@
 [versions]
-micronaut = "4.10.3"
-micronaut-docs = "2.0.0"
+micronaut = "4.10.6"
+micronaut-docs = "3.0.0"
 micronaut-test = "4.9.0"
 
 groovy = "4.0.27"
@@ -22,7 +22,7 @@ micronaut-validation = "4.11.0"
 google-cloud-functions = '1.1.4'
 micronaut-logging = "1.7.1"
 # Micronaut
-micronaut-gradle-plugin = "4.5.5"
+micronaut-gradle-plugin = "4.6.0"
 logback-access = "2.0.6"
 kotlin = "1.9.25"
 

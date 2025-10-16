@@ -548,6 +548,9 @@ public final class DefaultServletHttpRequest<B> implements
             final String[] values = delegate.getParameterValues(
                 Objects.requireNonNull(name, "Parameter name cannot be null").toString()
             );
+            if (values == null) {
+                return Collections.emptyList();
+            }
             return Arrays.asList(values);
         }
 
