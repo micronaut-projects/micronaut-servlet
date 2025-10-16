@@ -7,6 +7,3 @@ dependencies {
     api(libs.managed.servlet.api)
 }
 
-micronautBuild {
-    binaryCompatibility.enabled.set(false)
-}

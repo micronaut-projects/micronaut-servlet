@@ -25,9 +25,3 @@ dependencies {
     testImplementation(mn.micronaut.jackson.databind)
     testImplementation(projects.micronautHttpPojaApache)
 }
-
-micronautBuild {
-    binaryCompatibility {
-        enabled.set(false)
-    }
-}
