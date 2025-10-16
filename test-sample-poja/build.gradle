@@ -31,6 +31,7 @@ dependencies {
 
     testAnnotationProcessor(mn.micronaut.inject.java.test)
     testImplementation(mn.micronaut.inject.java)
+    testRuntimeOnly(mnTest.junit.platform.suite)
 }
 
 application {
