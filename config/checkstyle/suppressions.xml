@@ -10,4 +10,5 @@
 
     <suppress checks="MissingJavadocType" files=".*doc-examples.*" />
     <suppress checks=".*" files=".*/http-poja-common/src/main/java/io/micronaut/http/poja/util/QueryStringDecoder.java" />
+
 </suppressions>
