@@ -8,6 +8,3 @@ dependencies {
     testImplementation(mn.micronaut.inject.java.test)
 }
 
-micronautBuild {
-    binaryCompatibility.enabled.set(false)
-}
