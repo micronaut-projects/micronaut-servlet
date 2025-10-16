@@ -31,6 +31,8 @@ dependencies {
 
     testAnnotationProcessor(mn.micronaut.inject.java.test)
     testImplementation(mn.micronaut.inject.java)
+    testImplementation(mnTest.junit.jupiter.engine)
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 application {
