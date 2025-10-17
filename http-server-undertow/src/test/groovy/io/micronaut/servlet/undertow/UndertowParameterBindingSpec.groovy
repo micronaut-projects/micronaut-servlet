@@ -90,8 +90,7 @@ class UndertowParameterBindingSpec extends Specification {
 
         expect:
         response.status() == HttpStatus.BAD_REQUEST
-        response.body().contains('Failed to convert argument')
-        response.body().contains('Expected one string, but got array of multiple value')
+        response.body().contains('Required argument [Book book] not specified')
     }
 
     @Requires(property = 'spec.name', value = 'UndertowParameterBindingSpec')
