@@ -31,7 +31,9 @@ dependencies {
 
     testAnnotationProcessor(mn.micronaut.inject.java.test)
     testImplementation(mn.micronaut.inject.java)
+    testRuntimeOnly(mnTest.junit.platform.launcher)
     testRuntimeOnly(mnTest.junit.platform.suite)
+    testRuntimeOnly(mnTest.junit.jupiter.engine)
 }
 
 application {
@@ -51,6 +53,6 @@ graalvmNative {
     }
 }
 
-test {
+tasks.withType(Test).configureEach {
     useJUnitPlatform()
 }
