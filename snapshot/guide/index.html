@@ -15,7 +15,7 @@
     <script>hljs.initHighlightingOnLoad();</script>
     <link rel="stylesheet" href="../css/multi-language-sample.css"/>
     <script src="../js/docs.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.5.13/clipboard.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.11/clipboard.min.js"></script>
     <script type="text/javascript">
         function addJsClass(el) {
             var classes = document.body.className.split(" ");
@@ -143,13 +143,13 @@
         <h1>Micronaut Servlet</h1>
         <p></p>
         <p>Provides integration between Micronaut and the Servlet API</p>
-        <p><strong>Version:</strong> 5.6.1-SNAPSHOT </p>
+        <p><strong>Version:</strong> 6.0.0-SNAPSHOT </p>
     </div>
     
 <h1 id="introduction"><a class="anchor" href="#introduction"></a>1 Introduction</h1>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/5.6.x/src/main/docs/guide/introduction.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/6.0.x/src/main/docs/guide/introduction.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -178,7 +178,7 @@
 <h1 id="releaseHistory"><a class="anchor" href="#releaseHistory"></a>2 Release History</h1>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/5.6.x/src/main/docs/guide/releaseHistory.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/6.0.x/src/main/docs/guide/releaseHistory.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -194,7 +194,7 @@
 <h1 id="servletApi"><a class="anchor" href="#servletApi"></a>3 Working with the Servlet API</h1>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/5.6.x/src/main/docs/guide/servletApi.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/6.0.x/src/main/docs/guide/servletApi.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -316,7 +316,7 @@ String multipart(
 <h1 id="servletAnnotation"><a class="anchor" href="#servletAnnotation"></a>4 Servlet Annotation Support</h1>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/5.6.x/src/main/docs/guide/servletAnnotation.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/6.0.x/src/main/docs/guide/servletAnnotation.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -342,7 +342,8 @@ String multipart(
     &lt;/path&gt;
 &lt;/annotationProcessorPaths&gt;</code></pre>
 </div>
-</div></p>
+</div>
+</p>
 </div>
 <div class="paragraph">
 <p>The following annotations can then be used from the Servlet API to add additional servlets, filters and listeners as beans:</p>
@@ -461,7 +462,7 @@ Servlet Filters are not to be confused with <a href="https://docs.micronaut.io/l
 <h1 id="warDeployment"><a class="anchor" href="#warDeployment"></a>5 WAR Deployment</h1>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/5.6.x/src/main/docs/guide/warDeployment.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/6.0.x/src/main/docs/guide/warDeployment.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -488,7 +489,8 @@ Servlet Filters are not to be confused with <a href="https://docs.micronaut.io/l
     &lt;scope&gt;provided&lt;/scope&gt;
 &lt;/dependency&gt;</code></pre>
 </div>
-</div></p>
+</div>
+</p>
 </div>
 <div class="paragraph">
 <p>Then make sure you include <code>micronaut-servlet-engine</code> dependency in your build configuration:</p>
@@ -507,7 +509,8 @@ Servlet Filters are not to be confused with <a href="https://docs.micronaut.io/l
     &lt;artifactId&gt;micronaut-servlet-engine&lt;/artifactId&gt;
 &lt;/dependency&gt;</code></pre>
 </div>
-</div></p>
+</div>
+</p>
 </div>
 <div class="paragraph">
 <p>Then alter your build configuration to build a WAR file. In Gradle this can be done by applying the WAR plugin:</p>
@@ -540,7 +543,7 @@ Micronaut will load using <a href="../api/io/micronaut/servlet/engine/initialize
 <h2 id="versioning"><a class="anchor" href="#versioning"></a>5.1 Container version considerations</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/5.6.x/src/main/docs/guide/warDeployment/versioning.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/6.0.x/src/main/docs/guide/warDeployment/versioning.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -561,7 +564,7 @@ And Micronaut 4.0.0 WAR files cannot be run on Tomcat 9 or earlier.</p>
 <h2 id="externalConfig"><a class="anchor" href="#externalConfig"></a>5.2 External Configuration</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/5.6.x/src/main/docs/guide/warDeployment/externalConfig.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/6.0.x/src/main/docs/guide/warDeployment/externalConfig.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -626,7 +629,7 @@ Some servlet containers may limit the locations that are accessible from applica
 <h2 id="warContext"><a class="anchor" href="#warContext"></a>5.3 WAR Context path</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/5.6.x/src/main/docs/guide/warDeployment/warContext.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/6.0.x/src/main/docs/guide/warDeployment/warContext.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -642,7 +645,7 @@ Some servlet containers may limit the locations that are accessible from applica
 <h1 id="jetty"><a class="anchor" href="#jetty"></a>6 Jetty Server</h1>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/5.6.x/src/main/docs/guide/jetty.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/6.0.x/src/main/docs/guide/jetty.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -665,7 +668,8 @@ Some servlet containers may limit the locations that are accessible from applica
     &lt;artifactId&gt;micronaut-http-server-jetty&lt;/artifactId&gt;
 &lt;/dependency&gt;</code></pre>
 </div>
-</div></p>
+</div>
+</p>
 </div>
 <div class="admonitionblock note">
 <table>
@@ -970,7 +974,8 @@ micronaut.server.jetty.accessLog.pattern = "%{client}a - %u %t \"%r\" %s %O"</co
     &lt;artifactId&gt;logback-access-common&lt;/artifactId&gt;
 &lt;/dependency&gt;</code></pre>
 </div>
-</div></p>
+</div>
+</p>
 </div>
 <div class="paragraph">
 <p>By default, it will check for logback-access.xml in resources folder.</p>
@@ -981,7 +986,7 @@ micronaut.server.jetty.accessLog.pattern = "%{client}a - %u %t \"%r\" %s %O"</co
 <h1 id="tomcat"><a class="anchor" href="#tomcat"></a>7 Tomcat Server</h1>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/5.6.x/src/main/docs/guide/tomcat.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/6.0.x/src/main/docs/guide/tomcat.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -1004,7 +1009,8 @@ micronaut.server.jetty.accessLog.pattern = "%{client}a - %u %t \"%r\" %s %O"</co
     &lt;artifactId&gt;micronaut-http-server-tomcat&lt;/artifactId&gt;
 &lt;/dependency&gt;</code></pre>
 </div>
-</div></p>
+</div>
+</p>
 </div>
 <div class="admonitionblock note">
 <table>
@@ -1286,7 +1292,7 @@ micronaut.server.tomcat.accessLog.directory = "/var/logs"</code></pre>
 <h1 id="undertow"><a class="anchor" href="#undertow"></a>8 Undertow Server</h1>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/5.6.x/src/main/docs/guide/undertow.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/6.0.x/src/main/docs/guide/undertow.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -1309,7 +1315,8 @@ micronaut.server.tomcat.accessLog.directory = "/var/logs"</code></pre>
     &lt;artifactId&gt;micronaut-http-server-undertow&lt;/artifactId&gt;
 &lt;/dependency&gt;</code></pre>
 </div>
-</div></p>
+</div>
+</p>
 </div>
 <div class="admonitionblock warning">
 <table>
@@ -1603,7 +1610,7 @@ micronaut.server.undertow.accessLog.outputDirectory = "/var/logs"</code></pre>
 <h1 id="httpServer"><a class="anchor" href="#httpServer"></a>9 Built-In Java HTTP Server Runtime</h1>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/5.6.x/src/main/docs/guide/httpServer.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/6.0.x/src/main/docs/guide/httpServer.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -1626,13 +1633,14 @@ micronaut.server.undertow.accessLog.outputDirectory = "/var/logs"</code></pre>
     &lt;artifactId&gt;micronaut-http-server-jdk&lt;/artifactId&gt;
 &lt;/dependency&gt;</code></pre>
 </div>
-</div></p>
+</div>
+</p>
 </div>
 
 <h1 id="httpPoja"><a class="anchor" href="#httpPoja"></a>10 HTTP POJA Application</h1>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/5.6.x/src/main/docs/guide/httpPoja.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/6.0.x/src/main/docs/guide/httpPoja.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -1662,7 +1670,8 @@ Currently HTTP POJA is based on <a href="https://hc.apache.org/httpcomponents-co
     &lt;artifactId&gt;micronaut-http-poja-apache&lt;/artifactId&gt;
 &lt;/dependency&gt;</code></pre>
 </div>
-</div></p>
+</div>
+</p>
 </div>
 <div class="paragraph">
 <p>        <div class="listingblock multi-language-sample">
@@ -1679,7 +1688,8 @@ Currently HTTP POJA is based on <a href="https://hc.apache.org/httpcomponents-co
     &lt;scope&gt;test&lt;/scope&gt;
 &lt;/dependency&gt;</code></pre>
 </div>
-</div></p>
+</div>
+</p>
 </div>
 <div class="paragraph">
 <p>To customize the HTTP POJA you can use the following configuration properties:</p>
@@ -1932,7 +1942,7 @@ sudo systemctl start examplepoja.socket</code></pre>
 <h1 id="knownIssues"><a class="anchor" href="#knownIssues"></a>11 Known Issues</h1>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/5.6.x/src/main/docs/guide/knownIssues.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/6.0.x/src/main/docs/guide/knownIssues.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -1958,7 +1968,7 @@ The body is read from the request input-stream and so attempting to reparse it f
 <h1 id="faq"><a class="anchor" href="#faq"></a>12 FAQ</h1>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/5.6.x/src/main/docs/guide/faq.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/6.0.x/src/main/docs/guide/faq.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -1995,7 +2005,7 @@ The body is read from the request input-stream and so attempting to reparse it f
 <h1 id="breaks"><a class="anchor" href="#breaks"></a>13 Breaking Changes</h1>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/5.6.x/src/main/docs/guide/breaks.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/6.0.x/src/main/docs/guide/breaks.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -2042,7 +2052,7 @@ To restore the original functionality, you need to configure <code>micronaut.ser
 <h1 id="repository"><a class="anchor" href="#repository"></a>14 Repository</h1>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/5.6.x/src/main/docs/guide/repository.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/6.0.x/src/main/docs/guide/repository.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
