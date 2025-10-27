@@ -499,7 +499,7 @@ public final class DefaultServletHttpRequest<B> implements
     /**
      * The servlet request headers.
      */
-    private class ServletRequestHeaders implements HttpHeaders {
+    private final class ServletRequestHeaders implements HttpHeaders {
 
         @Override
         public List<String> getAll(CharSequence name) {
@@ -541,7 +541,7 @@ public final class DefaultServletHttpRequest<B> implements
     /**
      * The servlet request parameters.
      */
-    private class ServletParameters implements HttpParameters {
+    private final class ServletParameters implements HttpParameters {
 
         @Override
         public List<String> getAll(CharSequence name) {
