@@ -53,6 +53,6 @@ graalvmNative {
     }
 }
 
-tasks.withType(Test).configureEach {
+test {
     useJUnitPlatform()
 }
