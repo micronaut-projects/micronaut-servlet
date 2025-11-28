@@ -80,6 +80,7 @@ final class ApacheResponseContext implements Closeable {
     @Override
     public void close() throws IOException {
         if (bodyStream != null) {
+            bodyStream.flush();
             bodyStream.close();
         }
         outputBuffer.flush(out);
