@@ -17,7 +17,7 @@ package io.micronaut.servlet.jetty;
 
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.event.ApplicationEventPublisher;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.http.server.exceptions.HttpServerException;
 import io.micronaut.runtime.ApplicationConfiguration;

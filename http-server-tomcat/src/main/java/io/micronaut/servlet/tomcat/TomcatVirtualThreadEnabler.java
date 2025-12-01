@@ -18,7 +18,7 @@ package io.micronaut.servlet.tomcat;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.event.BeanCreatedEvent;
 import io.micronaut.context.event.BeanCreatedEventListener;
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.servlet.http.ServletConfiguration;
 import jakarta.inject.Singleton;
 import org.apache.catalina.connector.Connector;

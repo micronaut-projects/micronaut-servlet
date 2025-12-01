@@ -16,7 +16,7 @@
 package io.micronaut.servlet.jetty;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.core.attr.AttributeHolder;
 import io.micronaut.servlet.http.SSLSessionProvider;
 import jakarta.inject.Singleton;

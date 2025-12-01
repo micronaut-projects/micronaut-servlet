@@ -17,7 +17,7 @@ package io.micronaut.servlet.annotation.processor;
 
 import static io.micronaut.core.util.ArrayUtils.concat;
 
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.processing.ProcessingException;
