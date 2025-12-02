@@ -16,8 +16,8 @@
 package io.micronaut.servlet.http.encoders;
 
 import io.micronaut.core.annotation.AnnotationMetadata;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.http.MutableHttpResponse;
 import io.micronaut.http.server.types.files.SystemFile;
 import io.micronaut.servlet.http.ServletConfiguration;

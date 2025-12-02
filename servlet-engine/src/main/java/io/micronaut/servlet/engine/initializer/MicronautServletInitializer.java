@@ -20,7 +20,7 @@ import io.micronaut.context.ApplicationContextBuilder;
 import io.micronaut.context.BeanRegistration;
 import io.micronaut.context.annotation.Prototype;
 import io.micronaut.core.annotation.AnnotationValue;
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.inject.BeanDefinition;

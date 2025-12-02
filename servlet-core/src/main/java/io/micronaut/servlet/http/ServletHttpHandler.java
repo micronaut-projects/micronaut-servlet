@@ -17,8 +17,8 @@ package io.micronaut.servlet.http;
 
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.LifeCycle;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.execution.ExecutionFlow;
 import io.micronaut.core.io.buffer.ByteArrayBufferFactory;

@@ -19,7 +19,7 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Replaces;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.env.Environment;
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.http.poja.PojaHttpServerlessApplication;
 import io.micronaut.runtime.ApplicationConfiguration;
 import io.micronaut.runtime.EmbeddedApplication;

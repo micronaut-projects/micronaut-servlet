@@ -25,7 +25,7 @@ import io.micronaut.context.annotation.ConfigurationBuilder;
 import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.context.annotation.Replaces;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.annotation.TypeHint;
 import io.micronaut.http.server.HttpServerConfiguration;
 import org.apache.catalina.connector.Connector;
