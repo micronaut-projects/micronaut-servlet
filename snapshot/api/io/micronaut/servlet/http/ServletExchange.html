@@ -166,8 +166,7 @@ extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/ja
 <li>
 <section class="detail" id="getResponse()">
 <h3>getResponse</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="return-type">@NonNull <a href="ServletHttpResponse.html" title="interface in io.micronaut.servlet.http">ServletHttpResponse</a>&lt;<a href="ServletExchange.html" title="type parameter in ServletExchange">Res</a>,<wbr>?&gt;</span>&nbsp;<span class="element-name">getResponse</span>()</div>
+<div class="member-signature"><span class="return-type">@NonNull <a href="ServletHttpResponse.html" title="interface in io.micronaut.servlet.http">ServletHttpResponse</a>&lt;<a href="ServletExchange.html" title="type parameter in ServletExchange">Res</a>,<wbr>?&gt;</span>&nbsp;<span class="element-name">getResponse</span>()</div>
 <div class="block">Get the current response, the last response created by <a href="#createResponse()"><code>createResponse()</code></a>.</div>
 <dl class="notes">
 <dt>Returns:</dt>
@@ -178,8 +177,7 @@ extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/ja
 <li>
 <section class="detail" id="createResponse()">
 <h3>createResponse</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">default</span>&nbsp;<span class="return-type">@NonNull <a href="ServletHttpResponse.html" title="interface in io.micronaut.servlet.http">ServletHttpResponse</a>&lt;<a href="ServletExchange.html" title="type parameter in ServletExchange">Res</a>,<wbr>?&gt;</span>&nbsp;<span class="element-name">createResponse</span>()</div>
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">@NonNull <a href="ServletHttpResponse.html" title="interface in io.micronaut.servlet.http">ServletHttpResponse</a>&lt;<a href="ServletExchange.html" title="type parameter in ServletExchange">Res</a>,<wbr>?&gt;</span>&nbsp;<span class="element-name">createResponse</span>()</div>
 <div class="block">Create a new, empty response for this exchange. Only the last response created for a request
  is fully backed by the servlet container response, meaning it can access
  <a href="ServletHttpResponse.html#getOutputStream()"><code>ServletHttpResponse.getOutputStream()</code></a> and similar methods.</div>

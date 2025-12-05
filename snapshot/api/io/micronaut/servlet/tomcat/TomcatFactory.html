@@ -279,7 +279,7 @@ loadScripts(document, 'script');</script>
 <div class="member-signature"><span class="annotations">@Singleton
 @Primary
 </span><span class="modifiers">protected</span>&nbsp;<span class="return-type">org.apache.catalina.startup.Tomcat</span>&nbsp;<span class="element-name">tomcatServer</span><wbr><span class="parameters">(org.apache.catalina.connector.Connector&nbsp;connector,
- @Named("HTTPS") @Nullable
+ @Named("HTTPS")
  @Nullable org.apache.catalina.connector.Connector&nbsp;httpsConnector,
  <a href="../engine/MicronautServletConfiguration.html" title="class in io.micronaut.servlet.engine">MicronautServletConfiguration</a>&nbsp;configuration,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;jakarta.servlet.ServletContainerInitializer&gt;&nbsp;servletInitializers)</span></div>
@@ -311,11 +311,8 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="configureConnectors(org.apache.catalina.startup.Tomcat,org.apache.catalina.connector.Connector,org.apache.catalina.connector.Connector)">
 <h3>configureConnectors</h3>
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">configureConnectors</span><wbr><span class="parameters">(@NonNull
- @NonNull org.apache.catalina.startup.Tomcat&nbsp;tomcat,
- @NonNull
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">configureConnectors</span><wbr><span class="parameters">(@NonNull org.apache.catalina.startup.Tomcat&nbsp;tomcat,
  @NonNull org.apache.catalina.connector.Connector&nbsp;httpConnector,
- @Nullable
  @Nullable org.apache.catalina.connector.Connector&nbsp;httpsConnector)</span></div>
 <div class="block">Configures the available connectors.</div>
 <dl class="notes">
@@ -329,9 +326,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="newTomcatContext(org.apache.catalina.startup.Tomcat)">
 <h3>newTomcatContext</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">@NonNull org.apache.catalina.Context</span>&nbsp;<span class="element-name">newTomcatContext</span><wbr><span class="parameters">(@NonNull
- @NonNull org.apache.catalina.startup.Tomcat&nbsp;tomcat)</span></div>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">@NonNull org.apache.catalina.Context</span>&nbsp;<span class="element-name">newTomcatContext</span><wbr><span class="parameters">(@NonNull org.apache.catalina.startup.Tomcat&nbsp;tomcat)</span></div>
 <div class="block">Create a new context.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -344,8 +339,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="newTomcat()">
 <h3>newTomcat</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">@NonNull org.apache.catalina.startup.Tomcat</span>&nbsp;<span class="element-name">newTomcat</span>()</div>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">@NonNull org.apache.catalina.startup.Tomcat</span>&nbsp;<span class="element-name">newTomcat</span>()</div>
 <div class="block">Create a new tomcat server.</div>
 <dl class="notes">
 <dt>Returns:</dt>

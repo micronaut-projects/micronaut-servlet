@@ -171,9 +171,9 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/http/ServletBodyBinder.html#bind(io.micronaut.core.convert.ArgumentConversionContext,io.micronaut.http.HttpRequest)" class="member-name-link">bind(ArgumentConversionContext&lt;T&gt;, HttpRequest&lt;?&gt;)</a> - Method in class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletBodyBinder.html" title="class in io.micronaut.servlet.http">ServletBodyBinder</a></dt>
 <dd>&nbsp;</dd>
-<dt><a href="io/micronaut/http/poja/apache/ApacheServletHttpRequest.html#body(T)" class="member-name-link">body(T)</a> - Method in class io.micronaut.http.poja.apache.<a href="io/micronaut/http/poja/apache/ApacheServletHttpRequest.html" title="class in io.micronaut.http.poja.apache">ApacheServletHttpRequest</a></dt>
-<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/engine/DefaultServletHttpResponse.html#body(T)" class="member-name-link">body(T)</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/DefaultServletHttpResponse.html" title="class in io.micronaut.servlet.engine">DefaultServletHttpResponse</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/http/poja/apache/ApacheServletHttpRequest.html#body(T)" class="member-name-link">body(T)</a> - Method in class io.micronaut.http.poja.apache.<a href="io/micronaut/http/poja/apache/ApacheServletHttpRequest.html" title="class in io.micronaut.http.poja.apache">ApacheServletHttpRequest</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/http/BodyBuilder.html" class="type-name-link" title="interface in io.micronaut.servlet.http">BodyBuilder</a> - Interface in <a href="io/micronaut/servlet/http/package-summary.html">io.micronaut.servlet.http</a></dt>
 <dd>
@@ -445,6 +445,11 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/undertow/UndertowConfiguration.AccessLogConfiguration.html#ENABLED_PROPERTY" class="member-name-link">ENABLED_PROPERTY</a> - Static variable in class io.micronaut.servlet.undertow.<a href="io/micronaut/servlet/undertow/UndertowConfiguration.AccessLogConfiguration.html" title="class in io.micronaut.servlet.undertow">UndertowConfiguration.AccessLogConfiguration</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/http/ServletResponseEncoder.html#encode(io.micronaut.servlet.http.ServletExchange,io.micronaut.core.annotation.AnnotationMetadata,T)" class="member-name-link">encode(ServletExchange&lt;?, ?&gt;, AnnotationMetadata, T)</a> - Method in interface io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletResponseEncoder.html" title="interface in io.micronaut.servlet.http">ServletResponseEncoder</a></dt>
+<dd>
+<div class="deprecation-block"><span class="deprecated-label">Deprecated.</span></div>
+<div class="block">Encode the given value.</div>
+</dd>
 <dt><a href="io/micronaut/servlet/http/encoders/StreamFileEncoder.html#encode(io.micronaut.servlet.http.ServletExchange,io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.http.server.types.files.StreamedFile)" class="member-name-link">encode(ServletExchange&lt;?, ?&gt;, AnnotationMetadata, StreamedFile)</a> - Method in class io.micronaut.servlet.http.encoders.<a href="io/micronaut/servlet/http/encoders/StreamFileEncoder.html" title="class in io.micronaut.servlet.http.encoders">StreamFileEncoder</a></dt>
 <dd>
 <div class="deprecation-block"><span class="deprecated-label">Deprecated.</span></div>
@@ -457,11 +462,6 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="deprecation-block"><span class="deprecated-label">Deprecated.</span></div>
 &nbsp;</dd>
-<dt><a href="io/micronaut/servlet/http/ServletResponseEncoder.html#encode(io.micronaut.servlet.http.ServletExchange,io.micronaut.core.annotation.AnnotationMetadata,T)" class="member-name-link">encode(ServletExchange&lt;?, ?&gt;, AnnotationMetadata, T)</a> - Method in interface io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletResponseEncoder.html" title="interface in io.micronaut.servlet.http">ServletResponseEncoder</a></dt>
-<dd>
-<div class="deprecation-block"><span class="deprecated-label">Deprecated.</span></div>
-<div class="block">Encode the given value.</div>
-</dd>
 <dt><a href="io/micronaut/http/poja/apache/ApacheServletConfiguration.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in record class io.micronaut.http.poja.apache.<a href="io/micronaut/http/poja/apache/ApacheServletConfiguration.html" title="class in io.micronaut.http.poja.apache">ApacheServletConfiguration</a></dt>
 <dd>
 <div class="block">Indicates whether some other object is "equal to" this one.</div>
@@ -1033,6 +1033,8 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/http/server/package-summary.html">io.micronaut.servlet.http.server</a> - package io.micronaut.servlet.http.server</dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/info/package-summary.html">io.micronaut.servlet.info</a> - package io.micronaut.servlet.info</dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/jetty/package-summary.html">io.micronaut.servlet.jetty</a> - package io.micronaut.servlet.jetty</dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/tomcat/package-summary.html">io.micronaut.servlet.tomcat</a> - package io.micronaut.servlet.tomcat</dt>
@@ -1175,7 +1177,7 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/servlet/jetty/JettyServer.html#%3Cinit%3E(io.micronaut.context.ApplicationContext,io.micronaut.runtime.ApplicationConfiguration,org.eclipse.jetty.server.Server,io.micronaut.web.router.Router,io.micronaut.servlet.jetty.JettyConfiguration,java.util.List)" class="member-name-link">JettyServer(ApplicationContext, ApplicationConfiguration, Server, Router, JettyConfiguration, List&lt;JettyConfiguration.ConnectorConfiguration&gt;)</a> - Constructor for class io.micronaut.servlet.jetty.<a href="io/micronaut/servlet/jetty/JettyServer.html" title="class in io.micronaut.servlet.jetty">JettyServer</a></dt>
 <dd>
 <div class="deprecation-block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span>
-<div class="deprecation-comment">Use <a href="io/micronaut/servlet/jetty/JettyServer.html#%3Cinit%3E(io.micronaut.context.ApplicationContext,io.micronaut.runtime.ApplicationConfiguration,org.eclipse.jetty.server.Server,io.micronaut.web.router.Router,io.micronaut.servlet.jetty.JettyConfiguration,java.util.List,io.micronaut.context.event.ApplicationEventPublisher)"><code>JettyServer(io.micronaut.context.ApplicationContext,io.micronaut.runtime.ApplicationConfiguration,org.eclipse.jetty.server.Server,io.micronaut.web.router.Router,io.micronaut.servlet.jetty.JettyConfiguration,java.util.List&lt;io.micronaut.servlet.jetty.JettyConfiguration.ConnectorConfiguration&gt;,io.micronaut.context.event.@io.micronaut.core.annotation.Nullable ApplicationEventPublisher&lt;io.micronaut.runtime.server.event.ServerShutdownEvent&gt;)</code></a> instead.</div>
+<div class="deprecation-comment">Use <a href="io/micronaut/servlet/jetty/JettyServer.html#%3Cinit%3E(io.micronaut.context.ApplicationContext,io.micronaut.runtime.ApplicationConfiguration,org.eclipse.jetty.server.Server,io.micronaut.web.router.Router,io.micronaut.servlet.jetty.JettyConfiguration,java.util.List,io.micronaut.context.event.ApplicationEventPublisher)"><code>JettyServer(io.micronaut.context.ApplicationContext,io.micronaut.runtime.ApplicationConfiguration,org.eclipse.jetty.server.Server,io.micronaut.web.router.Router,io.micronaut.servlet.jetty.JettyConfiguration,java.util.List&lt;io.micronaut.servlet.jetty.JettyConfiguration.ConnectorConfiguration&gt;,io.micronaut.context.event.@org.jspecify.annotations.Nullable ApplicationEventPublisher&lt;io.micronaut.runtime.server.event.ServerShutdownEvent&gt;)</code></a> instead.</div>
 </div>
 </dd>
 <dt><a href="io/micronaut/servlet/jetty/JettyServer.html#%3Cinit%3E(io.micronaut.context.ApplicationContext,io.micronaut.runtime.ApplicationConfiguration,org.eclipse.jetty.server.Server,io.micronaut.web.router.Router,io.micronaut.servlet.jetty.JettyConfiguration,java.util.List,io.micronaut.context.event.ApplicationEventPublisher)" class="member-name-link">JettyServer(ApplicationContext, ApplicationConfiguration, Server, Router, JettyConfiguration, List&lt;JettyConfiguration.ConnectorConfiguration&gt;, ApplicationEventPublisher&lt;ServerShutdownEvent&gt;)</a> - Constructor for class io.micronaut.servlet.jetty.<a href="io/micronaut/servlet/jetty/JettyServer.html" title="class in io.micronaut.servlet.jetty">JettyServer</a></dt>
@@ -1228,6 +1230,38 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html#maxCapacity()" class="member-name-link">maxCapacity()</a> - Method in class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html" title="class in io.micronaut.servlet.http">ByteArrayByteBuffer</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/info/MicronautHttpPojaApacheModuleInfo.html" class="type-name-link" title="class in io.micronaut.servlet.info">MicronautHttpPojaApacheModuleInfo</a> - Class in <a href="io/micronaut/servlet/info/package-summary.html">io.micronaut.servlet.info</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/info/MicronautHttpPojaApacheModuleInfo.html#%3Cinit%3E()" class="member-name-link">MicronautHttpPojaApacheModuleInfo()</a> - Constructor for class io.micronaut.servlet.info.<a href="io/micronaut/servlet/info/MicronautHttpPojaApacheModuleInfo.html" title="class in io.micronaut.servlet.info">MicronautHttpPojaApacheModuleInfo</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/info/MicronautHttpPojaCommonModuleInfo.html" class="type-name-link" title="class in io.micronaut.servlet.info">MicronautHttpPojaCommonModuleInfo</a> - Class in <a href="io/micronaut/servlet/info/package-summary.html">io.micronaut.servlet.info</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/info/MicronautHttpPojaCommonModuleInfo.html#%3Cinit%3E()" class="member-name-link">MicronautHttpPojaCommonModuleInfo()</a> - Constructor for class io.micronaut.servlet.info.<a href="io/micronaut/servlet/info/MicronautHttpPojaCommonModuleInfo.html" title="class in io.micronaut.servlet.info">MicronautHttpPojaCommonModuleInfo</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/info/MicronautHttpPojaTestModuleInfo.html" class="type-name-link" title="class in io.micronaut.servlet.info">MicronautHttpPojaTestModuleInfo</a> - Class in <a href="io/micronaut/servlet/info/package-summary.html">io.micronaut.servlet.info</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/info/MicronautHttpPojaTestModuleInfo.html#%3Cinit%3E()" class="member-name-link">MicronautHttpPojaTestModuleInfo()</a> - Constructor for class io.micronaut.servlet.info.<a href="io/micronaut/servlet/info/MicronautHttpPojaTestModuleInfo.html" title="class in io.micronaut.servlet.info">MicronautHttpPojaTestModuleInfo</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/info/MicronautHttpServerJdkModuleInfo.html" class="type-name-link" title="class in io.micronaut.servlet.info">MicronautHttpServerJdkModuleInfo</a> - Class in <a href="io/micronaut/servlet/info/package-summary.html">io.micronaut.servlet.info</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/info/MicronautHttpServerJdkModuleInfo.html#%3Cinit%3E()" class="member-name-link">MicronautHttpServerJdkModuleInfo()</a> - Constructor for class io.micronaut.servlet.info.<a href="io/micronaut/servlet/info/MicronautHttpServerJdkModuleInfo.html" title="class in io.micronaut.servlet.info">MicronautHttpServerJdkModuleInfo</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/info/MicronautHttpServerJettyModuleInfo.html" class="type-name-link" title="class in io.micronaut.servlet.info">MicronautHttpServerJettyModuleInfo</a> - Class in <a href="io/micronaut/servlet/info/package-summary.html">io.micronaut.servlet.info</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/info/MicronautHttpServerJettyModuleInfo.html#%3Cinit%3E()" class="member-name-link">MicronautHttpServerJettyModuleInfo()</a> - Constructor for class io.micronaut.servlet.info.<a href="io/micronaut/servlet/info/MicronautHttpServerJettyModuleInfo.html" title="class in io.micronaut.servlet.info">MicronautHttpServerJettyModuleInfo</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/info/MicronautHttpServerTomcatModuleInfo.html" class="type-name-link" title="class in io.micronaut.servlet.info">MicronautHttpServerTomcatModuleInfo</a> - Class in <a href="io/micronaut/servlet/info/package-summary.html">io.micronaut.servlet.info</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/info/MicronautHttpServerTomcatModuleInfo.html#%3Cinit%3E()" class="member-name-link">MicronautHttpServerTomcatModuleInfo()</a> - Constructor for class io.micronaut.servlet.info.<a href="io/micronaut/servlet/info/MicronautHttpServerTomcatModuleInfo.html" title="class in io.micronaut.servlet.info">MicronautHttpServerTomcatModuleInfo</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/info/MicronautHttpServerUndertowModuleInfo.html" class="type-name-link" title="class in io.micronaut.servlet.info">MicronautHttpServerUndertowModuleInfo</a> - Class in <a href="io/micronaut/servlet/info/package-summary.html">io.micronaut.servlet.info</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/info/MicronautHttpServerUndertowModuleInfo.html#%3Cinit%3E()" class="member-name-link">MicronautHttpServerUndertowModuleInfo()</a> - Constructor for class io.micronaut.servlet.info.<a href="io/micronaut/servlet/info/MicronautHttpServerUndertowModuleInfo.html" title="class in io.micronaut.servlet.info">MicronautHttpServerUndertowModuleInfo</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/info/MicronautServletApiModuleInfo.html" class="type-name-link" title="class in io.micronaut.servlet.info">MicronautServletApiModuleInfo</a> - Class in <a href="io/micronaut/servlet/info/package-summary.html">io.micronaut.servlet.info</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/info/MicronautServletApiModuleInfo.html#%3Cinit%3E()" class="member-name-link">MicronautServletApiModuleInfo()</a> - Constructor for class io.micronaut.servlet.info.<a href="io/micronaut/servlet/info/MicronautServletApiModuleInfo.html" title="class in io.micronaut.servlet.info">MicronautServletApiModuleInfo</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/engine/MicronautServletConfiguration.html" class="type-name-link" title="class in io.micronaut.servlet.engine">MicronautServletConfiguration</a> - Class in <a href="io/micronaut/servlet/engine/package-summary.html">io.micronaut.servlet.engine</a></dt>
 <dd>
 <div class="block">Configuration properties for the Micronaut servlet.</div>
@@ -1236,6 +1270,14 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Default constructor.</div>
 </dd>
+<dt><a href="io/micronaut/servlet/info/MicronautServletCoreModuleInfo.html" class="type-name-link" title="class in io.micronaut.servlet.info">MicronautServletCoreModuleInfo</a> - Class in <a href="io/micronaut/servlet/info/package-summary.html">io.micronaut.servlet.info</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/info/MicronautServletCoreModuleInfo.html#%3Cinit%3E()" class="member-name-link">MicronautServletCoreModuleInfo()</a> - Constructor for class io.micronaut.servlet.info.<a href="io/micronaut/servlet/info/MicronautServletCoreModuleInfo.html" title="class in io.micronaut.servlet.info">MicronautServletCoreModuleInfo</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/info/MicronautServletEngineModuleInfo.html" class="type-name-link" title="class in io.micronaut.servlet.info">MicronautServletEngineModuleInfo</a> - Class in <a href="io/micronaut/servlet/info/package-summary.html">io.micronaut.servlet.info</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/info/MicronautServletEngineModuleInfo.html#%3Cinit%3E()" class="member-name-link">MicronautServletEngineModuleInfo()</a> - Constructor for class io.micronaut.servlet.info.<a href="io/micronaut/servlet/info/MicronautServletEngineModuleInfo.html" title="class in io.micronaut.servlet.info">MicronautServletEngineModuleInfo</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/engine/initializer/MicronautServletInitializer.html" class="type-name-link" title="class in io.micronaut.servlet.engine.initializer">MicronautServletInitializer</a> - Class in <a href="io/micronaut/servlet/engine/initializer/package-summary.html">io.micronaut.servlet.engine.initializer</a></dt>
 <dd>
 <div class="block">A servlet initializer for Micronaut for deployment as a WAR file.</div>
@@ -1243,6 +1285,18 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/servlet/engine/initializer/MicronautServletInitializer.html#%3Cinit%3E()" class="member-name-link">MicronautServletInitializer()</a> - Constructor for class io.micronaut.servlet.engine.initializer.<a href="io/micronaut/servlet/engine/initializer/MicronautServletInitializer.html" title="class in io.micronaut.servlet.engine.initializer">MicronautServletInitializer</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/engine/initializer/MicronautServletInitializer.html#%3Cinit%3E(io.micronaut.context.ApplicationContext)" class="member-name-link">MicronautServletInitializer(ApplicationContext)</a> - Constructor for class io.micronaut.servlet.engine.initializer.<a href="io/micronaut/servlet/engine/initializer/MicronautServletInitializer.html" title="class in io.micronaut.servlet.engine.initializer">MicronautServletInitializer</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/info/MicronautServletProcessorModuleInfo.html" class="type-name-link" title="class in io.micronaut.servlet.info">MicronautServletProcessorModuleInfo</a> - Class in <a href="io/micronaut/servlet/info/package-summary.html">io.micronaut.servlet.info</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/info/MicronautServletProcessorModuleInfo.html#%3Cinit%3E()" class="member-name-link">MicronautServletProcessorModuleInfo()</a> - Constructor for class io.micronaut.servlet.info.<a href="io/micronaut/servlet/info/MicronautServletProcessorModuleInfo.html" title="class in io.micronaut.servlet.info">MicronautServletProcessorModuleInfo</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/info/MicronautTestSuiteJettyDefaultAccessLogModuleInfo.html" class="type-name-link" title="class in io.micronaut.servlet.info">MicronautTestSuiteJettyDefaultAccessLogModuleInfo</a> - Class in <a href="io/micronaut/servlet/info/package-summary.html">io.micronaut.servlet.info</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/info/MicronautTestSuiteJettyDefaultAccessLogModuleInfo.html#%3Cinit%3E()" class="member-name-link">MicronautTestSuiteJettyDefaultAccessLogModuleInfo()</a> - Constructor for class io.micronaut.servlet.info.<a href="io/micronaut/servlet/info/MicronautTestSuiteJettyDefaultAccessLogModuleInfo.html" title="class in io.micronaut.servlet.info">MicronautTestSuiteJettyDefaultAccessLogModuleInfo</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/info/MicronautTestSuiteJettyLogbackAccessLogModuleInfo.html" class="type-name-link" title="class in io.micronaut.servlet.info">MicronautTestSuiteJettyLogbackAccessLogModuleInfo</a> - Class in <a href="io/micronaut/servlet/info/package-summary.html">io.micronaut.servlet.info</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/info/MicronautTestSuiteJettyLogbackAccessLogModuleInfo.html#%3Cinit%3E()" class="member-name-link">MicronautTestSuiteJettyLogbackAccessLogModuleInfo()</a> - Constructor for class io.micronaut.servlet.info.<a href="io/micronaut/servlet/info/MicronautTestSuiteJettyLogbackAccessLogModuleInfo.html" title="class in io.micronaut.servlet.info">MicronautTestSuiteJettyLogbackAccessLogModuleInfo</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/http/poja/util/MultiValueHeaders.html" class="type-name-link" title="class in io.micronaut.http.poja.util">MultiValueHeaders</a> - Record Class in <a href="io/micronaut/http/poja/util/package-summary.html">io.micronaut.http.poja.util</a></dt>
 <dd>
@@ -1946,7 +2000,7 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/servlet/tomcat/TomcatServer.html#%3Cinit%3E(io.micronaut.context.ApplicationContext,io.micronaut.runtime.ApplicationConfiguration,org.apache.catalina.startup.Tomcat)" class="member-name-link">TomcatServer(ApplicationContext, ApplicationConfiguration, Tomcat)</a> - Constructor for class io.micronaut.servlet.tomcat.<a href="io/micronaut/servlet/tomcat/TomcatServer.html" title="class in io.micronaut.servlet.tomcat">TomcatServer</a></dt>
 <dd>
 <div class="deprecation-block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span>
-<div class="deprecation-comment">Use <a href="io/micronaut/servlet/tomcat/TomcatServer.html#%3Cinit%3E(io.micronaut.context.ApplicationContext,io.micronaut.runtime.ApplicationConfiguration,io.micronaut.context.event.ApplicationEventPublisher,org.apache.catalina.startup.Tomcat)"><code>TomcatServer(io.micronaut.context.ApplicationContext,io.micronaut.runtime.ApplicationConfiguration,io.micronaut.context.event.@io.micronaut.core.annotation.Nullable ApplicationEventPublisher&lt;io.micronaut.runtime.server.event.ServerShutdownEvent&gt;,org.apache.catalina.startup.Tomcat)</code></a> instead.</div>
+<div class="deprecation-comment">Use <a href="io/micronaut/servlet/tomcat/TomcatServer.html#%3Cinit%3E(io.micronaut.context.ApplicationContext,io.micronaut.runtime.ApplicationConfiguration,io.micronaut.context.event.ApplicationEventPublisher,org.apache.catalina.startup.Tomcat)"><code>TomcatServer(io.micronaut.context.ApplicationContext,io.micronaut.runtime.ApplicationConfiguration,io.micronaut.context.event.@org.jspecify.annotations.Nullable ApplicationEventPublisher&lt;io.micronaut.runtime.server.event.ServerShutdownEvent&gt;,org.apache.catalina.startup.Tomcat)</code></a> instead.</div>
 </div>
 </dd>
 <dt><a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html#toOutputStream()" class="member-name-link">toOutputStream()</a> - Method in class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html" title="class in io.micronaut.servlet.http">ByteArrayByteBuffer</a></dt>
