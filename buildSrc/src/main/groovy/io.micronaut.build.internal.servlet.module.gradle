@@ -4,6 +4,6 @@ plugins {
 }
 ossIndexAudit {
     excludeCoordinates = [
-            "io.undertow:undertow-core:2.3.19.Final" // no patched version https://ossindex.sonatype.org/component/pkg:maven/io.undertow/undertow-core
+            "io.undertow:undertow-core:2.3.20.Final" // no patched version https://ossindex.sonatype.org/component/pkg:maven/io.undertow/undertow-core
     ]
 }
