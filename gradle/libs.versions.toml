@@ -1,6 +1,5 @@
 [versions]
 micronaut = "5.0.0-M2"
-micronaut-test = "4.10.2"
 
 
 managed-servlet-api = '6.1.0'
