@@ -101,10 +101,6 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
         this.routeExecutor = applicationContext.getBean(RouteExecutor.class);
         this.conversionService = conversionService;
         this.ioExecutor = SupplierUtil.memoized(() -> applicationContext.getBean(Executor.class, Qualifiers.byName(TaskExecutors.BLOCKING)));
-
-        // hack for bug fixed in Micronaut 1.3.3
-        applicationContext.getEnvironment()
-            .addConverter(HttpRequest.class, HttpRequest.class, httpRequest -> httpRequest);
     }
 
     /**
