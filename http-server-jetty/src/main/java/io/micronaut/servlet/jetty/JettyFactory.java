@@ -258,7 +258,7 @@ public class JettyFactory extends ServletServerFactory {
     protected @NonNull ServerConnector newHttpsConnector(
         @NonNull Server server,
         @NonNull SslConfiguration sslConfiguration,
-        @NonNull JettyConfiguration.JettySslConfiguration jettySslConfiguration, ResourceFactory resourceFactory) throws Exception {
+        JettyConfiguration.@NonNull JettySslConfiguration jettySslConfiguration, ResourceFactory resourceFactory) throws Exception {
         ServerConnector https;
         final HttpConfiguration httpConfig = jettyConfiguration.getHttpConfiguration();
         int securePort = sslConfiguration.getPort();

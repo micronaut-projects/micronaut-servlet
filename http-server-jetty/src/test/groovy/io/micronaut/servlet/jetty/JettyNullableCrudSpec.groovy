@@ -15,7 +15,7 @@ import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
 
-import io.micronaut.core.annotation.Nullable
+import org.jspecify.annotations.Nullable
 import java.util.concurrent.atomic.AtomicLong
 
 class JettyNullableCrudSpec extends Specification {

@@ -15,7 +15,7 @@ import reactor.core.publisher.Mono
 import spock.lang.Specification
 import spock.lang.Unroll
 
-import io.micronaut.core.annotation.Nullable
+import org.jspecify.annotations.Nullable
 import jakarta.inject.Inject
 
 /**
