@@ -24,8 +24,8 @@ import io.micronaut.context.annotation.Primary;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.env.Environment;
 import io.micronaut.context.exceptions.ConfigurationException;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.io.ResourceResolver;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.http.server.HttpServerConfiguration;
@@ -258,7 +258,7 @@ public class JettyFactory extends ServletServerFactory {
     protected @NonNull ServerConnector newHttpsConnector(
         @NonNull Server server,
         @NonNull SslConfiguration sslConfiguration,
-        @NonNull JettyConfiguration.JettySslConfiguration jettySslConfiguration, ResourceFactory resourceFactory) throws Exception {
+        JettyConfiguration.@NonNull JettySslConfiguration jettySslConfiguration, ResourceFactory resourceFactory) throws Exception {
         ServerConnector https;
         final HttpConfiguration httpConfig = jettyConfiguration.getHttpConfiguration();
         int securePort = sslConfiguration.getPort();

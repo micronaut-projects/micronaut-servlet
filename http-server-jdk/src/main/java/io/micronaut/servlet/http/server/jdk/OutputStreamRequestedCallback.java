@@ -15,7 +15,7 @@
  */
 package io.micronaut.servlet.http.server.jdk;
 
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import jakarta.servlet.http.HttpServletResponse;
 
 @FunctionalInterface

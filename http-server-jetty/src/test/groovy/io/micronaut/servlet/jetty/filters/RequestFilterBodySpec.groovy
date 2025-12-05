@@ -2,7 +2,7 @@ package io.micronaut.servlet.jetty.filters
 
 import io.micronaut.context.annotation.Property
 import io.micronaut.context.annotation.Requires
-import io.micronaut.core.annotation.NonNull
+import org.jspecify.annotations.NonNull
 import io.micronaut.core.type.Argument
 import io.micronaut.core.type.MutableHeaders
 import io.micronaut.http.HttpRequest

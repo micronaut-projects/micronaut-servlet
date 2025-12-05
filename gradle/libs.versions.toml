@@ -1,10 +1,6 @@
 [versions]
-micronaut = "4.10.9"
-micronaut-docs = "3.0.0"
-micronaut-test = "4.10.2"
+micronaut = "5.0.0-M2"
 
-groovy = "4.0.27"
-spock = "2.3-groovy-4.0"
 
 managed-servlet-api = '6.1.0'
 kotest-runner = '5.9.1'
@@ -14,9 +10,9 @@ bcpkix = "1.70"
 
 managed-apache-http-core5 = "5.3.6"
 managed-jetty = '12.1.4'
-micronaut-reactor = "3.8.0"
+micronaut-reactor = "4.0.0-M1"
 micronaut-security = "4.15.0"
-micronaut-serde = "2.15.4"
+micronaut-serde = "3.0.0-M1"
 micronaut-session = "4.7.0"
 micronaut-validation = "4.11.0"
 google-cloud-functions = '1.1.4'

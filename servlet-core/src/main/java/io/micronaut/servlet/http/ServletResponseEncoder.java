@@ -17,7 +17,7 @@ package io.micronaut.servlet.http;
 
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Indexed;
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.http.MutableHttpResponse;
 import org.reactivestreams.Publisher;
 

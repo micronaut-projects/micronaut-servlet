@@ -16,7 +16,7 @@
 package io.micronaut.servlet.http;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.core.attr.AttributeHolder;
 
 import javax.net.ssl.SSLSession;

@@ -15,7 +15,7 @@
  */
 package io.micronaut.servlet.http.encoders;
 
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.MutableHttpHeaders;

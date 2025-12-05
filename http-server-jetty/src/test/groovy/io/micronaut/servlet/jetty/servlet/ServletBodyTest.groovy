@@ -1,7 +1,7 @@
 package io.micronaut.servlet.jetty.servlet
 
 import io.micronaut.context.annotation.Property
-import io.micronaut.core.annotation.Nullable
+import org.jspecify.annotations.Nullable
 import io.micronaut.http.HttpHeaders
 import io.micronaut.http.HttpRequest
 import io.micronaut.http.HttpResponse

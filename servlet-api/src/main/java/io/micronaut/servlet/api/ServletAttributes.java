@@ -15,7 +15,7 @@
  */
 package io.micronaut.servlet.api;
 
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 
 /**
  * Attributes to lookup servlet related types from the request.

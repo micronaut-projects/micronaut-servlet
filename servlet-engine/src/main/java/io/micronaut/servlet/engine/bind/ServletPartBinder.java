@@ -15,7 +15,7 @@
  */
 package io.micronaut.servlet.engine.bind;
 
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.io.IOUtils;
 import io.micronaut.core.io.Readable;
