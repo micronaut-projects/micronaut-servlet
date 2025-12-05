@@ -2,7 +2,6 @@
 micronaut = "5.0.0-M2"
 micronaut-test = "4.10.2"
 
-spock = "2.3-groovy-4.0"
 
 managed-servlet-api = '6.1.0'
 kotest-runner = '5.9.1'
