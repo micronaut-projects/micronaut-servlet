@@ -1,5 +1,4 @@
 [versions]
-micronaut-docs = "3.0.0"
 micronaut = "5.0.0-M2"
 micronaut-test = "4.10.2"
 
