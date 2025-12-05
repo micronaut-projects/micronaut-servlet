@@ -1,0 +1,2077 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+    <title>Micronaut Servlet</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <link rel="stylesheet" href="../css/main.css" type="text/css" media="screen, print" title="Style" charset="utf-8" />
+    <link rel="stylesheet" href="../css/custom.css" type="text/css" media="screen, print" title="Style" charset="utf-8" />
+    <link rel="stylesheet" href="../css/pdf.css" type="text/css" media="print" title="PDF" charset="utf-8" />
+    <link rel="stylesheet" href="../css/highlight/agate.css">
+    <script src="../js/highlight.pack.js"></script>
+    <script src="../js/guide.js"></script>
+    <script src="../js/multi-language-sample.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+    <link rel="stylesheet" href="../css/multi-language-sample.css"/>
+    <script src="../js/docs.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.11/clipboard.min.js"></script>
+    <script type="text/javascript">
+        function addJsClass(el) {
+            var classes = document.body.className.split(" ");
+            classes.push("js");
+            document.body.className = classes.join(" ");
+        }
+    </script>
+    <style type="text/css">
+        .lang-java { display: block }; .lang-python { display: block }; .lang-kotlin { display: block }; .lang-groovy { display: block }; 
+    </style>
+</head>
+
+<body class="body" id="docs" onload="addJsClass();" onhashchange="highlightMenu()">
+
+<div id="table-of-content-nav-link" class="desktop">
+    <a id="theme-switcher" title="Switch to dark theme" href="javascript:switchTheme(true)"><i class="fa fa-moon-o"></i></a>
+    <a title="Collapse/Open Table of contents" title="Hide Table of Contents" href="javascript:hideTableOfContents();" class="button">[ + ]</a>
+</div>
+
+<div id="main">
+    <div id="navigation" class="no-print">
+        <div class="navTitle">
+            <span id="logo"><a href="http://micronaut.io" title="Go to Micronaut Website"><img src="../img/micronaut-logo-white.svg" alt="Micronaut"/></a></span>
+        </div>
+        <div class="navLinks">
+            <ul>
+                    <li><div id="nav-summary" onmouseover="toggleNavSummary(false)" onmouseout="toggleNavSummary(true)" class="desktop">
+                            <a href="../guide/index.html" class="button">Table of contents</a>
+                            <div id="nav-summary-childs" style="display:none;">
+                                
+                                <div class="toc-item" style="margin-left:0"><a href="#introduction"><strong>1</strong><span>Introduction</span></a></div>
+                                
+                                <div class="toc-item" style="margin-left:0"><a href="#releaseHistory"><strong>2</strong><span>Release History</span></a></div>
+                                
+                                <div class="toc-item" style="margin-left:0"><a href="#servletApi"><strong>3</strong><span>Working with the Servlet API</span></a></div>
+                                
+                                <div class="toc-item" style="margin-left:0"><a href="#servletAnnotation"><strong>4</strong><span>Servlet Annotation Support</span></a></div>
+                                
+                                <div class="toc-item" style="margin-left:0"><a href="#warDeployment"><strong>5</strong><span>WAR Deployment</span></a></div>
+                                
+                                <div class="toc-item" style="margin-left:0"><a href="#jetty"><strong>6</strong><span>Jetty Server</span></a></div>
+                                
+                                <div class="toc-item" style="margin-left:0"><a href="#tomcat"><strong>7</strong><span>Tomcat Server</span></a></div>
+                                
+                                <div class="toc-item" style="margin-left:0"><a href="#undertow"><strong>8</strong><span>Undertow Server</span></a></div>
+                                
+                                <div class="toc-item" style="margin-left:0"><a href="#httpServer"><strong>9</strong><span>Built-In Java HTTP Server Runtime</span></a></div>
+                                
+                                <div class="toc-item" style="margin-left:0"><a href="#httpPoja"><strong>10</strong><span>HTTP POJA Application</span></a></div>
+                                
+                                <div class="toc-item" style="margin-left:0"><a href="#knownIssues"><strong>11</strong><span>Known Issues</span></a></div>
+                                
+                                <div class="toc-item" style="margin-left:0"><a href="#faq"><strong>12</strong><span>FAQ</span></a></div>
+                                
+                                <div class="toc-item" style="margin-left:0"><a href="#breaks"><strong>13</strong><span>Breaking Changes</span></a></div>
+                                
+                                <div class="toc-item" style="margin-left:0"><a href="#repository"><strong>14</strong><span>Repository</span></a></div>
+                                
+                            </div>
+                        </div>
+                    </li>
+
+                <li id="table-of-content-nav-link-mobile" class="mobile">
+                    <a title="Scroll to Table of contents" href="javascript:scrollToTop();" class="button">Toc</a>
+                </li>
+                <li class="desktop">
+                    <a title="Go to API documentation" href="../api/index.html" class="button">API Reference</a>
+                </li>
+                <li class="mobile">
+                    <a title="Go to API documentation" href="../api/index.html" class="button">API</a>
+                </li>
+                <li class="desktop">
+                    <a title="Go to Configuration Reference documentation" href="../guide/configurationreference.html" class="button">Configuration Reference</a>
+                </li>
+                <li class="mobile">
+                    <a title="Go to Configuration Reference documentation" href="../guide/configurationreference.html" class="button">Conf</a>
+                </li>
+            </ul>
+
+        </div>
+    </div>
+    
+    <div id="table-of-content">
+        <div class="toc-content">
+
+        <h2>Table of Contents</h2>
+        
+        <div class="toc-item" style="margin-left:0px" id="toc-item-introduction"><a href="#introduction"><strong>1</strong><span>Introduction</span></a></div>
+        
+        <div class="toc-item" style="margin-left:0px" id="toc-item-releaseHistory"><a href="#releaseHistory"><strong>2</strong><span>Release History</span></a></div>
+        
+        <div class="toc-item" style="margin-left:0px" id="toc-item-servletApi"><a href="#servletApi"><strong>3</strong><span>Working with the Servlet API</span></a></div>
+        
+        <div class="toc-item" style="margin-left:0px" id="toc-item-servletAnnotation"><a href="#servletAnnotation"><strong>4</strong><span>Servlet Annotation Support</span></a></div>
+        
+        <div class="toc-item" style="margin-left:0px" id="toc-item-warDeployment"><a href="#warDeployment"><strong>5</strong><span>WAR Deployment</span></a></div>
+        
+        <div class="toc-item" style="margin-left:10px" id="toc-item-versioning"><a href="#versioning"><strong>5.1</strong><span>Container version considerations</span></a></div>
+        
+        <div class="toc-item" style="margin-left:10px" id="toc-item-externalConfig"><a href="#externalConfig"><strong>5.2</strong><span>External Configuration</span></a></div>
+        
+        <div class="toc-item" style="margin-left:10px" id="toc-item-warContext"><a href="#warContext"><strong>5.3</strong><span>WAR Context path</span></a></div>
+        
+        <div class="toc-item" style="margin-left:0px" id="toc-item-jetty"><a href="#jetty"><strong>6</strong><span>Jetty Server</span></a></div>
+        
+        <div class="toc-item" style="margin-left:0px" id="toc-item-tomcat"><a href="#tomcat"><strong>7</strong><span>Tomcat Server</span></a></div>
+        
+        <div class="toc-item" style="margin-left:0px" id="toc-item-undertow"><a href="#undertow"><strong>8</strong><span>Undertow Server</span></a></div>
+        
+        <div class="toc-item" style="margin-left:0px" id="toc-item-httpServer"><a href="#httpServer"><strong>9</strong><span>Built-In Java HTTP Server Runtime</span></a></div>
+        
+        <div class="toc-item" style="margin-left:0px" id="toc-item-httpPoja"><a href="#httpPoja"><strong>10</strong><span>HTTP POJA Application</span></a></div>
+        
+        <div class="toc-item" style="margin-left:0px" id="toc-item-knownIssues"><a href="#knownIssues"><strong>11</strong><span>Known Issues</span></a></div>
+        
+        <div class="toc-item" style="margin-left:0px" id="toc-item-faq"><a href="#faq"><strong>12</strong><span>FAQ</span></a></div>
+        
+        <div class="toc-item" style="margin-left:0px" id="toc-item-breaks"><a href="#breaks"><strong>13</strong><span>Breaking Changes</span></a></div>
+        
+        <div class="toc-item" style="margin-left:0px" id="toc-item-repository"><a href="#repository"><strong>14</strong><span>Repository</span></a></div>
+        
+        </div>
+    </div>
+    
+    <div class="docs-content">
+    <div class="project">
+        <h1>Micronaut Servlet</h1>
+        <p></p>
+        <p>Provides integration between Micronaut and the Servlet API</p>
+        <p><strong>Version:</strong> 6.0.0-M1 </p>
+    </div>
+    
+<h1 id="introduction"><a class="anchor" href="#introduction"></a>1 Introduction</h1>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/6.0.x/src/main/docs/guide/introduction.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>This project implements a <a href="https://docs.micronaut.io/latest/guide/index.html#httpServer">Micronaut HTTP server</a> backed onto the Servlet API and includes various subprojects that allow running popular Servlet containers as servers.</p>
+</div>
+<div class="paragraph">
+<p>This project is for users who fall into one of the following categories:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Users who want to use Micronaut but the target deployment environment is based on Servlets</p>
+</li>
+<li>
+<p>Users who prefer the thread per connection model of the Servlet API over the Event Loop model provided by the default Netty-based HTTP server</p>
+</li>
+<li>
+<p>Users who have existing Servlets and/or Filters that they wish to combine with Micronaut.</p>
+</li>
+</ul>
+</div>
+
+<h1 id="releaseHistory"><a class="anchor" href="#releaseHistory"></a>2 Release History</h1>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/6.0.x/src/main/docs/guide/releaseHistory.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>For this project, you can find a list of releases (with release notes) here:</p>
+</div>
+<div class="paragraph">
+<p><a href="https://github.com/micronaut-projects/micronaut-servlet/releases">https://github.com/micronaut-projects/micronaut-servlet/releases</a></p>
+</div>
+
+<h1 id="servletApi"><a class="anchor" href="#servletApi"></a>3 Working with the Servlet API</h1>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/6.0.x/src/main/docs/guide/servletApi.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>In general, you can follow the <a href="https://docs.micronaut.io/latest/guide/index.html#httpServer">documentation for the HTTP server</a> when building applications. All non-Netty specific features of the default HTTP server should work the same for Servlet containers (<a href="https://github.com/micronaut-projects/micronaut-servlet/issues">Report an issue</a> if you find a difference).</p>
+</div>
+<div class="paragraph">
+<p>There are a couple of additional extensions within Micronaut Servlet that make it easier to work with the Servlet API which are detailed in the following sections.</p>
+</div>
+<div class="sect2">
+<h3 id="_injecting_the_servlet_request_and_response">Injecting the Servlet Request and Response</h3>
+<div class="paragraph">
+<p>You can receive the <code>HttpServletRequest</code> and <code>HttpServletResponse</code> objects directly as parameters:</p>
+</div>
+<div class="listingblock">
+<div class="title">Using the Request and Response</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@Get("/hello")
+void process(
+        HttpServletRequest request, <i class="conum" data-value="1"></i><b>(1)</b>
+        HttpServletResponse response) <i class="conum" data-value="2"></i><b>(2)</b>
+        throws IOException {
+    response.addHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_PLAIN);
+    response.setStatus(HttpStatus.ACCEPTED.getCode());
+    try (final PrintWriter writer = response.getWriter()) {
+        writer.append("Hello ").append(request.getParameter("name"));
+        writer.flush();
+    }
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>The request object</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>The response object</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_simplified_io_code_with_readable_and_writable">Simplified I/O code with Readable and Writable</h3>
+<div class="paragraph">
+<p>Writing to the response and reading from the request can be simplified with Micronaut&#8217;s <code>Readable</code> and <code>Writable</code> interfaces:</p>
+</div>
+<div class="listingblock">
+<div class="title">Using Readable and Writable</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">import io.micronaut.core.io.Readable;
+import io.micronaut.core.io.Writable;
+
+@Post(value = "/writable", processes = "text/plain")
+Writable readAndWrite(@Body Readable readable) throws IOException {
+    return out -&gt; {
+        try (BufferedReader reader = new BufferedReader(readable.asReader())) {
+            out.append("Hello ").append(reader.readLine());
+        }
+    };
+}</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_multipart_support_with_part">Multipart support with <code>@Part</code></h3>
+<div class="paragraph">
+<p>Multipart support is improved with the ability to inject parts using the annotation <code>io.micronaut.http.annotation.Part</code>. For example:</p>
+</div>
+<div class="listingblock">
+<div class="title">Using <code>@Part</code></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@Post(value = "/multipart", consumes = MediaType.MULTIPART_FORM_DATA, produces = "text/plain")
+String multipart(
+        String attribute, <i class="conum" data-value="1"></i><b>(1)</b>
+        @Part("one") Person person, <i class="conum" data-value="2"></i><b>(2)</b>
+        @Part("two") String text, <i class="conum" data-value="3"></i><b>(3)</b>
+        @Part("three") byte[] bytes, <i class="conum" data-value="4"></i><b>(4)</b>
+        @Part("four") jakarta.servlet.http.Part raw, <i class="conum" data-value="5"></i><b>(5)</b>
+        @Part("five") CompletedPart part) { <i class="conum" data-value="6"></i><b>(6)</b>
+    return "Ok";
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>You can receive attributes with just parameter names that match the attribute name</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>Parts that have a content type of <code>application/json</code> can be bound to POJOs</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>You can read parts as text</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="4"></i><b>4</b></td>
+<td>You can read parts as <code>byte[]</code></td>
+</tr>
+<tr>
+<td><i class="conum" data-value="5"></i><b>5</b></td>
+<td>You can receive the raw <code>jakarta.servlet.http.Part</code></td>
+</tr>
+<tr>
+<td><i class="conum" data-value="6"></i><b>6</b></td>
+<td>You can receive Micronaut&#8217;s <code>CompletedPart</code> interface which works with Netty too</td>
+</tr>
+</table>
+</div>
+</div>
+
+<h1 id="servletAnnotation"><a class="anchor" href="#servletAnnotation"></a>4 Servlet Annotation Support</h1>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/6.0.x/src/main/docs/guide/servletAnnotation.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>To use the <a href="https://jakarta.ee/specifications/servlet/5.0/apidocs/jakarta/servlet/annotation/package-summary">Servlet APIs annotations</a> to register servlets, filters and listeners you first need to add the following annotation processor dependency:</p>
+</div>
+<div class="paragraph">
+<p>        <div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">annotationProcessor(<span class="hljs-string">"io.micronaut.servlet:micronaut-servlet-processor")</span></code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;annotationProcessorPaths&gt;
+    &lt;path&gt;
+        &lt;groupId&gt;io.micronaut.servlet&lt;/groupId&gt;
+        &lt;artifactId&gt;micronaut-servlet-processor&lt;/artifactId&gt;
+    &lt;/path&gt;
+&lt;/annotationProcessorPaths&gt;</code></pre>
+</div>
+</div>
+</p>
+</div>
+<div class="paragraph">
+<p>The following annotations can then be used from the Servlet API to add additional servlets, filters and listeners as beans:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="https://jakarta.ee/specifications/servlet/5.0/apidocs/jakarta/servlet/annotation/webfilter">@WebFilter</a> - Applicable to types that implement the <code>jakarta.servlet.Filter</code> interface.</p>
+</li>
+<li>
+<p><a href="https://jakarta.ee/specifications/servlet/5.0/apidocs/jakarta/servlet/annotation/webservlet">@WebServlet</a> - Applicable to types that implement the <code>jakarta.servlet.Servlet</code> interface.</p>
+</li>
+<li>
+<p><a href="https://jakarta.ee/specifications/servlet/5.0/apidocs/jakarta/servlet/annotation/weblistener">@WebListener</a> - See the annotation javadoc for applicable types.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>The <a href="https://docs.micronaut.io/latest/api/io/micronaut/core/annotation/Order.html">@Order</a> annotation can be used to control registration order and hence filter order. For example a value of <a href="https://docs.micronaut.io/latest/api/io/micronaut/core/order/Ordered.html#HIGHEST_PRECEDENCE">io.micronaut.core.order.Ordered.HIGHEST_PRECEDENCE</a> will run the filter first.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+Using <code>HIGHEST_PRECEDENCE</code> will prevent any other filter running before your filter. The default position is <code>0</code> and <code>HIGHEST_PRECEDENCE</code> == <code>Integer.MIN_VALUE</code> hence you should consider using constants to the represent the position of your filter that exist somewhere between <code>HIGHEST_PRECEDENCE</code> and <code>LOWEST_PRECEDENCE</code>.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>In addition, you can use the following annotations on methods of <a href="https://docs.micronaut.io/latest/guide/#factories">@Factory beans</a> to instantiate servlets and filters and register them:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="../api/io/micronaut/servlet/api/annotation/ServletBean.html">@ServletBean</a> - Equivalent of <a href="https://jakarta.ee/specifications/servlet/5.0/apidocs/jakarta/servlet/annotation/webservlet">@WebServlet</a> but can be applied to a method of a factory to Register a new servlet.</p>
+</li>
+<li>
+<p><a href="../api/io/micronaut/servlet/api/annotation/ServletFilterBean.html">@ServletFilterBean</a> - Equivalent of <a href="https://jakarta.ee/specifications/servlet/5.0/apidocs/jakarta/servlet/annotation/webfilter">@WebFilter</a> but can be applied to a method of a factory to Register a new filter.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>The following example adds a new Servlet filter with the highest precedence:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title">Adding a Filter with a Factory</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">import io.micronaut.context.annotation.Factory;
+import io.micronaut.core.annotation.Order;
+import io.micronaut.core.order.Ordered;
+import io.micronaut.servlet.api.annotation.ServletFilterBean;
+import jakarta.servlet.Filter;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.GenericFilter;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
+import java.io.IOException;
+
+@Factory // <b class="conum">(1)</b>
+public class MyFilterFactory {
+
+    @ServletFilterBean(
+        filterName = "another", // <b class="conum">(2)</b>
+        value = {"/extra-filter/*", "${my.filter.mapping}"}) // <b class="conum">(3)</b>
+    @Order(Ordered.HIGHEST_PRECEDENCE) // <b class="conum">(4)</b>
+    Filter myOtherFilter() {
+        return new GenericFilter() {
+            @Override
+            public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws ServletException, IOException {
+                request.setAttribute("runFirst", true);
+                chain.doFilter(request, response);
+            }
+        };
+    }
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>A <code>@Factory</code> bean is defined</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>The <a href="../api/io/micronaut/servlet/api/annotation/ServletFilterBean.html">@ServletFilterBean</a> annotation is used and a filter name defined</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>1 or more mappings are defined. Note these can be resolved from property placeholder configuration if necessary.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="4"></i><b>4</b></td>
+<td>The order of the filter is defined.</td>
+</tr>
+</table>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+Servlet Filters are not to be confused with <a href="https://docs.micronaut.io/latest/guide/#filters">Micronaut filters</a>. Servlet Filters always run before the Micronaut Servlet which in turn runs the Micronaut Filters hence it is not possible to place a Servlet Filter after Micronaut Filters.
+</td>
+</tr>
+</table>
+</div>
+
+<h1 id="warDeployment"><a class="anchor" href="#warDeployment"></a>5 WAR Deployment</h1>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/6.0.x/src/main/docs/guide/warDeployment.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>To deploy as a WAR file you need to make some adjustments to your dependencies.</p>
+</div>
+<div class="paragraph">
+<p>First make the server you are using a <code>developmentOnly</code> dependency (or <code>provided</code> in Maven):</p>
+</div>
+<div class="paragraph">
+<p>        <div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">developmentOnly(<span class="hljs-string">"io.micronaut.servlet:micronaut-http-server-jetty")</span></code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
+    &lt;groupId&gt;io.micronaut.servlet&lt;/groupId&gt;
+    &lt;artifactId&gt;micronaut-http-server-jetty&lt;/artifactId&gt;
+    &lt;scope&gt;provided&lt;/scope&gt;
+&lt;/dependency&gt;</code></pre>
+</div>
+</div>
+</p>
+</div>
+<div class="paragraph">
+<p>Then make sure you include <code>micronaut-servlet-engine</code> dependency in your build configuration:</p>
+</div>
+<div class="paragraph">
+<p>        <div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">implementation(<span class="hljs-string">"io.micronaut.servlet:micronaut-servlet-engine")</span></code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
+    &lt;groupId&gt;io.micronaut.servlet&lt;/groupId&gt;
+    &lt;artifactId&gt;micronaut-servlet-engine&lt;/artifactId&gt;
+&lt;/dependency&gt;</code></pre>
+</div>
+</div>
+</p>
+</div>
+<div class="paragraph">
+<p>Then alter your build configuration to build a WAR file. In Gradle this can be done by applying the WAR plugin:</p>
+</div>
+<div class="listingblock">
+<div class="title">Applying the Gradle WAR plugin</div>
+<div class="content">
+<pre>plugins {
+    id "war"
+    id "application"
+}</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>You can then build the WAR file and deploy it to the Servlet container as per the instructions provided by the container.</p>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+Micronaut will load using <a href="../api/io/micronaut/servlet/engine/initializer/MicronautServletInitializer.html">MicronautServletInitializer</a> which registers the <a href="../api/io/micronaut/servlet/engine/DefaultMicronautServlet.html">DefaultMicronautServlet</a> instance.
+</td>
+</tr>
+</table>
+</div>
+
+<h2 id="versioning"><a class="anchor" href="#versioning"></a>5.1 Container version considerations</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/6.0.x/src/main/docs/guide/warDeployment/versioning.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>Micronaut 4.0.0 switched to using the new <code>jakarta.servlet</code> package for Servlet API classes.
+This means that Micronaut 4.0.0+ WAR files will not run on Servlet containers that do not support the <code>jakarta.servlet</code> package.</p>
+</div>
+<div class="paragraph">
+<p>For example, Tomcat 10 switched to the <code>jakarta.servlet</code> package, so Micronaut 4.0.0 is required to run as a WAR on Tomcat 10.
+And Micronaut 4.0.0 WAR files cannot be run on Tomcat 9 or earlier.</p>
+</div>
+<div class="paragraph">
+<p>If you have a Micronaut 3 based WAR file that you wish to deploy to Tomcat 10, you need to deploy it to the <code>$CATALINA_BASE/webapps-javaee</code> directory instead of the usual <code>$CATALINA_BASE/webapps</code>, and Tomcat will perform a conversion to jakarta.servlet.</p>
+</div>
+
+<h2 id="externalConfig"><a class="anchor" href="#externalConfig"></a>5.2 External Configuration</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/6.0.x/src/main/docs/guide/warDeployment/externalConfig.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>In a standalone Micronaut Framework application, <a href="https://docs.micronaut.io/latest/guide/#propertySource">external property sources for configuration</a> can be configured via the Java system property <code>micronaut.config.files</code> or the environment variable <code>MICRONAUT_CONFIG_FILES</code>.
+When running as a WAR file, this can be problematic if you wish to run multiple Micronaut Framework WARs in the same container, as all applications will share the same location.</p>
+</div>
+<div class="paragraph">
+<p>To allow an external location per application, it is necessary to write our own replacement for <a href="../api/io/micronaut/servlet/engine/initializer/MicronautServletInitializer.html">MicronautServletInitializer</a>.
+The following example will look for configuration in the <code>/tmp</code> directory and on the classpath in the <code>/some/path</code> directory.</p>
+</div>
+<div class="listingblock">
+<div class="title">src/main/java/example/CustomMicronautServletInitializer.java</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">package example;
+
+import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.ApplicationContextBuilder;
+import io.micronaut.servlet.engine.initializer.MicronautServletInitializer;
+import jakarta.servlet.ServletContext;
+
+public class CustomInitializer extends MicronautServletInitializer {
+
+    @Override
+    protected ApplicationContextBuilder buildApplicationContext(ServletContext ctx) {
+        return ApplicationContext
+                .builder()
+                .overrideConfigLocations(
+                    "file:/tmp",
+                    "classpath:/some/path"
+                )
+                .classLoader(ctx.getClassLoader())
+                .singletons(ctx);
+    }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>We can then use Java&#8217;s Service Provider Interface to register this class as the initializer by pointing to it in the <code>META-INF/services/jakarta.servlet.ServletContainerInitializer</code> file.</p>
+</div>
+<div class="listingblock">
+<div class="title">src/main/resources/META-INF/services/jakarta.servlet.ServletContainerInitializer</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-text hljs" data-lang="text">example.CustomInitializer</code></pre>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+Some servlet containers may limit the locations that are accessible from applications for security reasons.
+</td>
+</tr>
+</table>
+</div>
+
+<h2 id="warContext"><a class="anchor" href="#warContext"></a>5.3 WAR Context path</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/6.0.x/src/main/docs/guide/warDeployment/warContext.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>If you are deploying the WAR to the root context&#8201;&#8212;&#8201;for example by renaming the WAR to <code>ROOT.war</code> prior to deployment&#8201;&#8212;&#8201;then the context path may be overridden by configuring <code>micronaut.server.context-path</code> in your application configuration.</p>
+</div>
+<div class="paragraph">
+<p>If you are deploying a WAR called <code>myproject-1.0.war</code> to Tomcat, Jetty, etc. the context path will be set to <code>/myproject-1.0</code>, and cannot be overridden via application configuration.</p>
+</div>
+
+<h1 id="jetty"><a class="anchor" href="#jetty"></a>6 Jetty Server</h1>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/6.0.x/src/main/docs/guide/jetty.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>To use <a href="https://www.eclipse.org/jetty/">Jetty</a> as a server add the following dependency:</p>
+</div>
+<div class="paragraph">
+<p>        <div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">implementation(<span class="hljs-string">"io.micronaut.servlet:micronaut-http-server-jetty")</span></code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
+    &lt;groupId&gt;io.micronaut.servlet&lt;/groupId&gt;
+    &lt;artifactId&gt;micronaut-http-server-jetty&lt;/artifactId&gt;
+&lt;/dependency&gt;</code></pre>
+</div>
+</div>
+</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+Jetty is supported with GraalVM native image
+</td>
+</tr>
+</table>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+If you plan to produce a WAR file then the dependency should be <code>developmentOnly</code>.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>To customize the Jetty server you can use the following configuration properties:</p>
+</div>
+<a id="io.micronaut.servlet.jetty.JettyConfiguration" href="#io.micronaut.servlet.jetty.JettyConfiguration">&#128279;</a>
+<table class="tableblock frame-all grid-all stretch">
+<caption class="title">Table 1. Configuration Properties for <a href="../api/io/micronaut/servlet/jetty/JettyConfiguration.html">JettyConfiguration</a></caption>
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Property</th>
+<th class="tableblock halign-left valign-top">Type</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-left valign-top">Default value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.http-version</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/http/HttpVersion.html">HttpVersion</a></p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.thread-selection</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/scheduling/executor/ThreadSelection.html">ThreadSelection</a></p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.default-charset</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.nio.charset.Charset</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.port</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">int</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.host</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.lang.String</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.read-timeout</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.lang.Integer</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.max-request-size</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">long</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.max-request-buffer-size</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">long</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.read-idle-timeout</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.time.Duration</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.write-idle-timeout</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.time.Duration</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.idle-timeout</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.time.Duration</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.server-header</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.lang.String</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.date-header</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.log-handled-exceptions</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.client-address-header</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.lang.String</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.context-path</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.lang.String</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.dual-protocol</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.http-to-https-redirect</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.dispatch-options-requests</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.validate-url</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.escape-html-url</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.not-found-on-missing-body</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.semicolon-is-normal-char</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.max-params</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">int</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.jetty.init-parameters</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.util.Map</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Sets the servlet init parameters.</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>Or you can register a <code>BeanCreatedEventListener</code>:</p>
+</div>
+<div class="listingblock">
+<div class="title">Jetty Server Customization</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">import io.micronaut.context.event.BeanCreatedEvent;
+import io.micronaut.context.event.BeanCreatedEventListener;
+import org.eclipse.jetty.server.Server;
+import jakarta.inject.Singleton;
+
+@Singleton
+public class JettyServerCustomizer implements BeanCreatedEventListener&lt;Server&gt; {
+    @Override
+    public Server onCreated(BeanCreatedEvent&lt;Server&gt; event) {
+        Server jettyServer = event.getBean();
+        // perform customizations...
+        return jettyServer;
+    }
+}</code></pre>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_access_log_configuration">Access Log Configuration</h3>
+<div class="paragraph">
+<p>To configure the <a href="https://eclipse.dev/jetty/documentation/jetty-12/programming-guide/index.html#pg-server-http-request-logging">Jetty Access Log</a>:</p>
+</div>
+<div class="openblock">
+<div class="title">Jetty Access Log Configuration</div>
+<div class="content">
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-properties hljs" data-lang="properties">micronaut.server.jetty.access-log.enabled=true
+micronaut.server.jetty.access-log.filename=/tmp/access.log
+micronaut.server.jetty.access-log.retain-days=10
+micronaut.server.jetty.access-log.pattern=%{client}a - %u %t "%r" %s %O</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">micronaut.server.jetty.access-log.enabled: true
+micronaut.server.jetty.access-log.filename: /tmp/access.log
+micronaut.server.jetty.access-log.retain-days: 10
+micronaut.server.jetty.access-log.pattern: &gt;
+    %{client}a - %u %t "%r" %s %O</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">"micronaut.server.jetty.access-log.enabled"=true
+"micronaut.server.jetty.access-log.filename"="/tmp/access.log"
+"micronaut.server.jetty.access-log.retain-days"=10
+"micronaut.server.jetty.access-log.pattern"="%{client}a - %u %t \"%r\" %s %O"</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy-config hljs" data-lang="groovy-config">micronaut.server.jetty.accessLog.enabled = true
+micronaut.server.jetty.accessLog.filename = "/tmp/access.log"
+micronaut.server.jetty.accessLog.retainDays = 10
+micronaut.server.jetty.accessLog.pattern = "%{client}a - %u %t \"%r\" %s %O"</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-hocon hljs" data-lang="hocon">{
+  "micronaut.server.jetty.access-log.enabled" = true
+  "micronaut.server.jetty.access-log.filename" = "/tmp/access.log"
+  "micronaut.server.jetty.access-log.retain-days" = 10
+  "micronaut.server.jetty.access-log.pattern" = "%{client}a - %u %t \"%r\" %s %O"
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json-config hljs" data-lang="json-config">{
+  "micronaut.server.jetty.access-log.enabled": true,
+  "micronaut.server.jetty.access-log.filename": "/tmp/access.log",
+  "micronaut.server.jetty.access-log.retain-days": 10,
+  "micronaut.server.jetty.access-log.pattern": "%{client}a - %u %t \"%r\" %s %O"
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_jetty_support_for_logback_access">Jetty support for <a href="https://logback.qos.ch/access.html">Logback access</a></h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>If you want to use <a href="https://logback.qos.ch/access.html">Logback access</a> library with jetty you have to provide logback dependency on classpath:</p>
+</div>
+<div class="paragraph">
+<p>        <div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">implementation(<span class="hljs-string">"ch.qos.logback.access:logback-access-common")</span></code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
+    &lt;groupId&gt;ch.qos.logback.access&lt;/groupId&gt;
+    &lt;artifactId&gt;logback-access-common&lt;/artifactId&gt;
+&lt;/dependency&gt;</code></pre>
+</div>
+</div>
+</p>
+</div>
+<div class="paragraph">
+<p>By default, it will check for logback-access.xml in resources folder.</p>
+</div>
+</div>
+</div>
+
+<h1 id="tomcat"><a class="anchor" href="#tomcat"></a>7 Tomcat Server</h1>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/6.0.x/src/main/docs/guide/tomcat.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>To use <a href="https://tomcat.apache.org/">Tomcat</a> as a server add the following dependency:</p>
+</div>
+<div class="paragraph">
+<p>        <div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">implementation(<span class="hljs-string">"io.micronaut.servlet:micronaut-http-server-tomcat")</span></code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
+    &lt;groupId&gt;io.micronaut.servlet&lt;/groupId&gt;
+    &lt;artifactId&gt;micronaut-http-server-tomcat&lt;/artifactId&gt;
+&lt;/dependency&gt;</code></pre>
+</div>
+</div>
+</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+Tomcat is supported with GraalVM native image
+</td>
+</tr>
+</table>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+If you plan to produce a WAR file then the dependency should be <code>developmentOnly</code>.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>To customize the Tomcat server you can use the following configuration properties:</p>
+</div>
+<a id="io.micronaut.servlet.tomcat.TomcatConfiguration" href="#io.micronaut.servlet.tomcat.TomcatConfiguration">&#128279;</a>
+<table class="tableblock frame-all grid-all stretch">
+<caption class="title">Table 1. Configuration Properties for <a href="../api/io/micronaut/servlet/tomcat/TomcatConfiguration.html">TomcatConfiguration</a></caption>
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Property</th>
+<th class="tableblock halign-left valign-top">Type</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-left valign-top">Default value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.http-version</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/http/HttpVersion.html">HttpVersion</a></p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.thread-selection</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/scheduling/executor/ThreadSelection.html">ThreadSelection</a></p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.default-charset</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.nio.charset.Charset</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.port</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">int</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.host</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.lang.String</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.read-timeout</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.lang.Integer</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.max-request-size</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">long</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.max-request-buffer-size</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">long</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.read-idle-timeout</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.time.Duration</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.write-idle-timeout</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.time.Duration</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.idle-timeout</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.time.Duration</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.server-header</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.lang.String</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.date-header</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.log-handled-exceptions</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.client-address-header</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.lang.String</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.context-path</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.lang.String</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.dual-protocol</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.http-to-https-redirect</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.dispatch-options-requests</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.validate-url</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.escape-html-url</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.not-found-on-missing-body</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.semicolon-is-normal-char</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.max-params</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">int</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.tomcat.protocol</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.lang.String</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The protocol to use. Defaults to org.apache.coyote.http11.Http11NioProtocol.</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>Or you can register a <code>BeanCreatedEventListener</code>:</p>
+</div>
+<div class="listingblock">
+<div class="title">Tomcat Server Customization</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">import io.micronaut.context.event.BeanCreatedEvent;
+import io.micronaut.context.event.BeanCreatedEventListener;
+import org.apache.catalina.startup.Tomcat;
+import jakarta.inject.Singleton;
+
+@Singleton
+public class TomcatServerCustomizer implements BeanCreatedEventListener&lt;Tomcat&gt; {
+    @Override
+    public Tomcat onCreated(BeanCreatedEvent&lt;Tomcat&gt; event) {
+        Tomcat tomcat = event.getBean();
+        // perform customizations...
+        return tomcat;
+    }
+}</code></pre>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_access_log_configuration">Access Log Configuration</h3>
+<div class="paragraph">
+<p>To configure the <a href="https://tomcat.apache.org/tomcat-10.1-doc/config/valve.html#Access_Logging">Tomcat Access Log</a>:</p>
+</div>
+<div class="openblock">
+<div class="title">Tomcat Access Log Configuration</div>
+<div class="content">
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-properties hljs" data-lang="properties">micronaut.server.tomcat.access-log.enabled=true,
+micronaut.server.tomcat.access-log.pattern=combined
+micronaut.server.tomcat.access-log.directory=/var/logs</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">micronaut.server.tomcat.access-log.enabled: true,
+micronaut.server.tomcat.access-log.pattern: combined
+micronaut.server.tomcat.access-log.directory: /var/logs</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">"micronaut.server.tomcat.access-log.enabled"="true,"
+"micronaut.server.tomcat.access-log.pattern"="combined"
+"micronaut.server.tomcat.access-log.directory"="/var/logs"</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy-config hljs" data-lang="groovy-config">micronaut.server.tomcat.accessLog.enabled = "true,"
+micronaut.server.tomcat.accessLog.pattern = "combined"
+micronaut.server.tomcat.accessLog.directory = "/var/logs"</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-hocon hljs" data-lang="hocon">{
+  "micronaut.server.tomcat.access-log.enabled" = "true,"
+  "micronaut.server.tomcat.access-log.pattern" = "combined"
+  "micronaut.server.tomcat.access-log.directory" = "/var/logs"
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json-config hljs" data-lang="json-config">{
+  "micronaut.server.tomcat.access-log.enabled": "true,",
+  "micronaut.server.tomcat.access-log.pattern": "combined",
+  "micronaut.server.tomcat.access-log.directory": "/var/logs"
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<h1 id="undertow"><a class="anchor" href="#undertow"></a>8 Undertow Server</h1>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/6.0.x/src/main/docs/guide/undertow.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>To use <a href="http://undertow.io/">Undertow</a> as a server add the following dependency:</p>
+</div>
+<div class="paragraph">
+<p>        <div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">implementation(<span class="hljs-string">"io.micronaut.servlet:micronaut-http-server-undertow")</span></code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
+    &lt;groupId&gt;io.micronaut.servlet&lt;/groupId&gt;
+    &lt;artifactId&gt;micronaut-http-server-undertow&lt;/artifactId&gt;
+&lt;/dependency&gt;</code></pre>
+</div>
+</div>
+</p>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+Undertow is not supported with GraalVM native image. Use <a href="#jetty">Jetty</a> or <a href="#tomcat">Tomcat</a> if native image support is required. See <a href="https://issues.redhat.com/projects/UNDERTOW/issues/UNDERTOW-1408">UNDERTOW-1408</a>.
+</td>
+</tr>
+</table>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+If you plan to produce a WAR file then the dependency should be <code>developmentOnly</code>.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>To customize the Undertow server you can use the following configuration properties:</p>
+</div>
+<a id="io.micronaut.servlet.undertow.UndertowConfiguration" href="#io.micronaut.servlet.undertow.UndertowConfiguration">&#128279;</a>
+<table class="tableblock frame-all grid-all stretch">
+<caption class="title">Table 1. Configuration Properties for <a href="../api/io/micronaut/servlet/undertow/UndertowConfiguration.html">UndertowConfiguration</a></caption>
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Property</th>
+<th class="tableblock halign-left valign-top">Type</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-left valign-top">Default value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.http-version</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/http/HttpVersion.html">HttpVersion</a></p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.thread-selection</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/scheduling/executor/ThreadSelection.html">ThreadSelection</a></p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.default-charset</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.nio.charset.Charset</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.port</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">int</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.host</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.lang.String</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.read-timeout</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.lang.Integer</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.max-request-size</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">long</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.max-request-buffer-size</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">long</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.read-idle-timeout</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.time.Duration</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.write-idle-timeout</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.time.Duration</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.idle-timeout</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.time.Duration</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.server-header</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.lang.String</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.date-header</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.log-handled-exceptions</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.client-address-header</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.lang.String</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.context-path</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.lang.String</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.dual-protocol</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.http-to-https-redirect</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.dispatch-options-requests</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.validate-url</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.escape-html-url</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.not-found-on-missing-body</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.semicolon-is-normal-char</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.max-params</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">int</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.undertow.worker-options</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.util.Map</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Sets the worker options.</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.undertow.socket-options</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.util.Map</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Sets the socket options.</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.undertow.server-options</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.util.Map</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The server options.</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>Or you can register a <code>BeanCreatedEventListener</code>:</p>
+</div>
+<div class="listingblock">
+<div class="title">Undertow Server Customization</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">import io.micronaut.context.event.BeanCreatedEvent;
+import io.micronaut.context.event.BeanCreatedEventListener;
+import io.undertow.Undertow;
+import jakarta.inject.Singleton;
+
+@Singleton
+public class UndertowServerCustomizer implements BeanCreatedEventListener&lt;Undertow.Builder&gt; {
+    @Override
+    public Undertow.Builder onCreated(BeanCreatedEvent&lt;Undertow.Builder&gt; event) {
+        Undertow.Builder undertowBuilder = event.getBean();
+        // perform customizations...
+        return undertowBuilder;
+    }
+}</code></pre>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_access_log_configuration">Access Log Configuration</h3>
+<div class="paragraph">
+<p>To configure the <a href="https://access.redhat.com/documentation/en-us/red_hat_jboss_enterprise_application_platform/7.3/html/configuration_guide/configuring_the_web_server_undertow#access_logging">Undertow Access Log</a>:</p>
+</div>
+<div class="openblock">
+<div class="title">Undertow Access Log Configuration</div>
+<div class="content">
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-properties hljs" data-lang="properties">micronaut.server.undertow.access-log.enabled=true,
+micronaut.server.undertow.access-log.pattern=combined
+micronaut.server.undertow.access-log.output-directory=/var/logs</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">micronaut.server.undertow.access-log.enabled: true,
+micronaut.server.undertow.access-log.pattern: combined
+micronaut.server.undertow.access-log.output-directory: /var/logs</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">"micronaut.server.undertow.access-log.enabled"="true,"
+"micronaut.server.undertow.access-log.pattern"="combined"
+"micronaut.server.undertow.access-log.output-directory"="/var/logs"</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy-config hljs" data-lang="groovy-config">micronaut.server.undertow.accessLog.enabled = "true,"
+micronaut.server.undertow.accessLog.pattern = "combined"
+micronaut.server.undertow.accessLog.outputDirectory = "/var/logs"</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-hocon hljs" data-lang="hocon">{
+  "micronaut.server.undertow.access-log.enabled" = "true,"
+  "micronaut.server.undertow.access-log.pattern" = "combined"
+  "micronaut.server.undertow.access-log.output-directory" = "/var/logs"
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json-config hljs" data-lang="json-config">{
+  "micronaut.server.undertow.access-log.enabled": "true,",
+  "micronaut.server.undertow.access-log.pattern": "combined",
+  "micronaut.server.undertow.access-log.output-directory": "/var/logs"
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<h1 id="httpServer"><a class="anchor" href="#httpServer"></a>9 Built-In Java HTTP Server Runtime</h1>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/6.0.x/src/main/docs/guide/httpServer.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>To use a server runtime based on the <a href="https://docs.oracle.com/javase/8/docs/jre/api/net/httpserver/spec/com/sun/net/httpserver/HttpServer.html">Java built-in Http Server</a>, add the following dependency:</p>
+</div>
+<div class="paragraph">
+<p>        <div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">implementation(<span class="hljs-string">"io.micronaut.servlet:micronaut-http-server-jdk")</span></code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
+    &lt;groupId&gt;io.micronaut.servlet&lt;/groupId&gt;
+    &lt;artifactId&gt;micronaut-http-server-jdk&lt;/artifactId&gt;
+&lt;/dependency&gt;</code></pre>
+</div>
+</div>
+</p>
+</div>
+
+<h1 id="httpPoja"><a class="anchor" href="#httpPoja"></a>10 HTTP POJA Application</h1>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/6.0.x/src/main/docs/guide/httpPoja.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>HTTP POJA allows creating Micronaut applications that consume respond to HTTP requests with streams. By default, the application will read requests from standard input stream and write responses to standard output. The requests can only be answered in a serial manner.
+Currently HTTP POJA is based on <a href="https://hc.apache.org/httpcomponents-core-5.2.x/">Apache HTTP Core library</a>.</p>
+</div>
+<div class="paragraph">
+<p>This feature allows creating simple applications that launch and respond on demand with minimal overhead. The module is suitable for usage with <code>systemd</code> on Linux or <code>launchd</code> on MacOS. Examples are given below.</p>
+</div>
+<div class="paragraph">
+<p>To use the HTTP POJA feature add the following dependencies:</p>
+</div>
+<div class="paragraph">
+<p>        <div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">implementation(<span class="hljs-string">"io.micronaut.servlet:micronaut-http-poja-apache")</span></code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
+    &lt;groupId&gt;io.micronaut.servlet&lt;/groupId&gt;
+    &lt;artifactId&gt;micronaut-http-poja-apache&lt;/artifactId&gt;
+&lt;/dependency&gt;</code></pre>
+</div>
+</div>
+</p>
+</div>
+<div class="paragraph">
+<p>        <div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">testImplementation(<span class="hljs-string">"io.micronaut.servlet:micronaut-http-poja-test")</span></code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
+    &lt;groupId&gt;io.micronaut.servlet&lt;/groupId&gt;
+    &lt;artifactId&gt;micronaut-http-poja-test&lt;/artifactId&gt;
+    &lt;scope&gt;test&lt;/scope&gt;
+&lt;/dependency&gt;</code></pre>
+</div>
+</div>
+</p>
+</div>
+<div class="paragraph">
+<p>To customize the HTTP POJA you can use the following configuration properties:</p>
+</div>
+<a id="io.micronaut.http.poja.apache.ApacheServletConfiguration" href="#io.micronaut.http.poja.apache.ApacheServletConfiguration">&#128279;</a>
+<table class="tableblock frame-all grid-all stretch">
+<caption class="title">Table 1. Configuration Properties for <a href="../api/io/micronaut/http/poja/apache/ApacheServletConfiguration.html">ApacheServletConfiguration</a></caption>
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Property</th>
+<th class="tableblock halign-left valign-top">Type</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-left valign-top">Default value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>poja.apache.input-buffer-size</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">int</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The size of the buffer that is used to read and parse the HTTP request
+                        (in bytes). Default value is 8192 (8Kb).</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">8192</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>poja.apache.output-buffer-size</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">int</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The size of the buffer that is used to write the HTTP response
+                        (in bytes). Default value is 8192 (8Kb).</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">8192</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>poja.apache.use-inherited-channel</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">When true, the inherited channel will be used by if present.
+                            Otherwise, STDIN and STDOUT will be used.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+</tbody>
+</table>
+<div class="sect2">
+<h3 id="_use_http_poja_with_launchd_on_macos">Use HTTP POJA with launchd on MacOS</h3>
+<div class="paragraph">
+<p>If you have built a HTTP POJA application as a native image executable, create the following <code>plist</code> file and
+replace <code>[executable]</code> with your executable path.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+If you are unfamiliar with building native image executables refer to <a href="https://guides.micronaut.io/latest/micronaut-creating-first-graal-app">Micronaut Creating First Graal App</a> guide.
+</td>
+</tr>
+</table>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+If you do not wish to use native image prepend <code>java</code> and <code>-jar</code> program arguments and use the jar instead.
+</td>
+</tr>
+</table>
+</div>
+<div class="listingblock">
+<div class="title">~/Library/LaunchAgents/com.example.poja.plist</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"&gt;
+&lt;plist version="1.0"&gt;
+  &lt;dict&gt;
+    &lt;key&gt;Label&lt;/key&gt;
+    &lt;string&gt;com.example.poja&lt;/string&gt;
+
+    &lt;key&gt;Enabled&lt;/key&gt;
+    &lt;false/&gt;
+
+    &lt;key&gt;ProgramArguments&lt;/key&gt;
+    &lt;array&gt;
+        &lt;string&gt;[executable]&lt;/string&gt;
+        &lt;string&gt;-Dpoja.apache.useInheritedChannel=false&lt;/string&gt;
+    &lt;/array&gt;
+
+    &lt;key&gt;Sockets&lt;/key&gt;
+    &lt;dict&gt;
+      &lt;key&gt;Listeners&lt;/key&gt;
+      &lt;dict&gt;
+        &lt;key&gt;SockServiceName&lt;/key&gt;
+        &lt;string&gt;8080&lt;/string&gt;
+        &lt;key&gt;SockType&lt;/key&gt;
+        &lt;string&gt;stream&lt;/string&gt;
+        &lt;key&gt;SockProtocol&lt;/key&gt;
+        &lt;string&gt;TCP&lt;/string&gt;
+      &lt;/dict&gt;
+    &lt;/dict&gt;
+
+    &lt;key&gt;StandardErrorPath&lt;/key&gt;
+    &lt;string&gt;/tmp/com.example.poja.log&lt;/string&gt;
+
+    &lt;key&gt;inetdCompatibility&lt;/key&gt;
+    &lt;dict&gt;
+      &lt;key&gt;Wait&lt;/key&gt;
+      &lt;false/&gt;
+    &lt;/dict&gt;
+
+    &lt;key&gt;KeepAlive&lt;/key&gt;
+    &lt;false/&gt;
+  &lt;/dict&gt;
+&lt;/plist&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Load the <code>plist</code> file with launchd:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">launchctl load ~/Library/LaunchAgents/com.example.poja.plist</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Then the configured application will respond on port <code>8080</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">curl localhost:8080</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_use_http_poja_with_systemd_on_linux">Use HTTP POJA with systemd on Linux</h3>
+<div class="paragraph">
+<p>If you have built a HTTP POJA application as a native image executable, create the following files and
+replace <code>[executable]</code> with your executable path.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+If you are unfamiliar with building native image executables refer to <a href="https://guides.micronaut.io/latest/micronaut-creating-first-graal-app">Micronaut Creating First Graal App</a> guide.
+</td>
+</tr>
+</table>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+If you do not wish to use native image prepend <code>java</code> and <code>-jar</code> program arguments and use the jar instead.
+</td>
+</tr>
+</table>
+</div>
+<div class="listingblock">
+<div class="title">/etc/systemd/system/examplepoja.socket</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">[Unit]
+Description=Socket to launch poja example on incoming connection
+
+[Socket]
+ListenStream=127.0.0.1:8080
+Accept=yes
+
+[Install]
+WantedBy=sockets.target</code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="title">/etc/systemd/system/examplepoja@.service</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">[Unit]
+Description=Example Poja Service
+Requires=examplepoja.socket
+
+[Service]
+Type=simple
+ExecStart=[executable] -Dpoja.apache.useInheritedChannel=false
+ExecStop=/bin/kill $MAINPID
+KillMode=process
+StandardInput=socket
+StandardOutput=socket
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Change selinux policy to allow systemd to use executable in the desired location with:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">chcon -R -t bin_t [executable parent directory]</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Enable and start listening on the socket with systemctl:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">sudo systemctl enable examplepoja.socket
+sudo systemctl start examplepoja.socket</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Then the configured application will respond on port <code>8080</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">curl localhost:8080</code></pre>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_use_http_poja_with_systemd_socket_activate_on_linux">Use HTTP POJA with <code>systemd-socket-activate</code> on Linux</h4>
+<div class="paragraph">
+<p>To test your application with <code>systemd-socket-activate</code> run:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">systemd-socket-activate --inetd -a -l /tmp/http-poja.sock [executable]</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>In a separate terminal send a request to the socket:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">curl --unix-socket /tmp/http-poja.sock http://localhost/</code></pre>
+</div>
+</div>
+</div>
+</div>
+
+<h1 id="knownIssues"><a class="anchor" href="#knownIssues"></a>11 Known Issues</h1>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/6.0.x/src/main/docs/guide/knownIssues.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>There are some known issues with Servlet integration to the Micronaut Framework</p>
+</div>
+<div class="sect2">
+<h3 id="_httpproxyclient_and_server_filters">HttpProxyClient and Server Filters</h3>
+<div class="paragraph">
+<p>It is not currently possible to use the HttpProxyClient with Servlet Filters.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_error_handlers_re_reading_the_request_body">Error handlers re-reading the request body</h3>
+<div class="paragraph">
+<p>Local error handlers that require the request body to be reparsed will not work in Servlet based applications.
+The body is read from the request input-stream and so attempting to reparse it for the error handler will fail.</p>
+</div>
+</div>
+
+<h1 id="faq"><a class="anchor" href="#faq"></a>12 FAQ</h1>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/6.0.x/src/main/docs/guide/faq.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="sect3">
+<h4 id="_where_can_i_find_the_source_code">Where can I find the source code?</h4>
+<div class="paragraph">
+<p>You can find the source code of this project in this repository:</p>
+</div>
+<div class="paragraph">
+<p><a href="https://github.com/micronaut-projects/micronaut-servlet">https://github.com/micronaut-projects/micronaut-servlet</a></p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_how_do_i_configure_multipart_handling">How do I configure Multipart handling?</h4>
+<div class="paragraph">
+<p>Multipart handling is disabled by default. You can enable it with the <a href="https://docs.micronaut.io/latest/guide/configurationreference.html#io.micronaut.http.server.HttpServerConfiguration$MultipartConfiguration">following configuration properties</a>.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_how_do_i_configure_static_resource_handling_for_the_embedded_server">How do I configure Static Resource handling for the embedded server?</h4>
+<div class="paragraph">
+<p>Static resources are not enabled by default. See <a href="https://docs.micronaut.io/latest/guide/index.html#staticResources">Serving Static Resources</a> for how to configure paths to static resources.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_how_do_i_enable_https_for_the_embedded_server">How do I enable HTTPS for the embedded server?</h4>
+<div class="paragraph">
+<p>See <a href="https://docs.micronaut.io/latest/guide/index.html#https">Securing the Server with HTTPS</a> and the <a href="https://docs.micronaut.io/latest/guide/configurationreference.html#io.micronaut.http.ssl.ServerSslConfiguration$DefaultKeyStoreConfiguration">configuration properties</a> for <a href="https://docs.micronaut.io/latest/api/io/micronaut/http/ssl/ServerSslConfiguration.html">ServerSslConfiguration</a>.</p>
+</div>
+</div>
+
+<h1 id="breaks"><a class="anchor" href="#breaks"></a>13 Breaking Changes</h1>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/6.0.x/src/main/docs/guide/breaks.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>This section documents breaking changes between Micronaut Servlet versions:</p>
+</div>
+<div class="sect1">
+<h2 id="_micronaut_servlet_5_0_0">Micronaut Servlet 5.0.0</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_deprecations">Deprecations</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>The Singleton constructor <code>io.micronaut.servlet.engine.DefaultServletHttpHandler(ApplicationContext) deprecated previously has been removed.
+`DefaultServletHttpHandler(ApplicationContext, ConversionService)</code> is used instead.</p>
+</li>
+<li>
+<p>The abstract class constructor <code>io.micronaut.servlet.http.ServletHttpHandler(ApplicationContext)</code> deprecated previously has been removed.
+<code>ServletHttpHandler(ApplicationContext, ConversionService)</code> is used instead.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_micronaut_servlet_3_3_4">Micronaut Servlet 3.3.4</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_binding_network_interface">Binding network interface</h3>
+<div class="paragraph">
+<p>Previously, the default servlet engine will bind to all network interfaces.
+This is a security risk.
+Now, the default servlet engine will bind to <code>localhost</code> only.
+To restore the original functionality, you need to configure <code>micronaut.server.host</code>, or set the <code>HOST</code> environment variable.</p>
+</div>
+</div>
+</div>
+</div>
+
+<h1 id="repository"><a class="anchor" href="#repository"></a>14 Repository</h1>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/6.0.x/src/main/docs/guide/repository.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>You can find the source code of this project in this repository:</p>
+</div>
+<div class="paragraph">
+<p><a href="https://github.com/micronaut-projects/micronaut-servlet">https://github.com/micronaut-projects/micronaut-servlet</a></p>
+</div>
+
+    </div>
+</div>
+
+<script type="text/javascript">
+
+</script>
+</body>
+</html>
