@@ -78,7 +78,7 @@ public class TestingServerlessEmbeddedApplication implements EmbeddedServer {
 
     @Override
     public TestingServerlessEmbeddedApplication start() {
-        if (isRunning.compareAndSet(true, true)) {
+        if (isRunning.getAndSet(true)) {
             return this; // Already running
         }
         createServerSocket();
