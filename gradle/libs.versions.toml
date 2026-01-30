@@ -16,10 +16,10 @@ micronaut-serde = "3.0.0-M2"
 micronaut-session = "4.7.0"
 micronaut-validation = "4.11.0"
 google-cloud-functions = '1.1.4'
-micronaut-logging = "1.7.1"
+micronaut-logging = "2.0.0-M1"
 # Micronaut
 micronaut-gradle-plugin = "4.6.1"
-logback-access = "2.0.8"
+logback-access = "2.0.9"
 kotlin = "2.2.21"
 
 [libraries]
