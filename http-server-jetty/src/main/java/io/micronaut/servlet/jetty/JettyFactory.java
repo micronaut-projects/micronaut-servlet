@@ -61,6 +61,7 @@ import org.eclipse.jetty.server.SslConnectionFactory;
 import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.server.handler.ResourceHandler;
+import org.eclipse.jetty.server.handler.CrossOriginHandler;
 import org.eclipse.jetty.util.resource.Resource;
 import org.eclipse.jetty.util.resource.ResourceFactory;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
@@ -498,6 +499,54 @@ public class JettyFactory extends ServletServerFactory {
         contextHandler.setHandler(resourceHandler);
         contextHandler.setDisplayName("Static Resources " + mapping);
 
+        if (getServerConfiguration().getCors().isEnabled()) {
+            CrossOriginHandler cors = new CrossOriginHandler();
+            var configs = getServerConfiguration().getCors().getConfigurations().values();
+            java.time.Duration preflight = null;
+            for (var c : configs) {
+                Long maxAge = c.getMaxAge();
+                if (maxAge != null && maxAge > 0 && preflight == null) {
+                    preflight = java.time.Duration.ofSeconds(maxAge);
+                }
+            }
+            if (preflight != null) {
+                cors.setPreflightMaxAge(preflight);
+            }
+            // Derive allowed origins from Micronaut CORS config if present
+            java.util.Set<String> originPatterns = new java.util.HashSet<>();
+            for (var c : configs) {
+                var regex = c.getAllowedOriginsRegex();
+                if (regex != null && regex.isPresent()) {
+                    originPatterns.add(regex.get());
+                }
+                var origins = c.getAllowedOrigins();
+                if (origins != null && !origins.isEmpty()) {
+                    for (String o : origins) {
+                        String p;
+                        if ("*".equals(o)) {
+                            p = ".*";
+                        } else if (o.startsWith("http://") || o.startsWith("https://")) {
+                            String base = o.replace(".", "\\.");
+                            p = base + "(:\\d+)?";
+                        } else {
+                            String host = java.util.regex.Pattern.quote(o);
+                            p = "https?://" + host + "(:\\d+)?";
+                        }
+                        originPatterns.add(p);
+                    }
+                }
+            }
+            if (originPatterns.isEmpty()) {
+                originPatterns.add(".*");
+            }
+            cors.setAllowCredentials(false);
+            cors.setAllowedOriginPatterns(originPatterns);
+            cors.setAllowedMethods(java.util.Set.of("GET"));
+            cors.setAllowedHeaders(java.util.Set.of("*"));
+            cors.setHandler(contextHandler.getHandler());
+            contextHandler.setHandler(cors);
+        }
+ 
         return contextHandler;
     }
 
