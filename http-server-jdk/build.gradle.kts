@@ -10,7 +10,7 @@ dependencies {
 }
 
 micronautBuild {
-    testFramework = TestFramework.JUNIT5
+    testFramework = TestFramework.JUNIT6
 }
 micronautBuild {
     binaryCompatibility.enabled = false
