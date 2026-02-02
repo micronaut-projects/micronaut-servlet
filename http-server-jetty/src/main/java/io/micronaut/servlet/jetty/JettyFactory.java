@@ -531,19 +531,7 @@ public class JettyFactory extends ServletServerFactory {
             }
             var origins = c.getAllowedOrigins();
             if (origins != null && !origins.isEmpty()) {
-                for (String o : origins) {
-                    String p;
-                    if ("*".equals(o)) {
-                        p = ".*";
-                    } else if (o.startsWith("http://") || o.startsWith("https://")) {
-                        String base = o.replace(".", "\\.");
-                        p = base + "(:\\d+)?";
-                    } else {
-                        String host = java.util.regex.Pattern.quote(o);
-                        p = "https?://" + host + "(:\\d+)?";
-                    }
-                    originPatterns.add(p);
-                }
+                origins.forEach(JettyFactory::getOriginPattern);
             }
         }
         if (originPatterns.isEmpty()) {
@@ -555,6 +543,20 @@ public class JettyFactory extends ServletServerFactory {
         cors.setAllowedHeaders(java.util.Set.of("*"));
         cors.setHandler(contextHandler.getHandler());
         contextHandler.setHandler(cors);
+    }
+
+    private static String getOriginPattern(String origin) {
+        String p;
+        if ("*".equals(origin)) {
+            p = ".*";
+        } else if (origin.startsWith("http://") || origin.startsWith("https://")) {
+            String base = origin.replace(".", "\\.");
+            p = base + "(:\\d+)?";
+        } else {
+            String host = java.util.regex.Pattern.quote(origin);
+            p = "https?://" + host + "(:\\d+)?";
+        }
+        return p;
     }
 
     private String resolveStorePath(String path, ResourceFactory resourceFactory) {
