@@ -3,24 +3,24 @@ micronaut = "5.0.0-M9"
 
 
 managed-servlet-api = '6.1.0'
-kotest-runner = '5.9.1'
-undertow = '2.3.20.Final'
+kotest-runner = '6.1.2'
+undertow = '2.3.22.Final'
 tomcat = '11.0.18'
 bcpkix = "1.70"
 
-managed-apache-http-core5 = "5.3.6"
+managed-apache-http-core5 = "5.4"
 managed-jetty = '12.1.6'
 micronaut-reactor = "4.0.0-M1"
 micronaut-security = "4.15.0"
 micronaut-serde = "3.0.0-M2"
 micronaut-session = "4.7.0"
 micronaut-validation = "4.11.0"
-google-cloud-functions = '1.1.4'
+google-cloud-functions = '2.0.0'
 micronaut-logging = "2.0.0-M1"
 # Micronaut
 micronaut-gradle-plugin = "4.6.1"
 logback-access = "2.0.9"
-kotlin = "2.2.21"
+kotlin = "2.3.0"
 
 [libraries]
 # Core
