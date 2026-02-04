@@ -513,18 +513,13 @@ public class JettyFactory extends ServletServerFactory {
         CrossOriginHandler cors = new CrossOriginHandler();
         var configs = getServerConfiguration().getCors().getConfigurations().values();
         Duration preflight = null;
+        // Derive allowed origins from Micronaut CORS config if present
+        Set<String> originPatterns = new HashSet<>();
         for (var c : configs) {
             Long maxAge = c.getMaxAge();
             if (maxAge != null && maxAge > 0 && preflight == null) {
                 preflight = Duration.ofSeconds(maxAge);
             }
-        }
-        if (preflight != null) {
-            cors.setPreflightMaxAge(preflight);
-        }
-        // Derive allowed origins from Micronaut CORS config if present
-        Set<String> originPatterns = new HashSet<>();
-        for (var c : configs) {
             var regex = c.getAllowedOriginsRegex();
             if (regex.isPresent()) {
                 originPatterns.add(regex.get());
@@ -533,6 +528,9 @@ public class JettyFactory extends ServletServerFactory {
             if (origins != null && !origins.isEmpty()) {
                 origins.forEach(JettyFactory::getOriginPattern);
             }
+        }
+        if (preflight != null) {
+            cors.setPreflightMaxAge(preflight);
         }
         if (originPatterns.isEmpty()) {
             originPatterns.add(".*");
