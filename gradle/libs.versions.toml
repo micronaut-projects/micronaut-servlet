@@ -20,7 +20,7 @@ micronaut-logging = "2.0.0-M1"
 # Micronaut
 micronaut-gradle-plugin = "4.6.1"
 logback-access = "2.0.9"
-kotlin = "2.2.21"
+kotlin = "2.3.0"
 
 [libraries]
 # Core
