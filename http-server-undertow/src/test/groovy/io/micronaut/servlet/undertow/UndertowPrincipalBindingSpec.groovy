@@ -11,19 +11,16 @@ import io.micronaut.http.annotation.Produces
 import io.micronaut.http.client.HttpClient
 import io.micronaut.http.client.annotation.Client
 import io.micronaut.security.annotation.Secured
-import io.micronaut.security.authentication.Authentication
-import io.micronaut.security.authentication.AuthenticationException
 import io.micronaut.security.authentication.AuthenticationFailed
-import io.micronaut.security.authentication.AuthenticationProvider
 import io.micronaut.security.authentication.AuthenticationRequest
 import io.micronaut.security.authentication.AuthenticationResponse
+import io.micronaut.security.authentication.provider.HttpRequestAuthenticationProvider
 import io.micronaut.security.rules.SecurityRule
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
-import org.reactivestreams.Publisher
-import reactor.core.publisher.Mono
-import reactor.core.publisher.MonoSink
+import org.jspecify.annotations.NonNull
+import org.jspecify.annotations.Nullable
 import spock.lang.Issue
 import spock.lang.Specification
 
@@ -63,18 +60,15 @@ class UndertowPrincipalBindingSpec extends Specification {
 
     @Requires(property = 'spec.name', value = 'UndertowPrincipalBindingSpec')
     @Singleton
-    static class AuthenticationProviderUserPassword<T> implements AuthenticationProvider<T> {
-        @Override
-        Publisher<AuthenticationResponse> authenticate(T httpRequest, AuthenticationRequest<?, ?> authenticationRequest) {
-            Mono.create({ MonoSink emitter ->
-                String identity = authenticationRequest.identity
-                if (identity == 'sherlock' && authenticationRequest.secret == 'password') {
-                    emitter.success(AuthenticationResponse.success(identity))
-                } else {
-                    emitter.error(new AuthenticationException(new AuthenticationFailed()))
-                }
+    static class AuthenticationProviderUserPassword<T> implements HttpRequestAuthenticationProvider<T> {
 
-            }) as Publisher<AuthenticationResponse>
+        @Override
+        AuthenticationResponse authenticate(@Nullable HttpRequest<T> requestContext,
+                                            @NonNull AuthenticationRequest<String, String> authenticationRequest) {
+            String identity = authenticationRequest.identity
+            (identity == 'sherlock' && authenticationRequest.secret == 'password')
+                    ? AuthenticationResponse.success(identity)
+                    : new AuthenticationFailed()
         }
     }
 }
