@@ -10,8 +10,10 @@ import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Get
 import io.micronaut.http.annotation.Post
 import io.micronaut.http.annotation.QueryValue
+import io.micronaut.http.client.BlockingHttpClient
 import io.micronaut.http.client.HttpClient
 import io.micronaut.http.client.annotation.Client
+import io.micronaut.http.client.exceptions.HttpClientResponseException
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import reactor.core.publisher.Mono
 import spock.lang.Specification
@@ -86,15 +88,29 @@ class JettyParameterBindingSpec extends Specification {
         HttpMethod.GET  | '/parameter/arrayStyle?param[]=a&param[]=b&param[]=c' | "Parameter Value: [a, b, c]"    | HttpStatus.OK
     }
 
-    void "test list to single error"() {
+    void "When supplying two query value parameters for a POJO field that is not a list, we expect a conversion failure"() {
         given:
-        def req = HttpRequest.GET('/parameter/exploded?title=The%20Stand&age=20&age=30')
-        def exchange = Mono.from(rxClient.exchange(req, String))
-        def response = exchange.onErrorResume({ t -> Mono.just(t.response) }).block()
+        HttpRequest<?> req = HttpRequest.GET('/parameter/exploded?title=The%20Stand&age=20&age=30')
+        BlockingHttpClient client = rxClient.toBlocking()
+        when:
+        client.exchange(req, String)
 
-        expect:
-        response.status() == HttpStatus.BAD_REQUEST
-        response.body().contains('Required argument [Book book] not specified')
+        then:
+        HttpClientResponseException ex = thrown()
+        and:
+        ex.status == HttpStatus.BAD_REQUEST
+
+        when:
+        Optional<String> jsonOptional = ex.getResponse().getBody(String)
+
+        then:
+        jsonOptional.isPresent()
+
+        when:
+        String json = jsonOptional.get()
+
+        then:
+        json.contains('Failed to convert argument [book] for value [Integer age] due to: Cannot convert an iterable with more than 1 value to a non collection object')
     }
 
     @Requires(property = 'spec.name', value = 'JettyParameterBindingSpec')
