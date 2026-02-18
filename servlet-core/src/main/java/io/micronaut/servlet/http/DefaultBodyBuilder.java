@@ -18,6 +18,7 @@ package io.micronaut.servlet.http;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.web.router.RouteAttributes;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.io.buffer.ByteBuffer;
@@ -94,7 +95,7 @@ public class DefaultBodyBuilder implements BodyBuilder {
     }
 
     private Argument<?> resolveBodyType(@NonNull HttpRequest<?> request) {
-        RouteMatch<?> route = request.getAttribute(HttpAttributes.ROUTE_MATCH, RouteMatch.class).orElse(null);
+        RouteMatch<?> route = RouteAttributes.getRouteMatch(request).orElse(null);
         if (route != null) {
             Argument<?> bodyType = route.getRouteInfo().getFullRequestBodyType()
                 /*
