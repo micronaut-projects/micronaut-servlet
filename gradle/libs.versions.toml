@@ -1,7 +1,5 @@
 [versions]
-micronaut = "5.0.0-M9"
-
-
+micronaut = "5.0.0-M11"
 managed-servlet-api = '6.1.0'
 kotest-runner = '6.1.3'
 undertow = '2.3.23.Final'
