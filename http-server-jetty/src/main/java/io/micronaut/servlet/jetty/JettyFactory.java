@@ -41,9 +41,12 @@ import jakarta.inject.Singleton;
 import jakarta.servlet.ServletContainerInitializer;
 
 import java.security.KeyStore;
+import java.time.Duration;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Stream;
 import org.eclipse.jetty.alpn.server.ALPNServerConnectionFactory;
@@ -61,6 +64,7 @@ import org.eclipse.jetty.server.SslConnectionFactory;
 import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.server.handler.ResourceHandler;
+import org.eclipse.jetty.server.handler.CrossOriginHandler;
 import org.eclipse.jetty.util.resource.Resource;
 import org.eclipse.jetty.util.resource.ResourceFactory;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
@@ -498,7 +502,59 @@ public class JettyFactory extends ServletServerFactory {
         contextHandler.setHandler(resourceHandler);
         contextHandler.setDisplayName("Static Resources " + mapping);
 
+        if (getServerConfiguration().getCors().isEnabled()) {
+            addCorsHandler(contextHandler);
+        }
+
         return contextHandler;
+    }
+
+    private void addCorsHandler(ContextHandler contextHandler) {
+        CrossOriginHandler cors = new CrossOriginHandler();
+        var configs = getServerConfiguration().getCors().getConfigurations().values();
+        Duration preflight = null;
+        // Derive allowed origins from Micronaut CORS config if present
+        Set<String> originPatterns = new HashSet<>();
+        for (var c : configs) {
+            Long maxAge = c.getMaxAge();
+            if (maxAge != null && maxAge > 0 && preflight == null) {
+                preflight = Duration.ofSeconds(maxAge);
+            }
+            var regex = c.getAllowedOriginsRegex();
+            if (regex.isPresent()) {
+                originPatterns.add(regex.get());
+            }
+            var origins = c.getAllowedOrigins();
+            if (origins != null && !origins.isEmpty()) {
+                origins.forEach(JettyFactory::getOriginPattern);
+            }
+        }
+        if (preflight != null) {
+            cors.setPreflightMaxAge(preflight);
+        }
+        if (originPatterns.isEmpty()) {
+            originPatterns.add(".*");
+        }
+        cors.setAllowCredentials(false);
+        cors.setAllowedOriginPatterns(originPatterns);
+        cors.setAllowedMethods(java.util.Set.of("GET"));
+        cors.setAllowedHeaders(java.util.Set.of("*"));
+        cors.setHandler(contextHandler.getHandler());
+        contextHandler.setHandler(cors);
+    }
+
+    private static String getOriginPattern(String origin) {
+        String p;
+        if ("*".equals(origin)) {
+            p = ".*";
+        } else if (origin.startsWith("http://") || origin.startsWith("https://")) {
+            String base = origin.replace(".", "\\.");
+            p = base + "(:\\d+)?";
+        } else {
+            String host = java.util.regex.Pattern.quote(origin);
+            p = "https?://" + host + "(:\\d+)?";
+        }
+        return p;
     }
 
     private String resolveStorePath(String path, ResourceFactory resourceFactory) {
