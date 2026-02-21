@@ -14,7 +14,7 @@ micronaut-serde = "3.0.0-M2"
 micronaut-session = "5.0.0-M1"
 micronaut-validation = "5.0.0-M1"
 google-cloud-functions = '2.0.0'
-micronaut-logging = "2.0.0-M1"
+micronaut-logging = "2.0.0-M2"
 # Micronaut
 micronaut-gradle-plugin = "4.6.2"
 logback-access = "2.0.12"
