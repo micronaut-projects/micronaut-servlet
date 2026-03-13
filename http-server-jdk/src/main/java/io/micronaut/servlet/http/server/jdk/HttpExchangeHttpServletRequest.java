@@ -141,7 +141,7 @@ final class HttpExchangeHttpServletRequest implements HttpServletRequest {
 
     @Override
     public String getQueryString() {
-        return exchange.getRequestURI().getQuery();
+        return exchange.getRequestURI().getRawQuery();
     }
 
     @Override
