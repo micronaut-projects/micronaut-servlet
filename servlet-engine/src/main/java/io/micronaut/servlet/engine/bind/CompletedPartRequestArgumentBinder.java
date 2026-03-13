@@ -16,18 +16,22 @@
 package io.micronaut.servlet.engine.bind;
 
 import io.micronaut.core.convert.ArgumentConversionContext;
+import io.micronaut.core.io.buffer.ReadBufferFactory;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
+import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.Part;
 import io.micronaut.http.bind.binders.TypedRequestArgumentBinder;
+import io.micronaut.http.multipart.CompletedFileUpload;
 import io.micronaut.http.multipart.CompletedPart;
+import io.micronaut.http.multipart.FormFieldMetadata;
 import io.micronaut.http.server.exceptions.InternalServerException;
-import io.micronaut.servlet.engine.ServletCompletedFileUpload;
 import io.micronaut.servlet.http.ServletExchange;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Optional;
 
 /**
@@ -51,7 +55,10 @@ class CompletedPartRequestArgumentBinder implements TypedRequestArgumentBinder<C
             if (part == null) {
                 return BindingResult.UNSATISFIED;
             }
-            return () -> Optional.of(new ServletCompletedFileUpload(part));
+            CompletedFileUpload completedFileUpload = completedFileUpload(part);
+            return () -> Optional.of(completedFileUpload);
+        } catch (UnsupportedOperationException e) {
+            return BindingResult.UNSATISFIED;
         } catch (IOException | ServletException e) {
             context.reject(new InternalServerException("Error reading part [" + partName + "]: " + e.getMessage(), e));
             return BindingResult.EMPTY;
@@ -61,5 +68,15 @@ class CompletedPartRequestArgumentBinder implements TypedRequestArgumentBinder<C
     @Override
     public Argument<CompletedPart> argumentType() {
         return Argument.of(CompletedPart.class);
+    }
+
+    private static CompletedFileUpload completedFileUpload(jakarta.servlet.http.Part part) throws IOException {
+        MediaType mediaType = Optional.ofNullable(part.getContentType())
+            .map(MediaType::new)
+            .orElse(null);
+        FormFieldMetadata metadata = new FormFieldMetadata(part.getName(), part.getSubmittedFileName(), mediaType);
+        try (InputStream inputStream = part.getInputStream()) {
+            return CompletedFileUpload.ofMemory(metadata, ReadBufferFactory.getJdkFactory().copyOf(inputStream));
+        }
     }
 }

@@ -23,6 +23,7 @@ import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.convert.value.MutableConvertibleValues;
 import io.micronaut.core.io.buffer.ByteArrayBufferFactory;
+import io.micronaut.core.io.buffer.ReadBuffer;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
@@ -39,10 +40,14 @@ import io.micronaut.http.ServerHttpRequest;
 import io.micronaut.http.body.ByteBody;
 import io.micronaut.http.body.ByteBodyFactory;
 import io.micronaut.http.body.ByteBufferBodyAdapter;
+import io.micronaut.http.body.CloseableAvailableByteBody;
 import io.micronaut.http.body.CloseableByteBody;
 import io.micronaut.http.body.stream.InputStreamByteBody;
 import io.micronaut.http.codec.MediaTypeCodecRegistry;
 import io.micronaut.http.cookie.Cookies;
+import io.micronaut.http.form.FormCapableHttpRequest;
+import io.micronaut.http.multipart.FormFieldMetadata;
+import io.micronaut.http.multipart.RawFormField;
 import io.micronaut.servlet.http.BodyBuilder;
 import io.micronaut.servlet.http.ParsedBodyHolder;
 import io.micronaut.servlet.http.SSLSessionProvider;
@@ -54,7 +59,11 @@ import jakarta.servlet.AsyncContext;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.FluxSink;
+import reactor.core.publisher.Mono;
 
 import javax.net.ssl.SSLSession;
 import java.io.BufferedReader;
@@ -63,6 +72,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.InetSocketAddress;
 import java.net.URI;
+import java.net.URLDecoder;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.Principal;
@@ -77,7 +87,9 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
 /**
@@ -93,9 +105,11 @@ public final class DefaultServletHttpRequest<B> implements
     ServletExchange<HttpServletRequest, HttpServletResponse>,
     StreamedServletMessage<B, byte[]>,
     ServerHttpRequest<B>,
+    FormCapableHttpRequest<B>,
     ParsedBodyHolder<B> {
 
     private static final String NULL_KEY = "Attribute key cannot be null";
+    private static final int STREAMING_FORM_FIELD_THRESHOLD = 64 * 1024;
 
     private final ConversionService conversionService;
     private final HttpServletRequest delegate;
@@ -114,6 +128,7 @@ public final class DefaultServletHttpRequest<B> implements
     private boolean bodyIsReadAsync;
     private B parsedBody;
     private AsyncContext asyncContext;
+    private List<Runnable> disposalResources;
 
     /**
      * Default constructor.
@@ -492,8 +507,194 @@ public final class DefaultServletHttpRequest<B> implements
     }
 
     @Override
+    public boolean hasFormBody() {
+        return getContentType().map(contentType -> contentType.matches(MediaType.APPLICATION_FORM_URLENCODED_TYPE)).orElse(false);
+    }
+
+    @Override
+    public @NonNull Publisher<RawFormField> getRawFormFields() throws IllegalStateException {
+        if (!hasFormBody()) {
+            throw new IllegalStateException("Not a form Content-Type. Please check hasFormBody() before calling this method.");
+        }
+        return Mono.fromFuture(byteBody().buffer())
+            .flatMapMany(availableByteBody -> {
+                try (availableByteBody) {
+                    return emitRawFormFields(parseRawFormFields(availableByteBody.toString(getCharacterEncoding())));
+                }
+            });
+    }
+
+    @Override
+    public synchronized void addDisposalResource(Runnable dispose) {
+        if (disposalResources == null) {
+            disposalResources = new ArrayList<>(1);
+        }
+        disposalResources.add(dispose);
+    }
+
+    @Override
     public void close() {
-        byteBody.close();
+        try {
+            byteBody.close();
+        } finally {
+            List<Runnable> resources = disposalResources;
+            if (resources != null) {
+                for (Runnable runnable : resources) {
+                    runnable.run();
+                }
+            }
+        }
+    }
+
+    @Override
+    public Optional<SSLSession> getSslSession() {
+        if (sslSessionProvider != null) {
+            return sslSessionProvider.getSSLSession(this);
+        }
+        return ServletHttpRequest.super.getSslSession();
+    }
+
+    private Flux<RawFormField> emitRawFormFields(List<ParsedFormField> fields) {
+        return Flux.create(sink -> emitRawFormField(0, fields, sink));
+    }
+
+    private void emitRawFormField(int index, List<ParsedFormField> fields, FluxSink<RawFormField> sink) {
+        if (sink.isCancelled()) {
+            return;
+        }
+        if (index >= fields.size()) {
+            sink.complete();
+            return;
+        }
+        ParsedFormField field = fields.get(index);
+        Runnable continueEmission = () -> emitRawFormField(index + 1, fields, sink);
+        RawFormField rawFormField = rawFormField(field, field.waitForClose() ? continueEmission : null);
+        sink.next(rawFormField);
+        if (!field.waitForClose()) {
+            continueEmission.run();
+        }
+    }
+
+    private RawFormField rawFormField(ParsedFormField field, @Nullable Runnable onClose) {
+        Charset charset = getCharacterEncoding();
+        CloseableByteBody body = byteBodyFactory().copyOf(field.value(), charset);
+        if (onClose != null) {
+            body = new OnSignalCloseableByteBody(body, onClose);
+        }
+        return new RawFormField(
+            new FormFieldMetadata(field.name(), null, null),
+            body
+        );
+    }
+
+    private List<ParsedFormField> parseRawFormFields(String payload) {
+        if (payload.isEmpty()) {
+            return List.of();
+        }
+        Charset charset = getCharacterEncoding();
+        List<ParsedFormField> fields = new ArrayList<>();
+        String[] entries = payload.split("&", -1);
+        for (int i = 0; i < entries.length; i++) {
+            String entry = entries[i];
+            if (entry.isEmpty()) {
+                continue;
+            }
+            int equalsAt = entry.indexOf('=');
+            String rawName;
+            String rawValue;
+            if (equalsAt >= 0) {
+                rawName = entry.substring(0, equalsAt);
+                rawValue = entry.substring(equalsAt + 1);
+            } else {
+                rawName = entry;
+                rawValue = "";
+            }
+            String name = decodeFormComponent(rawName, charset);
+            String value = decodeFormComponent(rawValue, charset);
+            boolean waitForClose = value.length() > STREAMING_FORM_FIELD_THRESHOLD && i < entries.length - 1;
+            fields.add(new ParsedFormField(name, value, waitForClose));
+        }
+        return fields;
+    }
+
+    private static String decodeFormComponent(String value, Charset charset) {
+        try {
+            return URLDecoder.decode(value, charset);
+        } catch (IllegalArgumentException ignored) {
+            return value;
+        }
+    }
+
+    private record ParsedFormField(String name, String value, boolean waitForClose) {
+    }
+
+    private static final class OnSignalCloseableByteBody implements CloseableByteBody {
+        private final CloseableByteBody delegate;
+        private final Runnable onSignal;
+        private final AtomicBoolean signaled = new AtomicBoolean(false);
+
+        private OnSignalCloseableByteBody(CloseableByteBody delegate, Runnable onSignal) {
+            this.delegate = delegate;
+            this.onSignal = onSignal;
+        }
+
+        @Override
+        public CloseableByteBody split(ByteBody.SplitBackpressureMode mode) {
+            return new OnSignalCloseableByteBody(delegate.split(mode), this::signalOnce);
+        }
+
+        @Override
+        public OptionalLong expectedLength() {
+            return delegate.expectedLength();
+        }
+
+        @Override
+        public InputStream toInputStream() {
+            return delegate.toInputStream();
+        }
+
+        @Override
+        public Publisher<byte[]> toByteArrayPublisher() {
+            return Flux.from(delegate.toByteArrayPublisher()).doFinally(signal -> signalOnce());
+        }
+
+        @Override
+        public Publisher<ReadBuffer> toReadBufferPublisher() {
+            return Flux.from(delegate.toReadBufferPublisher()).doFinally(signal -> signalOnce());
+        }
+
+        @Override
+        public CompletableFuture<? extends CloseableAvailableByteBody> buffer() {
+            CompletableFuture<? extends CloseableAvailableByteBody> future = delegate.buffer();
+            future.whenComplete((available, throwable) -> signalOnce());
+            return future;
+        }
+
+        @Override
+        public CloseableByteBody move() {
+            signalOnce();
+            return delegate.move();
+        }
+
+        @Override
+        public void touch() {
+            delegate.touch();
+        }
+
+        @Override
+        public void close() {
+            try {
+                delegate.close();
+            } finally {
+                signalOnce();
+            }
+        }
+
+        private void signalOnce() {
+            if (signaled.compareAndSet(false, true)) {
+                onSignal.run();
+            }
+        }
     }
 
     /**
@@ -617,11 +818,4 @@ public final class DefaultServletHttpRequest<B> implements
         }
     }
 
-    @Override
-    public Optional<SSLSession> getSslSession() {
-        if (sslSessionProvider != null) {
-            return sslSessionProvider.getSSLSession(this);
-        }
-        return ServletHttpRequest.super.getSslSession();
-    }
 }

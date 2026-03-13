@@ -15,6 +15,7 @@
  */
 package io.micronaut.servlet.engine.bind;
 
+import io.micronaut.context.BeanProvider;
 import io.micronaut.context.annotation.Replaces;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.async.publisher.Publishers;
@@ -31,6 +32,7 @@ import io.micronaut.http.bind.binders.RequestArgumentBinder;
 import io.micronaut.http.body.AvailableByteBody;
 import io.micronaut.http.codec.MediaTypeCodecRegistry;
 import io.micronaut.http.multipart.CompletedPart;
+import io.micronaut.http.server.multipart.FormFactory;
 import io.micronaut.json.codec.MapperMediaTypeCodec;
 import io.micronaut.servlet.http.ServletBinderRegistry;
 import io.micronaut.servlet.http.ServletBodyBinder;
@@ -74,7 +76,8 @@ class DefaultServletBinderRegistry<T> extends ServletBinderRegistry<T> {
             MediaTypeCodecRegistry mediaTypeCodecRegistry,
             ConversionService conversionService,
             List<RequestArgumentBinder> binders,
-            DefaultBodyAnnotationBinder<T> defaultBodyAnnotationBinder
+            DefaultBodyAnnotationBinder<T> defaultBodyAnnotationBinder,
+            BeanProvider<FormFactory> formFactory
     ) {
         super(mediaTypeCodecRegistry, conversionService, binders, defaultBodyAnnotationBinder);
         byType.put(HttpServletRequest.class, new ServletRequestBinder());
@@ -82,7 +85,7 @@ class DefaultServletBinderRegistry<T> extends ServletBinderRegistry<T> {
         byType.put(ServletConfig.class, new ServletConfigBinder());
         byType.put(ServletContext.class, new ServletContextBinder());
         byType.put(CompletedPart.class, new CompletedPartRequestArgumentBinder());
-        byAnnotation.put(Part.class, new ServletPartBinder<>(mediaTypeCodecRegistry));
+        byAnnotation.put(Part.class, new ServletPartBinder<>(mediaTypeCodecRegistry, conversionService, formFactory));
     }
 
     @SuppressWarnings("unchecked")
