@@ -62,6 +62,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.function.Supplier;
 
@@ -263,7 +264,7 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
 
         if (exchange.getRequest().isAsyncSupported()) {
             exchange.getRequest().executeAsync(ctx -> {
-                try (PropagatedContext.Scope ignore = PropagatedContext.getOrEmpty().plus(new ServerHttpRequestContext(req)).propagate()) {
+                PropagatedContext.getOrEmpty().plus(new ServerHttpRequestContext(req)).propagate(() -> {
                     lc.handleNormal(req)
                         .flatMap(response -> process(response, req, exchange.getResponse()))
                         .onComplete((bbhr, t) -> {
@@ -277,13 +278,15 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
                                 ctx.complete();
                             }
                         });
-                }
+                    return null;
+                });
             });
         } else {
             ExecutionResult executionResult;
-            try (PropagatedContext.Scope ignore = PropagatedContext.getOrEmpty().plus(new ServerHttpRequestContext(req)).propagate()) {
-                executionResult = lc.handleNormal(req)
-                    .flatMap(response -> process(response, req, exchange.getResponse())).toCompletableFuture().get();
+            CompletableFuture<ExecutionResult> cfExecutionResult = PropagatedContext.getOrEmpty().plus(new ServerHttpRequestContext(req)).propagate(() -> lc.handleNormal(req)
+                .flatMap(response -> process(response, req, exchange.getResponse())).toCompletableFuture());
+            try {
+                executionResult = cfExecutionResult.get();
             } catch (InterruptedException ie) {
                 Thread.currentThread().interrupt();
                 return;
