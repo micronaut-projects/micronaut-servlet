@@ -17,6 +17,7 @@ package io.micronaut.servlet.engine.bind;
 
 import org.jspecify.annotations.NonNull;
 import io.micronaut.core.convert.ArgumentConversionContext;
+import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.io.IOUtils;
 import io.micronaut.core.io.Readable;
 import io.micronaut.core.type.Argument;
@@ -25,11 +26,12 @@ import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.Part;
 import io.micronaut.http.bind.binders.AnnotatedRequestArgumentBinder;
-import io.micronaut.http.codec.MediaTypeCodec;
-import io.micronaut.http.codec.MediaTypeCodecRegistry;
+import io.micronaut.http.body.MessageBodyHandlerRegistry;
+import io.micronaut.http.body.MessageBodyReader;
 import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.http.multipart.CompletedFileUpload;
 import io.micronaut.http.server.exceptions.InternalServerException;
+import io.micronaut.http.simple.SimpleHttpHeaders;
 import io.micronaut.servlet.engine.ServletCompletedFileUpload;
 import io.micronaut.servlet.http.ServletExchange;
 
@@ -49,14 +51,17 @@ import java.util.Optional;
  */
 public class ServletPartBinder<T> implements AnnotatedRequestArgumentBinder<Part, T> {
 
-    private final MediaTypeCodecRegistry codecRegistry;
+    private final MessageBodyHandlerRegistry messageBodyHandlerRegistry;
+    private final ConversionService conversionService;
 
     /**
      * Default constructor.
-     * @param codecRegistry The codec registry.
+     * @param messageBodyHandlerRegistry The message body handler registry.
+     * @param conversionService The conversion service
      */
-    ServletPartBinder(MediaTypeCodecRegistry codecRegistry) {
-        this.codecRegistry = codecRegistry;
+    ServletPartBinder(MessageBodyHandlerRegistry messageBodyHandlerRegistry, ConversionService conversionService) {
+        this.messageBodyHandlerRegistry = messageBodyHandlerRegistry;
+        this.conversionService = conversionService;
     }
 
     @Override
@@ -145,11 +150,16 @@ public class ServletPartBinder<T> implements AnnotatedRequestArgumentBinder<Part
                             Optional.ofNullable(part.getContentType()).map(MediaType::new)
                             .orElse(null);
                     if (contentType != null) {
-                        final MediaTypeCodec codec = codecRegistry.findCodec(contentType, type).orElse(null);
-                        if (codec != null) {
+                        @SuppressWarnings("unchecked")
+                        MessageBodyReader<Object> reader = (MessageBodyReader<Object>) messageBodyHandlerRegistry
+                            .findReader((Argument<Object>) argument, contentType)
+                            .orElse(null);
+                        if (reader != null) {
                             try (InputStream inputStream = part.getInputStream()) {
-                                final T content = codec.decode(argument, inputStream);
-                                return () -> (Optional<T>) Optional.of(content);
+                                SimpleHttpHeaders headers = new SimpleHttpHeaders(conversionService);
+                                part.getHeaderNames().forEach(header -> part.getHeaders(header).forEach(value -> headers.add(header, value)));
+                                final T content = (T) reader.read((Argument<Object>) argument, contentType, headers, inputStream);
+                                return () -> Optional.ofNullable(content);
                             } catch (IOException e) {
                                 throw new HttpStatusException(
                                         HttpStatus.BAD_REQUEST,

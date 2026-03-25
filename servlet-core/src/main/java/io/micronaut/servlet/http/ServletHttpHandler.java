@@ -33,7 +33,6 @@ import io.micronaut.http.MutableHttpHeaders;
 import io.micronaut.http.body.AvailableByteBody;
 import io.micronaut.http.body.ByteBodyFactory;
 import io.micronaut.http.body.MessageBodyHandlerRegistry;
-import io.micronaut.http.codec.MediaTypeCodecRegistry;
 import io.micronaut.http.context.ServerHttpRequestContext;
 import io.micronaut.http.context.event.HttpRequestReceivedEvent;
 import io.micronaut.http.context.event.HttpRequestTerminatedEvent;
@@ -82,7 +81,6 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
     protected final ApplicationContext applicationContext;
     private final RouteExecutor routeExecutor;
     private final ConversionService conversionService;
-    private final MediaTypeCodecRegistry mediaTypeCodecRegistry;
     private final MessageBodyHandlerRegistry messageBodyHandlerRegistry;
     private final StaticResourceResolver staticResourceResolver;
     private final Supplier<Executor> ioExecutor;
@@ -95,7 +93,6 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
      */
     protected ServletHttpHandler(ApplicationContext applicationContext, ConversionService conversionService) {
         this.applicationContext = Objects.requireNonNull(applicationContext, "The application context cannot be null");
-        this.mediaTypeCodecRegistry = applicationContext.getBean(MediaTypeCodecRegistry.class);
         this.messageBodyHandlerRegistry = applicationContext.getBean(MessageBodyHandlerRegistry.class);
         this.staticResourceResolver = applicationContext.getBean(StaticResourceResolver.class);
         this.routeExecutor = applicationContext.getBean(RouteExecutor.class);
@@ -111,10 +108,10 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
     }
 
     /**
-     * @return The media type codec registry.
+     * @return The message body handler registry.
      */
-    public MediaTypeCodecRegistry getMediaTypeCodecRegistry() {
-        return mediaTypeCodecRegistry;
+    public MessageBodyHandlerRegistry getMessageBodyHandlerRegistry() {
+        return messageBodyHandlerRegistry;
     }
 
     /**

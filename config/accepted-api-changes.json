@@ -213,6 +213,1305 @@
     "type": "io.micronaut.servlet.http.ServletHttpHandler",
     "member": "Constructor io.micronaut.servlet.http.ServletHttpHandler(io.micronaut.context.ApplicationContext)",
     "reason": "Removed deprecated code for Micronaut Framework 5."
+  },
+  {
+    "type": "io.micronaut.servlet.http.$CodecErrorHandler$Definition",
+    "member": "Class io.micronaut.servlet.http.$CodecErrorHandler$Definition",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.http.$DefaultBodyBuilder$Definition",
+    "member": "Class io.micronaut.servlet.http.$DefaultBodyBuilder$Definition",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.http.DefaultBodyBuilder",
+    "member": "Class io.micronaut.servlet.http.DefaultBodyBuilder",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.http.encoders.$FileEncoder$Definition",
+    "member": "Class io.micronaut.servlet.http.encoders.$FileEncoder$Definition",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.http.encoders.$StreamFileEncoder$Definition",
+    "member": "Class io.micronaut.servlet.http.encoders.$StreamFileEncoder$Definition",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.http.encoders.$SystemFileEncoder$Definition",
+    "member": "Class io.micronaut.servlet.http.encoders.$SystemFileEncoder$Definition",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.http.server.$DiscoveryServerStartedEventPublisher$Definition",
+    "member": "Class io.micronaut.servlet.http.server.$DiscoveryServerStartedEventPublisher$Definition",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.http.server.$HttpServerEmbeddedServer$Definition",
+    "member": "Class io.micronaut.servlet.http.server.$HttpServerEmbeddedServer$Definition",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.http.server.$HttpServerFactory$CreateHttpServer0$Definition",
+    "member": "Class io.micronaut.servlet.http.server.$HttpServerFactory$CreateHttpServer0$Definition",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.http.server.$HttpServerFactory$Definition",
+    "member": "Class io.micronaut.servlet.http.server.$HttpServerFactory$Definition",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.http.server.$RootHttpHandlerPath$Definition",
+    "member": "Class io.micronaut.servlet.http.server.$RootHttpHandlerPath$Definition",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.http.server.$ServletStaticResourceConfiguration$Intercepted$Definition",
+    "member": "Class io.micronaut.servlet.http.server.$ServletStaticResourceConfiguration$Intercepted$Definition",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.http.ServletBinderRegistry",
+    "member": "Class io.micronaut.servlet.http.ServletBinderRegistry",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.http.ServletBodyBinder",
+    "member": "Class io.micronaut.servlet.http.ServletBodyBinder",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.http.ServletHttpHandler",
+    "member": "Class io.micronaut.servlet.http.ServletHttpHandler",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.http.DefaultBodyBuilder",
+    "member": "Constructor io.micronaut.servlet.http.DefaultBodyBuilder(io.micronaut.http.codec.MediaTypeCodecRegistry)",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.http.ServletBinderRegistry",
+    "member": "Constructor io.micronaut.servlet.http.ServletBinderRegistry(io.micronaut.http.codec.MediaTypeCodecRegistry,io.micronaut.core.convert.ConversionService,java.util.List,io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder)",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.http.ServletBodyBinder",
+    "member": "Constructor io.micronaut.servlet.http.ServletBodyBinder(io.micronaut.core.convert.ConversionService,io.micronaut.http.codec.MediaTypeCodecRegistry,io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder)",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.http.poja.$PojaBinderRegistry$Definition",
+    "member": "Class io.micronaut.http.poja.$PojaBinderRegistry$Definition",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.http.poja.PojaHttpRequest",
+    "member": "Class io.micronaut.http.poja.PojaHttpRequest",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.http.poja.PojaHttpRequest",
+    "member": "Constructor io.micronaut.http.poja.PojaHttpRequest(io.micronaut.core.convert.ConversionService,io.micronaut.http.codec.MediaTypeCodecRegistry)",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.engine.$DefaultMicronautServlet$Definition",
+    "member": "Class io.micronaut.servlet.engine.$DefaultMicronautServlet$Definition",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.engine.$DefaultServletHttpHandler$Definition",
+    "member": "Class io.micronaut.servlet.engine.$DefaultServletHttpHandler$Definition",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.engine.$MicronautServletConfiguration$Definition",
+    "member": "Class io.micronaut.servlet.engine.$MicronautServletConfiguration$Definition",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.engine.bind.$DefaultServletBinderRegistry$Definition",
+    "member": "Class io.micronaut.servlet.engine.bind.$DefaultServletBinderRegistry$Definition",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.engine.initializer.$MicronautServletInitializer$Definition",
+    "member": "Class io.micronaut.servlet.engine.initializer.$MicronautServletInitializer$Definition",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.jetty.$JettyConfiguration$ConnectorConfiguration$Definition",
+    "member": "Class io.micronaut.servlet.jetty.$JettyConfiguration$ConnectorConfiguration$Definition",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.jetty.$JettyConfiguration$Definition",
+    "member": "Class io.micronaut.servlet.jetty.$JettyConfiguration$Definition",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.jetty.$JettyConfiguration$JettyRequestLog$Definition",
+    "member": "Class io.micronaut.servlet.jetty.$JettyConfiguration$JettyRequestLog$Definition",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.jetty.$JettyConfiguration$JettySslConfiguration$Definition",
+    "member": "Class io.micronaut.servlet.jetty.$JettyConfiguration$JettySslConfiguration$Definition",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.jetty.$JettyFactory$Definition",
+    "member": "Class io.micronaut.servlet.jetty.$JettyFactory$Definition",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.jetty.$JettyFactory$JettyServer0$Definition",
+    "member": "Class io.micronaut.servlet.jetty.$JettyFactory$JettyServer0$Definition",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.jetty.$JettyFactory$RequestLog1$Definition",
+    "member": "Class io.micronaut.servlet.jetty.$JettyFactory$RequestLog1$Definition",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.jetty.$JettyFactory$RequestLogImpl2$Definition",
+    "member": "Class io.micronaut.servlet.jetty.$JettyFactory$RequestLogImpl2$Definition",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.jetty.$JettyServer$Definition",
+    "member": "Class io.micronaut.servlet.jetty.$JettyServer$Definition",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.jetty.$JettySslContextReload$Definition",
+    "member": "Class io.micronaut.servlet.jetty.$JettySslContextReload$Definition",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.jetty.$JettySSLSessionProvider$Definition",
+    "member": "Class io.micronaut.servlet.jetty.$JettySSLSessionProvider$Definition",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.undertow.$UndertowConfiguration$AccessLogConfiguration$Definition",
+    "member": "Class io.micronaut.servlet.undertow.$UndertowConfiguration$AccessLogConfiguration$Definition",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.undertow.$UndertowConfiguration$Definition",
+    "member": "Class io.micronaut.servlet.undertow.$UndertowConfiguration$Definition",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.undertow.$UndertowFactory$Definition",
+    "member": "Class io.micronaut.servlet.undertow.$UndertowFactory$Definition",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.undertow.$UndertowFactory$DeploymentInfo2$Definition",
+    "member": "Class io.micronaut.servlet.undertow.$UndertowFactory$DeploymentInfo2$Definition",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.undertow.$UndertowFactory$UndertowBuilder0$Definition",
+    "member": "Class io.micronaut.servlet.undertow.$UndertowFactory$UndertowBuilder0$Definition",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.undertow.$UndertowFactory$UndertowServer1$Definition",
+    "member": "Class io.micronaut.servlet.undertow.$UndertowFactory$UndertowServer1$Definition",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.undertow.$UndertowServer$Definition",
+    "member": "Class io.micronaut.servlet.undertow.$UndertowServer$Definition",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.tomcat.$TomcatConfiguration$AccessLogConfiguration$Definition",
+    "member": "Class io.micronaut.servlet.tomcat.$TomcatConfiguration$AccessLogConfiguration$Definition",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.tomcat.$TomcatConfiguration$Definition",
+    "member": "Class io.micronaut.servlet.tomcat.$TomcatConfiguration$Definition",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.tomcat.$TomcatFactory$Definition",
+    "member": "Class io.micronaut.servlet.tomcat.$TomcatFactory$Definition",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.tomcat.$TomcatFactory$SslConnector2$Definition",
+    "member": "Class io.micronaut.servlet.tomcat.$TomcatFactory$SslConnector2$Definition",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.tomcat.$TomcatFactory$TomcatConnector1$Definition",
+    "member": "Class io.micronaut.servlet.tomcat.$TomcatFactory$TomcatConnector1$Definition",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.tomcat.$TomcatFactory$TomcatServer0$Definition",
+    "member": "Class io.micronaut.servlet.tomcat.$TomcatFactory$TomcatServer0$Definition",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.tomcat.$TomcatServer$Definition",
+    "member": "Class io.micronaut.servlet.tomcat.$TomcatServer$Definition",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.tomcat.$TomcatVirtualThreadEnabler$Definition",
+    "member": "Class io.micronaut.servlet.tomcat.$TomcatVirtualThreadEnabler$Definition",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.http.poja.test.$TestingServerlessEmbeddedApplication$Definition",
+    "member": "Class io.micronaut.http.poja.test.$TestingServerlessEmbeddedApplication$Definition",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.http.poja.apache.$ApacheServerlessApplication$Definition",
+    "member": "Class io.micronaut.http.poja.apache.$ApacheServerlessApplication$Definition",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.http.poja.apache.$ApacheServletConfiguration$Definition",
+    "member": "Class io.micronaut.http.poja.apache.$ApacheServletConfiguration$Definition",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.http.poja.apache.ApacheServletHttpRequest",
+    "member": "Class io.micronaut.http.poja.apache.ApacheServletHttpRequest",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.http.poja.apache.ApacheServletHttpRequest",
+    "member": "Constructor io.micronaut.http.poja.apache.ApacheServletHttpRequest(java.io.InputStream,io.micronaut.http.poja.apache.ApacheResponseContext,org.apache.hc.core5.http.io.SessionInputBuffer,io.micronaut.core.convert.ConversionService,io.micronaut.http.codec.MediaTypeCodecRegistry,java.util.concurrent.ExecutorService,io.micronaut.core.io.buffer.ByteBufferFactory)",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.info.MicronautServletCoreModuleInfo",
+    "member": "Class io.micronaut.servlet.info.MicronautServletCoreModuleInfo",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.http.DefaultBodyBuilder",
+    "member": "Constructor io.micronaut.servlet.http.DefaultBodyBuilder(io.micronaut.http.body.MessageBodyHandlerRegistry)",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.http.ServletBinderRegistry",
+    "member": "Constructor io.micronaut.servlet.http.ServletBinderRegistry(io.micronaut.http.body.MessageBodyHandlerRegistry,io.micronaut.core.convert.ConversionService,java.util.List,io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder)",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.http.ServletBodyBinder",
+    "member": "Constructor io.micronaut.servlet.http.ServletBodyBinder(io.micronaut.core.convert.ConversionService,io.micronaut.http.body.MessageBodyHandlerRegistry,io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder)",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.info.MicronautServletCoreModuleInfo",
+    "member": "Constructor io.micronaut.servlet.info.MicronautServletCoreModuleInfo()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.http.$CodecErrorHandler$Definition.getExposedTypes",
+    "member": "Method io.micronaut.servlet.http.$CodecErrorHandler$Definition.getExposedTypes()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.http.$CodecErrorHandler$Definition.getReplacesDefinition",
+    "member": "Method io.micronaut.servlet.http.$CodecErrorHandler$Definition.getReplacesDefinition()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.http.$CodecErrorHandler$Definition.isParallel",
+    "member": "Method io.micronaut.servlet.http.$CodecErrorHandler$Definition.isParallel()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.http.$DefaultBodyBuilder$Definition.getExposedTypes",
+    "member": "Method io.micronaut.servlet.http.$DefaultBodyBuilder$Definition.getExposedTypes()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.http.$DefaultBodyBuilder$Definition.getReplacesDefinition",
+    "member": "Method io.micronaut.servlet.http.$DefaultBodyBuilder$Definition.getReplacesDefinition()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.http.$DefaultBodyBuilder$Definition.isCandidateBean",
+    "member": "Method io.micronaut.servlet.http.$DefaultBodyBuilder$Definition.isCandidateBean(io.micronaut.core.type.Argument)",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.http.$DefaultBodyBuilder$Definition.isParallel",
+    "member": "Method io.micronaut.servlet.http.$DefaultBodyBuilder$Definition.isParallel()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.http.encoders.$FileEncoder$Definition.getExposedTypes",
+    "member": "Method io.micronaut.servlet.http.encoders.$FileEncoder$Definition.getExposedTypes()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.http.encoders.$FileEncoder$Definition.getIndexes",
+    "member": "Method io.micronaut.servlet.http.encoders.$FileEncoder$Definition.getIndexes()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.http.encoders.$FileEncoder$Definition.getReplacesDefinition",
+    "member": "Method io.micronaut.servlet.http.encoders.$FileEncoder$Definition.getReplacesDefinition()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.http.encoders.$FileEncoder$Definition.isParallel",
+    "member": "Method io.micronaut.servlet.http.encoders.$FileEncoder$Definition.isParallel()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.http.encoders.$StreamFileEncoder$Definition.getExposedTypes",
+    "member": "Method io.micronaut.servlet.http.encoders.$StreamFileEncoder$Definition.getExposedTypes()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.http.encoders.$StreamFileEncoder$Definition.getIndexes",
+    "member": "Method io.micronaut.servlet.http.encoders.$StreamFileEncoder$Definition.getIndexes()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.http.encoders.$StreamFileEncoder$Definition.getReplacesDefinition",
+    "member": "Method io.micronaut.servlet.http.encoders.$StreamFileEncoder$Definition.getReplacesDefinition()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.http.encoders.$StreamFileEncoder$Definition.isParallel",
+    "member": "Method io.micronaut.servlet.http.encoders.$StreamFileEncoder$Definition.isParallel()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.http.encoders.$SystemFileEncoder$Definition.getExposedTypes",
+    "member": "Method io.micronaut.servlet.http.encoders.$SystemFileEncoder$Definition.getExposedTypes()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.http.encoders.$SystemFileEncoder$Definition.getIndexes",
+    "member": "Method io.micronaut.servlet.http.encoders.$SystemFileEncoder$Definition.getIndexes()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.http.encoders.$SystemFileEncoder$Definition.getReplacesDefinition",
+    "member": "Method io.micronaut.servlet.http.encoders.$SystemFileEncoder$Definition.getReplacesDefinition()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.http.encoders.$SystemFileEncoder$Definition.isParallel",
+    "member": "Method io.micronaut.servlet.http.encoders.$SystemFileEncoder$Definition.isParallel()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.http.server.$DiscoveryServerStartedEventPublisher$Definition.getExposedTypes",
+    "member": "Method io.micronaut.servlet.http.server.$DiscoveryServerStartedEventPublisher$Definition.getExposedTypes()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.http.server.$DiscoveryServerStartedEventPublisher$Definition.getIndexes",
+    "member": "Method io.micronaut.servlet.http.server.$DiscoveryServerStartedEventPublisher$Definition.getIndexes()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.http.server.$DiscoveryServerStartedEventPublisher$Definition.getReplacesDefinition",
+    "member": "Method io.micronaut.servlet.http.server.$DiscoveryServerStartedEventPublisher$Definition.getReplacesDefinition()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.http.server.$DiscoveryServerStartedEventPublisher$Definition.isParallel",
+    "member": "Method io.micronaut.servlet.http.server.$DiscoveryServerStartedEventPublisher$Definition.isParallel()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.http.server.$HttpServerEmbeddedServer$Definition.getExposedTypes",
+    "member": "Method io.micronaut.servlet.http.server.$HttpServerEmbeddedServer$Definition.getExposedTypes()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.http.server.$HttpServerEmbeddedServer$Definition.getReplacesDefinition",
+    "member": "Method io.micronaut.servlet.http.server.$HttpServerEmbeddedServer$Definition.getReplacesDefinition()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.http.server.$HttpServerEmbeddedServer$Definition.isParallel",
+    "member": "Method io.micronaut.servlet.http.server.$HttpServerEmbeddedServer$Definition.isParallel()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.http.server.$HttpServerFactory$CreateHttpServer0$Definition.getExposedTypes",
+    "member": "Method io.micronaut.servlet.http.server.$HttpServerFactory$CreateHttpServer0$Definition.getExposedTypes()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.http.server.$HttpServerFactory$CreateHttpServer0$Definition.getReplacesDefinition",
+    "member": "Method io.micronaut.servlet.http.server.$HttpServerFactory$CreateHttpServer0$Definition.getReplacesDefinition()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.http.server.$HttpServerFactory$CreateHttpServer0$Definition.isCandidateBean",
+    "member": "Method io.micronaut.servlet.http.server.$HttpServerFactory$CreateHttpServer0$Definition.isCandidateBean(io.micronaut.core.type.Argument)",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.http.server.$HttpServerFactory$CreateHttpServer0$Definition.isParallel",
+    "member": "Method io.micronaut.servlet.http.server.$HttpServerFactory$CreateHttpServer0$Definition.isParallel()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.http.server.$HttpServerFactory$Definition.getExposedTypes",
+    "member": "Method io.micronaut.servlet.http.server.$HttpServerFactory$Definition.getExposedTypes()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.http.server.$HttpServerFactory$Definition.getReplacesDefinition",
+    "member": "Method io.micronaut.servlet.http.server.$HttpServerFactory$Definition.getReplacesDefinition()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.http.server.$HttpServerFactory$Definition.isCandidateBean",
+    "member": "Method io.micronaut.servlet.http.server.$HttpServerFactory$Definition.isCandidateBean(io.micronaut.core.type.Argument)",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.http.server.$HttpServerFactory$Definition.isParallel",
+    "member": "Method io.micronaut.servlet.http.server.$HttpServerFactory$Definition.isParallel()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.http.server.$RootHttpHandlerPath$Definition.getExposedTypes",
+    "member": "Method io.micronaut.servlet.http.server.$RootHttpHandlerPath$Definition.getExposedTypes()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.http.server.$RootHttpHandlerPath$Definition.getReplacesDefinition",
+    "member": "Method io.micronaut.servlet.http.server.$RootHttpHandlerPath$Definition.getReplacesDefinition()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.http.server.$RootHttpHandlerPath$Definition.isCandidateBean",
+    "member": "Method io.micronaut.servlet.http.server.$RootHttpHandlerPath$Definition.isCandidateBean(io.micronaut.core.type.Argument)",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.http.server.$RootHttpHandlerPath$Definition.isParallel",
+    "member": "Method io.micronaut.servlet.http.server.$RootHttpHandlerPath$Definition.isParallel()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.http.server.$ServletStaticResourceConfiguration$Intercepted$Definition.getExposedTypes",
+    "member": "Method io.micronaut.servlet.http.server.$ServletStaticResourceConfiguration$Intercepted$Definition.getExposedTypes()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.http.server.$ServletStaticResourceConfiguration$Intercepted$Definition.getIndexes",
+    "member": "Method io.micronaut.servlet.http.server.$ServletStaticResourceConfiguration$Intercepted$Definition.getIndexes()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.http.server.$ServletStaticResourceConfiguration$Intercepted$Definition.getReplacesDefinition",
+    "member": "Method io.micronaut.servlet.http.server.$ServletStaticResourceConfiguration$Intercepted$Definition.getReplacesDefinition()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.http.server.$ServletStaticResourceConfiguration$Intercepted$Definition.isCandidateBean",
+    "member": "Method io.micronaut.servlet.http.server.$ServletStaticResourceConfiguration$Intercepted$Definition.isCandidateBean(io.micronaut.core.type.Argument)",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.http.server.$ServletStaticResourceConfiguration$Intercepted$Definition.isParallel",
+    "member": "Method io.micronaut.servlet.http.server.$ServletStaticResourceConfiguration$Intercepted$Definition.isParallel()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.http.ServletBinderRegistry.newServletBodyBinder",
+    "member": "Method io.micronaut.servlet.http.ServletBinderRegistry.newServletBodyBinder(io.micronaut.http.codec.MediaTypeCodecRegistry,io.micronaut.core.convert.ConversionService,io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder)",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.http.ServletBinderRegistry.newServletBodyBinder",
+    "member": "Method io.micronaut.servlet.http.ServletBinderRegistry.newServletBodyBinder(io.micronaut.http.body.MessageBodyHandlerRegistry,io.micronaut.core.convert.ConversionService,io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder)",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.http.ServletHttpHandler.getMediaTypeCodecRegistry",
+    "member": "Method io.micronaut.servlet.http.ServletHttpHandler.getMediaTypeCodecRegistry()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.http.ServletHttpHandler.getMessageBodyHandlerRegistry",
+    "member": "Method io.micronaut.servlet.http.ServletHttpHandler.getMessageBodyHandlerRegistry()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.info.MicronautServletProcessorModuleInfo",
+    "member": "Class io.micronaut.servlet.info.MicronautServletProcessorModuleInfo",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.info.MicronautServletProcessorModuleInfo",
+    "member": "Constructor io.micronaut.servlet.info.MicronautServletProcessorModuleInfo()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.info.MicronautServletApiModuleInfo",
+    "member": "Class io.micronaut.servlet.info.MicronautServletApiModuleInfo",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.info.MicronautServletApiModuleInfo",
+    "member": "Constructor io.micronaut.servlet.info.MicronautServletApiModuleInfo()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.info.MicronautHttpPojaCommonModuleInfo",
+    "member": "Class io.micronaut.servlet.info.MicronautHttpPojaCommonModuleInfo",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.http.poja.PojaHttpRequest",
+    "member": "Constructor io.micronaut.http.poja.PojaHttpRequest(io.micronaut.core.convert.ConversionService,io.micronaut.http.body.MessageBodyHandlerRegistry)",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.info.MicronautHttpPojaCommonModuleInfo",
+    "member": "Constructor io.micronaut.servlet.info.MicronautHttpPojaCommonModuleInfo()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.http.poja.$PojaBinderRegistry$Definition.getExposedTypes",
+    "member": "Method io.micronaut.http.poja.$PojaBinderRegistry$Definition.getExposedTypes()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.http.poja.$PojaBinderRegistry$Definition.getReplacesDefinition",
+    "member": "Method io.micronaut.http.poja.$PojaBinderRegistry$Definition.getReplacesDefinition()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.http.poja.$PojaBinderRegistry$Definition.isParallel",
+    "member": "Method io.micronaut.http.poja.$PojaBinderRegistry$Definition.isParallel()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "",
+    "member": "Field codecRegistry",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "",
+    "member": "Field messageBodyHandlerRegistry",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.info.MicronautServletEngineModuleInfo",
+    "member": "Class io.micronaut.servlet.info.MicronautServletEngineModuleInfo",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.info.MicronautServletEngineModuleInfo",
+    "member": "Constructor io.micronaut.servlet.info.MicronautServletEngineModuleInfo()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.engine.$DefaultMicronautServlet$Definition.getExposedTypes",
+    "member": "Method io.micronaut.servlet.engine.$DefaultMicronautServlet$Definition.getExposedTypes()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.engine.$DefaultMicronautServlet$Definition.getReplacesDefinition",
+    "member": "Method io.micronaut.servlet.engine.$DefaultMicronautServlet$Definition.getReplacesDefinition()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.engine.$DefaultMicronautServlet$Definition.isCandidateBean",
+    "member": "Method io.micronaut.servlet.engine.$DefaultMicronautServlet$Definition.isCandidateBean(io.micronaut.core.type.Argument)",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.engine.$DefaultMicronautServlet$Definition.isParallel",
+    "member": "Method io.micronaut.servlet.engine.$DefaultMicronautServlet$Definition.isParallel()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.engine.$DefaultServletHttpHandler$Definition.getExposedTypes",
+    "member": "Method io.micronaut.servlet.engine.$DefaultServletHttpHandler$Definition.getExposedTypes()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.engine.$DefaultServletHttpHandler$Definition.getReplacesDefinition",
+    "member": "Method io.micronaut.servlet.engine.$DefaultServletHttpHandler$Definition.getReplacesDefinition()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.engine.$DefaultServletHttpHandler$Definition.isParallel",
+    "member": "Method io.micronaut.servlet.engine.$DefaultServletHttpHandler$Definition.isParallel()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.engine.$MicronautServletConfiguration$Definition.getExposedTypes",
+    "member": "Method io.micronaut.servlet.engine.$MicronautServletConfiguration$Definition.getExposedTypes()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.engine.$MicronautServletConfiguration$Definition.getReplacesDefinition",
+    "member": "Method io.micronaut.servlet.engine.$MicronautServletConfiguration$Definition.getReplacesDefinition()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.engine.$MicronautServletConfiguration$Definition.isCandidateBean",
+    "member": "Method io.micronaut.servlet.engine.$MicronautServletConfiguration$Definition.isCandidateBean(io.micronaut.core.type.Argument)",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.engine.$MicronautServletConfiguration$Definition.isParallel",
+    "member": "Method io.micronaut.servlet.engine.$MicronautServletConfiguration$Definition.isParallel()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.engine.bind.$DefaultServletBinderRegistry$Definition.getExposedTypes",
+    "member": "Method io.micronaut.servlet.engine.bind.$DefaultServletBinderRegistry$Definition.getExposedTypes()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.engine.bind.$DefaultServletBinderRegistry$Definition.getReplacesDefinition",
+    "member": "Method io.micronaut.servlet.engine.bind.$DefaultServletBinderRegistry$Definition.getReplacesDefinition()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.engine.bind.$DefaultServletBinderRegistry$Definition.isParallel",
+    "member": "Method io.micronaut.servlet.engine.bind.$DefaultServletBinderRegistry$Definition.isParallel()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.engine.initializer.$MicronautServletInitializer$Definition.getExposedTypes",
+    "member": "Method io.micronaut.servlet.engine.initializer.$MicronautServletInitializer$Definition.getExposedTypes()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.engine.initializer.$MicronautServletInitializer$Definition.getReplacesDefinition",
+    "member": "Method io.micronaut.servlet.engine.initializer.$MicronautServletInitializer$Definition.getReplacesDefinition()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.engine.initializer.$MicronautServletInitializer$Definition.isCandidateBean",
+    "member": "Method io.micronaut.servlet.engine.initializer.$MicronautServletInitializer$Definition.isCandidateBean(io.micronaut.core.type.Argument)",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.engine.initializer.$MicronautServletInitializer$Definition.isParallel",
+    "member": "Method io.micronaut.servlet.engine.initializer.$MicronautServletInitializer$Definition.isParallel()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.info.MicronautHttpServerJettyModuleInfo",
+    "member": "Class io.micronaut.servlet.info.MicronautHttpServerJettyModuleInfo",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.info.MicronautHttpServerJettyModuleInfo",
+    "member": "Constructor io.micronaut.servlet.info.MicronautHttpServerJettyModuleInfo()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.jetty.$JettyConfiguration$ConnectorConfiguration$Definition.getExposedTypes",
+    "member": "Method io.micronaut.servlet.jetty.$JettyConfiguration$ConnectorConfiguration$Definition.getExposedTypes()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.jetty.$JettyConfiguration$ConnectorConfiguration$Definition.getReplacesDefinition",
+    "member": "Method io.micronaut.servlet.jetty.$JettyConfiguration$ConnectorConfiguration$Definition.getReplacesDefinition()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.jetty.$JettyConfiguration$ConnectorConfiguration$Definition.isCandidateBean",
+    "member": "Method io.micronaut.servlet.jetty.$JettyConfiguration$ConnectorConfiguration$Definition.isCandidateBean(io.micronaut.core.type.Argument)",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.jetty.$JettyConfiguration$ConnectorConfiguration$Definition.isParallel",
+    "member": "Method io.micronaut.servlet.jetty.$JettyConfiguration$ConnectorConfiguration$Definition.isParallel()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.jetty.$JettyConfiguration$Definition.getExposedTypes",
+    "member": "Method io.micronaut.servlet.jetty.$JettyConfiguration$Definition.getExposedTypes()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.jetty.$JettyConfiguration$Definition.getReplacesDefinition",
+    "member": "Method io.micronaut.servlet.jetty.$JettyConfiguration$Definition.getReplacesDefinition()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.jetty.$JettyConfiguration$Definition.isCandidateBean",
+    "member": "Method io.micronaut.servlet.jetty.$JettyConfiguration$Definition.isCandidateBean(io.micronaut.core.type.Argument)",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.jetty.$JettyConfiguration$Definition.isParallel",
+    "member": "Method io.micronaut.servlet.jetty.$JettyConfiguration$Definition.isParallel()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.jetty.$JettyConfiguration$JettyRequestLog$Definition.getExposedTypes",
+    "member": "Method io.micronaut.servlet.jetty.$JettyConfiguration$JettyRequestLog$Definition.getExposedTypes()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.jetty.$JettyConfiguration$JettyRequestLog$Definition.getReplacesDefinition",
+    "member": "Method io.micronaut.servlet.jetty.$JettyConfiguration$JettyRequestLog$Definition.getReplacesDefinition()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.jetty.$JettyConfiguration$JettyRequestLog$Definition.isCandidateBean",
+    "member": "Method io.micronaut.servlet.jetty.$JettyConfiguration$JettyRequestLog$Definition.isCandidateBean(io.micronaut.core.type.Argument)",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.jetty.$JettyConfiguration$JettyRequestLog$Definition.isParallel",
+    "member": "Method io.micronaut.servlet.jetty.$JettyConfiguration$JettyRequestLog$Definition.isParallel()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.jetty.$JettyConfiguration$JettySslConfiguration$Definition.getExposedTypes",
+    "member": "Method io.micronaut.servlet.jetty.$JettyConfiguration$JettySslConfiguration$Definition.getExposedTypes()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.jetty.$JettyConfiguration$JettySslConfiguration$Definition.getReplacesDefinition",
+    "member": "Method io.micronaut.servlet.jetty.$JettyConfiguration$JettySslConfiguration$Definition.getReplacesDefinition()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.jetty.$JettyConfiguration$JettySslConfiguration$Definition.isCandidateBean",
+    "member": "Method io.micronaut.servlet.jetty.$JettyConfiguration$JettySslConfiguration$Definition.isCandidateBean(io.micronaut.core.type.Argument)",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.jetty.$JettyConfiguration$JettySslConfiguration$Definition.isParallel",
+    "member": "Method io.micronaut.servlet.jetty.$JettyConfiguration$JettySslConfiguration$Definition.isParallel()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.jetty.$JettyFactory$Definition.getExposedTypes",
+    "member": "Method io.micronaut.servlet.jetty.$JettyFactory$Definition.getExposedTypes()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.jetty.$JettyFactory$Definition.getReplacesDefinition",
+    "member": "Method io.micronaut.servlet.jetty.$JettyFactory$Definition.getReplacesDefinition()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.jetty.$JettyFactory$Definition.isParallel",
+    "member": "Method io.micronaut.servlet.jetty.$JettyFactory$Definition.isParallel()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.jetty.$JettyFactory$JettyServer0$Definition.getExposedTypes",
+    "member": "Method io.micronaut.servlet.jetty.$JettyFactory$JettyServer0$Definition.getExposedTypes()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.jetty.$JettyFactory$JettyServer0$Definition.getReplacesDefinition",
+    "member": "Method io.micronaut.servlet.jetty.$JettyFactory$JettyServer0$Definition.getReplacesDefinition()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.jetty.$JettyFactory$JettyServer0$Definition.isCandidateBean",
+    "member": "Method io.micronaut.servlet.jetty.$JettyFactory$JettyServer0$Definition.isCandidateBean(io.micronaut.core.type.Argument)",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.jetty.$JettyFactory$JettyServer0$Definition.isParallel",
+    "member": "Method io.micronaut.servlet.jetty.$JettyFactory$JettyServer0$Definition.isParallel()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.jetty.$JettyFactory$RequestLog1$Definition.getExposedTypes",
+    "member": "Method io.micronaut.servlet.jetty.$JettyFactory$RequestLog1$Definition.getExposedTypes()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.jetty.$JettyFactory$RequestLog1$Definition.getReplacesDefinition",
+    "member": "Method io.micronaut.servlet.jetty.$JettyFactory$RequestLog1$Definition.getReplacesDefinition()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.jetty.$JettyFactory$RequestLog1$Definition.isCandidateBean",
+    "member": "Method io.micronaut.servlet.jetty.$JettyFactory$RequestLog1$Definition.isCandidateBean(io.micronaut.core.type.Argument)",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.jetty.$JettyFactory$RequestLog1$Definition.isParallel",
+    "member": "Method io.micronaut.servlet.jetty.$JettyFactory$RequestLog1$Definition.isParallel()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.jetty.$JettyFactory$RequestLogImpl2$Definition.getExposedTypes",
+    "member": "Method io.micronaut.servlet.jetty.$JettyFactory$RequestLogImpl2$Definition.getExposedTypes()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.jetty.$JettyFactory$RequestLogImpl2$Definition.getReplacesDefinition",
+    "member": "Method io.micronaut.servlet.jetty.$JettyFactory$RequestLogImpl2$Definition.getReplacesDefinition()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.jetty.$JettyFactory$RequestLogImpl2$Definition.isCandidateBean",
+    "member": "Method io.micronaut.servlet.jetty.$JettyFactory$RequestLogImpl2$Definition.isCandidateBean(io.micronaut.core.type.Argument)",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.jetty.$JettyFactory$RequestLogImpl2$Definition.isParallel",
+    "member": "Method io.micronaut.servlet.jetty.$JettyFactory$RequestLogImpl2$Definition.isParallel()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.jetty.$JettyServer$Definition.getExposedTypes",
+    "member": "Method io.micronaut.servlet.jetty.$JettyServer$Definition.getExposedTypes()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.jetty.$JettyServer$Definition.getReplacesDefinition",
+    "member": "Method io.micronaut.servlet.jetty.$JettyServer$Definition.getReplacesDefinition()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.jetty.$JettyServer$Definition.isParallel",
+    "member": "Method io.micronaut.servlet.jetty.$JettyServer$Definition.isParallel()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.jetty.$JettySslContextReload$Definition.getExposedTypes",
+    "member": "Method io.micronaut.servlet.jetty.$JettySslContextReload$Definition.getExposedTypes()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.jetty.$JettySslContextReload$Definition.getIndexes",
+    "member": "Method io.micronaut.servlet.jetty.$JettySslContextReload$Definition.getIndexes()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.jetty.$JettySslContextReload$Definition.getReplacesDefinition",
+    "member": "Method io.micronaut.servlet.jetty.$JettySslContextReload$Definition.getReplacesDefinition()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.jetty.$JettySslContextReload$Definition.isParallel",
+    "member": "Method io.micronaut.servlet.jetty.$JettySslContextReload$Definition.isParallel()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.jetty.$JettySSLSessionProvider$Definition.getExposedTypes",
+    "member": "Method io.micronaut.servlet.jetty.$JettySSLSessionProvider$Definition.getExposedTypes()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.jetty.$JettySSLSessionProvider$Definition.getReplacesDefinition",
+    "member": "Method io.micronaut.servlet.jetty.$JettySSLSessionProvider$Definition.getReplacesDefinition()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.jetty.$JettySSLSessionProvider$Definition.isCandidateBean",
+    "member": "Method io.micronaut.servlet.jetty.$JettySSLSessionProvider$Definition.isCandidateBean(io.micronaut.core.type.Argument)",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.jetty.$JettySSLSessionProvider$Definition.isParallel",
+    "member": "Method io.micronaut.servlet.jetty.$JettySSLSessionProvider$Definition.isParallel()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.info.MicronautHttpServerUndertowModuleInfo",
+    "member": "Class io.micronaut.servlet.info.MicronautHttpServerUndertowModuleInfo",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.info.MicronautHttpServerUndertowModuleInfo",
+    "member": "Constructor io.micronaut.servlet.info.MicronautHttpServerUndertowModuleInfo()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.undertow.$UndertowConfiguration$AccessLogConfiguration$Definition.getExposedTypes",
+    "member": "Method io.micronaut.servlet.undertow.$UndertowConfiguration$AccessLogConfiguration$Definition.getExposedTypes()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.undertow.$UndertowConfiguration$AccessLogConfiguration$Definition.getReplacesDefinition",
+    "member": "Method io.micronaut.servlet.undertow.$UndertowConfiguration$AccessLogConfiguration$Definition.getReplacesDefinition()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.undertow.$UndertowConfiguration$AccessLogConfiguration$Definition.isCandidateBean",
+    "member": "Method io.micronaut.servlet.undertow.$UndertowConfiguration$AccessLogConfiguration$Definition.isCandidateBean(io.micronaut.core.type.Argument)",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.undertow.$UndertowConfiguration$AccessLogConfiguration$Definition.isParallel",
+    "member": "Method io.micronaut.servlet.undertow.$UndertowConfiguration$AccessLogConfiguration$Definition.isParallel()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.undertow.$UndertowConfiguration$Definition.getExposedTypes",
+    "member": "Method io.micronaut.servlet.undertow.$UndertowConfiguration$Definition.getExposedTypes()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.undertow.$UndertowConfiguration$Definition.getReplacesDefinition",
+    "member": "Method io.micronaut.servlet.undertow.$UndertowConfiguration$Definition.getReplacesDefinition()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.undertow.$UndertowConfiguration$Definition.isCandidateBean",
+    "member": "Method io.micronaut.servlet.undertow.$UndertowConfiguration$Definition.isCandidateBean(io.micronaut.core.type.Argument)",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.undertow.$UndertowConfiguration$Definition.isParallel",
+    "member": "Method io.micronaut.servlet.undertow.$UndertowConfiguration$Definition.isParallel()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.undertow.$UndertowFactory$Definition.getExposedTypes",
+    "member": "Method io.micronaut.servlet.undertow.$UndertowFactory$Definition.getExposedTypes()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.undertow.$UndertowFactory$Definition.getReplacesDefinition",
+    "member": "Method io.micronaut.servlet.undertow.$UndertowFactory$Definition.getReplacesDefinition()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.undertow.$UndertowFactory$Definition.isParallel",
+    "member": "Method io.micronaut.servlet.undertow.$UndertowFactory$Definition.isParallel()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.undertow.$UndertowFactory$DeploymentInfo2$Definition.getExposedTypes",
+    "member": "Method io.micronaut.servlet.undertow.$UndertowFactory$DeploymentInfo2$Definition.getExposedTypes()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.undertow.$UndertowFactory$DeploymentInfo2$Definition.getReplacesDefinition",
+    "member": "Method io.micronaut.servlet.undertow.$UndertowFactory$DeploymentInfo2$Definition.getReplacesDefinition()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.undertow.$UndertowFactory$DeploymentInfo2$Definition.isCandidateBean",
+    "member": "Method io.micronaut.servlet.undertow.$UndertowFactory$DeploymentInfo2$Definition.isCandidateBean(io.micronaut.core.type.Argument)",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.undertow.$UndertowFactory$DeploymentInfo2$Definition.isParallel",
+    "member": "Method io.micronaut.servlet.undertow.$UndertowFactory$DeploymentInfo2$Definition.isParallel()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.undertow.$UndertowFactory$UndertowBuilder0$Definition.getExposedTypes",
+    "member": "Method io.micronaut.servlet.undertow.$UndertowFactory$UndertowBuilder0$Definition.getExposedTypes()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.undertow.$UndertowFactory$UndertowBuilder0$Definition.getReplacesDefinition",
+    "member": "Method io.micronaut.servlet.undertow.$UndertowFactory$UndertowBuilder0$Definition.getReplacesDefinition()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.undertow.$UndertowFactory$UndertowBuilder0$Definition.isCandidateBean",
+    "member": "Method io.micronaut.servlet.undertow.$UndertowFactory$UndertowBuilder0$Definition.isCandidateBean(io.micronaut.core.type.Argument)",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.undertow.$UndertowFactory$UndertowBuilder0$Definition.isParallel",
+    "member": "Method io.micronaut.servlet.undertow.$UndertowFactory$UndertowBuilder0$Definition.isParallel()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.undertow.$UndertowFactory$UndertowServer1$Definition.getExposedTypes",
+    "member": "Method io.micronaut.servlet.undertow.$UndertowFactory$UndertowServer1$Definition.getExposedTypes()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.undertow.$UndertowFactory$UndertowServer1$Definition.getReplacesDefinition",
+    "member": "Method io.micronaut.servlet.undertow.$UndertowFactory$UndertowServer1$Definition.getReplacesDefinition()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.undertow.$UndertowFactory$UndertowServer1$Definition.isCandidateBean",
+    "member": "Method io.micronaut.servlet.undertow.$UndertowFactory$UndertowServer1$Definition.isCandidateBean(io.micronaut.core.type.Argument)",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.undertow.$UndertowFactory$UndertowServer1$Definition.isParallel",
+    "member": "Method io.micronaut.servlet.undertow.$UndertowFactory$UndertowServer1$Definition.isParallel()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.undertow.$UndertowServer$Definition.getExposedTypes",
+    "member": "Method io.micronaut.servlet.undertow.$UndertowServer$Definition.getExposedTypes()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.undertow.$UndertowServer$Definition.getReplacesDefinition",
+    "member": "Method io.micronaut.servlet.undertow.$UndertowServer$Definition.getReplacesDefinition()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.undertow.$UndertowServer$Definition.isParallel",
+    "member": "Method io.micronaut.servlet.undertow.$UndertowServer$Definition.isParallel()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.info.MicronautHttpServerTomcatModuleInfo",
+    "member": "Class io.micronaut.servlet.info.MicronautHttpServerTomcatModuleInfo",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.info.MicronautHttpServerTomcatModuleInfo",
+    "member": "Constructor io.micronaut.servlet.info.MicronautHttpServerTomcatModuleInfo()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.tomcat.$TomcatConfiguration$AccessLogConfiguration$Definition.getExposedTypes",
+    "member": "Method io.micronaut.servlet.tomcat.$TomcatConfiguration$AccessLogConfiguration$Definition.getExposedTypes()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.tomcat.$TomcatConfiguration$AccessLogConfiguration$Definition.getReplacesDefinition",
+    "member": "Method io.micronaut.servlet.tomcat.$TomcatConfiguration$AccessLogConfiguration$Definition.getReplacesDefinition()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.tomcat.$TomcatConfiguration$AccessLogConfiguration$Definition.isCandidateBean",
+    "member": "Method io.micronaut.servlet.tomcat.$TomcatConfiguration$AccessLogConfiguration$Definition.isCandidateBean(io.micronaut.core.type.Argument)",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.tomcat.$TomcatConfiguration$AccessLogConfiguration$Definition.isParallel",
+    "member": "Method io.micronaut.servlet.tomcat.$TomcatConfiguration$AccessLogConfiguration$Definition.isParallel()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.tomcat.$TomcatConfiguration$Definition.getExposedTypes",
+    "member": "Method io.micronaut.servlet.tomcat.$TomcatConfiguration$Definition.getExposedTypes()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.tomcat.$TomcatConfiguration$Definition.getReplacesDefinition",
+    "member": "Method io.micronaut.servlet.tomcat.$TomcatConfiguration$Definition.getReplacesDefinition()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.tomcat.$TomcatConfiguration$Definition.isCandidateBean",
+    "member": "Method io.micronaut.servlet.tomcat.$TomcatConfiguration$Definition.isCandidateBean(io.micronaut.core.type.Argument)",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.tomcat.$TomcatConfiguration$Definition.isParallel",
+    "member": "Method io.micronaut.servlet.tomcat.$TomcatConfiguration$Definition.isParallel()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.tomcat.$TomcatFactory$Definition.getExposedTypes",
+    "member": "Method io.micronaut.servlet.tomcat.$TomcatFactory$Definition.getExposedTypes()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.tomcat.$TomcatFactory$Definition.getReplacesDefinition",
+    "member": "Method io.micronaut.servlet.tomcat.$TomcatFactory$Definition.getReplacesDefinition()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.tomcat.$TomcatFactory$Definition.isParallel",
+    "member": "Method io.micronaut.servlet.tomcat.$TomcatFactory$Definition.isParallel()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.tomcat.$TomcatFactory$SslConnector2$Definition.getExposedTypes",
+    "member": "Method io.micronaut.servlet.tomcat.$TomcatFactory$SslConnector2$Definition.getExposedTypes()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.tomcat.$TomcatFactory$SslConnector2$Definition.getReplacesDefinition",
+    "member": "Method io.micronaut.servlet.tomcat.$TomcatFactory$SslConnector2$Definition.getReplacesDefinition()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.tomcat.$TomcatFactory$SslConnector2$Definition.isCandidateBean",
+    "member": "Method io.micronaut.servlet.tomcat.$TomcatFactory$SslConnector2$Definition.isCandidateBean(io.micronaut.core.type.Argument)",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.tomcat.$TomcatFactory$SslConnector2$Definition.isParallel",
+    "member": "Method io.micronaut.servlet.tomcat.$TomcatFactory$SslConnector2$Definition.isParallel()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.tomcat.$TomcatFactory$TomcatConnector1$Definition.getExposedTypes",
+    "member": "Method io.micronaut.servlet.tomcat.$TomcatFactory$TomcatConnector1$Definition.getExposedTypes()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.tomcat.$TomcatFactory$TomcatConnector1$Definition.getReplacesDefinition",
+    "member": "Method io.micronaut.servlet.tomcat.$TomcatFactory$TomcatConnector1$Definition.getReplacesDefinition()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.tomcat.$TomcatFactory$TomcatConnector1$Definition.isCandidateBean",
+    "member": "Method io.micronaut.servlet.tomcat.$TomcatFactory$TomcatConnector1$Definition.isCandidateBean(io.micronaut.core.type.Argument)",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.tomcat.$TomcatFactory$TomcatConnector1$Definition.isParallel",
+    "member": "Method io.micronaut.servlet.tomcat.$TomcatFactory$TomcatConnector1$Definition.isParallel()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.tomcat.$TomcatFactory$TomcatServer0$Definition.getExposedTypes",
+    "member": "Method io.micronaut.servlet.tomcat.$TomcatFactory$TomcatServer0$Definition.getExposedTypes()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.tomcat.$TomcatFactory$TomcatServer0$Definition.getReplacesDefinition",
+    "member": "Method io.micronaut.servlet.tomcat.$TomcatFactory$TomcatServer0$Definition.getReplacesDefinition()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.tomcat.$TomcatFactory$TomcatServer0$Definition.isCandidateBean",
+    "member": "Method io.micronaut.servlet.tomcat.$TomcatFactory$TomcatServer0$Definition.isCandidateBean(io.micronaut.core.type.Argument)",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.tomcat.$TomcatFactory$TomcatServer0$Definition.isParallel",
+    "member": "Method io.micronaut.servlet.tomcat.$TomcatFactory$TomcatServer0$Definition.isParallel()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.tomcat.$TomcatServer$Definition.getExposedTypes",
+    "member": "Method io.micronaut.servlet.tomcat.$TomcatServer$Definition.getExposedTypes()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.tomcat.$TomcatServer$Definition.getReplacesDefinition",
+    "member": "Method io.micronaut.servlet.tomcat.$TomcatServer$Definition.getReplacesDefinition()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.tomcat.$TomcatServer$Definition.isParallel",
+    "member": "Method io.micronaut.servlet.tomcat.$TomcatServer$Definition.isParallel()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.tomcat.$TomcatVirtualThreadEnabler$Definition.getExposedTypes",
+    "member": "Method io.micronaut.servlet.tomcat.$TomcatVirtualThreadEnabler$Definition.getExposedTypes()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.tomcat.$TomcatVirtualThreadEnabler$Definition.getIndexes",
+    "member": "Method io.micronaut.servlet.tomcat.$TomcatVirtualThreadEnabler$Definition.getIndexes()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.tomcat.$TomcatVirtualThreadEnabler$Definition.getReplacesDefinition",
+    "member": "Method io.micronaut.servlet.tomcat.$TomcatVirtualThreadEnabler$Definition.getReplacesDefinition()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.tomcat.$TomcatVirtualThreadEnabler$Definition.isParallel",
+    "member": "Method io.micronaut.servlet.tomcat.$TomcatVirtualThreadEnabler$Definition.isParallel()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.info.MicronautHttpPojaTestModuleInfo",
+    "member": "Class io.micronaut.servlet.info.MicronautHttpPojaTestModuleInfo",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.info.MicronautHttpPojaTestModuleInfo",
+    "member": "Constructor io.micronaut.servlet.info.MicronautHttpPojaTestModuleInfo()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.http.poja.test.$TestingServerlessEmbeddedApplication$Definition.getExposedTypes",
+    "member": "Method io.micronaut.http.poja.test.$TestingServerlessEmbeddedApplication$Definition.getExposedTypes()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.http.poja.test.$TestingServerlessEmbeddedApplication$Definition.getReplacesDefinition",
+    "member": "Method io.micronaut.http.poja.test.$TestingServerlessEmbeddedApplication$Definition.getReplacesDefinition()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.http.poja.test.$TestingServerlessEmbeddedApplication$Definition.isParallel",
+    "member": "Method io.micronaut.http.poja.test.$TestingServerlessEmbeddedApplication$Definition.isParallel()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.info.MicronautHttpPojaApacheModuleInfo",
+    "member": "Class io.micronaut.servlet.info.MicronautHttpPojaApacheModuleInfo",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.http.poja.apache.ApacheServletHttpRequest",
+    "member": "Constructor io.micronaut.http.poja.apache.ApacheServletHttpRequest(java.io.InputStream,io.micronaut.http.poja.apache.ApacheResponseContext,org.apache.hc.core5.http.io.SessionInputBuffer,io.micronaut.core.convert.ConversionService,io.micronaut.http.body.MessageBodyHandlerRegistry,java.util.concurrent.ExecutorService,io.micronaut.core.io.buffer.ByteBufferFactory)",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.servlet.info.MicronautHttpPojaApacheModuleInfo",
+    "member": "Constructor io.micronaut.servlet.info.MicronautHttpPojaApacheModuleInfo()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.http.poja.apache.$ApacheServerlessApplication$Definition.getExposedTypes",
+    "member": "Method io.micronaut.http.poja.apache.$ApacheServerlessApplication$Definition.getExposedTypes()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.http.poja.apache.$ApacheServerlessApplication$Definition.getReplacesDefinition",
+    "member": "Method io.micronaut.http.poja.apache.$ApacheServerlessApplication$Definition.getReplacesDefinition()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.http.poja.apache.$ApacheServerlessApplication$Definition.isParallel",
+    "member": "Method io.micronaut.http.poja.apache.$ApacheServerlessApplication$Definition.isParallel()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.http.poja.apache.$ApacheServletConfiguration$Definition.getExposedTypes",
+    "member": "Method io.micronaut.http.poja.apache.$ApacheServletConfiguration$Definition.getExposedTypes()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.http.poja.apache.$ApacheServletConfiguration$Definition.getReplacesDefinition",
+    "member": "Method io.micronaut.http.poja.apache.$ApacheServletConfiguration$Definition.getReplacesDefinition()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.http.poja.apache.$ApacheServletConfiguration$Definition.isCandidateBean",
+    "member": "Method io.micronaut.http.poja.apache.$ApacheServletConfiguration$Definition.isCandidateBean(io.micronaut.core.type.Argument)",
+    "reason": "Switched to MessageBodyHandlerRegistry"
+  },
+  {
+    "type": "io.micronaut.http.poja.apache.$ApacheServletConfiguration$Definition.isParallel",
+    "member": "Method io.micronaut.http.poja.apache.$ApacheServletConfiguration$Definition.isParallel()",
+    "reason": "Switched to MessageBodyHandlerRegistry"
   }
 ]
-

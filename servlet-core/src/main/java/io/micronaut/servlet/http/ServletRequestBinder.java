@@ -20,8 +20,6 @@ import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.bind.binders.TypedRequestArgumentBinder;
-import io.micronaut.http.codec.MediaTypeCodecRegistry;
-
 import java.util.Optional;
 
 /**
@@ -33,17 +31,6 @@ import java.util.Optional;
  */
 @Internal
 class ServletRequestBinder implements TypedRequestArgumentBinder<HttpRequest> {
-
-    private final MediaTypeCodecRegistry mediaTypeCodecRegistry;
-
-    /**
-     * Default constructor.
-     *
-     * @param mediaTypeCodecRegistry The media type code registry
-     */
-    ServletRequestBinder(MediaTypeCodecRegistry mediaTypeCodecRegistry) {
-        this.mediaTypeCodecRegistry = mediaTypeCodecRegistry;
-    }
 
     @Override
     public Argument<HttpRequest> argumentType() {

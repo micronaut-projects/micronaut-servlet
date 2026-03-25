@@ -33,8 +33,8 @@ import io.micronaut.http.ServerHttpRequest;
 import io.micronaut.http.body.ByteBody;
 import io.micronaut.http.body.ByteBody.SplitBackpressureMode;
 import io.micronaut.http.body.CloseableByteBody;
-import io.micronaut.http.codec.MediaTypeCodec;
-import io.micronaut.http.codec.MediaTypeCodecRegistry;
+import io.micronaut.http.body.MessageBodyHandlerRegistry;
+import io.micronaut.http.body.MessageBodyReader;
 import io.micronaut.http.uri.QueryStringDecoder;
 import io.micronaut.servlet.http.ServletExchange;
 import io.micronaut.servlet.http.ServletHttpRequest;
@@ -67,15 +67,15 @@ public abstract class PojaHttpRequest<B, REQ, RES>
     public static final Argument<ConvertibleValues> CONVERTIBLE_VALUES_ARGUMENT = Argument.of(ConvertibleValues.class);
 
     protected final ConversionService conversionService;
-    protected final MediaTypeCodecRegistry codecRegistry;
+    protected final MessageBodyHandlerRegistry messageBodyHandlerRegistry;
     protected final MutableConvertibleValues<Object> attributes = new MutableConvertibleValuesMap<>();
 
     public PojaHttpRequest(
             ConversionService conversionService,
-            MediaTypeCodecRegistry codecRegistry
+            MessageBodyHandlerRegistry messageBodyHandlerRegistry
     ) {
         this.conversionService = conversionService;
-        this.codecRegistry = codecRegistry;
+        this.messageBodyHandlerRegistry = messageBodyHandlerRegistry;
     }
 
     @Override
@@ -119,18 +119,34 @@ public abstract class PojaHttpRequest<B, REQ, RES>
             }
         }
 
-        final MediaTypeCodec codec = codecRegistry.findCodec(contentType, type).orElse(null);
-        if (codec == null) {
+        if (ConvertibleValues.class == type || Object.class == type) {
+            Argument<Map<String, Object>> mapArgument = Argument.mapOf(String.class, Object.class);
+            @SuppressWarnings("unchecked")
+            MessageBodyReader<Map<String, Object>> mapReader =
+                (MessageBodyReader<Map<String, Object>>) messageBodyHandlerRegistry.findReader(mapArgument, contentType).orElse(null);
+            if (mapReader == null) {
+                return Optional.empty();
+            }
+            Map<String, Object> map = consumeBody(inputStream -> mapReader.read(mapArgument, contentType, getHeaders(), inputStream));
+            if (map == null) {
+                return Optional.empty();
+            }
+            ConvertibleValues<?> convertibleValues = ConvertibleValues.of(map);
+            if (ConvertibleValues.class == type) {
+                return Optional.of((T) convertibleValues);
+            }
+            if (Object.class == type) {
+                return Optional.of((T) convertibleValues);
+            }
+            return conversionService.convert(convertibleValues.asMap(), arg);
+        }
+        @SuppressWarnings("unchecked")
+        MessageBodyReader<T> reader = (MessageBodyReader<T>) messageBodyHandlerRegistry.findReader(arg, contentType).orElse(null);
+        if (reader == null) {
             return Optional.empty();
         }
-        if (ConvertibleValues.class == type || Object.class == type) {
-            final Map map = consumeBody(inputStream -> codec.decode(Map.class, inputStream));
-            ConvertibleValues result = ConvertibleValues.of(map);
-            return Optional.of((T) result);
-        } else {
-            final T value = consumeBody(inputStream -> codec.decode(arg, inputStream));
-            return Optional.of(value);
-        }
+        T value = consumeBody(inputStream -> reader.read(arg, contentType, getHeaders(), inputStream));
+        return Optional.ofNullable(value);
     }
 
     /**

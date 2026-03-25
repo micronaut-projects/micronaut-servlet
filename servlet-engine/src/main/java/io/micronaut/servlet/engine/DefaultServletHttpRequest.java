@@ -41,7 +41,7 @@ import io.micronaut.http.body.ByteBodyFactory;
 import io.micronaut.http.body.ByteBufferBodyAdapter;
 import io.micronaut.http.body.CloseableByteBody;
 import io.micronaut.http.body.stream.InputStreamByteBody;
-import io.micronaut.http.codec.MediaTypeCodecRegistry;
+import io.micronaut.http.body.MessageBodyHandlerRegistry;
 import io.micronaut.http.cookie.Cookies;
 import io.micronaut.servlet.http.BodyBuilder;
 import io.micronaut.servlet.http.ParsedBodyHolder;
@@ -104,7 +104,7 @@ public final class DefaultServletHttpRequest<B> implements
     private final ServletRequestHeaders headers;
     private final ServletParameters parameters;
     private DefaultServletHttpResponse<B> primaryResponse;
-    private final MediaTypeCodecRegistry codecRegistry;
+    private final MessageBodyHandlerRegistry messageBodyHandlerRegistry;
     private final MutableConvertibleValues<Object> attributes;
     private final CloseableByteBody byteBody;
     private final SSLSessionProvider sslSessionProvider;
@@ -121,17 +121,17 @@ public final class DefaultServletHttpRequest<B> implements
      * @param conversionService  The servlet request
      * @param delegate           The servlet request
      * @param response           The servlet response
-     * @param codecRegistry      The codec registry
+     * @param messageBodyHandlerRegistry      The message body handler registry
      * @param bodyBuilder        Body Builder
      * @param ioExecutor         Executor for blocking operations
      */
     private DefaultServletHttpRequest(ConversionService conversionService,
                                       HttpServletRequest delegate,
                                       HttpServletResponse response,
-                                      MediaTypeCodecRegistry codecRegistry,
+                                      MessageBodyHandlerRegistry messageBodyHandlerRegistry,
                                       BodyBuilder bodyBuilder,
                                       Executor ioExecutor) {
-        this(conversionService, delegate, response, codecRegistry, bodyBuilder, ioExecutor, null);
+        this(conversionService, delegate, response, messageBodyHandlerRegistry, bodyBuilder, ioExecutor, null);
     }
 
     /**
@@ -140,7 +140,7 @@ public final class DefaultServletHttpRequest<B> implements
      * @param conversionService  The servlet request
      * @param delegate           The servlet request
      * @param response           The servlet response
-     * @param codecRegistry      The codec registry
+     * @param messageBodyHandlerRegistry      The message body handler registry
      * @param bodyBuilder        Body Builder
      * @param ioExecutor         Executor for blocking operations
      * @param sslSessionProvider The {@link SSLSession} provider from attribute
@@ -148,14 +148,14 @@ public final class DefaultServletHttpRequest<B> implements
     DefaultServletHttpRequest(ConversionService conversionService,
                               HttpServletRequest delegate,
                               HttpServletResponse response,
-                              MediaTypeCodecRegistry codecRegistry,
+                              MessageBodyHandlerRegistry messageBodyHandlerRegistry,
                               BodyBuilder bodyBuilder,
                               Executor ioExecutor,
                               @Nullable SSLSessionProvider sslSessionProvider) {
         super();
         this.conversionService = conversionService;
         this.delegate = delegate;
-        this.codecRegistry = codecRegistry;
+        this.messageBodyHandlerRegistry = messageBodyHandlerRegistry;
         this.sslSessionProvider = sslSessionProvider;
         long contentLengthLong = delegate.getContentLengthLong();
         OptionalLong length = contentLengthLong < 0 ? OptionalLong.empty() : OptionalLong.of(contentLengthLong);
@@ -264,11 +264,8 @@ public final class DefaultServletHttpRequest<B> implements
         };
     }
 
-    /**
-     * @return The codec registry.
-     */
-    MediaTypeCodecRegistry getCodecRegistry() {
-        return codecRegistry;
+    MessageBodyHandlerRegistry getMessageBodyHandlerRegistry() {
+        return messageBodyHandlerRegistry;
     }
 
     @Override
@@ -496,6 +493,14 @@ public final class DefaultServletHttpRequest<B> implements
         byteBody.close();
     }
 
+    @Override
+    public Optional<SSLSession> getSslSession() {
+        if (sslSessionProvider != null) {
+            return sslSessionProvider.getSSLSession(this);
+        }
+        return ServletHttpRequest.super.getSslSession();
+    }
+
     /**
      * The servlet request headers.
      */
@@ -617,11 +622,4 @@ public final class DefaultServletHttpRequest<B> implements
         }
     }
 
-    @Override
-    public Optional<SSLSession> getSslSession() {
-        if (sslSessionProvider != null) {
-            return sslSessionProvider.getSSLSession(this);
-        }
-        return ServletHttpRequest.super.getSslSession();
-    }
 }

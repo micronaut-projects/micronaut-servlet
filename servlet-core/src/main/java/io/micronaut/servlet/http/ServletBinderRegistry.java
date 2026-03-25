@@ -25,7 +25,7 @@ import io.micronaut.http.bind.DefaultRequestBinderRegistry;
 import io.micronaut.http.bind.RequestBinderRegistry;
 import io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder;
 import io.micronaut.http.bind.binders.RequestArgumentBinder;
-import io.micronaut.http.codec.MediaTypeCodecRegistry;
+import io.micronaut.http.body.MessageBodyHandlerRegistry;
 
 import java.lang.annotation.Annotation;
 import java.util.LinkedHashMap;
@@ -51,33 +51,33 @@ public abstract class ServletBinderRegistry<T> implements RequestBinderRegistry 
     /**
      * Default constructor.
      *
-     * @param mediaTypeCodecRegistry The media type codec registry
+     * @param messageBodyHandlerRegistry The message body handler registry
      * @param conversionService      The conversion service
      * @param binders                Any registered binders
      * @param defaultBodyAnnotationBinder The delegate default body binder
      */
     public ServletBinderRegistry(
-            MediaTypeCodecRegistry mediaTypeCodecRegistry,
+            MessageBodyHandlerRegistry messageBodyHandlerRegistry,
             ConversionService conversionService,
             List<RequestArgumentBinder> binders,
             DefaultBodyAnnotationBinder<T> defaultBodyAnnotationBinder) {
         this.defaultRegistry = new DefaultRequestBinderRegistry(conversionService, binders);
-        this.byAnnotation.put(Body.class, newServletBodyBinder(mediaTypeCodecRegistry, conversionService, defaultBodyAnnotationBinder));
-        this.byType.put(HttpRequest.class, new ServletRequestBinder(mediaTypeCodecRegistry));
+        this.byAnnotation.put(Body.class, newServletBodyBinder(messageBodyHandlerRegistry, conversionService, defaultBodyAnnotationBinder));
+        this.byType.put(HttpRequest.class, new ServletRequestBinder());
     }
 
     /**
      * Creates the servlet body binder.
-     * @param mediaTypeCodecRegistry The media type registry
+     * @param messageBodyHandlerRegistry The message body handler registry
      * @param conversionService The conversion service
      * @param defaultBodyAnnotationBinder Default Body annotation Binder
      * @return The servlet body
      */
     protected ServletBodyBinder<T> newServletBodyBinder(
-            MediaTypeCodecRegistry mediaTypeCodecRegistry,
+            MessageBodyHandlerRegistry messageBodyHandlerRegistry,
             ConversionService conversionService,
             DefaultBodyAnnotationBinder<T> defaultBodyAnnotationBinder) {
-        return new ServletBodyBinder<>(conversionService, mediaTypeCodecRegistry, defaultBodyAnnotationBinder);
+        return new ServletBodyBinder<>(conversionService, messageBodyHandlerRegistry, defaultBodyAnnotationBinder);
     }
 
     @Override

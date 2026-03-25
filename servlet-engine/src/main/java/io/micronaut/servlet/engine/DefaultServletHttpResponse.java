@@ -36,7 +36,8 @@ import io.micronaut.http.MutableHttpHeaders;
 import io.micronaut.http.MutableHttpResponse;
 import io.micronaut.http.annotation.Produces;
 import io.micronaut.http.body.CloseableByteBody;
-import io.micronaut.http.codec.MediaTypeCodec;
+import io.micronaut.http.body.MessageBodyHandlerRegistry;
+import io.micronaut.http.body.MessageBodyWriter;
 import io.micronaut.http.cookie.Cookie;
 import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.http.simple.SimpleHttpHeaders;
@@ -143,7 +144,7 @@ public final class DefaultServletHttpResponse<B> implements ServletHttpResponse<
             Subscription subscription;
             final AtomicBoolean finished = new AtomicBoolean();
             MediaType contentType = getContentType().orElse(MediaType.APPLICATION_JSON_TYPE);
-            MediaTypeCodec codec = request.getCodecRegistry().findCodec(contentType).orElse(null);
+            MessageBodyHandlerRegistry handlerRegistry = request.getMessageBodyHandlerRegistry();
             boolean isJson = contentType.getSubtype().equals("json");
             boolean first = true;
             boolean raw = false;
@@ -208,8 +209,7 @@ public final class DefaultServletHttpResponse<B> implements ServletHttpResponse<
                             referenceCounted.release();
                         }
                     }
-                } else if (codec != null) {
-
+                } else {
                     if (isJson) {
                         if (first) {
                             outputStream.write('[');
@@ -218,13 +218,24 @@ public final class DefaultServletHttpResponse<B> implements ServletHttpResponse<
                             outputStream.write(',');
                         }
                     }
-                    if (outputStream.isReady()) {
-                        if (o instanceof CharSequence) {
-                            outputStream.write(o.toString().getBytes(getCharacterEncoding()));
-                        } else {
-                            byte[] bytes = codec.encode(o);
-                            outputStream.write(bytes);
-                        }
+                    if (!outputStream.isReady()) {
+                        return;
+                    }
+                    if (o instanceof CharSequence charSequence) {
+                        outputStream.write(charSequence.toString().getBytes(getCharacterEncoding()));
+                        flushIfReady();
+                        return;
+                    }
+                    Argument<Object> argument = Argument.of((Class<Object>) o.getClass());
+                    @SuppressWarnings("unchecked")
+                    MessageBodyWriter<Object> writer = (MessageBodyWriter<Object>) handlerRegistry
+                        .findWriter(argument, contentType)
+                        .orElse(null);
+                    if (writer != null) {
+                        writer.writeTo(argument, contentType, (Object) o, DefaultServletHttpResponse.this.getHeaders(), outputStream);
+                        flushIfReady();
+                    } else {
+                        outputStream.write(o.toString().getBytes(getCharacterEncoding()));
                         flushIfReady();
                     }
                 }
