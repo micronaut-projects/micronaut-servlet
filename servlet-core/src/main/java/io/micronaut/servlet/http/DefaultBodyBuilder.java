@@ -15,7 +15,6 @@
  */
 package io.micronaut.servlet.http;
 
-import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.web.router.RouteAttributes;
@@ -28,12 +27,10 @@ import io.micronaut.http.HttpAttributes;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.Body;
+import io.micronaut.http.body.MessageBodyHandlerRegistry;
+import io.micronaut.http.body.MessageBodyReader;
 import io.micronaut.http.codec.CodecException;
-import io.micronaut.http.codec.MediaTypeCodec;
-import io.micronaut.http.codec.MediaTypeCodecRegistry;
 import io.micronaut.inject.ExecutionHandle;
-import io.micronaut.json.codec.MapperMediaTypeCodec;
-import io.micronaut.json.tree.JsonNode;
 import io.micronaut.web.router.RouteMatch;
 import jakarta.inject.Singleton;
 
@@ -48,16 +45,15 @@ import java.util.concurrent.Callable;
  * @author Sergio del Amo
  * @since 4.0.0
  */
-@Requires(classes = {JsonNode.class, MapperMediaTypeCodec.class})
 @Internal
 @Singleton
 public class DefaultBodyBuilder implements BodyBuilder {
     private static final Set<Class<?>> RAW_BODY_TYPES = CollectionUtils.setOf(String.class, byte[].class, ByteBuffer.class, InputStream.class);
 
-    private final MediaTypeCodecRegistry codecRegistry;
+    private final MessageBodyHandlerRegistry messageBodyHandlerRegistry;
 
-    public DefaultBodyBuilder(MediaTypeCodecRegistry codecRegistry) {
-        this.codecRegistry = codecRegistry;
+    public DefaultBodyBuilder(MessageBodyHandlerRegistry messageBodyHandlerRegistry) {
+        this.messageBodyHandlerRegistry = messageBodyHandlerRegistry;
     }
 
     @Override
@@ -75,16 +71,14 @@ public class DefaultBodyBuilder implements BodyBuilder {
             try (InputStream inputStream = bodySupplier.call())  {
                 if (resolvedBodyType != null && RAW_BODY_TYPES.contains(resolvedBodyType.getType())) {
                     return inputStream.readAllBytes();
-                } else {
-                    final MediaTypeCodec codec = codecRegistry.findCodec(contentType).orElse(null);
-                    if (contentType.equals(MediaType.APPLICATION_JSON_TYPE) && codec instanceof MapperMediaTypeCodec mapperCodec) {
-                        return readJson(inputStream, mapperCodec);
-                    } else if (codec != null) {
-                        return decode(inputStream, codec);
-                    } else {
-                        return inputStream.readAllBytes();
-                    }
                 }
+                @SuppressWarnings("unchecked")
+                Argument<Object> targetType = (Argument<Object>) (resolvedBodyType == null ? Argument.OBJECT_ARGUMENT : resolvedBodyType);
+                MessageBodyReader<Object> reader = messageBodyHandlerRegistry.findReader(targetType, contentType).orElse(null);
+                if (reader != null) {
+                    return reader.read(targetType, contentType, request.getHeaders(), inputStream);
+                }
+                return inputStream.readAllBytes();
             } catch (EOFException e) {
                 // no content
                 return null;
@@ -131,11 +125,4 @@ public class DefaultBodyBuilder implements BodyBuilder {
         }
     }
 
-    private Object decode(InputStream inputStream, MediaTypeCodec codec) {
-        return codec.decode(Argument.of(byte[].class), inputStream);
-    }
-
-    private Object readJson(InputStream inputStream, MapperMediaTypeCodec mapperCodec) throws IOException {
-        return mapperCodec.getJsonMapper().readValue(inputStream, Argument.of(JsonNode.class));
-    }
 }

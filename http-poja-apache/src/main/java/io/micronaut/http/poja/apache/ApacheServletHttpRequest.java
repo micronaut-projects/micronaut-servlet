@@ -27,7 +27,7 @@ import io.micronaut.http.MutableHttpRequest;
 import io.micronaut.http.body.ByteBody;
 import io.micronaut.http.body.ByteBodyFactory;
 import io.micronaut.http.body.stream.InputStreamByteBody;
-import io.micronaut.http.codec.MediaTypeCodecRegistry;
+import io.micronaut.http.body.MessageBodyHandlerRegistry;
 import io.micronaut.http.cookie.Cookie;
 import io.micronaut.http.cookie.Cookies;
 import io.micronaut.http.poja.PojaHttpRequest;
@@ -95,7 +95,7 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
      * @param responseContext The response context
      * @param sessionInputBuffer Input buffer for parsing
      * @param conversionService The conversion service
-     * @param codecRegistry The media codec registry
+     * @param messageBodyHandlerRegistry The message body handler registry
      * @param ioExecutor The executor service
      * @param byteBufferFactory The byte buffer factory
      */
@@ -104,11 +104,11 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
         ApacheResponseContext responseContext,
         SessionInputBuffer sessionInputBuffer,
         ConversionService conversionService,
-        MediaTypeCodecRegistry codecRegistry,
+        MessageBodyHandlerRegistry messageBodyHandlerRegistry,
         ExecutorService ioExecutor,
         ByteBufferFactory<?, ?> byteBufferFactory
     ) {
-        super(conversionService, codecRegistry);
+        super(conversionService, messageBodyHandlerRegistry);
         this.responseContext = responseContext;
         DefaultHttpRequestParser parser = new DefaultHttpRequestParser();
 

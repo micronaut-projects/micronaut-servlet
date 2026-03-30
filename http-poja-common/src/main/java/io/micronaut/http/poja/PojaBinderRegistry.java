@@ -22,7 +22,7 @@ import io.micronaut.http.annotation.Body;
 import io.micronaut.http.bind.DefaultRequestBinderRegistry;
 import io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder;
 import io.micronaut.http.bind.binders.RequestArgumentBinder;
-import io.micronaut.http.codec.MediaTypeCodecRegistry;
+import io.micronaut.http.body.MessageBodyHandlerRegistry;
 import io.micronaut.servlet.http.ServletBinderRegistry;
 import jakarta.inject.Singleton;
 
@@ -38,18 +38,18 @@ class PojaBinderRegistry extends ServletBinderRegistry {
 
     /**
      * Default constructor.
-     *  @param mediaTypeCodecRegistry   The media type codec registry
+     *  @param messageBodyHandlerRegistry   The message body handler registry
      * @param conversionService         The conversion service
      * @param binders                   Any registered binders
      * @param defaultBodyAnnotationBinder The default binder
      */
-    public PojaBinderRegistry(MediaTypeCodecRegistry mediaTypeCodecRegistry,
+    public PojaBinderRegistry(MessageBodyHandlerRegistry messageBodyHandlerRegistry,
                               ConversionService conversionService,
                               List<RequestArgumentBinder> binders,
                               DefaultBodyAnnotationBinder<?> defaultBodyAnnotationBinder
     ) {
-        super(mediaTypeCodecRegistry, conversionService, binders, defaultBodyAnnotationBinder);
+        super(messageBodyHandlerRegistry, conversionService, binders, defaultBodyAnnotationBinder);
 
-        this.byAnnotation.put(Body.class, new PojaBodyBinder<>(conversionService, mediaTypeCodecRegistry, defaultBodyAnnotationBinder));
+        this.byAnnotation.put(Body.class, new PojaBodyBinder<>(conversionService, messageBodyHandlerRegistry, defaultBodyAnnotationBinder));
     }
 }

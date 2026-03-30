@@ -33,14 +33,16 @@ import io.micronaut.http.MutableHttpHeaders;
 import io.micronaut.http.body.AvailableByteBody;
 import io.micronaut.http.body.ByteBodyFactory;
 import io.micronaut.http.body.MessageBodyHandlerRegistry;
-import io.micronaut.http.codec.MediaTypeCodecRegistry;
+import io.micronaut.http.form.FormCapableHttpRequest;
 import io.micronaut.http.context.ServerHttpRequestContext;
 import io.micronaut.http.context.event.HttpRequestReceivedEvent;
 import io.micronaut.http.context.event.HttpRequestTerminatedEvent;
+import io.micronaut.http.server.multipart.FormRouteCompleter;
 import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.http.server.RequestLifecycle;
 import io.micronaut.http.server.ResponseLifecycle;
 import io.micronaut.http.server.RouteExecutor;
+import io.micronaut.http.server.multipart.FormFactory;
 import io.micronaut.http.server.types.files.FileCustomizableResponseType;
 import io.micronaut.http.server.types.files.StreamedFile;
 import io.micronaut.http.server.types.files.SystemFile;
@@ -49,6 +51,7 @@ import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.web.router.resource.StaticResourceResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import io.micronaut.web.router.RouteMatch;
 
 import java.io.EOFException;
 import java.io.File;
@@ -83,7 +86,6 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
     protected final ApplicationContext applicationContext;
     private final RouteExecutor routeExecutor;
     private final ConversionService conversionService;
-    private final MediaTypeCodecRegistry mediaTypeCodecRegistry;
     private final MessageBodyHandlerRegistry messageBodyHandlerRegistry;
     private final StaticResourceResolver staticResourceResolver;
     private final Supplier<Executor> ioExecutor;
@@ -96,7 +98,6 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
      */
     protected ServletHttpHandler(ApplicationContext applicationContext, ConversionService conversionService) {
         this.applicationContext = Objects.requireNonNull(applicationContext, "The application context cannot be null");
-        this.mediaTypeCodecRegistry = applicationContext.getBean(MediaTypeCodecRegistry.class);
         this.messageBodyHandlerRegistry = applicationContext.getBean(MessageBodyHandlerRegistry.class);
         this.staticResourceResolver = applicationContext.getBean(StaticResourceResolver.class);
         this.routeExecutor = applicationContext.getBean(RouteExecutor.class);
@@ -112,10 +113,10 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
     }
 
     /**
-     * @return The media type codec registry.
+     * @return The message body handler registry.
      */
-    public MediaTypeCodecRegistry getMediaTypeCodecRegistry() {
-        return mediaTypeCodecRegistry;
+    public MessageBodyHandlerRegistry getMessageBodyHandlerRegistry() {
+        return messageBodyHandlerRegistry;
     }
 
     /**
@@ -383,6 +384,21 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
 
         ExecutionFlow<HttpResponse<?>> handleNormal(HttpRequest<?> request) {
             return normalFlow(request);
+        }
+
+        @Override
+        protected ExecutionFlow<RouteMatch<?>> fulfillArguments(RouteMatch<?> routeMatch, HttpRequest<?> request) {
+            if (request instanceof FormCapableHttpRequest<?> formRequest && formRequest.hasFormBody()) {
+                FormFactory formFactory = applicationContext.getBean(FormFactory.class);
+                FormRouteCompleter completer = formFactory.getOrCreateCompleter(formRequest);
+                try {
+                    completer.start();
+                } catch (IllegalStateException ignored) {
+                    // already started upstream
+                }
+                return super.fulfillArguments(routeMatch, request);
+            }
+            return super.fulfillArguments(routeMatch, request);
         }
 
         @Override

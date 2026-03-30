@@ -33,8 +33,8 @@ import io.micronaut.http.ServerHttpRequest;
 import io.micronaut.http.body.ByteBody;
 import io.micronaut.http.body.ByteBody.SplitBackpressureMode;
 import io.micronaut.http.body.CloseableByteBody;
-import io.micronaut.http.codec.MediaTypeCodec;
-import io.micronaut.http.codec.MediaTypeCodecRegistry;
+import io.micronaut.http.body.MessageBodyHandlerRegistry;
+import io.micronaut.http.body.MessageBodyReader;
 import io.micronaut.http.uri.QueryStringDecoder;
 import io.micronaut.servlet.http.ServletExchange;
 import io.micronaut.servlet.http.ServletHttpRequest;
@@ -67,15 +67,15 @@ public abstract class PojaHttpRequest<B, REQ, RES>
     public static final Argument<ConvertibleValues> CONVERTIBLE_VALUES_ARGUMENT = Argument.of(ConvertibleValues.class);
 
     protected final ConversionService conversionService;
-    protected final MediaTypeCodecRegistry codecRegistry;
+    protected final MessageBodyHandlerRegistry messageBodyHandlerRegistry;
     protected final MutableConvertibleValues<Object> attributes = new MutableConvertibleValuesMap<>();
 
     public PojaHttpRequest(
             ConversionService conversionService,
-            MediaTypeCodecRegistry codecRegistry
+            MessageBodyHandlerRegistry messageBodyHandlerRegistry
     ) {
         this.conversionService = conversionService;
-        this.codecRegistry = codecRegistry;
+        this.messageBodyHandlerRegistry = messageBodyHandlerRegistry;
     }
 
     @Override
@@ -119,19 +119,32 @@ public abstract class PojaHttpRequest<B, REQ, RES>
             }
         }
 
-        final MediaTypeCodec codec = codecRegistry.findCodec(contentType, type).orElse(null);
-        if (codec == null) {
+        Argument<?> targetArgument;
+        boolean wrapConvertibleValues = false;
+        if (ConvertibleValues.class == type || Object.class == type) {
+            targetArgument = Argument.mapOf(String.class, Object.class);
+            wrapConvertibleValues = ConvertibleValues.class.isAssignableFrom(type) || ConvertibleValues.class == type;
+        } else {
+            targetArgument = arg;
+        }
+
+        MessageBodyReader<Object> reader = findReader(targetArgument, contentType);
+        if (reader == null) {
             return Optional.empty();
         }
-        if (ConvertibleValues.class == type || Object.class == type) {
-            final Map map = consumeBody(inputStream -> codec.decode(Map.class, inputStream));
-            ConvertibleValues result = ConvertibleValues.of(map);
-            return Optional.of((T) result);
-        } else {
-            final T value = consumeBody(inputStream -> codec.decode(arg, inputStream));
-            return Optional.of(value);
+
+        Object decoded = consumeBody(inputStream -> reader.read((Argument<Object>) targetArgument, contentType, getHeaders(), inputStream));
+        if (decoded == null) {
+            return Optional.empty();
         }
-    }
+        if (wrapConvertibleValues) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> map = (Map<String, Object>) decoded;
+            ConvertibleValues<?> result = ConvertibleValues.of(map, conversionService);
+            return Optional.of((T) result);
+        }
+        return Optional.of((T) decoded);
+}
 
     /**
      * A method used for retrieving form data. Can be overridden by specific implementations.
@@ -190,6 +203,13 @@ public abstract class PojaHttpRequest<B, REQ, RES>
         }
 
         return new ConvertibleMultiValuesMap<CharSequence>(parameterValues, conversionService);
+    }
+
+    @SuppressWarnings("unchecked")
+    private MessageBodyReader<Object> findReader(Argument<?> argument, MediaType mediaType) {
+        return (MessageBodyReader<Object>) messageBodyHandlerRegistry
+            .findReader((Argument) argument, mediaType)
+            .orElse(null);
     }
 
 }

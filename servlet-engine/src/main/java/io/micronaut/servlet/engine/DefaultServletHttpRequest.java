@@ -40,9 +40,10 @@ import io.micronaut.http.body.ByteBody;
 import io.micronaut.http.body.ByteBodyFactory;
 import io.micronaut.http.body.ByteBufferBodyAdapter;
 import io.micronaut.http.body.CloseableByteBody;
+import io.micronaut.http.body.CloseableAvailableByteBody;
 import io.micronaut.http.body.stream.AvailableByteArrayBody;
 import io.micronaut.http.body.stream.InputStreamByteBody;
-import io.micronaut.http.codec.MediaTypeCodecRegistry;
+import io.micronaut.http.body.MessageBodyHandlerRegistry;
 import io.micronaut.http.cookie.Cookies;
 import io.micronaut.http.form.FormCapableHttpRequest;
 import io.micronaut.http.multipart.FormFieldMetadata;
@@ -72,6 +73,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.InetSocketAddress;
 import java.net.URI;
+import java.net.URLDecoder;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.Principal;
@@ -81,12 +83,15 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.function.Supplier;
 
@@ -115,7 +120,7 @@ public final class DefaultServletHttpRequest<B> implements
     private final ServletRequestHeaders headers;
     private final ServletParameters parameters;
     private DefaultServletHttpResponse<B> primaryResponse;
-    private final MediaTypeCodecRegistry codecRegistry;
+    private final MessageBodyHandlerRegistry messageBodyHandlerRegistry;
     private final MutableConvertibleValues<Object> attributes;
     private final CloseableByteBody byteBody;
     private final ByteBodyFactory byteBodyFactory;
@@ -124,6 +129,8 @@ public final class DefaultServletHttpRequest<B> implements
     private DefaultServletCookies cookies;
     private Supplier<Optional<B>> body;
     private List<Runnable> disposalResources;
+    private FormData urlEncodedFormData;
+    private Throwable urlEncodedFormError;
 
     private boolean bodyIsReadAsync;
     private B parsedBody;
@@ -135,17 +142,17 @@ public final class DefaultServletHttpRequest<B> implements
      * @param conversionService  The servlet request
      * @param delegate           The servlet request
      * @param response           The servlet response
-     * @param codecRegistry      The codec registry
+     * @param messageBodyHandlerRegistry      The message body handler registry
      * @param bodyBuilder        Body Builder
      * @param ioExecutor         Executor for blocking operations
      */
     private DefaultServletHttpRequest(ConversionService conversionService,
                                       HttpServletRequest delegate,
                                       HttpServletResponse response,
-                                      MediaTypeCodecRegistry codecRegistry,
+                                      MessageBodyHandlerRegistry messageBodyHandlerRegistry,
                                       BodyBuilder bodyBuilder,
                                       Executor ioExecutor) {
-        this(conversionService, delegate, response, codecRegistry, bodyBuilder, ioExecutor, null);
+        this(conversionService, delegate, response, messageBodyHandlerRegistry, bodyBuilder, ioExecutor, null);
     }
 
     /**
@@ -154,7 +161,7 @@ public final class DefaultServletHttpRequest<B> implements
      * @param conversionService  The servlet request
      * @param delegate           The servlet request
      * @param response           The servlet response
-     * @param codecRegistry      The codec registry
+     * @param messageBodyHandlerRegistry      The message body handler registry
      * @param bodyBuilder        Body Builder
      * @param ioExecutor         Executor for blocking operations
      * @param sslSessionProvider The {@link SSLSession} provider from attribute
@@ -162,14 +169,14 @@ public final class DefaultServletHttpRequest<B> implements
     DefaultServletHttpRequest(ConversionService conversionService,
                               HttpServletRequest delegate,
                               HttpServletResponse response,
-                              MediaTypeCodecRegistry codecRegistry,
+                              MessageBodyHandlerRegistry messageBodyHandlerRegistry,
                               BodyBuilder bodyBuilder,
                               Executor ioExecutor,
                               @Nullable SSLSessionProvider sslSessionProvider) {
         super();
         this.conversionService = conversionService;
         this.delegate = delegate;
-        this.codecRegistry = codecRegistry;
+        this.messageBodyHandlerRegistry = messageBodyHandlerRegistry;
         this.ioExecutor = ioExecutor;
         this.sslSessionProvider = sslSessionProvider;
         long contentLengthLong = delegate.getContentLengthLong();
@@ -281,10 +288,10 @@ public final class DefaultServletHttpRequest<B> implements
     }
 
     /**
-     * @return The codec registry.
+     * @return The message body handler registry.
      */
-    MediaTypeCodecRegistry getCodecRegistry() {
-        return codecRegistry;
+    MessageBodyHandlerRegistry getMessageBodyHandlerRegistry() {
+        return messageBodyHandlerRegistry;
     }
 
     @Override
@@ -550,21 +557,14 @@ public final class DefaultServletHttpRequest<B> implements
                 }
             });
         }
+        Charset charset = getCharacterEncoding();
         return Flux.defer(() -> {
-            Map<String, String[]> parameterMap = delegate.getParameterMap();
-            if (parameterMap.isEmpty()) {
+            List<FormValue> values = resolveUrlEncodedFormValues(charset);
+            if (values.isEmpty()) {
                 return Flux.empty();
             }
-            Charset charset = getCharacterEncoding();
-            return Flux.fromIterable(parameterMap.entrySet())
-                .flatMap(entry -> {
-                    String[] values = entry.getValue();
-                    if (values == null || values.length == 0) {
-                        return Flux.empty();
-                    }
-                    return Flux.fromArray(values)
-                        .map(value -> toRawFormFieldFromValue(entry.getKey(), value, charset));
-                });
+            return Flux.fromIterable(values)
+                .map(value -> toRawFormFieldFromValue(value.name, value.value, charset));
         });
     }
 
@@ -624,6 +624,114 @@ public final class DefaultServletHttpRequest<B> implements
         }
     }
 
+    private List<FormValue> resolveUrlEncodedFormValues(Charset charset) {
+        FormData data = resolveUrlEncodedFormData(charset);
+        return data.values;
+    }
+
+    private FormData resolveUrlEncodedFormData(Charset charset) {
+        synchronized (this) {
+            if (urlEncodedFormData != null) {
+                return urlEncodedFormData;
+            }
+            if (urlEncodedFormError != null) {
+                if (urlEncodedFormError instanceof RuntimeException runtime) {
+                    throw runtime;
+                }
+                throw new InternalServerException(
+                    "Error reading form body: " + urlEncodedFormError.getMessage(),
+                    urlEncodedFormError
+                );
+            }
+            try {
+                FormData parsed = parseUrlEncodedForm(charset);
+                urlEncodedFormData = parsed;
+                return parsed;
+            } catch (RuntimeException e) {
+                urlEncodedFormError = e;
+                throw e;
+            } catch (Exception e) {
+                InternalServerException ise = new InternalServerException(
+                    "Error reading form body: " + e.getMessage(),
+                    e
+                );
+                urlEncodedFormError = ise;
+                throw ise;
+            }
+        }
+    }
+
+    private FormData parseUrlEncodedForm(Charset charset) throws ExecutionException, InterruptedException {
+        CompletableFuture<? extends CloseableAvailableByteBody> future = byteBody.buffer();
+        CloseableAvailableByteBody available;
+        try {
+            available = future.get();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw e;
+        }
+        try (CloseableAvailableByteBody closeable = available) {
+            String body = closeable.toString(charset);
+            return decodeUrlEncodedBody(body, charset);
+        }
+    }
+
+    private FormData decodeUrlEncodedBody(String body, Charset charset) {
+        List<FormValue> values = new ArrayList<>();
+        Map<String, List<String>> parameters = new LinkedHashMap<>();
+        if (StringUtils.isEmpty(body)) {
+            return new FormData(Collections.unmodifiableList(values), Collections.emptyMap());
+        }
+        int length = body.length();
+        int position = 0;
+        while (position <= length) {
+            int amp = body.indexOf('&', position);
+            String segment;
+            if (amp == -1) {
+                segment = body.substring(position);
+                position = length + 1;
+            } else {
+                segment = body.substring(position, amp);
+                position = amp + 1;
+            }
+            if (segment.isEmpty()) {
+                continue;
+            }
+            int eq = segment.indexOf('=');
+            String rawName = eq >= 0 ? segment.substring(0, eq) : segment;
+            String rawValue = eq >= 0 ? segment.substring(eq + 1) : "";
+            String name = URLDecoder.decode(rawName, charset);
+            String value = URLDecoder.decode(rawValue, charset);
+            values.add(new FormValue(name, value));
+            parameters.computeIfAbsent(name, key -> new ArrayList<>()).add(value);
+        }
+        Map<String, List<String>> unmodifiableParameters = new LinkedHashMap<>();
+        for (Map.Entry<String, List<String>> entry : parameters.entrySet()) {
+            unmodifiableParameters.put(entry.getKey(), Collections.unmodifiableList(entry.getValue()));
+        }
+        return new FormData(Collections.unmodifiableList(values), Collections.unmodifiableMap(unmodifiableParameters));
+    }
+
+    private static final class FormValue {
+        private final String name;
+        private final String value;
+
+        private FormValue(String name, String value) {
+            this.name = name;
+            this.value = value;
+        }
+    }
+
+    private static final class FormData {
+        private final List<FormValue> values;
+        private final Map<String, List<String>> parameters;
+
+        private FormData(List<FormValue> values, Map<String, List<String>> parameters) {
+            this.values = values;
+            this.parameters = parameters;
+        }
+    }
+
     /**
      * The servlet request headers.
      */
@@ -673,6 +781,12 @@ public final class DefaultServletHttpRequest<B> implements
 
         @Override
         public List<String> getAll(CharSequence name) {
+            if (useParsedFormParameters()) {
+                List<String> values = formParameterMap().get(
+                    Objects.requireNonNull(name, "Parameter name cannot be null").toString()
+                );
+                return values != null ? values : Collections.emptyList();
+            }
             final String[] values = delegate.getParameterValues(
                 Objects.requireNonNull(name, "Parameter name cannot be null").toString()
             );
@@ -685,6 +799,12 @@ public final class DefaultServletHttpRequest<B> implements
         @Nullable
         @Override
         public String get(CharSequence name) {
+            if (useParsedFormParameters()) {
+                List<String> values = formParameterMap().get(
+                    Objects.requireNonNull(name, "Parameter name cannot be null").toString()
+                );
+                return CollectionUtils.isNotEmpty(values) ? values.get(0) : null;
+            }
             return delegate.getParameter(
                 Objects.requireNonNull(name, "Parameter name cannot be null").toString()
             );
@@ -692,11 +812,17 @@ public final class DefaultServletHttpRequest<B> implements
 
         @Override
         public Set<String> names() {
+            if (useParsedFormParameters()) {
+                return formParameterMap().keySet();
+            }
             return CollectionUtils.enumerationToSet(delegate.getParameterNames());
         }
 
         @Override
         public Collection<List<String>> values() {
+            if (useParsedFormParameters()) {
+                return formParameterMap().values();
+            }
             return names()
                 .stream()
                 .map(this::getAll)
@@ -713,6 +839,30 @@ public final class DefaultServletHttpRequest<B> implements
             }
             final boolean isIterable = Iterable.class.isAssignableFrom(rawType);
             final String paramName = Objects.requireNonNull(name, "Parameter name should not be null").toString();
+            if (useParsedFormParameters()) {
+                Map<String, List<String>> map = formParameterMap();
+                List<String> values = map.get(paramName);
+                if (CollectionUtils.isEmpty(values)) {
+                    if (isIterable) {
+                        return conversionService.convert(Collections.emptyList(), conversionContext);
+                    }
+                    return Optional.empty();
+                }
+                if (isIterable) {
+                    if (isOptional) {
+                        return (Optional<T>) conversionService.convert(
+                            values,
+                            ConversionContext.of(argument.getFirstTypeVariable().orElse(argument))
+                        );
+                    }
+                    return conversionService.convert(values, conversionContext);
+                }
+                String first = values.get(0);
+                if (rawType.isInstance(first)) {
+                    return (Optional<T>) Optional.of(first);
+                }
+                return conversionService.convert(first, conversionContext);
+            }
             if (isIterable) {
                 final String[] parameterValues = delegate.getParameterValues(paramName);
                 if (ArrayUtils.isNotEmpty(parameterValues)) {
@@ -742,6 +892,18 @@ public final class DefaultServletHttpRequest<B> implements
                 }
             }
             return Optional.empty();
+        }
+
+        private boolean useParsedFormParameters() {
+            return DefaultServletHttpRequest.this.hasFormBody()
+                && DefaultServletHttpRequest.this.getContentType()
+                .map(mediaType -> mediaType.matches(MediaType.APPLICATION_FORM_URLENCODED_TYPE))
+                .orElse(false);
+        }
+
+        private Map<String, List<String>> formParameterMap() {
+            Charset charset = DefaultServletHttpRequest.this.getCharacterEncoding();
+            return DefaultServletHttpRequest.this.resolveUrlEncodedFormData(charset).parameters;
         }
     }
 }

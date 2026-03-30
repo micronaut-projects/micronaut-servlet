@@ -261,12 +261,12 @@
   },
   {
     "type": "io.micronaut.servlet.http.ServletBinderRegistry",
-    "member": "Constructor io.micronaut.servlet.http.ServletBinderRegistry(io.micronaut.http.codec.MediaTypeCodecRegistry,io.micronaut.core.convert.ConversionService,java.util.List)",
+    "member": "Constructor io.micronaut.servlet.http.ServletBinderRegistry(io.micronaut.http.body.MessageBodyHandlerRegistry,io.micronaut.core.convert.ConversionService,java.util.List)",
     "reason": "Core API change to DefaultBodyAnnotationBinder for Micronaut 4"
   },
   {
     "type": "io.micronaut.servlet.http.ServletBodyBinder",
-    "member": "Constructor io.micronaut.servlet.http.ServletBodyBinder(io.micronaut.core.convert.ConversionService,io.micronaut.http.codec.MediaTypeCodecRegistry)",
+    "member": "Constructor io.micronaut.servlet.http.ServletBodyBinder(io.micronaut.core.convert.ConversionService,io.micronaut.http.body.MessageBodyHandlerRegistry,io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder)",
     "reason": "Core API change to DefaultBodyAnnotationBinder for Micronaut 4"
   },
   {
