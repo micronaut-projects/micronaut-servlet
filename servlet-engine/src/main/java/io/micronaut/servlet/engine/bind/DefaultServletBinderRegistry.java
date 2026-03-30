@@ -82,7 +82,7 @@ class DefaultServletBinderRegistry<T> extends ServletBinderRegistry<T> {
         byType.put(ServletConfig.class, new ServletConfigBinder());
         byType.put(ServletContext.class, new ServletContextBinder());
         byType.put(CompletedPart.class, new CompletedPartRequestArgumentBinder());
-        byAnnotation.put(Part.class, new ServletPartBinder<>(mediaTypeCodecRegistry));
+        byAnnotation.put(Part.class, new ServletPartBinder<>(mediaTypeCodecRegistry, conversionService));
     }
 
     @SuppressWarnings("unchecked")

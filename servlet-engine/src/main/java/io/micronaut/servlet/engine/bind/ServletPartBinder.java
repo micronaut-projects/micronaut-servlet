@@ -17,6 +17,7 @@ package io.micronaut.servlet.engine.bind;
 
 import org.jspecify.annotations.NonNull;
 import io.micronaut.core.convert.ArgumentConversionContext;
+import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.io.IOUtils;
 import io.micronaut.core.io.Readable;
 import io.micronaut.core.type.Argument;
@@ -49,13 +50,17 @@ import java.util.Optional;
 public class ServletPartBinder<T> implements AnnotatedRequestArgumentBinder<Part, T> {
 
     private final MediaTypeCodecRegistry codecRegistry;
+    private final ConversionService conversionService;
 
     /**
      * Default constructor.
      * @param codecRegistry The codec registry.
+     * @param conversionService The conversion service
      */
-    ServletPartBinder(MediaTypeCodecRegistry codecRegistry) {
+    ServletPartBinder(MediaTypeCodecRegistry codecRegistry,
+                      ConversionService conversionService) {
         this.codecRegistry = codecRegistry;
+        this.conversionService = conversionService;
     }
 
     @Override
@@ -69,6 +74,11 @@ public class ServletPartBinder<T> implements AnnotatedRequestArgumentBinder<Part
             final HttpServletRequest nativeRequest = (HttpServletRequest) exchange.getRequest().getNativeRequest();
             final Argument<T> argument = context.getArgument();
             final String partName = context.getAnnotationMetadata().stringValue(Part.class).orElse(argument.getName());
+            final MediaType requestContentType = source.getContentType().orElse(null);
+            final boolean isMultipart = requestContentType != null && requestContentType.getName().startsWith("multipart/");
+            if (!isMultipart) {
+                return bindFromFormParameters(nativeRequest, argument, context, partName);
+            }
             final jakarta.servlet.http.Part part;
             try {
                 part = nativeRequest.getPart(partName);
@@ -169,6 +179,73 @@ public class ServletPartBinder<T> implements AnnotatedRequestArgumentBinder<Part
             }
         }
         return BindingResult.UNSATISFIED;
+    }
+
+    private BindingResult<T> bindFromFormParameters(HttpServletRequest nativeRequest,
+                                                    Argument<T> argument,
+                                                    ArgumentConversionContext<T> context,
+                                                    String partName) {
+        final Class<T> type = argument.getType();
+        String[] parameterValues = nativeRequest.getParameterValues(partName);
+        if (parameterValues == null || parameterValues.length == 0) {
+            return BindingResult.UNSATISFIED;
+        }
+        String value = parameterValues[0];
+        if (jakarta.servlet.http.Part.class.isAssignableFrom(type) || CompletedFileUpload.class.isAssignableFrom(type)) {
+            throw new HttpStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Unable to read part [" + partName + "]: request content type is not multipart"
+            );
+        } else if (Readable.class.isAssignableFrom(type)) {
+            final String finalValue = value;
+            //noinspection unchecked
+            return () -> (Optional<T>) Optional.of(new Readable() {
+                @NonNull
+                @Override
+                public String getName() {
+                    return partName;
+                }
+
+                @Override
+                public Reader asReader() {
+                    return new StringReader(finalValue);
+                }
+
+                @NonNull
+                @Override
+                public InputStream asInputStream() {
+                    Charset charset = resolveCharacterEncoding(nativeRequest);
+                    return new ByteArrayInputStream(finalValue.getBytes(charset));
+                }
+
+                @Override
+                public boolean exists() {
+                    return true;
+                }
+            });
+        } else if (String.class.isAssignableFrom(type)) {
+            //noinspection unchecked
+            return () -> (Optional<T>) Optional.of(value);
+        } else if (byte[].class.isAssignableFrom(type)) {
+            Charset charset = resolveCharacterEncoding(nativeRequest);
+            byte[] bytes = value.getBytes(charset);
+            //noinspection unchecked
+            return () -> (Optional<T>) Optional.of(bytes);
+        } else {
+            return () -> conversionService.convert(value, context);
+        }
+    }
+
+    private Charset resolveCharacterEncoding(HttpServletRequest nativeRequest) {
+        String encoding = nativeRequest.getCharacterEncoding();
+        if (encoding != null) {
+            try {
+                return Charset.forName(encoding);
+            } catch (Exception e) {
+                // ignore and fallback
+            }
+        }
+        return StandardCharsets.UTF_8;
     }
 
     private BufferedReader newReader(jakarta.servlet.http.Part part) throws IOException {
