@@ -496,6 +496,14 @@ public final class DefaultServletHttpRequest<B> implements
         byteBody.close();
     }
 
+    @Override
+    public Optional<SSLSession> getSslSession() {
+        if (sslSessionProvider != null) {
+            return sslSessionProvider.getSSLSession(this);
+        }
+        return ServletHttpRequest.super.getSslSession();
+    }
+
     /**
      * The servlet request headers.
      */
@@ -615,13 +623,5 @@ public final class DefaultServletHttpRequest<B> implements
             }
             return Optional.empty();
         }
-    }
-
-    @Override
-    public Optional<SSLSession> getSslSession() {
-        if (sslSessionProvider != null) {
-            return sslSessionProvider.getSSLSession(this);
-        }
-        return ServletHttpRequest.super.getSslSession();
     }
 }

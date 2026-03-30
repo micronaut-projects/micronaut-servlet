@@ -22,7 +22,6 @@ import io.micronaut.http.annotation.Part;
 import io.micronaut.http.bind.binders.TypedRequestArgumentBinder;
 import io.micronaut.http.multipart.CompletedPart;
 import io.micronaut.http.server.exceptions.InternalServerException;
-import io.micronaut.servlet.engine.ServletCompletedFileUpload;
 import io.micronaut.servlet.http.ServletExchange;
 
 import jakarta.servlet.ServletException;
@@ -51,8 +50,12 @@ class CompletedPartRequestArgumentBinder implements TypedRequestArgumentBinder<C
             if (part == null) {
                 return BindingResult.UNSATISFIED;
             }
-            return () -> Optional.of(new ServletCompletedFileUpload(part));
+            CompletedPart completedPart = ServletCompletedFileUploadFactory.create(part);
+            return () -> Optional.of(completedPart);
         } catch (IOException | ServletException e) {
+            context.reject(new InternalServerException("Error reading part [" + partName + "]: " + e.getMessage(), e));
+            return BindingResult.EMPTY;
+        } catch (RuntimeException e) {
             context.reject(new InternalServerException("Error reading part [" + partName + "]: " + e.getMessage(), e));
             return BindingResult.EMPTY;
         }

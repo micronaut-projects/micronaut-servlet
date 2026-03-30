@@ -76,8 +76,78 @@
   },
   {
     "type": "io.micronaut.servlet.engine.ServletCompletedFileUpload",
-    "member": "Constructor io.micronaut.servlet.engine.ServletCompletedFileUpload(javax.servlet.http.Part)",
-    "reason": "Jakarta upgrade"
+    "member": "Constructor io.micronaut.servlet.engine.ServletCompletedFileUpload(jakarta.servlet.http.Part)",
+    "reason": "CompletedFileUpload became sealed; servlet support now adapts to Micronaut's CompletedFileUpload instead of a custom implementation"
+  },
+  {
+    "type": "io.micronaut.servlet.engine.ServletCompletedFileUpload",
+    "member": "Implemented interface io.micronaut.http.multipart.CompletedFileUpload",
+    "reason": "CompletedFileUpload became sealed; servlet support now adapts to Micronaut's CompletedFileUpload instead of a custom implementation"
+  },
+  {
+    "type": "io.micronaut.servlet.engine.ServletCompletedFileUpload",
+    "member": "Implemented interface io.micronaut.http.multipart.CompletedPart",
+    "reason": "CompletedFileUpload became sealed; servlet support now adapts to Micronaut's CompletedFileUpload instead of a custom implementation"
+  },
+  {
+    "type": "io.micronaut.servlet.engine.ServletCompletedFileUpload",
+    "member": "Implemented interface io.micronaut.http.multipart.PartData",
+    "reason": "CompletedFileUpload became sealed; servlet support now adapts to Micronaut's CompletedFileUpload instead of a custom implementation"
+  },
+  {
+    "type": "io.micronaut.servlet.engine.ServletCompletedFileUpload",
+    "member": "Implemented interface io.micronaut.http.multipart.FileUpload",
+    "reason": "CompletedFileUpload became sealed; servlet support now adapts to Micronaut's CompletedFileUpload instead of a custom implementation"
+  },
+  {
+    "type": "io.micronaut.servlet.engine.ServletCompletedFileUpload",
+    "member": "Method io.micronaut.servlet.engine.ServletCompletedFileUpload.getByteBuffer():",
+    "reason": "CompletedFileUpload became sealed; servlet support now adapts to Micronaut's CompletedFileUpload instead of a custom implementation"
+  },
+  {
+    "type": "io.micronaut.servlet.engine.ServletCompletedFileUpload",
+    "member": "Method io.micronaut.servlet.engine.ServletCompletedFileUpload.getBytes():",
+    "reason": "CompletedFileUpload became sealed; servlet support now adapts to Micronaut's CompletedFileUpload instead of a custom implementation"
+  },
+  {
+    "type": "io.micronaut.servlet.engine.ServletCompletedFileUpload",
+    "member": "Method io.micronaut.servlet.engine.ServletCompletedFileUpload.getContentType():",
+    "reason": "CompletedFileUpload became sealed; servlet support now adapts to Micronaut's CompletedFileUpload instead of a custom implementation"
+  },
+  {
+    "type": "io.micronaut.servlet.engine.ServletCompletedFileUpload",
+    "member": "Method io.micronaut.servlet.engine.ServletCompletedFileUpload.getDefinedSize():",
+    "reason": "CompletedFileUpload became sealed; servlet support now adapts to Micronaut's CompletedFileUpload instead of a custom implementation"
+  },
+  {
+    "type": "io.micronaut.servlet.engine.ServletCompletedFileUpload",
+    "member": "Method io.micronaut.servlet.engine.ServletCompletedFileUpload.getFilename():",
+    "reason": "CompletedFileUpload became sealed; servlet support now adapts to Micronaut's CompletedFileUpload instead of a custom implementation"
+  },
+  {
+    "type": "io.micronaut.servlet.engine.ServletCompletedFileUpload",
+    "member": "Method io.micronaut.servlet.engine.ServletCompletedFileUpload.getInputStream():",
+    "reason": "CompletedFileUpload became sealed; servlet support now adapts to Micronaut's CompletedFileUpload instead of a custom implementation"
+  },
+  {
+    "type": "io.micronaut.servlet.engine.ServletCompletedFileUpload",
+    "member": "Method io.micronaut.servlet.engine.ServletCompletedFileUpload.getName():",
+    "reason": "CompletedFileUpload became sealed; servlet support now adapts to Micronaut's CompletedFileUpload instead of a custom implementation"
+  },
+  {
+    "type": "io.micronaut.servlet.engine.ServletCompletedFileUpload",
+    "member": "Method io.micronaut.servlet.engine.ServletCompletedFileUpload.getSize():",
+    "reason": "CompletedFileUpload became sealed; servlet support now adapts to Micronaut's CompletedFileUpload instead of a custom implementation"
+  },
+  {
+    "type": "io.micronaut.servlet.engine.ServletCompletedFileUpload",
+    "member": "Method io.micronaut.servlet.engine.ServletCompletedFileUpload.isComplete():",
+    "reason": "CompletedFileUpload became sealed; servlet support now adapts to Micronaut's CompletedFileUpload instead of a custom implementation"
+  },
+  {
+    "type": "io.micronaut.servlet.engine.ServletCompletedFileUpload",
+    "member": "Class io.micronaut.servlet.engine.ServletCompletedFileUpload:",
+    "reason": "CompletedFileUpload became sealed; servlet support now adapts to Micronaut's CompletedFileUpload instead of a custom implementation"
   },
   {
     "type": "io.micronaut.servlet.engine.ServletCookieAdapter",
@@ -215,4 +285,3 @@
     "reason": "Removed deprecated code for Micronaut Framework 5."
   }
 ]
-
