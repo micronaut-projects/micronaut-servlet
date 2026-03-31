@@ -82,6 +82,7 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
      * Logger to be used by subclasses for logging.
      */
     protected static final Logger LOG = LoggerFactory.getLogger(ServletHttpHandler.class);
+    private static final String FORM_COMPLETER_STARTED_ATTRIBUTE = "micronaut.servlet.formCompleterStarted";
 
     protected final ApplicationContext applicationContext;
     private final RouteExecutor routeExecutor;
@@ -391,12 +392,19 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
             if (request instanceof FormCapableHttpRequest<?> formRequest && formRequest.hasFormBody()) {
                 FormFactory formFactory = applicationContext.getBean(FormFactory.class);
                 FormRouteCompleter completer = formFactory.getOrCreateCompleter(formRequest);
-                try {
-                    completer.start();
-                } catch (IllegalStateException ignored) {
-                    // already started upstream
+                ExecutionFlow<RouteMatch<?>> result = super.fulfillArguments(routeMatch, request);
+                Boolean started = formRequest.getAttributes()
+                    .get(FORM_COMPLETER_STARTED_ATTRIBUTE, Boolean.class)
+                    .orElse(Boolean.FALSE);
+                if (!Boolean.TRUE.equals(started)) {
+                    try {
+                        completer.start();
+                    } catch (IllegalStateException ignored) {
+                        // already started upstream
+                    }
+                    formRequest.getAttributes().put(FORM_COMPLETER_STARTED_ATTRIBUTE, Boolean.TRUE);
                 }
-                return super.fulfillArguments(routeMatch, request);
+                return result;
             }
             return super.fulfillArguments(routeMatch, request);
         }
