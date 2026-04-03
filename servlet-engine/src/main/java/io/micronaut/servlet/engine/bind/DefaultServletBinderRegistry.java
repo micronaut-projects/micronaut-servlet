@@ -52,8 +52,6 @@ import java.util.List;
 @Internal
 class DefaultServletBinderRegistry<T> extends ServletBinderRegistry<T> {
 
-    public static final Argument<byte[]> BYTE_ARRAY = Argument.of(byte[].class);
-
     /**
      * Default constructor.
      *
@@ -75,7 +73,7 @@ class DefaultServletBinderRegistry<T> extends ServletBinderRegistry<T> {
         byType.put(ServletConfig.class, new ServletConfigBinder());
         byType.put(ServletContext.class, new ServletContextBinder());
         byType.put(CompletedPart.class, new CompletedPartRequestArgumentBinder());
-        byAnnotation.put(Part.class, new ServletPartBinder<>(conversionService, formFactoryProvider));
+        byAnnotation.put(Part.class, new ServletPartBinder<>(conversionService, formFactoryProvider, messageBodyHandlerRegistry));
     }
 
     @Override

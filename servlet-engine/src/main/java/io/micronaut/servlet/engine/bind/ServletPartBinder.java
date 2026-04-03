@@ -39,10 +39,14 @@ import io.micronaut.http.multipart.CompletedFileUpload;
 import io.micronaut.http.multipart.CompletedPart;
 import io.micronaut.http.multipart.PartData;
 import io.micronaut.http.multipart.StreamingFileUpload;
+import io.micronaut.http.body.MessageBodyHandlerRegistry;
+import io.micronaut.http.body.MessageBodyReader;
 import io.micronaut.http.reactive.execution.ReactiveExecutionFlow;
 import io.micronaut.http.server.exceptions.InternalServerException;
 import io.micronaut.http.server.multipart.FormFactory;
 import io.micronaut.http.server.multipart.FormRouteCompleter;
+import io.micronaut.http.simple.SimpleHttpHeaders;
+import io.micronaut.http.codec.CodecException;
 import io.micronaut.servlet.http.ServletExchange;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -77,17 +81,21 @@ public class ServletPartBinder<T> implements AnnotatedRequestArgumentBinder<Part
 
     private final ConversionService conversionService;
     private final BeanProvider<FormFactory> formFactoryProvider;
+    private final MessageBodyHandlerRegistry messageBodyHandlerRegistry;
 
     /**
      * Default constructor.
      *
      * @param conversionService   The conversion service.
      * @param formFactoryProvider The form factory provider.
+     * @param messageBodyHandlerRegistry The message body handler registry
      */
     ServletPartBinder(ConversionService conversionService,
-                      BeanProvider<FormFactory> formFactoryProvider) {
+                      BeanProvider<FormFactory> formFactoryProvider,
+                      MessageBodyHandlerRegistry messageBodyHandlerRegistry) {
         this.conversionService = conversionService;
         this.formFactoryProvider = formFactoryProvider;
+        this.messageBodyHandlerRegistry = messageBodyHandlerRegistry;
     }
 
     @Override
@@ -135,7 +143,14 @@ public class ServletPartBinder<T> implements AnnotatedRequestArgumentBinder<Part
         if (jakarta.servlet.http.Part.class.isAssignableFrom(type)) {
             //noinspection unchecked
             return () -> (Optional<T>) Optional.of(part);
-        } else if (Readable.class.isAssignableFrom(type)) {
+        }
+
+        Optional<T> messageBodyValue = readUsingMessageBodyReader(context, part, partName);
+        if (messageBodyValue.isPresent()) {
+            return () -> messageBodyValue;
+        }
+
+        if (Readable.class.isAssignableFrom(type)) {
             //noinspection unchecked
             return () -> (Optional<T>) Optional.of(new Readable() {
                 @NonNull
@@ -379,6 +394,42 @@ public class ServletPartBinder<T> implements AnnotatedRequestArgumentBinder<Part
             completedPart.closeAsync(factory.getDiskWriteExecutor());
         }
         return converted;
+    }
+
+    private Optional<T> readUsingMessageBodyReader(ArgumentConversionContext<T> context,
+                                                   jakarta.servlet.http.Part part,
+                                                   String partName) {
+        MediaType mediaType = Optional.ofNullable(part.getContentType()).map(MediaType::new).orElse(null);
+        Argument<T> argument = context.getArgument();
+        MessageBodyReader<T> reader = messageBodyHandlerRegistry.findReader(argument, mediaType).orElse(null);
+        if (reader == null) {
+            return Optional.empty();
+        }
+
+        SimpleHttpHeaders headers = new SimpleHttpHeaders(conversionService);
+        for (String headerName : part.getHeaderNames()) {
+            for (String headerValue : part.getHeaders(headerName)) {
+                headers.add(headerName, headerValue);
+            }
+        }
+
+        try (InputStream inputStream = part.getInputStream()) {
+            T value = reader.read(argument, mediaType, headers, inputStream);
+            if (value == null) {
+                return Optional.empty();
+            }
+            return Optional.of(value);
+        } catch (IOException e) {
+            throw new HttpStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Unable to read part [" + partName + "]: " + e.getMessage()
+            );
+        } catch (CodecException e) {
+            throw new HttpStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Unable to decode part [" + partName + "]: " + e.getMessage()
+            );
+        }
     }
 
     private Charset resolveCharset(CompletedPart completedPart) {
