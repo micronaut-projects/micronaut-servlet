@@ -18,9 +18,11 @@ package io.micronaut.http.poja.apache;
 import io.micronaut.core.annotation.Internal;
 import org.jspecify.annotations.NonNull;
 import io.micronaut.core.convert.ConversionService;
+import io.micronaut.core.convert.value.ConvertibleMultiValues;
 import io.micronaut.core.io.buffer.ByteBufferFactory;
 import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpMethod;
+import io.micronaut.http.MediaType;
 import io.micronaut.http.MutableHttpHeaders;
 import io.micronaut.http.MutableHttpParameters;
 import io.micronaut.http.MutableHttpRequest;
@@ -85,6 +87,7 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
     private final SimpleCookies cookies;
 
     private final ByteBody byteBody;
+    private volatile MultiValuesQueryParameters formParameters;
 
     private ApacheServletHttpResponse<?> primaryResponse;
 
@@ -194,6 +197,20 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
 
     @Override
     public @NonNull MutableHttpParameters getParameters() {
+        MediaType contentType = getContentType().orElse(null);
+        if (contentType != null && contentType.matches(MediaType.APPLICATION_FORM_URLENCODED_TYPE)) {
+            MultiValuesQueryParameters cached = formParameters;
+            if (cached == null) {
+                synchronized (this) {
+                    cached = formParameters;
+                    if (cached == null) {
+                        cached = resolveFormParameters();
+                        formParameters = cached;
+                    }
+                }
+            }
+            return cached;
+        }
         return queryParameters;
     }
 
@@ -294,6 +311,29 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
                     Collectors.mapping(NameValuePair::getValue, Collectors.toList())
             ));
         return new MultiValuesQueryParameters(map, conversionService);
+    }
+
+    private MultiValuesQueryParameters resolveFormParameters() {
+        Map<CharSequence, List<String>> merged = new LinkedHashMap<>();
+        for (String name : queryParameters.names()) {
+            List<String> values = queryParameters.getAll(name);
+            if (!values.isEmpty()) {
+                merged.put(name, new ArrayList<>(values));
+            }
+        }
+        ConvertibleMultiValues<CharSequence> formData = getFormData();
+        for (String name : formData.names()) {
+            List<CharSequence> values = formData.getAll(name);
+            if (values == null || values.isEmpty()) {
+                merged.computeIfAbsent(name, key -> new ArrayList<>());
+                continue;
+            }
+            List<String> target = merged.computeIfAbsent(name, key -> new ArrayList<>());
+            for (CharSequence value : values) {
+                target.add(value == null ? null : value.toString());
+            }
+        }
+        return new MultiValuesQueryParameters(merged, conversionService);
     }
 
     /**
