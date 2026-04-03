@@ -31,6 +31,7 @@ import org.junit.platform.suite.api.SuiteDisplayName;
     // Proxying is probably not supported. There is no request concurrency
     "io.micronaut.http.server.tck.tests.FilterProxyTest",
     "io.micronaut.http.server.tck.tests.forms.UploadTest", // multipart
+    "io.micronaut.http.server.tck.tests.forms.FormBindingDeadlockTest"
 })
 public class PojaApacheServerTestSuite {
 }

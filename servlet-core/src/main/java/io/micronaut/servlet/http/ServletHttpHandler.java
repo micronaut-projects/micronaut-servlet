@@ -33,16 +33,13 @@ import io.micronaut.http.MutableHttpHeaders;
 import io.micronaut.http.body.AvailableByteBody;
 import io.micronaut.http.body.ByteBodyFactory;
 import io.micronaut.http.body.MessageBodyHandlerRegistry;
-import io.micronaut.http.form.FormCapableHttpRequest;
 import io.micronaut.http.context.ServerHttpRequestContext;
 import io.micronaut.http.context.event.HttpRequestReceivedEvent;
 import io.micronaut.http.context.event.HttpRequestTerminatedEvent;
-import io.micronaut.http.server.multipart.FormRouteCompleter;
 import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.http.server.RequestLifecycle;
 import io.micronaut.http.server.ResponseLifecycle;
 import io.micronaut.http.server.RouteExecutor;
-import io.micronaut.http.server.multipart.FormFactory;
 import io.micronaut.http.server.types.files.FileCustomizableResponseType;
 import io.micronaut.http.server.types.files.StreamedFile;
 import io.micronaut.http.server.types.files.SystemFile;
@@ -51,7 +48,6 @@ import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.web.router.resource.StaticResourceResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import io.micronaut.web.router.RouteMatch;
 
 import java.io.EOFException;
 import java.io.File;
@@ -82,7 +78,6 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
      * Logger to be used by subclasses for logging.
      */
     protected static final Logger LOG = LoggerFactory.getLogger(ServletHttpHandler.class);
-    private static final String FORM_COMPLETER_STARTED_ATTRIBUTE = "micronaut.servlet.formCompleterStarted";
 
     protected final ApplicationContext applicationContext;
     private final RouteExecutor routeExecutor;
@@ -240,7 +235,7 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
     }
 
     /**
-     * Handles a {@link DefaultServletExchange}.
+     * Handles a {@link ServletExchange}.
      *
      * @param exchange The exchange
      */
@@ -370,7 +365,7 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
     }
 
     /**
-     * Creates the {@link DefaultServletExchange} object.
+     * Creates the {@link ServletExchange} object.
      *
      * @param request  The request
      * @param response The response
@@ -385,28 +380,6 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
 
         ExecutionFlow<HttpResponse<?>> handleNormal(HttpRequest<?> request) {
             return normalFlow(request);
-        }
-
-        @Override
-        protected ExecutionFlow<RouteMatch<?>> fulfillArguments(RouteMatch<?> routeMatch, HttpRequest<?> request) {
-            if (request instanceof FormCapableHttpRequest<?> formRequest && formRequest.hasFormBody()) {
-                FormFactory formFactory = applicationContext.getBean(FormFactory.class);
-                FormRouteCompleter completer = formFactory.getOrCreateCompleter(formRequest);
-                ExecutionFlow<RouteMatch<?>> result = super.fulfillArguments(routeMatch, request);
-                Boolean started = formRequest.getAttributes()
-                    .get(FORM_COMPLETER_STARTED_ATTRIBUTE, Boolean.class)
-                    .orElse(Boolean.FALSE);
-                if (!Boolean.TRUE.equals(started)) {
-                    try {
-                        completer.start();
-                    } catch (IllegalStateException ignored) {
-                        // already started upstream
-                    }
-                    formRequest.getAttributes().put(FORM_COMPLETER_STARTED_ATTRIBUTE, Boolean.TRUE);
-                }
-                return result;
-            }
-            return super.fulfillArguments(routeMatch, request);
         }
 
         @Override

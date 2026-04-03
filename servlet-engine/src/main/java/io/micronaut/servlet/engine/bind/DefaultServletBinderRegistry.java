@@ -88,7 +88,6 @@ class DefaultServletBinderRegistry<T> extends ServletBinderRegistry<T> {
         byAnnotation.put(Part.class, new ServletPartBinder<>(conversionService, formFactoryProvider));
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     protected ServletBodyBinder<T> newServletBodyBinder(
         MessageBodyHandlerRegistry messageBodyHandlerRegistry,

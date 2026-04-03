@@ -31,17 +31,18 @@ import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.Part;
 import io.micronaut.http.bind.binders.AnnotatedRequestArgumentBinder;
+import io.micronaut.http.bind.binders.PendingRequestBindingResult;
 import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.http.form.FormCapableHttpRequest;
 import io.micronaut.http.multipart.CompletedAttribute;
 import io.micronaut.http.multipart.CompletedFileUpload;
 import io.micronaut.http.multipart.CompletedPart;
 import io.micronaut.http.multipart.PartData;
+import io.micronaut.http.multipart.StreamingFileUpload;
 import io.micronaut.http.reactive.execution.ReactiveExecutionFlow;
 import io.micronaut.http.server.exceptions.InternalServerException;
 import io.micronaut.http.server.multipart.FormFactory;
 import io.micronaut.http.server.multipart.FormRouteCompleter;
-import io.micronaut.http.multipart.StreamingFileUpload;
 import io.micronaut.servlet.http.ServletExchange;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -53,23 +54,22 @@ import reactor.core.publisher.SignalType;
 import reactor.core.scheduler.Schedulers;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.io.StringReader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.OptionalLong;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * A binder capable of binding servlet multipart requests.
- * @param <T> The argument type
  *
+ * @param <T> The argument type
  * @author graemerocher
  * @since 1.0.0
  */
@@ -80,7 +80,8 @@ public class ServletPartBinder<T> implements AnnotatedRequestArgumentBinder<Part
 
     /**
      * Default constructor.
-     * @param conversionService The conversion service.
+     *
+     * @param conversionService   The conversion service.
      * @param formFactoryProvider The form factory provider.
      */
     ServletPartBinder(ConversionService conversionService,
@@ -210,7 +211,6 @@ public class ServletPartBinder<T> implements AnnotatedRequestArgumentBinder<Part
         }
         Argument<T> argument = context.getArgument();
         Class<T> argumentType = argument.getType();
-        FormRouteCompleter completerForLog = factory.getOrCreateCompleter(formRequest);
 
         if (Publisher.class.isAssignableFrom(argumentType)) {
             return bindPublisher(factory, formRequest, context, partName);
@@ -261,20 +261,20 @@ public class ServletPartBinder<T> implements AnnotatedRequestArgumentBinder<Part
                 .flatMap(raw -> ReactiveExecutionFlow.toPublisher(factory.completeFileUpload(formRequest, raw)))));
         } else if (CompletedAttribute.class.isAssignableFrom(elementType)) {
             flux = Flux.from(Publishers.bufferNow(Flux.from(completer.subscribeField(partName,
-                    new FormRouteCompleter.SubscriptionMetadata(FormRouteCompleter.SubscriptionMode.ASYNC_NO_BACKPRESSURE, argument)))
-                .flatMap(raw -> ReactiveExecutionFlow.toPublisher(factory.completeAttribute(formRequest, raw)))))
+                        new FormRouteCompleter.SubscriptionMetadata(FormRouteCompleter.SubscriptionMode.ASYNC_NO_BACKPRESSURE, argument)))
+                    .flatMap(raw -> ReactiveExecutionFlow.toPublisher(factory.completeAttribute(formRequest, raw)))))
                 .doOnDiscard(CompletedAttribute.class, attr -> attr.closeAsync(factory.getDiskWriteExecutor()));
         } else if (CompletedPart.class.isAssignableFrom(elementType)) {
             flux = Flux.from(Publishers.bufferNow(Flux.from(completer.subscribeField(partName,
-                    new FormRouteCompleter.SubscriptionMetadata(FormRouteCompleter.SubscriptionMode.ASYNC_NO_BACKPRESSURE, argument)))
-                .flatMap(raw -> ReactiveExecutionFlow.toPublisher(factory.completePart(formRequest, raw)))))
+                        new FormRouteCompleter.SubscriptionMetadata(FormRouteCompleter.SubscriptionMode.ASYNC_NO_BACKPRESSURE, argument)))
+                    .flatMap(raw -> ReactiveExecutionFlow.toPublisher(factory.completePart(formRequest, raw)))))
                 .doOnDiscard(CompletedPart.class, part -> part.closeAsync(factory.getDiskWriteExecutor()));
         } else {
             @SuppressWarnings("unchecked")
             ArgumentConversionContext<Object> conversionContext = (ArgumentConversionContext<Object>) ConversionContext.of(elementArgument);
             flux = Flux.from(Publishers.bufferNow(Flux.from(completer.subscribeField(partName,
-                    new FormRouteCompleter.SubscriptionMetadata(FormRouteCompleter.SubscriptionMode.ASYNC_NO_BACKPRESSURE, argument)))
-                .flatMap(raw -> ReactiveExecutionFlow.toPublisher(factory.completePart(formRequest, raw)))))
+                        new FormRouteCompleter.SubscriptionMetadata(FormRouteCompleter.SubscriptionMode.ASYNC_NO_BACKPRESSURE, argument)))
+                    .flatMap(raw -> ReactiveExecutionFlow.toPublisher(factory.completePart(formRequest, raw)))))
                 .publishOn(Schedulers.fromExecutor(factory.getDiskWriteExecutor()))
                 .flatMap(part -> Mono.justOrEmpty(convertCompletedPart(factory, conversionContext, part)));
         }
@@ -291,24 +291,57 @@ public class ServletPartBinder<T> implements AnnotatedRequestArgumentBinder<Part
     private BindingResult<T> bindSingleValue(FormFactory factory,
                                              FormCapableHttpRequest<?> formRequest,
                                              ArgumentConversionContext<T> context,
-                                             String partName,
-                                             boolean preventDuplicate) {
+                                             String inputName,
+                                             boolean skipClaimed) {
+//        FormRouteCompleter completer = factory.getOrCreateCompleter(formRequest);
+
+//        Publisher<io.micronaut.http.multipart.RawFormField> publisher = completer.subscribeField(partName,
+//            new FormRouteCompleter.SubscriptionMetadata(FormRouteCompleter.SubscriptionMode.WAITS_FOR_FULL, context.getArgument()));
+//
+//        Mono<Optional<T>> mono = Mono.from(publisher)
+//            .flatMap(raw -> Mono.from(ReactiveExecutionFlow.toPublisher(factory.completePart(formRequest, raw))))
+//            .map(part -> convertCompletedPart(factory, context, part))
+//            .defaultIfEmpty(Optional.empty());
+//
+//        CompletableFuture<Optional<T>> completableFuture = mono.toFuture();
+//        BasicHttpAttributes.addRouteWaitsFor(formRequest, CompletableFutureExecutionFlow.just(completableFuture));
+
+
         FormRouteCompleter completer = factory.getOrCreateCompleter(formRequest);
-        if (preventDuplicate && completer.isClaimed(partName)) {
-            return BindingResult.UNSATISFIED;
+        if (skipClaimed && completer.isClaimed(inputName)) {
+            return BindingResult.unsatisfied();
         }
+        CompletableFuture<Optional<T>> completableFuture = Mono.from(completer.subscribeField(inputName, new FormRouteCompleter.SubscriptionMetadata(FormRouteCompleter.SubscriptionMode.WAITS_FOR_FULL, context.getArgument())))
+            .flatMap(rff -> Mono.from(ReactiveExecutionFlow.toPublisher(factory.completePart(formRequest, rff))))
+            .map(d -> {
+                boolean skipClose = false;
+                try {
+                    Optional<T> converted = conversionService.convert(d, context);
+                    if (converted.isPresent() && converted.get() == d) {
+                        skipClose = true;
+                    }
+                    return converted;
+                } finally {
+                    if (!skipClose) {
+                        d.closeAsync(factory.getDiskWriteExecutor());
+                    }
+                }
+            })
+            .toFuture();
+        BasicHttpAttributes.addRouteWaitsFor(formRequest, CompletableFutureExecutionFlow.just(completableFuture));
 
-        Publisher<io.micronaut.http.multipart.RawFormField> publisher = completer.subscribeField(partName,
-            new FormRouteCompleter.SubscriptionMetadata(FormRouteCompleter.SubscriptionMode.WAITS_FOR_FULL, context.getArgument()));
+        return new PendingRequestBindingResult<>() {
 
-        Mono<Optional<T>> mono = Mono.from(publisher)
-            .flatMap(raw -> Mono.from(ReactiveExecutionFlow.toPublisher(factory.completePart(formRequest, raw))))
-            .map(part -> convertCompletedPart(factory, context, part))
-            .defaultIfEmpty(Optional.empty());
+            @Override
+            public boolean isPending() {
+                return !completableFuture.isDone();
+            }
 
-        CompletableFuture<Optional<T>> future = mono.toFuture();
-        BasicHttpAttributes.addRouteWaitsFor(formRequest, CompletableFutureExecutionFlow.just(future));
-        return new AsyncBindingResult<>(future, context);
+            @Override
+            public Optional<T> getValue() {
+                return completableFuture.getNow(null);
+            }
+        };
     }
 
     private <X> Optional<X> convertCompletedPart(FormFactory factory,
@@ -383,48 +416,7 @@ public class ServletPartBinder<T> implements AnnotatedRequestArgumentBinder<Part
         return new BufferedReader(inputStreamReader);
     }
 
-    private static final class AsyncBindingResult<T> implements BindingResult<T> {
-        private final CompletableFuture<Optional<T>> future;
-        private final ArgumentConversionContext<T> context;
-        private final AtomicBoolean rejected = new AtomicBoolean(false);
-
-        private AsyncBindingResult(CompletableFuture<Optional<T>> future,
-                                   ArgumentConversionContext<T> context) {
-            this.future = future;
-            this.context = context;
-        }
-
-        @Override
-        public Optional<T> getValue() {
-            try {
-                return future.get();
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                if (rejected.compareAndSet(false, true)) {
-                    context.reject(e);
-                }
-                throw new InternalServerException("Interrupted while binding @Part argument: " + e.getMessage(), e);
-            } catch (ExecutionException e) {
-                Throwable cause = e.getCause();
-                if (cause instanceof RuntimeException runtime) {
-                    throw runtime;
-                }
-                if (cause instanceof HttpStatusException status) {
-                    throw status;
-                }
-                if (rejected.compareAndSet(false, true)) {
-                    context.reject(cause instanceof Exception ? (Exception) cause : new RuntimeException(cause));
-                }
-                throw new InternalServerException("Error binding @Part argument: " + cause.getMessage(), cause);
-            }
-        }
-    }
-
-    private static final class SimpleReadable implements Readable {
-        private final String name;
-        private final String value;
-        private final Charset charset;
-
+    private record SimpleReadable(String name, String value, Charset charset) implements Readable {
         private SimpleReadable(String name, String value, Charset charset) {
             this.name = Objects.requireNonNull(name, "name");
             this.value = Objects.requireNonNull(value, "value");
@@ -439,13 +431,13 @@ public class ServletPartBinder<T> implements AnnotatedRequestArgumentBinder<Part
 
         @Override
         public Reader asReader() {
-            return new java.io.StringReader(value);
+            return new StringReader(value);
         }
 
         @NonNull
         @Override
         public InputStream asInputStream() {
-            return new java.io.ByteArrayInputStream(value.getBytes(charset));
+            return new ByteArrayInputStream(value.getBytes(charset));
         }
 
         @Override
