@@ -21,34 +21,40 @@ import io.micronaut.core.convert.ConversionError;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.io.IOUtils;
 import io.micronaut.core.io.Readable;
-import io.micronaut.core.io.buffer.ByteArrayBufferFactory;
-import io.micronaut.core.io.buffer.ByteBuffer;
 import io.micronaut.core.type.Argument;
-import io.micronaut.http.HttpAttributes;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.MediaType;
+import io.micronaut.http.ServerHttpRequest;
 import io.micronaut.http.annotation.Body;
 import io.micronaut.http.bind.binders.AnnotatedRequestArgumentBinder;
 import io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder;
+import io.micronaut.http.body.AvailableByteBody;
 import io.micronaut.http.body.MessageBodyHandlerRegistry;
 import io.micronaut.http.body.MessageBodyReader;
 import io.micronaut.http.codec.CodecException;
-import io.micronaut.json.body.JsonMessageHandler;
+import io.micronaut.json.JsonMapper;
+import io.micronaut.json.tree.JsonNode;
+import io.micronaut.web.router.RouteAttributes;
 import io.micronaut.web.router.RouteInfo;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
+import org.reactivestreams.Processor;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Sinks;
+import reactor.core.publisher.Mono;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.lang.reflect.Array;
+import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 /**
  * Allows binding the body from a {@link ServletHttpRequest}.
@@ -58,10 +64,12 @@ import java.util.Optional;
  * @since 2.0.0
  */
 public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body, T> {
+    private static final Argument<byte[]> BYTE_ARRAY = Argument.of(byte[].class);
+
     protected final ConversionService conversionService;
     private final MessageBodyHandlerRegistry messageBodyHandlerRegistry;
     private final DefaultBodyAnnotationBinder<T> defaultBodyAnnotationBinder;
-    private final MessageBodyReader<Object> jsonBodyReader;
+    private final JsonMapper jsonMapper;
 
     /**
      * Default constructor.
@@ -71,12 +79,12 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
      */
     protected ServletBodyBinder(ConversionService conversionService,
                                 MessageBodyHandlerRegistry messageBodyHandlerRegistry,
-                                DefaultBodyAnnotationBinder<T> defaultBodyAnnotationBinder) {
+                                DefaultBodyAnnotationBinder<T> defaultBodyAnnotationBinder,
+                                JsonMapper jsonMapper) {
         this.conversionService = conversionService;
         this.messageBodyHandlerRegistry = messageBodyHandlerRegistry;
         this.defaultBodyAnnotationBinder = defaultBodyAnnotationBinder;
-        this.jsonBodyReader = messageBodyHandlerRegistry.findReader(Argument.OBJECT_ARGUMENT, MediaType.APPLICATION_JSON_TYPE)
-            .orElseThrow(() -> new IllegalStateException("Json reader is required!"));
+        this.jsonMapper = jsonMapper;
     }
 
     @Override
@@ -123,27 +131,37 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
                     return () -> result;
                 }
             } else {
-                MessageBodyReader messageBodyReader = source.getAttribute(HttpAttributes.ROUTE_INFO, RouteInfo.class)
+                if (name != null) {
+                    Argument<Map<String, Object>> mapArgument = Argument.mapOf(String.class, Object.class);
+                    MessageBodyReader<Map<String, Object>> reader = messageBodyHandlerRegistry.findReader(mapArgument, mediaType).orElse(null);
+                    if (reader != null) {
+                        try (InputStream inputStream = servletHttpRequest.getInputStream()) {
+                            Map<String, Object> map = reader.read(mapArgument, mediaType, source.getHeaders(), inputStream);
+                            Object value = map == null ? null : map.get(name);
+                            T content = conversionService.convert(value, argument).orElse(null);
+                            return () -> Optional.ofNullable(content);
+                        } catch (CodecException | IOException e) {
+                            throw new CodecException("Unable to decode request body: " + e.getMessage(), e);
+                        }
+                    }
+                }
+                MessageBodyReader messageBodyReader = RouteAttributes.getRouteInfo(source)
                     .map(RouteInfo::getMessageBodyReader)
                     .orElse(null);
-                if (name == null && messageBodyReader != null && messageBodyReader.isReadable(context.getArgument(), mediaType)) {
-                    try (InputStream inputStream = servletHttpRequest.getInputStream()) {
-                        Object content;
-                        if (Publishers.isConvertibleToPublisher(context.getArgument().getType())) {
-                            Argument<Object> firstArg = (Argument<Object>) context.getArgument().getFirstTypeVariable().orElse(Argument.OBJECT_ARGUMENT);
-                            Publisher<?> publisher;
-                            if (messageBodyReader.getClass().getSimpleName().equals("NettyJsonStreamHandler")) {
-                                messageBodyReader = jsonBodyReader;
-                            }
-                            if (Publishers.isSingle(context.getArgument().getType())) {
-                                publisher = Publishers.just(messageBodyReader.read(firstArg, mediaType, source.getHeaders(), inputStream));
-                            } else {
-                                publisher = Flux.fromIterable((Iterable<?>) messageBodyReader.read(Argument.listOf(firstArg), mediaType, source.getHeaders(), inputStream));
-                            }
-                            content = conversionService.convertRequired(publisher, type);
-                        } else {
-                            content = messageBodyReader.read(context.getArgument(), mediaType, source.getHeaders(), inputStream);
-                        }
+                if (messageBodyReader != null && !messageBodyReader.isReadable(argument, mediaType)) {
+                    messageBodyReader = messageBodyHandlerRegistry.findReader(argument, mediaType).orElse(null);
+                }
+                if (messageBodyReader != null) {
+                    if (CompletionStage.class.isAssignableFrom(type)) {
+                        CompletableFuture<?> completableFuture = asFuture(context, source, servletHttpRequest, mediaType, messageBodyReader);
+                        return () -> Optional.of((T) completableFuture);
+                    }
+                    if (Publishers.isConvertibleToPublisher(context.getArgument().getType())) {
+                        Object publisher = asPublisher(context, source, servletHttpRequest, mediaType, messageBodyReader, type, name);
+                        return () -> (Optional<T>) Optional.ofNullable(publisher);
+                    }
+                    try (InputStream is = servletHttpRequest.getInputStream()) {
+                        Object content = messageBodyReader.read(context.getArgument(), mediaType, source.getHeaders(), is);
                         if (content != null && servletHttpRequest instanceof ParsedBodyHolder parsedBody) {
                             parsedBody.setParsedBody(content);
                         }
@@ -162,34 +180,7 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
                     }
                 }
 
-                if (Publishers.isConvertibleToPublisher(type)) {
-                    Argument<Object> typeArg = (Argument<Object>) argument.getFirstTypeVariable().orElse(Argument.OBJECT_ARGUMENT);
-                    try (InputStream inputStream = servletHttpRequest.getInputStream()) {
-                        if (Publishers.isSingle(type)) {
-                            MessageBodyReader<Object> reader = messageBodyHandlerRegistry.findReader(typeArg, mediaType).orElse(null);
-                            if (reader != null) {
-                                Object decoded = reader.read(typeArg, mediaType, source.getHeaders(), inputStream);
-                                Publisher<?> publisher = Publishers.just(decoded);
-                                T converted = conversionService.convertRequired(publisher, type);
-                                return () -> Optional.of(converted);
-                            }
-                        } else {
-                            Argument<List<?>> containerType = Argument.listOf((Argument) typeArg);
-                            MessageBodyReader<List<?>> reader = messageBodyHandlerRegistry.findReader(containerType, mediaType).orElse(null);
-                            if (reader != null) {
-                                List<?> list = reader.read(containerType, mediaType, source.getHeaders(), inputStream);
-                                if (list == null) {
-                                    list = List.of();
-                                }
-                                Publisher<?> publisher = Flux.fromIterable(list);
-                                T converted = conversionService.convertRequired(publisher, type);
-                                return () -> Optional.of(converted);
-                            }
-                        }
-                    } catch (CodecException | IOException e) {
-                        throw new CodecException("Unable to decode request body: " + e.getMessage(), e);
-                    }
-                } else if (type.isArray()) {
+                if (type.isArray()) {
                     Argument<List<?>> listArgument = Argument.listOf((Argument) Argument.of(type.getComponentType()));
                     MessageBodyReader<List<?>> reader = messageBodyHandlerRegistry.findReader(listArgument, mediaType).orElse(null);
                     if (reader != null) {
@@ -203,19 +194,6 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
                                 Array.set(array, i, list.get(i));
                             }
                             return () -> Optional.of((T) array);
-                        } catch (CodecException | IOException e) {
-                            throw new CodecException("Unable to decode request body: " + e.getMessage(), e);
-                        }
-                    }
-                } else if (name != null) {
-                    Argument<Map<String, Object>> mapArgument = Argument.mapOf(String.class, Object.class);
-                    MessageBodyReader<Map<String, Object>> reader = messageBodyHandlerRegistry.findReader(mapArgument, mediaType).orElse(null);
-                    if (reader != null) {
-                        try (InputStream inputStream = servletHttpRequest.getInputStream()) {
-                            Map<String, Object> map = reader.read(mapArgument, mediaType, source.getHeaders(), inputStream);
-                            Object value = map == null ? null : map.get(name);
-                            T content = conversionService.convert(value, argument).orElse(null);
-                            return () -> Optional.ofNullable(content);
                         } catch (CodecException | IOException e) {
                             throw new CodecException("Unable to decode request body: " + e.getMessage(), e);
                         }
@@ -237,6 +215,130 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
             }
         }
         return defaultBodyAnnotationBinder.bind(context, source);
+    }
+
+    private @NonNull CompletableFuture<?> asFuture(ArgumentConversionContext<T> context, HttpRequest<?> source, ServletHttpRequest<?, ?> servletHttpRequest, MediaType mediaType, MessageBodyReader messageBodyReader) {
+        Argument<Object> typeArgument = (Argument<Object>) context.getArgument().getFirstTypeVariable().orElse(Argument.OBJECT_ARGUMENT);
+        CompletableFuture<?> completableFuture;
+        if (servletHttpRequest instanceof ServerHttpRequest<?> serverHttpRequest) {
+            if (mediaType.equals(MediaType.APPLICATION_JSON_STREAM_TYPE)) {
+                completableFuture = steamJson(serverHttpRequest, typeArgument).single().toFuture();
+            } else {
+                Class<Object> typeArgumentClass = typeArgument.getType();
+                if (CharSequence.class.isAssignableFrom(typeArgumentClass)) {
+                    Charset characterEncoding = servletHttpRequest.getCharacterEncoding();
+                    completableFuture = serverHttpRequest.byteBody().buffer().thenApply(bb -> bb.toString(characterEncoding));
+                } else if (BYTE_ARRAY.getType().isAssignableFrom(typeArgumentClass)) {
+                    completableFuture = serverHttpRequest.byteBody().buffer().thenApply(AvailableByteBody::toByteArray);
+                } else {
+                    completableFuture = serverHttpRequest.byteBody().buffer().thenApply(
+                        bb -> messageBodyReader.read(typeArgument, mediaType, source.getHeaders(), bb.toByteBuffer())
+                    );
+                }
+            }
+        } else {
+            throw new IllegalStateException("Expected ServerHttpRequest");
+        }
+        if (servletHttpRequest instanceof ParsedBodyHolder parsedBody) {
+            completableFuture = completableFuture.thenApply(o -> {
+                if (o != null) {
+                    parsedBody.setParsedBody(o);
+                }
+                return o;
+            });
+        }
+        return completableFuture;
+    }
+
+    private @NonNull Object asPublisher(ArgumentConversionContext<T> context,
+                                        HttpRequest<?> source,
+                                        ServletHttpRequest<?, ?> servletHttpRequest,
+                                        MediaType mediaType,
+                                        MessageBodyReader messageBodyReader,
+                                        Class<T> type,
+                                        @Nullable String name) {
+        Argument<Object> typeArgument = (Argument<Object>) context.getArgument().getFirstTypeVariable().orElse(Argument.OBJECT_ARGUMENT);
+        boolean single = Publishers.isSingle(context.getArgument().getType());
+        Publisher<?> publisher;
+        if (servletHttpRequest instanceof ServerHttpRequest<?> serverHttpRequest) {
+            if (mediaType.equals(MediaType.APPLICATION_JSON_STREAM_TYPE) || !single && mediaType.equals(MediaType.APPLICATION_JSON_TYPE)) {
+                Flux<Object> jsonStream = steamJson(serverHttpRequest, typeArgument);
+                if (single) {
+                    publisher = jsonStream.single();
+                } else {
+                    publisher = jsonStream;
+                }
+            } else {
+                publisher = Mono.fromCompletionStage(serverHttpRequest.byteBody().buffer())
+                    .flatMapMany(bb -> {
+                        Class<Object> typeArgumentClass = typeArgument.getType();
+                        if (CharSequence.class.isAssignableFrom(typeArgumentClass)) {
+                            Charset characterEncoding = servletHttpRequest.getCharacterEncoding();
+                            return Mono.just(bb.toString(characterEncoding));
+                        }
+                        if (BYTE_ARRAY.getType().isAssignableFrom(typeArgumentClass)) {
+                            return Mono.just(bb.toByteArray());
+                        }
+                        if (single) {
+                            Object body = null;
+                            if (name != null) {
+                                Argument<Map<String, Object>> mapArgument = Argument.mapOf(String.class, Object.class);
+                                MessageBodyReader<Map<String, Object>> reader = messageBodyHandlerRegistry.findReader(mapArgument, mediaType).orElse(null);
+                                if (reader != null) {
+                                    Map<String, Object> map = reader.read(mapArgument, mediaType, source.getHeaders(), bb.toByteBuffer());
+                                    body = map == null ? null : map.get(name);
+                                }
+                            } else {
+                                body = messageBodyReader.read(typeArgument, mediaType, source.getHeaders(), bb.toByteBuffer());
+                            }
+                            if (body != null && servletHttpRequest instanceof ParsedBodyHolder parsedBody) {
+                                parsedBody.setParsedBody(body);
+                            }
+                            return Flux.just(body);
+                        } else {
+                            Object body = messageBodyReader.read(Argument.listOf(typeArgument), mediaType, source.getHeaders(), bb.toByteBuffer());
+                            if (body != null && servletHttpRequest instanceof ParsedBodyHolder parsedBody) {
+                                parsedBody.setParsedBody(body);
+                            }
+                            return Flux.fromIterable((Iterable<?>) body);
+                        }
+                    });
+            }
+        } else {
+            if (mediaType.equals(MediaType.APPLICATION_JSON_STREAM_TYPE)) {
+                throw new IllegalStateException("Expected ServerHttpRequest");
+            }
+            try (InputStream is = servletHttpRequest.getInputStream()) {
+                if (single) {
+                    Object body = messageBodyReader.read(typeArgument, mediaType, source.getHeaders(), is);
+                    if (body != null && servletHttpRequest instanceof ParsedBodyHolder parsedBody) {
+                        parsedBody.setParsedBody(body);
+                    }
+                    publisher = Flux.just(body);
+                } else {
+                    Object body = messageBodyReader.read(Argument.listOf(typeArgument), mediaType, source.getHeaders(), is);
+                    if (body != null && servletHttpRequest instanceof ParsedBodyHolder parsedBody) {
+                        parsedBody.setParsedBody(body);
+                    }
+                    publisher = Flux.fromIterable((Iterable<?>) body);
+                }
+            } catch (CodecException | IOException e) {
+                throw new CodecException("Unable to decode request body: " + e.getMessage(), e);
+            }
+        }
+        return conversionService.convertRequired(publisher, type);
+    }
+
+    private Flux<Object> steamJson(ServerHttpRequest<?> serverRequest, Argument<Object> typeArgument) {
+        Processor<byte[], JsonNode> reactiveParser = jsonMapper.createReactiveParser(p -> serverRequest.byteBody().toByteArrayPublisher().subscribe(p), false);
+        return Flux.from(reactiveParser)
+            .map(node -> {
+                try {
+                    return jsonMapper.readValueFromTree(node, typeArgument);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            });
     }
 
     private boolean isFormSubmission(MediaType contentType) {

@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder;
 import io.micronaut.http.body.MessageBodyHandlerRegistry;
+import io.micronaut.json.JsonMapper;
 import io.micronaut.servlet.http.ServletBodyBinder;
 
 /**
@@ -33,7 +34,8 @@ final class PojaBodyBinder<T> extends ServletBodyBinder<T> {
     @SuppressWarnings("unchecked")
     PojaBodyBinder(ConversionService conversionService,
                    MessageBodyHandlerRegistry messageBodyHandlerRegistry,
-                   DefaultBodyAnnotationBinder<?> defaultBodyAnnotationBinder) {
-        super(conversionService, messageBodyHandlerRegistry, (DefaultBodyAnnotationBinder<T>) defaultBodyAnnotationBinder);
+                   DefaultBodyAnnotationBinder<?> defaultBodyAnnotationBinder,
+                   JsonMapper jsonMapper) {
+        super(conversionService, messageBodyHandlerRegistry, (DefaultBodyAnnotationBinder<T>) defaultBodyAnnotationBinder, jsonMapper);
     }
 }

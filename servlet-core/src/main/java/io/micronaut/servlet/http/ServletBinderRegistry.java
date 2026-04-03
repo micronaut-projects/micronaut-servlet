@@ -26,6 +26,7 @@ import io.micronaut.http.bind.RequestBinderRegistry;
 import io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder;
 import io.micronaut.http.bind.binders.RequestArgumentBinder;
 import io.micronaut.http.body.MessageBodyHandlerRegistry;
+import io.micronaut.json.JsonMapper;
 
 import java.lang.annotation.Annotation;
 import java.util.LinkedHashMap;
@@ -37,7 +38,6 @@ import java.util.Optional;
  * A {@link RequestBinderRegistry} implementation specifically for Serverless functions over HTTP.
  *
  * @param <T> The type
- *
  * @author graemerocher
  * @since 2.0.0
  */
@@ -51,33 +51,38 @@ public abstract class ServletBinderRegistry<T> implements RequestBinderRegistry 
     /**
      * Default constructor.
      *
-     * @param messageBodyHandlerRegistry The message body handler registry
-     * @param conversionService      The conversion service
-     * @param binders                Any registered binders
+     * @param messageBodyHandlerRegistry  The message body handler registry
+     * @param conversionService           The conversion service
+     * @param binders                     Any registered binders
      * @param defaultBodyAnnotationBinder The delegate default body binder
+     * @param jsonMapper                  The JSON mapper
      */
     public ServletBinderRegistry(
-            MessageBodyHandlerRegistry messageBodyHandlerRegistry,
-            ConversionService conversionService,
-            List<RequestArgumentBinder> binders,
-            DefaultBodyAnnotationBinder<T> defaultBodyAnnotationBinder) {
+        MessageBodyHandlerRegistry messageBodyHandlerRegistry,
+        ConversionService conversionService,
+        List<RequestArgumentBinder> binders,
+        DefaultBodyAnnotationBinder<T> defaultBodyAnnotationBinder,
+        JsonMapper jsonMapper) {
         this.defaultRegistry = new DefaultRequestBinderRegistry(conversionService, binders);
-        this.byAnnotation.put(Body.class, newServletBodyBinder(messageBodyHandlerRegistry, conversionService, defaultBodyAnnotationBinder));
+        this.byAnnotation.put(Body.class, newServletBodyBinder(messageBodyHandlerRegistry, conversionService, defaultBodyAnnotationBinder, jsonMapper));
         this.byType.put(HttpRequest.class, new ServletRequestBinder());
     }
 
     /**
      * Creates the servlet body binder.
-     * @param messageBodyHandlerRegistry The message body handler registry
-     * @param conversionService The conversion service
+     *
+     * @param messageBodyHandlerRegistry  The message body handler registry
+     * @param conversionService           The conversion service
      * @param defaultBodyAnnotationBinder Default Body annotation Binder
+     * @param jsonMapper                  The JSON mapper
      * @return The servlet body
      */
     protected ServletBodyBinder<T> newServletBodyBinder(
-            MessageBodyHandlerRegistry messageBodyHandlerRegistry,
-            ConversionService conversionService,
-            DefaultBodyAnnotationBinder<T> defaultBodyAnnotationBinder) {
-        return new ServletBodyBinder<>(conversionService, messageBodyHandlerRegistry, defaultBodyAnnotationBinder);
+        MessageBodyHandlerRegistry messageBodyHandlerRegistry,
+        ConversionService conversionService,
+        DefaultBodyAnnotationBinder<T> defaultBodyAnnotationBinder,
+        JsonMapper jsonMapper) {
+        return new ServletBodyBinder<>(conversionService, messageBodyHandlerRegistry, defaultBodyAnnotationBinder, jsonMapper);
     }
 
     @Override

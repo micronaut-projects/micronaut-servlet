@@ -293,20 +293,6 @@ public class ServletPartBinder<T> implements AnnotatedRequestArgumentBinder<Part
                                              ArgumentConversionContext<T> context,
                                              String inputName,
                                              boolean skipClaimed) {
-//        FormRouteCompleter completer = factory.getOrCreateCompleter(formRequest);
-
-//        Publisher<io.micronaut.http.multipart.RawFormField> publisher = completer.subscribeField(partName,
-//            new FormRouteCompleter.SubscriptionMetadata(FormRouteCompleter.SubscriptionMode.WAITS_FOR_FULL, context.getArgument()));
-//
-//        Mono<Optional<T>> mono = Mono.from(publisher)
-//            .flatMap(raw -> Mono.from(ReactiveExecutionFlow.toPublisher(factory.completePart(formRequest, raw))))
-//            .map(part -> convertCompletedPart(factory, context, part))
-//            .defaultIfEmpty(Optional.empty());
-//
-//        CompletableFuture<Optional<T>> completableFuture = mono.toFuture();
-//        BasicHttpAttributes.addRouteWaitsFor(formRequest, CompletableFutureExecutionFlow.just(completableFuture));
-
-
         FormRouteCompleter completer = factory.getOrCreateCompleter(formRequest);
         if (skipClaimed && completer.isClaimed(inputName)) {
             return BindingResult.unsatisfied();

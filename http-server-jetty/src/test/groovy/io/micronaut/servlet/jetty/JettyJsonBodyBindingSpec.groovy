@@ -298,7 +298,7 @@ class JettyJsonBodyBindingSpec extends Specification {
         def e = thrown(HttpClientResponseException)
         def response = e.response
         response.status() == HttpStatus.BAD_REQUEST
-        response.body().toString().contains("Failed to convert argument [B] ")
+        response.body().toString().contains("Error decoding request body: Error decoding JSON stream for type [B]: Unexpected token START_ARRAY")
     }
 
     @Requires(property = 'spec.name', value = 'JettyJsonBodyBindingSpec')

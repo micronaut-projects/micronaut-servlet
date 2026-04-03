@@ -23,6 +23,7 @@ import io.micronaut.http.bind.DefaultRequestBinderRegistry;
 import io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder;
 import io.micronaut.http.bind.binders.RequestArgumentBinder;
 import io.micronaut.http.body.MessageBodyHandlerRegistry;
+import io.micronaut.json.JsonMapper;
 import io.micronaut.servlet.http.ServletBinderRegistry;
 import jakarta.inject.Singleton;
 
@@ -30,26 +31,30 @@ import java.util.List;
 
 /**
  * An argument binder registry implementation for serverless POJA applications.
+ *
+ * @param <T> The type
  */
 @Internal
 @Singleton
 @Replaces(DefaultRequestBinderRegistry.class)
-class PojaBinderRegistry extends ServletBinderRegistry {
+final class PojaBinderRegistry<T> extends ServletBinderRegistry<T> {
 
     /**
      * Default constructor.
-     *  @param messageBodyHandlerRegistry   The message body handler registry
-     * @param conversionService         The conversion service
-     * @param binders                   Any registered binders
+     *
+     * @param messageBodyHandlerRegistry  The message body handler registry
+     * @param conversionService           The conversion service
+     * @param binders                     Any registered binders
      * @param defaultBodyAnnotationBinder The default binder
+     * @param jsonMapper                  The JSON mapper
      */
     public PojaBinderRegistry(MessageBodyHandlerRegistry messageBodyHandlerRegistry,
                               ConversionService conversionService,
                               List<RequestArgumentBinder> binders,
-                              DefaultBodyAnnotationBinder<?> defaultBodyAnnotationBinder
-    ) {
-        super(messageBodyHandlerRegistry, conversionService, binders, defaultBodyAnnotationBinder);
+                              DefaultBodyAnnotationBinder<T> defaultBodyAnnotationBinder,
+                              JsonMapper jsonMapper) {
+        super(messageBodyHandlerRegistry, conversionService, binders, defaultBodyAnnotationBinder, jsonMapper);
 
-        this.byAnnotation.put(Body.class, new PojaBodyBinder<>(conversionService, messageBodyHandlerRegistry, defaultBodyAnnotationBinder));
+        this.byAnnotation.put(Body.class, new PojaBodyBinder<>(conversionService, messageBodyHandlerRegistry, defaultBodyAnnotationBinder, jsonMapper));
     }
 }
