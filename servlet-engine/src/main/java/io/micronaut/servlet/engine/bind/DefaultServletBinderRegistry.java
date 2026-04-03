@@ -18,7 +18,10 @@ package io.micronaut.servlet.engine.bind;
 import io.micronaut.context.BeanProvider;
 import io.micronaut.context.annotation.Replaces;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.convert.ConversionService;
+import io.micronaut.core.type.Argument;
+import io.micronaut.http.HttpRequest;
 import io.micronaut.http.annotation.Part;
 import io.micronaut.http.bind.DefaultRequestBinderRegistry;
 import io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder;
@@ -28,6 +31,7 @@ import io.micronaut.http.multipart.CompletedPart;
 import io.micronaut.http.server.multipart.FormFactory;
 import io.micronaut.json.JsonMapper;
 import io.micronaut.servlet.http.ServletBinderRegistry;
+import io.micronaut.servlet.http.ServletBodyBinder;
 import jakarta.inject.Singleton;
 import jakarta.servlet.ServletConfig;
 import jakarta.servlet.ServletContext;
@@ -46,15 +50,18 @@ import java.util.List;
 @Singleton
 @Replaces(DefaultRequestBinderRegistry.class)
 @Internal
-final class DefaultServletBinderRegistry<T> extends ServletBinderRegistry<T> {
+class DefaultServletBinderRegistry<T> extends ServletBinderRegistry<T> {
+
+    public static final Argument<byte[]> BYTE_ARRAY = Argument.of(byte[].class);
 
     /**
      * Default constructor.
      *
-     * @param messageBodyHandlerRegistry The message body handler registry
-     * @param conversionService          The conversion service
-     * @param binders                    Any registered binders
-     * @param jsonMapper                 The JSON mapper
+     * @param messageBodyHandlerRegistry  The message body handler registry
+     * @param conversionService           The conversion service
+     * @param binders                     Any registered binders
+     * @param defaultBodyAnnotationBinder The delegate default body binder
+     * @param jsonMapper                  The JSON mapper
      */
     public DefaultServletBinderRegistry(MessageBodyHandlerRegistry messageBodyHandlerRegistry,
                                         ConversionService conversionService,
@@ -71,4 +78,41 @@ final class DefaultServletBinderRegistry<T> extends ServletBinderRegistry<T> {
         byAnnotation.put(Part.class, new ServletPartBinder<>(conversionService, formFactoryProvider));
     }
 
+    @Override
+    protected ServletBodyBinder<T> newServletBodyBinder(MessageBodyHandlerRegistry messageBodyHandlerRegistry,
+                                                        ConversionService conversionService,
+                                                        DefaultBodyAnnotationBinder<T> defaultBodyAnnotationBinder,
+                                                        JsonMapper jsonMapper) {
+        return new DefaultServletBodyBinder<>(conversionService, messageBodyHandlerRegistry, defaultBodyAnnotationBinder, jsonMapper);
+    }
+
+    /**
+     * Overridden body binder.
+     *
+     * @param <T> The type
+     */
+    private static class DefaultServletBodyBinder<T> extends ServletBodyBinder<T> {
+
+        /**
+         * Default constructor.
+         *
+         * @param conversionService           The conversion service
+         * @param messageBodyHandlerRegistry  The message body handler registry
+         * @param defaultBodyAnnotationBinder The delegate default body binder
+         * @param jsonMapper                  The json mapper
+         */
+        protected DefaultServletBodyBinder(ConversionService conversionService, MessageBodyHandlerRegistry messageBodyHandlerRegistry, DefaultBodyAnnotationBinder<T> defaultBodyAnnotationBinder, JsonMapper jsonMapper) {
+            super(conversionService, messageBodyHandlerRegistry, defaultBodyAnnotationBinder, jsonMapper);
+        }
+
+        @Override
+        public BindingResult bind(ArgumentConversionContext context, HttpRequest source) {
+            Argument<?> argument = context.getArgument();
+            Class<?> type = argument.getType();
+            if (CompletedPart.class.isAssignableFrom(type)) {
+                return new CompletedPartRequestArgumentBinder().bind(context, source);
+            }
+            return super.bind(context, source);
+        }
+    }
 }

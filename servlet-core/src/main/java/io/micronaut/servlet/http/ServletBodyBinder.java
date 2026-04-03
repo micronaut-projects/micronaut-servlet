@@ -75,7 +75,9 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
      * Default constructor.
      *
      * @param conversionService           The conversion service
+     * @param messageBodyHandlerRegistry  The message body handler registry
      * @param defaultBodyAnnotationBinder The delegate default body binder
+     * @param jsonMapper                  The JSON mapper
      */
     protected ServletBodyBinder(ConversionService conversionService,
                                 MessageBodyHandlerRegistry messageBodyHandlerRegistry,
@@ -330,7 +332,7 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
     }
 
     private Flux<Object> steamJson(ServerHttpRequest<?> serverRequest, Argument<Object> typeArgument) {
-        Processor<byte[], JsonNode> reactiveParser = jsonMapper.createReactiveParser(p -> serverRequest.byteBody().toByteArrayPublisher().subscribe(p), false);
+        Processor<byte[], JsonNode> reactiveParser = jsonMapper.createReactiveParser(p -> serverRequest.byteBody().toByteArrayPublisher().subscribe(p), true);
         return Flux.from(reactiveParser)
             .map(node -> {
                 try {
