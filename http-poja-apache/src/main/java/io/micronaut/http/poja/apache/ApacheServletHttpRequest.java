@@ -16,6 +16,7 @@
 package io.micronaut.http.poja.apache;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.util.SupplierUtil;
 import org.jspecify.annotations.NonNull;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.convert.value.ConvertibleMultiValues;
@@ -63,6 +64,7 @@ import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
+import java.util.function.Supplier;
 
 /**
  * An implementation of the POJA Http Request based on Apache.
@@ -87,7 +89,7 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
     private final SimpleCookies cookies;
 
     private final ByteBody byteBody;
-    private volatile MultiValuesQueryParameters formParameters;
+    private final Supplier<MultiValuesQueryParameters> formParameters;
 
     private ApacheServletHttpResponse<?> primaryResponse;
 
@@ -133,6 +135,7 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
         headers = createHeaders(request.getHeaders(), conversionService);
         queryParameters = parseQueryParameters(uri, conversionService);
         cookies = parseCookies(request, conversionService);
+        formParameters = SupplierUtil.memoized(this::resolveFormParameters);
 
         Header connection = request.getFirstHeader(HttpHeaders.CONNECTION);
         if (connection != null && connection.getValue().equalsIgnoreCase(CONNECTION_CLOSE)) {
@@ -199,17 +202,7 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
     public @NonNull MutableHttpParameters getParameters() {
         MediaType contentType = getContentType().orElse(null);
         if (contentType != null && contentType.matches(MediaType.APPLICATION_FORM_URLENCODED_TYPE)) {
-            MultiValuesQueryParameters cached = formParameters;
-            if (cached == null) {
-                synchronized (this) {
-                    cached = formParameters;
-                    if (cached == null) {
-                        cached = resolveFormParameters();
-                        formParameters = cached;
-                    }
-                }
-            }
-            return cached;
+            return formParameters.get();
         }
         return queryParameters;
     }

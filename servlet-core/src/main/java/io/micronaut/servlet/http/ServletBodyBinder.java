@@ -147,23 +147,37 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
                         }
                     }
                 }
-                MessageBodyReader messageBodyReader = RouteAttributes.getRouteInfo(source)
+                MessageBodyReader<?> messageBodyReader = RouteAttributes.getRouteInfo(source)
                     .map(RouteInfo::getMessageBodyReader)
                     .orElse(null);
-                if (messageBodyReader != null && !messageBodyReader.isReadable(argument, mediaType)) {
-                    messageBodyReader = messageBodyHandlerRegistry.findReader(argument, mediaType).orElse(null);
-                }
+                @SuppressWarnings("unchecked")
+                Argument<Object> bodyArgumentForReader = (Argument<Object>) (Argument<?>) argument;
+                MessageBodyReader<Object> bodyReader = null;
                 if (messageBodyReader != null) {
+                    @SuppressWarnings("unchecked")
+                    MessageBodyReader<Object> candidate = (MessageBodyReader<Object>) messageBodyReader;
+                    if (candidate.isReadable(bodyArgumentForReader, mediaType)) {
+                        bodyReader = candidate;
+                    }
+                }
+                if (bodyReader == null) {
+                    bodyReader = messageBodyHandlerRegistry.findReader(argument, mediaType)
+                        .map(reader -> (MessageBodyReader<Object>) reader)
+                        .orElse(null);
+                }
+                if (bodyReader != null) {
                     if (CompletionStage.class.isAssignableFrom(type)) {
-                        CompletableFuture<?> completableFuture = asFuture(context, source, servletHttpRequest, mediaType, messageBodyReader);
+                        CompletableFuture<?> completableFuture = asFuture(context, source, servletHttpRequest, mediaType, bodyReader);
                         return () -> Optional.of((T) completableFuture);
                     }
                     if (Publishers.isConvertibleToPublisher(context.getArgument().getType())) {
-                        Object publisher = asPublisher(context, source, servletHttpRequest, mediaType, messageBodyReader, type, name);
+                        Object publisher = asPublisher(context, source, servletHttpRequest, mediaType, bodyReader, type, name);
                         return () -> (Optional<T>) Optional.ofNullable(publisher);
                     }
                     try (InputStream is = servletHttpRequest.getInputStream()) {
-                        Object content = messageBodyReader.read(context.getArgument(), mediaType, source.getHeaders(), is);
+                        @SuppressWarnings("unchecked")
+                        Argument<Object> bodyArgument = (Argument<Object>) (Argument<?>) context.getArgument();
+                        Object content = bodyReader.read(bodyArgument, mediaType, source.getHeaders(), is);
                         if (content != null && servletHttpRequest instanceof ParsedBodyHolder parsedBody) {
                             parsedBody.setParsedBody(content);
                         }
@@ -183,7 +197,9 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
                 }
 
                 if (type.isArray()) {
-                    Argument<List<?>> listArgument = Argument.listOf((Argument) Argument.of(type.getComponentType()));
+                    Argument<?> componentArgument = Argument.of(type.getComponentType());
+                    @SuppressWarnings("unchecked")
+                    Argument<List<?>> listArgument = (Argument<List<?>>) (Argument<?>) Argument.of(List.class, componentArgument);
                     MessageBodyReader<List<?>> reader = messageBodyHandlerRegistry.findReader(listArgument, mediaType).orElse(null);
                     if (reader != null) {
                         try (InputStream inputStream = servletHttpRequest.getInputStream()) {
@@ -219,7 +235,11 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
         return defaultBodyAnnotationBinder.bind(context, source);
     }
 
-    private @NonNull CompletableFuture<?> asFuture(ArgumentConversionContext<T> context, HttpRequest<?> source, ServletHttpRequest<?, ?> servletHttpRequest, MediaType mediaType, MessageBodyReader messageBodyReader) {
+    private @NonNull CompletableFuture<?> asFuture(ArgumentConversionContext<T> context,
+                                                   HttpRequest<?> source,
+                                                   ServletHttpRequest<?, ?> servletHttpRequest,
+                                                   MediaType mediaType,
+                                                   MessageBodyReader<Object> messageBodyReader) {
         Argument<Object> typeArgument = (Argument<Object>) context.getArgument().getFirstTypeVariable().orElse(Argument.OBJECT_ARGUMENT);
         CompletableFuture<?> completableFuture;
         if (servletHttpRequest instanceof ServerHttpRequest<?> serverHttpRequest) {
@@ -256,7 +276,7 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
                                         HttpRequest<?> source,
                                         ServletHttpRequest<?, ?> servletHttpRequest,
                                         MediaType mediaType,
-                                        MessageBodyReader messageBodyReader,
+                                        MessageBodyReader<Object> messageBodyReader,
                                         Class<T> type,
                                         @Nullable String name) {
         Argument<Object> typeArgument = (Argument<Object>) context.getArgument().getFirstTypeVariable().orElse(Argument.OBJECT_ARGUMENT);
@@ -296,13 +316,15 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
                             if (body != null && servletHttpRequest instanceof ParsedBodyHolder parsedBody) {
                                 parsedBody.setParsedBody(body);
                             }
-                            return Flux.just(body);
+                            return body != null ? Flux.just(body) : Flux.empty();
                         } else {
-                            Object body = messageBodyReader.read(Argument.listOf(typeArgument), mediaType, source.getHeaders(), bb.toByteBuffer());
+                            @SuppressWarnings("unchecked")
+                            Argument<Object> listArgument = (Argument<Object>) (Argument<?>) Argument.listOf(typeArgument);
+                            Object body = messageBodyReader.read(listArgument, mediaType, source.getHeaders(), bb.toByteBuffer());
                             if (body != null && servletHttpRequest instanceof ParsedBodyHolder parsedBody) {
                                 parsedBody.setParsedBody(body);
                             }
-                            return Flux.fromIterable((Iterable<?>) body);
+                            return body != null ? Flux.fromIterable((Iterable<?>) body) : Flux.empty();
                         }
                     });
             }
@@ -316,13 +338,15 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
                     if (body != null && servletHttpRequest instanceof ParsedBodyHolder parsedBody) {
                         parsedBody.setParsedBody(body);
                     }
-                    publisher = Flux.just(body);
+                    publisher = body != null ? Flux.just(body) : Flux.empty();
                 } else {
-                    Object body = messageBodyReader.read(Argument.listOf(typeArgument), mediaType, source.getHeaders(), is);
+                    @SuppressWarnings("unchecked")
+                    Argument<Object> listArgument = (Argument<Object>) (Argument<?>) Argument.listOf(typeArgument);
+                    Object body = messageBodyReader.read(listArgument, mediaType, source.getHeaders(), is);
                     if (body != null && servletHttpRequest instanceof ParsedBodyHolder parsedBody) {
                         parsedBody.setParsedBody(body);
                     }
-                    publisher = Flux.fromIterable((Iterable<?>) body);
+                    publisher = body != null ? Flux.fromIterable((Iterable<?>) body) : Flux.empty();
                 }
             } catch (CodecException | IOException e) {
                 throw new CodecException("Unable to decode request body: " + e.getMessage(), e);
@@ -338,7 +362,7 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
                 try {
                     return jsonMapper.readValueFromTree(node, typeArgument);
                 } catch (IOException e) {
-                    throw new RuntimeException(e);
+                    throw new CodecException("Unable to decode JSON stream: " + e.getMessage(), e);
                 }
             });
     }

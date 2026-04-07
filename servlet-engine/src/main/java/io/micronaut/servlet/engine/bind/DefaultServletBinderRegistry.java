@@ -63,11 +63,11 @@ class DefaultServletBinderRegistry<T> extends ServletBinderRegistry<T> {
      */
     public DefaultServletBinderRegistry(MessageBodyHandlerRegistry messageBodyHandlerRegistry,
                                         ConversionService conversionService,
-                                        List<RequestArgumentBinder> binders,
+                                        List<RequestArgumentBinder<?>> binders,
                                         DefaultBodyAnnotationBinder<T> defaultBodyAnnotationBinder,
                                         BeanProvider<FormFactory> formFactoryProvider,
                                         JsonMapper jsonMapper) {
-        super(messageBodyHandlerRegistry, conversionService, binders, defaultBodyAnnotationBinder, jsonMapper);
+        super(messageBodyHandlerRegistry, conversionService, (List) binders, defaultBodyAnnotationBinder, jsonMapper);
         byType.put(HttpServletRequest.class, new ServletRequestBinder());
         byType.put(HttpServletResponse.class, new ServletResponseBinder());
         byType.put(ServletConfig.class, new ServletConfigBinder());

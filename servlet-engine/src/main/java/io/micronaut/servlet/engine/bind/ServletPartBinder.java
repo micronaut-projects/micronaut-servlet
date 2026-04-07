@@ -34,6 +34,7 @@ import io.micronaut.http.bind.binders.AnnotatedRequestArgumentBinder;
 import io.micronaut.http.bind.binders.PendingRequestBindingResult;
 import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.http.form.FormCapableHttpRequest;
+import io.micronaut.http.LifecycleHttpRequest;
 import io.micronaut.http.multipart.CompletedAttribute;
 import io.micronaut.http.multipart.CompletedFileUpload;
 import io.micronaut.http.multipart.CompletedPart;
@@ -112,7 +113,8 @@ public class ServletPartBinder<T> implements AnnotatedRequestArgumentBinder<Part
             final MediaType requestContentType = source.getContentType().orElse(null);
             final boolean isMultipart = requestContentType != null && requestContentType.matches(MediaType.MULTIPART_FORM_DATA_TYPE);
 
-            if (!isMultipart && source instanceof FormCapableHttpRequest<?> formRequest && formRequest.hasFormBody()) {
+            if (!isMultipart && source instanceof FormCapableHttpRequest<?> && ((FormCapableHttpRequest<?>) source).hasFormBody()) {
+                FormCapableHttpRequest<?> formRequest = (FormCapableHttpRequest<?>) source;
                 BindingResult<T> result = bindFromForm(formRequest, context, partName);
                 if (result != BindingResult.UNSATISFIED) {
                     return result;
@@ -120,13 +122,14 @@ public class ServletPartBinder<T> implements AnnotatedRequestArgumentBinder<Part
             }
 
             if (isMultipart) {
-                return bindFromMultipart(context, nativeRequest, partName);
+                return bindFromMultipart(context, exchange, nativeRequest, partName);
             }
         }
         return BindingResult.UNSATISFIED;
     }
 
     private BindingResult<T> bindFromMultipart(ArgumentConversionContext<T> context,
+                                               ServletExchange<?, ?> exchange,
                                                HttpServletRequest nativeRequest,
                                                String partName) {
         final Argument<T> argument = context.getArgument();
@@ -200,6 +203,15 @@ public class ServletPartBinder<T> implements AnnotatedRequestArgumentBinder<Part
         } else if (CompletedFileUpload.class.isAssignableFrom(type)) {
             try {
                 CompletedFileUpload completedFileUpload = ServletCompletedFileUploadFactory.create(part);
+                if (exchange.getRequest() instanceof LifecycleHttpRequest<?> lifecycleRequest) {
+                    lifecycleRequest.addDisposalResource(() -> {
+                        try {
+                            completedFileUpload.close();
+                        } catch (IOException ignored) {
+                            // best effort cleanup
+                        }
+                    });
+                }
                 //noinspection unchecked
                 return () -> (Optional<T>) Optional.of(completedFileUpload);
             } catch (IOException e) {
@@ -231,7 +243,7 @@ public class ServletPartBinder<T> implements AnnotatedRequestArgumentBinder<Part
             return bindPublisher(factory, formRequest, context, partName);
         }
 
-        return bindSingleValue(factory, formRequest, context, partName, false);
+        return bindSingleValue(factory, formRequest, context, partName);
     }
 
     private BindingResult<T> bindPublisher(FormFactory factory,
@@ -306,12 +318,8 @@ public class ServletPartBinder<T> implements AnnotatedRequestArgumentBinder<Part
     private BindingResult<T> bindSingleValue(FormFactory factory,
                                              FormCapableHttpRequest<?> formRequest,
                                              ArgumentConversionContext<T> context,
-                                             String inputName,
-                                             boolean skipClaimed) {
+                                             String inputName) {
         FormRouteCompleter completer = factory.getOrCreateCompleter(formRequest);
-        if (skipClaimed && completer.isClaimed(inputName)) {
-            return BindingResult.unsatisfied();
-        }
         CompletableFuture<Optional<T>> completableFuture = Mono.from(completer.subscribeField(inputName, new FormRouteCompleter.SubscriptionMetadata(FormRouteCompleter.SubscriptionMode.WAITS_FOR_FULL, context.getArgument())))
             .flatMap(rff -> Mono.from(ReactiveExecutionFlow.toPublisher(factory.completePart(formRequest, rff))))
             .map(d -> {
@@ -320,6 +328,9 @@ public class ServletPartBinder<T> implements AnnotatedRequestArgumentBinder<Part
                     Optional<T> converted = conversionService.convert(d, context);
                     if (converted.isPresent() && converted.get() == d) {
                         skipClose = true;
+                        if (formRequest instanceof LifecycleHttpRequest<?> lifecycleRequest) {
+                            lifecycleRequest.addDisposalResource(() -> d.closeAsync(factory.getDiskWriteExecutor()));
+                        }
                     }
                     return converted;
                 } finally {

@@ -112,6 +112,7 @@ public final class DefaultServletHttpRequest<B> implements
     FormCapableHttpRequest<B> {
 
     private static final String NULL_KEY = "Attribute key cannot be null";
+    private static final String NULL_PARAMETER_NAME = "Parameter name cannot be null";
 
     private final ConversionService conversionService;
     private final HttpServletRequest delegate;
@@ -678,7 +679,7 @@ public final class DefaultServletHttpRequest<B> implements
 
     private FormData decodeUrlEncodedBody(String body, Charset charset) {
         List<FormValue> values = new ArrayList<>();
-        Map<String, List<String>> parameters = new LinkedHashMap<>();
+        Map<String, List<String>> collectedParameters = new LinkedHashMap<>();
         if (StringUtils.isEmpty(body)) {
             return new FormData(Collections.unmodifiableList(values), Collections.emptyMap());
         }
@@ -703,13 +704,13 @@ public final class DefaultServletHttpRequest<B> implements
             String name = URLDecoder.decode(rawName, charset);
             String value = URLDecoder.decode(rawValue, charset);
             values.add(new FormValue(name, value));
-            parameters.computeIfAbsent(name, key -> new ArrayList<>()).add(value);
+            collectedParameters.computeIfAbsent(name, key -> new ArrayList<>()).add(value);
         }
-        Map<String, List<String>> unmodifiableParameters = new LinkedHashMap<>();
-        for (Map.Entry<String, List<String>> entry : parameters.entrySet()) {
-            unmodifiableParameters.put(entry.getKey(), Collections.unmodifiableList(entry.getValue()));
+        Map<String, List<String>> immutableParameters = new LinkedHashMap<>();
+        for (Map.Entry<String, List<String>> entry : collectedParameters.entrySet()) {
+            immutableParameters.put(entry.getKey(), Collections.unmodifiableList(entry.getValue()));
         }
-        return new FormData(Collections.unmodifiableList(values), Collections.unmodifiableMap(unmodifiableParameters));
+        return new FormData(Collections.unmodifiableList(values), Collections.unmodifiableMap(immutableParameters));
     }
 
     private static final class FormValue {
@@ -783,12 +784,12 @@ public final class DefaultServletHttpRequest<B> implements
         public List<String> getAll(CharSequence name) {
             if (useParsedFormParameters()) {
                 List<String> values = formParameterMap().get(
-                    Objects.requireNonNull(name, "Parameter name cannot be null").toString()
+                    Objects.requireNonNull(name, NULL_PARAMETER_NAME).toString()
                 );
                 return values != null ? values : Collections.emptyList();
             }
             final String[] values = delegate.getParameterValues(
-                Objects.requireNonNull(name, "Parameter name cannot be null").toString()
+                Objects.requireNonNull(name, NULL_PARAMETER_NAME).toString()
             );
             if (values == null) {
                 return Collections.emptyList();
@@ -801,12 +802,12 @@ public final class DefaultServletHttpRequest<B> implements
         public String get(CharSequence name) {
             if (useParsedFormParameters()) {
                 List<String> values = formParameterMap().get(
-                    Objects.requireNonNull(name, "Parameter name cannot be null").toString()
+                    Objects.requireNonNull(name, NULL_PARAMETER_NAME).toString()
                 );
                 return CollectionUtils.isNotEmpty(values) ? values.get(0) : null;
             }
             return delegate.getParameter(
-                Objects.requireNonNull(name, "Parameter name cannot be null").toString()
+                Objects.requireNonNull(name, NULL_PARAMETER_NAME).toString()
             );
         }
 
@@ -832,10 +833,13 @@ public final class DefaultServletHttpRequest<B> implements
         @Override
         public <T> Optional<T> get(CharSequence name, ArgumentConversionContext<T> conversionContext) {
             final Argument<T> argument = conversionContext.getArgument();
-            Class rawType = argument.getType();
+            Class<?> rawType = argument.getType();
             final boolean isOptional = rawType == Optional.class;
             if (isOptional) {
-                rawType = argument.getFirstTypeVariable().map(Argument::getType).orElse(rawType);
+                Optional<Argument<?>> firstTypeVariable = argument.getFirstTypeVariable();
+                if (firstTypeVariable.isPresent()) {
+                    rawType = firstTypeVariable.get().getType();
+                }
             }
             final boolean isIterable = Iterable.class.isAssignableFrom(rawType);
             final String paramName = Objects.requireNonNull(name, "Parameter name should not be null").toString();

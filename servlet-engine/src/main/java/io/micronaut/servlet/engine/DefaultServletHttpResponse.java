@@ -242,9 +242,9 @@ public final class DefaultServletHttpResponse<B> implements ServletHttpResponse<
                 MessageBodyWriter<Object> writer = null;
                 MessageBodyHandlerRegistry registry = request.getMessageBodyHandlerRegistry();
                 if (registry != null) {
-                    writer = (MessageBodyWriter<Object>) registry.findWriter(argument, mediaType).orElse(null);
+                    writer = registry.findWriter(argument, mediaType).orElse(null);
                     if (writer == null) {
-                        writer = (MessageBodyWriter<Object>) registry.findWriter(argument).orElse(null);
+                        writer = registry.findWriter(argument).orElse(null);
                     }
                 }
                 if (writer != null) {

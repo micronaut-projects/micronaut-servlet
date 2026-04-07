@@ -18,13 +18,13 @@ package io.micronaut.servlet.engine.bind;
 import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
+import io.micronaut.http.LifecycleHttpRequest;
 import io.micronaut.http.annotation.Part;
 import io.micronaut.http.bind.binders.TypedRequestArgumentBinder;
 import io.micronaut.http.multipart.CompletedPart;
 import io.micronaut.http.server.exceptions.InternalServerException;
 import io.micronaut.servlet.http.ServletExchange;
 
-import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.util.Optional;
@@ -51,11 +51,17 @@ class CompletedPartRequestArgumentBinder implements TypedRequestArgumentBinder<C
                 return BindingResult.UNSATISFIED;
             }
             CompletedPart completedPart = ServletCompletedFileUploadFactory.create(part);
+            if (source instanceof LifecycleHttpRequest<?> lifecycleRequest) {
+                lifecycleRequest.addDisposalResource(() -> {
+                    try {
+                        completedPart.close();
+                    } catch (IOException closeException) {
+                        // ignore, disposal best-effort
+                    }
+                });
+            }
             return () -> Optional.of(completedPart);
-        } catch (IOException | ServletException e) {
-            context.reject(new InternalServerException("Error reading part [" + partName + "]: " + e.getMessage(), e));
-            return BindingResult.EMPTY;
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             context.reject(new InternalServerException("Error reading part [" + partName + "]: " + e.getMessage(), e));
             return BindingResult.EMPTY;
         }
