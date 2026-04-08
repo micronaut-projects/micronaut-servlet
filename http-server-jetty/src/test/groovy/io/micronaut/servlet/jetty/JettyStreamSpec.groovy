@@ -176,13 +176,13 @@ class JettyStreamSpec extends Specification {
         String echoAsString(@QueryValue @Nullable int n, @QueryValue @Nullable String data);
 
         @Get(value = "/echo{?n,data}", consumes = MediaType.TEXT_PLAIN)
-        Publisher<ByteBuffer<?>> echoAsByteBuffers(@QueryValue @Nullable int n, @QueryValue @Nullable String data);
+        Publisher<ByteBuffer<?>> echoAsByteBuffers(@QueryValue int n, @QueryValue @Nullable String data);
 
         @Get(value = "/echo{?n,data}", consumes = MediaType.TEXT_PLAIN)
-        Publisher<Elephant> echoAsElephant(@QueryValue @Nullable int n, @QueryValue @Nullable String data);
+        Publisher<Elephant> echoAsElephant(@QueryValue int n, @QueryValue @Nullable String data);
 
         @Get(value = "/echoWithHeaders{?n,data}", consumes = MediaType.TEXT_PLAIN)
-        HttpResponse<String> echoWithHeaders(@QueryValue @Nullable int n, @QueryValue @Nullable String data);
+        HttpResponse<String> echoWithHeaders(@QueryValue int n, @QueryValue @Nullable String data);
 
         @Get(value = "/echoWithHeadersSingle{?data}", consumes = MediaType.TEXT_PLAIN)
         HttpResponse<String> echoWithHeadersSingle(@QueryValue @Nullable String data);
@@ -205,12 +205,12 @@ class JettyStreamSpec extends Specification {
         @Inject ByteBufferFactory<?, ?> bufferFactory
 
         @Get(value = "/echo{?n,data}", produces = MediaType.TEXT_PLAIN)
-        Publisher<byte[]> postStream(@QueryValue @Nullable int n,  @QueryValue @Nullable String data) {
+        Publisher<byte[]> postStream(@QueryValue int n,  @QueryValue @Nullable String data) {
             return Flux.just(data.getBytes(StandardCharsets.UTF_8)).repeat(n - 1)
         }
 
         @Get(value = "/echoWithHeaders{?n,data}", produces = MediaType.TEXT_PLAIN)
-        HttpResponse<Publisher<byte[]>> echoWithHeaders(@QueryValue @Nullable int n, @QueryValue @Nullable String data) {
+        HttpResponse<Publisher<byte[]>> echoWithHeaders(@QueryValue int n, @QueryValue @Nullable String data) {
             return HttpResponse.ok(Flux.just(data.getBytes(StandardCharsets.UTF_8)).repeat(n - 1)).header("X-MyHeader", "42")
         }
 
