@@ -50,6 +50,7 @@ class CompletedPartRequestArgumentBinder implements TypedRequestArgumentBinder<C
             if (part == null) {
                 return BindingResult.UNSATISFIED;
             }
+            @SuppressWarnings("java:S2095")
             CompletedPart completedPart = ServletCompletedFileUploadFactory.create(part);
             if (source instanceof LifecycleHttpRequest<?> lifecycleRequest) {
                 lifecycleRequest.addDisposalResource(() -> {

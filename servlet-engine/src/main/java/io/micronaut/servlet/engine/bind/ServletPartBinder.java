@@ -202,6 +202,7 @@ public class ServletPartBinder<T> implements AnnotatedRequestArgumentBinder<Part
             }
         } else if (CompletedFileUpload.class.isAssignableFrom(type)) {
             try {
+                @SuppressWarnings("java:S2095")
                 CompletedFileUpload completedFileUpload = ServletCompletedFileUploadFactory.create(part);
                 if (exchange.getRequest() instanceof LifecycleHttpRequest<?> lifecycleRequest) {
                     lifecycleRequest.addDisposalResource(() -> {
