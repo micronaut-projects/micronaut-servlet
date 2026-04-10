@@ -28,26 +28,27 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.http.BasicHttpAttributes;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpStatus;
+import io.micronaut.http.LifecycleHttpRequest;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.Part;
 import io.micronaut.http.bind.binders.AnnotatedRequestArgumentBinder;
 import io.micronaut.http.bind.binders.PendingRequestBindingResult;
+import io.micronaut.http.body.MessageBodyHandlerRegistry;
+import io.micronaut.http.body.MessageBodyReader;
+import io.micronaut.http.codec.CodecException;
 import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.http.form.FormCapableHttpRequest;
-import io.micronaut.http.LifecycleHttpRequest;
 import io.micronaut.http.multipart.CompletedAttribute;
 import io.micronaut.http.multipart.CompletedFileUpload;
 import io.micronaut.http.multipart.CompletedPart;
 import io.micronaut.http.multipart.PartData;
 import io.micronaut.http.multipart.StreamingFileUpload;
-import io.micronaut.http.body.MessageBodyHandlerRegistry;
-import io.micronaut.http.body.MessageBodyReader;
 import io.micronaut.http.reactive.execution.ReactiveExecutionFlow;
+import io.micronaut.http.server.HttpServerConfiguration;
 import io.micronaut.http.server.exceptions.InternalServerException;
 import io.micronaut.http.server.multipart.FormFactory;
 import io.micronaut.http.server.multipart.FormRouteCompleter;
 import io.micronaut.http.simple.SimpleHttpHeaders;
-import io.micronaut.http.codec.CodecException;
 import io.micronaut.servlet.http.ServletExchange;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -83,6 +84,7 @@ public class ServletPartBinder<T> implements AnnotatedRequestArgumentBinder<Part
     private final ConversionService conversionService;
     private final BeanProvider<FormFactory> formFactoryProvider;
     private final MessageBodyHandlerRegistry messageBodyHandlerRegistry;
+    private final HttpServerConfiguration configuration;
 
     /**
      * Default constructor.
@@ -93,10 +95,12 @@ public class ServletPartBinder<T> implements AnnotatedRequestArgumentBinder<Part
      */
     ServletPartBinder(ConversionService conversionService,
                       BeanProvider<FormFactory> formFactoryProvider,
-                      MessageBodyHandlerRegistry messageBodyHandlerRegistry) {
+                      MessageBodyHandlerRegistry messageBodyHandlerRegistry,
+                      HttpServerConfiguration configuration) {
         this.conversionService = conversionService;
         this.formFactoryProvider = formFactoryProvider;
         this.messageBodyHandlerRegistry = messageBodyHandlerRegistry;
+        this.configuration = configuration;
     }
 
     @Override
@@ -203,7 +207,7 @@ public class ServletPartBinder<T> implements AnnotatedRequestArgumentBinder<Part
         } else if (CompletedFileUpload.class.isAssignableFrom(type)) {
             try {
                 @SuppressWarnings("java:S2095")
-                CompletedFileUpload completedFileUpload = ServletCompletedFileUploadFactory.create(part);
+                CompletedFileUpload completedFileUpload = ServletCompletedFileUploadFactory.create(configuration, part);
                 if (exchange.getRequest() instanceof LifecycleHttpRequest<?> lifecycleRequest) {
                     lifecycleRequest.addDisposalResource(() -> {
                         try {

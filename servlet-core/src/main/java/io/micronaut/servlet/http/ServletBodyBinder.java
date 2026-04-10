@@ -43,8 +43,6 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.reactivestreams.Processor;
 import org.reactivestreams.Publisher;
-import org.reactivestreams.Subscriber;
-import org.reactivestreams.Subscription;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -59,6 +57,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -137,8 +136,14 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
                     return () -> servletHttpRequest.getParameters().get(name, context);
                 } else {
                     if (servletHttpRequest instanceof FormCapableHttpRequest<?> formCapableHttpRequest) {
+                        List<RawFormField> bufferedFields = Flux.from(formCapableHttpRequest.getRawFormFields())
+                            .concatMap(rff -> Mono.fromCompletionStage(rff.byteBody().buffer()).map(buffered -> new RawFormField(rff.metadata(), buffered)))
+                            .doOnDiscard(RawFormField.class, RawFormField::close)
+                            .collectList()
+                            .block();
+                        Objects.requireNonNull(bufferedFields);
                         Map<String, List<CloseableByteBody>> bodies = new LinkedHashMap<>();
-                        for (RawFormField rff : toListNow(formCapableHttpRequest.getRawFormFields())) {
+                        for (RawFormField rff : bufferedFields) {
                             bodies.computeIfAbsent(rff.metadata().name(), k -> new ArrayList<>(1)).add(rff.byteBody());
                         }
                         Object intermediate = io.micronaut.http.server.multipart.FormRouteCompleter.mapForGetBody(bodies, source.getCharacterEncoding());
@@ -250,45 +255,6 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
         return defaultBodyAnnotationBinder.bind(context, source);
     }
 
-    private static <T> List<T> toListNow(Publisher<T> publisher) {
-        Flux<T> flux = Flux.from(publisher);
-        var sub = new Subscriber<T>() {
-            final List<T> list = new ArrayList<>();
-            boolean complete = false;
-            @Nullable
-            Throwable error = null;
-
-            @Override
-            public void onSubscribe(Subscription s) {
-                s.request(Long.MAX_VALUE);
-            }
-
-            @Override
-            public void onNext(T t) {
-                list.add(t);
-            }
-
-            @Override
-            public void onError(Throwable t) {
-                error = t;
-                complete = true;
-            }
-
-            @Override
-            public void onComplete() {
-                complete = true;
-            }
-        };
-        flux.subscribe(sub);
-        if (!sub.complete) {
-            throw new IllegalStateException("Flux did not finish immediately");
-        }
-        if (sub.error != null) {
-            throw new IllegalStateException("Failed to load form fields", sub.error);
-        }
-        return sub.list;
-    }
-
     private @NonNull CompletableFuture<?> asFuture(ArgumentConversionContext<T> context,
                                                    HttpRequest<?> source,
                                                    ServletHttpRequest<?, ?> servletHttpRequest,
@@ -298,7 +264,7 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
         CompletableFuture<?> completableFuture;
         if (servletHttpRequest instanceof ServerHttpRequest<?> serverHttpRequest) {
             if (mediaType.equals(MediaType.APPLICATION_JSON_STREAM_TYPE)) {
-                completableFuture = steamJson(serverHttpRequest, typeArgument).single().toFuture();
+                completableFuture = streamJson(serverHttpRequest, typeArgument).single().toFuture();
             } else {
                 Class<Object> typeArgumentClass = typeArgument.getType();
                 if (CharSequence.class.isAssignableFrom(typeArgumentClass)) {
@@ -338,7 +304,7 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
         Publisher<?> publisher;
         if (servletHttpRequest instanceof ServerHttpRequest<?> serverHttpRequest) {
             if (mediaType.equals(MediaType.APPLICATION_JSON_STREAM_TYPE) || !single && mediaType.equals(MediaType.APPLICATION_JSON_TYPE)) {
-                Flux<Object> jsonStream = steamJson(serverHttpRequest, typeArgument);
+                Flux<Object> jsonStream = streamJson(serverHttpRequest, typeArgument);
                 if (single) {
                     publisher = jsonStream.single();
                 } else {
@@ -409,7 +375,7 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
         return conversionService.convertRequired(publisher, type);
     }
 
-    private Flux<Object> steamJson(ServerHttpRequest<?> serverRequest, Argument<Object> typeArgument) {
+    private Flux<Object> streamJson(ServerHttpRequest<?> serverRequest, Argument<Object> typeArgument) {
         Processor<byte[], JsonNode> reactiveParser = jsonMapper.createReactiveParser(p -> serverRequest.byteBody().toByteArrayPublisher().subscribe(p), true);
         return Flux.from(reactiveParser)
             .map(node -> {

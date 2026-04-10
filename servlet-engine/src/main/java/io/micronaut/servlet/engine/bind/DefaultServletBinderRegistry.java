@@ -28,6 +28,7 @@ import io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder;
 import io.micronaut.http.bind.binders.RequestArgumentBinder;
 import io.micronaut.http.body.MessageBodyHandlerRegistry;
 import io.micronaut.http.multipart.CompletedPart;
+import io.micronaut.http.server.HttpServerConfiguration;
 import io.micronaut.http.server.multipart.FormFactory;
 import io.micronaut.json.JsonMapper;
 import io.micronaut.servlet.http.ServletBinderRegistry;
@@ -52,6 +53,8 @@ import java.util.List;
 @Internal
 class DefaultServletBinderRegistry<T> extends ServletBinderRegistry<T> {
 
+    private final HttpServerConfiguration configuration;
+
     /**
      * Default constructor.
      *
@@ -66,14 +69,16 @@ class DefaultServletBinderRegistry<T> extends ServletBinderRegistry<T> {
                                         List<RequestArgumentBinder<?>> binders,
                                         DefaultBodyAnnotationBinder<T> defaultBodyAnnotationBinder,
                                         BeanProvider<FormFactory> formFactoryProvider,
-                                        JsonMapper jsonMapper) {
+                                        JsonMapper jsonMapper,
+                                        HttpServerConfiguration configuration) {
         super(messageBodyHandlerRegistry, conversionService, (List) binders, defaultBodyAnnotationBinder, jsonMapper);
+        this.configuration = configuration;
         byType.put(HttpServletRequest.class, new ServletRequestBinder());
         byType.put(HttpServletResponse.class, new ServletResponseBinder());
         byType.put(ServletConfig.class, new ServletConfigBinder());
         byType.put(ServletContext.class, new ServletContextBinder());
-        byType.put(CompletedPart.class, new CompletedPartRequestArgumentBinder());
-        byAnnotation.put(Part.class, new ServletPartBinder<>(conversionService, formFactoryProvider, messageBodyHandlerRegistry));
+        byType.put(CompletedPart.class, new CompletedPartRequestArgumentBinder(configuration));
+        byAnnotation.put(Part.class, new ServletPartBinder<>(conversionService, formFactoryProvider, messageBodyHandlerRegistry, configuration));
     }
 
     @Override
@@ -89,7 +94,7 @@ class DefaultServletBinderRegistry<T> extends ServletBinderRegistry<T> {
      *
      * @param <T> The type
      */
-    private static class DefaultServletBodyBinder<T> extends ServletBodyBinder<T> {
+    private class DefaultServletBodyBinder<T> extends ServletBodyBinder<T> {
 
         /**
          * Default constructor.
@@ -108,7 +113,7 @@ class DefaultServletBinderRegistry<T> extends ServletBinderRegistry<T> {
             Argument<?> argument = context.getArgument();
             Class<?> type = argument.getType();
             if (CompletedPart.class.isAssignableFrom(type)) {
-                return new CompletedPartRequestArgumentBinder().bind(context, source);
+                return new CompletedPartRequestArgumentBinder(configuration).bind(context, source);
             }
             return super.bind(context, source);
         }

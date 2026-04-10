@@ -16,8 +16,6 @@
 package io.micronaut.servlet.engine;
 
 import io.micronaut.core.annotation.Internal;
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.convert.ConversionService;
@@ -39,11 +37,11 @@ import io.micronaut.http.ServerHttpRequest;
 import io.micronaut.http.body.ByteBody;
 import io.micronaut.http.body.ByteBodyFactory;
 import io.micronaut.http.body.ByteBufferBodyAdapter;
-import io.micronaut.http.body.CloseableByteBody;
 import io.micronaut.http.body.CloseableAvailableByteBody;
+import io.micronaut.http.body.CloseableByteBody;
+import io.micronaut.http.body.MessageBodyHandlerRegistry;
 import io.micronaut.http.body.stream.AvailableByteArrayBody;
 import io.micronaut.http.body.stream.InputStreamByteBody;
-import io.micronaut.http.body.MessageBodyHandlerRegistry;
 import io.micronaut.http.cookie.Cookies;
 import io.micronaut.http.form.FormCapableHttpRequest;
 import io.micronaut.http.multipart.FormFieldMetadata;
@@ -57,11 +55,13 @@ import io.micronaut.servlet.http.ServletHttpRequest;
 import io.micronaut.servlet.http.ServletHttpResponse;
 import io.micronaut.servlet.http.StreamedServletMessage;
 import jakarta.servlet.AsyncContext;
-import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.Part;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import reactor.core.publisher.Flux;
@@ -82,13 +82,13 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
-import java.util.List;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalLong;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -585,8 +585,7 @@ public final class DefaultServletHttpRequest<B> implements
 
     private RawFormField toRawFormFieldFromPart(Part part) {
         try {
-            OptionalLong expectedLength = part.getSize() >= 0 ? OptionalLong.of(part.getSize()) : OptionalLong.empty();
-            CloseableByteBody partBody = InputStreamByteBody.create(part.getInputStream(), expectedLength, ioExecutor, byteBodyFactory);
+            CloseableByteBody partBody = InputStreamByteBody.create(part.getInputStream(), OptionalLong.of(part.getSize()), ioExecutor, byteBodyFactory);
             addDisposalResource(() -> safeDelete(part));
             FormFieldMetadata metadata = new FormFieldMetadata(
                 part.getName(),
