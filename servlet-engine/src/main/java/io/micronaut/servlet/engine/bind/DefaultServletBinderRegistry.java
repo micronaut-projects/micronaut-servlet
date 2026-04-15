@@ -51,7 +51,7 @@ import java.util.List;
 @Singleton
 @Replaces(DefaultRequestBinderRegistry.class)
 @Internal
-final class DefaultServletBinderRegistry<T> extends ServletBinderRegistry<T> {
+class DefaultServletBinderRegistry<T> extends ServletBinderRegistry<T> {
 
     private final HttpServerConfiguration configuration;
 
@@ -86,7 +86,7 @@ final class DefaultServletBinderRegistry<T> extends ServletBinderRegistry<T> {
                                                         ConversionService conversionService,
                                                         DefaultBodyAnnotationBinder<T> defaultBodyAnnotationBinder,
                                                         JsonMapper jsonMapper) {
-        return new DefaultServletBodyBinder<>(conversionService, messageBodyHandlerRegistry, defaultBodyAnnotationBinder, jsonMapper, configuration);
+        return new DefaultServletBodyBinder<>(conversionService, messageBodyHandlerRegistry, defaultBodyAnnotationBinder, jsonMapper);
     }
 
     /**
@@ -94,9 +94,7 @@ final class DefaultServletBinderRegistry<T> extends ServletBinderRegistry<T> {
      *
      * @param <T> The type
      */
-    private static class DefaultServletBodyBinder<T> extends ServletBodyBinder<T> {
-
-        private final HttpServerConfiguration configuration;
+    private class DefaultServletBodyBinder<T> extends ServletBodyBinder<T> {
 
         /**
          * Default constructor.
@@ -105,15 +103,9 @@ final class DefaultServletBinderRegistry<T> extends ServletBinderRegistry<T> {
          * @param messageBodyHandlerRegistry  The message body handler registry
          * @param defaultBodyAnnotationBinder The delegate default body binder
          * @param jsonMapper                  The json mapper
-         * @param configuration               The configuration
          */
-        protected DefaultServletBodyBinder(ConversionService conversionService,
-                                           MessageBodyHandlerRegistry messageBodyHandlerRegistry,
-                                           DefaultBodyAnnotationBinder<T> defaultBodyAnnotationBinder,
-                                           JsonMapper jsonMapper,
-                                           HttpServerConfiguration configuration) {
+        protected DefaultServletBodyBinder(ConversionService conversionService, MessageBodyHandlerRegistry messageBodyHandlerRegistry, DefaultBodyAnnotationBinder<T> defaultBodyAnnotationBinder, JsonMapper jsonMapper) {
             super(conversionService, messageBodyHandlerRegistry, defaultBodyAnnotationBinder, jsonMapper);
-            this.configuration = configuration;
         }
 
         @Override
