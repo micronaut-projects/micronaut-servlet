@@ -37,7 +37,6 @@ import io.micronaut.http.ServerHttpRequest;
 import io.micronaut.http.body.ByteBody;
 import io.micronaut.http.body.ByteBodyFactory;
 import io.micronaut.http.body.ByteBufferBodyAdapter;
-import io.micronaut.http.body.CloseableAvailableByteBody;
 import io.micronaut.http.body.CloseableByteBody;
 import io.micronaut.http.body.MessageBodyHandlerRegistry;
 import io.micronaut.http.body.stream.AvailableByteArrayBody;
@@ -73,7 +72,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.InetSocketAddress;
 import java.net.URI;
-import java.net.URLDecoder;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.Principal;
@@ -82,16 +80,12 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.function.Supplier;
 
@@ -130,8 +124,6 @@ public final class DefaultServletHttpRequest<B> implements
     private DefaultServletCookies cookies;
     private Supplier<Optional<B>> body;
     private List<Runnable> disposalResources;
-    private FormData urlEncodedFormData;
-    private Throwable urlEncodedFormError;
 
     private boolean bodyIsReadAsync;
     private B parsedBody;
@@ -557,16 +549,12 @@ public final class DefaultServletHttpRequest<B> implements
                     return Flux.error(e);
                 }
             });
+        } else {
+            return Flux.fromIterable(delegate.getParameterMap().entrySet().stream()
+                .flatMap(entry -> Arrays.stream(entry.getValue())
+                    .map(value -> new RawFormField(new FormFieldMetadata(entry.getKey(), null, null), byteBodyFactory().adapt(value.getBytes(StandardCharsets.UTF_8)))))
+                .toList());
         }
-        Charset charset = getCharacterEncoding();
-        return Flux.defer(() -> {
-            List<FormValue> values = resolveUrlEncodedFormValues(charset);
-            if (values.isEmpty()) {
-                return Flux.empty();
-            }
-            return Flux.fromIterable(values)
-                .map(value -> toRawFormFieldFromValue(value.name, value.value, charset));
-        });
     }
 
     @Override
@@ -624,114 +612,6 @@ public final class DefaultServletHttpRequest<B> implements
         }
     }
 
-    private List<FormValue> resolveUrlEncodedFormValues(Charset charset) {
-        FormData data = resolveUrlEncodedFormData(charset);
-        return data.values;
-    }
-
-    private FormData resolveUrlEncodedFormData(Charset charset) {
-        synchronized (this) {
-            if (urlEncodedFormData != null) {
-                return urlEncodedFormData;
-            }
-            if (urlEncodedFormError != null) {
-                if (urlEncodedFormError instanceof RuntimeException runtime) {
-                    throw runtime;
-                }
-                throw new InternalServerException(
-                    "Error reading form body: " + urlEncodedFormError.getMessage(),
-                    urlEncodedFormError
-                );
-            }
-            try {
-                FormData parsed = parseUrlEncodedForm(charset);
-                urlEncodedFormData = parsed;
-                return parsed;
-            } catch (RuntimeException e) {
-                urlEncodedFormError = e;
-                throw e;
-            } catch (Exception e) {
-                InternalServerException ise = new InternalServerException(
-                    "Error reading form body: " + e.getMessage(),
-                    e
-                );
-                urlEncodedFormError = ise;
-                throw ise;
-            }
-        }
-    }
-
-    private FormData parseUrlEncodedForm(Charset charset) throws ExecutionException, InterruptedException {
-        CompletableFuture<? extends CloseableAvailableByteBody> future = byteBody.buffer();
-        CloseableAvailableByteBody available;
-        try {
-            available = future.get();
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw e;
-        }
-        try (CloseableAvailableByteBody closeable = available) {
-            String body = closeable.toString(charset);
-            return decodeUrlEncodedBody(body, charset);
-        }
-    }
-
-    private FormData decodeUrlEncodedBody(String body, Charset charset) {
-        List<FormValue> values = new ArrayList<>();
-        Map<String, List<String>> collectedParameters = new LinkedHashMap<>();
-        if (StringUtils.isEmpty(body)) {
-            return new FormData(Collections.unmodifiableList(values), Collections.emptyMap());
-        }
-        int length = body.length();
-        int position = 0;
-        while (position <= length) {
-            int amp = body.indexOf('&', position);
-            String segment;
-            if (amp == -1) {
-                segment = body.substring(position);
-                position = length + 1;
-            } else {
-                segment = body.substring(position, amp);
-                position = amp + 1;
-            }
-            if (segment.isEmpty()) {
-                continue;
-            }
-            int eq = segment.indexOf('=');
-            String rawName = eq >= 0 ? segment.substring(0, eq) : segment;
-            String rawValue = eq >= 0 ? segment.substring(eq + 1) : "";
-            String name = URLDecoder.decode(rawName, charset);
-            String value = URLDecoder.decode(rawValue, charset);
-            values.add(new FormValue(name, value));
-            collectedParameters.computeIfAbsent(name, key -> new ArrayList<>()).add(value);
-        }
-        Map<String, List<String>> immutableParameters = new LinkedHashMap<>();
-        for (Map.Entry<String, List<String>> entry : collectedParameters.entrySet()) {
-            immutableParameters.put(entry.getKey(), Collections.unmodifiableList(entry.getValue()));
-        }
-        return new FormData(Collections.unmodifiableList(values), Collections.unmodifiableMap(immutableParameters));
-    }
-
-    private static final class FormValue {
-        private final String name;
-        private final String value;
-
-        private FormValue(String name, String value) {
-            this.name = name;
-            this.value = value;
-        }
-    }
-
-    private static final class FormData {
-        private final List<FormValue> values;
-        private final Map<String, List<String>> parameters;
-
-        private FormData(List<FormValue> values, Map<String, List<String>> parameters) {
-            this.values = values;
-            this.parameters = parameters;
-        }
-    }
-
     /**
      * The servlet request headers.
      */
@@ -781,12 +661,6 @@ public final class DefaultServletHttpRequest<B> implements
 
         @Override
         public List<String> getAll(CharSequence name) {
-            if (useParsedFormParameters()) {
-                List<String> values = formParameterMap().get(
-                    Objects.requireNonNull(name, NULL_PARAMETER_NAME).toString()
-                );
-                return values != null ? values : Collections.emptyList();
-            }
             final String[] values = delegate.getParameterValues(
                 Objects.requireNonNull(name, NULL_PARAMETER_NAME).toString()
             );
@@ -799,12 +673,6 @@ public final class DefaultServletHttpRequest<B> implements
         @Nullable
         @Override
         public String get(CharSequence name) {
-            if (useParsedFormParameters()) {
-                List<String> values = formParameterMap().get(
-                    Objects.requireNonNull(name, NULL_PARAMETER_NAME).toString()
-                );
-                return CollectionUtils.isNotEmpty(values) ? values.get(0) : null;
-            }
             return delegate.getParameter(
                 Objects.requireNonNull(name, NULL_PARAMETER_NAME).toString()
             );
@@ -812,17 +680,11 @@ public final class DefaultServletHttpRequest<B> implements
 
         @Override
         public Set<String> names() {
-            if (useParsedFormParameters()) {
-                return formParameterMap().keySet();
-            }
             return CollectionUtils.enumerationToSet(delegate.getParameterNames());
         }
 
         @Override
         public Collection<List<String>> values() {
-            if (useParsedFormParameters()) {
-                return formParameterMap().values();
-            }
             return names()
                 .stream()
                 .map(this::getAll)
@@ -842,30 +704,6 @@ public final class DefaultServletHttpRequest<B> implements
             }
             final boolean isIterable = Iterable.class.isAssignableFrom(rawType);
             final String paramName = Objects.requireNonNull(name, "Parameter name should not be null").toString();
-            if (useParsedFormParameters()) {
-                Map<String, List<String>> map = formParameterMap();
-                List<String> values = map.get(paramName);
-                if (CollectionUtils.isEmpty(values)) {
-                    if (isIterable) {
-                        return conversionService.convert(Collections.emptyList(), conversionContext);
-                    }
-                    return Optional.empty();
-                }
-                if (isIterable) {
-                    if (isOptional) {
-                        return (Optional<T>) conversionService.convert(
-                            values,
-                            ConversionContext.of(argument.getFirstTypeVariable().orElse(argument))
-                        );
-                    }
-                    return conversionService.convert(values, conversionContext);
-                }
-                String first = values.get(0);
-                if (rawType.isInstance(first)) {
-                    return (Optional<T>) Optional.of(first);
-                }
-                return conversionService.convert(first, conversionContext);
-            }
             if (isIterable) {
                 final String[] parameterValues = delegate.getParameterValues(paramName);
                 if (ArrayUtils.isNotEmpty(parameterValues)) {
@@ -895,18 +733,6 @@ public final class DefaultServletHttpRequest<B> implements
                 }
             }
             return Optional.empty();
-        }
-
-        private boolean useParsedFormParameters() {
-            return DefaultServletHttpRequest.this.hasFormBody()
-                && DefaultServletHttpRequest.this.getContentType()
-                .map(mediaType -> mediaType.matches(MediaType.APPLICATION_FORM_URLENCODED_TYPE))
-                .orElse(false);
-        }
-
-        private Map<String, List<String>> formParameterMap() {
-            Charset charset = DefaultServletHttpRequest.this.getCharacterEncoding();
-            return DefaultServletHttpRequest.this.resolveUrlEncodedFormData(charset).parameters;
         }
     }
 }
