@@ -16,7 +16,6 @@ import org.junit.platform.suite.api.SuiteDisplayName;
     "io.micronaut.http.server.tck.tests.cors.CorsSimpleRequestTest",
     "io.micronaut.http.server.tck.tests.forms.UploadTest", // multipart
     "io.micronaut.http.server.tck.tests.forms.FormBindingDeadlockTest",
-    "io.micronaut.http.server.tck.tests.forms.FormsJacksonAnnotationsTest" // TODO: Re-enable once https://github.com/micronaut-projects/micronaut-core/pull/12602 is merged
 })
 public class JettyHttpServerTestSuite {
 }

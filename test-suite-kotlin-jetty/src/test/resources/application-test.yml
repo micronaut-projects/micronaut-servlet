@@ -1,6 +1,4 @@
 micronaut:
-  propagation: thread-local
   http:
     client:
       read-timeout: 60s
-
