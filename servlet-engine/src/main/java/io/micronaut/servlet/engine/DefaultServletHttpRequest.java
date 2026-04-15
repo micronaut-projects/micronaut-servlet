@@ -542,7 +542,7 @@ public final class DefaultServletHttpRequest<B> implements
         if (mediaType.matches(MediaType.MULTIPART_FORM_DATA_TYPE)) {
             return Flux.defer(() -> {
                 try {
-                    Collection<Part> parts = delegate.getParts();
+                    Collection<Part> parts = ((HttpServletRequest) delegate()).getParts();
                     return Flux.fromIterable(parts)
                         .map(this::toRawFormFieldFromPart);
                 } catch (IOException | ServletException e) {
@@ -550,7 +550,7 @@ public final class DefaultServletHttpRequest<B> implements
                 }
             });
         } else {
-            return Flux.fromIterable(delegate.getParameterMap().entrySet().stream()
+            return Flux.fromIterable(delegate().getParameterMap().entrySet().stream()
                 .flatMap(entry -> Arrays.stream(entry.getValue())
                     .map(value -> new RawFormField(new FormFieldMetadata(entry.getKey(), null, null), byteBodyFactory().adapt(value.getBytes(StandardCharsets.UTF_8)))))
                 .toList());
@@ -604,6 +604,7 @@ public final class DefaultServletHttpRequest<B> implements
         }
     }
 
+    @SuppressWarnings("java:S1166")
     private void safeDelete(Part part) {
         try {
             part.delete();

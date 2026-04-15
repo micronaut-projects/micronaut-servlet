@@ -356,7 +356,7 @@ public class ServletPartBinder<T> implements AnnotatedRequestArgumentBinder<Part
 
             @Override
             public Optional<T> getValue() {
-                return completableFuture.getNow(null);
+                return completableFuture.getNow(Optional.empty());
             }
         };
     }
@@ -455,7 +455,7 @@ public class ServletPartBinder<T> implements AnnotatedRequestArgumentBinder<Part
     }
 
     private void closeRaw(SignalType signalType, io.micronaut.http.multipart.RawFormField raw) {
-        if (signalType == SignalType.CANCEL || signalType == SignalType.ON_COMPLETE) {
+        if (signalType == SignalType.CANCEL || signalType == SignalType.ON_COMPLETE || signalType == SignalType.ON_ERROR) {
             raw.close();
         }
     }
