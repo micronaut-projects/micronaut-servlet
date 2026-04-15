@@ -609,7 +609,7 @@ public final class DefaultServletHttpRequest<B> implements
         try {
             part.delete();
         } catch (Exception ignored) {
-            // no-op
+            // best-effort cleanup, never mask request processing failures
         }
     }
 
