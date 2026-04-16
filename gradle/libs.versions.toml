@@ -18,7 +18,6 @@ micronaut-logging = "2.0.0-M2"
 # Micronaut
 micronaut-gradle-plugin = "4.6.2"
 logback-access = "2.0.12"
-kotlin = "2.3.20"
 
 [libraries]
 # Core
@@ -54,4 +53,3 @@ logback-access-jetty12 = { module = "ch.qos.logback.access:logback-access-jetty1
 
 # Gradle
 gradle-micronaut = { module = "io.micronaut.gradle:micronaut-gradle-plugin", version.ref = "micronaut-gradle-plugin" }
-gradle-kotlin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
