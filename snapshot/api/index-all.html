@@ -94,6 +94,8 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/http/poja/util/MultiValuesQueryParameters.html#add(java.lang.CharSequence,java.util.List)" class="member-name-link">add(CharSequence, List)</a> - Method in record class io.micronaut.http.poja.util.<a href="io/micronaut/http/poja/util/MultiValuesQueryParameters.html" title="class in io.micronaut.http.poja.util">MultiValuesQueryParameters</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html#addDisposalResource(java.lang.Runnable)" class="member-name-link">addDisposalResource(Runnable)</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html" title="class in io.micronaut.servlet.engine">DefaultServletHttpRequest</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/engine/initializer/MicronautServletInitializer.html#addMicronautServletMapping(java.lang.String)" class="member-name-link">addMicronautServletMapping(String)</a> - Method in class io.micronaut.servlet.engine.initializer.<a href="io/micronaut/servlet/engine/initializer/MicronautServletInitializer.html" title="class in io.micronaut.servlet.engine.initializer">MicronautServletInitializer</a></dt>
 <dd>
 <div class="block">Adds an additional mapping for the micronaut servlet.</div>
@@ -132,7 +134,7 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">An implementation of the POJA Http Request based on Apache.</div>
 </dd>
-<dt><a href="io/micronaut/http/poja/apache/ApacheServletHttpRequest.html#%3Cinit%3E(java.io.InputStream,io.micronaut.http.poja.apache.ApacheResponseContext,org.apache.hc.core5.http.io.SessionInputBuffer,io.micronaut.core.convert.ConversionService,io.micronaut.http.codec.MediaTypeCodecRegistry,java.util.concurrent.ExecutorService,io.micronaut.core.io.buffer.ByteBufferFactory)" class="member-name-link">ApacheServletHttpRequest(InputStream, ApacheResponseContext, SessionInputBuffer, ConversionService, MediaTypeCodecRegistry, ExecutorService, ByteBufferFactory)</a> - Constructor for class io.micronaut.http.poja.apache.<a href="io/micronaut/http/poja/apache/ApacheServletHttpRequest.html" title="class in io.micronaut.http.poja.apache">ApacheServletHttpRequest</a></dt>
+<dt><a href="io/micronaut/http/poja/apache/ApacheServletHttpRequest.html#%3Cinit%3E(java.io.InputStream,io.micronaut.http.poja.apache.ApacheResponseContext,org.apache.hc.core5.http.io.SessionInputBuffer,io.micronaut.core.convert.ConversionService,io.micronaut.http.body.MessageBodyHandlerRegistry,java.util.concurrent.ExecutorService,io.micronaut.core.io.buffer.ByteBufferFactory)" class="member-name-link">ApacheServletHttpRequest(InputStream, ApacheResponseContext, SessionInputBuffer, ConversionService, MessageBodyHandlerRegistry, ExecutorService, ByteBufferFactory)</a> - Constructor for class io.micronaut.http.poja.apache.<a href="io/micronaut/http/poja/apache/ApacheServletHttpRequest.html" title="class in io.micronaut.http.poja.apache">ApacheServletHttpRequest</a></dt>
 <dd>
 <div class="block">Create an Apache-based request.</div>
 </dd>
@@ -221,6 +223,8 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html#byteBody()" class="member-name-link">byteBody()</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html" title="class in io.micronaut.servlet.engine">DefaultServletHttpRequest</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html#byteBodyFactory()" class="member-name-link">byteBodyFactory()</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html" title="class in io.micronaut.servlet.engine">DefaultServletHttpRequest</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/http/ServletBinderRegistry.html#byType" class="member-name-link">byType</a> - Variable in class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletBinderRegistry.html" title="class in io.micronaut.servlet.http">ServletBinderRegistry</a></dt>
 <dd>&nbsp;</dd>
 </dl>
@@ -245,8 +249,6 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/servlet/http/ServletHttpHandler.html#close()" class="member-name-link">close()</a> - Method in class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletHttpHandler.html" title="class in io.micronaut.servlet.http">ServletHttpHandler</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/engine/DefaultServletHttpResponse.html#code()" class="member-name-link">code()</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/DefaultServletHttpResponse.html" title="class in io.micronaut.servlet.engine">DefaultServletHttpResponse</a></dt>
-<dd>&nbsp;</dd>
-<dt><a href="io/micronaut/http/poja/PojaHttpRequest.html#codecRegistry" class="member-name-link">codecRegistry</a> - Variable in class io.micronaut.http.poja.<a href="io/micronaut/http/poja/PojaHttpRequest.html" title="class in io.micronaut.http.poja">PojaHttpRequest</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/engine/ServletCookieAdapter.html#compareTo(io.micronaut.http.cookie.Cookie)" class="member-name-link">compareTo(Cookie)</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/ServletCookieAdapter.html" title="class in io.micronaut.servlet.engine">ServletCookieAdapter</a></dt>
 <dd>&nbsp;</dd>
@@ -310,7 +312,7 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/http/ServletHttpHandler.html#createExchange(REQ,RES)" class="member-name-link">createExchange(REQ, RES)</a> - Method in class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletHttpHandler.html" title="class in io.micronaut.servlet.http">ServletHttpHandler</a></dt>
 <dd>
-<div class="block">Creates the <a href="io/micronaut/servlet/http/DefaultServletExchange.html" title="class in io.micronaut.servlet.http"><code>DefaultServletExchange</code></a> object.</div>
+<div class="block">Creates the <a href="io/micronaut/servlet/http/ServletExchange.html" title="interface in io.micronaut.servlet.http"><code>ServletExchange</code></a> object.</div>
 </dd>
 <dt><a href="io/micronaut/http/poja/apache/ApacheServletHttpRequest.html#createResponse()" class="member-name-link">createResponse()</a> - Method in class io.micronaut.http.poja.apache.<a href="io/micronaut/http/poja/apache/ApacheServletHttpRequest.html" title="class in io.micronaut.http.poja.apache">ApacheServletHttpRequest</a></dt>
 <dd>&nbsp;</dd>
@@ -347,7 +349,7 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Default implementation of <a href="io/micronaut/servlet/http/BodyBuilder.html" title="interface in io.micronaut.servlet.http"><code>BodyBuilder</code></a>.</div>
 </dd>
-<dt><a href="io/micronaut/servlet/http/DefaultBodyBuilder.html#%3Cinit%3E(io.micronaut.http.codec.MediaTypeCodecRegistry)" class="member-name-link">DefaultBodyBuilder(MediaTypeCodecRegistry)</a> - Constructor for class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/DefaultBodyBuilder.html" title="class in io.micronaut.servlet.http">DefaultBodyBuilder</a></dt>
+<dt><a href="io/micronaut/servlet/http/DefaultBodyBuilder.html#%3Cinit%3E(io.micronaut.http.body.MessageBodyHandlerRegistry)" class="member-name-link">DefaultBodyBuilder(MessageBodyHandlerRegistry)</a> - Constructor for class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/DefaultBodyBuilder.html" title="class in io.micronaut.servlet.http">DefaultBodyBuilder</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/engine/DefaultMicronautServlet.html" class="type-name-link" title="class in io.micronaut.servlet.engine">DefaultMicronautServlet</a> - Class in <a href="io/micronaut/servlet/engine/package-summary.html">io.micronaut.servlet.engine</a></dt>
 <dd>
@@ -597,10 +599,6 @@ thread pool, to run the specified <a href="io/micronaut/servlet/http/ServletHttp
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html#getByte(int)" class="member-name-link">getByte(int)</a> - Method in class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html" title="class in io.micronaut.servlet.http">ByteArrayByteBuffer</a></dt>
 <dd>&nbsp;</dd>
-<dt><a href="io/micronaut/servlet/engine/ServletCompletedFileUpload.html#getByteBuffer()" class="member-name-link">getByteBuffer()</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/ServletCompletedFileUpload.html" title="class in io.micronaut.servlet.engine">ServletCompletedFileUpload</a></dt>
-<dd>&nbsp;</dd>
-<dt><a href="io/micronaut/servlet/engine/ServletCompletedFileUpload.html#getBytes()" class="member-name-link">getBytes()</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/ServletCompletedFileUpload.html" title="class in io.micronaut.servlet.engine">ServletCompletedFileUpload</a></dt>
-<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/engine/server/ServletStaticResourceConfiguration.html#getCacheControl()" class="member-name-link">getCacheControl()</a> - Method in interface io.micronaut.servlet.engine.server.<a href="io/micronaut/servlet/engine/server/ServletStaticResourceConfiguration.html" title="interface in io.micronaut.servlet.engine.server">ServletStaticResourceConfiguration</a></dt>
 <dd>
 <div class="deprecation-block"><span class="deprecated-label">Deprecated.</span></div>
@@ -630,8 +628,6 @@ thread pool, to run the specified <a href="io/micronaut/servlet/http/ServletHttp
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/engine/DefaultServletHttpResponse.html#getContentType()" class="member-name-link">getContentType()</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/DefaultServletHttpResponse.html" title="class in io.micronaut.servlet.engine">DefaultServletHttpResponse</a></dt>
 <dd>&nbsp;</dd>
-<dt><a href="io/micronaut/servlet/engine/ServletCompletedFileUpload.html#getContentType()" class="member-name-link">getContentType()</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/ServletCompletedFileUpload.html" title="class in io.micronaut.servlet.engine">ServletCompletedFileUpload</a></dt>
-<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html#getContextPath()" class="member-name-link">getContextPath()</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html" title="class in io.micronaut.servlet.engine">DefaultServletHttpRequest</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/engine/server/ServletServerFactory.html#getContextPath()" class="member-name-link">getContextPath()</a> - Method in class io.micronaut.servlet.engine.server.<a href="io/micronaut/servlet/engine/server/ServletServerFactory.html" title="class in io.micronaut.servlet.engine.server">ServletServerFactory</a></dt>
@@ -650,8 +646,6 @@ thread pool, to run the specified <a href="io/micronaut/servlet/http/ServletHttp
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html#getCookies()" class="member-name-link">getCookies()</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html" title="class in io.micronaut.servlet.engine">DefaultServletHttpRequest</a></dt>
 <dd>&nbsp;</dd>
-<dt><a href="io/micronaut/servlet/engine/ServletCompletedFileUpload.html#getDefinedSize()" class="member-name-link">getDefinedSize()</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/ServletCompletedFileUpload.html" title="class in io.micronaut.servlet.engine">ServletCompletedFileUpload</a></dt>
-<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/engine/ServletCookieAdapter.html#getDomain()" class="member-name-link">getDomain()</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/ServletCookieAdapter.html" title="class in io.micronaut.servlet.engine">ServletCookieAdapter</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/engine/server/ServletServerFactory.html#getEnvironment()" class="member-name-link">getEnvironment()</a> - Method in class io.micronaut.servlet.engine.server.<a href="io/micronaut/servlet/engine/server/ServletServerFactory.html" title="class in io.micronaut.servlet.engine.server">ServletServerFactory</a></dt>
@@ -659,8 +653,6 @@ thread pool, to run the specified <a href="io/micronaut/servlet/http/ServletHttp
 <div class="deprecation-block"><span class="deprecated-label">Deprecated.</span></div>
 &nbsp;</dd>
 <dt><a href="io/micronaut/servlet/http/server/ServletServerFactory.html#getEnvironment()" class="member-name-link">getEnvironment()</a> - Method in class io.micronaut.servlet.http.server.<a href="io/micronaut/servlet/http/server/ServletServerFactory.html" title="class in io.micronaut.servlet.http.server">ServletServerFactory</a></dt>
-<dd>&nbsp;</dd>
-<dt><a href="io/micronaut/servlet/engine/ServletCompletedFileUpload.html#getFilename()" class="member-name-link">getFilename()</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/ServletCompletedFileUpload.html" title="class in io.micronaut.servlet.engine">ServletCompletedFileUpload</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/jetty/JettyConfiguration.JettyRequestLog.html#getFileName()" class="member-name-link">getFileName()</a> - Method in class io.micronaut.servlet.jetty.<a href="io/micronaut/servlet/jetty/JettyConfiguration.JettyRequestLog.html" title="class in io.micronaut.servlet.jetty">JettyConfiguration.JettyRequestLog</a></dt>
 <dd>&nbsp;</dd>
@@ -694,8 +686,6 @@ thread pool, to run the specified <a href="io/micronaut/servlet/http/ServletHttp
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html#getInputStream()" class="member-name-link">getInputStream()</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html" title="class in io.micronaut.servlet.engine">DefaultServletHttpRequest</a></dt>
 <dd>&nbsp;</dd>
-<dt><a href="io/micronaut/servlet/engine/ServletCompletedFileUpload.html#getInputStream()" class="member-name-link">getInputStream()</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/ServletCompletedFileUpload.html" title="class in io.micronaut.servlet.engine">ServletCompletedFileUpload</a></dt>
-<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/http/ServletHttpRequest.html#getInputStream()" class="member-name-link">getInputStream()</a> - Method in interface io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletHttpRequest.html" title="interface in io.micronaut.servlet.http">ServletHttpRequest</a></dt>
 <dd>
 <div class="block">Returns an <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/io/InputStream.html" title="class or interface in java.io" class="external-link"><code>InputStream</code></a> that can be used to read the body of this HTTP request.</div>
@@ -718,7 +708,7 @@ thread pool, to run the specified <a href="io/micronaut/servlet/http/ServletHttp
 <dd>
 <div class="block">Get the maximum number of threads in the created thread pool.</div>
 </dd>
-<dt><a href="io/micronaut/servlet/http/ServletHttpHandler.html#getMediaTypeCodecRegistry()" class="member-name-link">getMediaTypeCodecRegistry()</a> - Method in class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletHttpHandler.html" title="class in io.micronaut.servlet.http">ServletHttpHandler</a></dt>
+<dt><a href="io/micronaut/servlet/http/ServletHttpHandler.html#getMessageBodyHandlerRegistry()" class="member-name-link">getMessageBodyHandlerRegistry()</a> - Method in class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletHttpHandler.html" title="class in io.micronaut.servlet.http">ServletHttpHandler</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/http/poja/apache/ApacheServletHttpRequest.html#getMethod()" class="member-name-link">getMethod()</a> - Method in class io.micronaut.http.poja.apache.<a href="io/micronaut/http/poja/apache/ApacheServletHttpRequest.html" title="class in io.micronaut.http.poja.apache">ApacheServletHttpRequest</a></dt>
 <dd>&nbsp;</dd>
@@ -741,8 +731,6 @@ thread pool, to run the specified <a href="io/micronaut/servlet/http/ServletHttp
 <dt><a href="io/micronaut/servlet/undertow/UndertowConfiguration.html#getMultipartConfiguration()" class="member-name-link">getMultipartConfiguration()</a> - Method in class io.micronaut.servlet.undertow.<a href="io/micronaut/servlet/undertow/UndertowConfiguration.html" title="class in io.micronaut.servlet.undertow">UndertowConfiguration</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/engine/MicronautServletConfiguration.html#getName()" class="member-name-link">getName()</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/MicronautServletConfiguration.html" title="class in io.micronaut.servlet.engine">MicronautServletConfiguration</a></dt>
-<dd>&nbsp;</dd>
-<dt><a href="io/micronaut/servlet/engine/ServletCompletedFileUpload.html#getName()" class="member-name-link">getName()</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/ServletCompletedFileUpload.html" title="class in io.micronaut.servlet.engine">ServletCompletedFileUpload</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/engine/ServletCookieAdapter.html#getName()" class="member-name-link">getName()</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/ServletCookieAdapter.html" title="class in io.micronaut.servlet.engine">ServletCookieAdapter</a></dt>
 <dd>&nbsp;</dd>
@@ -795,6 +783,8 @@ thread pool, to run the specified <a href="io/micronaut/servlet/http/ServletHttp
 <dt><a href="io/micronaut/servlet/undertow/UndertowServer.html#getPort()" class="member-name-link">getPort()</a> - Method in class io.micronaut.servlet.undertow.<a href="io/micronaut/servlet/undertow/UndertowServer.html" title="class in io.micronaut.servlet.undertow">UndertowServer</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/tomcat/TomcatConfiguration.html#getProtocol()" class="member-name-link">getProtocol()</a> - Method in class io.micronaut.servlet.tomcat.<a href="io/micronaut/servlet/tomcat/TomcatConfiguration.html" title="class in io.micronaut.servlet.tomcat">TomcatConfiguration</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html#getRawFormFields()" class="member-name-link">getRawFormFields()</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html" title="class in io.micronaut.servlet.engine">DefaultServletHttpRequest</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/http/poja/PojaHttpRequest.html#getReader()" class="member-name-link">getReader()</a> - Method in class io.micronaut.http.poja.<a href="io/micronaut/http/poja/PojaHttpRequest.html" title="class in io.micronaut.http.poja">PojaHttpRequest</a></dt>
 <dd>&nbsp;</dd>
@@ -878,8 +868,6 @@ thread pool, to run the specified <a href="io/micronaut/servlet/http/ServletHttp
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/undertow/UndertowConfiguration.html#getServerOptions()" class="member-name-link">getServerOptions()</a> - Method in class io.micronaut.servlet.undertow.<a href="io/micronaut/servlet/undertow/UndertowConfiguration.html" title="class in io.micronaut.servlet.undertow">UndertowConfiguration</a></dt>
 <dd>&nbsp;</dd>
-<dt><a href="io/micronaut/servlet/engine/ServletCompletedFileUpload.html#getSize()" class="member-name-link">getSize()</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/ServletCompletedFileUpload.html" title="class in io.micronaut.servlet.engine">ServletCompletedFileUpload</a></dt>
-<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/undertow/UndertowConfiguration.html#getSocketOptions()" class="member-name-link">getSocketOptions()</a> - Method in class io.micronaut.servlet.undertow.<a href="io/micronaut/servlet/undertow/UndertowConfiguration.html" title="class in io.micronaut.servlet.undertow">UndertowConfiguration</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/engine/server/ServletServerFactory.html#getSslConfiguration()" class="member-name-link">getSslConfiguration()</a> - Method in class io.micronaut.servlet.engine.server.<a href="io/micronaut/servlet/engine/server/ServletServerFactory.html" title="class in io.micronaut.servlet.engine.server">ServletServerFactory</a></dt>
@@ -949,6 +937,8 @@ thread pool, to run the specified <a href="io/micronaut/servlet/http/ServletHttp
 <dd>
 <div class="block">Handle a single request.</div>
 </dd>
+<dt><a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html#hasFormBody()" class="member-name-link">hasFormBody()</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html" title="class in io.micronaut.servlet.engine">DefaultServletHttpRequest</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/http/poja/apache/ApacheServletConfiguration.html#hashCode()" class="member-name-link">hashCode()</a> - Method in record class io.micronaut.http.poja.apache.<a href="io/micronaut/http/poja/apache/ApacheServletConfiguration.html" title="class in io.micronaut.http.poja.apache">ApacheServletConfiguration</a></dt>
 <dd>
 <div class="block">Returns a hash code value for this object.</div>
@@ -1065,8 +1055,6 @@ thread pool, to run the specified <a href="io/micronaut/servlet/http/ServletHttp
 <dd>
 <div class="block">If native response is commited and cannot be modified anymore.</div>
 </dd>
-<dt><a href="io/micronaut/servlet/engine/ServletCompletedFileUpload.html#isComplete()" class="member-name-link">isComplete()</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/ServletCompletedFileUpload.html" title="class in io.micronaut.servlet.engine">ServletCompletedFileUpload</a></dt>
-<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/engine/server/ServletStaticResourceConfiguration.html#isEnabled()" class="member-name-link">isEnabled()</a> - Method in interface io.micronaut.servlet.engine.server.<a href="io/micronaut/servlet/engine/server/ServletStaticResourceConfiguration.html" title="interface in io.micronaut.servlet.engine.server">ServletStaticResourceConfiguration</a></dt>
 <dd>
 <div class="deprecation-block"><span class="deprecated-label">Deprecated.</span></div>
@@ -1230,6 +1218,8 @@ thread pool, to run the specified <a href="io/micronaut/servlet/http/ServletHttp
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html#maxCapacity()" class="member-name-link">maxCapacity()</a> - Method in class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html" title="class in io.micronaut.servlet.http">ByteArrayByteBuffer</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/http/poja/PojaHttpRequest.html#messageBodyHandlerRegistry" class="member-name-link">messageBodyHandlerRegistry</a> - Variable in class io.micronaut.http.poja.<a href="io/micronaut/http/poja/PojaHttpRequest.html" title="class in io.micronaut.http.poja">PojaHttpRequest</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/info/MicronautHttpPojaApacheModuleInfo.html" class="type-name-link" title="class in io.micronaut.servlet.info">MicronautHttpPojaApacheModuleInfo</a> - Class in <a href="io/micronaut/servlet/info/package-summary.html">io.micronaut.servlet.info</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/info/MicronautHttpPojaApacheModuleInfo.html#%3Cinit%3E()" class="member-name-link">MicronautHttpPojaApacheModuleInfo()</a> - Constructor for class io.micronaut.servlet.info.<a href="io/micronaut/servlet/info/MicronautHttpPojaApacheModuleInfo.html" title="class in io.micronaut.servlet.info">MicronautHttpPojaApacheModuleInfo</a></dt>
@@ -1359,7 +1349,7 @@ thread pool, to run the specified <a href="io/micronaut/servlet/http/ServletHttp
 <dd>
 <div class="block">Create a new server instance.</div>
 </dd>
-<dt><a href="io/micronaut/servlet/http/ServletBinderRegistry.html#newServletBodyBinder(io.micronaut.http.codec.MediaTypeCodecRegistry,io.micronaut.core.convert.ConversionService,io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder)" class="member-name-link">newServletBodyBinder(MediaTypeCodecRegistry, ConversionService, DefaultBodyAnnotationBinder)</a> - Method in class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletBinderRegistry.html" title="class in io.micronaut.servlet.http">ServletBinderRegistry</a></dt>
+<dt><a href="io/micronaut/servlet/http/ServletBinderRegistry.html#newServletBodyBinder(io.micronaut.http.body.MessageBodyHandlerRegistry,io.micronaut.core.convert.ConversionService,io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder,io.micronaut.json.JsonMapper)" class="member-name-link">newServletBodyBinder(MessageBodyHandlerRegistry, ConversionService, DefaultBodyAnnotationBinder, JsonMapper)</a> - Method in class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletBinderRegistry.html" title="class in io.micronaut.servlet.http">ServletBinderRegistry</a></dt>
 <dd>
 <div class="block">Creates the servlet body binder.</div>
 </dd>
@@ -1416,7 +1406,7 @@ thread pool, to run the specified <a href="io/micronaut/servlet/http/ServletHttp
 <div class="block">A base class for serverless POJA requests that provides a number of common methods
 to be reused for body and binding.</div>
 </dd>
-<dt><a href="io/micronaut/http/poja/PojaHttpRequest.html#%3Cinit%3E(io.micronaut.core.convert.ConversionService,io.micronaut.http.codec.MediaTypeCodecRegistry)" class="member-name-link">PojaHttpRequest(ConversionService, MediaTypeCodecRegistry)</a> - Constructor for class io.micronaut.http.poja.<a href="io/micronaut/http/poja/PojaHttpRequest.html" title="class in io.micronaut.http.poja">PojaHttpRequest</a></dt>
+<dt><a href="io/micronaut/http/poja/PojaHttpRequest.html#%3Cinit%3E(io.micronaut.core.convert.ConversionService,io.micronaut.http.body.MessageBodyHandlerRegistry)" class="member-name-link">PojaHttpRequest(ConversionService, MessageBodyHandlerRegistry)</a> - Constructor for class io.micronaut.http.poja.<a href="io/micronaut/http/poja/PojaHttpRequest.html" title="class in io.micronaut.http.poja">PojaHttpRequest</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/http/poja/PojaHttpResponse.html" class="type-name-link" title="class in io.micronaut.http.poja">PojaHttpResponse&lt;T,<wbr>RES&gt;</a> - Class in <a href="io/micronaut/http/poja/package-summary.html">io.micronaut.http.poja</a></dt>
 <dd>
@@ -1569,7 +1559,7 @@ specified charset.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/http/ServletHttpHandler.html#service(io.micronaut.servlet.http.ServletExchange)" class="member-name-link">service(ServletExchange)</a> - Method in class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletHttpHandler.html" title="class in io.micronaut.servlet.http">ServletHttpHandler</a></dt>
 <dd>
-<div class="block">Handles a <a href="io/micronaut/servlet/http/DefaultServletExchange.html" title="class in io.micronaut.servlet.http"><code>DefaultServletExchange</code></a>.</div>
+<div class="block">Handles a <a href="io/micronaut/servlet/http/ServletExchange.html" title="interface in io.micronaut.servlet.http"><code>ServletExchange</code></a>.</div>
 </dd>
 <dt><a href="io/micronaut/servlet/engine/DefaultMicronautServlet.html#service(jakarta.servlet.http.HttpServletRequest,jakarta.servlet.http.HttpServletResponse)" class="member-name-link">service(HttpServletRequest, HttpServletResponse)</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/DefaultMicronautServlet.html" title="class in io.micronaut.servlet.engine">DefaultMicronautServlet</a></dt>
 <dd>&nbsp;</dd>
@@ -1603,7 +1593,7 @@ specified charset.</div>
 <dd>
 <div class="block">A <code>RequestBinderRegistry</code> implementation specifically for Serverless functions over HTTP.</div>
 </dd>
-<dt><a href="io/micronaut/servlet/http/ServletBinderRegistry.html#%3Cinit%3E(io.micronaut.http.codec.MediaTypeCodecRegistry,io.micronaut.core.convert.ConversionService,java.util.List,io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder)" class="member-name-link">ServletBinderRegistry(MediaTypeCodecRegistry, ConversionService, List, DefaultBodyAnnotationBinder)</a> - Constructor for class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletBinderRegistry.html" title="class in io.micronaut.servlet.http">ServletBinderRegistry</a></dt>
+<dt><a href="io/micronaut/servlet/http/ServletBinderRegistry.html#%3Cinit%3E(io.micronaut.http.body.MessageBodyHandlerRegistry,io.micronaut.core.convert.ConversionService,java.util.List,io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder,io.micronaut.json.JsonMapper)" class="member-name-link">ServletBinderRegistry(MessageBodyHandlerRegistry, ConversionService, List, DefaultBodyAnnotationBinder, JsonMapper)</a> - Constructor for class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletBinderRegistry.html" title="class in io.micronaut.servlet.http">ServletBinderRegistry</a></dt>
 <dd>
 <div class="block">Default constructor.</div>
 </dd>
@@ -1611,15 +1601,7 @@ specified charset.</div>
 <dd>
 <div class="block">Allows binding the body from a <a href="io/micronaut/servlet/http/ServletHttpRequest.html" title="interface in io.micronaut.servlet.http"><code>ServletHttpRequest</code></a>.</div>
 </dd>
-<dt><a href="io/micronaut/servlet/http/ServletBodyBinder.html#%3Cinit%3E(io.micronaut.core.convert.ConversionService,io.micronaut.http.codec.MediaTypeCodecRegistry,io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder)" class="member-name-link">ServletBodyBinder(ConversionService, MediaTypeCodecRegistry, DefaultBodyAnnotationBinder)</a> - Constructor for class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletBodyBinder.html" title="class in io.micronaut.servlet.http">ServletBodyBinder</a></dt>
-<dd>
-<div class="block">Default constructor.</div>
-</dd>
-<dt><a href="io/micronaut/servlet/engine/ServletCompletedFileUpload.html" class="type-name-link" title="class in io.micronaut.servlet.engine">ServletCompletedFileUpload</a> - Class in <a href="io/micronaut/servlet/engine/package-summary.html">io.micronaut.servlet.engine</a></dt>
-<dd>
-<div class="block">An implementation of <code>CompletedFileUpload</code> that backs on a Servlet part.</div>
-</dd>
-<dt><a href="io/micronaut/servlet/engine/ServletCompletedFileUpload.html#%3Cinit%3E(jakarta.servlet.http.Part)" class="member-name-link">ServletCompletedFileUpload(Part)</a> - Constructor for class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/ServletCompletedFileUpload.html" title="class in io.micronaut.servlet.engine">ServletCompletedFileUpload</a></dt>
+<dt><a href="io/micronaut/servlet/http/ServletBodyBinder.html#%3Cinit%3E(io.micronaut.core.convert.ConversionService,io.micronaut.http.body.MessageBodyHandlerRegistry,io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder,io.micronaut.json.JsonMapper)" class="member-name-link">ServletBodyBinder(ConversionService, MessageBodyHandlerRegistry, DefaultBodyAnnotationBinder, JsonMapper)</a> - Constructor for class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletBodyBinder.html" title="class in io.micronaut.servlet.http">ServletBodyBinder</a></dt>
 <dd>
 <div class="block">Default constructor.</div>
 </dd>

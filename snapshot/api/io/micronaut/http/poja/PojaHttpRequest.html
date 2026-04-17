@@ -62,13 +62,13 @@ loadScripts(document, 'script');</script>
 <ol class="toc-list">
 <li><a href="#CONVERTIBLE_VALUES_ARGUMENT" tabindex="0">CONVERTIBLE_VALUES_ARGUMENT</a></li>
 <li><a href="#conversionService" tabindex="0">conversionService</a></li>
-<li><a href="#codecRegistry" tabindex="0">codecRegistry</a></li>
+<li><a href="#messageBodyHandlerRegistry" tabindex="0">messageBodyHandlerRegistry</a></li>
 <li><a href="#attributes" tabindex="0">attributes</a></li>
 </ol>
 </li>
 <li><a href="#constructor-detail" tabindex="0">Constructor Details</a>
 <ol class="toc-list">
-<li><a href="#%3Cinit%3E(io.micronaut.core.convert.ConversionService,io.micronaut.http.codec.MediaTypeCodecRegistry)" tabindex="0">PojaHttpRequest(ConversionService, MediaTypeCodecRegistry)</a></li>
+<li><a href="#%3Cinit%3E(io.micronaut.core.convert.ConversionService,io.micronaut.http.body.MessageBodyHandlerRegistry)" tabindex="0">PojaHttpRequest(ConversionService, MessageBodyHandlerRegistry)</a></li>
 </ol>
 </li>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
@@ -148,14 +148,14 @@ to be reused for body and binding.</div>
 <div class="col-first even-row-color"><code>protected final io.micronaut.core.convert.value.MutableConvertibleValues<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</code></div>
 <div class="col-second even-row-color"><code><a href="#attributes" class="member-name-link">attributes</a></code></div>
 <div class="col-last even-row-color">&nbsp;</div>
-<div class="col-first odd-row-color"><code>protected final io.micronaut.http.codec.MediaTypeCodecRegistry</code></div>
-<div class="col-second odd-row-color"><code><a href="#codecRegistry" class="member-name-link">codecRegistry</a></code></div>
+<div class="col-first odd-row-color"><code>protected final io.micronaut.core.convert.ConversionService</code></div>
+<div class="col-second odd-row-color"><code><a href="#conversionService" class="member-name-link">conversionService</a></code></div>
 <div class="col-last odd-row-color">&nbsp;</div>
-<div class="col-first even-row-color"><code>protected final io.micronaut.core.convert.ConversionService</code></div>
-<div class="col-second even-row-color"><code><a href="#conversionService" class="member-name-link">conversionService</a></code></div>
+<div class="col-first even-row-color"><code>static final io.micronaut.core.type.Argument<wbr>&lt;io.micronaut.core.convert.value.ConvertibleValues&gt;</code></div>
+<div class="col-second even-row-color"><code><a href="#CONVERTIBLE_VALUES_ARGUMENT" class="member-name-link">CONVERTIBLE_VALUES_ARGUMENT</a></code></div>
 <div class="col-last even-row-color">&nbsp;</div>
-<div class="col-first odd-row-color"><code>static final io.micronaut.core.type.Argument<wbr>&lt;io.micronaut.core.convert.value.ConvertibleValues&gt;</code></div>
-<div class="col-second odd-row-color"><code><a href="#CONVERTIBLE_VALUES_ARGUMENT" class="member-name-link">CONVERTIBLE_VALUES_ARGUMENT</a></code></div>
+<div class="col-first odd-row-color"><code>protected final io.micronaut.http.body.MessageBodyHandlerRegistry</code></div>
+<div class="col-second odd-row-color"><code><a href="#messageBodyHandlerRegistry" class="member-name-link">messageBodyHandlerRegistry</a></code></div>
 <div class="col-last odd-row-color">&nbsp;</div>
 </div>
 <div class="inherited-list">
@@ -171,8 +171,8 @@ to be reused for body and binding.</div>
 <div class="summary-table two-column-summary">
 <div class="table-header col-first">Constructor</div>
 <div class="table-header col-last">Description</div>
-<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(io.micronaut.core.convert.ConversionService,io.micronaut.http.codec.MediaTypeCodecRegistry)" class="member-name-link">PojaHttpRequest</a><wbr>(io.micronaut.core.convert.ConversionService&nbsp;conversionService,
- io.micronaut.http.codec.MediaTypeCodecRegistry&nbsp;codecRegistry)</code></div>
+<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(io.micronaut.core.convert.ConversionService,io.micronaut.http.body.MessageBodyHandlerRegistry)" class="member-name-link">PojaHttpRequest</a><wbr>(io.micronaut.core.convert.ConversionService&nbsp;conversionService,
+ io.micronaut.http.body.MessageBodyHandlerRegistry&nbsp;messageBodyHandlerRegistry)</code></div>
 <div class="col-last even-row-color">&nbsp;</div>
 </div>
 </section>
@@ -289,10 +289,10 @@ to be reused for body and binding.</div>
 </section>
 </li>
 <li>
-<section class="detail" id="codecRegistry">
-<h3>codecRegistry</h3>
+<section class="detail" id="messageBodyHandlerRegistry">
+<h3>messageBodyHandlerRegistry</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type">io.micronaut.http.codec.MediaTypeCodecRegistry</span>&nbsp;<span class="element-name">codecRegistry</span></div>
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type">io.micronaut.http.body.MessageBodyHandlerRegistry</span>&nbsp;<span class="element-name">messageBodyHandlerRegistry</span></div>
 </div>
 </section>
 </li>
@@ -313,11 +313,11 @@ to be reused for body and binding.</div>
 <h2>Constructor Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="&lt;init&gt;(io.micronaut.core.convert.ConversionService,io.micronaut.http.codec.MediaTypeCodecRegistry)">
+<section class="detail" id="&lt;init&gt;(io.micronaut.core.convert.ConversionService,io.micronaut.http.body.MessageBodyHandlerRegistry)">
 <h3>PojaHttpRequest</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">PojaHttpRequest</span><wbr><span class="parameters">(io.micronaut.core.convert.ConversionService&nbsp;conversionService,
- io.micronaut.http.codec.MediaTypeCodecRegistry&nbsp;codecRegistry)</span></div>
+ io.micronaut.http.body.MessageBodyHandlerRegistry&nbsp;messageBodyHandlerRegistry)</span></div>
 </div>
 </section>
 </li>

@@ -71,7 +71,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
 <ol class="toc-list">
 <li><a href="#getApplicationContext()" tabindex="0">getApplicationContext()</a></li>
-<li><a href="#getMediaTypeCodecRegistry()" tabindex="0">getMediaTypeCodecRegistry()</a></li>
+<li><a href="#getMessageBodyHandlerRegistry()" tabindex="0">getMessageBodyHandlerRegistry()</a></li>
 <li><a href="#service(REQ,RES)" tabindex="0">service(REQ, RES)</a></li>
 <li><a href="#exchange(REQ,RES)" tabindex="0">exchange(REQ, RES)</a></li>
 <li><a href="#exchange(io.micronaut.servlet.http.ServletExchange)" tabindex="0">exchange(ServletExchange)</a></li>
@@ -179,7 +179,7 @@ implements <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#createExchange(REQ,RES)" class="member-name-link">createExchange</a><wbr>(<a href="#type-param-REQ" title="type parameter in ServletHttpHandler">REQ</a>&nbsp;request,
  <a href="#type-param-RES" title="type parameter in ServletHttpHandler">RES</a>&nbsp;response)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
-<div class="block">Creates the <a href="DefaultServletExchange.html" title="class in io.micronaut.servlet.http"><code>DefaultServletExchange</code></a> object.</div>
+<div class="block">Creates the <a href="ServletExchange.html" title="interface in io.micronaut.servlet.http"><code>ServletExchange</code></a> object.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="ServletExchange.html" title="interface in io.micronaut.servlet.http">ServletExchange</a><wbr>&lt;<a href="#type-param-REQ" title="type parameter in ServletHttpHandler">REQ</a>,<wbr><a href="#type-param-RES" title="type parameter in ServletHttpHandler">RES</a>&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#exchange(io.micronaut.servlet.http.ServletExchange)" class="member-name-link">exchange</a><wbr>(<a href="ServletExchange.html" title="interface in io.micronaut.servlet.http">ServletExchange</a>&lt;<a href="#type-param-REQ" title="type parameter in ServletHttpHandler">REQ</a>,<wbr><a href="#type-param-RES" title="type parameter in ServletHttpHandler">RES</a>&gt;&nbsp;exchange)</code></div>
@@ -195,8 +195,8 @@ implements <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>io.micronaut.context.ApplicationContext</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getApplicationContext()" class="member-name-link">getApplicationContext</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>io.micronaut.http.codec.MediaTypeCodecRegistry</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getMediaTypeCodecRegistry()" class="member-name-link">getMediaTypeCodecRegistry</a>()</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>io.micronaut.http.body.MessageBodyHandlerRegistry</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getMessageBodyHandlerRegistry()" class="member-name-link">getMessageBodyHandlerRegistry</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isRunning()" class="member-name-link">isRunning</a>()</code></div>
@@ -204,7 +204,7 @@ implements <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#service(io.micronaut.servlet.http.ServletExchange)" class="member-name-link">service</a><wbr>(<a href="ServletExchange.html" title="interface in io.micronaut.servlet.http">ServletExchange</a>&lt;<a href="#type-param-REQ" title="type parameter in ServletHttpHandler">REQ</a>,<wbr><a href="#type-param-RES" title="type parameter in ServletHttpHandler">RES</a>&gt;&nbsp;exchange)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Handles a <a href="DefaultServletExchange.html" title="class in io.micronaut.servlet.http"><code>DefaultServletExchange</code></a>.</div>
+<div class="block">Handles a <a href="ServletExchange.html" title="interface in io.micronaut.servlet.http"><code>ServletExchange</code></a>.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#service(REQ,RES)" class="member-name-link">service</a><wbr>(<a href="#type-param-REQ" title="type parameter in ServletHttpHandler">REQ</a>&nbsp;request,
@@ -299,13 +299,13 @@ implements <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base
 </section>
 </li>
 <li>
-<section class="detail" id="getMediaTypeCodecRegistry()">
-<h3>getMediaTypeCodecRegistry</h3>
+<section class="detail" id="getMessageBodyHandlerRegistry()">
+<h3>getMessageBodyHandlerRegistry</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">io.micronaut.http.codec.MediaTypeCodecRegistry</span>&nbsp;<span class="element-name">getMediaTypeCodecRegistry</span>()</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">io.micronaut.http.body.MessageBodyHandlerRegistry</span>&nbsp;<span class="element-name">getMessageBodyHandlerRegistry</span>()</div>
 <dl class="notes">
 <dt>Returns:</dt>
-<dd>The media type codec registry.</dd>
+<dd>The message body handler registry.</dd>
 </dl>
 </div>
 </section>
@@ -374,7 +374,7 @@ implements <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base
 <h3>service</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">service</span><wbr><span class="parameters">(<a href="ServletExchange.html" title="interface in io.micronaut.servlet.http">ServletExchange</a>&lt;<a href="#type-param-REQ" title="type parameter in ServletHttpHandler">REQ</a>,<wbr><a href="#type-param-RES" title="type parameter in ServletHttpHandler">RES</a>&gt;&nbsp;exchange)</span></div>
-<div class="block">Handles a <a href="DefaultServletExchange.html" title="class in io.micronaut.servlet.http"><code>DefaultServletExchange</code></a>.</div>
+<div class="block">Handles a <a href="ServletExchange.html" title="interface in io.micronaut.servlet.http"><code>ServletExchange</code></a>.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>exchange</code> - The exchange</dd>
@@ -428,7 +428,7 @@ implements <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">protected abstract</span>&nbsp;<span class="return-type"><a href="ServletExchange.html" title="interface in io.micronaut.servlet.http">ServletExchange</a>&lt;<a href="#type-param-REQ" title="type parameter in ServletHttpHandler">REQ</a>,<wbr><a href="#type-param-RES" title="type parameter in ServletHttpHandler">RES</a>&gt;</span>&nbsp;<span class="element-name">createExchange</span><wbr><span class="parameters">(<a href="#type-param-REQ" title="type parameter in ServletHttpHandler">REQ</a>&nbsp;request,
  <a href="#type-param-RES" title="type parameter in ServletHttpHandler">RES</a>&nbsp;response)</span></div>
-<div class="block">Creates the <a href="DefaultServletExchange.html" title="class in io.micronaut.servlet.http"><code>DefaultServletExchange</code></a> object.</div>
+<div class="block">Creates the <a href="ServletExchange.html" title="interface in io.micronaut.servlet.http"><code>ServletExchange</code></a> object.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>request</code> - The request</dd>

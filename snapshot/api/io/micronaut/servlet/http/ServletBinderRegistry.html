@@ -65,12 +65,12 @@ loadScripts(document, 'script');</script>
 </li>
 <li><a href="#constructor-detail" tabindex="0">Constructor Details</a>
 <ol class="toc-list">
-<li><a href="#%3Cinit%3E(io.micronaut.http.codec.MediaTypeCodecRegistry,io.micronaut.core.convert.ConversionService,java.util.List,io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder)" tabindex="0">ServletBinderRegistry(MediaTypeCodecRegistry, ConversionService, List, DefaultBodyAnnotationBinder)</a></li>
+<li><a href="#%3Cinit%3E(io.micronaut.http.body.MessageBodyHandlerRegistry,io.micronaut.core.convert.ConversionService,java.util.List,io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder,io.micronaut.json.JsonMapper)" tabindex="0">ServletBinderRegistry(MessageBodyHandlerRegistry, ConversionService, List, DefaultBodyAnnotationBinder, JsonMapper)</a></li>
 </ol>
 </li>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
 <ol class="toc-list">
-<li><a href="#newServletBodyBinder(io.micronaut.http.codec.MediaTypeCodecRegistry,io.micronaut.core.convert.ConversionService,io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder)" tabindex="0">newServletBodyBinder(MediaTypeCodecRegistry, ConversionService, DefaultBodyAnnotationBinder)</a></li>
+<li><a href="#newServletBodyBinder(io.micronaut.http.body.MessageBodyHandlerRegistry,io.micronaut.core.convert.ConversionService,io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder,io.micronaut.json.JsonMapper)" tabindex="0">newServletBodyBinder(MessageBodyHandlerRegistry, ConversionService, DefaultBodyAnnotationBinder, JsonMapper)</a></li>
 <li><a href="#findArgumentBinder(io.micronaut.core.type.Argument)" tabindex="0">findArgumentBinder(Argument)</a></li>
 </ol>
 </li>
@@ -135,10 +135,11 @@ implements io.micronaut.http.bind.RequestBinderRegistry</span></div>
 <div class="summary-table two-column-summary">
 <div class="table-header col-first">Constructor</div>
 <div class="table-header col-last">Description</div>
-<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(io.micronaut.http.codec.MediaTypeCodecRegistry,io.micronaut.core.convert.ConversionService,java.util.List,io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder)" class="member-name-link">ServletBinderRegistry</a><wbr>(io.micronaut.http.codec.MediaTypeCodecRegistry&nbsp;mediaTypeCodecRegistry,
+<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(io.micronaut.http.body.MessageBodyHandlerRegistry,io.micronaut.core.convert.ConversionService,java.util.List,io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder,io.micronaut.json.JsonMapper)" class="member-name-link">ServletBinderRegistry</a><wbr>(io.micronaut.http.body.MessageBodyHandlerRegistry&nbsp;messageBodyHandlerRegistry,
  io.micronaut.core.convert.ConversionService&nbsp;conversionService,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;io.micronaut.http.bind.binders.RequestArgumentBinder&gt;&nbsp;binders,
- io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder&lt;<a href="#type-param-T" title="type parameter in ServletBinderRegistry">T</a>&gt;&nbsp;defaultBodyAnnotationBinder)</code></div>
+ io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder&lt;<a href="#type-param-T" title="type parameter in ServletBinderRegistry">T</a>&gt;&nbsp;defaultBodyAnnotationBinder,
+ io.micronaut.json.JsonMapper&nbsp;jsonMapper)</code></div>
 <div class="col-last even-row-color">
 <div class="block">Default constructor.</div>
 </div>
@@ -160,9 +161,10 @@ implements io.micronaut.http.bind.RequestBinderRegistry</span></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#findArgumentBinder(io.micronaut.core.type.Argument)" class="member-name-link">findArgumentBinder</a><wbr>(io.micronaut.core.type.Argument&lt;T&gt;&nbsp;argument)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="ServletBodyBinder.html" title="class in io.micronaut.servlet.http">ServletBodyBinder</a><wbr>&lt;<a href="#type-param-T" title="type parameter in ServletBinderRegistry">T</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#newServletBodyBinder(io.micronaut.http.codec.MediaTypeCodecRegistry,io.micronaut.core.convert.ConversionService,io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder)" class="member-name-link">newServletBodyBinder</a><wbr>(io.micronaut.http.codec.MediaTypeCodecRegistry&nbsp;mediaTypeCodecRegistry,
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#newServletBodyBinder(io.micronaut.http.body.MessageBodyHandlerRegistry,io.micronaut.core.convert.ConversionService,io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder,io.micronaut.json.JsonMapper)" class="member-name-link">newServletBodyBinder</a><wbr>(io.micronaut.http.body.MessageBodyHandlerRegistry&nbsp;messageBodyHandlerRegistry,
  io.micronaut.core.convert.ConversionService&nbsp;conversionService,
- io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder&lt;<a href="#type-param-T" title="type parameter in ServletBinderRegistry">T</a>&gt;&nbsp;defaultBodyAnnotationBinder)</code></div>
+ io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder&lt;<a href="#type-param-T" title="type parameter in ServletBinderRegistry">T</a>&gt;&nbsp;defaultBodyAnnotationBinder,
+ io.micronaut.json.JsonMapper&nbsp;jsonMapper)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Creates the servlet body binder.</div>
 </div>
@@ -214,20 +216,22 @@ implements io.micronaut.http.bind.RequestBinderRegistry</span></div>
 <h2>Constructor Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="&lt;init&gt;(io.micronaut.http.codec.MediaTypeCodecRegistry,io.micronaut.core.convert.ConversionService,java.util.List,io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder)">
+<section class="detail" id="&lt;init&gt;(io.micronaut.http.body.MessageBodyHandlerRegistry,io.micronaut.core.convert.ConversionService,java.util.List,io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder,io.micronaut.json.JsonMapper)">
 <h3>ServletBinderRegistry</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">ServletBinderRegistry</span><wbr><span class="parameters">(io.micronaut.http.codec.MediaTypeCodecRegistry&nbsp;mediaTypeCodecRegistry,
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">ServletBinderRegistry</span><wbr><span class="parameters">(io.micronaut.http.body.MessageBodyHandlerRegistry&nbsp;messageBodyHandlerRegistry,
  io.micronaut.core.convert.ConversionService&nbsp;conversionService,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;io.micronaut.http.bind.binders.RequestArgumentBinder&gt;&nbsp;binders,
- io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder&lt;<a href="#type-param-T" title="type parameter in ServletBinderRegistry">T</a>&gt;&nbsp;defaultBodyAnnotationBinder)</span></div>
+ io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder&lt;<a href="#type-param-T" title="type parameter in ServletBinderRegistry">T</a>&gt;&nbsp;defaultBodyAnnotationBinder,
+ io.micronaut.json.JsonMapper&nbsp;jsonMapper)</span></div>
 <div class="block">Default constructor.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
-<dd><code>mediaTypeCodecRegistry</code> - The media type codec registry</dd>
+<dd><code>messageBodyHandlerRegistry</code> - The message body handler registry</dd>
 <dd><code>conversionService</code> - The conversion service</dd>
 <dd><code>binders</code> - Any registered binders</dd>
 <dd><code>defaultBodyAnnotationBinder</code> - The delegate default body binder</dd>
+<dd><code>jsonMapper</code> - The JSON mapper</dd>
 </dl>
 </div>
 </section>
@@ -241,18 +245,20 @@ implements io.micronaut.http.bind.RequestBinderRegistry</span></div>
 <h2>Method Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="newServletBodyBinder(io.micronaut.http.codec.MediaTypeCodecRegistry,io.micronaut.core.convert.ConversionService,io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder)">
+<section class="detail" id="newServletBodyBinder(io.micronaut.http.body.MessageBodyHandlerRegistry,io.micronaut.core.convert.ConversionService,io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder,io.micronaut.json.JsonMapper)">
 <h3>newServletBodyBinder</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="ServletBodyBinder.html" title="class in io.micronaut.servlet.http">ServletBodyBinder</a>&lt;<a href="#type-param-T" title="type parameter in ServletBinderRegistry">T</a>&gt;</span>&nbsp;<span class="element-name">newServletBodyBinder</span><wbr><span class="parameters">(io.micronaut.http.codec.MediaTypeCodecRegistry&nbsp;mediaTypeCodecRegistry,
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="ServletBodyBinder.html" title="class in io.micronaut.servlet.http">ServletBodyBinder</a>&lt;<a href="#type-param-T" title="type parameter in ServletBinderRegistry">T</a>&gt;</span>&nbsp;<span class="element-name">newServletBodyBinder</span><wbr><span class="parameters">(io.micronaut.http.body.MessageBodyHandlerRegistry&nbsp;messageBodyHandlerRegistry,
  io.micronaut.core.convert.ConversionService&nbsp;conversionService,
- io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder&lt;<a href="#type-param-T" title="type parameter in ServletBinderRegistry">T</a>&gt;&nbsp;defaultBodyAnnotationBinder)</span></div>
+ io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder&lt;<a href="#type-param-T" title="type parameter in ServletBinderRegistry">T</a>&gt;&nbsp;defaultBodyAnnotationBinder,
+ io.micronaut.json.JsonMapper&nbsp;jsonMapper)</span></div>
 <div class="block">Creates the servlet body binder.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
-<dd><code>mediaTypeCodecRegistry</code> - The media type registry</dd>
+<dd><code>messageBodyHandlerRegistry</code> - The message body handler registry</dd>
 <dd><code>conversionService</code> - The conversion service</dd>
 <dd><code>defaultBodyAnnotationBinder</code> - Default Body annotation Binder</dd>
+<dd><code>jsonMapper</code> - The JSON mapper</dd>
 <dt>Returns:</dt>
 <dd>The servlet body</dd>
 </dl>

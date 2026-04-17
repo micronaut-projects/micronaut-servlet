@@ -60,7 +60,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#method-summary" tabindex="0">Method Summary</a></li>
 <li><a href="#constructor-detail" tabindex="0">Constructor Details</a>
 <ol class="toc-list">
-<li><a href="#%3Cinit%3E(java.io.InputStream,io.micronaut.http.poja.apache.ApacheResponseContext,org.apache.hc.core5.http.io.SessionInputBuffer,io.micronaut.core.convert.ConversionService,io.micronaut.http.codec.MediaTypeCodecRegistry,java.util.concurrent.ExecutorService,io.micronaut.core.io.buffer.ByteBufferFactory)" tabindex="0">ApacheServletHttpRequest(InputStream, ApacheResponseContext, SessionInputBuffer, ConversionService, MediaTypeCodecRegistry, ExecutorService, ByteBufferFactory)</a></li>
+<li><a href="#%3Cinit%3E(java.io.InputStream,io.micronaut.http.poja.apache.ApacheResponseContext,org.apache.hc.core5.http.io.SessionInputBuffer,io.micronaut.core.convert.ConversionService,io.micronaut.http.body.MessageBodyHandlerRegistry,java.util.concurrent.ExecutorService,io.micronaut.core.io.buffer.ByteBufferFactory)" tabindex="0">ApacheServletHttpRequest(InputStream, ApacheResponseContext, SessionInputBuffer, ConversionService, MessageBodyHandlerRegistry, ExecutorService, ByteBufferFactory)</a></li>
 </ol>
 </li>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
@@ -133,7 +133,7 @@ loadScripts(document, 'script');</script>
 <h2>Field Summary</h2>
 <div class="inherited-list">
 <h3 id="fields-inherited-from-class-io.micronaut.http.poja.PojaHttpRequest">Fields inherited from class&nbsp;<a href="../PojaHttpRequest.html#field-summary" title="class in io.micronaut.http.poja">PojaHttpRequest</a></h3>
-<code><a href="../PojaHttpRequest.html#attributes">attributes</a>, <a href="../PojaHttpRequest.html#codecRegistry">codecRegistry</a>, <a href="../PojaHttpRequest.html#conversionService">conversionService</a>, <a href="../PojaHttpRequest.html#CONVERTIBLE_VALUES_ARGUMENT">CONVERTIBLE_VALUES_ARGUMENT</a></code></div>
+<code><a href="../PojaHttpRequest.html#attributes">attributes</a>, <a href="../PojaHttpRequest.html#conversionService">conversionService</a>, <a href="../PojaHttpRequest.html#CONVERTIBLE_VALUES_ARGUMENT">CONVERTIBLE_VALUES_ARGUMENT</a>, <a href="../PojaHttpRequest.html#messageBodyHandlerRegistry">messageBodyHandlerRegistry</a></code></div>
 <div class="inherited-list">
 <h3 id="fields-inherited-from-class-io.micronaut.http.HttpRequest">Fields inherited from interface&nbsp;io.micronaut.http.HttpRequest</h3>
 <code>SCHEME_HTTP, SCHEME_HTTPS</code></div>
@@ -147,11 +147,11 @@ loadScripts(document, 'script');</script>
 <div class="summary-table two-column-summary">
 <div class="table-header col-first">Constructor</div>
 <div class="table-header col-last">Description</div>
-<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(java.io.InputStream,io.micronaut.http.poja.apache.ApacheResponseContext,org.apache.hc.core5.http.io.SessionInputBuffer,io.micronaut.core.convert.ConversionService,io.micronaut.http.codec.MediaTypeCodecRegistry,java.util.concurrent.ExecutorService,io.micronaut.core.io.buffer.ByteBufferFactory)" class="member-name-link">ApacheServletHttpRequest</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/io/InputStream.html" title="class or interface in java.io" class="external-link">InputStream</a>&nbsp;inputStream,
+<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(java.io.InputStream,io.micronaut.http.poja.apache.ApacheResponseContext,org.apache.hc.core5.http.io.SessionInputBuffer,io.micronaut.core.convert.ConversionService,io.micronaut.http.body.MessageBodyHandlerRegistry,java.util.concurrent.ExecutorService,io.micronaut.core.io.buffer.ByteBufferFactory)" class="member-name-link">ApacheServletHttpRequest</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/io/InputStream.html" title="class or interface in java.io" class="external-link">InputStream</a>&nbsp;inputStream,
  io.micronaut.http.poja.apache.ApacheResponseContext&nbsp;responseContext,
  org.apache.hc.core5.http.io.SessionInputBuffer&nbsp;sessionInputBuffer,
  io.micronaut.core.convert.ConversionService&nbsp;conversionService,
- io.micronaut.http.codec.MediaTypeCodecRegistry&nbsp;codecRegistry,
+ io.micronaut.http.body.MessageBodyHandlerRegistry&nbsp;messageBodyHandlerRegistry,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/ExecutorService.html" title="class or interface in java.util.concurrent" class="external-link">ExecutorService</a>&nbsp;ioExecutor,
  io.micronaut.core.io.buffer.ByteBufferFactory&lt;?,<wbr>?&gt;&nbsp;byteBufferFactory)</code></div>
 <div class="col-last even-row-color">
@@ -265,14 +265,14 @@ loadScripts(document, 'script');</script>
 <h2>Constructor Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="&lt;init&gt;(java.io.InputStream,io.micronaut.http.poja.apache.ApacheResponseContext,org.apache.hc.core5.http.io.SessionInputBuffer,io.micronaut.core.convert.ConversionService,io.micronaut.http.codec.MediaTypeCodecRegistry,java.util.concurrent.ExecutorService,io.micronaut.core.io.buffer.ByteBufferFactory)">
+<section class="detail" id="&lt;init&gt;(java.io.InputStream,io.micronaut.http.poja.apache.ApacheResponseContext,org.apache.hc.core5.http.io.SessionInputBuffer,io.micronaut.core.convert.ConversionService,io.micronaut.http.body.MessageBodyHandlerRegistry,java.util.concurrent.ExecutorService,io.micronaut.core.io.buffer.ByteBufferFactory)">
 <h3>ApacheServletHttpRequest</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">ApacheServletHttpRequest</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/io/InputStream.html" title="class or interface in java.io" class="external-link">InputStream</a>&nbsp;inputStream,
  io.micronaut.http.poja.apache.ApacheResponseContext&nbsp;responseContext,
  org.apache.hc.core5.http.io.SessionInputBuffer&nbsp;sessionInputBuffer,
  io.micronaut.core.convert.ConversionService&nbsp;conversionService,
- io.micronaut.http.codec.MediaTypeCodecRegistry&nbsp;codecRegistry,
+ io.micronaut.http.body.MessageBodyHandlerRegistry&nbsp;messageBodyHandlerRegistry,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/ExecutorService.html" title="class or interface in java.util.concurrent" class="external-link">ExecutorService</a>&nbsp;ioExecutor,
  io.micronaut.core.io.buffer.ByteBufferFactory&lt;?,<wbr>?&gt;&nbsp;byteBufferFactory)</span></div>
 <div class="block">Create an Apache-based request.</div>
@@ -282,7 +282,7 @@ loadScripts(document, 'script');</script>
 <dd><code>responseContext</code> - The response context</dd>
 <dd><code>sessionInputBuffer</code> - Input buffer for parsing</dd>
 <dd><code>conversionService</code> - The conversion service</dd>
-<dd><code>codecRegistry</code> - The media codec registry</dd>
+<dd><code>messageBodyHandlerRegistry</code> - The message body handler registry</dd>
 <dd><code>ioExecutor</code> - The executor service</dd>
 <dd><code>byteBufferFactory</code> - The byte buffer factory</dd>
 </dl>
