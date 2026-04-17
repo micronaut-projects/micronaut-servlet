@@ -16,8 +16,6 @@
 package io.micronaut.servlet.engine;
 
 import io.micronaut.core.annotation.Internal;
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.convert.value.MutableConvertibleValues;
@@ -45,6 +43,8 @@ import io.micronaut.servlet.http.ServletHttpResponse;
 import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.WriteListener;
 import jakarta.servlet.http.HttpServletResponse;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
@@ -214,25 +214,22 @@ public final class DefaultServletHttpResponse<B> implements ServletHttpResponse<
                     return;
                 }
 
-                if (!raw && isJson) {
-                    if (first) {
-                        outputStream.write('[');
-                        first = false;
-                    } else {
-                        outputStream.write(',');
-                    }
-                }
-
-                if (!outputStream.isReady()) {
-                    return;
-                }
-
+                byte[] encoded;
                 if (o instanceof CharSequence charSequence) {
-                    outputStream.write(charSequence.toString().getBytes(getCharacterEncoding()));
+                    encoded = charSequence.toString().getBytes(getCharacterEncoding());
                 } else {
                     @SuppressWarnings("unchecked")
                     Argument<Object> argument = (Argument<Object>) Argument.of(o.getClass());
-                    byte[] encoded = encodeBody(argument, o, contentType);
+                    encoded = encodeBody(argument, o, contentType);
+                }
+
+                if (!raw && isJson) {
+                    byte[] combined = new byte[encoded.length + 1];
+                    combined[0] = first ? (byte) '[' : (byte) ',';
+                    System.arraycopy(encoded, 0, combined, 1, encoded.length);
+                    first = false;
+                    outputStream.write(combined);
+                } else {
                     outputStream.write(encoded);
                 }
                 flushIfReady();

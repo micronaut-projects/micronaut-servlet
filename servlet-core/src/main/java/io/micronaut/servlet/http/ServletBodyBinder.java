@@ -19,15 +19,18 @@ import io.micronaut.core.async.publisher.Publishers;
 import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.convert.ConversionError;
 import io.micronaut.core.convert.ConversionService;
+import io.micronaut.core.execution.CompletableFutureExecutionFlow;
 import io.micronaut.core.io.IOUtils;
 import io.micronaut.core.io.Readable;
 import io.micronaut.core.type.Argument;
+import io.micronaut.http.BasicHttpAttributes;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.ServerHttpRequest;
 import io.micronaut.http.annotation.Body;
 import io.micronaut.http.bind.binders.AnnotatedRequestArgumentBinder;
 import io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder;
+import io.micronaut.http.bind.binders.PendingRequestBindingResult;
 import io.micronaut.http.body.AvailableByteBody;
 import io.micronaut.http.body.CloseableByteBody;
 import io.micronaut.http.body.MessageBodyHandlerRegistry;
@@ -57,7 +60,6 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -136,19 +138,31 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
                     return () -> servletHttpRequest.getParameters().get(name, context);
                 } else {
                     if (servletHttpRequest instanceof FormCapableHttpRequest<?> formCapableHttpRequest) {
-                        List<RawFormField> bufferedFields = Flux.from(formCapableHttpRequest.getRawFormFields())
+                        CompletableFuture<Optional<T>> future = Flux.from(formCapableHttpRequest.getRawFormFields())
                             .concatMap(rff -> Mono.fromCompletionStage(rff.byteBody().buffer()).map(buffered -> new RawFormField(rff.metadata(), buffered)))
                             .doOnDiscard(RawFormField.class, RawFormField::close)
                             .collectList()
-                            .block();
-                        Objects.requireNonNull(bufferedFields);
-                        Map<String, List<CloseableByteBody>> bodies = new LinkedHashMap<>();
-                        for (RawFormField rff : bufferedFields) {
-                            bodies.computeIfAbsent(rff.metadata().name(), k -> new ArrayList<>(1)).add(rff.byteBody());
-                        }
-                        Object intermediate = io.micronaut.http.server.multipart.FormRouteCompleter.mapForGetBody(bodies, source.getCharacterEncoding());
-                        Optional<T> result = conversionService.convert(intermediate, context);
-                        return () -> result;
+                            .map(bufferedFields -> {
+                                Map<String, List<CloseableByteBody>> bodies = new LinkedHashMap<>();
+                                for (RawFormField rff : bufferedFields) {
+                                    bodies.computeIfAbsent(rff.metadata().name(), k -> new ArrayList<>(1)).add(rff.byteBody());
+                                }
+                                Object intermediate = io.micronaut.http.server.multipart.FormRouteCompleter.mapForGetBody(bodies, source.getCharacterEncoding());
+                                return conversionService.convert(intermediate, context);
+                            })
+                            .toFuture();
+                        BasicHttpAttributes.addRouteWaitsFor(servletHttpRequest, CompletableFutureExecutionFlow.just(future));
+                        return new PendingRequestBindingResult<>() {
+                            @Override
+                            public boolean isPending() {
+                                return !future.isDone();
+                            }
+
+                            @Override
+                            public Optional<T> getValue() {
+                                return future.getNow(Optional.empty());
+                            }
+                        };
                     }
                     Optional<T> result = conversionService.convert(servletHttpRequest.getParameters().asMap(), context);
                     return () -> result;
