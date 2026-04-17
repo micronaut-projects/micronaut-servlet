@@ -16,8 +16,6 @@
 package io.micronaut.servlet.engine;
 
 import io.micronaut.core.annotation.Internal;
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.convert.value.MutableConvertibleValues;
@@ -36,7 +34,8 @@ import io.micronaut.http.MutableHttpHeaders;
 import io.micronaut.http.MutableHttpResponse;
 import io.micronaut.http.annotation.Produces;
 import io.micronaut.http.body.CloseableByteBody;
-import io.micronaut.http.codec.MediaTypeCodec;
+import io.micronaut.http.body.MessageBodyHandlerRegistry;
+import io.micronaut.http.body.MessageBodyWriter;
 import io.micronaut.http.cookie.Cookie;
 import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.http.simple.SimpleHttpHeaders;
@@ -44,6 +43,8 @@ import io.micronaut.servlet.http.ServletHttpResponse;
 import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.WriteListener;
 import jakarta.servlet.http.HttpServletResponse;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
@@ -53,6 +54,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 
 import java.io.BufferedWriter;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Writer;
@@ -143,8 +145,7 @@ public final class DefaultServletHttpResponse<B> implements ServletHttpResponse<
             Subscription subscription;
             final AtomicBoolean finished = new AtomicBoolean();
             MediaType contentType = getContentType().orElse(MediaType.APPLICATION_JSON_TYPE);
-            MediaTypeCodec codec = request.getCodecRegistry().findCodec(contentType).orElse(null);
-            boolean isJson = contentType.getSubtype().equals("json");
+            boolean isJson = "json".equalsIgnoreCase(contentType.getSubtype());
             boolean first = true;
             boolean raw = false;
             boolean written = false;
@@ -198,7 +199,9 @@ public final class DefaultServletHttpResponse<B> implements ServletHttpResponse<
                     raw = true;
                     outputStream.write(byteArray);
                     flushIfReady();
-                } else if (o instanceof ByteBuffer buf) {
+                    return;
+                }
+                if (o instanceof ByteBuffer buf) {
                     try {
                         raw = true;
                         outputStream.write(buf.toByteArray());
@@ -208,26 +211,47 @@ public final class DefaultServletHttpResponse<B> implements ServletHttpResponse<
                             referenceCounted.release();
                         }
                     }
-                } else if (codec != null) {
+                    return;
+                }
 
-                    if (isJson) {
-                        if (first) {
-                            outputStream.write('[');
-                            first = false;
-                        } else {
-                            outputStream.write(',');
-                        }
-                    }
-                    if (outputStream.isReady()) {
-                        if (o instanceof CharSequence) {
-                            outputStream.write(o.toString().getBytes(getCharacterEncoding()));
-                        } else {
-                            byte[] bytes = codec.encode(o);
-                            outputStream.write(bytes);
-                        }
-                        flushIfReady();
+                byte[] encoded;
+                if (o instanceof CharSequence charSequence) {
+                    encoded = charSequence.toString().getBytes(getCharacterEncoding());
+                } else {
+                    @SuppressWarnings("unchecked")
+                    Argument<Object> argument = (Argument<Object>) Argument.of(o.getClass());
+                    encoded = encodeBody(argument, o, contentType);
+                }
+
+                if (!raw && isJson) {
+                    byte[] combined = new byte[encoded.length + 1];
+                    combined[0] = first ? (byte) '[' : (byte) ',';
+                    System.arraycopy(encoded, 0, combined, 1, encoded.length);
+                    first = false;
+                    outputStream.write(combined);
+                } else {
+                    outputStream.write(encoded);
+                }
+                flushIfReady();
+            }
+
+            private byte[] encodeBody(Argument<Object> argument, Object value, MediaType mediaType) throws IOException {
+                MessageBodyWriter<Object> writer = null;
+                MessageBodyHandlerRegistry registry = request.getMessageBodyHandlerRegistry();
+                if (registry != null) {
+                    writer = registry.findWriter(argument, mediaType).orElse(null);
+                    if (writer == null) {
+                        writer = registry.findWriter(argument).orElse(null);
                     }
                 }
+                if (writer != null) {
+                    try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+                        writer.writeTo(argument, mediaType, value, getHeaders(), baos);
+                        return baos.toByteArray();
+                    }
+                }
+                return conversionService.convert(value, byte[].class)
+                    .orElseGet(() -> value.toString().getBytes(getCharacterEncoding()));
             }
 
             private void flushIfReady() throws IOException {

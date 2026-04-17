@@ -16,8 +16,6 @@
 package io.micronaut.servlet.engine;
 
 import io.micronaut.core.annotation.Internal;
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.convert.ConversionService;
@@ -40,9 +38,14 @@ import io.micronaut.http.body.ByteBody;
 import io.micronaut.http.body.ByteBodyFactory;
 import io.micronaut.http.body.ByteBufferBodyAdapter;
 import io.micronaut.http.body.CloseableByteBody;
+import io.micronaut.http.body.MessageBodyHandlerRegistry;
+import io.micronaut.http.body.stream.AvailableByteArrayBody;
 import io.micronaut.http.body.stream.InputStreamByteBody;
-import io.micronaut.http.codec.MediaTypeCodecRegistry;
 import io.micronaut.http.cookie.Cookies;
+import io.micronaut.http.form.FormCapableHttpRequest;
+import io.micronaut.http.multipart.FormFieldMetadata;
+import io.micronaut.http.multipart.RawFormField;
+import io.micronaut.http.server.exceptions.InternalServerException;
 import io.micronaut.servlet.http.BodyBuilder;
 import io.micronaut.servlet.http.ParsedBodyHolder;
 import io.micronaut.servlet.http.SSLSessionProvider;
@@ -51,10 +54,16 @@ import io.micronaut.servlet.http.ServletHttpRequest;
 import io.micronaut.servlet.http.ServletHttpResponse;
 import io.micronaut.servlet.http.StreamedServletMessage;
 import jakarta.servlet.AsyncContext;
+import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.Part;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
+import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
+import reactor.core.publisher.Flux;
 
 import javax.net.ssl.SSLSession;
 import java.io.BufferedReader;
@@ -93,9 +102,11 @@ public final class DefaultServletHttpRequest<B> implements
     ServletExchange<HttpServletRequest, HttpServletResponse>,
     StreamedServletMessage<B, byte[]>,
     ServerHttpRequest<B>,
-    ParsedBodyHolder<B> {
+    ParsedBodyHolder<B>,
+    FormCapableHttpRequest<B> {
 
     private static final String NULL_KEY = "Attribute key cannot be null";
+    private static final String NULL_PARAMETER_NAME = "Parameter name cannot be null";
 
     private final ConversionService conversionService;
     private final HttpServletRequest delegate;
@@ -104,12 +115,15 @@ public final class DefaultServletHttpRequest<B> implements
     private final ServletRequestHeaders headers;
     private final ServletParameters parameters;
     private DefaultServletHttpResponse<B> primaryResponse;
-    private final MediaTypeCodecRegistry codecRegistry;
+    private final MessageBodyHandlerRegistry messageBodyHandlerRegistry;
     private final MutableConvertibleValues<Object> attributes;
     private final CloseableByteBody byteBody;
+    private final ByteBodyFactory byteBodyFactory;
+    private final Executor ioExecutor;
     private final SSLSessionProvider sslSessionProvider;
     private DefaultServletCookies cookies;
     private Supplier<Optional<B>> body;
+    private List<Runnable> disposalResources;
 
     private boolean bodyIsReadAsync;
     private B parsedBody;
@@ -121,17 +135,17 @@ public final class DefaultServletHttpRequest<B> implements
      * @param conversionService  The servlet request
      * @param delegate           The servlet request
      * @param response           The servlet response
-     * @param codecRegistry      The codec registry
+     * @param messageBodyHandlerRegistry      The message body handler registry
      * @param bodyBuilder        Body Builder
      * @param ioExecutor         Executor for blocking operations
      */
     private DefaultServletHttpRequest(ConversionService conversionService,
                                       HttpServletRequest delegate,
                                       HttpServletResponse response,
-                                      MediaTypeCodecRegistry codecRegistry,
+                                      MessageBodyHandlerRegistry messageBodyHandlerRegistry,
                                       BodyBuilder bodyBuilder,
                                       Executor ioExecutor) {
-        this(conversionService, delegate, response, codecRegistry, bodyBuilder, ioExecutor, null);
+        this(conversionService, delegate, response, messageBodyHandlerRegistry, bodyBuilder, ioExecutor, null);
     }
 
     /**
@@ -140,7 +154,7 @@ public final class DefaultServletHttpRequest<B> implements
      * @param conversionService  The servlet request
      * @param delegate           The servlet request
      * @param response           The servlet response
-     * @param codecRegistry      The codec registry
+     * @param messageBodyHandlerRegistry      The message body handler registry
      * @param bodyBuilder        Body Builder
      * @param ioExecutor         Executor for blocking operations
      * @param sslSessionProvider The {@link SSLSession} provider from attribute
@@ -148,21 +162,23 @@ public final class DefaultServletHttpRequest<B> implements
     DefaultServletHttpRequest(ConversionService conversionService,
                               HttpServletRequest delegate,
                               HttpServletResponse response,
-                              MediaTypeCodecRegistry codecRegistry,
+                              MessageBodyHandlerRegistry messageBodyHandlerRegistry,
                               BodyBuilder bodyBuilder,
                               Executor ioExecutor,
                               @Nullable SSLSessionProvider sslSessionProvider) {
         super();
         this.conversionService = conversionService;
         this.delegate = delegate;
-        this.codecRegistry = codecRegistry;
+        this.messageBodyHandlerRegistry = messageBodyHandlerRegistry;
+        this.ioExecutor = ioExecutor;
         this.sslSessionProvider = sslSessionProvider;
         long contentLengthLong = delegate.getContentLengthLong();
         OptionalLong length = contentLengthLong < 0 ? OptionalLong.empty() : OptionalLong.of(contentLengthLong);
+        this.byteBodyFactory = ByteBodyFactory.createDefault(ByteArrayBufferFactory.INSTANCE);
         if (delegate.isAsyncSupported()) {
             this.byteBody = ByteBufferBodyAdapter.adapt(new ServletStreamPublisher(delegate::getInputStream), length);
         } else {
-            this.byteBody = InputStreamByteBody.create(new LazyDelegateInputStream(delegate), length, ioExecutor, ByteBodyFactory.createDefault(ByteArrayBufferFactory.INSTANCE));
+            this.byteBody = InputStreamByteBody.create(new LazyDelegateInputStream(delegate), length, ioExecutor, byteBodyFactory);
         }
 
         String requestURI = delegate.getRequestURI();
@@ -265,10 +281,10 @@ public final class DefaultServletHttpRequest<B> implements
     }
 
     /**
-     * @return The codec registry.
+     * @return The message body handler registry.
      */
-    MediaTypeCodecRegistry getCodecRegistry() {
-        return codecRegistry;
+    MessageBodyHandlerRegistry getMessageBodyHandlerRegistry() {
+        return messageBodyHandlerRegistry;
     }
 
     @Override
@@ -492,8 +508,109 @@ public final class DefaultServletHttpRequest<B> implements
     }
 
     @Override
+    public ByteBodyFactory byteBodyFactory() {
+        return byteBodyFactory;
+    }
+
+    @Override
     public void close() {
         byteBody.close();
+        runDisposalResources();
+    }
+
+    @Override
+    public Optional<SSLSession> getSslSession() {
+        if (sslSessionProvider != null) {
+            return sslSessionProvider.getSSLSession(this);
+        }
+        return ServletHttpRequest.super.getSslSession();
+    }
+
+    @Override
+    public boolean hasFormBody() {
+        return getContentType()
+            .map(this::isFormContentType)
+            .orElse(false);
+    }
+
+    @Override
+    public Publisher<RawFormField> getRawFormFields() {
+        MediaType mediaType = getContentType().orElse(null);
+        if (mediaType == null || !isFormContentType(mediaType)) {
+            throw new IllegalStateException("Not a form Content-Type. Please check hasFormBody() before calling this method.");
+        }
+        if (mediaType.matches(MediaType.MULTIPART_FORM_DATA_TYPE)) {
+            return Flux.defer(() -> {
+                try {
+                    Collection<Part> parts = ((HttpServletRequest) delegate()).getParts();
+                    return Flux.fromIterable(parts)
+                        .map(this::toRawFormFieldFromPart);
+                } catch (IOException | ServletException e) {
+                    return Flux.error(e);
+                }
+            });
+        } else {
+            return Flux.fromIterable(delegate().getParameterMap().entrySet().stream()
+                .flatMap(entry -> Arrays.stream(entry.getValue())
+                    .map(value -> new RawFormField(new FormFieldMetadata(entry.getKey(), null, null), byteBodyFactory().adapt(value.getBytes(StandardCharsets.UTF_8)))))
+                .toList());
+        }
+    }
+
+    @Override
+    public synchronized void addDisposalResource(Runnable runnable) {
+        Objects.requireNonNull(runnable, "Disposable resource cannot be null");
+        if (disposalResources == null) {
+            disposalResources = new ArrayList<>(2);
+        }
+        disposalResources.add(runnable);
+    }
+
+    private boolean isFormContentType(MediaType mediaType) {
+        return mediaType.matches(MediaType.APPLICATION_FORM_URLENCODED_TYPE)
+            || mediaType.matches(MediaType.MULTIPART_FORM_DATA_TYPE);
+    }
+
+    private RawFormField toRawFormFieldFromPart(Part part) {
+        try {
+            CloseableByteBody partBody = InputStreamByteBody.create(part.getInputStream(), OptionalLong.of(part.getSize()), ioExecutor, byteBodyFactory);
+            addDisposalResource(() -> safeDelete(part));
+            FormFieldMetadata metadata = new FormFieldMetadata(
+                part.getName(),
+                part.getSubmittedFileName(),
+                Optional.ofNullable(part.getContentType()).map(MediaType::new).orElse(null)
+            );
+            return new RawFormField(metadata, partBody);
+        } catch (IOException e) {
+            throw new InternalServerException("Error reading part [" + part.getName() + "]: " + e.getMessage(), e);
+        }
+    }
+
+    private RawFormField toRawFormFieldFromValue(String name, String value, Charset charset) {
+        byte[] bytes = value != null ? value.getBytes(charset) : ArrayUtils.EMPTY_BYTE_ARRAY;
+        CloseableByteBody body = AvailableByteArrayBody.create(byteBodyFactory.readBufferFactory().adapt(bytes));
+        FormFieldMetadata metadata = new FormFieldMetadata(name, null, MediaType.APPLICATION_FORM_URLENCODED_TYPE);
+        return new RawFormField(metadata, body);
+    }
+
+    private synchronized void runDisposalResources() {
+        if (disposalResources == null || disposalResources.isEmpty()) {
+            return;
+        }
+        List<Runnable> resources = disposalResources;
+        disposalResources = null;
+        for (Runnable runnable : resources) {
+            runnable.run();
+        }
+    }
+
+    @SuppressWarnings("java:S1166")
+    private void safeDelete(Part part) {
+        try {
+            part.delete();
+        } catch (Exception ignored) {
+            // best-effort cleanup, never mask request processing failures
+        }
     }
 
     /**
@@ -546,7 +663,7 @@ public final class DefaultServletHttpRequest<B> implements
         @Override
         public List<String> getAll(CharSequence name) {
             final String[] values = delegate.getParameterValues(
-                Objects.requireNonNull(name, "Parameter name cannot be null").toString()
+                Objects.requireNonNull(name, NULL_PARAMETER_NAME).toString()
             );
             if (values == null) {
                 return Collections.emptyList();
@@ -558,7 +675,7 @@ public final class DefaultServletHttpRequest<B> implements
         @Override
         public String get(CharSequence name) {
             return delegate.getParameter(
-                Objects.requireNonNull(name, "Parameter name cannot be null").toString()
+                Objects.requireNonNull(name, NULL_PARAMETER_NAME).toString()
             );
         }
 
@@ -578,10 +695,13 @@ public final class DefaultServletHttpRequest<B> implements
         @Override
         public <T> Optional<T> get(CharSequence name, ArgumentConversionContext<T> conversionContext) {
             final Argument<T> argument = conversionContext.getArgument();
-            Class rawType = argument.getType();
+            Class<?> rawType = argument.getType();
             final boolean isOptional = rawType == Optional.class;
             if (isOptional) {
-                rawType = argument.getFirstTypeVariable().map(Argument::getType).orElse(rawType);
+                Optional<Argument<?>> firstTypeVariable = argument.getFirstTypeVariable();
+                if (firstTypeVariable.isPresent()) {
+                    rawType = firstTypeVariable.get().getType();
+                }
             }
             final boolean isIterable = Iterable.class.isAssignableFrom(rawType);
             final String paramName = Objects.requireNonNull(name, "Parameter name should not be null").toString();
@@ -615,13 +735,5 @@ public final class DefaultServletHttpRequest<B> implements
             }
             return Optional.empty();
         }
-    }
-
-    @Override
-    public Optional<SSLSession> getSslSession() {
-        if (sslSessionProvider != null) {
-            return sslSessionProvider.getSSLSession(this);
-        }
-        return ServletHttpRequest.super.getSslSession();
     }
 }

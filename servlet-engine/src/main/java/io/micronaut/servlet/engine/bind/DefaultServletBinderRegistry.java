@@ -15,23 +15,22 @@
  */
 package io.micronaut.servlet.engine.bind;
 
+import io.micronaut.context.BeanProvider;
 import io.micronaut.context.annotation.Replaces;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.async.publisher.Publishers;
 import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
-import io.micronaut.http.MediaType;
-import io.micronaut.http.ServerHttpRequest;
 import io.micronaut.http.annotation.Part;
 import io.micronaut.http.bind.DefaultRequestBinderRegistry;
 import io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder;
 import io.micronaut.http.bind.binders.RequestArgumentBinder;
-import io.micronaut.http.body.AvailableByteBody;
-import io.micronaut.http.codec.MediaTypeCodecRegistry;
+import io.micronaut.http.body.MessageBodyHandlerRegistry;
 import io.micronaut.http.multipart.CompletedPart;
-import io.micronaut.json.codec.MapperMediaTypeCodec;
+import io.micronaut.http.server.HttpServerConfiguration;
+import io.micronaut.http.server.multipart.FormFactory;
+import io.micronaut.json.JsonMapper;
 import io.micronaut.servlet.http.ServletBinderRegistry;
 import io.micronaut.servlet.http.ServletBodyBinder;
 import jakarta.inject.Singleton;
@@ -39,20 +38,13 @@ import jakarta.servlet.ServletConfig;
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.reactivestreams.Processor;
-import reactor.core.publisher.Flux;
 
-import java.nio.charset.Charset;
 import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
 
 /**
  * Replaces the {@link DefaultRequestBinderRegistry} with one capable of binding from servlet requests.
  *
  * @param <T> The type
- *
  * @author graemerocher
  * @since 1.0.0
  */
@@ -61,37 +53,40 @@ import java.util.concurrent.CompletionStage;
 @Internal
 class DefaultServletBinderRegistry<T> extends ServletBinderRegistry<T> {
 
-    public static final Argument<byte[]> BYTE_ARRAY = Argument.of(byte[].class);
+    private final HttpServerConfiguration configuration;
 
     /**
      * Default constructor.
      *
-     * @param mediaTypeCodecRegistry The media type codec registry
-     * @param conversionService      The conversion service
-     * @param binders                Any registered binders
+     * @param messageBodyHandlerRegistry  The message body handler registry
+     * @param conversionService           The conversion service
+     * @param binders                     Any registered binders
+     * @param defaultBodyAnnotationBinder The delegate default body binder
+     * @param jsonMapper                  The JSON mapper
      */
-    public DefaultServletBinderRegistry(
-            MediaTypeCodecRegistry mediaTypeCodecRegistry,
-            ConversionService conversionService,
-            List<RequestArgumentBinder> binders,
-            DefaultBodyAnnotationBinder<T> defaultBodyAnnotationBinder
-    ) {
-        super(mediaTypeCodecRegistry, conversionService, binders, defaultBodyAnnotationBinder);
+    public DefaultServletBinderRegistry(MessageBodyHandlerRegistry messageBodyHandlerRegistry,
+                                        ConversionService conversionService,
+                                        List<RequestArgumentBinder<?>> binders,
+                                        DefaultBodyAnnotationBinder<T> defaultBodyAnnotationBinder,
+                                        BeanProvider<FormFactory> formFactoryProvider,
+                                        JsonMapper jsonMapper,
+                                        HttpServerConfiguration configuration) {
+        super(messageBodyHandlerRegistry, conversionService, (List) binders, defaultBodyAnnotationBinder, jsonMapper);
+        this.configuration = configuration;
         byType.put(HttpServletRequest.class, new ServletRequestBinder());
         byType.put(HttpServletResponse.class, new ServletResponseBinder());
         byType.put(ServletConfig.class, new ServletConfigBinder());
         byType.put(ServletContext.class, new ServletContextBinder());
-        byType.put(CompletedPart.class, new CompletedPartRequestArgumentBinder());
-        byAnnotation.put(Part.class, new ServletPartBinder<>(mediaTypeCodecRegistry));
+        byType.put(CompletedPart.class, new CompletedPartRequestArgumentBinder(configuration));
+        byAnnotation.put(Part.class, new ServletPartBinder<>(conversionService, formFactoryProvider, messageBodyHandlerRegistry, configuration));
     }
 
-    @SuppressWarnings("unchecked")
     @Override
-    protected ServletBodyBinder<T> newServletBodyBinder(
-        MediaTypeCodecRegistry mediaTypeCodecRegistry,
-        ConversionService conversionService,
-        DefaultBodyAnnotationBinder<T> defaultBodyAnnotationBinder) {
-        return new DefaultServletBodyBinder<>(conversionService, mediaTypeCodecRegistry, defaultBodyAnnotationBinder);
+    protected ServletBodyBinder<T> newServletBodyBinder(MessageBodyHandlerRegistry messageBodyHandlerRegistry,
+                                                        ConversionService conversionService,
+                                                        DefaultBodyAnnotationBinder<T> defaultBodyAnnotationBinder,
+                                                        JsonMapper jsonMapper) {
+        return new DefaultServletBodyBinder<>(conversionService, messageBodyHandlerRegistry, defaultBodyAnnotationBinder, jsonMapper);
     }
 
     /**
@@ -99,80 +94,26 @@ class DefaultServletBinderRegistry<T> extends ServletBinderRegistry<T> {
      *
      * @param <T> The type
      */
-    private static class DefaultServletBodyBinder<T> extends ServletBodyBinder<T> {
-        private final MediaTypeCodecRegistry mediaTypeCodecRegistry;
+    private class DefaultServletBodyBinder<T> extends ServletBodyBinder<T> {
 
-        public DefaultServletBodyBinder(ConversionService conversionService,
-                                        MediaTypeCodecRegistry mediaTypeCodecRegistry,
-                                        DefaultBodyAnnotationBinder<T> defaultBodyAnnotationBinder) {
-            super(conversionService, mediaTypeCodecRegistry, defaultBodyAnnotationBinder);
-            this.mediaTypeCodecRegistry = mediaTypeCodecRegistry;
+        /**
+         * Default constructor.
+         *
+         * @param conversionService           The conversion service
+         * @param messageBodyHandlerRegistry  The message body handler registry
+         * @param defaultBodyAnnotationBinder The delegate default body binder
+         * @param jsonMapper                  The json mapper
+         */
+        protected DefaultServletBodyBinder(ConversionService conversionService, MessageBodyHandlerRegistry messageBodyHandlerRegistry, DefaultBodyAnnotationBinder<T> defaultBodyAnnotationBinder, JsonMapper jsonMapper) {
+            super(conversionService, messageBodyHandlerRegistry, defaultBodyAnnotationBinder, jsonMapper);
         }
 
         @Override
         public BindingResult bind(ArgumentConversionContext context, HttpRequest source) {
             Argument<?> argument = context.getArgument();
             Class<?> type = argument.getType();
-            if (CompletionStage.class.isAssignableFrom(type)) {
-                ServerHttpRequest<?> serverRequest = (ServerHttpRequest<?>) source;
-                CompletableFuture<?> future;
-                Argument<?> typeArgument = argument.getFirstTypeVariable().orElse(BYTE_ARRAY);
-                Class<?> javaArgument = typeArgument.getType();
-                Charset characterEncoding = source.getCharacterEncoding();
-                if (CharSequence.class.isAssignableFrom(javaArgument)) {
-                    future = serverRequest.byteBody().buffer().thenApply(bb -> bb.toString(characterEncoding));
-                } else if (BYTE_ARRAY.getType().isAssignableFrom(type)) {
-                    future = serverRequest.byteBody().buffer().thenApply(AvailableByteBody::toByteArray);
-                } else {
-                    MediaType mediaType = serverRequest.getContentType().orElse(MediaType.APPLICATION_JSON_TYPE);
-                    MapperMediaTypeCodec codec = (MapperMediaTypeCodec) mediaTypeCodecRegistry.findCodec(mediaType, javaArgument).orElse(null);
-
-                    if (codec == null) {
-                        return super.bind(context, source);
-                    } else {
-                        Processor<byte[], io.micronaut.json.tree.JsonNode> jsonProcessor = codec.getJsonMapper().createReactiveParser(p -> serverRequest.byteBody().toByteArrayPublisher().subscribe(p), false);
-                        future = Flux.from(jsonProcessor)
-                            .next()
-                            .map(node -> codec.decode(typeArgument, node))
-                            .toFuture();
-
-                    }
-                }
-                return () -> Optional.of(future);
-            } else if (CompletedPart.class.isAssignableFrom(type)) {
-                return new CompletedPartRequestArgumentBinder().bind(context, source);
-            } else {
-                if (Publishers.isConvertibleToPublisher(type)) {
-                    Argument<?> typeArgument = argument.getFirstTypeVariable().orElse(BYTE_ARRAY);
-                    Class<?> javaArgument = typeArgument.getType();
-
-                    ServerHttpRequest<?> serverRequest = (ServerHttpRequest<?>) source;
-                    Charset characterEncoding = serverRequest.getCharacterEncoding();
-                    if (CharSequence.class.isAssignableFrom(javaArgument)) {
-                        Flux<String> stringFlux = Flux.from(serverRequest.byteBody().toByteArrayPublisher())
-                                .map(bytes -> new String(bytes, characterEncoding));
-                        if (type.isInstance(stringFlux)) {
-                            return () -> Optional.of(stringFlux);
-                        } else {
-                            Object converted = Publishers.convertPublisher(conversionService, stringFlux, type);
-                            return () -> Optional.of(converted);
-                        }
-                    } else if (byte[].class.isAssignableFrom(javaArgument)) {
-                        Object converted = Publishers.convertPublisher(conversionService, Flux.from(serverRequest.byteBody().toByteArrayPublisher()), type);
-                        return () -> Optional.of(converted);
-                    } else {
-                        MediaType mediaType = serverRequest.getContentType().orElse(MediaType.APPLICATION_JSON_TYPE);
-                        MapperMediaTypeCodec codec = (MapperMediaTypeCodec) mediaTypeCodecRegistry.findCodec(mediaType, javaArgument).orElse(null);
-                        if (codec != null) {
-                            Processor<byte[], io.micronaut.json.tree.JsonNode> jsonProcessor = codec.getJsonMapper().createReactiveParser(p -> serverRequest.byteBody().toByteArrayPublisher().subscribe(p), true);
-                            Object converted = Publishers.convertPublisher(
-                                    conversionService,
-                                    Flux.from(jsonProcessor)
-                                        .map(jsonNode -> codec.decode(typeArgument, jsonNode)), type);
-                            return () -> Optional.of(converted);
-                        }
-                    }
-                }
+            if (CompletedPart.class.isAssignableFrom(type)) {
+                return new CompletedPartRequestArgumentBinder(configuration).bind(context, source);
             }
             return super.bind(context, source);
         }

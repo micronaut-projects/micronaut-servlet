@@ -16,18 +16,21 @@
 package io.micronaut.http.poja.apache;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.util.SupplierUtil;
 import org.jspecify.annotations.NonNull;
 import io.micronaut.core.convert.ConversionService;
+import io.micronaut.core.convert.value.ConvertibleMultiValues;
 import io.micronaut.core.io.buffer.ByteBufferFactory;
 import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpMethod;
+import io.micronaut.http.MediaType;
 import io.micronaut.http.MutableHttpHeaders;
 import io.micronaut.http.MutableHttpParameters;
 import io.micronaut.http.MutableHttpRequest;
 import io.micronaut.http.body.ByteBody;
 import io.micronaut.http.body.ByteBodyFactory;
 import io.micronaut.http.body.stream.InputStreamByteBody;
-import io.micronaut.http.codec.MediaTypeCodecRegistry;
+import io.micronaut.http.body.MessageBodyHandlerRegistry;
 import io.micronaut.http.cookie.Cookie;
 import io.micronaut.http.cookie.Cookies;
 import io.micronaut.http.poja.PojaHttpRequest;
@@ -61,6 +64,7 @@ import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
+import java.util.function.Supplier;
 
 /**
  * An implementation of the POJA Http Request based on Apache.
@@ -85,6 +89,7 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
     private final SimpleCookies cookies;
 
     private final ByteBody byteBody;
+    private final Supplier<MultiValuesQueryParameters> formParameters;
 
     private ApacheServletHttpResponse<?> primaryResponse;
 
@@ -95,7 +100,7 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
      * @param responseContext The response context
      * @param sessionInputBuffer Input buffer for parsing
      * @param conversionService The conversion service
-     * @param codecRegistry The media codec registry
+     * @param messageBodyHandlerRegistry The message body handler registry
      * @param ioExecutor The executor service
      * @param byteBufferFactory The byte buffer factory
      */
@@ -104,11 +109,11 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
         ApacheResponseContext responseContext,
         SessionInputBuffer sessionInputBuffer,
         ConversionService conversionService,
-        MediaTypeCodecRegistry codecRegistry,
+        MessageBodyHandlerRegistry messageBodyHandlerRegistry,
         ExecutorService ioExecutor,
         ByteBufferFactory<?, ?> byteBufferFactory
     ) {
-        super(conversionService, codecRegistry);
+        super(conversionService, messageBodyHandlerRegistry);
         this.responseContext = responseContext;
         DefaultHttpRequestParser parser = new DefaultHttpRequestParser();
 
@@ -130,6 +135,7 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
         headers = createHeaders(request.getHeaders(), conversionService);
         queryParameters = parseQueryParameters(uri, conversionService);
         cookies = parseCookies(request, conversionService);
+        formParameters = SupplierUtil.memoized(this::resolveFormParameters);
 
         Header connection = request.getFirstHeader(HttpHeaders.CONNECTION);
         if (connection != null && connection.getValue().equalsIgnoreCase(CONNECTION_CLOSE)) {
@@ -194,6 +200,10 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
 
     @Override
     public @NonNull MutableHttpParameters getParameters() {
+        MediaType contentType = getContentType().orElse(null);
+        if (contentType != null && contentType.matches(MediaType.APPLICATION_FORM_URLENCODED_TYPE)) {
+            return formParameters.get();
+        }
         return queryParameters;
     }
 
@@ -294,6 +304,29 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
                     Collectors.mapping(NameValuePair::getValue, Collectors.toList())
             ));
         return new MultiValuesQueryParameters(map, conversionService);
+    }
+
+    private MultiValuesQueryParameters resolveFormParameters() {
+        Map<CharSequence, List<String>> merged = new LinkedHashMap<>();
+        for (String name : queryParameters.names()) {
+            List<String> values = queryParameters.getAll(name);
+            if (!values.isEmpty()) {
+                merged.put(name, new ArrayList<>(values));
+            }
+        }
+        ConvertibleMultiValues<CharSequence> formData = getFormData();
+        for (String name : formData.names()) {
+            List<CharSequence> values = formData.getAll(name);
+            if (values == null || values.isEmpty()) {
+                merged.computeIfAbsent(name, key -> new ArrayList<>());
+                continue;
+            }
+            List<String> target = merged.computeIfAbsent(name, key -> new ArrayList<>());
+            for (CharSequence value : values) {
+                target.add(value == null ? null : value.toString());
+            }
+        }
+        return new MultiValuesQueryParameters(merged, conversionService);
     }
 
     /**

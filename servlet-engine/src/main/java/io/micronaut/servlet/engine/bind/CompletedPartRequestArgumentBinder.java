@@ -18,14 +18,14 @@ package io.micronaut.servlet.engine.bind;
 import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
+import io.micronaut.http.LifecycleHttpRequest;
 import io.micronaut.http.annotation.Part;
 import io.micronaut.http.bind.binders.TypedRequestArgumentBinder;
 import io.micronaut.http.multipart.CompletedPart;
+import io.micronaut.http.server.HttpServerConfiguration;
 import io.micronaut.http.server.exceptions.InternalServerException;
-import io.micronaut.servlet.engine.ServletCompletedFileUpload;
 import io.micronaut.servlet.http.ServletExchange;
 
-import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.util.Optional;
@@ -37,6 +37,11 @@ import java.util.Optional;
  * @since 1.0.0
  */
 class CompletedPartRequestArgumentBinder implements TypedRequestArgumentBinder<CompletedPart> {
+    private final HttpServerConfiguration configuration;
+
+    CompletedPartRequestArgumentBinder(HttpServerConfiguration configuration) {
+        this.configuration = configuration;
+    }
 
     @Override
     public BindingResult<CompletedPart> bind(
@@ -51,8 +56,19 @@ class CompletedPartRequestArgumentBinder implements TypedRequestArgumentBinder<C
             if (part == null) {
                 return BindingResult.UNSATISFIED;
             }
-            return () -> Optional.of(new ServletCompletedFileUpload(part));
-        } catch (IOException | ServletException e) {
+            @SuppressWarnings("java:S2095")
+            CompletedPart completedPart = ServletCompletedFileUploadFactory.create(configuration, part);
+            if (source instanceof LifecycleHttpRequest<?> lifecycleRequest) {
+                lifecycleRequest.addDisposalResource(() -> {
+                    try {
+                        completedPart.close();
+                    } catch (IOException closeException) {
+                        // ignore, disposal best-effort
+                    }
+                });
+            }
+            return () -> Optional.of(completedPart);
+        } catch (Exception e) {
             context.reject(new InternalServerException("Error reading part [" + partName + "]: " + e.getMessage(), e));
             return BindingResult.EMPTY;
         }

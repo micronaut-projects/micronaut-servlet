@@ -33,7 +33,6 @@ import io.micronaut.http.MutableHttpHeaders;
 import io.micronaut.http.body.AvailableByteBody;
 import io.micronaut.http.body.ByteBodyFactory;
 import io.micronaut.http.body.MessageBodyHandlerRegistry;
-import io.micronaut.http.codec.MediaTypeCodecRegistry;
 import io.micronaut.http.context.ServerHttpRequestContext;
 import io.micronaut.http.context.event.HttpRequestReceivedEvent;
 import io.micronaut.http.context.event.HttpRequestTerminatedEvent;
@@ -62,6 +61,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.function.Supplier;
 
@@ -82,7 +82,6 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
     protected final ApplicationContext applicationContext;
     private final RouteExecutor routeExecutor;
     private final ConversionService conversionService;
-    private final MediaTypeCodecRegistry mediaTypeCodecRegistry;
     private final MessageBodyHandlerRegistry messageBodyHandlerRegistry;
     private final StaticResourceResolver staticResourceResolver;
     private final Supplier<Executor> ioExecutor;
@@ -95,7 +94,6 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
      */
     protected ServletHttpHandler(ApplicationContext applicationContext, ConversionService conversionService) {
         this.applicationContext = Objects.requireNonNull(applicationContext, "The application context cannot be null");
-        this.mediaTypeCodecRegistry = applicationContext.getBean(MediaTypeCodecRegistry.class);
         this.messageBodyHandlerRegistry = applicationContext.getBean(MessageBodyHandlerRegistry.class);
         this.staticResourceResolver = applicationContext.getBean(StaticResourceResolver.class);
         this.routeExecutor = applicationContext.getBean(RouteExecutor.class);
@@ -111,10 +109,10 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
     }
 
     /**
-     * @return The media type codec registry.
+     * @return The message body handler registry.
      */
-    public MediaTypeCodecRegistry getMediaTypeCodecRegistry() {
-        return mediaTypeCodecRegistry;
+    public MessageBodyHandlerRegistry getMessageBodyHandlerRegistry() {
+        return messageBodyHandlerRegistry;
     }
 
     /**
@@ -237,7 +235,7 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
     }
 
     /**
-     * Handles a {@link DefaultServletExchange}.
+     * Handles a {@link ServletExchange}.
      *
      * @param exchange The exchange
      */
@@ -263,7 +261,7 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
 
         if (exchange.getRequest().isAsyncSupported()) {
             exchange.getRequest().executeAsync(ctx -> {
-                try (PropagatedContext.Scope ignore = PropagatedContext.getOrEmpty().plus(new ServerHttpRequestContext(req)).propagate()) {
+                PropagatedContext.getOrEmpty().plus(new ServerHttpRequestContext(req)).propagate(() -> {
                     lc.handleNormal(req)
                         .flatMap(response -> process(response, req, exchange.getResponse()))
                         .onComplete((bbhr, t) -> {
@@ -277,13 +275,15 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
                                 ctx.complete();
                             }
                         });
-                }
+                    return null;
+                });
             });
         } else {
             ExecutionResult executionResult;
-            try (PropagatedContext.Scope ignore = PropagatedContext.getOrEmpty().plus(new ServerHttpRequestContext(req)).propagate()) {
-                executionResult = lc.handleNormal(req)
-                    .flatMap(response -> process(response, req, exchange.getResponse())).toCompletableFuture().get();
+            CompletableFuture<ExecutionResult> cfExecutionResult = PropagatedContext.getOrEmpty().plus(new ServerHttpRequestContext(req)).propagate(() -> lc.handleNormal(req)
+                .flatMap(response -> process(response, req, exchange.getResponse())).toCompletableFuture());
+            try {
+                executionResult = cfExecutionResult.get();
             } catch (InterruptedException ie) {
                 Thread.currentThread().interrupt();
                 return;
@@ -365,7 +365,7 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
     }
 
     /**
-     * Creates the {@link DefaultServletExchange} object.
+     * Creates the {@link ServletExchange} object.
      *
      * @param request  The request
      * @param response The response

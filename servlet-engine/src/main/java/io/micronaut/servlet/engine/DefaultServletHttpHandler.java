@@ -99,7 +99,7 @@ public class DefaultServletHttpHandler extends ServletHttpHandler<HttpServletReq
     protected ServletExchange<HttpServletRequest, HttpServletResponse> createExchange(
             HttpServletRequest request,
             HttpServletResponse response) {
-        return new DefaultServletHttpRequest<>(applicationContext.getConversionService(), request, response, getMediaTypeCodecRegistry(), applicationContext.getBean(BodyBuilder.class), ioExecutor, sslSessionProvider);
+        return new DefaultServletHttpRequest<>(applicationContext.getConversionService(), request, response, getMessageBodyHandlerRegistry(), applicationContext.getBean(BodyBuilder.class), ioExecutor, sslSessionProvider);
     }
 
     @Override

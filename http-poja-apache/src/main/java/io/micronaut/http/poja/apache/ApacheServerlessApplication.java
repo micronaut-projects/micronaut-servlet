@@ -20,7 +20,7 @@ import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.io.buffer.ByteArrayBufferFactory;
 import io.micronaut.core.io.buffer.ByteBufferFactory;
 import io.micronaut.http.HttpStatus;
-import io.micronaut.http.codec.MediaTypeCodecRegistry;
+import io.micronaut.http.body.MessageBodyHandlerRegistry;
 import io.micronaut.http.poja.PojaHttpServerlessApplication;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.runtime.ApplicationConfiguration;
@@ -48,7 +48,7 @@ public class ApacheServerlessApplication
     extends PojaHttpServerlessApplication<ApacheServletHttpRequest<?>, ApacheServletHttpResponse<?>> {
 
     private final ConversionService conversionService;
-    private final MediaTypeCodecRegistry codecRegistry;
+    private final MessageBodyHandlerRegistry messageBodyHandlerRegistry;
     private final ExecutorService ioExecutor;
     private final ByteBufferFactory<?, ?> byteBufferFactory;
     private final ApacheServletConfiguration configuration;
@@ -64,7 +64,7 @@ public class ApacheServerlessApplication
                                        ApplicationConfiguration applicationConfiguration) {
         super(applicationContext, applicationConfiguration);
         conversionService = applicationContext.getConversionService();
-        codecRegistry = applicationContext.getBean(MediaTypeCodecRegistry.class);
+        messageBodyHandlerRegistry = applicationContext.getBean(MessageBodyHandlerRegistry.class);
         ioExecutor = applicationContext.getBean(ExecutorService.class, Qualifiers.byName(TaskExecutors.BLOCKING));
         configuration = applicationContext.getBean(ApacheServletConfiguration.class);
         byteBufferFactory = ByteArrayBufferFactory.INSTANCE;
@@ -83,7 +83,7 @@ public class ApacheServerlessApplication
                     sessionInputBuffer = new SessionInputBufferImpl(configuration.inputBufferSize());
                 }
                 ApacheServletHttpRequest exchange = new ApacheServletHttpRequest<>(
-                    in, responseContext, sessionInputBuffer, conversionService, codecRegistry, ioExecutor, byteBufferFactory
+                    in, responseContext, sessionInputBuffer, conversionService, messageBodyHandlerRegistry, ioExecutor, byteBufferFactory
                 );
                 servletHttpHandler.service(exchange);
                 if (!responseContext.isCommitted()) {
