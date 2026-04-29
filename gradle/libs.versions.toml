@@ -44,6 +44,7 @@ undertow-servlet = { module = 'io.undertow:undertow-servlet', version.ref = 'und
 jetty-servlet = { module = 'org.eclipse.jetty.ee10:jetty-ee10-servlet', version.ref = 'managed-jetty' }
 jetty-http2-server = { module = 'org.eclipse.jetty.http2:jetty-http2-server', version.ref = 'managed-jetty' }
 jetty-alpn-server = { module = 'org.eclipse.jetty:jetty-alpn-server', version.ref = 'managed-jetty' }
+jetty-alpn-java-server = { module = 'org.eclipse.jetty:jetty-alpn-java-server', version.ref = 'managed-jetty' }
 jetty-alpn-conscrypt-server = { module = 'org.eclipse.jetty:jetty-alpn-conscrypt-server', version.ref = 'managed-jetty' }
 kotest-runner = { module = 'io.kotest:kotest-runner-junit5', version.ref = 'kotest-runner' }
 bcpkix = { module = "org.bouncycastle:bcpkix-jdk15on", version.ref = "bcpkix" }

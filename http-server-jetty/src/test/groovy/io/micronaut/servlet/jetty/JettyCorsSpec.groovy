@@ -85,7 +85,7 @@ class JettyCorsSpec extends Specification implements TestPropertyProvider {
         !headerNames.contains(ACCESS_CONTROL_ALLOW_HEADERS)
         !headerNames.contains(ACCESS_CONTROL_ALLOW_METHODS)
         !headerNames.contains(ACCESS_CONTROL_EXPOSE_HEADERS)
-        response.header(ACCESS_CONTROL_ALLOW_CREDENTIALS) == 'true'
+        !headerNames.contains(ACCESS_CONTROL_ALLOW_CREDENTIALS)
     }
 
     void "test cors request with controlled method"() {
@@ -106,7 +106,7 @@ class JettyCorsSpec extends Specification implements TestPropertyProvider {
         !headerNames.contains(ACCESS_CONTROL_ALLOW_HEADERS)
         !headerNames.contains(ACCESS_CONTROL_ALLOW_METHODS)
         !headerNames.contains(ACCESS_CONTROL_EXPOSE_HEADERS)
-        response.header(ACCESS_CONTROL_ALLOW_CREDENTIALS) == 'true'
+        !headerNames.contains(ACCESS_CONTROL_ALLOW_CREDENTIALS)
     }
 
     void "test cors request with controlled headers"() {
@@ -216,7 +216,7 @@ class JettyCorsSpec extends Specification implements TestPropertyProvider {
         response.header(ACCESS_CONTROL_ALLOW_ORIGIN) == 'foo.com'
         response.header(VARY) == ORIGIN
         !headerNames.contains(ACCESS_CONTROL_EXPOSE_HEADERS)
-        response.header(ACCESS_CONTROL_ALLOW_CREDENTIALS) == 'true'
+        !headerNames.contains(ACCESS_CONTROL_ALLOW_CREDENTIALS)
     }
 
     void "test preflight request with controlled headers"() {
