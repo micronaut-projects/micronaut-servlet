@@ -2,6 +2,17 @@ plugins {
     id 'io.micronaut.build.internal.servlet.base'
     id 'io.micronaut.build.internal.module'
 }
+
+tasks.withType(JavaCompile).configureEach {
+    sourceCompatibility = "21"
+    targetCompatibility = "21"
+}
+
+tasks.withType(GroovyCompile).configureEach {
+    sourceCompatibility = "21"
+    targetCompatibility = "21"
+}
+
 ossIndexAudit {
     excludeCoordinates = [
             "io.undertow:undertow-core:2.3.24.Final" // no patched version https://ossindex.sonatype.org/component/pkg:maven/io.undertow/undertow-core
