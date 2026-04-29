@@ -169,6 +169,8 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
             return;
         }
 
+        exchange.getRequest().prepareForResponse();
+
         traceHeaders(byteBodyResponse.getHeaders());
 
         ServletHttpResponse<?, ?> servletResponse = exchange.getResponse();
