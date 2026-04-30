@@ -186,12 +186,16 @@ public class MicronautServletInitializer implements ServletContainerInitializer 
         return name.equals("Primary") ? definition.getBeanType().getName() : name;
     }
 
+    private static boolean isMicronautServlet(BeanDefinition<Servlet> beanDefinition) {
+        return DefaultMicronautServlet.class.isAssignableFrom(beanDefinition.getBeanType());
+    }
+
     private int configureServletBean(BeanRegistration<Servlet> servlet, String servletName, MicronautServletConfiguration configuration, int order, ServletRegistration.Dynamic registration, ApplicationContext applicationContext) {
         BeanDefinition<Servlet> beanDefinition = servlet.getBeanDefinition();
         AnnotationValue<WebServlet> webServletAnnotationValue = beanDefinition
             .findAnnotation(WebServlet.class)
             .orElse(EMPTY_WEB_SERVLET);
-        boolean isMicronautServlet = DefaultMicronautServlet.NAME.equals(servletName);
+        boolean isMicronautServlet = isMicronautServlet(beanDefinition);
         @NonNull String[] urlPatterns = getUrlPatterns(webServletAnnotationValue, beanDefinition, isMicronautServlet, configuration);
         int loadOnStartup = webServletAnnotationValue.intValue(MEMBER_LOAD_ON_STARTUP).orElse(order++);
         boolean isAsyncSupported = webServletAnnotationValue.booleanValue(MEMBER_ASYNC_SUPPORTED).orElse(configuration.isAsyncSupported());
