@@ -22,9 +22,11 @@ import org.jspecify.annotations.Nullable;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.execution.ExecutionFlow;
 import io.micronaut.core.io.buffer.ByteArrayBufferFactory;
+import io.micronaut.core.io.buffer.ReadBufferFactory;
 import io.micronaut.core.propagation.PropagatedContext;
 import io.micronaut.core.util.SupplierUtil;
 import io.micronaut.http.ByteBodyHttpResponse;
+import io.micronaut.http.ByteBodyHttpResponseWrapper;
 import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
@@ -32,11 +34,14 @@ import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MutableHttpHeaders;
 import io.micronaut.http.body.AvailableByteBody;
 import io.micronaut.http.body.ByteBodyFactory;
+import io.micronaut.http.body.CloseableByteBody;
 import io.micronaut.http.body.MessageBodyHandlerRegistry;
 import io.micronaut.http.context.ServerHttpRequestContext;
 import io.micronaut.http.context.event.HttpRequestReceivedEvent;
 import io.micronaut.http.context.event.HttpRequestTerminatedEvent;
 import io.micronaut.http.exceptions.HttpStatusException;
+import io.micronaut.http.netty.NettyHttpResponseBuilder;
+import io.micronaut.http.netty.stream.StreamedHttpResponse;
 import io.micronaut.http.server.RequestLifecycle;
 import io.micronaut.http.server.ResponseLifecycle;
 import io.micronaut.http.server.RouteExecutor;
@@ -46,8 +51,11 @@ import io.micronaut.http.server.types.files.SystemFile;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.web.router.resource.StaticResourceResolver;
+import io.netty.handler.codec.http.HttpContent;
+import io.netty.util.ReferenceCountUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import reactor.core.publisher.Flux;
 
 import java.io.EOFException;
 import java.io.File;
@@ -74,6 +82,8 @@ import java.util.function.Supplier;
  * @since 1.2.0
  */
 public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, LifeCycle<ServletHttpHandler<REQ, RES>> {
+    private static final ByteBodyFactory STREAMING_BODY_FACTORY = ByteBodyFactory.createDefault(ByteArrayBufferFactory.INSTANCE);
+
     /**
      * Logger to be used by subclasses for logging.
      */
@@ -301,7 +311,31 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
         if (shr.isCommitted()) {
             return ExecutionFlow.just(new ExecutionResult(null));
         }
+        ByteBodyHttpResponse<?> proxied = adaptNettyStreamingResponse(response);
+        if (proxied != null) {
+            return ExecutionFlow.just(new ExecutionResult(proxied));
+        }
         return new ServletResponseLifecycle().encodeHttpResponseSafe(req, response).map(ExecutionResult::new);
+    }
+
+    private @Nullable ByteBodyHttpResponse<?> adaptNettyStreamingResponse(HttpResponse<?> response) {
+        if (!(response instanceof NettyHttpResponseBuilder builder) || !builder.isStream()) {
+            return null;
+        }
+        StreamedHttpResponse streamedResponse = builder.toStreamHttpResponse();
+        CloseableByteBody byteBody = STREAMING_BODY_FACTORY.adapt(
+            Flux.from(streamedResponse)
+                .doOnDiscard(HttpContent.class, ReferenceCountUtil::release)
+                .map(content -> {
+                    try {
+                        return ReadBufferFactory.getJdkFactory().copyOf(content.content().nioBuffer());
+                    } finally {
+                        ReferenceCountUtil.release(content);
+                    }
+                }),
+            response.getHeaders().contentLength()
+        );
+        return ByteBodyHttpResponseWrapper.wrap(response, byteBody);
     }
 
     private static void handleFallback(ServletHttpResponse<?, ?> shr, Throwable t) {

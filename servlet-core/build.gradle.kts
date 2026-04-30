@@ -4,6 +4,7 @@ plugins {
 
 dependencies {
     api(mn.micronaut.http.server)
+    implementation(mn.micronaut.http.netty)
     compileOnly(mn.micronaut.discovery.core)
     compileOnly(mn.micronaut.json.core)
     implementation(mn.micronaut.router)
