@@ -56,8 +56,10 @@ import io.micronaut.servlet.http.StreamedServletMessage;
 import jakarta.servlet.AsyncContext;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
+import jakarta.servlet.http.HttpServletMapping;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.MappingMatch;
 import jakarta.servlet.http.Part;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -181,7 +183,7 @@ public final class DefaultServletHttpRequest<B> implements
             this.byteBody = InputStreamByteBody.create(new LazyDelegateInputStream(delegate), length, ioExecutor, byteBodyFactory);
         }
 
-        String requestURI = delegate.getRequestURI();
+        String requestURI = resolveRequestUri(delegate);
 
         String queryString = delegate.getQueryString();
         if (StringUtils.isNotEmpty(queryString)) {
@@ -262,6 +264,26 @@ public final class DefaultServletHttpRequest<B> implements
                 return this;
             }
         };
+    }
+
+    private static String resolveRequestUri(HttpServletRequest delegate) {
+        HttpServletMapping mapping = delegate.getHttpServletMapping();
+        if (mapping == null || mapping.getMappingMatch() == null) {
+            return delegate.getRequestURI();
+        }
+        String contextPath = delegate.getContextPath();
+        MappingMatch mappingMatch = mapping.getMappingMatch();
+        return switch (mappingMatch) {
+            case CONTEXT_ROOT, EXACT -> prependContextPath(contextPath, "/");
+            case PATH -> prependContextPath(contextPath, mapping.getMatchValue());
+            case EXTENSION -> prependContextPath(contextPath, mapping.getMatchValue() + mapping.getPattern().substring(1));
+            case DEFAULT -> delegate.getRequestURI();
+        };
+    }
+
+    private static String prependContextPath(String contextPath, String path) {
+        String normalizedPath = StringUtils.isNotEmpty(path) ? StringUtils.prependUri("/", path) : "/";
+        return StringUtils.isNotEmpty(contextPath) ? contextPath + normalizedPath : normalizedPath;
     }
 
     /**
