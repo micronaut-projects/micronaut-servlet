@@ -12,6 +12,19 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class JdkEnablementTest {
 
     @Test
+    void jdkRuntimeConfigurationExposesEnablementToggle() {
+        JdkHttpServerConfiguration configuration = new JdkHttpServerConfiguration();
+
+        assertTrue(configuration.isEnabled());
+        assertTrue("micronaut.server.jdk".equals(JdkHttpServerConfiguration.PREFIX));
+        assertTrue("micronaut.server.jdk.enabled".equals(JdkHttpServerConfiguration.ENABLED_PROPERTY));
+
+        configuration.setEnabled(false);
+
+        assertTrue(!configuration.isEnabled());
+    }
+
+    @Test
     void jdkRuntimeCanBeDisabled() {
         try (ApplicationContext context = ApplicationContext.builder()
             .deduceEnvironment(false)

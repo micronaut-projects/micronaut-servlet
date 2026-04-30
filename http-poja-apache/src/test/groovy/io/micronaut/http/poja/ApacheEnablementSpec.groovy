@@ -8,6 +8,22 @@ import spock.lang.Specification
 
 class ApacheEnablementSpec extends Specification {
 
+    void "apache runtime configuration exposes enablement toggle"() {
+        given:
+        def configuration = new ApacheRuntimeConfiguration()
+
+        expect:
+        configuration.enabled
+        ApacheRuntimeConfiguration.PREFIX == 'poja.apache'
+        ApacheRuntimeConfiguration.ENABLED_PROPERTY == 'poja.apache.enabled'
+
+        when:
+        configuration.enabled = false
+
+        then:
+        !configuration.enabled
+    }
+
     void "apache poja runtime can be disabled"() {
         given:
         ApplicationContext context = ApplicationContext.builder()

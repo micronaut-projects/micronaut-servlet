@@ -7,6 +7,22 @@ import spock.lang.Specification
 
 class TomcatEnablementSpec extends Specification {
 
+    void "tomcat configuration exposes enablement toggle"() {
+        given:
+        def configuration = new TomcatConfiguration(null, null)
+
+        expect:
+        configuration.enabled
+        TomcatConfiguration.PREFIX == 'micronaut.server.tomcat'
+        TomcatConfiguration.ENABLED_PROPERTY == 'micronaut.server.tomcat.enabled'
+
+        when:
+        configuration.enabled = false
+
+        then:
+        !configuration.enabled
+    }
+
     void "tomcat runtime can be disabled"() {
         given:
         ApplicationContext context = ApplicationContext.builder()

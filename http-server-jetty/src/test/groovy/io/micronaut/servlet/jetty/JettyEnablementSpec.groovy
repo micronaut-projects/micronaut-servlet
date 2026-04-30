@@ -7,6 +7,22 @@ import spock.lang.Specification
 
 class JettyEnablementSpec extends Specification {
 
+    void "jetty configuration exposes enablement toggle"() {
+        given:
+        def configuration = new JettyConfiguration(null, null)
+
+        expect:
+        configuration.enabled
+        JettyConfiguration.PREFIX == 'micronaut.server.jetty'
+        JettyConfiguration.ENABLED_PROPERTY == 'micronaut.server.jetty.enabled'
+
+        when:
+        configuration.enabled = false
+
+        then:
+        !configuration.enabled
+    }
+
     void "jetty runtime can be disabled"() {
         given:
         ApplicationContext context = ApplicationContext.builder()
