@@ -26,6 +26,7 @@ dependencies {
     annotationProcessor(mn.micronaut.inject.java)
 
     testImplementation(projects.micronautHttpPojaTest)
+    testImplementation(projects.micronautHttpServerJetty)
     testImplementation(mnTest.micronaut.test.junit5)
     testImplementation(mn.micronaut.http.client)
 

@@ -39,6 +39,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 @Internal
 @Experimental
+@Requires(property = "micronaut.server.jdk.enabled", value = "true", defaultValue = "true")
 @Requires(beans = HttpServer.class)
 @Singleton
 class HttpServerEmbeddedServer extends AbstractServletServer<HttpServer> {

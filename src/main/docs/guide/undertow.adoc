@@ -10,6 +10,14 @@ To customize the Undertow server you can use the following configuration propert
 
 include::{includedir}configurationProperties/io.micronaut.servlet.undertow.UndertowConfiguration.adoc[]
 
+To disable the Undertow runtime when it is present on the classpath:
+
+[configuration]
+----
+micronaut.server.undertow.enabled: false
+----
+
+This is useful when multiple servlet runtimes are available and you want Micronaut to ignore Undertow during startup.
 
 Or you can register a `BeanCreatedEventListener`:
 

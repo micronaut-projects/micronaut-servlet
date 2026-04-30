@@ -17,6 +17,7 @@ package io.micronaut.servlet.engine.bind;
 
 import io.micronaut.context.BeanProvider;
 import io.micronaut.context.annotation.Replaces;
+import io.micronaut.context.annotation.Secondary;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.convert.ConversionService;
@@ -49,6 +50,7 @@ import java.util.List;
  * @since 1.0.0
  */
 @Singleton
+@Secondary
 @Replaces(DefaultRequestBinderRegistry.class)
 @Internal
 class DefaultServletBinderRegistry<T> extends ServletBinderRegistry<T> {

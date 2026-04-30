@@ -49,13 +49,17 @@ import java.util.concurrent.ExecutorService;
     accessType = TypeHint.AccessType.ALL_DECLARED_FIELDS
 )
 @Replaces(HttpServerConfiguration.class)
-public class UndertowConfiguration extends HttpServerConfiguration {
+public class UndertowConfiguration extends HttpServerConfiguration implements Toggleable {
+
+    public static final String PREFIX = HttpServerConfiguration.PREFIX + ".undertow";
+    public static final String ENABLED_PROPERTY = PREFIX + ".enabled";
 
     @ConfigurationBuilder
     protected Undertow.Builder undertowBuilder = Undertow.builder();
 
     private final MultipartConfiguration multipartConfiguration;
     private AccessLogConfiguration accessLogConfiguration;
+    private boolean enabled = true;
     private Map<String, String> workerOptions = new HashMap<>(5);
     private Map<String, String> socketOptions = new HashMap<>(5);
     private Map<String, String> serverOptions = new HashMap<>(5);
@@ -74,6 +78,20 @@ public class UndertowConfiguration extends HttpServerConfiguration {
      */
     public Optional<AccessLogConfiguration> getAccessLogConfiguration() {
         return Optional.ofNullable(accessLogConfiguration);
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    /**
+     * Sets whether the Undertow runtime is enabled.
+     *
+     * @param enabled True if the runtime is enabled
+     */
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
     }
 
     /**
