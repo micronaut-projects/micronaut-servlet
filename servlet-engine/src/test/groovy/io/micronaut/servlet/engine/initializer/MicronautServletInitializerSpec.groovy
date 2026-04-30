@@ -1,42 +1,35 @@
 package io.micronaut.servlet.engine.initializer
 
 import io.micronaut.inject.BeanDefinition
-import io.micronaut.inject.BeanIdentifier
-import jakarta.servlet.annotation.WebFilter
-import jakarta.servlet.annotation.WebServlet
+import io.micronaut.servlet.engine.DefaultMicronautServlet
+import jakarta.servlet.Servlet
 import spock.lang.Specification
 
 class MicronautServletInitializerSpec extends Specification {
 
-    void "resolve servlet name prefers WebServlet name over bean identifier"() {
+    void "default micronaut servlet is detected by bean type"() {
         given:
-        BeanIdentifier identifier = Stub(BeanIdentifier) {
-            getName() >> 'defaultMicronautServlet'
-        }
-        BeanDefinition<?> definition = Stub(BeanDefinition) {
-            stringValue(WebServlet, 'name') >> Optional.of('micronaut')
+        BeanDefinition<Servlet> definition = Stub(BeanDefinition) {
+            getBeanType() >> DefaultMicronautServlet
         }
 
         expect:
-        resolve('resolveServletName', identifier, definition) == 'micronaut'
+        resolve(definition)
     }
 
-    void "resolve filter name prefers WebFilter filterName over bean identifier"() {
+    void "non-micronaut servlet is not detected by bean type"() {
         given:
-        BeanIdentifier identifier = Stub(BeanIdentifier) {
-            getName() >> 'myFilter'
-        }
-        BeanDefinition<?> definition = Stub(BeanDefinition) {
-            stringValue(WebFilter, 'filterName') >> Optional.of('namedFilter')
+        BeanDefinition<Servlet> definition = Stub(BeanDefinition) {
+            getBeanType() >> Servlet
         }
 
         expect:
-        resolve('resolveFilterName', identifier, definition) == 'namedFilter'
+        !resolve(definition)
     }
 
-    private static String resolve(String methodName, BeanIdentifier identifier, BeanDefinition<?> definition) {
-        def method = MicronautServletInitializer.getDeclaredMethod(methodName, BeanIdentifier, BeanDefinition)
+    private static boolean resolve(BeanDefinition<Servlet> definition) {
+        def method = MicronautServletInitializer.getDeclaredMethod('isMicronautServlet', BeanDefinition)
         method.accessible = true
-        (String) method.invoke(null, identifier, definition)
+        (boolean) method.invoke(null, definition)
     }
 }

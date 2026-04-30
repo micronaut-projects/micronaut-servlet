@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 original authors
+ * Copyright 2017-2026 original authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -271,13 +271,13 @@ public final class DefaultServletHttpRequest<B> implements
         if (mapping == null || mapping.getMappingMatch() == null) {
             return delegate.getRequestURI();
         }
+        String requestUri = delegate.getRequestURI();
         String contextPath = delegate.getContextPath();
         MappingMatch mappingMatch = mapping.getMappingMatch();
         return switch (mappingMatch) {
             case CONTEXT_ROOT, EXACT -> prependContextPath(contextPath, "/");
-            case PATH -> prependContextPath(contextPath, mapping.getMatchValue());
-            case EXTENSION -> prependContextPath(contextPath, mapping.getMatchValue() + mapping.getPattern().substring(1));
-            case DEFAULT -> delegate.getRequestURI();
+            case PATH -> stripServletPath(requestUri, contextPath, mapping.getPattern());
+            case EXTENSION, DEFAULT -> requestUri;
         };
     }
 
@@ -286,6 +286,16 @@ public final class DefaultServletHttpRequest<B> implements
         return StringUtils.isNotEmpty(contextPath) ? contextPath + normalizedPath : normalizedPath;
     }
 
+    private static String stripServletPath(String requestUri, String contextPath, String pattern) {
+        String path = StringUtils.isNotEmpty(contextPath) && requestUri.startsWith(contextPath)
+            ? requestUri.substring(contextPath.length())
+            : requestUri;
+        String servletPath = pattern.endsWith("/*") ? pattern.substring(0, pattern.length() - 2) : pattern;
+        if (StringUtils.isEmpty(servletPath) || !path.startsWith(servletPath)) {
+            return requestUri;
+        }
+        return prependContextPath(contextPath, path.substring(servletPath.length()));
+    }
     /**
      * @return The conversion service.
      */

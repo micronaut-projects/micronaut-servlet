@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2023 original authors
+ * Copyright 2017-2026 original authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,7 +97,7 @@ public class MicronautServletInitializer implements ServletContainerInitializer 
         int servletOrder = 0;
         for (BeanRegistration<Servlet> servlet : servlets) {
             Servlet servletBean = servlet.getBean();
-            String servletName = resolveServletName(servlet.getIdentifier(), servlet.getBeanDefinition());
+            String servletName = resolveName(servlet.getIdentifier(), servlet.getBeanDefinition());
             ServletRegistration.Dynamic registration = ctx.addServlet(servletName, servletBean);
             servletOrder = configureServletBean(
                 servlet,
@@ -122,7 +122,7 @@ public class MicronautServletInitializer implements ServletContainerInitializer 
         Filter filter = beanRegistration.getBean();
         BeanIdentifier identifier = beanRegistration.getIdentifier();
         BeanDefinition<Filter> beanDefinition = beanRegistration.getBeanDefinition();
-        String filterName = resolveFilterName(identifier, beanDefinition);
+        String filterName = resolveName(identifier, beanDefinition);
         FilterRegistration.Dynamic registration = ctx.addFilter(filterName, filter);
         AnnotationValue<WebFilter> webFilterAnn = beanDefinition.findAnnotation(WebFilter.class).orElse(new AnnotationValue<>(WebFilter.class.getName()));
         DispatcherType[] dispatcherTypes = webFilterAnn.enumValues("dispatcherTypes", DispatcherType.class);
@@ -165,16 +165,8 @@ public class MicronautServletInitializer implements ServletContainerInitializer 
         return name.equals("Primary") ? definition.getBeanType().getName() : name;
     }
 
-    private static String resolveServletName(BeanIdentifier identifier, BeanDefinition<?> definition) {
-        return definition.stringValue(WebServlet.class, "name")
-            .filter(StringUtils::isNotEmpty)
-            .orElseGet(() -> resolveName(identifier, definition));
-    }
-
-    private static String resolveFilterName(BeanIdentifier identifier, BeanDefinition<?> definition) {
-        return definition.stringValue(WebFilter.class, "filterName")
-            .filter(StringUtils::isNotEmpty)
-            .orElseGet(() -> resolveName(identifier, definition));
+    private static boolean isMicronautServlet(BeanDefinition<Servlet> beanDefinition) {
+        return DefaultMicronautServlet.class.isAssignableFrom(beanDefinition.getBeanType());
     }
 
     private int configureServletBean(BeanRegistration<Servlet> servlet, String servletName, MicronautServletConfiguration configuration, int order, ServletRegistration.Dynamic registration, ApplicationContext applicationContext) {
@@ -182,7 +174,7 @@ public class MicronautServletInitializer implements ServletContainerInitializer 
         AnnotationValue<WebServlet> webServletAnnotationValue = beanDefinition
             .findAnnotation(WebServlet.class)
             .orElse(EMPTY_WEB_SERVLET);
-        boolean isMicronautServlet = DefaultMicronautServlet.NAME.equals(servletName);
+        boolean isMicronautServlet = isMicronautServlet(beanDefinition);
         @NonNull String[] urlPatterns = getUrlPatterns(webServletAnnotationValue, beanDefinition, isMicronautServlet, configuration);
         int loadOnStartup = webServletAnnotationValue.intValue(MEMBER_LOAD_ON_STARTUP).orElse(order++);
         boolean isAsyncSupported = webServletAnnotationValue.booleanValue(MEMBER_ASYNC_SUPPORTED).orElse(configuration.isAsyncSupported());
