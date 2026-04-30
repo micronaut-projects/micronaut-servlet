@@ -34,6 +34,7 @@ import java.util.List;
 @Experimental
 @Internal
 @Factory
+@Requires(property = "micronaut.server.jdk.enabled", value = "true", defaultValue = "true")
 public class HttpServerFactory {
     /**
      *

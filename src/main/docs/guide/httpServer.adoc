@@ -1,3 +1,14 @@
 To use a server runtime based on the https://docs.oracle.com/javase/8/docs/jre/api/net/httpserver/spec/com/sun/net/httpserver/HttpServer.html[Java built-in Http Server], add the following dependency:
 
 dependency:micronaut-http-server-jdk[groupId=io.micronaut.servlet]
+
+To customize the built-in JDK HTTP server runtime you can use the following configuration properties:
+
+include::{includedir}configurationProperties/io.micronaut.servlet.http.server.jdk.JdkHttpServerConfiguration.adoc[]
+
+To disable the built-in JDK HTTP server runtime when it is present on the classpath:
+
+[configuration]
+----
+micronaut.server.jdk.enabled: false
+----

@@ -22,6 +22,7 @@ import jakarta.inject.Singleton;
 /**
  * A {@link HttpHandlerPath} for the path {@value /}.
  */
+@Requires(property = "micronaut.server.jdk.enabled", value = "true", defaultValue = "true")
 @Requires(beans = HttpHandler.class)
 @Requires(missingBeans = HttpHandlerPath.class)
 @Singleton
