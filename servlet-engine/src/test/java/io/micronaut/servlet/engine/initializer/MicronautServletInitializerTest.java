@@ -30,10 +30,12 @@ import jakarta.servlet.ServletContextListener;
 import jakarta.servlet.ServletRegistration;
 import org.junit.jupiter.api.Test;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Proxy;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -60,11 +62,13 @@ class MicronautServletInitializerTest {
             .build()
             .start()) {
             ServerEventRecorder recorder = applicationContext.getBean(ServerEventRecorder.class);
+            ServletContextEmbeddedServer embeddedServer = applicationContext.getBean(ServletContextEmbeddedServer.class);
 
             new MicronautServletInitializer(applicationContext).onStartup(Set.of(), servletContext);
 
             assertEquals(1, recorder.startupCount.get());
             assertSame(applicationContext, servletContext.getAttribute(CONTEXT_ATTRIBUTE));
+            assertTrue(runningFlag(embeddedServer));
 
             ServletContextListener listener = shutdownListener.get();
             assertNotNull(listener);
@@ -72,6 +76,7 @@ class MicronautServletInitializerTest {
             listener.contextDestroyed(new ServletContextEvent(servletContext));
 
             assertEquals(1, recorder.shutdownCount.get());
+            assertFalse(runningFlag(embeddedServer));
             assertFalse(applicationContext.isRunning());
         }
     }
@@ -203,6 +208,16 @@ class MicronautServletInitializerTest {
             return Collections.emptySet();
         }
         return null;
+    }
+
+    private static boolean runningFlag(ServletContextEmbeddedServer embeddedServer) {
+        try {
+            Field field = ServletContextEmbeddedServer.class.getDeclaredField("running");
+            field.setAccessible(true);
+            return ((AtomicBoolean) field.get(embeddedServer)).get();
+        } catch (ReflectiveOperationException e) {
+            throw new AssertionError(e);
+        }
     }
 
     @Singleton

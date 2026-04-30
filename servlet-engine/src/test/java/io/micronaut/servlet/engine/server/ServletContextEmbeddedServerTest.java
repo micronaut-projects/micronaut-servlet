@@ -84,6 +84,19 @@ class ServletContextEmbeddedServerTest {
         }
     }
 
+    @Test
+    void usesRootUriWhenContextPathIsNull() {
+        try (ApplicationContext applicationContext = ApplicationContext.builder()
+            .singletons(servletContext(null))
+            .build()
+            .start()) {
+            ServletContextEmbeddedServer embeddedServer = applicationContext.getBean(ServletContextEmbeddedServer.class);
+
+            assertEquals(URI.create("http://localhost"), embeddedServer.getURI());
+            assertNotNull(embeddedServer.getURL());
+        }
+    }
+
     private static ServletContext servletContext(String contextPath) {
         return (ServletContext) Proxy.newProxyInstance(
             ServletContextEmbeddedServerTest.class.getClassLoader(),
