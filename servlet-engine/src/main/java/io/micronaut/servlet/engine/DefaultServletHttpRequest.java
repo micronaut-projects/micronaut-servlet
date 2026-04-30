@@ -551,7 +551,14 @@ public class DefaultServletHttpRequest<B> implements
 
     @Override
     public void close() {
-        runDisposalResources();
+        CloseableByteBody body = byteBody;
+        try {
+            if (body != null) {
+                body.close();
+            }
+        } finally {
+            runDisposalResources();
+        }
     }
 
     @Override
@@ -583,9 +590,9 @@ public class DefaultServletHttpRequest<B> implements
         if (mediaType == null || !isFormContentType(mediaType)) {
             throw new IllegalStateException("Not a form Content-Type. Please check hasFormBody() before calling this method.");
         }
-        bodyAccessed = true;
         if (mediaType.matches(MediaType.MULTIPART_FORM_DATA_TYPE)) {
             return Flux.defer(() -> {
+                bodyAccessed = true;
                 try {
                     Collection<Part> parts = ((HttpServletRequest) delegate()).getParts();
                     discardByteBodyIfInitialized();
@@ -597,6 +604,7 @@ public class DefaultServletHttpRequest<B> implements
             });
         } else {
             return Flux.defer(() -> {
+                bodyAccessed = true;
                 var parameterMap = delegate().getParameterMap();
                 discardByteBodyIfInitialized();
                 return Flux.fromIterable(parameterMap.entrySet().stream()
@@ -614,14 +622,25 @@ public class DefaultServletHttpRequest<B> implements
         }
     }
 
+    /**
+     * Called by {@link #prepareForResponse()} when the request has a form body that has not been
+     * accessed. Subclasses can override this to consume or drain the unread form body before the
+     * response is committed.
+     *
+     * @return {@code true} if the body was handled (preventing the default no-op behavior)
+     */
     protected boolean prepareUnusedFormBodyForResponse() {
         return false;
     }
 
     private CloseableByteBody createByteBody() {
-        long contentLengthLong = delegate.getContentLengthLong();
+        HttpServletRequest currentRequest = (HttpServletRequest) delegate();
+        long contentLengthLong = currentRequest.getContentLengthLong();
         OptionalLong length = contentLengthLong < 0 ? OptionalLong.empty() : OptionalLong.of(contentLengthLong);
-        return InputStreamByteBody.create(new LazyDelegateInputStream(delegate), length, ioExecutor, byteBodyFactory);
+        if (isAsyncSupported()) {
+            return ByteBufferBodyAdapter.adapt(new ServletStreamPublisher(currentRequest::getInputStream), length);
+        }
+        return InputStreamByteBody.create(new LazyDelegateInputStream(currentRequest), length, ioExecutor, byteBodyFactory);
     }
 
     @Override
