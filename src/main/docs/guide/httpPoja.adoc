@@ -1,4 +1,5 @@
 HTTP POJA allows creating Micronaut applications that consume respond to HTTP requests with streams. By default, the application will read requests from standard input stream and write responses to standard output. The requests can only be answered in a serial manner.
+Blocking work also stays on the POJA request thread by default, so using `@ExecuteOn(TaskExecutors.BLOCKING)` does not create additional Micronaut executor threads for POJA applications. If you need different behavior, configure the `blocking` executor explicitly with the standard `micronaut.executors.blocking.*` properties.
 Currently HTTP POJA is based on https://hc.apache.org/httpcomponents-core-5.2.x/[Apache HTTP Core library].
 
 This feature allows creating simple applications that launch and respond on demand with minimal overhead. The module is suitable for usage with `systemd` on Linux or `launchd` on MacOS. Examples are given below.
