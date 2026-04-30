@@ -241,6 +241,22 @@ class TomcatParameterBinding2Spec extends Specification {
         response.body() == 'Good: true'
 
     }
-}
 
+    void "test multipart @Body map uses utf8 for form fields"() {
+
+        given:
+        def value = '“smart quotes” and an em dash —'
+        def request = HttpRequest.POST("/parameters/multipartBodyMap", MultipartBody.builder()
+                .addPart("text", value)
+                .build()
+        )
+        request.contentType(MediaType.MULTIPART_FORM_DATA)
+        def response = client.toBlocking().exchange(request, Argument.STRING, Argument.STRING)
+
+        expect:
+        response.status() == HttpStatus.OK
+        response.body() == value
+
+    }
+}
 

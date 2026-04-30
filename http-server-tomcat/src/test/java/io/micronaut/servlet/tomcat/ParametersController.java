@@ -11,6 +11,8 @@ import io.micronaut.http.cookie.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.*;
+import java.util.List;
+import java.util.Map;
 
 @Controller("/parameters")
 public class ParametersController {
@@ -103,6 +105,11 @@ public class ParametersController {
                 text.equals("Whatever") &&
                 new String(bytes).equals("My Doc") &&
                 IOUtils.readText(new BufferedReader(new InputStreamReader(raw.getInputStream()))).equals("Another Doc"));
+    }
+
+    @Post(value = "/multipartBodyMap", consumes = MediaType.MULTIPART_FORM_DATA, produces = MediaType.TEXT_PLAIN)
+    String multipartBodyMap(@Body Map<String, List<String>> body) {
+        return body.get("text").getFirst();
     }
 
 }
