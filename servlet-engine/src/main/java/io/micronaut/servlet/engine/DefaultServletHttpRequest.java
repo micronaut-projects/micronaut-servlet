@@ -89,6 +89,7 @@ import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Set;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 /**
@@ -119,7 +120,7 @@ public class DefaultServletHttpRequest<B> implements
     private DefaultServletHttpResponse<B> primaryResponse;
     private final MessageBodyHandlerRegistry messageBodyHandlerRegistry;
     private final MutableConvertibleValues<Object> attributes;
-    private volatile CloseableByteBody byteBody;
+    private final AtomicReference<CloseableByteBody> byteBody = new AtomicReference<>();
     private final ByteBodyFactory byteBodyFactory;
     private final Executor ioExecutor;
     private final SSLSessionProvider sslSessionProvider;
@@ -531,17 +532,17 @@ public class DefaultServletHttpRequest<B> implements
     @Override
     public @NonNull ByteBody byteBody() {
         bodyAccessed = true;
-        CloseableByteBody body = byteBody;
-        if (body == null) {
+        CloseableByteBody closeableBody = byteBody.get();
+        if (closeableBody == null) {
             synchronized (this) {
-                body = byteBody;
-                if (body == null) {
-                    body = createByteBody();
-                    byteBody = body;
+                closeableBody = byteBody.get();
+                if (closeableBody == null) {
+                    closeableBody = createByteBody();
+                    byteBody.set(closeableBody);
                 }
             }
         }
-        return body;
+        return closeableBody;
     }
 
     @Override
@@ -551,10 +552,10 @@ public class DefaultServletHttpRequest<B> implements
 
     @Override
     public void close() {
-        CloseableByteBody body = byteBody;
+        CloseableByteBody closeableBody = byteBody.get();
         try {
-            if (body != null) {
-                body.close();
+            if (closeableBody != null) {
+                closeableBody.close();
             }
         } finally {
             runDisposalResources();
@@ -616,9 +617,9 @@ public class DefaultServletHttpRequest<B> implements
     }
 
     private void discardByteBodyIfInitialized() {
-        CloseableByteBody body = byteBody;
-        if (body != null) {
-            body.allowDiscard();
+        CloseableByteBody closeableBody = byteBody.get();
+        if (closeableBody != null) {
+            closeableBody.allowDiscard();
         }
     }
 
