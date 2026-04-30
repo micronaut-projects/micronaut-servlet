@@ -97,7 +97,7 @@ public class MicronautServletInitializer implements ServletContainerInitializer 
         int servletOrder = 0;
         for (BeanRegistration<Servlet> servlet : servlets) {
             Servlet servletBean = servlet.getBean();
-            String servletName = resolveName(servlet.getIdentifier(), servlet.getBeanDefinition());
+            String servletName = resolveServletName(servlet.getIdentifier(), servlet.getBeanDefinition());
             ServletRegistration.Dynamic registration = ctx.addServlet(servletName, servletBean);
             servletOrder = configureServletBean(
                 servlet,
@@ -122,7 +122,7 @@ public class MicronautServletInitializer implements ServletContainerInitializer 
         Filter filter = beanRegistration.getBean();
         BeanIdentifier identifier = beanRegistration.getIdentifier();
         BeanDefinition<Filter> beanDefinition = beanRegistration.getBeanDefinition();
-        String filterName = resolveName(identifier, beanDefinition);
+        String filterName = resolveFilterName(identifier, beanDefinition);
         FilterRegistration.Dynamic registration = ctx.addFilter(filterName, filter);
         AnnotationValue<WebFilter> webFilterAnn = beanDefinition.findAnnotation(WebFilter.class).orElse(new AnnotationValue<>(WebFilter.class.getName()));
         DispatcherType[] dispatcherTypes = webFilterAnn.enumValues("dispatcherTypes", DispatcherType.class);
@@ -163,6 +163,18 @@ public class MicronautServletInitializer implements ServletContainerInitializer 
     private static String resolveName(BeanIdentifier identifier, BeanDefinition<?> definition) {
         String name = identifier.getName();
         return name.equals("Primary") ? definition.getBeanType().getName() : name;
+    }
+
+    private static String resolveServletName(BeanIdentifier identifier, BeanDefinition<?> definition) {
+        return definition.stringValue(WebServlet.class, "name")
+            .filter(StringUtils::isNotEmpty)
+            .orElseGet(() -> resolveName(identifier, definition));
+    }
+
+    private static String resolveFilterName(BeanIdentifier identifier, BeanDefinition<?> definition) {
+        return definition.stringValue(WebFilter.class, "filterName")
+            .filter(StringUtils::isNotEmpty)
+            .orElseGet(() -> resolveName(identifier, definition));
     }
 
     private int configureServletBean(BeanRegistration<Servlet> servlet, String servletName, MicronautServletConfiguration configuration, int order, ServletRegistration.Dynamic registration, ApplicationContext applicationContext) {
