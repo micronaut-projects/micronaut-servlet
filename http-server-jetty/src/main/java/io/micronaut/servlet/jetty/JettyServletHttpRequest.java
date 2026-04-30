@@ -22,11 +22,13 @@ import io.micronaut.servlet.engine.DefaultServletHttpRequest;
 import io.micronaut.servlet.http.BodyBuilder;
 import io.micronaut.servlet.http.SSLSessionProvider;
 import jakarta.servlet.ServletRequest;
-import jakarta.servlet.ServletRequestWrapper;
+import jakarta.servlet.ServletInputStream;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.eclipse.jetty.ee10.servlet.ServletApiRequest;
+import org.eclipse.jetty.ee10.servlet.ServletCoreRequest;
 
+import java.io.IOException;
 import java.util.concurrent.Executor;
 
 @Internal
@@ -44,8 +46,17 @@ final class JettyServletHttpRequest<B> extends DefaultServletHttpRequest<B> {
     @Override
     protected boolean prepareUnusedFormBodyForResponse() {
         ServletRequest request = delegate();
-        while (request instanceof ServletRequestWrapper wrapper) {
-            request = wrapper.getRequest();
+        if (request instanceof HttpServletRequest httpServletRequest) {
+            try {
+                ServletInputStream inputStream = httpServletRequest.getInputStream();
+                byte[] buffer = new byte[8192];
+                while (inputStream.read(buffer) != -1) {
+                    // Fully drain the request before handing control back to Jetty.
+                }
+            } catch (IOException ignored) {
+                // Fall through to Jetty's best-effort request consumption below.
+            }
+            return ServletCoreRequest.wrap(httpServletRequest).consumeAvailable();
         }
         if (request instanceof ServletApiRequest servletApiRequest) {
             return servletApiRequest.getRequest().consumeAvailable();
