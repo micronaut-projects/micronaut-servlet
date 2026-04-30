@@ -14,4 +14,5 @@ dependencies {
     implementation(mn.micronaut.jackson.core)
 
     testAnnotationProcessor(mn.micronaut.inject.java)
+    testImplementation(libs.junit.jupiter.engine)
 }
