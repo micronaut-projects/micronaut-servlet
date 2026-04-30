@@ -50,8 +50,11 @@ final class JettyServletHttpRequest<B> extends DefaultServletHttpRequest<B> {
             try {
                 ServletInputStream inputStream = httpServletRequest.getInputStream();
                 byte[] buffer = new byte[8192];
-                while (inputStream.read(buffer) != -1) {
-                    // Fully drain the request before handing control back to Jetty.
+                while (true) {
+                    int read = inputStream.read(buffer);
+                    if (read == -1) {
+                        break;
+                    }
                 }
             } catch (IOException ignored) {
                 // Fall through to Jetty's best-effort request consumption below.
