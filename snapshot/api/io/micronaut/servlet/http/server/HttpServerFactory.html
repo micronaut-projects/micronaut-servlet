@@ -76,6 +76,9 @@ loadScripts(document, 'script');</script>
 <div class="horizontal-scroll">
 <div class="type-signature"><span class="annotations">@Internal
 @Factory
+@Requires(property="micronaut.server.jdk.enabled",
+          value="true",
+          defaultValue="true")
 </span><span class="modifiers">public class </span><span class="element-name type-name-label">HttpServerFactory</span>
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span></div>
 <div class="block">Factory for creating beans of type <a href="https://docs.oracle.com/en/java/javase/21/docs/api/jdk.httpserver/com/sun/net/httpserver/HttpServer.html" title="class or interface in com.sun.net.httpserver" class="external-link"><code>HttpServer</code></a>.</div>

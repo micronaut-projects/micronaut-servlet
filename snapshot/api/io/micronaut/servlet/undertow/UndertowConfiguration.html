@@ -60,6 +60,8 @@ loadScripts(document, 'script');</script>
 <li><a href="#method-summary" tabindex="0">Method Summary</a></li>
 <li><a href="#field-detail" tabindex="0">Field Details</a>
 <ol class="toc-list">
+<li><a href="#PREFIX" tabindex="0">PREFIX</a></li>
+<li><a href="#ENABLED_PROPERTY" tabindex="0">ENABLED_PROPERTY</a></li>
 <li><a href="#undertowBuilder" tabindex="0">undertowBuilder</a></li>
 </ol>
 </li>
@@ -71,6 +73,8 @@ loadScripts(document, 'script');</script>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
 <ol class="toc-list">
 <li><a href="#getAccessLogConfiguration()" tabindex="0">getAccessLogConfiguration()</a></li>
+<li><a href="#isEnabled()" tabindex="0">isEnabled()</a></li>
+<li><a href="#setEnabled(boolean)" tabindex="0">setEnabled(boolean)</a></li>
 <li><a href="#setAccessLogConfiguration(io.micronaut.servlet.undertow.UndertowConfiguration.AccessLogConfiguration)" tabindex="0">setAccessLogConfiguration(UndertowConfiguration.AccessLogConfiguration)</a></li>
 <li><a href="#getUndertowBuilder()" tabindex="0">getUndertowBuilder()</a></li>
 <li><a href="#getMultipartConfiguration()" tabindex="0">getMultipartConfiguration()</a></li>
@@ -97,14 +101,15 @@ loadScripts(document, 'script');</script>
 <section class="class-description" id="class-description">
 <dl class="notes">
 <dt>All Implemented Interfaces:</dt>
-<dd><code>io.micronaut.http.context.ServerContextPathProvider</code></dd>
+<dd><code>io.micronaut.core.util.Toggleable, io.micronaut.http.context.ServerContextPathProvider</code></dd>
 </dl>
 <hr>
 <div class="horizontal-scroll">
 <div class="type-signature"><span class="annotations">@ConfigurationProperties("undertow")
 @Replaces(io.micronaut.http.server.HttpServerConfiguration.class)
 </span><span class="modifiers">public class </span><span class="element-name type-name-label">UndertowConfiguration</span>
-<span class="extends-implements">extends io.micronaut.http.server.HttpServerConfiguration</span></div>
+<span class="extends-implements">extends io.micronaut.http.server.HttpServerConfiguration
+implements io.micronaut.core.util.Toggleable</span></div>
 <div class="block">Configuration for the Undertow server.</div>
 <dl class="notes">
 <dt>Since:</dt>
@@ -145,13 +150,19 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Field</div>
 <div class="table-header col-last">Description</div>
+<div class="col-first even-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code><a href="#ENABLED_PROPERTY" class="member-name-link">ENABLED_PROPERTY</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#PREFIX" class="member-name-link">PREFIX</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
 <div class="col-first even-row-color"><code>protected io.undertow.Undertow.Builder</code></div>
 <div class="col-second even-row-color"><code><a href="#undertowBuilder" class="member-name-link">undertowBuilder</a></code></div>
 <div class="col-last even-row-color">&nbsp;</div>
 </div>
 <div class="inherited-list">
 <h3 id="fields-inherited-from-class-io.micronaut.http.server.HttpServerConfiguration">Fields inherited from class&nbsp;io.micronaut.http.server.HttpServerConfiguration</h3>
-<code>DEFAULT_DATEHEADER, DEFAULT_DISPATCH_OPTIONS_REQUESTS, DEFAULT_DUAL_PROTOCOL, DEFAULT_HTTP_TO_HTTPS_REDIRECT, DEFAULT_IDLE_TIME_MINUTES, DEFAULT_LOG_HANDLED_EXCEPTIONS, DEFAULT_MAX_PARAMS, DEFAULT_MAX_REQUEST_BUFFER_SIZE, DEFAULT_MAX_REQUEST_SIZE, DEFAULT_PORT, DEFAULT_RANDOM_PORT, DEFAULT_READ_IDLE_TIME_MINUTES, DEFAULT_SEMICOLON_IS_NORMAL_CHAR, DEFAULT_WRITE_IDLE_TIME_MINUTES, PREFIX</code></div>
+<code>DEFAULT_DATEHEADER, DEFAULT_DISPATCH_OPTIONS_REQUESTS, DEFAULT_DUAL_PROTOCOL, DEFAULT_HTTP_TO_HTTPS_REDIRECT, DEFAULT_IDLE_TIME_MINUTES, DEFAULT_LOG_HANDLED_EXCEPTIONS, DEFAULT_MAX_PARAMS, DEFAULT_MAX_REQUEST_BUFFER_SIZE, DEFAULT_MAX_REQUEST_SIZE, DEFAULT_PORT, DEFAULT_RANDOM_PORT, DEFAULT_READ_IDLE_TIME_MINUTES, DEFAULT_SEMICOLON_IS_NORMAL_CHAR, DEFAULT_WRITE_IDLE_TIME_MINUTES</code></div>
 </section>
 </li>
 <!-- ======== CONSTRUCTOR SUMMARY ======== -->
@@ -198,10 +209,18 @@ loadScripts(document, 'script');</script>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getWorkerOptions()" class="member-name-link">getWorkerOptions</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setAccessLogConfiguration(io.micronaut.servlet.undertow.UndertowConfiguration.AccessLogConfiguration)" class="member-name-link">setAccessLogConfiguration</a><wbr>(@Nullable <a href="UndertowConfiguration.AccessLogConfiguration.html" title="class in io.micronaut.servlet.undertow">UndertowConfiguration.AccessLogConfiguration</a>&nbsp;accessLogConfiguration)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isEnabled()" class="member-name-link">isEnabled</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setAccessLogConfiguration(io.micronaut.servlet.undertow.UndertowConfiguration.AccessLogConfiguration)" class="member-name-link">setAccessLogConfiguration</a><wbr>(@Nullable <a href="UndertowConfiguration.AccessLogConfiguration.html" title="class in io.micronaut.servlet.undertow">UndertowConfiguration.AccessLogConfiguration</a>&nbsp;accessLogConfiguration)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">The access log configuration.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setEnabled(boolean)" class="member-name-link">setEnabled</a><wbr>(boolean&nbsp;enabled)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Sets whether the Undertow runtime is enabled.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setServerOptions(java.util.Map)" class="member-name-link">setServerOptions</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;serverOptions)</code></div>
@@ -236,6 +255,38 @@ loadScripts(document, 'script');</script>
 <section class="field-details" id="field-detail">
 <h2>Field Details</h2>
 <ul class="member-list">
+<li>
+<section class="detail" id="PREFIX">
+<h3>PREFIX</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">PREFIX</span></div>
+<dl class="notes">
+<dt>See Also:</dt>
+<dd>
+<ul class="tag-list">
+<li><a href="../../../../constant-values.html#io.micronaut.servlet.undertow.UndertowConfiguration.PREFIX">Constant Field Values</a></li>
+</ul>
+</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="ENABLED_PROPERTY">
+<h3>ENABLED_PROPERTY</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">ENABLED_PROPERTY</span></div>
+<dl class="notes">
+<dt>See Also:</dt>
+<dd>
+<ul class="tag-list">
+<li><a href="../../../../constant-values.html#io.micronaut.servlet.undertow.UndertowConfiguration.ENABLED_PROPERTY">Constant Field Values</a></li>
+</ul>
+</dd>
+</dl>
+</div>
+</section>
+</li>
 <li>
 <section class="detail" id="undertowBuilder">
 <h3>undertowBuilder</h3>
@@ -282,6 +333,31 @@ loadScripts(document, 'script');</script>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>The access log configuration.</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="isEnabled()">
+<h3>isEnabled</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">isEnabled</span>()</div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code>isEnabled</code>&nbsp;in interface&nbsp;<code>io.micronaut.core.util.Toggleable</code></dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="setEnabled(boolean)">
+<h3>setEnabled</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">setEnabled</span><wbr><span class="parameters">(boolean&nbsp;enabled)</span></div>
+<div class="block">Sets whether the Undertow runtime is enabled.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>enabled</code> - True if the runtime is enabled</dd>
 </dl>
 </div>
 </section>
