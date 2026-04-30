@@ -7,8 +7,6 @@ import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Get
 import io.micronaut.http.client.HttpClient
 import io.micronaut.runtime.server.EmbeddedServer
-import io.micronaut.http.annotation.Controller
-import io.micronaut.http.annotation.Get
 import spock.lang.Specification
 
 class JettyEagerInitSingletonsSpec extends Specification {
