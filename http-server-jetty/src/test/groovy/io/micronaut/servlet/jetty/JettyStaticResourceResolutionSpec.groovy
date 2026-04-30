@@ -30,9 +30,11 @@ import java.nio.file.Paths
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.LinkedBlockingQueue
 
+import static io.micronaut.http.HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN
 import static io.micronaut.http.HttpHeaders.CACHE_CONTROL
 import static io.micronaut.http.HttpHeaders.CONTENT_LENGTH
 import static io.micronaut.http.HttpHeaders.CONTENT_TYPE
+import static io.micronaut.http.HttpHeaders.ORIGIN
 
 @MicronautTest
 class JettyStaticResourceResolutionSpec extends Specification implements TestPropertyProvider {
@@ -151,6 +153,38 @@ class JettyStaticResourceResolutionSpec extends Specification implements TestPro
         response.headers.contains(CACHE_CONTROL)
 
         response.body() == "<html><head></head><body>HTML Page from resources</body></html>"
+
+        cleanup:
+        rxClient.close()
+        embeddedServer.stop()
+    }
+
+    void "test cors for static resources uses configured allowed origins"() {
+        given:
+        EmbeddedServer embeddedServer = ApplicationContext.run(EmbeddedServer, [
+                'micronaut.router.static-resources.default.paths': ['classpath:public'],
+                'micronaut.router.static-resources.default.mapping': '/static/**',
+                'micronaut.server.cors.enabled': true,
+                'micronaut.server.cors.configurations.foo.allowedOrigins': ['foo.com']])
+        HttpClient rxClient = embeddedServer.applicationContext.createBean(HttpClient, embeddedServer.getURL())
+
+        when:
+        def allowedResponse = rxClient.toBlocking().exchange(
+                HttpRequest.GET("/static/index.html").header(ORIGIN, 'http://foo.com'), String
+        )
+
+        then:
+        allowedResponse.status == HttpStatus.OK
+        allowedResponse.header(ACCESS_CONTROL_ALLOW_ORIGIN) == 'http://foo.com'
+
+        when:
+        def forbiddenResponse = rxClient.toBlocking().exchange(
+                HttpRequest.GET("/static/index.html").header(ORIGIN, 'http://bar.com'), String
+        )
+
+        then:
+        forbiddenResponse.status == HttpStatus.OK
+        forbiddenResponse.header(ACCESS_CONTROL_ALLOW_ORIGIN) == null
 
         cleanup:
         rxClient.close()

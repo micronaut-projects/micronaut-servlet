@@ -526,7 +526,7 @@ public class JettyFactory extends ServletServerFactory {
             }
             var origins = c.getAllowedOrigins();
             if (origins != null && !origins.isEmpty()) {
-                origins.forEach(JettyFactory::getOriginPattern);
+                origins.forEach(origin -> originPatterns.add(getOriginPattern(origin)));
             }
         }
         if (preflight != null) {
