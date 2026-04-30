@@ -1,0 +1,23 @@
+Payara scans application classes and libraries for Jakarta lifecycle annotations during deployment.
+Micronaut applications packaged as WAR files include internal lifecycle beans from Micronaut Context, for example
+`io.micronaut.scheduling.io.watch.DefaultWatchThread`, and Payara can reject those classes before Micronaut starts.
+
+For Micronaut 4 and later, only Payara 6 or later is supported because Micronaut uses the `jakarta.servlet` API.
+
+When deploying to Payara, add an application `web.xml` with `metadata-complete="true"` so the container does not try
+to discover lifecycle annotations from Micronaut libraries:
+
+[source,xml]
+.src/main/webapp/WEB-INF/web.xml
+----
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="https://jakarta.ee/xml/ns/jakartaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd"
+         version="6.0"
+         metadata-complete="true">
+</web-app>
+----
+
+This deployment descriptor complements the `web-fragment.xml` packaged in `micronaut-servlet-engine` and prevents
+Payara from treating Micronaut internal lifecycle methods as container lifecycle callbacks.
