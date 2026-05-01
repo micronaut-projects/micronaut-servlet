@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 original authors
+ * Copyright 2017-2026 original authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,8 +56,10 @@ import io.micronaut.servlet.http.StreamedServletMessage;
 import jakarta.servlet.AsyncContext;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
+import jakarta.servlet.http.HttpServletMapping;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.MappingMatch;
 import jakarta.servlet.http.Part;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -181,7 +183,7 @@ public final class DefaultServletHttpRequest<B> implements
             this.byteBody = InputStreamByteBody.create(new LazyDelegateInputStream(delegate), length, ioExecutor, byteBodyFactory);
         }
 
-        String requestURI = delegate.getRequestURI();
+        String requestURI = resolveRequestUri(delegate);
 
         String queryString = delegate.getQueryString();
         if (StringUtils.isNotEmpty(queryString)) {
@@ -264,6 +266,36 @@ public final class DefaultServletHttpRequest<B> implements
         };
     }
 
+    private static String resolveRequestUri(HttpServletRequest delegate) {
+        HttpServletMapping mapping = delegate.getHttpServletMapping();
+        if (mapping == null || mapping.getMappingMatch() == null) {
+            return delegate.getRequestURI();
+        }
+        String requestUri = delegate.getRequestURI();
+        String contextPath = delegate.getContextPath();
+        MappingMatch mappingMatch = mapping.getMappingMatch();
+        return switch (mappingMatch) {
+            case CONTEXT_ROOT, EXACT -> prependContextPath(contextPath, "/");
+            case PATH -> stripServletPath(requestUri, contextPath, mapping.getPattern());
+            case EXTENSION, DEFAULT -> requestUri;
+        };
+    }
+
+    private static String prependContextPath(String contextPath, String path) {
+        String normalizedPath = StringUtils.isNotEmpty(path) ? StringUtils.prependUri("/", path) : "/";
+        return StringUtils.isNotEmpty(contextPath) ? contextPath + normalizedPath : normalizedPath;
+    }
+
+    private static String stripServletPath(String requestUri, String contextPath, String pattern) {
+        String path = StringUtils.isNotEmpty(contextPath) && requestUri.startsWith(contextPath)
+            ? requestUri.substring(contextPath.length())
+            : requestUri;
+        String servletPath = pattern.endsWith("/*") ? pattern.substring(0, pattern.length() - 2) : pattern;
+        if (StringUtils.isEmpty(servletPath) || !path.startsWith(servletPath)) {
+            return requestUri;
+        }
+        return prependContextPath(contextPath, path.substring(servletPath.length()));
+    }
     /**
      * @return The conversion service.
      */

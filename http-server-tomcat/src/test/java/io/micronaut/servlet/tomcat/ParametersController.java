@@ -26,6 +26,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.util.List;
+import java.util.Map;
 
 @Controller("/parameters")
 public class ParametersController {
@@ -118,6 +120,11 @@ public class ParametersController {
                 text.equals("Whatever") &&
                 new String(bytes).equals("My Doc") &&
                 IOUtils.readText(new BufferedReader(new InputStreamReader(raw.getInputStream()))).equals("Another Doc"));
+    }
+
+    @Post(value = "/multipartBodyMap", consumes = MediaType.MULTIPART_FORM_DATA, produces = MediaType.TEXT_PLAIN)
+    String multipartBodyMap(@Body Map<String, List<String>> body) {
+        return body.get("text").getFirst();
     }
 
 }

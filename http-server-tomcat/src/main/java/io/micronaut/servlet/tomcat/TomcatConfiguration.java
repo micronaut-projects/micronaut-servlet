@@ -52,11 +52,15 @@ import org.apache.coyote.http2.Http2Protocol;
         AjpNioProtocol.class
 })
 @Replaces(HttpServerConfiguration.class)
-public class TomcatConfiguration extends HttpServerConfiguration {
+public class TomcatConfiguration extends HttpServerConfiguration implements Toggleable {
+
+    public static final String PREFIX = HttpServerConfiguration.PREFIX + ".tomcat";
+    public static final String ENABLED_PROPERTY = PREFIX + ".enabled";
 
     @ConfigurationBuilder
     protected final Connector tomcatConnector;
     private final MultipartConfiguration multipartConfiguration;
+    private boolean enabled = true;
     private String protocol;
 
     private AccessLogConfiguration accessLogConfiguration;
@@ -102,6 +106,20 @@ public class TomcatConfiguration extends HttpServerConfiguration {
      */
     public Optional<MultipartConfiguration> getMultipartConfiguration() {
         return Optional.ofNullable(multipartConfiguration);
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    /**
+     * Sets whether the Tomcat runtime is enabled.
+     *
+     * @param enabled True if the runtime is enabled
+     */
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
     }
 
     /**

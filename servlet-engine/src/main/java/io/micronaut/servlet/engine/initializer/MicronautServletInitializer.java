@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2023 original authors
+ * Copyright 2017-2026 original authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,8 +26,11 @@ import io.micronaut.core.util.StringUtils;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.BeanIdentifier;
 import io.micronaut.inject.qualifiers.Qualifiers;
+import io.micronaut.runtime.server.event.ServerShutdownEvent;
+import io.micronaut.runtime.server.event.ServerStartupEvent;
 import io.micronaut.servlet.engine.DefaultMicronautServlet;
 import io.micronaut.servlet.engine.MicronautServletConfiguration;
+import io.micronaut.servlet.engine.server.ServletContextEmbeddedServer;
 import jakarta.inject.Inject;
 import jakarta.servlet.DispatcherType;
 import jakarta.servlet.Filter;
@@ -36,6 +39,8 @@ import jakarta.servlet.MultipartConfigElement;
 import jakarta.servlet.Servlet;
 import jakarta.servlet.ServletContainerInitializer;
 import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletContextEvent;
+import jakarta.servlet.ServletContextListener;
 import jakarta.servlet.ServletRegistration;
 import jakarta.servlet.ServletSecurityElement;
 import jakarta.servlet.annotation.MultipartConfig;
@@ -90,7 +95,9 @@ public class MicronautServletInitializer implements ServletContainerInitializer 
         final ApplicationContext applicationContext = this.applicationContext != null ? this.applicationContext : buildApplicationContext(ctx)
                 .build()
                 .start();
+        ctx.setAttribute(DefaultMicronautServlet.CONTEXT_ATTRIBUTE, applicationContext);
         final MicronautServletConfiguration configuration = applicationContext.getBean(MicronautServletConfiguration.class);
+        final ServletContextEmbeddedServer servletContextEmbeddedServer = applicationContext.findBean(ServletContextEmbeddedServer.class).orElse(null);
         Collection<BeanRegistration<Servlet>> servlets = applicationContext.getBeanRegistrations(Servlet.class);
         Collection<BeanRegistration<Filter>> filters = applicationContext.getBeanRegistrations(Filter.class);
         Collection<EventListener> servletListeners = applicationContext.getBeansOfType(EventListener.class, Qualifiers.byStereotype(WebListener.class));
@@ -115,7 +122,21 @@ public class MicronautServletInitializer implements ServletContainerInitializer 
         for (EventListener servletListener : servletListeners) {
             ctx.addListener(servletListener);
         }
-
+        if (servletContextEmbeddedServer != null) {
+            servletContextEmbeddedServer.start();
+            applicationContext.publishEvent(new ServerStartupEvent(servletContextEmbeddedServer));
+            ctx.addListener(new ServletContextListener() {
+                @Override
+                public void contextDestroyed(ServletContextEvent sce) {
+                    if (!applicationContext.isRunning()) {
+                        return;
+                    }
+                    applicationContext.publishEvent(new ServerShutdownEvent(servletContextEmbeddedServer));
+                    servletContextEmbeddedServer.stop();
+                    applicationContext.stop();
+                }
+            });
+        }
     }
 
     private static void handleFilterRegistration(ServletContext ctx, BeanRegistration<Filter> beanRegistration) {
@@ -165,12 +186,16 @@ public class MicronautServletInitializer implements ServletContainerInitializer 
         return name.equals("Primary") ? definition.getBeanType().getName() : name;
     }
 
+    private static boolean isMicronautServlet(BeanDefinition<Servlet> beanDefinition) {
+        return DefaultMicronautServlet.class.isAssignableFrom(beanDefinition.getBeanType());
+    }
+
     private int configureServletBean(BeanRegistration<Servlet> servlet, String servletName, MicronautServletConfiguration configuration, int order, ServletRegistration.Dynamic registration, ApplicationContext applicationContext) {
         BeanDefinition<Servlet> beanDefinition = servlet.getBeanDefinition();
         AnnotationValue<WebServlet> webServletAnnotationValue = beanDefinition
             .findAnnotation(WebServlet.class)
             .orElse(EMPTY_WEB_SERVLET);
-        boolean isMicronautServlet = DefaultMicronautServlet.NAME.equals(servletName);
+        boolean isMicronautServlet = isMicronautServlet(beanDefinition);
         @NonNull String[] urlPatterns = getUrlPatterns(webServletAnnotationValue, beanDefinition, isMicronautServlet, configuration);
         int loadOnStartup = webServletAnnotationValue.intValue(MEMBER_LOAD_ON_STARTUP).orElse(order++);
         boolean isAsyncSupported = webServletAnnotationValue.booleanValue(MEMBER_ASYNC_SUPPORTED).orElse(configuration.isAsyncSupported());

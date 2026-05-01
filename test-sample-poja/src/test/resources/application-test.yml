@@ -1,0 +1,4 @@
+micronaut:
+  server:
+    jetty:
+      enabled: false

@@ -49,13 +49,17 @@ import org.eclipse.jetty.server.ServerConnector;
  */
 @ConfigurationProperties("jetty")
 @Replaces(HttpServerConfiguration.class)
-public class JettyConfiguration extends HttpServerConfiguration {
+public class JettyConfiguration extends HttpServerConfiguration implements Toggleable {
+
+    public static final String PREFIX = HttpServerConfiguration.PREFIX + ".jetty";
+    public static final String ENABLED_PROPERTY = PREFIX + ".enabled";
 
     @ConfigurationBuilder
     protected HttpConfiguration httpConfiguration = new HttpConfiguration();
     private final JettyRequestLog requestLog;
 
     private final MultipartConfiguration multipartConfiguration;
+    private boolean enabled = true;
     private Map<String, String> initParameters;
 
     /**
@@ -96,6 +100,20 @@ public class JettyConfiguration extends HttpServerConfiguration {
      */
     public Optional<JettyRequestLog> getRequestLog() {
         return Optional.ofNullable(requestLog);
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    /**
+     * Sets whether the Jetty runtime is enabled.
+     *
+     * @param enabled True if the runtime is enabled
+     */
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
     }
 
     /**

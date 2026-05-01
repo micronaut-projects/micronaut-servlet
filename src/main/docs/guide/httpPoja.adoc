@@ -12,6 +12,16 @@ dependency:io.micronaut.servlet:micronaut-http-poja-test[scope="test"]
 To customize the HTTP POJA you can use the following configuration properties:
 
 include::{includedir}configurationProperties/io.micronaut.http.poja.apache.ApacheServletConfiguration.adoc[]
+include::{includedir}configurationProperties/io.micronaut.http.poja.apache.ApacheRuntimeConfiguration.adoc[]
+
+To disable the Apache HTTP POJA runtime when it is present on the classpath:
+
+[configuration]
+----
+poja.apache.enabled: false
+----
+
+This is useful when multiple Micronaut runtimes are available and you want Micronaut to ignore the POJA runtime during startup.
 
 === Use HTTP POJA with launchd on MacOS
 
@@ -159,4 +169,3 @@ In a separate terminal send a request to the socket:
 ----
 curl --unix-socket /tmp/http-poja.sock http://localhost/
 ----
-
