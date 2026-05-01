@@ -22,11 +22,6 @@ dependencies {
     testRuntimeOnly(mnValidation.micronaut.validation)
 }
 
-java {
-    sourceCompatibility = JavaVersion.toVersion("21")
-    targetCompatibility = JavaVersion.toVersion("21")
-}
-
 tasks.named("test") {
     useJUnitPlatform()
 }
@@ -38,6 +33,7 @@ graalvmNative {
     binaries {
         all {
             resources.autodetect()
+            buildArgs.add("-H:+SharedArenaSupport")
         }
     }
 }

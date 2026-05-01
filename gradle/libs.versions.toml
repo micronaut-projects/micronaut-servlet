@@ -1,5 +1,5 @@
 [versions]
-micronaut = "5.0.0-M22"
+micronaut = "5.0.0-M26"
 managed-servlet-api = '6.1.0'
 kotest-runner = '6.1.11'
 undertow = '2.3.24.Final'
@@ -9,8 +9,8 @@ bcpkix = "1.70"
 managed-apache-http-core5 = "5.4.2"
 managed-jetty = '12.1.8'
 micronaut-reactor = "4.0.0-M2"
-micronaut-security = "5.0.0-M1"
-micronaut-serde = "3.0.0-M7"
+micronaut-security = "5.0.0-M2"
+micronaut-serde = "3.0.0-M8"
 micronaut-session = "5.0.0-M2"
 micronaut-validation = "5.0.0-M2"
 micronaut-logging = "2.0.0-M2"
@@ -44,6 +44,7 @@ undertow-servlet = { module = 'io.undertow:undertow-servlet', version.ref = 'und
 jetty-servlet = { module = 'org.eclipse.jetty.ee10:jetty-ee10-servlet', version.ref = 'managed-jetty' }
 jetty-http2-server = { module = 'org.eclipse.jetty.http2:jetty-http2-server', version.ref = 'managed-jetty' }
 jetty-alpn-server = { module = 'org.eclipse.jetty:jetty-alpn-server', version.ref = 'managed-jetty' }
+jetty-alpn-java-server = { module = 'org.eclipse.jetty:jetty-alpn-java-server', version.ref = 'managed-jetty' }
 jetty-alpn-conscrypt-server = { module = 'org.eclipse.jetty:jetty-alpn-conscrypt-server', version.ref = 'managed-jetty' }
 kotest-runner = { module = 'io.kotest:kotest-runner-junit5', version.ref = 'kotest-runner' }
 bcpkix = { module = "org.bouncycastle:bcpkix-jdk15on", version.ref = "bcpkix" }

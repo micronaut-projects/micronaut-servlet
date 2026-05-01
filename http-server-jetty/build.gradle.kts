@@ -6,6 +6,7 @@ dependencies {
     implementation(libs.jetty.servlet)
     implementation(libs.jetty.http2.server)
     implementation(libs.jetty.alpn.server)
+    implementation(libs.jetty.alpn.java.server)
     implementation(mnLogging.logback.core)//force version to avoid CVE-2025-11226
     compileOnly(libs.logback.access.jetty12)
     testImplementation(libs.bcpkix)
