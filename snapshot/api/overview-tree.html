@@ -77,7 +77,7 @@ loadScripts(document, 'script');</script>
 <section class="hierarchy">
 <h2 title="Class Hierarchy">Class Hierarchy</h2>
 <ul>
-<li class="circle">java.lang.<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" class="type-name-link external-link" title="class or interface in java.lang">Object</a>
+<li class="circle">java.lang.<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" class="type-name-link external-link" title="class or interface in java.lang">Object</a>
 <ul>
 <li class="circle">io.micronaut.servlet.http.encoders.<a href="io/micronaut/servlet/http/encoders/AbstractFileEncoder.html" class="type-name-link" title="class in io.micronaut.servlet.http.encoders">AbstractFileEncoder</a>&lt;T&gt; (implements io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletResponseEncoder.html" title="interface in io.micronaut.servlet.http">ServletResponseEncoder</a>&lt;T&gt;)
 <ul>
@@ -140,7 +140,7 @@ loadScripts(document, 'script');</script>
 <li class="circle">io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/DefaultServletHttpResponse.html" class="type-name-link" title="class in io.micronaut.servlet.engine">DefaultServletHttpResponse</a>&lt;B&gt; (implements io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletHttpResponse.html" title="interface in io.micronaut.servlet.http">ServletHttpResponse</a>&lt;N,<wbr>B&gt;)</li>
 <li class="circle">io.micronaut.servlet.http.server.<a href="io/micronaut/servlet/http/server/DiscoveryServerStartedEventPublisher.html" class="type-name-link" title="class in io.micronaut.servlet.http.server">DiscoveryServerStartedEventPublisher</a> (implements io.micronaut.context.event.ApplicationEventListener&lt;E&gt;)</li>
 <li class="circle">io.micronaut.servlet.http.encoders.<a href="io/micronaut/servlet/http/encoders/FileEncoder.html" class="type-name-link" title="class in io.micronaut.servlet.http.encoders">FileEncoder</a> (implements io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletResponseEncoder.html" title="interface in io.micronaut.servlet.http">ServletResponseEncoder</a>&lt;T&gt;)</li>
-<li class="circle">jakarta.servlet.GenericServlet (implements java.io.<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/io/Serializable.html" title="class or interface in java.io" class="external-link">Serializable</a>, jakarta.servlet.Servlet, jakarta.servlet.ServletConfig)
+<li class="circle">jakarta.servlet.GenericServlet (implements java.io.<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/Serializable.html" title="class or interface in java.io" class="external-link">Serializable</a>, jakarta.servlet.Servlet, jakarta.servlet.ServletConfig)
 <ul>
 <li class="circle">jakarta.servlet.http.HttpServlet
 <ul>
@@ -149,7 +149,7 @@ loadScripts(document, 'script');</script>
 </li>
 </ul>
 </li>
-<li class="circle">io.micronaut.http.server.HttpServerConfiguration (implements io.micronaut.http.context.ServerContextPathProvider)
+<li class="circle">io.micronaut.http.server.HttpServerConfiguration (implements io.micronaut.http.context.ServerContextPathProvider, io.micronaut.scheduling.executor.ThreadSelectionConfiguration)
 <ul>
 <li class="circle">io.micronaut.servlet.http.server.jdk.<a href="io/micronaut/servlet/http/server/jdk/JdkHttpServerConfiguration.html" class="type-name-link" title="class in io.micronaut.servlet.http.server.jdk">JdkHttpServerConfiguration</a> (implements io.micronaut.core.util.Toggleable)</li>
 <li class="circle">io.micronaut.servlet.jetty.<a href="io/micronaut/servlet/jetty/JettyConfiguration.html" class="type-name-link" title="class in io.micronaut.servlet.jetty">JettyConfiguration</a> (implements io.micronaut.core.util.Toggleable)</li>
@@ -158,7 +158,7 @@ loadScripts(document, 'script');</script>
 </ul>
 </li>
 <li class="circle">io.micronaut.servlet.http.server.<a href="io/micronaut/servlet/http/server/HttpServerFactory.html" class="type-name-link" title="class in io.micronaut.servlet.http.server">HttpServerFactory</a></li>
-<li class="circle">java.io.<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/io/InputStream.html" class="type-name-link external-link" title="class or interface in java.io">InputStream</a> (implements java.io.<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/io/Closeable.html" title="class or interface in java.io" class="external-link">Closeable</a>)
+<li class="circle">java.io.<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/InputStream.html" class="type-name-link external-link" title="class or interface in java.io">InputStream</a> (implements java.io.<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/Closeable.html" title="class or interface in java.io" class="external-link">Closeable</a>)
 <ul>
 <li class="circle">io.micronaut.http.poja.util.<a href="io/micronaut/http/poja/util/LimitingInputStream.html" class="type-name-link" title="class in io.micronaut.http.poja.util">LimitingInputStream</a></li>
 </ul>
@@ -215,7 +215,7 @@ loadScripts(document, 'script');</script>
 <li class="circle">io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletBodyBinder.html" class="type-name-link" title="class in io.micronaut.servlet.http">ServletBodyBinder</a>&lt;T&gt; (implements io.micronaut.http.bind.binders.AnnotatedRequestArgumentBinder&lt;A,<wbr>T&gt;)</li>
 <li class="circle">io.micronaut.servlet.engine.server.<a href="io/micronaut/servlet/engine/server/ServletContextEmbeddedServer.html" class="type-name-link" title="class in io.micronaut.servlet.engine.server">ServletContextEmbeddedServer</a> (implements io.micronaut.runtime.server.EmbeddedServer)</li>
 <li class="circle">io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/ServletCookieAdapter.html" class="type-name-link" title="class in io.micronaut.servlet.engine">ServletCookieAdapter</a> (implements io.micronaut.http.cookie.Cookie)</li>
-<li class="circle">io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletHttpHandler.html" class="type-name-link" title="class in io.micronaut.servlet.http">ServletHttpHandler</a>&lt;REQ,<wbr>RES&gt; (implements java.lang.<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/AutoCloseable.html" title="class or interface in java.lang" class="external-link">AutoCloseable</a>, io.micronaut.context.LifeCycle&lt;T&gt;)
+<li class="circle">io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletHttpHandler.html" class="type-name-link" title="class in io.micronaut.servlet.http">ServletHttpHandler</a>&lt;REQ,<wbr>RES&gt; (implements java.lang.<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/AutoCloseable.html" title="class or interface in java.lang" class="external-link">AutoCloseable</a>, io.micronaut.context.LifeCycle&lt;T&gt;)
 <ul>
 <li class="circle">io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/DefaultServletHttpHandler.html" class="type-name-link" title="class in io.micronaut.servlet.engine">DefaultServletHttpHandler</a></li>
 </ul>
@@ -236,11 +236,11 @@ loadScripts(document, 'script');</script>
 </ul>
 </li>
 <li class="circle">io.micronaut.http.poja.test.<a href="io/micronaut/http/poja/test/TestingServerlessEmbeddedApplication.html" class="type-name-link" title="class in io.micronaut.http.poja.test">TestingServerlessEmbeddedApplication</a> (implements io.micronaut.runtime.server.EmbeddedServer)</li>
-<li class="circle">java.lang.<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Throwable.html" class="type-name-link external-link" title="class or interface in java.lang">Throwable</a> (implements java.io.<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/io/Serializable.html" title="class or interface in java.io" class="external-link">Serializable</a>)
+<li class="circle">java.lang.<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Throwable.html" class="type-name-link external-link" title="class or interface in java.lang">Throwable</a> (implements java.io.<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/Serializable.html" title="class or interface in java.io" class="external-link">Serializable</a>)
 <ul>
-<li class="circle">java.lang.<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Exception.html" class="type-name-link external-link" title="class or interface in java.lang">Exception</a>
+<li class="circle">java.lang.<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Exception.html" class="type-name-link external-link" title="class or interface in java.lang">Exception</a>
 <ul>
-<li class="circle">java.lang.<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/RuntimeException.html" class="type-name-link external-link" title="class or interface in java.lang">RuntimeException</a>
+<li class="circle">java.lang.<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/RuntimeException.html" class="type-name-link external-link" title="class or interface in java.lang">RuntimeException</a>
 <ul>
 <li class="circle">io.micronaut.http.exceptions.HttpException
 <ul>
@@ -319,9 +319,9 @@ loadScripts(document, 'script');</script>
 </li>
 </ul>
 </li>
-<li class="circle">java.lang.<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/AutoCloseable.html" class="type-name-link external-link" title="class or interface in java.lang">AutoCloseable</a>
+<li class="circle">java.lang.<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/AutoCloseable.html" class="type-name-link external-link" title="class or interface in java.lang">AutoCloseable</a>
 <ul>
-<li class="circle">java.io.<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/io/Closeable.html" class="type-name-link external-link" title="class or interface in java.io">Closeable</a>
+<li class="circle">java.io.<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/Closeable.html" class="type-name-link external-link" title="class or interface in java.io">Closeable</a>
 <ul>
 <li class="circle">io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletExchange.html" class="type-name-link" title="interface in io.micronaut.servlet.http">ServletExchange</a>&lt;Req,<wbr>Res&gt;</li>
 </ul>
@@ -361,18 +361,18 @@ loadScripts(document, 'script');</script>
 <section class="hierarchy">
 <h2 title="Annotation Interface Hierarchy">Annotation Interface Hierarchy</h2>
 <ul>
-<li class="circle">io.micronaut.servlet.api.annotation.<a href="io/micronaut/servlet/api/annotation/ServletBean.html" class="type-name-link" title="annotation interface in io.micronaut.servlet.api.annotation">ServletBean</a> (implements java.lang.annotation.<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/annotation/Annotation.html" title="class or interface in java.lang.annotation" class="external-link">Annotation</a>)</li>
-<li class="circle">io.micronaut.servlet.api.annotation.<a href="io/micronaut/servlet/api/annotation/ServletFilterBean.html" class="type-name-link" title="annotation interface in io.micronaut.servlet.api.annotation">ServletFilterBean</a> (implements java.lang.annotation.<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/annotation/Annotation.html" title="class or interface in java.lang.annotation" class="external-link">Annotation</a>)</li>
+<li class="circle">io.micronaut.servlet.api.annotation.<a href="io/micronaut/servlet/api/annotation/ServletBean.html" class="type-name-link" title="annotation interface in io.micronaut.servlet.api.annotation">ServletBean</a> (implements java.lang.annotation.<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/annotation/Annotation.html" title="class or interface in java.lang.annotation" class="external-link">Annotation</a>)</li>
+<li class="circle">io.micronaut.servlet.api.annotation.<a href="io/micronaut/servlet/api/annotation/ServletFilterBean.html" class="type-name-link" title="annotation interface in io.micronaut.servlet.api.annotation">ServletFilterBean</a> (implements java.lang.annotation.<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/annotation/Annotation.html" title="class or interface in java.lang.annotation" class="external-link">Annotation</a>)</li>
 </ul>
 </section>
 <section class="hierarchy">
 <h2 title="Enum Class Hierarchy">Enum Class Hierarchy</h2>
 <ul>
-<li class="circle">java.lang.<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" class="type-name-link external-link" title="class or interface in java.lang">Object</a>
+<li class="circle">java.lang.<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" class="type-name-link external-link" title="class or interface in java.lang">Object</a>
 <ul>
-<li class="circle">java.lang.<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Enum.html" class="type-name-link external-link" title="class or interface in java.lang">Enum</a>&lt;E&gt; (implements java.lang.<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Comparable.html" title="class or interface in java.lang" class="external-link">Comparable</a>&lt;T&gt;, java.lang.constant.<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/constant/Constable.html" title="class or interface in java.lang.constant" class="external-link">Constable</a>, java.io.<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/io/Serializable.html" title="class or interface in java.io" class="external-link">Serializable</a>)
+<li class="circle">java.lang.<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Enum.html" class="type-name-link external-link" title="class or interface in java.lang">Enum</a>&lt;E&gt; (implements java.lang.<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Comparable.html" title="class or interface in java.lang" class="external-link">Comparable</a>&lt;T&gt;, java.lang.constant.<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/constant/Constable.html" title="class or interface in java.lang.constant" class="external-link">Constable</a>, java.io.<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/Serializable.html" title="class or interface in java.io" class="external-link">Serializable</a>)
 <ul>
-<li class="circle">io.micronaut.servlet.api.<a href="io/micronaut/servlet/api/ServletAttributes.html" class="type-name-link" title="enum class in io.micronaut.servlet.api">ServletAttributes</a> (implements java.lang.<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/CharSequence.html" title="class or interface in java.lang" class="external-link">CharSequence</a>)</li>
+<li class="circle">io.micronaut.servlet.api.<a href="io/micronaut/servlet/api/ServletAttributes.html" class="type-name-link" title="enum class in io.micronaut.servlet.api">ServletAttributes</a> (implements java.lang.<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/CharSequence.html" title="class or interface in java.lang" class="external-link">CharSequence</a>)</li>
 </ul>
 </li>
 </ul>
@@ -382,9 +382,9 @@ loadScripts(document, 'script');</script>
 <section class="hierarchy">
 <h2 title="Record Class Hierarchy">Record Class Hierarchy</h2>
 <ul>
-<li class="circle">java.lang.<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" class="type-name-link external-link" title="class or interface in java.lang">Object</a>
+<li class="circle">java.lang.<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" class="type-name-link external-link" title="class or interface in java.lang">Object</a>
 <ul>
-<li class="circle">java.lang.<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Record.html" class="type-name-link external-link" title="class or interface in java.lang">Record</a>
+<li class="circle">java.lang.<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Record.html" class="type-name-link external-link" title="class or interface in java.lang">Record</a>
 <ul>
 <li class="circle">io.micronaut.http.poja.apache.<a href="io/micronaut/http/poja/apache/ApacheServletConfiguration.html" class="type-name-link" title="class in io.micronaut.http.poja.apache">ApacheServletConfiguration</a></li>
 <li class="circle">io.micronaut.http.poja.util.<a href="io/micronaut/http/poja/util/MultiValueHeaders.html" class="type-name-link" title="class in io.micronaut.http.poja.util">MultiValueHeaders</a> (implements io.micronaut.http.MutableHttpHeaders)</li>

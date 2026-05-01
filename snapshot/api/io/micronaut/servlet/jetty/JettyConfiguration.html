@@ -89,7 +89,7 @@ loadScripts(document, 'script');</script>
 <div class="header">
 <h1 title="Class JettyConfiguration" class="title">Class JettyConfiguration</h1>
 </div>
-<div class="inheritance" title="Inheritance Tree"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">java.lang.Object</a>
+<div class="inheritance" title="Inheritance Tree"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">java.lang.Object</a>
 <div class="inheritance">io.micronaut.http.server.HttpServerConfiguration
 <div class="inheritance">io.micronaut.servlet.jetty.JettyConfiguration</div>
 </div>
@@ -97,7 +97,7 @@ loadScripts(document, 'script');</script>
 <section class="class-description" id="class-description">
 <dl class="notes">
 <dt>All Implemented Interfaces:</dt>
-<dd><code>io.micronaut.core.util.Toggleable, io.micronaut.http.context.ServerContextPathProvider</code></dd>
+<dd><code>io.micronaut.core.util.Toggleable, io.micronaut.http.context.ServerContextPathProvider, io.micronaut.scheduling.executor.ThreadSelectionConfiguration</code></dd>
 </dl>
 <hr>
 <div class="horizontal-scroll">
@@ -156,13 +156,13 @@ implements io.micronaut.core.util.Toggleable</span></div>
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Field</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-first even-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
 <div class="col-second even-row-color"><code><a href="#ENABLED_PROPERTY" class="member-name-link">ENABLED_PROPERTY</a></code></div>
 <div class="col-last even-row-color">&nbsp;</div>
 <div class="col-first odd-row-color"><code>protected org.eclipse.jetty.server.HttpConfiguration</code></div>
 <div class="col-second odd-row-color"><code><a href="#httpConfiguration" class="member-name-link">httpConfiguration</a></code></div>
 <div class="col-last odd-row-color">&nbsp;</div>
-<div class="col-first even-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-first even-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
 <div class="col-second even-row-color"><code><a href="#PREFIX" class="member-name-link">PREFIX</a></code></div>
 <div class="col-last even-row-color">&nbsp;</div>
 </div>
@@ -205,13 +205,13 @@ implements io.micronaut.core.util.Toggleable</span></div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>org.eclipse.jetty.server.HttpConfiguration</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getHttpConfiguration()" class="member-name-link">getHttpConfiguration</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getInitParameters()" class="member-name-link">getInitParameters</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a><wbr>&lt;io.micronaut.http.server.HttpServerConfiguration.MultipartConfiguration&gt;</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a><wbr>&lt;io.micronaut.http.server.HttpServerConfiguration.MultipartConfiguration&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getMultipartConfiguration()" class="member-name-link">getMultipartConfiguration</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a><wbr>&lt;<a href="JettyConfiguration.JettyRequestLog.html" title="class in io.micronaut.servlet.jetty">JettyConfiguration.JettyRequestLog</a>&gt;</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a><wbr>&lt;<a href="JettyConfiguration.JettyRequestLog.html" title="class in io.micronaut.servlet.jetty">JettyConfiguration.JettyRequestLog</a>&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getRequestLog()" class="member-name-link">getRequestLog</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
@@ -223,7 +223,7 @@ implements io.micronaut.core.util.Toggleable</span></div>
 <div class="block">Sets whether the Jetty runtime is enabled.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setInitParameters(java.util.Map)" class="member-name-link">setInitParameters</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;initParameters)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setInitParameters(java.util.Map)" class="member-name-link">setInitParameters</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;initParameters)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Sets the servlet init parameters.</div>
 </div>
@@ -232,10 +232,10 @@ implements io.micronaut.core.util.Toggleable</span></div>
 </div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-io.micronaut.http.server.HttpServerConfiguration">Methods inherited from class&nbsp;io.micronaut.http.server.HttpServerConfiguration</h3>
-<code>getApplicationConfiguration, getClientAddressHeader, getContextPath, getCors, getDefaultCharset, getHost, getHostResolution, getHttpVersion, getIdleTimeout, getLocaleResolution, getMaxParams, getMaxRequestBufferSize, getMaxRequestSize, getMultipart, getPort, getReadIdleTimeout, getReadTimeout, getServerHeader, getThreadSelection, getWriteIdleTimeout, isDateHeader, isDispatchOptionsRequests, isDualProtocol, isEscapeHtmlUrl, isHttpToHttpsRedirect, isLogHandledExceptions, isNotFoundOnMissingBody, isSemicolonIsNormalChar, isValidateUrl, setClientAddressHeader, setContextPath, setCors, setDateHeader, setDefaultCharset, setDispatchOptionsRequests, setDualProtocol, setEscapeHtmlUrl, setHost, setHostResolution, setHttpToHttpsRedirect, setHttpVersion, setIdleTimeout, setLocaleResolution, setLogHandledExceptions, setMaxParams, setMaxRequestBufferSize, setMaxRequestSize, setMultipart, setNotFoundOnMissingBody, setPort, setReadIdleTimeout, setReadTimeout, setSemicolonIsNormalChar, setServerHeader, setThreadSelection, setValidateUrl, setWriteIdleTimeout</code></div>
+<code>getApplicationConfiguration, getClientAddressHeader, getContextPath, getCors, getDefaultCharset, getHost, getHostResolution, getHttpVersion, getIdleTimeout, getLocaleResolution, getMaxParams, getMaxRequestBufferSize, getMaxRequestSize, getMultipart, getPort, getReadIdleTimeout, getReadTimeout, getServerHeader, getThreadSelection, getWriteIdleTimeout, isDateHeader, isDispatchOptionsRequests, isDualProtocol, isEscapeHtmlUrl, isHttpToHttpsRedirect, isLogHandledExceptions, isNotFoundOnMissingBody, isRedispatchNonBlockingOnly, isSemicolonIsNormalChar, isValidateUrl, setClientAddressHeader, setContextPath, setCors, setDateHeader, setDefaultCharset, setDispatchOptionsRequests, setDualProtocol, setEscapeHtmlUrl, setHost, setHostResolution, setHttpToHttpsRedirect, setHttpVersion, setIdleTimeout, setLocaleResolution, setLogHandledExceptions, setMaxParams, setMaxRequestBufferSize, setMaxRequestSize, setMultipart, setNotFoundOnMissingBody, setPort, setReadIdleTimeout, setReadTimeout, setRedispatchNonBlockingOnly, setSemicolonIsNormalChar, setServerHeader, setThreadSelection, setValidateUrl, setWriteIdleTimeout</code></div>
 <div class="inherited-list">
-<h3 id="methods-inherited-from-class-java.lang.Object">Methods inherited from class&nbsp;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#method-summary" title="class or interface in java.lang" class="external-link">Object</a></h3>
-<code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#clone()" title="class or interface in java.lang" class="external-link">clone</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#equals(java.lang.Object)" title="class or interface in java.lang" class="external-link">equals</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#finalize()" title="class or interface in java.lang" class="external-link">finalize</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#getClass()" title="class or interface in java.lang" class="external-link">getClass</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#hashCode()" title="class or interface in java.lang" class="external-link">hashCode</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#notify()" title="class or interface in java.lang" class="external-link">notify</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#notifyAll()" title="class or interface in java.lang" class="external-link">notifyAll</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#toString()" title="class or interface in java.lang" class="external-link">toString</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#wait()" title="class or interface in java.lang" class="external-link">wait</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#wait(long)" title="class or interface in java.lang" class="external-link">wait</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#wait(long,int)" title="class or interface in java.lang" class="external-link">wait</a></code></div>
+<h3 id="methods-inherited-from-class-java.lang.Object">Methods inherited from class&nbsp;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#method-summary" title="class or interface in java.lang" class="external-link">Object</a></h3>
+<code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#clone()" title="class or interface in java.lang" class="external-link">clone</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#equals(java.lang.Object)" title="class or interface in java.lang" class="external-link">equals</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#finalize()" title="class or interface in java.lang" class="external-link">finalize</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#getClass()" title="class or interface in java.lang" class="external-link">getClass</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#hashCode()" title="class or interface in java.lang" class="external-link">hashCode</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#notify()" title="class or interface in java.lang" class="external-link">notify</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#notifyAll()" title="class or interface in java.lang" class="external-link">notifyAll</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#toString()" title="class or interface in java.lang" class="external-link">toString</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#wait()" title="class or interface in java.lang" class="external-link">wait</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#wait(long)" title="class or interface in java.lang" class="external-link">wait</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#wait(long,int)" title="class or interface in java.lang" class="external-link">wait</a></code></div>
 </section>
 </li>
 </ul>
@@ -251,7 +251,7 @@ implements io.micronaut.core.util.Toggleable</span></div>
 <section class="detail" id="PREFIX">
 <h3>PREFIX</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">PREFIX</span></div>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">PREFIX</span></div>
 <dl class="notes">
 <dt>See Also:</dt>
 <dd>
@@ -267,7 +267,7 @@ implements io.micronaut.core.util.Toggleable</span></div>
 <section class="detail" id="ENABLED_PROPERTY">
 <h3>ENABLED_PROPERTY</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">ENABLED_PROPERTY</span></div>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">ENABLED_PROPERTY</span></div>
 <dl class="notes">
 <dt>See Also:</dt>
 <dd>
@@ -349,7 +349,7 @@ implements io.micronaut.core.util.Toggleable</span></div>
 <section class="detail" id="getMultipartConfiguration()">
 <h3>getMultipartConfiguration</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;io.micronaut.http.server.HttpServerConfiguration.MultipartConfiguration&gt;</span>&nbsp;<span class="element-name">getMultipartConfiguration</span>()</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;io.micronaut.http.server.HttpServerConfiguration.MultipartConfiguration&gt;</span>&nbsp;<span class="element-name">getMultipartConfiguration</span>()</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>The multipart configuration</dd>
@@ -361,7 +361,7 @@ implements io.micronaut.core.util.Toggleable</span></div>
 <section class="detail" id="getRequestLog()">
 <h3>getRequestLog</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="JettyConfiguration.JettyRequestLog.html" title="class in io.micronaut.servlet.jetty">JettyConfiguration.JettyRequestLog</a>&gt;</span>&nbsp;<span class="element-name">getRequestLog</span>()</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="JettyConfiguration.JettyRequestLog.html" title="class in io.micronaut.servlet.jetty">JettyConfiguration.JettyRequestLog</a>&gt;</span>&nbsp;<span class="element-name">getRequestLog</span>()</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>The request log configuration.</dd>
@@ -398,7 +398,7 @@ implements io.micronaut.core.util.Toggleable</span></div>
 <section class="detail" id="getInitParameters()">
 <h3>getInitParameters</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name">getInitParameters</span>()</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name">getInitParameters</span>()</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>The servlet init parameters</dd>
@@ -411,7 +411,7 @@ implements io.micronaut.core.util.Toggleable</span></div>
 <h3>setInitParameters</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">setInitParameters</span><wbr><span class="parameters">(@MapFormat(transformation=FLAT,keyFormat=RAW)
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;initParameters)</span></div>
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;initParameters)</span></div>
 <div class="block">Sets the servlet init parameters.</div>
 <dl class="notes">
 <dt>Parameters:</dt>

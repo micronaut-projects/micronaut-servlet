@@ -115,22 +115,22 @@ extends io.micronaut.http.MutableHttpResponse&lt;B&gt;</span></div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#type-param-N" title="type parameter in ServletHttpResponse">N</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getNativeResponse()" class="member-name-link">getNativeResponse</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/io/OutputStream.html" title="class or interface in java.io" class="external-link">OutputStream</a></code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/OutputStream.html" title="class or interface in java.io" class="external-link">OutputStream</a></code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getOutputStream()" class="member-name-link">getOutputStream</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
-<div class="block">Returns an <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/io/OutputStream.html" title="class or interface in java.io" class="external-link"><code>OutputStream</code></a> that can be used to write the body of the response.</div>
+<div class="block">Returns an <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/OutputStream.html" title="class or interface in java.io" class="external-link"><code>OutputStream</code></a> that can be used to write the body of the response.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/io/BufferedWriter.html" title="class or interface in java.io" class="external-link">BufferedWriter</a></code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/BufferedWriter.html" title="class or interface in java.io" class="external-link">BufferedWriter</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getWriter()" class="member-name-link">getWriter</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
-<div class="block">Returns a <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/io/BufferedWriter.html" title="class or interface in java.io" class="external-link"><code>BufferedWriter</code></a> that can be used to write the text body of the response.</div>
+<div class="block">Returns a <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/BufferedWriter.html" title="class or interface in java.io" class="external-link"><code>BufferedWriter</code></a> that can be used to write the text body of the response.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default boolean</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#isCommitted()" class="member-name-link">isCommitted</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">If native response is commited and cannot be modified anymore.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default @NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/CompletableFuture.html" title="class or interface in java.util.concurrent" class="external-link">CompletableFuture</a><wbr>&lt;?&gt;</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default @NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletableFuture.html" title="class or interface in java.util.concurrent" class="external-link">CompletableFuture</a><wbr>&lt;?&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#stream(io.micronaut.http.body.CloseableByteBody)" class="member-name-link">stream</a><wbr>(@NonNull io.micronaut.http.body.CloseableByteBody&nbsp;body)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Stream data from the given ByteBody.</div>
@@ -203,17 +203,17 @@ extends io.micronaut.http.MutableHttpResponse&lt;B&gt;</span></div>
 <section class="detail" id="getOutputStream()">
 <h3>getOutputStream</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/io/OutputStream.html" title="class or interface in java.io" class="external-link">OutputStream</a></span>&nbsp;<span class="element-name">getOutputStream</span>()
-                      throws <span class="exceptions"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/io/IOException.html" title="class or interface in java.io" class="external-link">IOException</a></span></div>
-<div class="block">Returns an <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/io/OutputStream.html" title="class or interface in java.io" class="external-link"><code>OutputStream</code></a> that can be used to write the body of the response.
+<div class="member-signature"><span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/OutputStream.html" title="class or interface in java.io" class="external-link">OutputStream</a></span>&nbsp;<span class="element-name">getOutputStream</span>()
+                      throws <span class="exceptions"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/IOException.html" title="class or interface in java.io" class="external-link">IOException</a></span></div>
+<div class="block">Returns an <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/OutputStream.html" title="class or interface in java.io" class="external-link"><code>OutputStream</code></a> that can be used to write the body of the response.
 This method is typically used to write binary data. If the body is text, the
 <a href="#getWriter()"><code>getWriter()</code></a> method is more appropriate.</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>The output stream</dd>
 <dt>Throws:</dt>
-<dd><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/io/IOException.html" title="class or interface in java.io" class="external-link">IOException</a></code> - if a valid <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/io/OutputStream.html" title="class or interface in java.io" class="external-link"><code>OutputStream</code></a> cannot be returned for some reason.</dd>
-<dd><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/IllegalStateException.html" title="class or interface in java.lang" class="external-link">IllegalStateException</a></code> - if <a href="#getWriter()"><code>getWriter()</code></a> has already been called on this instance.</dd>
+<dd><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/IOException.html" title="class or interface in java.io" class="external-link">IOException</a></code> - if a valid <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/OutputStream.html" title="class or interface in java.io" class="external-link"><code>OutputStream</code></a> cannot be returned for some reason.</dd>
+<dd><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/IllegalStateException.html" title="class or interface in java.lang" class="external-link">IllegalStateException</a></code> - if <a href="#getWriter()"><code>getWriter()</code></a> has already been called on this instance.</dd>
 </dl>
 </div>
 </section>
@@ -222,17 +222,17 @@ This method is typically used to write binary data. If the body is text, the
 <section class="detail" id="getWriter()">
 <h3>getWriter</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/io/BufferedWriter.html" title="class or interface in java.io" class="external-link">BufferedWriter</a></span>&nbsp;<span class="element-name">getWriter</span>()
-                  throws <span class="exceptions"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/io/IOException.html" title="class or interface in java.io" class="external-link">IOException</a></span></div>
-<div class="block">Returns a <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/io/BufferedWriter.html" title="class or interface in java.io" class="external-link"><code>BufferedWriter</code></a> that can be used to write the text body of the response.
+<div class="member-signature"><span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/BufferedWriter.html" title="class or interface in java.io" class="external-link">BufferedWriter</a></span>&nbsp;<span class="element-name">getWriter</span>()
+                  throws <span class="exceptions"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/IOException.html" title="class or interface in java.io" class="external-link">IOException</a></span></div>
+<div class="block">Returns a <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/BufferedWriter.html" title="class or interface in java.io" class="external-link"><code>BufferedWriter</code></a> that can be used to write the text body of the response.
 If the written text will not be US-ASCII, you should specify a character encoding by calling
 <code>MutableHttpResponse.contentEncoding(CharSequence)</code> before calling this method.</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>The writer</dd>
 <dt>Throws:</dt>
-<dd><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/io/IOException.html" title="class or interface in java.io" class="external-link">IOException</a></code> - if a valid <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/io/BufferedWriter.html" title="class or interface in java.io" class="external-link"><code>BufferedWriter</code></a> cannot be returned for some reason.</dd>
-<dd><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/IllegalStateException.html" title="class or interface in java.lang" class="external-link">IllegalStateException</a></code> - if <a href="#getOutputStream()"><code>getOutputStream()</code></a> has already been called on this
+<dd><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/IOException.html" title="class or interface in java.io" class="external-link">IOException</a></code> - if a valid <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/BufferedWriter.html" title="class or interface in java.io" class="external-link"><code>BufferedWriter</code></a> cannot be returned for some reason.</dd>
+<dd><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/IllegalStateException.html" title="class or interface in java.lang" class="external-link">IllegalStateException</a></code> - if <a href="#getOutputStream()"><code>getOutputStream()</code></a> has already been called on this
     instance.</dd>
 </dl>
 </div>
@@ -242,8 +242,8 @@ If the written text will not be US-ASCII, you should specify a character encodin
 <section class="detail" id="stream(org.reactivestreams.Publisher)">
 <h3>stream</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="annotations"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Deprecated.html" title="class or interface in java.lang" class="external-link">@Deprecated</a>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Deprecated.html#forRemoval()" title="class or interface in java.lang" class="external-link">forRemoval</a>=true,
-            <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Deprecated.html#since()" title="class or interface in java.lang" class="external-link">since</a>="5.1.0")
+<div class="member-signature"><span class="annotations"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Deprecated.html" title="class or interface in java.lang" class="external-link">@Deprecated</a>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Deprecated.html#forRemoval()" title="class or interface in java.lang" class="external-link">forRemoval</a>=true,
+            <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Deprecated.html#since()" title="class or interface in java.lang" class="external-link">since</a>="5.1.0")
 </span><span class="modifiers">default</span>&nbsp;<span class="return-type">org.reactivestreams.Publisher&lt;io.micronaut.http.MutableHttpResponse&lt;?&gt;&gt;</span>&nbsp;<span class="element-name">stream</span><wbr><span class="parameters">(org.reactivestreams.Publisher&lt;?&gt;&nbsp;dataPublisher)</span></div>
 <div class="deprecation-block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span>
 <div class="deprecation-comment">Use <a href="#stream(io.micronaut.http.body.CloseableByteBody)"><code>stream(CloseableByteBody)</code></a></div>
@@ -262,7 +262,7 @@ If the written text will not be US-ASCII, you should specify a character encodin
 <section class="detail" id="stream(io.micronaut.http.body.CloseableByteBody)">
 <h3>stream</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/CompletableFuture.html" title="class or interface in java.util.concurrent" class="external-link">CompletableFuture</a>&lt;?&gt;</span>&nbsp;<span class="element-name">stream</span><wbr><span class="parameters">(@NonNull io.micronaut.http.body.CloseableByteBody&nbsp;body)</span></div>
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletableFuture.html" title="class or interface in java.util.concurrent" class="external-link">CompletableFuture</a>&lt;?&gt;</span>&nbsp;<span class="element-name">stream</span><wbr><span class="parameters">(@NonNull io.micronaut.http.body.CloseableByteBody&nbsp;body)</span></div>
 <div class="block">Stream data from the given ByteBody.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
