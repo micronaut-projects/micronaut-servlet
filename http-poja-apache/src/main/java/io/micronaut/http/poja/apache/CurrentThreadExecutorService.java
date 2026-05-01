@@ -54,7 +54,7 @@ final class CurrentThreadExecutorService extends AbstractExecutorService {
 
     @Override
     public boolean awaitTermination(long timeout, java.util.concurrent.TimeUnit unit) {
-        return true;
+        return isTerminated();
     }
 
     @Override

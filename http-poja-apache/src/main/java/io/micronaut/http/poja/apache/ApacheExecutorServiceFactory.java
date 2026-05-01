@@ -37,7 +37,7 @@ final class ApacheExecutorServiceFactory {
     @Singleton
     @Named(TaskExecutors.BLOCKING)
     @Replaces(value = ExecutorService.class, factory = IOExecutorServiceConfig.class, named = TaskExecutors.BLOCKING)
-    @Requires(missingProperty = ExecutorConfiguration.PREFIX + "." + TaskExecutors.BLOCKING)
+    @Requires(missingProperty = ExecutorConfiguration.PREFIX + "." + TaskExecutors.BLOCKING + ".type")
     ExecutorService blocking() {
         return new CurrentThreadExecutorService();
     }
