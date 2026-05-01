@@ -10,7 +10,7 @@ tasks.withType(JavaCompile).configureEach {
 
 tasks.withType(GroovyCompile).configureEach {
     sourceCompatibility = "21"
-    targetCompatibility = "21"
+    targetCompatibility = "25"
 }
 
 ossIndexAudit {
