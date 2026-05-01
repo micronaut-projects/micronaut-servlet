@@ -33,7 +33,10 @@ import io.micronaut.runtime.server.event.ServerShutdownEvent;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 
-import java.net.*;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
