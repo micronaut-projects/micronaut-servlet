@@ -84,19 +84,34 @@ public class TestingServerlessEmbeddedApplication implements EmbeddedServer {
         createServerSocket();
 
         // Run the thread that sends requests to the server
-        new Thread(() -> {
+        Thread acceptThread = new Thread(() -> {
             while (!serverSocket.isClosed()) {
-                try (Socket socket = serverSocket.accept()) {
-                    application.start(socket.getInputStream(), socket.getOutputStream());
+                try {
+                    Socket socket = serverSocket.accept();
+                    Thread connectionThread = new Thread(() -> handleConnection(socket));
+                    connectionThread.setDaemon(true);
+                    connectionThread.start();
                 } catch (java.net.SocketException ignored) {
                     // Socket closed
                 } catch (IOException e) {
                     throw new UncheckedIOException(e);
                 }
             }
-        }).start();
+        });
+        acceptThread.setDaemon(true);
+        acceptThread.start();
 
         return this;
+    }
+
+    private void handleConnection(Socket socket) {
+        try (socket) {
+            application.start(socket.getInputStream(), socket.getOutputStream());
+        } catch (java.net.SocketException ignored) {
+            // Socket closed
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     @Override
