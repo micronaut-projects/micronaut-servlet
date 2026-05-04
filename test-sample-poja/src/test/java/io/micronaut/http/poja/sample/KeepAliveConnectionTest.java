@@ -12,8 +12,11 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
+import java.util.Locale;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 @MicronautTest
 class KeepAliveConnectionTest {
@@ -30,8 +33,10 @@ class KeepAliveConnectionTest {
                 "GET / HTTP/1.1\r\n" +
                     "Host: h\r\n" +
                     "\r\n");
-            assertTrue(readUntilContains(keepAliveSocket.getInputStream(), "Hello, Micronaut Without Netty!\n")
-                .contains("Hello, Micronaut Without Netty!\n"));
+            String firstResponse = readUntilContains(keepAliveSocket.getInputStream(), "Hello, Micronaut Without Netty!\n");
+            assertTrue(firstResponse.contains("Hello, Micronaut Without Netty!\n"));
+            assertFalse(firstResponse.toLowerCase(Locale.ROOT).contains("connection: close"));
+            assertConnectionStillOpen(keepAliveSocket);
 
             try (Socket secondSocket = socket()) {
                 writeRequest(secondSocket,
@@ -78,6 +83,18 @@ class KeepAliveConnectionTest {
             }
         }
         return output.toString(StandardCharsets.UTF_8);
+    }
+
+    private static void assertConnectionStillOpen(Socket socket) throws IOException {
+        try {
+            int read = socket.getInputStream().read();
+            if (read < 0) {
+                fail("Expected keep-alive connection to remain open");
+            }
+            fail("Expected keep-alive connection to stay open without immediate extra data");
+        } catch (SocketTimeoutException expected) {
+            // No EOF and no extra data means the connection stayed open.
+        }
     }
 
     private static boolean contains(byte[] bytes, byte[] expectedBytes) {

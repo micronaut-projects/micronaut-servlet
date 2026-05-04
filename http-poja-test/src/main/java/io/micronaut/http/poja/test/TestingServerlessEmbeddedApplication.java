@@ -33,6 +33,10 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URI;
 import java.net.URL;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -53,7 +57,9 @@ public class TestingServerlessEmbeddedApplication implements EmbeddedServer {
     private PojaHttpServerlessApplication<?, ?> application;
 
     private final AtomicBoolean isRunning = new AtomicBoolean(false);
+    private final Set<Socket> activeConnections = ConcurrentHashMap.newKeySet();
     private ServerSocket serverSocket;
+    private ExecutorService connectionExecutor;
     private int port;
 
     /**
@@ -82,15 +88,19 @@ public class TestingServerlessEmbeddedApplication implements EmbeddedServer {
             return this; // Already running
         }
         createServerSocket();
+        connectionExecutor = Executors.newCachedThreadPool(runnable -> {
+            Thread thread = new Thread(runnable);
+            thread.setDaemon(true);
+            return thread;
+        });
 
         // Run the thread that sends requests to the server
         Thread acceptThread = new Thread(() -> {
             while (!serverSocket.isClosed()) {
                 try {
                     Socket socket = serverSocket.accept();
-                    Thread connectionThread = new Thread(() -> handleConnection(socket));
-                    connectionThread.setDaemon(true);
-                    connectionThread.start();
+                    activeConnections.add(socket);
+                    connectionExecutor.execute(() -> handleConnection(socket));
                 } catch (java.net.SocketException ignored) {
                     // Socket closed
                 } catch (IOException e) {
@@ -111,12 +121,27 @@ public class TestingServerlessEmbeddedApplication implements EmbeddedServer {
             // Socket closed
         } catch (IOException e) {
             throw new UncheckedIOException(e);
+        } finally {
+            activeConnections.remove(socket);
         }
     }
 
     @Override
     public @NonNull TestingServerlessEmbeddedApplication stop() {
+        isRunning.set(false);
         application.stop();
+        for (Socket connection : activeConnections) {
+            try {
+                connection.close();
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        }
+        activeConnections.clear();
+        if (connectionExecutor != null) {
+            connectionExecutor.shutdownNow();
+            connectionExecutor = null;
+        }
         try {
             serverSocket.close();
         } catch (IOException e) {
