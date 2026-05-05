@@ -2037,7 +2037,8 @@ micronaut.server.undertow.accessLog.outputDirectory = "/var/logs"</code></pre>
 
 
 <div class="paragraph">
-<p>HTTP POJA allows creating Micronaut applications that consume respond to HTTP requests with streams. By default, the application will read requests from standard input stream and write responses to standard output. The requests can only be answered in a serial manner.
+<p>HTTP POJA allows creating Micronaut applications that consume and respond to HTTP requests with streams. By default, the application will read requests from standard input stream and write responses to standard output. The requests can only be answered in a serial manner.
+Blocking work also stays on the POJA request thread by default, so using <code>@ExecuteOn(TaskExecutors.BLOCKING)</code> does not create additional Micronaut executor threads for POJA applications. If you need different behavior, configure the <code>blocking</code> executor explicitly with the standard <code>micronaut.executors.blocking.*</code> properties.
 Currently HTTP POJA is based on <a href="https://hc.apache.org/httpcomponents-core-5.2.x/">Apache HTTP Core library</a>.</p>
 </div>
 <div class="paragraph">
