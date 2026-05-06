@@ -5,6 +5,7 @@ servletAnnotation: Servlet Annotation Support
 warDeployment:
   title: WAR Deployment
   versioning: Container version considerations
+  payara: Payara deployment
   externalConfig: External Configuration
   warContext: WAR Context path
 jetty: Jetty Server
