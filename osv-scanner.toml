@@ -1,0 +1,4 @@
+[[IgnoredVulns]]
+id = "GHSA-3x3v-w654-m28m"
+reason = "No Undertow version patched for io.undertow:undertow-core:2.3.24.Final"
+
