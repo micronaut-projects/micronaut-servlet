@@ -15,6 +15,7 @@ io.micronaut.servlet.http
 io.micronaut.servlet.http.encoders
 io.micronaut.servlet.http.server
 io.micronaut.servlet.http.server.jdk
+io.micronaut.servlet.info
 io.micronaut.servlet.jetty
 io.micronaut.servlet.tomcat
 io.micronaut.servlet.undertow
