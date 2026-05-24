@@ -23,7 +23,6 @@ class TonmcatHttp2OverPlaintextSpec extends Specification {
     @Inject
     @Client(
             value = "/",
-            alpnModes = HttpVersionSelection.ALPN_HTTP_2,
             plaintextMode = HttpVersionSelection.PlaintextMode.H2C)
     HttpClient client
 
