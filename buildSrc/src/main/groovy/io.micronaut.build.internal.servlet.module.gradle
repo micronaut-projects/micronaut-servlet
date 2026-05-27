@@ -15,6 +15,6 @@ tasks.withType(GroovyCompile).configureEach {
 
 ossIndexAudit {
     excludeCoordinates = [
-            "io.undertow:undertow-core:2.3.24.Final" // no patched version https://ossindex.sonatype.org/component/pkg:maven/io.undertow/undertow-core
+            "io.undertow:undertow-core:2.4.1.Final" // no patched version https://ossindex.sonatype.org/component/pkg:maven/io.undertow/undertow-core
     ]
 }
