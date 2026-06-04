@@ -2,6 +2,8 @@ package io.micronaut.servlet.engine
 
 import io.micronaut.core.convert.ConversionService
 import io.micronaut.core.io.buffer.ByteArrayBufferFactory
+import io.micronaut.http.HttpResponse
+import io.micronaut.http.HttpResponseProvider
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.Produces
@@ -92,6 +94,24 @@ class DefaultServletHttpResponseSpec extends Specification {
         output.toString() == "raw"
     }
 
+    void "stream publisher writes raw byte buffers without json delimiters"() {
+        given:
+        def output = new CapturingServletOutputStream()
+        HttpServletResponse servletResponse = Stub(HttpServletResponse) {
+            getOutputStream() >> output
+            getContentType() >> MediaType.APPLICATION_OCTET_STREAM
+        }
+        def response = newResponse(servletResponse)
+        def buffer = ByteArrayBufferFactory.INSTANCE.wrap("buffer".bytes)
+
+        when:
+        def emitted = Flux.from(response.stream(Flux.just(buffer))).blockLast()
+
+        then:
+        emitted.is(response)
+        output.toString() == "buffer"
+    }
+
     void "stream publisher reports status errors before data is written"() {
         given:
         def output = new CapturingServletOutputStream()
@@ -110,6 +130,57 @@ class DefaultServletHttpResponseSpec extends Specification {
         emitted.is(response)
         status == HttpStatus.BAD_REQUEST.code
         output.toString() == "bad request"
+    }
+
+    void "stream publisher converts non-status errors before data is written"() {
+        given:
+        def output = new CapturingServletOutputStream()
+        int status = 0
+        HttpServletResponse servletResponse = Stub(HttpServletResponse) {
+            getOutputStream() >> output
+            getContentType() >> MediaType.TEXT_PLAIN
+            setStatus(_ as Integer) >> { int code -> status = code }
+        }
+        def response = newResponse(servletResponse)
+
+        when:
+        def emitted = Flux.from(response.stream(Flux.error(new IllegalStateException("boom")))).blockLast()
+
+        then:
+        emitted.is(response)
+        status == HttpStatus.INTERNAL_SERVER_ERROR.code
+        output.toString() == "Internal Server Error: boom"
+    }
+
+    void "stream publisher forwards converted errors after data is written"() {
+        given:
+        def output = new CapturingServletOutputStream()
+        int status = 0
+        HttpServletResponse servletResponse = Stub(HttpServletResponse) {
+            getOutputStream() >> output
+            getContentType() >> null
+            setStatus(_ as Integer) >> { int code -> status = code }
+        }
+        def response = newResponse(servletResponse)
+
+        when:
+        Flux.from(response.stream(Flux.concat(Flux.just("partial"), Flux.error(new IllegalStateException("boom"))))).blockLast()
+
+        then:
+        thrown(HttpStatusException)
+        status == HttpStatus.INTERNAL_SERVER_ERROR.code
+        output.toString() == "[partial"
+    }
+
+    void "body unwraps http response provider body"() {
+        given:
+        def response = newResponse(Stub(HttpServletResponse))
+
+        when:
+        response.body(new ProvidedResponse(HttpResponse.ok("provided")))
+
+        then:
+        response.getBody().get() == "provided"
     }
 
     void "body sets content type from produces annotation when absent"() {
@@ -202,5 +273,18 @@ class DefaultServletHttpResponseSpec extends Specification {
 
     @Produces(MediaType.TEXT_PLAIN)
     private static final class PlainTextBody {
+    }
+
+    private static final class ProvidedResponse implements HttpResponseProvider {
+        private final HttpResponse<?> response
+
+        private ProvidedResponse(HttpResponse<?> response) {
+            this.response = response
+        }
+
+        @Override
+        HttpResponse<?> getResponse() {
+            response
+        }
     }
 }

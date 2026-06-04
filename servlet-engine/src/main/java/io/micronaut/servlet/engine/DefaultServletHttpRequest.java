@@ -87,7 +87,6 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalLong;
-import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executor;
@@ -127,7 +126,7 @@ public final class DefaultServletHttpRequest<B> implements
     private final @Nullable SSLSessionProvider sslSessionProvider;
     private volatile @Nullable DefaultServletCookies cookies;
     private Supplier<Optional<B>> body;
-    private final Queue<Runnable> disposalResources = new ConcurrentLinkedQueue<>();
+    private final ConcurrentLinkedQueue<Runnable> disposalResources = new ConcurrentLinkedQueue<>();
 
     private boolean bodyIsReadAsync;
     private @Nullable B parsedBody;
