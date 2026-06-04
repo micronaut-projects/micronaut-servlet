@@ -13,14 +13,19 @@ class JettyEnablementSpec extends Specification {
 
         expect:
         configuration.enabled
+        configuration.multipartConfiguration.empty
+        configuration.requestLog.empty
+        configuration.initParameters.isEmpty()
         JettyConfiguration.PREFIX == 'micronaut.server.jetty'
         JettyConfiguration.ENABLED_PROPERTY == 'micronaut.server.jetty.enabled'
 
         when:
         configuration.enabled = false
+        configuration.initParameters = ["name": "value"]
 
         then:
         !configuration.enabled
+        configuration.initParameters == ["name": "value"]
     }
 
     void "jetty runtime can be disabled"() {

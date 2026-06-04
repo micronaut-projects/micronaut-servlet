@@ -124,7 +124,7 @@ public final class DefaultServletHttpRequest<B> implements
     private final ByteBodyFactory byteBodyFactory;
     private final Executor ioExecutor;
     private final @Nullable SSLSessionProvider sslSessionProvider;
-    private volatile @Nullable DefaultServletCookies cookies;
+    private @Nullable DefaultServletCookies cookies;
     private Supplier<Optional<B>> body;
     private final ConcurrentLinkedQueue<Runnable> disposalResources = new ConcurrentLinkedQueue<>();
 
@@ -439,16 +439,11 @@ public final class DefaultServletHttpRequest<B> implements
 
     @NonNull
     @Override
-    public Cookies getCookies() {
+    public synchronized Cookies getCookies() {
         DefaultServletCookies cookies = this.cookies;
         if (cookies == null) {
-            synchronized (this) { // double check
-                cookies = this.cookies;
-                if (cookies == null) {
-                    cookies = new DefaultServletCookies(delegate.getCookies());
-                    this.cookies = cookies;
-                }
-            }
+            cookies = new DefaultServletCookies(delegate.getCookies());
+            this.cookies = cookies;
         }
         return cookies;
     }
@@ -593,7 +588,7 @@ public final class DefaultServletHttpRequest<B> implements
     }
 
     @Override
-    public void addDisposalResource(Runnable runnable) {
+    public synchronized void addDisposalResource(Runnable runnable) {
         Objects.requireNonNull(runnable, "Disposable resource cannot be null");
         disposalResources.add(runnable);
     }
@@ -625,7 +620,7 @@ public final class DefaultServletHttpRequest<B> implements
         return new RawFormField(metadata, body);
     }
 
-    private void runDisposalResources() {
+    private synchronized void runDisposalResources() {
         Runnable runnable;
         while ((runnable = disposalResources.poll()) != null) {
             runnable.run();

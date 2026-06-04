@@ -319,7 +319,7 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
         ConvertibleMultiValues<CharSequence> formData = getFormData();
         for (String name : formData.names()) {
             List<CharSequence> values = formData.getAll(name);
-            if (values.isEmpty()) {
+            if (values == null || values.isEmpty()) {
                 merged.computeIfAbsent(name, key -> new ArrayList<>());
                 continue;
             }

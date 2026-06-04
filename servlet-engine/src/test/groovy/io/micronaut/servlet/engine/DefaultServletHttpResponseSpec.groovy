@@ -8,6 +8,8 @@ import io.micronaut.http.HttpStatus
 import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.Produces
 import io.micronaut.http.body.ByteBodyFactory
+import io.micronaut.http.body.MessageBodyHandlerRegistry
+import io.micronaut.http.body.MessageBodyWriter
 import io.micronaut.http.exceptions.HttpStatusException
 import io.micronaut.servlet.http.BodyBuilder
 import jakarta.servlet.ServletInputStream
@@ -112,6 +114,49 @@ class DefaultServletHttpResponseSpec extends Specification {
         output.toString() == "buffer"
     }
 
+    void "stream publisher writes objects with message body writer"() {
+        given:
+        def output = new CapturingServletOutputStream()
+        HttpServletResponse servletResponse = Stub(HttpServletResponse) {
+            getOutputStream() >> output
+            getContentType() >> MediaType.APPLICATION_JSON
+        }
+        MessageBodyWriter<EncodedBody> writer = Stub(MessageBodyWriter) {
+            writeTo(_, _, _ as EncodedBody, _, _ as OutputStream) >> { args ->
+                args[4].write("encoded:${args[2].value}".bytes)
+            }
+        }
+        MessageBodyHandlerRegistry registry = Stub(MessageBodyHandlerRegistry) {
+            findWriter(_, _ as MediaType) >> Optional.empty()
+            findWriter(_) >> Optional.of(writer)
+        }
+        def response = newResponse(servletResponse, registry)
+
+        when:
+        def emitted = Flux.from(response.stream(Flux.just(new EncodedBody("alpha")))).blockLast()
+
+        then:
+        emitted.is(response)
+        output.toString() == "[encoded:alpha]"
+    }
+
+    void "stream publisher falls back to object string encoding"() {
+        given:
+        def output = new CapturingServletOutputStream()
+        HttpServletResponse servletResponse = Stub(HttpServletResponse) {
+            getOutputStream() >> output
+            getContentType() >> MediaType.APPLICATION_JSON
+        }
+        def response = newResponse(servletResponse)
+
+        when:
+        def emitted = Flux.from(response.stream(Flux.just(new EncodedBody("fallback")))).blockLast()
+
+        then:
+        emitted.is(response)
+        output.toString() == "[fallback]"
+    }
+
     void "stream publisher reports status errors before data is written"() {
         given:
         def output = new CapturingServletOutputStream()
@@ -201,7 +246,9 @@ class DefaultServletHttpResponseSpec extends Specification {
         contentType == MediaType.TEXT_PLAIN
     }
 
-    private DefaultServletHttpResponse<?> newResponse(HttpServletResponse servletResponse) {
+    private DefaultServletHttpResponse<?> newResponse(
+        HttpServletResponse servletResponse,
+        MessageBodyHandlerRegistry messageBodyHandlerRegistry = null) {
         HttpServletRequest servletRequest = Stub(HttpServletRequest) {
             getContentLengthLong() >> -1
             isAsyncSupported() >> false
@@ -219,7 +266,7 @@ class DefaultServletHttpResponseSpec extends Specification {
             ConversionService.SHARED,
             servletRequest,
             servletResponse,
-            null,
+            messageBodyHandlerRegistry,
             bodyBuilder,
             executor,
             null
@@ -273,6 +320,19 @@ class DefaultServletHttpResponseSpec extends Specification {
 
     @Produces(MediaType.TEXT_PLAIN)
     private static final class PlainTextBody {
+    }
+
+    private static final class EncodedBody {
+        private final String value
+
+        private EncodedBody(String value) {
+            this.value = value
+        }
+
+        @Override
+        String toString() {
+            value
+        }
     }
 
     private static final class ProvidedResponse implements HttpResponseProvider {

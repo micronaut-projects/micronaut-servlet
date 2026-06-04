@@ -94,7 +94,7 @@ public class ApacheServerlessApplication
             } catch (Exception e) {
                 if (!responseContext.isCommitted()) {
                     try (OutputStream os = responseContext.commit(new BasicClassicHttpResponse(HttpStatus.BAD_REQUEST.getCode()))) {
-                        os.write(Objects.toString(e.getMessage(), e.toString()).getBytes(StandardCharsets.UTF_8));
+                        os.write(Objects.toString(e.getMessage(), "").getBytes(StandardCharsets.UTF_8));
                     }
                 }
                 throw e;

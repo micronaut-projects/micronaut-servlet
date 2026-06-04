@@ -13,14 +13,19 @@ class TomcatEnablementSpec extends Specification {
 
         expect:
         configuration.enabled
+        configuration.protocol == 'org.apache.coyote.http11.Http11NioProtocol'
+        configuration.multipartConfiguration.empty
+        configuration.accessLogConfiguration.empty
         TomcatConfiguration.PREFIX == 'micronaut.server.tomcat'
         TomcatConfiguration.ENABLED_PROPERTY == 'micronaut.server.tomcat.enabled'
 
         when:
         configuration.enabled = false
+        configuration.protocol = null
 
         then:
         !configuration.enabled
+        configuration.protocol == 'org.apache.coyote.http11.Http11NioProtocol'
     }
 
     void "tomcat runtime can be disabled"() {

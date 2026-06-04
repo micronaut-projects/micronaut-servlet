@@ -489,7 +489,7 @@ final class HttpExchangeHttpServletRequest implements HttpServletRequest {
 
     private boolean isFormSubmission() {
         String contentType = getContentType();
-        if (contentType == null || contentType.isEmpty()) {
+        if (StringUtils.isEmpty(contentType)) {
             return false;
         }
         MediaType mediaType = MediaType.of(contentType);
