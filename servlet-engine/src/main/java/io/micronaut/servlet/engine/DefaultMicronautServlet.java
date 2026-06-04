@@ -53,7 +53,7 @@ public class DefaultMicronautServlet extends HttpServlet {
 
     private @Nullable ApplicationContext applicationContext;
     private boolean isContextOwner;
-    private @Nullable DefaultServletHttpHandler handler;
+    private transient @Nullable DefaultServletHttpHandler handler;
 
     /**
      * Constructor that takes an application context.

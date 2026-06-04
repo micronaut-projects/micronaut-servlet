@@ -87,23 +87,23 @@ public class TestingServerlessEmbeddedApplication implements EmbeddedServer {
         if (isRunning.getAndSet(true)) {
             return this; // Already running
         }
-        ServerSocket serverSocket = createServerSocket();
-        this.serverSocket = serverSocket;
-        port = serverSocket.getLocalPort();
-        ExecutorService connectionExecutor = Executors.newCachedThreadPool(runnable -> {
+        ServerSocket createdServerSocket = createServerSocket();
+        this.serverSocket = createdServerSocket;
+        port = createdServerSocket.getLocalPort();
+        ExecutorService createdConnectionExecutor = Executors.newCachedThreadPool(runnable -> {
             Thread thread = new Thread(runnable);
             thread.setDaemon(true);
             return thread;
         });
-        this.connectionExecutor = connectionExecutor;
+        this.connectionExecutor = createdConnectionExecutor;
 
         // Run the thread that sends requests to the server
         Thread acceptThread = new Thread(() -> {
-            while (!serverSocket.isClosed()) {
+            while (!createdServerSocket.isClosed()) {
                 try {
-                    Socket socket = serverSocket.accept();
+                    Socket socket = createdServerSocket.accept();
                     activeConnections.add(socket);
-                    connectionExecutor.execute(() -> handleConnection(socket));
+                    createdConnectionExecutor.execute(() -> handleConnection(socket));
                 } catch (java.net.SocketException ignored) {
                     // Socket closed
                 } catch (IOException e) {
@@ -141,16 +141,15 @@ public class TestingServerlessEmbeddedApplication implements EmbeddedServer {
             }
         }
         activeConnections.clear();
-        ExecutorService connectionExecutor = this.connectionExecutor;
-        if (connectionExecutor != null) {
-            connectionExecutor.shutdownNow();
-            connectionExecutor = null;
+        ExecutorService currentConnectionExecutor = this.connectionExecutor;
+        if (currentConnectionExecutor != null) {
+            currentConnectionExecutor.shutdownNow();
         }
         this.connectionExecutor = null;
-        ServerSocket serverSocket = this.serverSocket;
-        if (serverSocket != null) {
+        ServerSocket currentServerSocket = this.serverSocket;
+        if (currentServerSocket != null) {
             try {
-                serverSocket.close();
+                currentServerSocket.close();
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
             }
