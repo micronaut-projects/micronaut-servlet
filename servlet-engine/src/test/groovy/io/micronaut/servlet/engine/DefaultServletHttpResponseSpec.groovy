@@ -310,6 +310,30 @@ class DefaultServletHttpResponseSpec extends Specification {
         contentType == MediaType.TEXT_PLAIN
     }
 
+    void "status with null message uses default reason and respects committed response"() {
+        given:
+        int status = 0
+        HttpServletResponse servletResponse = Stub(HttpServletResponse) {
+            isCommitted() >>> [false, true]
+            setStatus(_ as Integer) >> { int code -> status = code }
+        }
+        def response = newResponse(servletResponse)
+
+        when:
+        response.status(HttpStatus.ACCEPTED.code, null)
+
+        then:
+        response.reason() == HttpStatus.ACCEPTED.reason
+        status == HttpStatus.ACCEPTED.code
+
+        when:
+        response.status(HttpStatus.CREATED.code, null)
+
+        then:
+        response.reason() == HttpStatus.CREATED.reason
+        status == HttpStatus.ACCEPTED.code
+    }
+
     private DefaultServletHttpResponse<?> newResponse(
         HttpServletResponse servletResponse,
         MessageBodyHandlerRegistry messageBodyHandlerRegistry = null) {
