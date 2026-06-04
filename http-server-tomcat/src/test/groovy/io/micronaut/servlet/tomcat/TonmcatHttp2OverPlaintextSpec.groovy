@@ -23,7 +23,8 @@ class TonmcatHttp2OverPlaintextSpec extends Specification {
     @Inject
     @Client(
             value = "/",
-            plaintextMode = HttpVersionSelection.PlaintextMode.H2C)
+            alpnModes = HttpVersionSelection.ALPN_HTTP_2,
+            plaintextMode = HttpVersionSelection.PlaintextMode.H2C_PRIOR_KNOWLEDGE)
     HttpClient client
 
     void "test simple post request with JSON over h2c"() {
