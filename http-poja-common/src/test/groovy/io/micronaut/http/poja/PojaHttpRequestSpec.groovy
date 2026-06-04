@@ -57,6 +57,12 @@ class PojaHttpRequestSpec extends Specification {
 
         then:
         headers.getAll("X-Test-Header").empty
+
+        when:
+        headers.get(null)
+
+        then:
+        thrown(NullPointerException)
     }
 
     void "multi value query parameters add character sequence values"() {

@@ -157,6 +157,23 @@ class DefaultServletHttpResponseSpec extends Specification {
         output.toString() == "[fallback]"
     }
 
+    void "stream publisher forwards output stream acquisition errors"() {
+        given:
+        HttpServletResponse servletResponse = Stub(HttpServletResponse) {
+            getOutputStream() >> { throw new IOException("no stream") }
+            getContentType() >> null
+        }
+        def response = newResponse(servletResponse)
+
+        when:
+        Flux.from(response.stream(Flux.just("value"))).blockLast()
+
+        then:
+        def e = thrown(RuntimeException)
+        e.cause instanceof IOException
+        e.cause.message == "no stream"
+    }
+
     void "stream publisher reports status errors before data is written"() {
         given:
         def output = new CapturingServletOutputStream()
@@ -175,6 +192,26 @@ class DefaultServletHttpResponseSpec extends Specification {
         emitted.is(response)
         status == HttpStatus.BAD_REQUEST.code
         output.toString() == "bad request"
+    }
+
+    void "stream publisher writes non-string status error bodies before data is written"() {
+        given:
+        def output = new CapturingServletOutputStream()
+        int status = 0
+        HttpServletResponse servletResponse = Stub(HttpServletResponse) {
+            getOutputStream() >> output
+            getContentType() >> MediaType.APPLICATION_JSON
+            setStatus(_ as Integer) >> { int code -> status = code }
+        }
+        def response = newResponse(servletResponse)
+
+        when:
+        def emitted = Flux.from(response.stream(Flux.error(new HttpStatusException(HttpStatus.BAD_REQUEST, [message: "bad request"])))).blockLast()
+
+        then:
+        emitted.is(response)
+        status == HttpStatus.BAD_REQUEST.code
+        output.toString() == "[{message=bad request}"
     }
 
     void "stream publisher converts non-status errors before data is written"() {

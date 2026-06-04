@@ -9,7 +9,7 @@ class JettyEnablementSpec extends Specification {
 
     void "jetty configuration exposes enablement toggle"() {
         given:
-        def configuration = new JettyConfiguration(null, null)
+        def configuration = new JettyConfiguration(null)
 
         expect:
         configuration.enabled
