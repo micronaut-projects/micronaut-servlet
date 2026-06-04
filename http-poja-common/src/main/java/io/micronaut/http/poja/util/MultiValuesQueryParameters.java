@@ -25,6 +25,7 @@ import io.micronaut.http.MutableHttpParameters;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -78,7 +79,7 @@ public record MultiValuesQueryParameters(
     @Override
     public MutableHttpParameters add(CharSequence name, List<CharSequence> values) {
         for (CharSequence value: values) {
-            queryParams.add(name, value == null ? null : value.toString());
+            queryParams.add(name, Objects.requireNonNull(value, "Parameter value cannot be null").toString());
         }
         return this;
     }

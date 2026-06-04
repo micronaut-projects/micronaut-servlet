@@ -25,6 +25,7 @@ import org.apache.hc.core5.http.impl.io.ContentLengthOutputStream;
 import org.apache.hc.core5.http.impl.io.DefaultHttpResponseWriter;
 import org.apache.hc.core5.http.impl.io.SessionOutputBufferImpl;
 import org.apache.hc.core5.http.io.SessionOutputBuffer;
+import org.jspecify.annotations.Nullable;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -32,10 +33,12 @@ import java.io.OutputStream;
 
 final class ApacheResponseContext implements Closeable {
     boolean connectionClose = false;
+    @Nullable
     ApacheServletHttpResponse<?> primaryResponse;
 
     private final SessionOutputBuffer outputBuffer;
     private final OutputStream out;
+    @Nullable
     private OutputStream bodyStream;
 
     ApacheResponseContext(ApacheServletConfiguration configuration, OutputStream out) {

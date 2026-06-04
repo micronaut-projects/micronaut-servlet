@@ -104,11 +104,11 @@ final class StreamPair {
         };
     }
 
-    record Pair(ExtendedInputStream left, ExtendedInputStream right) {
-    }
-
     private ByteQueue queue() {
         return Objects.requireNonNull(queue, "Queue not initialized for this backpressure mode");
+    }
+
+    record Pair(ExtendedInputStream left, ExtendedInputStream right) {
     }
 
     private abstract class Side extends ExtendedInputStream {

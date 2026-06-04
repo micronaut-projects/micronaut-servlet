@@ -68,7 +68,7 @@ public class TomcatServer extends AbstractServletServer<Tomcat> {
      * @param applicationContext       The context
      * @param applicationConfiguration The configuration
      * @param tomcat                   The tomcat instance
-     * @deprecated Use {@link TomcatServer(ApplicationContext, ApplicationConfiguration, ApplicationEventPublisher, Tomcat)} instead.
+     * @deprecated Use the constructor that accepts an application event publisher instead.
      */
     @Deprecated(forRemoval = true, since = "5.2.0")
     public TomcatServer(

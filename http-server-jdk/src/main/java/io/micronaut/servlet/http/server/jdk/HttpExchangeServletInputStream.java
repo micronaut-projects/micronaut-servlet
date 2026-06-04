@@ -20,6 +20,7 @@ import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.Internal;
 import jakarta.servlet.ReadListener;
 import jakarta.servlet.ServletInputStream;
+import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,7 +32,7 @@ import java.io.InputStream;
 @Experimental
 final class HttpExchangeServletInputStream extends ServletInputStream {
     private final HttpExchange httpExchange;
-    private InputStream inputStream;
+    private @Nullable InputStream inputStream;
 
     HttpExchangeServletInputStream(HttpExchange httpExchange) {
         this.httpExchange = httpExchange;

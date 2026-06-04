@@ -56,18 +56,18 @@ public class JettyConfiguration extends HttpServerConfiguration implements Toggl
 
     @ConfigurationBuilder
     protected HttpConfiguration httpConfiguration = new HttpConfiguration();
-    private final JettyRequestLog requestLog;
+    private final @Nullable JettyRequestLog requestLog;
 
-    private final MultipartConfiguration multipartConfiguration;
+    private final @Nullable MultipartConfiguration multipartConfiguration;
     private boolean enabled = true;
-    private Map<String, String> initParameters;
+    private @Nullable Map<String, String> initParameters;
 
     /**
      * Default constructor.
      * @param multipartConfiguration The multipart configuration.
      */
     public JettyConfiguration(@Nullable MultipartConfiguration multipartConfiguration) {
-        this(null, null);
+        this(multipartConfiguration, null);
     }
 
     /**
@@ -194,18 +194,18 @@ public class JettyConfiguration extends HttpServerConfiguration implements Toggl
 
         private boolean enabled = true;
         private String pattern = CustomRequestLog.EXTENDED_NCSA_FORMAT;
-        private String fileName;
+        private @Nullable String fileName;
         private String resourcePath = "/logback-access.xml";
         private boolean quiet = true;
 
-        public String getFileName() {
+        public @Nullable String getFileName() {
             return fileName;
         }
 
         /**
          * @param fileName sets the fileName attribute for {@link ch.qos.logback.access.jetty.RequestLogImpl}.
          */
-        public void setFileName(String fileName) {
+        public void setFileName(@Nullable String fileName) {
             this.fileName = fileName;
         }
 

@@ -15,16 +15,17 @@
  */
 package io.micronaut.http.poja.test;
 
+import io.micronaut.http.poja.PojaHttpServerlessApplication;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Replaces;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.env.Environment;
-import org.jspecify.annotations.NonNull;
-import io.micronaut.http.poja.PojaHttpServerlessApplication;
 import io.micronaut.runtime.ApplicationConfiguration;
 import io.micronaut.runtime.EmbeddedApplication;
 import io.micronaut.runtime.server.EmbeddedServer;
 import jakarta.inject.Singleton;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -58,8 +59,8 @@ public class TestingServerlessEmbeddedApplication implements EmbeddedServer {
 
     private final AtomicBoolean isRunning = new AtomicBoolean(false);
     private final Set<Socket> activeConnections = ConcurrentHashMap.newKeySet();
-    private ServerSocket serverSocket;
-    private ExecutorService connectionExecutor;
+    private @Nullable ServerSocket serverSocket;
+    private @Nullable ExecutorService connectionExecutor;
     private int port;
 
     /**
@@ -73,13 +74,12 @@ public class TestingServerlessEmbeddedApplication implements EmbeddedServer {
         this.application = application;
     }
 
-    private void createServerSocket() {
+    private ServerSocket createServerSocket() {
         try {
-            serverSocket = new ServerSocket(0);
+            return new ServerSocket(0);
         } catch (IOException e) {
             throw new UncheckedIOException("Could not bind", e);
         }
-        port = serverSocket.getLocalPort();
     }
 
     @Override
@@ -87,12 +87,15 @@ public class TestingServerlessEmbeddedApplication implements EmbeddedServer {
         if (isRunning.getAndSet(true)) {
             return this; // Already running
         }
-        createServerSocket();
-        connectionExecutor = Executors.newCachedThreadPool(runnable -> {
+        ServerSocket serverSocket = createServerSocket();
+        this.serverSocket = serverSocket;
+        port = serverSocket.getLocalPort();
+        ExecutorService connectionExecutor = Executors.newCachedThreadPool(runnable -> {
             Thread thread = new Thread(runnable);
             thread.setDaemon(true);
             return thread;
         });
+        this.connectionExecutor = connectionExecutor;
 
         // Run the thread that sends requests to the server
         Thread acceptThread = new Thread(() -> {
@@ -138,15 +141,21 @@ public class TestingServerlessEmbeddedApplication implements EmbeddedServer {
             }
         }
         activeConnections.clear();
+        ExecutorService connectionExecutor = this.connectionExecutor;
         if (connectionExecutor != null) {
             connectionExecutor.shutdownNow();
             connectionExecutor = null;
         }
-        try {
-            serverSocket.close();
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
+        this.connectionExecutor = null;
+        ServerSocket serverSocket = this.serverSocket;
+        if (serverSocket != null) {
+            try {
+                serverSocket.close();
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
         }
+        this.serverSocket = null;
         return this;
     }
 
@@ -160,6 +169,7 @@ public class TestingServerlessEmbeddedApplication implements EmbeddedServer {
      *
      * @return The port
      */
+    @Override
     public int getPort() {
         return port;
     }

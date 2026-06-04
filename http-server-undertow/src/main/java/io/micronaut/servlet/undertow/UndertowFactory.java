@@ -61,7 +61,7 @@ import org.xnio.Options;
 public class UndertowFactory extends ServletServerFactory {
 
     private final UndertowConfiguration configuration;
-    private final Router router;
+    private final @Nullable Router router;
 
     /**
      * Default constructor.
@@ -226,7 +226,7 @@ public class UndertowFactory extends ServletServerFactory {
         }
     }
 
-    private static void addListener(Undertow.Builder builder, String host, SSLContext sslContext, Integer exposedPort) {
+    private static void addListener(Undertow.Builder builder, String host, @Nullable SSLContext sslContext, Integer exposedPort) {
         if (sslContext != null) {
             builder.addHttpsListener(exposedPort, host, sslContext);
         } else {
@@ -234,7 +234,7 @@ public class UndertowFactory extends ServletServerFactory {
         }
     }
 
-    private Object getOptionValue(String key) {
+    private @Nullable Object getOptionValue(String key) {
         return ReflectionUtils.findDeclaredField(Options.class, key)
                 .map(field -> {
                     field.setAccessible(true);

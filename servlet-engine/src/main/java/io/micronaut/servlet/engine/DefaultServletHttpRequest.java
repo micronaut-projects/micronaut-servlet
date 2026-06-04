@@ -296,6 +296,7 @@ public final class DefaultServletHttpRequest<B> implements
         }
         return prependContextPath(contextPath, path.substring(servletPath.length()));
     }
+
     /**
      * @return The conversion service.
      */

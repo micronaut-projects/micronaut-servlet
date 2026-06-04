@@ -20,7 +20,7 @@ import io.micronaut.context.annotation.Requires;
 import jakarta.inject.Singleton;
 
 /**
- * A {@link HttpHandlerPath} for the path {@value /}.
+ * A {@link HttpHandlerPath} for the root path.
  */
 @Requires(property = "micronaut.server.jdk.enabled", value = "true", defaultValue = "true")
 @Requires(beans = HttpHandler.class)
