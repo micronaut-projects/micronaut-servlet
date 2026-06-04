@@ -2,13 +2,18 @@ package io.micronaut.servlet.engine
 
 import io.micronaut.core.convert.ConversionService
 import io.micronaut.core.io.buffer.ByteArrayBufferFactory
+import io.micronaut.http.HttpStatus
+import io.micronaut.http.MediaType
+import io.micronaut.http.annotation.Produces
 import io.micronaut.http.body.ByteBodyFactory
+import io.micronaut.http.exceptions.HttpStatusException
 import io.micronaut.servlet.http.BodyBuilder
 import jakarta.servlet.ServletInputStream
 import jakarta.servlet.ServletOutputStream
 import jakarta.servlet.WriteListener
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
+import reactor.core.publisher.Flux
 import spock.lang.Specification
 
 import java.nio.ByteBuffer
@@ -34,6 +39,95 @@ class DefaultServletHttpResponseSpec extends Specification {
         result.get() == null
         output.toByteArray() == "hello".bytes
         contentLength == 5
+    }
+
+    void "stream publisher writes json delimiters for non-raw values"() {
+        given:
+        def output = new CapturingServletOutputStream()
+        HttpServletResponse servletResponse = Stub(HttpServletResponse) {
+            getOutputStream() >> output
+            getContentType() >> null
+        }
+        def response = newResponse(servletResponse)
+
+        when:
+        def emitted = Flux.from(response.stream(Flux.just("one", "two"))).blockLast()
+
+        then:
+        emitted.is(response)
+        output.toString() == "[one,two]"
+    }
+
+    void "stream publisher writes empty json array when no values are emitted"() {
+        given:
+        def output = new CapturingServletOutputStream()
+        HttpServletResponse servletResponse = Stub(HttpServletResponse) {
+            getOutputStream() >> output
+            getContentType() >> null
+        }
+        def response = newResponse(servletResponse)
+
+        when:
+        def emitted = Flux.from(response.stream(Flux.empty())).blockLast()
+
+        then:
+        emitted.is(response)
+        output.toString() == "[]"
+    }
+
+    void "stream publisher writes raw byte arrays without json delimiters"() {
+        given:
+        def output = new CapturingServletOutputStream()
+        HttpServletResponse servletResponse = Stub(HttpServletResponse) {
+            getOutputStream() >> output
+            getContentType() >> MediaType.APPLICATION_OCTET_STREAM
+        }
+        def response = newResponse(servletResponse)
+
+        when:
+        def emitted = Flux.from(response.stream(Flux.just("raw".bytes))).blockLast()
+
+        then:
+        emitted.is(response)
+        output.toString() == "raw"
+    }
+
+    void "stream publisher reports status errors before data is written"() {
+        given:
+        def output = new CapturingServletOutputStream()
+        int status = 0
+        HttpServletResponse servletResponse = Stub(HttpServletResponse) {
+            getOutputStream() >> output
+            getContentType() >> MediaType.TEXT_PLAIN
+            setStatus(_ as Integer) >> { int code -> status = code }
+        }
+        def response = newResponse(servletResponse)
+
+        when:
+        def emitted = Flux.from(response.stream(Flux.error(new HttpStatusException(HttpStatus.BAD_REQUEST, "bad request")))).blockLast()
+
+        then:
+        emitted.is(response)
+        status == HttpStatus.BAD_REQUEST.code
+        output.toString() == "bad request"
+    }
+
+    void "body sets content type from produces annotation when absent"() {
+        given:
+        String contentType = null
+        HttpServletResponse servletResponse = Stub(HttpServletResponse) {
+            getContentType() >> { contentType }
+            setContentType(_ as String) >> { String value -> contentType = value }
+        }
+        def response = newResponse(servletResponse)
+        def body = new PlainTextBody()
+
+        when:
+        response.body(body)
+
+        then:
+        response.getBody().get().is(body)
+        contentType == MediaType.TEXT_PLAIN
     }
 
     private DefaultServletHttpResponse<?> newResponse(HttpServletResponse servletResponse) {
@@ -100,5 +194,13 @@ class DefaultServletHttpResponseSpec extends Specification {
         byte[] toByteArray() {
             bytes.toByteArray()
         }
+
+        String toString() {
+            bytes.toString("UTF-8")
+        }
+    }
+
+    @Produces(MediaType.TEXT_PLAIN)
+    private static final class PlainTextBody {
     }
 }

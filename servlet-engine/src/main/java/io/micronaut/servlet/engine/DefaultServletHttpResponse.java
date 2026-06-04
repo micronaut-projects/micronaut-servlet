@@ -591,15 +591,13 @@ public final class DefaultServletHttpResponse<B> implements ServletHttpResponse<
                 body(response.body());
             }
         } else {
-            if (body != null) {
-                if (getContentType().isEmpty()) {
-                    final Produces ann = body.getClass().getAnnotation(Produces.class);
-                    if (ann != null) {
-                        final String[] v = ann.value();
-                        if (ArrayUtils.isNotEmpty(v)) {
-                            final MediaType mediaType = new MediaType(v[0]);
-                            contentType(mediaType);
-                        }
+            if (body != null && getContentType().isEmpty()) {
+                final Produces ann = body.getClass().getAnnotation(Produces.class);
+                if (ann != null) {
+                    final String[] v = ann.value();
+                    if (ArrayUtils.isNotEmpty(v)) {
+                        final MediaType mediaType = new MediaType(v[0]);
+                        contentType(mediaType);
                     }
                 }
             }

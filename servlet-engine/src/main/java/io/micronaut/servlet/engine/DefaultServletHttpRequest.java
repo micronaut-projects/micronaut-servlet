@@ -87,7 +87,9 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalLong;
+import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executor;
 import java.util.function.Supplier;
 
@@ -125,7 +127,7 @@ public final class DefaultServletHttpRequest<B> implements
     private final @Nullable SSLSessionProvider sslSessionProvider;
     private volatile @Nullable DefaultServletCookies cookies;
     private Supplier<Optional<B>> body;
-    private @Nullable List<Runnable> disposalResources;
+    private final Queue<Runnable> disposalResources = new ConcurrentLinkedQueue<>();
 
     private boolean bodyIsReadAsync;
     private @Nullable B parsedBody;
@@ -592,11 +594,8 @@ public final class DefaultServletHttpRequest<B> implements
     }
 
     @Override
-    public synchronized void addDisposalResource(Runnable runnable) {
+    public void addDisposalResource(Runnable runnable) {
         Objects.requireNonNull(runnable, "Disposable resource cannot be null");
-        if (disposalResources == null) {
-            disposalResources = new ArrayList<>(2);
-        }
         disposalResources.add(runnable);
     }
 
@@ -627,13 +626,9 @@ public final class DefaultServletHttpRequest<B> implements
         return new RawFormField(metadata, body);
     }
 
-    private synchronized void runDisposalResources() {
-        if (disposalResources == null || disposalResources.isEmpty()) {
-            return;
-        }
-        List<Runnable> resources = disposalResources;
-        disposalResources = null;
-        for (Runnable runnable : resources) {
+    private void runDisposalResources() {
+        Runnable runnable;
+        while ((runnable = disposalResources.poll()) != null) {
             runnable.run();
         }
     }
