@@ -45,6 +45,33 @@ class DefaultServletHttpResponseSpec extends Specification {
         contentLength == 5
     }
 
+    void "stream closeable byte body falls back when byte buffer writes are unavailable"() {
+        given:
+        def output = new CapturingServletOutputStream() {
+            @Override
+            void write(ByteBuffer buffer) {
+                throw new NoSuchMethodError("write(ByteBuffer)")
+            }
+        }
+        HttpServletResponse servletResponse = Stub(HttpServletResponse) {
+            getOutputStream() >> output
+        }
+        def response = newResponse(servletResponse)
+        def body = ByteBodyFactory.createDefault(ByteArrayBufferFactory.INSTANCE).adapt("fallback".bytes)
+
+        when:
+        def result = response.stream(body)
+
+        then:
+        result.get() == null
+        output.toString() == "fallback"
+
+        cleanup:
+        def field = DefaultServletHttpResponse.getDeclaredField("writeBufferAvailable")
+        field.accessible = true
+        field.set(null, true)
+    }
+
     void "stream publisher writes json delimiters for non-raw values"() {
         given:
         def output = new CapturingServletOutputStream()
@@ -311,7 +338,7 @@ class DefaultServletHttpResponseSpec extends Specification {
         return new DefaultServletHttpResponse<>(ConversionService.SHARED, request, servletResponse)
     }
 
-    private static final class CapturingServletOutputStream extends ServletOutputStream {
+    private static class CapturingServletOutputStream extends ServletOutputStream {
         private final ByteArrayOutputStream bytes = new ByteArrayOutputStream()
 
         @Override

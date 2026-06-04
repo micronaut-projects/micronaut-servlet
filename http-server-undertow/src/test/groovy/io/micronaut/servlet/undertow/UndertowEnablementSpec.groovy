@@ -1,6 +1,7 @@
 package io.micronaut.servlet.undertow
 
 import io.micronaut.context.ApplicationContext
+import io.micronaut.runtime.ApplicationConfiguration
 import io.micronaut.runtime.server.EmbeddedServer
 import io.undertow.Undertow
 import spock.lang.Specification
@@ -21,6 +22,21 @@ class UndertowEnablementSpec extends Specification {
 
         then:
         !configuration.enabled
+    }
+
+    void "undertow server exposes defaults before listeners are started"() {
+        given:
+        def server = new UndertowServer(
+            Stub(ApplicationContext),
+            new ApplicationConfiguration(),
+            Undertow.builder().build()
+        )
+
+        expect:
+        server.port == -1
+        server.host == 'localhost'
+        server.scheme == 'http'
+        server.URI.toString() == 'http://localhost'
     }
 
     void "undertow runtime can be disabled"() {

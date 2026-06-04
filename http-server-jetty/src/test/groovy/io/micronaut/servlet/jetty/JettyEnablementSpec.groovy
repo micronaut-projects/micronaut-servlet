@@ -1,8 +1,11 @@
 package io.micronaut.servlet.jetty
 
 import io.micronaut.context.ApplicationContext
+import io.micronaut.runtime.ApplicationConfiguration
 import io.micronaut.runtime.server.EmbeddedServer
+import io.micronaut.web.router.Router
 import org.eclipse.jetty.server.Server
+import org.eclipse.jetty.server.ServerConnector
 import spock.lang.Specification
 
 class JettyEnablementSpec extends Specification {
@@ -26,6 +29,25 @@ class JettyEnablementSpec extends Specification {
         then:
         !configuration.enabled
         configuration.initParameters == ["name": "value"]
+    }
+
+    void "deprecated jetty server constructor delegates to current constructor"() {
+        given:
+        def jetty = new Server()
+        jetty.addConnector(new ServerConnector(jetty))
+
+        when:
+        def server = new JettyServer(
+            Stub(ApplicationContext),
+            new ApplicationConfiguration(),
+            jetty,
+            Stub(Router),
+            new JettyConfiguration(null),
+            []
+        )
+
+        then:
+        server.getServer().is(jetty)
     }
 
     void "jetty runtime can be disabled"() {
