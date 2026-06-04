@@ -72,6 +72,29 @@ class DefaultServletHttpResponseSpec extends Specification {
         field.set(null, true)
     }
 
+    void "stream closeable byte body completes after output becomes ready again"() {
+        given:
+        def output = new BackPressureServletOutputStream()
+        HttpServletResponse servletResponse = Stub(HttpServletResponse) {
+            getOutputStream() >> output
+        }
+        def response = newResponse(servletResponse)
+        def body = ByteBodyFactory.createDefault(ByteArrayBufferFactory.INSTANCE).adapt("delayed".bytes)
+
+        when:
+        def result = response.stream(body)
+
+        then:
+        !result.isDone()
+        output.toString() == "delayed"
+
+        when:
+        output.resume()
+
+        then:
+        result.get() == null
+    }
+
     void "stream publisher writes json delimiters for non-raw values"() {
         given:
         def output = new CapturingServletOutputStream()
@@ -403,6 +426,33 @@ class DefaultServletHttpResponseSpec extends Specification {
 
         String toString() {
             bytes.toString("UTF-8")
+        }
+    }
+
+    private static final class BackPressureServletOutputStream extends CapturingServletOutputStream {
+        private WriteListener writeListener
+        private boolean ready = true
+
+        @Override
+        boolean isReady() {
+            ready
+        }
+
+        @Override
+        void setWriteListener(WriteListener writeListener) {
+            this.writeListener = writeListener
+            writeListener.onWritePossible()
+        }
+
+        @Override
+        void write(ByteBuffer buffer) {
+            super.write(buffer)
+            ready = false
+        }
+
+        void resume() {
+            ready = true
+            writeListener.onWritePossible()
         }
     }
 
