@@ -15,6 +15,8 @@
  */
 package io.micronaut.servlet.http;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * Configuration for the servlet environment.
  */
@@ -56,7 +58,7 @@ public interface ServletConfiguration {
      *
      * @return The minimum number of threads
      */
-    default Integer getMinThreads() {
+    default @Nullable Integer getMinThreads() {
         return null;
     }
 
@@ -65,7 +67,7 @@ public interface ServletConfiguration {
      *
      * @return The maximum number of threads
      */
-    default Integer getMaxThreads() {
+    default @Nullable Integer getMaxThreads() {
         return null;
     }
 

@@ -122,14 +122,14 @@ public final class DefaultServletHttpRequest<B> implements
     private final CloseableByteBody byteBody;
     private final ByteBodyFactory byteBodyFactory;
     private final Executor ioExecutor;
-    private final SSLSessionProvider sslSessionProvider;
-    private DefaultServletCookies cookies;
+    private final @Nullable SSLSessionProvider sslSessionProvider;
+    private volatile @Nullable DefaultServletCookies cookies;
     private Supplier<Optional<B>> body;
-    private List<Runnable> disposalResources;
+    private @Nullable List<Runnable> disposalResources;
 
     private boolean bodyIsReadAsync;
-    private B parsedBody;
-    private AsyncContext asyncContext;
+    private @Nullable B parsedBody;
+    private @Nullable AsyncContext asyncContext;
 
     /**
      * Default constructor.
@@ -329,8 +329,9 @@ public final class DefaultServletHttpRequest<B> implements
         if (asyncContext != null) {
             throw new IllegalStateException("Async execution has already been started");
         }
-        this.asyncContext = delegate.startAsync();
-        asyncContext.start(() -> asyncExecutionCallback.run(asyncContext::complete));
+        AsyncContext startedAsyncContext = delegate.startAsync();
+        this.asyncContext = startedAsyncContext;
+        startedAsyncContext.start(() -> asyncExecutionCallback.run(startedAsyncContext::complete));
     }
 
     @NonNull

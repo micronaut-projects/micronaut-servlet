@@ -65,7 +65,7 @@ public class TomcatFactory extends ServletServerFactory {
 
     private static final String HTTPS = "HTTPS";
     private static final String CLIENT_AUTH = "clientAuth";
-    private final Router router;
+    private final @Nullable Router router;
 
     /**
      * Default constructor.

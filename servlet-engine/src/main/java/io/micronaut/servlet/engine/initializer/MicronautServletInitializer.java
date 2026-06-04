@@ -21,6 +21,7 @@ import io.micronaut.context.BeanRegistration;
 import io.micronaut.context.annotation.Prototype;
 import io.micronaut.core.annotation.AnnotationValue;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.inject.BeanDefinition;
@@ -79,7 +80,7 @@ public class MicronautServletInitializer implements ServletContainerInitializer 
     private static final String MEMBER_ASYNC_SUPPORTED = "asyncSupported";
     private static final String MEMBER_INIT_PARAMS = "initParams";
     private static final DispatcherType[] DEFAULT_DISPATCHER_TYPES = {DispatcherType.REQUEST};
-    private ApplicationContext applicationContext;
+    private @Nullable ApplicationContext applicationContext;
     private List<String> micronautServletMappings = new ArrayList<>();
 
     @Inject
@@ -250,7 +251,7 @@ public class MicronautServletInitializer implements ServletContainerInitializer 
         });
     }
 
-    private MultipartConfigElement getMultipartConfig(BeanDefinition<Servlet> beanDefinition, boolean isMicronautServlet, MicronautServletConfiguration configuration) {
+    private @Nullable MultipartConfigElement getMultipartConfig(BeanDefinition<Servlet> beanDefinition, boolean isMicronautServlet, MicronautServletConfiguration configuration) {
         return beanDefinition.findAnnotation(MultipartConfig.class)
                 .map(this::toMultipartElement)
                 .orElse(isMicronautServlet ? configuration.getMultipartConfigElement().orElse(null) : null);

@@ -26,6 +26,7 @@ import io.micronaut.http.server.exceptions.HttpServerException;
 import io.micronaut.http.server.exceptions.ServerStartupException;
 import io.micronaut.http.ssl.SslBuilder;
 import io.micronaut.http.ssl.SslConfiguration;
+import org.jspecify.annotations.Nullable;
 
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
@@ -141,9 +142,9 @@ public abstract class ServletServerFactory extends SslBuilder<SSLContext> {
 
                 final SSLContext sslContext = SSLContext.getInstance(protocol);
                 final KeyManagerFactory keyManagerFactory = getKeyManagerFactory(ssl);
-                final KeyManager[] keyManagers = keyManagerFactory.getKeyManagers();
+                final KeyManager @Nullable [] keyManagers = keyManagerFactory == null ? null : keyManagerFactory.getKeyManagers();
                 final TrustManagerFactory trustManagerFactory = getTrustManagerFactory(ssl);
-                final TrustManager[] trustManagers = trustManagerFactory.getTrustManagers();
+                final TrustManager @Nullable [] trustManagers = trustManagerFactory == null ? null : trustManagerFactory.getTrustManagers();
 
                 sslContext.init(
                         keyManagers,

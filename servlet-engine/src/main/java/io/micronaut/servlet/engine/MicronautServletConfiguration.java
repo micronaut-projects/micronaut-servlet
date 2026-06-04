@@ -19,12 +19,12 @@ import io.micronaut.context.annotation.ConfigurationInject;
 import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.context.env.Environment;
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 import io.micronaut.core.bind.annotation.Bindable;
 import io.micronaut.core.naming.Named;
 import io.micronaut.http.server.HttpServerConfiguration;
 import io.micronaut.servlet.http.ServletConfiguration;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 import jakarta.servlet.MultipartConfigElement;
 import java.io.File;
@@ -44,15 +44,15 @@ public class MicronautServletConfiguration implements Named, ServletConfiguratio
      */
     public static final String PREFIX = "micronaut.servlet";
     private final String mapping;
-    private final MultipartConfigElement multipartConfigElement;
+    private final @Nullable MultipartConfigElement multipartConfigElement;
     private final String name;
     private boolean asyncFileServingEnabled = true;
 
     private boolean asyncSupported = true;
     private boolean enableVirtualThreads = true;
 
-    private Integer minThreads;
-    private Integer maxThreads;
+    private @Nullable Integer minThreads;
+    private @Nullable Integer maxThreads;
 
 
     /**
@@ -156,7 +156,7 @@ public class MicronautServletConfiguration implements Named, ServletConfiguratio
     }
 
     @Override
-    public Integer getMinThreads() {
+    public @Nullable Integer getMinThreads() {
         return minThreads;
     }
 
@@ -165,12 +165,12 @@ public class MicronautServletConfiguration implements Named, ServletConfiguratio
      *
      * @param minThreads The minimum number of threads
      */
-    public void setMinThreads(Integer minThreads) {
+    public void setMinThreads(@Nullable Integer minThreads) {
         this.minThreads = minThreads;
     }
 
     @Override
-    public Integer getMaxThreads() {
+    public @Nullable Integer getMaxThreads() {
         return maxThreads;
     }
 
@@ -179,7 +179,7 @@ public class MicronautServletConfiguration implements Named, ServletConfiguratio
      *
      * @param maxThreads The maximum number of threads
      */
-    public void setMaxThreads(Integer maxThreads) {
+    public void setMaxThreads(@Nullable Integer maxThreads) {
         this.maxThreads = maxThreads;
     }
 }

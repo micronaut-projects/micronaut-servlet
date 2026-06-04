@@ -3,7 +3,7 @@ micronaut = "5.0.2"
 managed-servlet-api = '6.1.0'
 kotest-runner = '6.1.11'
 undertow = '2.3.24.Final'
-tomcat = '11.0.21'
+tomcat = '11.0.22'
 bcpkix = "1.70"
 
 managed-apache-http-core5 = "5.4.2"
