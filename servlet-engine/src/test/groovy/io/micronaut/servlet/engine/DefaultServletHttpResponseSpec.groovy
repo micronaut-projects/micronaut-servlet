@@ -333,6 +333,33 @@ class DefaultServletHttpResponseSpec extends Specification {
         contentType == MediaType.TEXT_PLAIN
     }
 
+    void "body does not inspect produces annotation for null body"() {
+        given:
+        def response = newResponse(Stub(HttpServletResponse))
+
+        when:
+        response.body(null)
+
+        then:
+        response.getBody().empty
+    }
+
+    void "body preserves existing content type"() {
+        given:
+        HttpServletResponse servletResponse = Stub(HttpServletResponse) {
+            getContentType() >> MediaType.APPLICATION_JSON
+        }
+        def response = newResponse(servletResponse)
+        def body = new PlainTextBody()
+
+        when:
+        response.body(body)
+
+        then:
+        response.getBody().get().is(body)
+        response.contentType.get() == MediaType.APPLICATION_JSON_TYPE
+    }
+
     void "status with null message uses default reason and respects committed response"() {
         given:
         int status = 0
