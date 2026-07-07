@@ -15,7 +15,7 @@ micronaut-session = "5.1.0"
 micronaut-validation = "5.0.0"
 micronaut-logging = "2.1.0"
 # Micronaut
-micronaut-gradle-plugin = "5.0.0-M1"
+micronaut-gradle-plugin = "5.0.2"
 logback-access = "2.0.12"
 
 [libraries]
