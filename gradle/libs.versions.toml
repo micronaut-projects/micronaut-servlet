@@ -13,7 +13,7 @@ micronaut-security = "5.2.0"
 micronaut-serde = "3.1.0"
 micronaut-session = "5.1.0"
 micronaut-validation = "5.0.0"
-micronaut-logging = "2.0.0"
+micronaut-logging = "2.1.0"
 # Micronaut
 micronaut-gradle-plugin = "5.0.0-M1"
 logback-access = "2.0.12"
