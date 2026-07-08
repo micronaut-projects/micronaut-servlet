@@ -92,6 +92,17 @@ public interface ServletHttpRequest<N, B> extends HttpRequest<B> {
     }
 
     /**
+     * Prepare the request for writing a response.
+     *
+     * <p>Servlet containers may require unread request bodies such as form or multipart content
+     * to be consumed before the response is committed. Implementations may use this hook to let
+     * the native container perform that consumption when no application code has already claimed
+     * the request body.
+     */
+    default void prepareForResponse() {
+    }
+
+    /**
      * Async execution callback.
      *
      * @author Denis Stepanov

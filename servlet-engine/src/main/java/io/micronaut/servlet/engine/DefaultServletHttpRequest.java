@@ -89,6 +89,7 @@ import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Set;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 /**
@@ -99,7 +100,7 @@ import java.util.function.Supplier;
  * @since 1.0.0
  */
 @Internal
-public final class DefaultServletHttpRequest<B> implements
+public class DefaultServletHttpRequest<B> implements
     ServletHttpRequest<HttpServletRequest, B>,
     ServletExchange<HttpServletRequest, HttpServletResponse>,
     StreamedServletMessage<B, byte[]>,
@@ -119,7 +120,7 @@ public final class DefaultServletHttpRequest<B> implements
     private DefaultServletHttpResponse<B> primaryResponse;
     private final MessageBodyHandlerRegistry messageBodyHandlerRegistry;
     private final MutableConvertibleValues<Object> attributes;
-    private final CloseableByteBody byteBody;
+    private final AtomicReference<CloseableByteBody> byteBody = new AtomicReference<>();
     private final ByteBodyFactory byteBodyFactory;
     private final Executor ioExecutor;
     private final SSLSessionProvider sslSessionProvider;
@@ -128,6 +129,7 @@ public final class DefaultServletHttpRequest<B> implements
     private List<Runnable> disposalResources;
 
     private boolean bodyIsReadAsync;
+    private boolean bodyAccessed;
     private B parsedBody;
     private AsyncContext asyncContext;
 
@@ -161,27 +163,20 @@ public final class DefaultServletHttpRequest<B> implements
      * @param ioExecutor         Executor for blocking operations
      * @param sslSessionProvider The {@link SSLSession} provider from attribute
      */
-    DefaultServletHttpRequest(ConversionService conversionService,
-                              HttpServletRequest delegate,
-                              HttpServletResponse response,
-                              MessageBodyHandlerRegistry messageBodyHandlerRegistry,
-                              BodyBuilder bodyBuilder,
-                              Executor ioExecutor,
-                              @Nullable SSLSessionProvider sslSessionProvider) {
+    protected DefaultServletHttpRequest(ConversionService conversionService,
+                                        HttpServletRequest delegate,
+                                        HttpServletResponse response,
+                                        MessageBodyHandlerRegistry messageBodyHandlerRegistry,
+                                        BodyBuilder bodyBuilder,
+                                        Executor ioExecutor,
+                                        @Nullable SSLSessionProvider sslSessionProvider) {
         super();
         this.conversionService = conversionService;
         this.delegate = delegate;
         this.messageBodyHandlerRegistry = messageBodyHandlerRegistry;
         this.ioExecutor = ioExecutor;
         this.sslSessionProvider = sslSessionProvider;
-        long contentLengthLong = delegate.getContentLengthLong();
-        OptionalLong length = contentLengthLong < 0 ? OptionalLong.empty() : OptionalLong.of(contentLengthLong);
         this.byteBodyFactory = ByteBodyFactory.createDefault(ByteArrayBufferFactory.INSTANCE);
-        if (delegate.isAsyncSupported()) {
-            this.byteBody = ByteBufferBodyAdapter.adapt(new ServletStreamPublisher(delegate::getInputStream), length);
-        } else {
-            this.byteBody = InputStreamByteBody.create(new LazyDelegateInputStream(delegate), length, ioExecutor, byteBodyFactory);
-        }
 
         String requestURI = resolveRequestUri(delegate);
 
@@ -380,7 +375,7 @@ public final class DefaultServletHttpRequest<B> implements
         );
     }
 
-    private ServletRequest delegate() {
+    protected final ServletRequest delegate() {
         return asyncContext != null ? asyncContext.getRequest() : delegate;
     }
 
@@ -536,7 +531,18 @@ public final class DefaultServletHttpRequest<B> implements
 
     @Override
     public @NonNull ByteBody byteBody() {
-        return byteBody;
+        bodyAccessed = true;
+        CloseableByteBody closeableBody = byteBody.get();
+        if (closeableBody == null) {
+            synchronized (this) {
+                closeableBody = byteBody.get();
+                if (closeableBody == null) {
+                    closeableBody = createByteBody();
+                    byteBody.set(closeableBody);
+                }
+            }
+        }
+        return closeableBody;
     }
 
     @Override
@@ -546,8 +552,22 @@ public final class DefaultServletHttpRequest<B> implements
 
     @Override
     public void close() {
-        byteBody.close();
-        runDisposalResources();
+        CloseableByteBody closeableBody = byteBody.get();
+        try {
+            if (closeableBody != null) {
+                closeableBody.close();
+            }
+        } finally {
+            runDisposalResources();
+        }
+    }
+
+    @Override
+    public void prepareForResponse() {
+        if (bodyAccessed || !hasFormBody()) {
+            return;
+        }
+        bodyAccessed = prepareUnusedFormBodyForResponse();
     }
 
     @Override
@@ -573,8 +593,10 @@ public final class DefaultServletHttpRequest<B> implements
         }
         if (mediaType.matches(MediaType.MULTIPART_FORM_DATA_TYPE)) {
             return Flux.defer(() -> {
+                bodyAccessed = true;
                 try {
                     Collection<Part> parts = ((HttpServletRequest) delegate()).getParts();
+                    discardByteBodyIfInitialized();
                     return Flux.fromIterable(parts)
                         .map(this::toRawFormFieldFromPart);
                 } catch (IOException | ServletException e) {
@@ -582,11 +604,44 @@ public final class DefaultServletHttpRequest<B> implements
                 }
             });
         } else {
-            return Flux.fromIterable(delegate().getParameterMap().entrySet().stream()
+            return Flux.defer(() -> {
+                bodyAccessed = true;
+                var parameterMap = delegate().getParameterMap();
+                discardByteBodyIfInitialized();
+                return Flux.fromIterable(parameterMap.entrySet().stream()
                 .flatMap(entry -> Arrays.stream(entry.getValue())
                     .map(value -> new RawFormField(new FormFieldMetadata(entry.getKey(), null, null), byteBodyFactory().adapt(value.getBytes(StandardCharsets.UTF_8)))))
-                .toList());
+                    .toList());
+            });
         }
+    }
+
+    private void discardByteBodyIfInitialized() {
+        CloseableByteBody closeableBody = byteBody.get();
+        if (closeableBody != null) {
+            closeableBody.allowDiscard();
+        }
+    }
+
+    /**
+     * Called by {@link #prepareForResponse()} when the request has a form body that has not been
+     * accessed. Subclasses can override this to consume or drain the unread form body before the
+     * response is committed.
+     *
+     * @return {@code true} if the body was handled (preventing the default no-op behavior)
+     */
+    protected boolean prepareUnusedFormBodyForResponse() {
+        return false;
+    }
+
+    private CloseableByteBody createByteBody() {
+        HttpServletRequest currentRequest = (HttpServletRequest) delegate();
+        long contentLengthLong = currentRequest.getContentLengthLong();
+        OptionalLong length = contentLengthLong < 0 ? OptionalLong.empty() : OptionalLong.of(contentLengthLong);
+        if (isAsyncSupported()) {
+            return ByteBufferBodyAdapter.adapt(new ServletStreamPublisher(currentRequest::getInputStream), length);
+        }
+        return InputStreamByteBody.create(new LazyDelegateInputStream(currentRequest), length, ioExecutor, byteBodyFactory);
     }
 
     @Override

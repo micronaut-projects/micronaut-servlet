@@ -112,4 +112,12 @@ public class DefaultServletHttpHandler extends ServletHttpHandler<HttpServletReq
     public boolean isRunning() {
         return getApplicationContext().isRunning();
     }
+
+    protected final Executor getIoExecutor() {
+        return ioExecutor;
+    }
+
+    protected final @Nullable SSLSessionProvider getSslSessionProvider() {
+        return sslSessionProvider;
+    }
 }
