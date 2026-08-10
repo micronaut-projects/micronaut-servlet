@@ -179,9 +179,9 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/http/ServletBodyBinder.html#bind(io.micronaut.core.convert.ArgumentConversionContext,io.micronaut.http.HttpRequest)" class="member-name-link">bind(ArgumentConversionContext, HttpRequest)</a> - Method in class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletBodyBinder.html" title="class in io.micronaut.servlet.http">ServletBodyBinder</a></dt>
 <dd>&nbsp;</dd>
-<dt><a href="io/micronaut/servlet/engine/DefaultServletHttpResponse.html#body(T)" class="member-name-link">body(T)</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/DefaultServletHttpResponse.html" title="class in io.micronaut.servlet.engine">DefaultServletHttpResponse</a></dt>
-<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/http/poja/apache/ApacheServletHttpRequest.html#body(T)" class="member-name-link">body(T)</a> - Method in class io.micronaut.http.poja.apache.<a href="io/micronaut/http/poja/apache/ApacheServletHttpRequest.html" title="class in io.micronaut.http.poja.apache">ApacheServletHttpRequest</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/engine/DefaultServletHttpResponse.html#body(T)" class="member-name-link">body(T)</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/DefaultServletHttpResponse.html" title="class in io.micronaut.servlet.engine">DefaultServletHttpResponse</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/http/BodyBuilder.html" class="type-name-link" title="interface in io.micronaut.servlet.http">BodyBuilder</a> - Interface in <a href="io/micronaut/servlet/http/package-summary.html">io.micronaut.servlet.http</a></dt>
 <dd>
@@ -1227,7 +1227,7 @@ thread pool, to run the specified <a href="io/micronaut/servlet/http/ServletHttp
 <dt><a href="io/micronaut/servlet/jetty/JettyServer.html#%3Cinit%3E(io.micronaut.context.ApplicationContext,io.micronaut.runtime.ApplicationConfiguration,org.eclipse.jetty.server.Server,io.micronaut.web.router.Router,io.micronaut.servlet.jetty.JettyConfiguration,java.util.List)" class="member-name-link">JettyServer(ApplicationContext, ApplicationConfiguration, Server, Router, JettyConfiguration, List)</a> - Constructor for class io.micronaut.servlet.jetty.<a href="io/micronaut/servlet/jetty/JettyServer.html" title="class in io.micronaut.servlet.jetty">JettyServer</a></dt>
 <dd>
 <div class="deprecation-block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span>
-<div class="deprecation-comment">Use <a href="io/micronaut/servlet/jetty/JettyServer.html#%3Cinit%3E(io.micronaut.context.ApplicationContext,io.micronaut.runtime.ApplicationConfiguration,org.eclipse.jetty.server.Server,io.micronaut.web.router.Router,io.micronaut.servlet.jetty.JettyConfiguration,java.util.List,io.micronaut.context.event.ApplicationEventPublisher)"><code>JettyServer(io.micronaut.context.ApplicationContext,io.micronaut.runtime.ApplicationConfiguration,org.eclipse.jetty.server.Server,io.micronaut.web.router.Router,io.micronaut.servlet.jetty.JettyConfiguration,java.util.List&lt;io.micronaut.servlet.jetty.JettyConfiguration.ConnectorConfiguration&gt;,io.micronaut.context.event.@org.jspecify.annotations.Nullable ApplicationEventPublisher&lt;io.micronaut.runtime.server.event.ServerShutdownEvent&gt;)</code></a> instead.</div>
+<div class="deprecation-comment">Use the constructor that accepts an application event publisher instead.</div>
 </div>
 </dd>
 <dt><a href="io/micronaut/servlet/jetty/JettyServer.html#%3Cinit%3E(io.micronaut.context.ApplicationContext,io.micronaut.runtime.ApplicationConfiguration,org.eclipse.jetty.server.Server,io.micronaut.web.router.Router,io.micronaut.servlet.jetty.JettyConfiguration,java.util.List,io.micronaut.context.event.ApplicationEventPublisher)" class="member-name-link">JettyServer(ApplicationContext, ApplicationConfiguration, Server, Router, JettyConfiguration, List, ApplicationEventPublisher)</a> - Constructor for class io.micronaut.servlet.jetty.<a href="io/micronaut/servlet/jetty/JettyServer.html" title="class in io.micronaut.servlet.jetty">JettyServer</a></dt>
@@ -2084,7 +2084,7 @@ specified charset.</div>
 <dt><a href="io/micronaut/servlet/tomcat/TomcatServer.html#%3Cinit%3E(io.micronaut.context.ApplicationContext,io.micronaut.runtime.ApplicationConfiguration,org.apache.catalina.startup.Tomcat)" class="member-name-link">TomcatServer(ApplicationContext, ApplicationConfiguration, Tomcat)</a> - Constructor for class io.micronaut.servlet.tomcat.<a href="io/micronaut/servlet/tomcat/TomcatServer.html" title="class in io.micronaut.servlet.tomcat">TomcatServer</a></dt>
 <dd>
 <div class="deprecation-block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span>
-<div class="deprecation-comment">Use <a href="io/micronaut/servlet/tomcat/TomcatServer.html#%3Cinit%3E(io.micronaut.context.ApplicationContext,io.micronaut.runtime.ApplicationConfiguration,io.micronaut.context.event.ApplicationEventPublisher,org.apache.catalina.startup.Tomcat)"><code>TomcatServer(io.micronaut.context.ApplicationContext,io.micronaut.runtime.ApplicationConfiguration,io.micronaut.context.event.@org.jspecify.annotations.Nullable ApplicationEventPublisher&lt;io.micronaut.runtime.server.event.ServerShutdownEvent&gt;,org.apache.catalina.startup.Tomcat)</code></a> instead.</div>
+<div class="deprecation-comment">Use the constructor that accepts an application event publisher instead.</div>
 </div>
 </dd>
 <dt><a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html#toOutputStream()" class="member-name-link">toOutputStream()</a> - Method in class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html" title="class in io.micronaut.servlet.http">ByteArrayByteBuffer</a></dt>
