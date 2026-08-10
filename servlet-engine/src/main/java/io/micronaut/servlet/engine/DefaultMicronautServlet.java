@@ -26,6 +26,8 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.jspecify.annotations.Nullable;
+
 import java.util.Objects;
 
 /**
@@ -49,9 +51,9 @@ public class DefaultMicronautServlet extends HttpServlet {
      */
     public static final String CONTEXT_ATTRIBUTE = "io.micronaut.servlet.APPLICATION_CONTEXT";
 
-    private ApplicationContext applicationContext;
+    private @Nullable ApplicationContext applicationContext;
     private boolean isContextOwner;
-    private DefaultServletHttpHandler handler;
+    private transient @Nullable DefaultServletHttpHandler handler;
 
     /**
      * Constructor that takes an application context.
@@ -104,9 +106,9 @@ public class DefaultMicronautServlet extends HttpServlet {
             isContextOwner = true;
         }
         if (servletContext != null) {
-            servletContext.setAttribute(CONTEXT_ATTRIBUTE, applicationContext);
+            servletContext.setAttribute(CONTEXT_ATTRIBUTE, Objects.requireNonNull(applicationContext));
         }
-        this.handler = applicationContext.getBean(DefaultServletHttpHandler.class);
+        this.handler = Objects.requireNonNull(applicationContext).getBean(DefaultServletHttpHandler.class);
     }
 
     /**

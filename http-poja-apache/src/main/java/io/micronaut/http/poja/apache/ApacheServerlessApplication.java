@@ -30,11 +30,13 @@ import jakarta.inject.Singleton;
 import org.apache.hc.core5.http.impl.io.SessionInputBufferImpl;
 import org.apache.hc.core5.http.io.SessionInputBuffer;
 import org.apache.hc.core5.http.message.BasicClassicHttpResponse;
+import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 
 /**
@@ -52,7 +54,7 @@ public class ApacheServerlessApplication
     private final ExecutorService ioExecutor;
     private final ByteBufferFactory<?, ?> byteBufferFactory;
     private final ApacheServletConfiguration configuration;
-    private SessionInputBuffer sessionInputBuffer;
+    private @Nullable SessionInputBuffer sessionInputBuffer;
 
     /**
      * Default constructor.
@@ -87,12 +89,12 @@ public class ApacheServerlessApplication
                 );
                 servletHttpHandler.service(exchange);
                 if (!responseContext.isCommitted()) {
-                    responseContext.primaryResponse.getOutputStream(); // this causes the commit
+                    Objects.requireNonNull(responseContext.primaryResponse, "primaryResponse").getOutputStream(); // this causes the commit
                 }
             } catch (Exception e) {
                 if (!responseContext.isCommitted()) {
                     try (OutputStream os = responseContext.commit(new BasicClassicHttpResponse(HttpStatus.BAD_REQUEST.getCode()))) {
-                        os.write(e.getMessage().getBytes(StandardCharsets.UTF_8));
+                        os.write(Objects.toString(e.getMessage(), "").getBytes(StandardCharsets.UTF_8));
                     }
                 }
                 throw e;

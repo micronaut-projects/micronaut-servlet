@@ -54,10 +54,12 @@ class FormSubmissionTest {
             this.pages = pages;
         }
 
+        @Override
         public @NonNull String title() {
             return this.title;
         }
 
+        @Override
         public @Nullable Integer pages() {
             return this.pages;
         }

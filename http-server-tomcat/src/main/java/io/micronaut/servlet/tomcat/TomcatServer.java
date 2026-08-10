@@ -31,6 +31,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -67,7 +68,7 @@ public class TomcatServer extends AbstractServletServer<Tomcat> {
      * @param applicationContext       The context
      * @param applicationConfiguration The configuration
      * @param tomcat                   The tomcat instance
-     * @deprecated Use {@link TomcatServer(ApplicationContext, ApplicationConfiguration, ApplicationEventPublisher, Tomcat)} instead.
+     * @deprecated Use the constructor that accepts an application event publisher instead.
      */
     @Deprecated(forRemoval = true, since = "5.2.0")
     public TomcatServer(
@@ -131,7 +132,7 @@ public class TomcatServer extends AbstractServletServer<Tomcat> {
         try {
             return getURI().toURL();
         } catch (MalformedURLException e) {
-            throw new InternalServerException(e.getMessage(), e);
+            throw new InternalServerException(Optional.ofNullable(e.getMessage()).orElse(e.toString()), e);
         }
     }
 

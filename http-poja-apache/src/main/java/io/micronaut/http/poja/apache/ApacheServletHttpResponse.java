@@ -54,7 +54,7 @@ final class ApacheServletHttpResponse<T> extends PojaHttpResponse<T, ClassicHttp
 
     private final SimpleHttpHeaders headers;
     private final MutableConvertibleValues<Object> attributes = new MutableConvertibleValuesMap<>();
-    private T bodyObject;
+    private @Nullable T bodyObject;
 
     /**
      * Create an Apache-based response.
@@ -102,7 +102,7 @@ final class ApacheServletHttpResponse<T> extends PojaHttpResponse<T, ClassicHttp
     }
 
     @Override
-    public MutableHttpResponse<T> status(int code, CharSequence message) {
+    public MutableHttpResponse<T> status(int code, @Nullable CharSequence message) {
         this.code = code;
         if (message == null) {
             this.reasonPhrase = HttpStatus.getDefaultReason(code);

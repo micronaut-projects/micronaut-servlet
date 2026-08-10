@@ -33,6 +33,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Implementation of {@link AbstractServletServer} for Undertow.
@@ -43,7 +44,7 @@ import java.util.Map;
 @Singleton
 public class UndertowServer extends AbstractServletServer<Undertow> {
 
-    private Map<String, Undertow.ListenerInfo> listenersByProtocol;
+    private Map<String, Undertow.ListenerInfo> listenersByProtocol = new HashMap<>();
 
     /**
      * Default constructor.
@@ -133,7 +134,7 @@ public class UndertowServer extends AbstractServletServer<Undertow> {
         try {
             return getURI().toURL();
         } catch (MalformedURLException e) {
-            throw new InternalServerException(e.getMessage(), e);
+            throw new InternalServerException(Optional.ofNullable(e.getMessage()).orElse(e.toString()), e);
         }
     }
 
@@ -142,7 +143,7 @@ public class UndertowServer extends AbstractServletServer<Undertow> {
         try {
             return new URI(getScheme(), null, getHost(), getPort(), null, null, null);
         } catch (URISyntaxException e) {
-            throw new InternalServerException(e.getMessage(), e);
+            throw new InternalServerException(Optional.ofNullable(e.getMessage()).orElse(e.toString()), e);
         }
     }
 

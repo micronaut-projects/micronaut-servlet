@@ -24,6 +24,7 @@ import io.micronaut.http.HttpStatus;
 import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
+import org.jspecify.annotations.Nullable;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -78,7 +79,7 @@ final class HttpExchangeHttpServletResponse implements HttpServletResponse {
     }
 
     @Override
-    public String getContentType() {
+    public @Nullable String getContentType() {
         return getHeader(HttpHeaders.CONTENT_TYPE);
     }
 
@@ -219,14 +220,15 @@ final class HttpExchangeHttpServletResponse implements HttpServletResponse {
     }
 
     @Override
-    public String getHeader(String s) {
+    public @Nullable String getHeader(String s) {
         List<Object> headersValues = headers.get(s);
         return CollectionUtils.isEmpty(headersValues) ? null : headersValues.get(0).toString();
     }
 
     @Override
     public Collection<String> getHeaders(String s) {
-        return headers.get(s).stream().map(Object::toString).toList();
+        List<Object> values = headers.get(s);
+        return CollectionUtils.isEmpty(values) ? Collections.emptyList() : values.stream().map(Object::toString).toList();
     }
 
     @Override

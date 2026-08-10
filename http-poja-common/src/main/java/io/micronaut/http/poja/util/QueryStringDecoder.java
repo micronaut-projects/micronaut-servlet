@@ -17,6 +17,7 @@ package io.micronaut.http.poja.util;
 
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.StringUtils;
+import org.jspecify.annotations.Nullable;
 
 import java.net.URI;
 import java.net.URLDecoder;
@@ -74,8 +75,8 @@ public class QueryStringDecoder {
     private final int maxParams;
     private final boolean semicolonIsNormalChar;
     private int pathEndIdx;
-    private String path;
-    private Map<String, List<String>> params;
+    private @Nullable String path;
+    private @Nullable Map<String, List<String>> params;
 
     /**
      * Creates a new decoder that decodes the specified URI. The decoder will

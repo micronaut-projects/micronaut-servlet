@@ -18,6 +18,9 @@ jobs:
     name: "build"
     if: github.repository != 'micronaut-projects/micronaut-project-template'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      checks: write
     strategy:
       matrix:
         java: ['25']

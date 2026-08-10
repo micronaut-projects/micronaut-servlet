@@ -56,14 +56,15 @@ public class TomcatConfiguration extends HttpServerConfiguration implements Togg
 
     public static final String PREFIX = HttpServerConfiguration.PREFIX + ".tomcat";
     public static final String ENABLED_PROPERTY = PREFIX + ".enabled";
+    private static final String DEFAULT_PROTOCOL = "org.apache.coyote.http11.Http11NioProtocol";
 
     @ConfigurationBuilder
     protected final Connector tomcatConnector;
-    private final MultipartConfiguration multipartConfiguration;
+    private final @Nullable MultipartConfiguration multipartConfiguration;
     private boolean enabled = true;
     private String protocol;
 
-    private AccessLogConfiguration accessLogConfiguration;
+    private @Nullable AccessLogConfiguration accessLogConfiguration;
 
     /**
      * Default constructor.
@@ -75,9 +76,8 @@ public class TomcatConfiguration extends HttpServerConfiguration implements Togg
             @Property(name = HttpServerConfiguration.PREFIX + ".tomcat.protocol")
             @Nullable String protocol) {
         this.multipartConfiguration = multipartConfiguration;
-        this.tomcatConnector = new Connector(
-                protocol != null ? protocol : "org.apache.coyote.http11.Http11NioProtocol"
-        );
+        this.protocol = protocol != null ? protocol : DEFAULT_PROTOCOL;
+        this.tomcatConnector = new Connector(this.protocol);
     }
 
     /**
@@ -91,7 +91,7 @@ public class TomcatConfiguration extends HttpServerConfiguration implements Togg
      * @param protocol The protocol to use. Defaults to org.apache.coyote.http11.Http11NioProtocol.
      */
     public void setProtocol(@Nullable String protocol) {
-        this.protocol = protocol;
+        this.protocol = protocol != null ? protocol : DEFAULT_PROTOCOL;
     }
 
     /**

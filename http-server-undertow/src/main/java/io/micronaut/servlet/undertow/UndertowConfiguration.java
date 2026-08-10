@@ -57,8 +57,8 @@ public class UndertowConfiguration extends HttpServerConfiguration implements To
     @ConfigurationBuilder
     protected Undertow.Builder undertowBuilder = Undertow.builder();
 
-    private final MultipartConfiguration multipartConfiguration;
-    private AccessLogConfiguration accessLogConfiguration;
+    private final @Nullable MultipartConfiguration multipartConfiguration;
+    private @Nullable AccessLogConfiguration accessLogConfiguration;
     private boolean enabled = true;
     private Map<String, String> workerOptions = new HashMap<>(5);
     private Map<String, String> socketOptions = new HashMap<>(5);

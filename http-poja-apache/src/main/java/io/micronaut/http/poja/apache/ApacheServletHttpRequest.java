@@ -16,11 +16,10 @@
 package io.micronaut.http.poja.apache;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.util.SupplierUtil;
-import org.jspecify.annotations.NonNull;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.convert.value.ConvertibleMultiValues;
 import io.micronaut.core.io.buffer.ByteBufferFactory;
+import io.micronaut.core.util.SupplierUtil;
 import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpMethod;
 import io.micronaut.http.MediaType;
@@ -60,11 +59,14 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 import java.util.function.Supplier;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 /**
  * An implementation of the POJA Http Request based on Apache.
@@ -230,7 +232,7 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
     }
 
     @Override
-    public <T> MutableHttpRequest<T> body(T body) {
+    public <T> MutableHttpRequest<T> body(@Nullable T body) {
         throw new UnsupportedOperationException("Could not change request body");
     }
 
@@ -323,7 +325,7 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
             }
             List<String> target = merged.computeIfAbsent(name, key -> new ArrayList<>());
             for (CharSequence value : values) {
-                target.add(value == null ? null : value.toString());
+                target.add(Objects.requireNonNull(value, "form value").toString());
             }
         }
         return new MultiValuesQueryParameters(merged, conversionService);

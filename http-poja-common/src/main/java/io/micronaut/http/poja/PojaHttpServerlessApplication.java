@@ -83,7 +83,7 @@ public abstract class PojaHttpServerlessApplication<REQ, RES> implements Embedde
      */
     public @NonNull PojaHttpServerlessApplication<REQ, RES> start(InputStream input, OutputStream output) {
         final ServletHttpHandler<REQ, RES> servletHttpHandler =
-            new ServletHttpHandler<>(applicationContext, null) {
+            new ServletHttpHandler<>(applicationContext, applicationContext.getConversionService()) {
                 @Override
                 protected ServletExchange<REQ, RES> createExchange(Object request, Object response) {
                     throw new UnsupportedOperationException("Not expected in serverless mode.");

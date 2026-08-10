@@ -26,6 +26,8 @@ import io.micronaut.http.server.exceptions.response.ErrorContext;
 import io.micronaut.http.server.exceptions.response.ErrorResponseProcessor;
 import jakarta.inject.Singleton;
 
+import java.util.Optional;
+
 /**
  * Error mapper for {@link CodecException}.
  *
@@ -42,11 +44,12 @@ final class CodecErrorHandler implements ExceptionHandler<CodecException, HttpRe
         this.responseProcessor = responseProcessor;
     }
 
+    @Override
     public HttpResponse<?> handle(HttpRequest request, CodecException exception) {
         return this.responseProcessor.processResponse(ErrorContext.builder(request).cause(exception).error(new Error() {
             @Override
             public String getMessage() {
-                return exception.getMessage();
+                return Optional.ofNullable(exception.getMessage()).orElse(exception.toString());
             }
         }).build(), HttpResponse.badRequest());
     }

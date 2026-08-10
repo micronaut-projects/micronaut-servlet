@@ -18,6 +18,7 @@ package io.micronaut.servlet.engine;
 import io.micronaut.core.util.functional.ThrowingSupplier;
 import jakarta.servlet.ReadListener;
 import jakarta.servlet.ServletInputStream;
+import org.jspecify.annotations.Nullable;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
@@ -26,6 +27,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Objects;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicReference;
@@ -44,14 +46,14 @@ final class ServletStreamPublisher implements Publisher<ByteBuffer>, Subscriptio
 
     private final ThrowingSupplier<ServletInputStream, IOException> upstreamSupplier;
 
-    private ServletInputStream upstream;
+    private @Nullable ServletInputStream upstream;
     private long demand;
     private boolean upstreamListenerRegistered;
     private boolean upstreamReady;
     private boolean upstreamDone;
     private boolean downstreamDone;
-    private Throwable error;
-    private Subscriber<? super ByteBuffer> downstream;
+    private @Nullable Throwable error;
+    private @Nullable Subscriber<? super ByteBuffer> downstream;
 
     ServletStreamPublisher(ThrowingSupplier<ServletInputStream, IOException> upstreamSupplier) {
         this.upstreamSupplier = upstreamSupplier;
@@ -103,7 +105,7 @@ final class ServletStreamPublisher implements Publisher<ByteBuffer>, Subscriptio
                 upstreamListenerRegistered = true;
                 try {
                     upstream = upstreamSupplier.get();
-                    upstream.setReadListener(this);
+                    upstream().setReadListener(this);
                 } catch (IOException e) {
                     onError(e);
                 }
@@ -114,17 +116,19 @@ final class ServletStreamPublisher implements Publisher<ByteBuffer>, Subscriptio
     }
 
     private void forwardSome() {
+        Subscriber<? super ByteBuffer> currentDownstream = downstream();
         while (!downstreamDone && demand > 0 && (upstreamReady || upstreamDone)) {
             if (!upstreamDone) {
                 try {
                     byte[] arr = new byte[4096];
-                    int n = upstream.read(arr);
+                    ServletInputStream currentUpstream = upstream();
+                    int n = currentUpstream.read(arr);
                     if (n == -1) {
                         upstreamDone = true;
                     } else {
                         demand--;
-                        downstream.onNext(ByteBuffer.wrap(arr, 0, n));
-                        upstreamReady = upstream.isReady();
+                        currentDownstream.onNext(ByteBuffer.wrap(arr, 0, n));
+                        upstreamReady = currentUpstream.isReady();
                     }
                 } catch (IOException e) {
                     error = e;
@@ -134,12 +138,20 @@ final class ServletStreamPublisher implements Publisher<ByteBuffer>, Subscriptio
             if (upstreamDone) {
                 downstreamDone = true;
                 if (error != null) {
-                    downstream.onError(error);
+                    currentDownstream.onError(error);
                 } else {
-                    downstream.onComplete();
+                    currentDownstream.onComplete();
                 }
             }
         }
+    }
+
+    private ServletInputStream upstream() {
+        return Objects.requireNonNull(upstream, "Upstream not initialized");
+    }
+
+    private Subscriber<? super ByteBuffer> downstream() {
+        return Objects.requireNonNull(downstream, "Downstream not initialized");
     }
 
     @Override
@@ -159,7 +171,7 @@ final class ServletStreamPublisher implements Publisher<ByteBuffer>, Subscriptio
     @Override
     public void onDataAvailable() {
         submit(() -> {
-            upstreamReady = upstream.isReady();
+            upstreamReady = upstream().isReady();
             forwardSome();
         });
     }

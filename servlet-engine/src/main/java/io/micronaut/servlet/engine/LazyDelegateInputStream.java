@@ -17,9 +17,11 @@ package io.micronaut.servlet.engine;
 
 import io.micronaut.core.annotation.Internal;
 import jakarta.servlet.http.HttpServletRequest;
+import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Objects;
 
 /**
  * Delegating {@link InputStream} that only calls {@link HttpServletRequest#getInputStream()} on
@@ -30,8 +32,8 @@ import java.io.InputStream;
  */
 @Internal
 final class LazyDelegateInputStream extends InputStream {
-    private HttpServletRequest request;
-    private InputStream delegate;
+    private @Nullable HttpServletRequest request;
+    private @Nullable InputStream delegate;
 
     LazyDelegateInputStream(HttpServletRequest request) {
         this.request = request;
@@ -39,7 +41,7 @@ final class LazyDelegateInputStream extends InputStream {
 
     private InputStream delegate() throws IOException {
         if (delegate == null) {
-            delegate = request.getInputStream();
+            delegate = Objects.requireNonNull(request, "Request not initialized").getInputStream();
             request = null;
         }
         return delegate;

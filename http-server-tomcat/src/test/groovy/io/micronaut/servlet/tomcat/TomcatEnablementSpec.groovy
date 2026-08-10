@@ -1,6 +1,7 @@
 package io.micronaut.servlet.tomcat
 
 import io.micronaut.context.ApplicationContext
+import io.micronaut.runtime.ApplicationConfiguration
 import io.micronaut.runtime.server.EmbeddedServer
 import org.apache.catalina.startup.Tomcat
 import spock.lang.Specification
@@ -13,14 +14,30 @@ class TomcatEnablementSpec extends Specification {
 
         expect:
         configuration.enabled
+        configuration.protocol == 'org.apache.coyote.http11.Http11NioProtocol'
+        configuration.multipartConfiguration.empty
+        configuration.accessLogConfiguration.empty
         TomcatConfiguration.PREFIX == 'micronaut.server.tomcat'
         TomcatConfiguration.ENABLED_PROPERTY == 'micronaut.server.tomcat.enabled'
 
         when:
         configuration.enabled = false
+        configuration.protocol = null
 
         then:
         !configuration.enabled
+        configuration.protocol == 'org.apache.coyote.http11.Http11NioProtocol'
+    }
+
+    void "deprecated tomcat server constructor delegates to current constructor"() {
+        given:
+        def tomcat = new Tomcat()
+
+        when:
+        def server = new TomcatServer(Stub(ApplicationContext), new ApplicationConfiguration(), tomcat)
+
+        then:
+        server.getServer().is(tomcat)
     }
 
     void "tomcat runtime can be disabled"() {

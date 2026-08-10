@@ -42,6 +42,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.HttpUpgradeHandler;
 import jakarta.servlet.http.Part;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.io.BufferedReader;
@@ -71,8 +72,8 @@ final class HttpExchangeHttpServletRequest implements HttpServletRequest {
     private final HttpExchange exchange;
     private final ServletInputStream inputStream;
     private final FormUrlEncodedDecoder formUrlEncodedDecoder;
-    private Map<String, Object> attributes = new HashMap<>();
-    private Map<String, String[]>  parameters = null;
+    private final Map<String, @Nullable Object> attributes = new HashMap<>();
+    private @Nullable Map<String, String[]>  parameters;
 
     HttpExchangeHttpServletRequest(HttpExchange httpExchange,
                                    FormUrlEncodedDecoder formUrlEncodedDecoder) {
@@ -110,7 +111,7 @@ final class HttpExchangeHttpServletRequest implements HttpServletRequest {
     }
 
     @Override
-    public String getHeader(String name) {
+    public @Nullable String getHeader(String name) {
         return exchange.getRequestHeaders().getFirst(name);
     }
 
@@ -140,7 +141,7 @@ final class HttpExchangeHttpServletRequest implements HttpServletRequest {
     }
 
     @Override
-    public String getQueryString() {
+    public @Nullable String getQueryString() {
         return exchange.getRequestURI().getRawQuery();
     }
 
@@ -155,7 +156,7 @@ final class HttpExchangeHttpServletRequest implements HttpServletRequest {
     }
 
     @Override
-    public Object getAttribute(String name) {
+    public @Nullable Object getAttribute(String name) {
         return attributes.get(name);
     }
 
@@ -188,7 +189,7 @@ final class HttpExchangeHttpServletRequest implements HttpServletRequest {
     }
 
     @Override
-    public String getContentType() {
+    public @Nullable String getContentType() {
         return exchange.getRequestHeaders().getFirst(HttpHeaders.CONTENT_TYPE);
     }
 
@@ -198,7 +199,7 @@ final class HttpExchangeHttpServletRequest implements HttpServletRequest {
     }
 
     @Override
-    public String getParameter(String name) {
+    public @Nullable String getParameter(String name) {
         String[] values = getParameterValues(name);
         return values == null ? null : values[0];
     }
@@ -209,14 +210,14 @@ final class HttpExchangeHttpServletRequest implements HttpServletRequest {
     }
 
     @Override
-    public String[] getParameterValues(String name) {
+    public String @Nullable [] getParameterValues(String name) {
         return getParameterMap().get(name);
     }
 
     @Override
     public Map<String, String[]> getParameterMap() {
         if (parameters == null) {
-            Map<String, Object> formParameters = null;
+            Map<String, Object> formParameters = Collections.emptyMap();
             if (isFormSubmission()) {
                 try {
                     String formBody = new String(getInputStream().readAllBytes(), StandardCharsets.UTF_8);
@@ -224,8 +225,6 @@ final class HttpExchangeHttpServletRequest implements HttpServletRequest {
                 } catch (IOException e) {
                     LOG.error("could not decode form url encoded body", e);
                 }
-            } else {
-                formParameters = Collections.emptyMap();
             }
             Map<String, List<String>> params = new QueryStringDecoder(exchange.getRequestURI()).parameters();
             parameters = mergeParams(formParameters, params);
@@ -240,7 +239,7 @@ final class HttpExchangeHttpServletRequest implements HttpServletRequest {
     }
 
     @Override
-    public String getScheme() {
+    public @Nullable String getScheme() {
         return exchange.getRequestURI().getScheme();
     }
 
@@ -270,7 +269,7 @@ final class HttpExchangeHttpServletRequest implements HttpServletRequest {
     }
 
     @Override
-    public void setAttribute(String name, Object o) {
+    public void setAttribute(String name, @Nullable Object o) {
         this.attributes.put(name, o);
     }
 
@@ -490,7 +489,6 @@ final class HttpExchangeHttpServletRequest implements HttpServletRequest {
 
     private boolean isFormSubmission() {
         String contentType = getContentType();
-
         if (StringUtils.isEmpty(contentType)) {
             return false;
         }

@@ -41,6 +41,7 @@ import io.micronaut.http.cookie.Cookies;
 import io.micronaut.http.simple.SimpleHttpHeaders;
 import io.micronaut.http.simple.SimpleHttpParameters;
 import io.micronaut.servlet.http.MutableServletHttpRequest;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Mutable implementation for servlets.
@@ -49,9 +50,9 @@ import io.micronaut.servlet.http.MutableServletHttpRequest;
 @Internal
 final class DefaultMutableServletHttpRequest<B> implements MutableServletHttpRequest<HttpServletRequest, B> {
     private final DefaultServletHttpRequest<B> servletHttpRequest;
-    private URI uri;
+    private @Nullable URI uri;
     private ConversionService conversionService;
-    private B body;
+    private @Nullable B body;
     private final MutableHttpParameters parameters;
     private final MutableHttpHeaders headers;
 
@@ -98,7 +99,7 @@ final class DefaultMutableServletHttpRequest<B> implements MutableServletHttpReq
     }
 
     @Override
-    public <T> MutableHttpRequest<T> body(T body) {
+    public <T> MutableHttpRequest<T> body(@Nullable T body) {
         this.body = (B) body;
         return (MutableHttpRequest<T>) this;
     }

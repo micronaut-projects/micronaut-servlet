@@ -228,7 +228,7 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
             try (InputStream is = byteBodyResponse.byteBody().toInputStream()) {
                 is.transferTo(servletResponse.getOutputStream());
             } catch (IOException e) {
-                throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+                throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, Optional.ofNullable(e.getMessage()).orElse(e.toString()));
             }
             onComplete.run();
         }
@@ -288,7 +288,7 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
                 Thread.currentThread().interrupt();
                 return;
             } catch (Throwable ee) {
-                handleFallback(exchange.getResponse(), ee.getCause());
+                handleFallback(exchange.getResponse(), Optional.ofNullable(ee.getCause()).orElse(ee));
                 return;
             }
             transfer(executionResult, exchange, false, requestTerminated);
@@ -383,7 +383,7 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
         }
 
         @Override
-        protected FileCustomizableResponseType findFile(HttpRequest<?> request) {
+        protected @Nullable FileCustomizableResponseType findFile(HttpRequest<?> request) {
             return matchFile(request.getPath()).orElse(null);
         }
     }
@@ -391,7 +391,7 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
     private final class ServletResponseLifecycle extends ResponseLifecycle {
         private static final ByteBodyFactory BBF = ByteBodyFactory.createDefault(ByteArrayBufferFactory.INSTANCE);
 
-        public ServletResponseLifecycle() {
+        ServletResponseLifecycle() {
             super(routeExecutor, messageBodyHandlerRegistry, conversionService, BBF);
         }
 

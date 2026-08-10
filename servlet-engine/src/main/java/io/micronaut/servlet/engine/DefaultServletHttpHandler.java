@@ -43,7 +43,7 @@ import java.util.concurrent.ForkJoinPool;
 public class DefaultServletHttpHandler extends ServletHttpHandler<HttpServletRequest, HttpServletResponse> {
 
     private final Executor ioExecutor;
-    private final SSLSessionProvider sslSessionProvider;
+    private final @Nullable SSLSessionProvider sslSessionProvider;
 
     /**
      * Default constructor.

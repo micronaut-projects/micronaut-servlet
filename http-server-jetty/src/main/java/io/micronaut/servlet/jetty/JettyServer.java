@@ -32,6 +32,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import org.eclipse.jetty.http.HttpVersion;
 import org.eclipse.jetty.server.ConnectionFactory;
@@ -104,7 +105,7 @@ public class JettyServer extends AbstractServletServer<Server> {
      * @param router                   The router
      * @param jettyConfiguration       The jetty configuration
      * @param connectors               Additional connector configuration
-     * @deprecated Use {@link JettyServer(ApplicationContext, ApplicationConfiguration, Server, Router, JettyConfiguration, List, ApplicationEventPublisher)} instead.
+     * @deprecated Use the constructor that accepts an application event publisher instead.
      */
     @Deprecated(forRemoval = true, since = "5.2.0")
     public JettyServer(
@@ -149,7 +150,7 @@ public class JettyServer extends AbstractServletServer<Server> {
         try {
             return getServer().getURI().toURL();
         } catch (MalformedURLException e) {
-            throw new HttpServerException(e.getMessage(), e);
+            throw new HttpServerException(Optional.ofNullable(e.getMessage()).orElse(e.toString()), e);
         }
     }
 

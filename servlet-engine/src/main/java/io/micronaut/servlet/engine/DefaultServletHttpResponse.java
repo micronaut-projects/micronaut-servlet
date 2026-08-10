@@ -58,6 +58,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -84,14 +85,14 @@ public final class DefaultServletHttpResponse<B> implements ServletHttpResponse<
 
     private static final Logger LOG = LoggerFactory.getLogger(DefaultServletHttpResponse.class);
 
-    private static final byte[] EMPTY_ARRAY = "[]".getBytes();
+    private static final byte[] EMPTY_ARRAY = "[]".getBytes(StandardCharsets.UTF_8);
 
     private final ConversionService conversionService;
     private ResponseMetadata delegate;
     private final DefaultServletHttpRequest<?> request;
     private final ServletResponseHeaders headers;
     private final MutableConvertibleValues<Object> attributes;
-    private B body;
+    private @Nullable B body;
     private String reason = HttpStatus.OK.getReason();
 
     /**
@@ -141,8 +142,8 @@ public final class DefaultServletHttpResponse<B> implements ServletHttpResponse<
     @Override
     public Publisher<MutableHttpResponse<?>> stream(Publisher<?> dataPublisher) {
         return Flux.create(emitter -> dataPublisher.subscribe(new Subscriber<Object>() {
-            ServletOutputStream outputStream;
-            Subscription subscription;
+            @Nullable ServletOutputStream outputStream;
+            @Nullable Subscription subscription;
             final AtomicBoolean finished = new AtomicBoolean();
             MediaType contentType = getContentType().orElse(MediaType.APPLICATION_JSON_TYPE);
             boolean isJson = "json".equalsIgnoreCase(contentType.getSubtype());
@@ -169,7 +170,7 @@ public final class DefaultServletHttpResponse<B> implements ServletHttpResponse<
                 } catch (IOException e) {
                     if (finished.compareAndSet(false, true)) {
                         emitter.error(e);
-                        subscription.cancel();
+                        subscription().cancel();
                     }
                 }
             }
@@ -177,18 +178,18 @@ public final class DefaultServletHttpResponse<B> implements ServletHttpResponse<
             @Override
             public void onNext(Object o) {
                 try {
-                    if (outputStream.isReady() && !finished.get()) {
+                    if (outputStream().isReady() && !finished.get()) {
 
                         writeToOutputStream(o);
 
-                        if (outputStream.isReady()) {
-                            subscription.request(1);
+                        if (outputStream().isReady()) {
+                            subscription().request(1);
                         }
                     }
                 } catch (IOException e) {
                     if (finished.compareAndSet(false, true)) {
                         onError(e);
-                        subscription.cancel();
+                        subscription().cancel();
                     }
                 }
             }
@@ -197,14 +198,14 @@ public final class DefaultServletHttpResponse<B> implements ServletHttpResponse<
                 written = true;
                 if (o instanceof byte[] byteArray) {
                     raw = true;
-                    outputStream.write(byteArray);
+                    outputStream().write(byteArray);
                     flushIfReady();
                     return;
                 }
                 if (o instanceof ByteBuffer buf) {
                     try {
                         raw = true;
-                        outputStream.write(buf.toByteArray());
+                        outputStream().write(buf.toByteArray());
                         flushIfReady();
                     } finally {
                         if (buf instanceof ReferenceCounted referenceCounted) {
@@ -228,9 +229,9 @@ public final class DefaultServletHttpResponse<B> implements ServletHttpResponse<
                     combined[0] = first ? (byte) '[' : (byte) ',';
                     System.arraycopy(encoded, 0, combined, 1, encoded.length);
                     first = false;
-                    outputStream.write(combined);
+                    outputStream().write(combined);
                 } else {
-                    outputStream.write(encoded);
+                    outputStream().write(encoded);
                 }
                 flushIfReady();
             }
@@ -255,9 +256,18 @@ public final class DefaultServletHttpResponse<B> implements ServletHttpResponse<
             }
 
             private void flushIfReady() throws IOException {
-                if (outputStream.isReady()) {
-                    outputStream.flush();
+                ServletOutputStream currentOutputStream = outputStream();
+                if (currentOutputStream.isReady()) {
+                    currentOutputStream.flush();
                 }
+            }
+
+            private ServletOutputStream outputStream() {
+                return Objects.requireNonNull(outputStream, "Output stream not initialized");
+            }
+
+            private Subscription subscription() {
+                return Objects.requireNonNull(subscription, "Subscription not initialized");
             }
 
             @Override
@@ -271,7 +281,7 @@ public final class DefaultServletHttpResponse<B> implements ServletHttpResponse<
                         }
                         maybeReportErrorDownstream(new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, HttpStatus.INTERNAL_SERVER_ERROR.getReason() + ": " + t.getMessage()));
                     }
-                    subscription.cancel();
+                    subscription().cancel();
                 }
             }
 
@@ -280,11 +290,12 @@ public final class DefaultServletHttpResponse<B> implements ServletHttpResponse<
                 delegate.setStatus(httpStatusException.getStatus().getCode());
                 if (!written) {
                     try {
-                        Object message = httpStatusException.getBody().orElse(httpStatusException.getMessage());
-                        if (outputStream.isReady() && message instanceof CharSequence) {
-                            outputStream.write(message.toString().getBytes(getCharacterEncoding()));
+                        Object message = httpStatusException.getBody()
+                            .orElseGet(() -> Optional.ofNullable(httpStatusException.getMessage()).orElse(httpStatusException.toString()));
+                        if (outputStream().isReady() && message instanceof CharSequence) {
+                            outputStream().write(message.toString().getBytes(getCharacterEncoding()));
                             flushIfReady();
-                        } else if (outputStream.isReady()) {
+                        } else if (outputStream().isReady()) {
                             writeToOutputStream(message);
                         }
                         finish();
@@ -301,11 +312,11 @@ public final class DefaultServletHttpResponse<B> implements ServletHttpResponse<
             public void onComplete() {
                 if (finished.compareAndSet(false, true)) {
                     try {
-                        if (!raw && isJson && outputStream.isReady()) {
+                        if (!raw && isJson && outputStream().isReady()) {
                             if (first) { //empty publisher
-                                outputStream.write(EMPTY_ARRAY);
+                                outputStream().write(EMPTY_ARRAY);
                             } else {
-                                outputStream.write(']');
+                                outputStream().write(']');
                             }
                             flushIfReady();
                         }
@@ -332,9 +343,9 @@ public final class DefaultServletHttpResponse<B> implements ServletHttpResponse<
             subscriber = new Subscriber<>() {
                 final ServletOutputStream outputStream = delegate.getOutputStream();
                 final AtomicReference<CloseState> closeState = new AtomicReference<>(CloseState.IDLE);
-                Throwable failure;
-                Subscription subscription;
-                java.nio.ByteBuffer internalBuffer;
+                @Nullable Throwable failure;
+                @Nullable Subscription subscription;
+                java.nio.@Nullable ByteBuffer internalBuffer;
 
                 @Override
                 public void onSubscribe(Subscription s) {
@@ -357,25 +368,25 @@ public final class DefaultServletHttpResponse<B> implements ServletHttpResponse<
                 }
 
                 private void writeSome() throws IOException {
-                    assert internalBuffer != null;
+                    java.nio.ByteBuffer currentBuffer = Objects.requireNonNull(internalBuffer, "Internal buffer not initialized");
 
                     // isReady at the start, ensured by caller. we can't assert this here because
                     // isReady may have side effects
 
-                    while (internalBuffer.hasRemaining()) { // hasRemaining is only legal when isReady!
+                    while (currentBuffer.hasRemaining()) { // hasRemaining is only legal when isReady!
 
                         boolean writeBuffer = writeBufferAvailable;
                         if (writeBuffer) {
                             try {
-                                outputStream.write(internalBuffer);
+                                outputStream.write(currentBuffer);
                             } catch (NoSuchMethodError e) {
                                 writeBuffer = false;
                                 writeBufferAvailable = false;
                             }
                         }
                         if (!writeBuffer) {
-                            outputStream.write(internalBuffer.array(), internalBuffer.arrayOffset() + internalBuffer.position(), internalBuffer.remaining());
-                            internalBuffer.position(internalBuffer.limit());
+                            outputStream.write(currentBuffer.array(), currentBuffer.arrayOffset() + currentBuffer.position(), currentBuffer.remaining());
+                            currentBuffer.position(currentBuffer.limit());
                         }
 
                         if (!outputStream.isReady()) {
@@ -392,7 +403,7 @@ public final class DefaultServletHttpResponse<B> implements ServletHttpResponse<
                             completion.completeExceptionally(failure);
                         }
                     } else {
-                        subscription.request(1);
+                        Objects.requireNonNull(subscription, "Subscription not initialized").request(1);
                     }
                 }
 
@@ -580,19 +591,15 @@ public final class DefaultServletHttpResponse<B> implements ServletHttpResponse<
                 body(response.body());
             }
         } else {
-            if (body != null) {
-                getContentType().orElseGet(() -> {
-                    final Produces ann = body.getClass().getAnnotation(Produces.class);
-                    if (ann != null) {
-                        final String[] v = ann.value();
-                        if (ArrayUtils.isNotEmpty(v)) {
-                            final MediaType mediaType = new MediaType(v[0]);
-                            contentType(mediaType);
-                            return mediaType;
-                        }
+            if (body != null && getContentType().isEmpty()) {
+                final Produces ann = body.getClass().getAnnotation(Produces.class);
+                if (ann != null) {
+                    final String[] v = ann.value();
+                    if (ArrayUtils.isNotEmpty(v)) {
+                        final MediaType mediaType = new MediaType(v[0]);
+                        contentType(mediaType);
                     }
-                    return null;
-                });
+                }
             }
             this.body = (B) body;
         }
@@ -600,7 +607,7 @@ public final class DefaultServletHttpResponse<B> implements ServletHttpResponse<
     }
 
     @Override
-    public MutableHttpResponse<B> status(int status, CharSequence message) {
+    public MutableHttpResponse<B> status(int status, @Nullable CharSequence message) {
         if (message == null) {
             this.reason = HttpStatus.getDefaultReason(status);
         } else {
@@ -656,6 +663,7 @@ public final class DefaultServletHttpResponse<B> implements ServletHttpResponse<
 
         void setContentLengthLong(long l);
 
+        @Nullable
         String getContentType();
 
         void setContentType(String contentType);
@@ -687,7 +695,7 @@ public final class DefaultServletHttpResponse<B> implements ServletHttpResponse<
         }
 
         @Override
-        public String getHeader(String k) {
+        public @Nullable String getHeader(String k) {
             return delegate.getHeader(k);
         }
 
@@ -732,7 +740,7 @@ public final class DefaultServletHttpResponse<B> implements ServletHttpResponse<
         }
 
         @Override
-        public String getContentType() {
+        public @Nullable String getContentType() {
             return delegate.getContentType();
         }
 
@@ -796,7 +804,7 @@ public final class DefaultServletHttpResponse<B> implements ServletHttpResponse<
         }
 
         @Override
-        public String getHeader(String k) {
+        public @Nullable String getHeader(String k) {
             return headers.get(k);
         }
 
@@ -836,7 +844,7 @@ public final class DefaultServletHttpResponse<B> implements ServletHttpResponse<
         }
 
         @Override
-        public String getContentType() {
+        public @Nullable String getContentType() {
             return headers.getContentType().orElse(null);
         }
 

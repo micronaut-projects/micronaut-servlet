@@ -50,6 +50,7 @@ public class DefaultServletExchange<Req, Res> implements ServletExchange<Req, Re
     /**
      * @return The request object
      */
+    @Override
     public ServletHttpRequest<Req, ? super Object> getRequest() {
         return request;
     }
@@ -57,6 +58,7 @@ public class DefaultServletExchange<Req, Res> implements ServletExchange<Req, Re
     /**
      * @return The response object
      */
+    @Override
     public ServletHttpResponse<Res, ?> getResponse() {
         return response;
     }

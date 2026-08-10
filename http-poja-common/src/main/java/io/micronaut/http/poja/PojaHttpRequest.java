@@ -38,6 +38,7 @@ import io.micronaut.http.body.MessageBodyReader;
 import io.micronaut.http.uri.QueryStringDecoder;
 import io.micronaut.servlet.http.ServletExchange;
 import io.micronaut.servlet.http.ServletHttpRequest;
+import org.jspecify.annotations.Nullable;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -181,8 +182,9 @@ public abstract class PojaHttpRequest<B, REQ, RES>
      */
     public boolean isFormSubmission() {
         MediaType contentType = getContentType().orElse(null);
-        return MediaType.APPLICATION_FORM_URLENCODED_TYPE.equals(contentType)
-            || MediaType.MULTIPART_FORM_DATA_TYPE.equals(contentType);
+        return contentType != null
+            && (contentType.equals(MediaType.APPLICATION_FORM_URLENCODED_TYPE)
+            || contentType.equals(MediaType.MULTIPART_FORM_DATA_TYPE));
     }
 
     @Override
@@ -206,7 +208,7 @@ public abstract class PojaHttpRequest<B, REQ, RES>
     }
 
     @SuppressWarnings("unchecked")
-    private MessageBodyReader<Object> findReader(Argument<?> argument, MediaType mediaType) {
+    private @Nullable MessageBodyReader<Object> findReader(Argument<?> argument, MediaType mediaType) {
         return (MessageBodyReader<Object>) messageBodyHandlerRegistry
             .findReader((Argument) argument, mediaType)
             .orElse(null);

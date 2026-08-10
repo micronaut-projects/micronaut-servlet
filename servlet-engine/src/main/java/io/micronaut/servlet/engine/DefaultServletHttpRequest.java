@@ -88,6 +88,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Set;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executor;
 import java.util.function.Supplier;
 
@@ -122,14 +123,14 @@ public final class DefaultServletHttpRequest<B> implements
     private final CloseableByteBody byteBody;
     private final ByteBodyFactory byteBodyFactory;
     private final Executor ioExecutor;
-    private final SSLSessionProvider sslSessionProvider;
-    private DefaultServletCookies cookies;
+    private final @Nullable SSLSessionProvider sslSessionProvider;
+    private @Nullable DefaultServletCookies cookies;
     private Supplier<Optional<B>> body;
-    private List<Runnable> disposalResources;
+    private final ConcurrentLinkedQueue<Runnable> disposalResources = new ConcurrentLinkedQueue<>();
 
     private boolean bodyIsReadAsync;
-    private B parsedBody;
-    private AsyncContext asyncContext;
+    private @Nullable B parsedBody;
+    private @Nullable AsyncContext asyncContext;
 
     /**
      * Default constructor.
@@ -296,6 +297,7 @@ public final class DefaultServletHttpRequest<B> implements
         }
         return prependContextPath(contextPath, path.substring(servletPath.length()));
     }
+
     /**
      * @return The conversion service.
      */
@@ -329,8 +331,9 @@ public final class DefaultServletHttpRequest<B> implements
         if (asyncContext != null) {
             throw new IllegalStateException("Async execution has already been started");
         }
-        this.asyncContext = delegate.startAsync();
-        asyncContext.start(() -> asyncExecutionCallback.run(asyncContext::complete));
+        AsyncContext startedAsyncContext = delegate.startAsync();
+        this.asyncContext = startedAsyncContext;
+        startedAsyncContext.start(() -> asyncExecutionCallback.run(startedAsyncContext::complete));
     }
 
     @NonNull
@@ -436,16 +439,11 @@ public final class DefaultServletHttpRequest<B> implements
 
     @NonNull
     @Override
-    public Cookies getCookies() {
+    public synchronized Cookies getCookies() {
         DefaultServletCookies cookies = this.cookies;
         if (cookies == null) {
-            synchronized (this) { // double check
-                cookies = this.cookies;
-                if (cookies == null) {
-                    cookies = new DefaultServletCookies(delegate.getCookies());
-                    this.cookies = cookies;
-                }
-            }
+            cookies = new DefaultServletCookies(delegate.getCookies());
+            this.cookies = cookies;
         }
         return cookies;
     }
@@ -592,9 +590,6 @@ public final class DefaultServletHttpRequest<B> implements
     @Override
     public synchronized void addDisposalResource(Runnable runnable) {
         Objects.requireNonNull(runnable, "Disposable resource cannot be null");
-        if (disposalResources == null) {
-            disposalResources = new ArrayList<>(2);
-        }
         disposalResources.add(runnable);
     }
 
@@ -626,12 +621,8 @@ public final class DefaultServletHttpRequest<B> implements
     }
 
     private synchronized void runDisposalResources() {
-        if (disposalResources == null || disposalResources.isEmpty()) {
-            return;
-        }
-        List<Runnable> resources = disposalResources;
-        disposalResources = null;
-        for (Runnable runnable : resources) {
+        Runnable runnable;
+        while ((runnable = disposalResources.poll()) != null) {
             runnable.run();
         }
     }

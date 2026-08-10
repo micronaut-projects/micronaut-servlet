@@ -26,6 +26,7 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -70,7 +71,7 @@ public record MultiValueHeaders(
 
     @Override
     public MutableHttpHeaders add(CharSequence header, CharSequence value) {
-        headers.add(standardizeHeader(header), value == null ? null : value.toString());
+        headers.add(standardizeHeader(header), Objects.requireNonNull(value, "Header value cannot be null").toString());
         return this;
     }
 
@@ -99,7 +100,7 @@ public record MultiValueHeaders(
     private static String standardizeHeader(CharSequence charSequence) {
         String s;
         if (charSequence == null) {
-            return null;
+            throw new NullPointerException("Header name cannot be null");
         } else if (charSequence instanceof String) {
             s = (String) charSequence;
         } else {
