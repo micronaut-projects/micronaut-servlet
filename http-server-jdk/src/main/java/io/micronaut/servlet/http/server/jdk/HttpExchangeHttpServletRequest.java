@@ -16,6 +16,7 @@
 package io.micronaut.servlet.http.server.jdk;
 
 import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpsExchange;
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.util.CollectionUtils;
@@ -172,20 +173,23 @@ final class HttpExchangeHttpServletRequest implements HttpServletRequest {
 
     @Override
     public int getContentLength() {
-        String headerValue = getHeader(HttpHeaders.CONTENT_LENGTH);
-        if (StringUtils.isEmpty(headerValue)) {
-            return 0;
-        }
-        return Integer.valueOf(headerValue);
+        long length = getContentLengthLong();
+        return length > Integer.MAX_VALUE ? -1 : (int) length;
     }
 
     @Override
     public long getContentLengthLong() {
+        // an absent Content-Length means the length is unknown, which is -1 per the Servlet spec. Returning 0 here
+        // made a chunked request body look empty and bind as no body at all
         String headerValue = getHeader(HttpHeaders.CONTENT_LENGTH);
         if (StringUtils.isEmpty(headerValue)) {
-            return 0L;
+            return -1L;
         }
-        return Long.valueOf(headerValue);
+        try {
+            return Long.parseLong(headerValue);
+        } catch (NumberFormatException e) {
+            return -1L;
+        }
     }
 
     @Override
@@ -239,8 +243,9 @@ final class HttpExchangeHttpServletRequest implements HttpServletRequest {
     }
 
     @Override
-    public @Nullable String getScheme() {
-        return exchange.getRequestURI().getScheme();
+    public String getScheme() {
+        // the JDK server hands over a path-only request URI, so the scheme has to come from the exchange itself
+        return exchange instanceof HttpsExchange ? "https" : "http";
     }
 
     @Override
@@ -255,7 +260,11 @@ final class HttpExchangeHttpServletRequest implements HttpServletRequest {
 
     @Override
     public BufferedReader getReader() throws IOException {
-        return new BufferedReader(new InputStreamReader(exchange.getRequestBody()));
+        // go through the servlet input stream so a body is not consumed twice, and honour the request charset
+        return new BufferedReader(new InputStreamReader(
+            getInputStream(),
+            parseCharacterEncoding(getHeader(HttpHeaders.CONTENT_TYPE), getHeader(HttpHeaders.ACCEPT_CHARSET))
+        ));
     }
 
     @Override
@@ -289,7 +298,7 @@ final class HttpExchangeHttpServletRequest implements HttpServletRequest {
 
     @Override
     public boolean isSecure() {
-        return "https".equalsIgnoreCase(exchange.getRequestURI().getScheme());
+        return exchange instanceof HttpsExchange;
     }
 
     @Override
@@ -500,7 +509,8 @@ final class HttpExchangeHttpServletRequest implements HttpServletRequest {
     }
 
     private static boolean isFormSubmission(MediaType contentType) {
-        return MediaType.APPLICATION_FORM_URLENCODED_TYPE.equals(contentType) || MediaType.MULTIPART_FORM_DATA_TYPE.equals(contentType);
+        // multipart bodies are not URL encoded; decoding one as a form both mis-parses it and consumes the body
+        return MediaType.APPLICATION_FORM_URLENCODED_TYPE.matches(contentType);
     }
 
     private static Map<String, String[]> mergeParams(Map<String, Object> map1, Map<String, List<String>> map2) {

@@ -24,11 +24,8 @@ import io.micronaut.servlet.http.ServletHttpHandler;
 import jakarta.inject.Singleton;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.HttpURLConnection;
 import java.util.ArrayList;
 
 /**
@@ -38,10 +35,19 @@ import java.util.ArrayList;
 @Requires(missingBeans = HttpHandler.class)
 @Singleton
 final class ServletApiHttpHandler implements HttpHandler {
-    private static final Logger LOG = LoggerFactory.getLogger(ServletApiHttpHandler.class);
+    /**
+     * Passed to {@link HttpExchange#sendResponseHeaders(int, long)} when the response carries no body at all.
+     */
+    private static final long NO_BODY = -1L;
+
+    /**
+     * Passed to {@link HttpExchange#sendResponseHeaders(int, long)} when the body length is not known up front,
+     * which makes the JDK server use chunked encoding.
+     */
+    private static final long CHUNKED = 0L;
+
     private final ServletHttpHandler<HttpServletRequest, HttpServletResponse> httpHandler;
     private final FormUrlEncodedDecoder formUrlEncodedDecoder;
-    private boolean headersSent = false;
 
     ServletApiHttpHandler(ServletHttpHandler<HttpServletRequest,
         HttpServletResponse> httpHandler,
@@ -52,46 +58,50 @@ final class ServletApiHttpHandler implements HttpHandler {
 
     @Override
     public void handle(HttpExchange httpExchange) throws IOException {
-        HttpExchangeHttpServletResponse response = new HttpExchangeHttpServletResponse(httpExchange, rsp -> {
-            try {
-                populateAndSendResponseHeaders(rsp, httpExchange);
-            } catch (IOException e) {
-                LOG.error(e.getMessage(), e);
-            }
-            headersSent = true;
-        });
+        // all per-request state lives on the request and response objects; this handler is a singleton
+        HttpExchangeHttpServletResponse response = new HttpExchangeHttpServletResponse(
+            httpExchange,
+            rsp -> populateAndSendResponseHeaders(rsp, httpExchange)
+        );
         HttpServletRequest request = new HttpExchangeHttpServletRequest(httpExchange, formUrlEncodedDecoder);
-        httpHandler.exchange(request, response);
-        if (!headersSent) {
-            // if the headers have not been sent, e.g. nothing was written to the outpustream and hence no callback, then send them now
-            populateAndSendResponseHeaders(response, httpExchange);
+        try {
+            httpHandler.exchange(request, response);
+            // nothing requested the output stream, so the response has no body and the headers are still unsent
+            response.commitHeaders();
+        } finally {
+            response.setCommitted(true);
+            httpExchange.close();
         }
-        response.setCommitted(true);
-        httpExchange.close();
     }
 
-    void populateAndSendResponseHeaders(HttpServletResponse response,
-                                        HttpExchange exchange) throws IOException {
+    private void populateAndSendResponseHeaders(HttpExchangeHttpServletResponse response,
+                                                HttpExchange exchange) throws IOException {
         for (String headerName : response.getHeaderNames()) {
             exchange.getResponseHeaders().put(headerName, new ArrayList<>(response.getHeaders(headerName)));
         }
-        int status = response.getStatus();
-        // A response length of 0 tells the JDK HTTP server to use chunked encoding and expect
-        // an arbitrary number of bytes to be written before close(). That's wrong for statuses
-        // which must never carry a body (1xx, 204, 205, 304) or for HEAD requests, since nothing will
-        // ever be written to the output stream; use -1 (no body) instead so the exchange completes.
-        int contentLength = isBodyAllowed(status, exchange.getRequestMethod()) ? 0 : -1;
-        exchange.sendResponseHeaders(status, contentLength);
+        exchange.sendResponseHeaders(response.getStatus(), responseLength(response, exchange));
     }
 
-    private static boolean isBodyAllowed(int status, String method) {
-        if ("HEAD".equalsIgnoreCase(method)) {
-            return false;
+    /**
+     * Resolves the {@code responseLength} argument of {@link HttpExchange#sendResponseHeaders(int, long)}.
+     *
+     * <p>The JDK server reads {@code 0} as "chunked, the caller will write an arbitrary number of bytes and close the
+     * exchange". Passing it for a response that never writes a body leaves the exchange half finished and the
+     * connection hangs, which is why a body-less response has to be announced with {@code -1} instead. See
+     * <a href="https://github.com/micronaut-projects/micronaut-servlet/issues/1117">#1117</a>.</p>
+     *
+     * @param response The response
+     * @param exchange The exchange
+     * @return {@code -1} for no body, {@code 0} for a chunked body of unknown length, otherwise the fixed body length
+     */
+    private static long responseLength(HttpExchangeHttpServletResponse response, HttpExchange exchange) {
+        if (!response.isBodyAllowed() || !response.isOutputStreamRequested()) {
+            return NO_BODY;
         }
-        return status != HttpURLConnection.HTTP_NOT_MODIFIED
-            && status != HttpURLConnection.HTTP_NO_CONTENT
-            && status != HttpURLConnection.HTTP_RESET
-            && status >= HttpURLConnection.HTTP_OK;
+        long declaredLength = response.getDeclaredContentLength();
+        if (declaredLength == 0L) {
+            return NO_BODY;
+        }
+        return declaredLength > 0L ? declaredLength : CHUNKED;
     }
-
 }

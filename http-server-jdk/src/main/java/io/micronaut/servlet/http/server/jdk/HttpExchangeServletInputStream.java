@@ -33,6 +33,7 @@ import java.io.InputStream;
 final class HttpExchangeServletInputStream extends ServletInputStream {
     private final HttpExchange httpExchange;
     private @Nullable InputStream inputStream;
+    private boolean finished;
 
     HttpExchangeServletInputStream(HttpExchange httpExchange) {
         this.httpExchange = httpExchange;
@@ -40,22 +41,43 @@ final class HttpExchangeServletInputStream extends ServletInputStream {
 
     @Override
     public boolean isFinished() {
-        throw new UnsupportedOperationException("Not implemented");
+        return finished;
     }
 
     @Override
     public boolean isReady() {
-        throw new UnsupportedOperationException("Not implemented");
+        // this stream is always blocking; the JDK HTTP server has no non-blocking read API
+        return !finished;
     }
 
     @Override
     public void setReadListener(ReadListener readListener) {
-        throw new UnsupportedOperationException("Not implemented");
+        throw new UnsupportedOperationException("The JDK HTTP server does not support non-blocking reads");
     }
 
     @Override
     public int read() throws IOException {
-        return getInputStream().read();
+        int read = getInputStream().read();
+        if (read == -1) {
+            finished = true;
+        }
+        return read;
+    }
+
+    @Override
+    public int read(byte[] b, int off, int len) throws IOException {
+        // ServletInputStream inherits a byte-at-a-time loop from InputStream, which makes readAllBytes() pay a
+        // virtual call and a bounds check per byte of the request body
+        int read = getInputStream().read(b, off, len);
+        if (read == -1) {
+            finished = true;
+        }
+        return read;
+    }
+
+    @Override
+    public int available() throws IOException {
+        return getInputStream().available();
     }
 
     @Override

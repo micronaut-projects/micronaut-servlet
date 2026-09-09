@@ -16,9 +16,18 @@
 package io.micronaut.servlet.http.server.jdk;
 
 import org.jspecify.annotations.NonNull;
-import jakarta.servlet.http.HttpServletResponse;
 
+import java.io.IOException;
+
+/**
+ * Writes the status line and headers of a response to the underlying exchange. Invoked at most once per response,
+ * either when the body is about to be written or, for a body-less response, once the exchange has been handled.
+ */
 @FunctionalInterface
-interface OutputStreamRequestedCallback {
-    void onOutputStreamRequested(@NonNull HttpServletResponse response);
+interface ResponseHeadersCommitter {
+    /**
+     * @param response The response whose status and headers should be sent
+     * @throws IOException If the headers could not be sent
+     */
+    void commit(@NonNull HttpExchangeHttpServletResponse response) throws IOException;
 }

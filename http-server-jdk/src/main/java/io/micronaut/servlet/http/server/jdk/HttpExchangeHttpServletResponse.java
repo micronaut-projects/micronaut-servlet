@@ -19,55 +19,127 @@ import com.sun.net.httpserver.HttpExchange;
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.util.CollectionUtils;
+import io.micronaut.core.util.StringUtils;
 import io.micronaut.http.HttpHeaders;
+import io.micronaut.http.HttpMethod;
 import io.micronaut.http.HttpStatus;
+import io.micronaut.http.cookie.SameSite;
+import io.micronaut.http.cookie.ServerCookieEncoder;
+import io.micronaut.http.util.HttpHeadersUtil;
 import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import org.jspecify.annotations.Nullable;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.TreeMap;
 
 /**
- * {@link HttpServletResponse} implementation backed with a {@link ByteArrayOutputStream}.
+ * {@link HttpServletResponse} implementation backed by a {@link HttpExchange}.
  */
 @Experimental
 @Internal
 final class HttpExchangeHttpServletResponse implements HttpServletResponse {
     private static final int DEFAULT_STATUS = HttpStatus.OK.getCode();
-    private Map<String, List<Object>> headers = new LinkedHashMap<>();
-    private final OutputStreamRequestedCallback callback;
-    private final ServletOutputStream outputStream;
-    private int status = DEFAULT_STATUS;
-    private boolean committed = false;
+    private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter
+        .ofPattern("EEE, dd MMM yyyy HH:mm:ss 'GMT'", Locale.ENGLISH);
 
-    HttpExchangeHttpServletResponse(HttpExchange httpExchange, OutputStreamRequestedCallback callback) {
-        this.outputStream = new HttpExchangeServletOutputStream(httpExchange);
-        this.callback = callback;
+    /**
+     * Header names are case-insensitive per RFC 9110, and a header may legitimately carry several values
+     * (for example {@code Set-Cookie} or {@code Vary}).
+     */
+    private final Map<String, List<String>> headers = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+    private final ResponseHeadersCommitter headersCommitter;
+    private final HttpExchange httpExchange;
+    private @Nullable ServletOutputStream outputStream;
+    private int status = DEFAULT_STATUS;
+    private boolean committed;
+    private boolean headersSent;
+    private boolean outputStreamRequested;
+
+    HttpExchangeHttpServletResponse(HttpExchange httpExchange, ResponseHeadersCommitter headersCommitter) {
+        this.httpExchange = httpExchange;
+        this.headersCommitter = headersCommitter;
+    }
+
+    /**
+     * Sends the status line and headers, unless they have already been sent for this response.
+     *
+     * @throws IOException If the headers could not be sent
+     */
+    void commitHeaders() throws IOException {
+        if (headersSent) {
+            return;
+        }
+        headersSent = true;
+        headersCommitter.commit(this);
+    }
+
+    /**
+     * @return Whether anything asked for the response body stream, which is how this response learns that a body is
+     * about to be written
+     */
+    boolean isOutputStreamRequested() {
+        return outputStreamRequested;
+    }
+
+    /**
+     * @return Whether the response status permits a body at all. 1xx, 204 and 304 never carry one (RFC 9110)
+     */
+    boolean isBodyAllowed() {
+        return status >= HttpStatus.OK.getCode()
+            && status != HttpStatus.NO_CONTENT.getCode()
+            && status != HttpStatus.NOT_MODIFIED.getCode()
+            && !HttpMethod.HEAD.name().equalsIgnoreCase(httpExchange.getRequestMethod());
+    }
+
+    /**
+     * @return The body length declared through {@code Content-Length}, or {@code -1} when it is absent or unparseable
+     */
+    long getDeclaredContentLength() {
+        String value = getHeader(HttpHeaders.CONTENT_LENGTH);
+        if (StringUtils.isEmpty(value)) {
+            return -1L;
+        }
+        try {
+            return Long.parseLong(value);
+        } catch (NumberFormatException e) {
+            return -1L;
+        }
     }
 
     @Override
     public void reset() {
+        if (committed) {
+            throw new IllegalStateException("Cannot reset a response that has already been committed");
+        }
         status = DEFAULT_STATUS;
         headers.clear();
     }
 
     @Override
     public boolean isCommitted() {
+        // deliberately not headersSent: this shim has no response buffer, so it sends headers as soon as the body
+        // stream is asked for, which is earlier than a buffering container would commit. Reporting that as committed
+        // makes the handler skip encoding a body it is about to write
         return committed;
     }
 
     /**
-     *
-     * @param committed  A committed response has already had its status code and headers written.
+     * @param committed A committed response has already had its status code and headers written.
      */
     public void setCommitted(boolean committed) {
         this.committed = committed;
@@ -75,7 +147,7 @@ final class HttpExchangeHttpServletResponse implements HttpServletResponse {
 
     @Override
     public String getCharacterEncoding() {
-        throw new UnsupportedOperationException("Not implemented");
+        return HttpHeadersUtil.parseCharacterEncoding(getContentType(), null).name();
     }
 
     @Override
@@ -85,7 +157,17 @@ final class HttpExchangeHttpServletResponse implements HttpServletResponse {
 
     @Override
     public ServletOutputStream getOutputStream() {
-        callback.onOutputStreamRequested(this);
+        outputStreamRequested = true;
+        try {
+            commitHeaders();
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+        if (outputStream == null) {
+            // a response that may not carry a body still has to tolerate writes; they are discarded rather than
+            // corrupting an exchange that was announced as body-less
+            outputStream = new HttpExchangeServletOutputStream(isBodyAllowed() ? httpExchange : null);
+        }
         return outputStream;
     }
 
@@ -101,17 +183,17 @@ final class HttpExchangeHttpServletResponse implements HttpServletResponse {
 
     @Override
     public void setContentLength(int i) {
-        headers.put(HttpHeaders.CONTENT_LENGTH, Collections.singletonList(i));
+        setHeader(HttpHeaders.CONTENT_LENGTH, String.valueOf(i));
     }
 
     @Override
     public void setContentLengthLong(long l) {
-        headers.put(HttpHeaders.CONTENT_LENGTH, Collections.singletonList(l));
+        setHeader(HttpHeaders.CONTENT_LENGTH, String.valueOf(l));
     }
 
     @Override
     public void setContentType(String s) {
-        headers.put(HttpHeaders.CONTENT_TYPE, Collections.singletonList(s));
+        setHeader(HttpHeaders.CONTENT_TYPE, s);
     }
 
     @Override
@@ -126,7 +208,10 @@ final class HttpExchangeHttpServletResponse implements HttpServletResponse {
 
     @Override
     public void flushBuffer() throws IOException {
-        throw new UnsupportedOperationException("Not implemented");
+        commitHeaders();
+        if (outputStream != null) {
+            outputStream.flush();
+        }
     }
 
     @Override
@@ -146,7 +231,35 @@ final class HttpExchangeHttpServletResponse implements HttpServletResponse {
 
     @Override
     public void addCookie(Cookie cookie) {
-        throw new UnsupportedOperationException("Not implemented");
+        for (String encoded : ServerCookieEncoder.INSTANCE.encode(toMicronautCookie(cookie))) {
+            addHeader(HttpHeaders.SET_COOKIE, encoded);
+        }
+    }
+
+    private static io.micronaut.http.cookie.Cookie toMicronautCookie(Cookie cookie) {
+        io.micronaut.http.cookie.Cookie result = io.micronaut.http.cookie.Cookie
+            .of(cookie.getName(), cookie.getValue() == null ? "" : cookie.getValue())
+            .httpOnly(cookie.isHttpOnly())
+            .secure(cookie.getSecure());
+        if (cookie.getDomain() != null) {
+            result = result.domain(cookie.getDomain());
+        }
+        if (cookie.getPath() != null) {
+            result = result.path(cookie.getPath());
+        }
+        if (cookie.getMaxAge() >= 0) {
+            result = result.maxAge(cookie.getMaxAge());
+        }
+        String sameSite = cookie.getAttribute("SameSite");
+        if (StringUtils.isNotEmpty(sameSite)) {
+            for (SameSite candidate : SameSite.values()) {
+                if (candidate.name().equalsIgnoreCase(sameSite)) {
+                    result = result.sameSite(candidate);
+                    break;
+                }
+            }
+        }
+        return result;
     }
 
     @Override
@@ -166,47 +279,68 @@ final class HttpExchangeHttpServletResponse implements HttpServletResponse {
 
     @Override
     public void sendError(int i, String s) throws IOException {
-        throw new UnsupportedOperationException("Not implemented");
+        setStatus(i);
+        if (StringUtils.isNotEmpty(s)) {
+            byte[] body = s.getBytes(StandardCharsets.UTF_8);
+            setContentLength(body.length);
+            getOutputStream().write(body);
+        } else {
+            commitHeaders();
+        }
     }
 
     @Override
     public void sendError(int i) throws IOException {
-        throw new UnsupportedOperationException("Not implemented");
+        sendError(i, null);
     }
 
     @Override
     public void sendRedirect(String s, int i, boolean b) throws IOException {
-        throw new UnsupportedOperationException("Not implemented");
+        setStatus(i);
+        setHeader(HttpHeaders.LOCATION, s);
+        commitHeaders();
     }
 
     @Override
     public void setDateHeader(String s, long l) {
-        throw new UnsupportedOperationException("Not implemented");
+        setHeader(s, formatDate(l));
     }
 
     @Override
     public void addDateHeader(String s, long l) {
-        throw new UnsupportedOperationException("Not implemented");
+        addHeader(s, formatDate(l));
+    }
+
+    private static String formatDate(long millis) {
+        return DATE_FORMAT.format(ZonedDateTime.ofInstant(Instant.ofEpochMilli(millis), ZoneOffset.UTC));
     }
 
     @Override
-    public void setHeader(String s, String s1) {
-        headers.put(s, Collections.singletonList(s1));
+    public void setHeader(String s, @Nullable String s1) {
+        if (s1 == null) {
+            headers.remove(s);
+        } else {
+            List<String> values = new ArrayList<>(1);
+            values.add(s1);
+            headers.put(s, values);
+        }
     }
 
     @Override
-    public void addHeader(String s, String s1) {
-        headers.put(s, Collections.singletonList(s1));
+    public void addHeader(String s, @Nullable String s1) {
+        if (s1 != null) {
+            headers.computeIfAbsent(s, k -> new ArrayList<>(1)).add(s1);
+        }
     }
 
     @Override
     public void setIntHeader(String s, int i) {
-        headers.put(s, Collections.singletonList(i));
+        setHeader(s, String.valueOf(i));
     }
 
     @Override
     public void addIntHeader(String s, int i) {
-        throw new UnsupportedOperationException("Not implemented");
+        addHeader(s, String.valueOf(i));
     }
 
     @Override
@@ -221,18 +355,18 @@ final class HttpExchangeHttpServletResponse implements HttpServletResponse {
 
     @Override
     public @Nullable String getHeader(String s) {
-        List<Object> headersValues = headers.get(s);
-        return CollectionUtils.isEmpty(headersValues) ? null : headersValues.get(0).toString();
+        List<String> headersValues = headers.get(s);
+        return CollectionUtils.isEmpty(headersValues) ? null : headersValues.get(0);
     }
 
     @Override
     public Collection<String> getHeaders(String s) {
-        List<Object> values = headers.get(s);
-        return CollectionUtils.isEmpty(values) ? Collections.emptyList() : values.stream().map(Object::toString).toList();
+        List<String> values = headers.get(s);
+        return CollectionUtils.isEmpty(values) ? Collections.emptyList() : Collections.unmodifiableList(values);
     }
 
     @Override
     public Collection<String> getHeaderNames() {
-        return headers.keySet();
+        return Collections.unmodifiableCollection(headers.keySet());
     }
 }
