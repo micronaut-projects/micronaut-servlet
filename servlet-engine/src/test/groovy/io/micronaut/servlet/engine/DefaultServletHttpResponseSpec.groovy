@@ -2,6 +2,7 @@ package io.micronaut.servlet.engine
 
 import io.micronaut.core.convert.ConversionService
 import io.micronaut.core.io.buffer.ByteArrayBufferFactory
+import io.micronaut.http.HttpHeaders
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpResponseProvider
 import io.micronaut.http.HttpStatus
@@ -383,6 +384,54 @@ class DefaultServletHttpResponseSpec extends Specification {
         then:
         response.reason() == HttpStatus.CREATED.reason
         status == HttpStatus.ACCEPTED.code
+    }
+
+    void "content length set through the headers reaches the container's own setter"() {
+        given:
+        long contentLength = -1
+        Map<String, String> plainHeaders = [:]
+        HttpServletResponse servletResponse = Stub(HttpServletResponse) {
+            setContentLengthLong(_ as Long) >> { long length -> contentLength = length }
+            setHeader(_ as String, _ as String) >> { String name, String value -> plainHeaders[name] = value }
+        }
+        def response = newResponse(servletResponse)
+
+        when: "the length is set the way the blocking transfer path sets it"
+        response.getHeaders().set(HttpHeaders.CONTENT_LENGTH, "512")
+
+        then: "it is applied through setContentLengthLong, not dropped and not written as a plain header"
+        contentLength == 512L
+        !plainHeaders.containsKey(HttpHeaders.CONTENT_LENGTH)
+    }
+
+    void "an unparseable content length is ignored rather than announced"() {
+        given:
+        long contentLength = -1
+        HttpServletResponse servletResponse = Stub(HttpServletResponse) {
+            setContentLengthLong(_ as Long) >> { long length -> contentLength = length }
+        }
+        def response = newResponse(servletResponse)
+
+        when:
+        response.getHeaders().set(HttpHeaders.CONTENT_LENGTH, "not a number")
+
+        then: "the container frames the response itself rather than being told a length it cannot honour"
+        contentLength == -1L
+    }
+
+    void "transfer encoding is still refused"() {
+        given:
+        Map<String, String> plainHeaders = [:]
+        HttpServletResponse servletResponse = Stub(HttpServletResponse) {
+            setHeader(_ as String, _ as String) >> { String name, String value -> plainHeaders[name] = value }
+        }
+        def response = newResponse(servletResponse)
+
+        when: "tomcat cannot clear this header once set, so it must never be set"
+        response.getHeaders().set(HttpHeaders.TRANSFER_ENCODING, "chunked")
+
+        then:
+        plainHeaders.isEmpty()
     }
 
     private DefaultServletHttpResponse<?> newResponse(
