@@ -78,6 +78,49 @@ class ServletCookieAdapterSpec extends Specification {
         cookie.getSameSite().empty
     }
 
+    void "the adapter reads through to the servlet cookie"() {
+        given:
+        def servletCookie = new jakarta.servlet.http.Cookie("session", "abc")
+        servletCookie.path = "/app"
+        servletCookie.domain = "example.com"
+        servletCookie.maxAge = 60
+        servletCookie.secure = true
+        servletCookie.httpOnly = true
+        def cookie = new ServletCookieAdapter(servletCookie)
+
+        expect:
+        cookie.name == "session"
+        cookie.value == "abc"
+        cookie.path == "/app"
+        cookie.domain == "example.com"
+        cookie.maxAge == 60L
+        cookie.secure
+        cookie.httpOnly
+        cookie.cookie.is(servletCookie)
+    }
+
+    void "the adapter writes through to the servlet cookie"() {
+        given:
+        def servletCookie = new jakarta.servlet.http.Cookie("session", "abc")
+        def cookie = new ServletCookieAdapter(servletCookie)
+
+        when:
+        cookie.value("changed")
+            .domain("other.com")
+            .path("/elsewhere")
+            .maxAge(120L)
+            .secure(true)
+            .httpOnly(true)
+
+        then:
+        servletCookie.value == "changed"
+        servletCookie.domain == "other.com"
+        servletCookie.path == "/elsewhere"
+        servletCookie.maxAge == 120
+        servletCookie.secure
+        servletCookie.httpOnly
+    }
+
     private static ServletCookieAdapter adapter(String name, String path, String domain) {
         def servletCookie = new jakarta.servlet.http.Cookie(name, "value")
         if (path != null) {

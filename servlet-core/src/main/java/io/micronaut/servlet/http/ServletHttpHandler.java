@@ -315,7 +315,7 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
                     if (t == null) {
                         try {
                             transfer(bbhr, exchange, true, finish);
-                        } catch (Throwable transferFailure) {
+                        } catch (Exception transferFailure) {
                             // transfer throws on a write failure, before it can run the callback itself
                             handleFallback(exchange.getResponse(), transferFailure);
                             finish.run();
