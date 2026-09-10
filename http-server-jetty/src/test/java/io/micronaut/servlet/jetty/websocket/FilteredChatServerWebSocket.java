@@ -6,8 +6,12 @@ import io.micronaut.websocket.annotation.OnMessage;
 import io.micronaut.websocket.annotation.ServerWebSocket;
 
 @Requires(property = "spec.name", value = "JettyWebSocketSpec")
-@ServerWebSocket("/secured/chat")
-public class SecuredChatServerWebSocket {
+/**
+ * Target of the filter cancellation test. Route authorization through micronaut-security
+ * is covered separately by {@code JettyWebSocketSecuritySpec}.
+ */
+@ServerWebSocket("/filtered/chat")
+public class FilteredChatServerWebSocket {
 
     @OnMessage
     public void onMessage(String message, WebSocketSession session) {

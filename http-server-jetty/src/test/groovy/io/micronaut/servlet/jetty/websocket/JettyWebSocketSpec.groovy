@@ -136,7 +136,7 @@ class JettyWebSocketSpec extends Specification {
 
     void "a filter that returns a response cancels the upgrade"() {
         when:
-        Flux.from(wsClient.connect(ErrorsClientWebSocket, "/secured/chat")).blockFirst()
+        Flux.from(wsClient.connect(ErrorsClientWebSocket, "/filtered/chat")).blockFirst()
 
         then:
         thrown(WebSocketClientException)

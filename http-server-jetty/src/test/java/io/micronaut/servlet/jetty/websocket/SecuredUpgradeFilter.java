@@ -18,7 +18,7 @@ public class SecuredUpgradeFilter {
     @RequestFilter
     public @Nullable HttpResponse<?> filterRequest(HttpRequest<?> request) {
         this.invoked = true;
-        if (request.getPath().startsWith("/secured/chat")) {
+        if (request.getPath().startsWith("/filtered/chat")) {
             return HttpResponse.unauthorized();
         }
         return null;
