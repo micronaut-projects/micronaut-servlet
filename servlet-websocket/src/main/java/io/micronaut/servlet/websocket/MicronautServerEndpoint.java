@@ -93,6 +93,7 @@ public class MicronautServerEndpoint extends Endpoint {
     private static final String MAX_PAYLOAD_LENGTH = "maxPayloadLength";
 
     private final AtomicBoolean closed = new AtomicBoolean();
+    private volatile boolean opened;
 
     private @Nullable WebSocketUpgradeContext context;
     private @Nullable ServletWebSocketSupport support;
@@ -144,16 +145,20 @@ public class MicronautServerEndpoint extends Endpoint {
         );
 
         applyLimits(session);
-        support.sessionRegistry().register(micronautSession);
 
         MethodExecutionHandle<Object, ?> messageMethod = webSocketBean.messageMethod().orElse(null);
         if (messageMethod != null) {
             this.messageBodyArgument = resolveBodyArgument(messageMethod, false);
             if (messageBodyArgument == null) {
+                // Validated before the session is registered and before the open event, so a
+                // listener never sees a close that had no matching open.
                 LOG.error("WebSocket @OnMessage method [{}] must declare exactly one message body argument", messageMethod.getExecutableMethod());
-                closeSession(CloseReason.INTERNAL_ERROR);
+                closeQuietly(session, CloseReason.INTERNAL_ERROR);
                 return;
             }
+        }
+        support.sessionRegistry().register(micronautSession);
+        if (messageMethod != null) {
             session.addMessageHandler(String.class, (MessageHandler.Whole<String>) this::onTextMessage);
             session.addMessageHandler(ByteBuffer.class, (MessageHandler.Whole<ByteBuffer>) this::onBinaryMessage);
         }
@@ -172,6 +177,7 @@ public class MicronautServerEndpoint extends Endpoint {
         if (openMethod != null) {
             invokeOpen(openMethod);
         }
+        opened = true;
         support.applicationContext().publishEvent(new WebSocketSessionOpenEvent(micronautSession));
     }
 
@@ -249,16 +255,7 @@ public class MicronautServerEndpoint extends Endpoint {
      * @param openMethod The open handler
      */
     private void invokeOpen(MethodExecutionHandle<Object, ?> openMethod) {
-        BoundExecutable<Object, ?> bound;
-        try {
-            WebSocketState state = new WebSocketState(micronautSession, context.originatingRequest());
-            bound = new DefaultExecutableBinder<WebSocketState>(Map.of())
-                .bind(openMethod.getExecutableMethod(), support.binderRegistry(), state);
-        } catch (Exception e) {
-            failOpen(e);
-            return;
-        }
-        invokeBound(openMethod, bound).onComplete((ignored, error) -> {
+        invokeHandler(openMethod, Map.of()).onComplete((ignored, error) -> {
             if (error != null) {
                 failOpen(error);
             }
@@ -347,16 +344,7 @@ public class MicronautServerEndpoint extends Endpoint {
     private void invoke(MethodExecutionHandle<Object, ?> handle,
                         Map<Argument<?>, Object> preBound,
                         @Nullable Object processedMessage) {
-        BoundExecutable<Object, ?> bound;
-        try {
-            WebSocketState state = new WebSocketState(micronautSession, context.originatingRequest());
-            bound = new DefaultExecutableBinder<WebSocketState>(preBound)
-                .bind(handle.getExecutableMethod(), support.binderRegistry(), state);
-        } catch (Exception e) {
-            forwardError(e);
-            return;
-        }
-        invokeBound(handle, bound).onComplete((ignored, error) -> {
+        invokeHandler(handle, preBound).onComplete((ignored, error) -> {
             if (error != null) {
                 forwardError(error);
             } else if (processedMessage != null) {
@@ -367,25 +355,39 @@ public class MicronautServerEndpoint extends Endpoint {
     }
 
     /**
-     * Invokes a bound handler on the executor selected for it, so that {@code @ExecuteOn}
-     * is honoured, with the originating request propagated so that
+     * Binds and invokes a handler on the executor selected for it, so that
+     * {@code @ExecuteOn} is honoured, with the originating request propagated so that
      * {@code ServerRequestContext.currentRequest()} resolves inside the handler.
      *
-     * @param handle The handler
-     * @param bound  The bound executable
+     * <p>Binding happens inside the executor task rather than on the container thread,
+     * because a Kotlin {@code suspend} handler has its continuation registered on the
+     * request during binding and read back after the call. Doing both in one task, against a
+     * request that belongs to this invocation, keeps concurrent messages on one session from
+     * overwriting each other's continuation.</p>
+     *
+     * @param handle   The handler
+     * @param preBound Arguments already resolved, such as the message body
      * @return A flow completing when the handler, and any publisher it returned, completes
      */
-    private ExecutionFlow<Object> invokeBound(MethodExecutionHandle<Object, ?> handle, BoundExecutable<Object, ?> bound) {
+    private ExecutionFlow<Object> invokeHandler(MethodExecutionHandle<Object, ?> handle,
+                                                Map<Argument<?>, Object> preBound) {
         Executor executor = support.executorSelector()
             .selectExecutor(handle.getExecutableMethod(), support.threadSelectionConfiguration());
+        boolean suspend = handle.getExecutableMethod().isSuspend();
         PropagatedContext propagatedContext = PropagatedContext.getOrEmpty()
             .plus(new ServerHttpRequestContext(context.originatingRequest()));
         return ExecutionFlow.async(executor, () -> propagatedContext.propagate(() -> {
             try {
-                if (handle.getExecutableMethod().isSuspend()) {
-                    return invokeSuspend(bound);
+                HttpRequest<?> request = suspend
+                    ? WebSocketHandshakeRequest.snapshot(context.originatingRequest())
+                    : context.originatingRequest();
+                BoundExecutable<Object, ?> bound = new DefaultExecutableBinder<WebSocketState>(preBound)
+                    .bind(handle.getExecutableMethod(), support.binderRegistry(),
+                        new WebSocketState(micronautSession, request));
+                if (suspend) {
+                    return invokeSuspend(bound, request, propagatedContext);
                 }
-                return toFlow(bound.invoke(webSocketBean.getTarget()));
+                return toFlow(bound.invoke(webSocketBean.getTarget()), propagatedContext);
             } catch (Throwable e) {
                 return ExecutionFlow.error(e);
             }
@@ -401,16 +403,19 @@ public class MicronautServerEndpoint extends Endpoint {
      * handler would be treated as already finished and neither its result nor its failure
      * would be seen.</p>
      *
-     * @param bound The bound handler
+     * @param bound             The bound handler
+     * @param request           The request this invocation owns, which holds its continuation
+     * @param propagatedContext The context to run the handler under
      * @return A flow completing when the coroutine completes
      */
-    private ExecutionFlow<Object> invokeSuspend(BoundExecutable<Object, ?> bound) {
+    private ExecutionFlow<Object> invokeSuspend(BoundExecutable<Object, ?> bound,
+                                                HttpRequest<?> request,
+                                                PropagatedContext propagatedContext) {
         CoroutineHelper coroutineHelper = support.coroutineHelper();
         if (coroutineHelper == null) {
-            return toFlow(bound.invoke(webSocketBean.getTarget()));
+            return toFlow(bound.invoke(webSocketBean.getTarget()), propagatedContext);
         }
-        HttpRequest<?> request = context.originatingRequest();
-        coroutineHelper.setupCoroutineContext(request, Context.empty(), PropagatedContext.getOrEmpty());
+        coroutineHelper.setupCoroutineContext(request, Context.empty(), propagatedContext);
         Object result = bound.invoke(webSocketBean.getTarget());
         if (!KotlinUtils.isKotlinCoroutineSuspended(result)) {
             return ExecutionFlow.just(null);
@@ -424,13 +429,16 @@ public class MicronautServerEndpoint extends Endpoint {
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
-    private ExecutionFlow<Object> toFlow(@Nullable Object result) {
+    private ExecutionFlow<Object> toFlow(@Nullable Object result, PropagatedContext propagatedContext) {
         if (result == null) {
             return ExecutionFlow.just(null);
         }
         if (Publishers.isConvertibleToPublisher(result)) {
-            return ReactiveExecutionFlow.fromPublisher(
-                Publishers.convertToPublisher(support.conversionService(), result)
+            // Subscribed eagerly: a lazy subscription would happen after the propagation
+            // scope has exited, leaving the handler's reactive code without the request.
+            return ReactiveExecutionFlow.fromPublisherEager(
+                Publishers.convertToPublisher(support.conversionService(), result),
+                propagatedContext
             );
         }
         if (result instanceof CompletionStage<?> stage) {
@@ -450,17 +458,7 @@ public class MicronautServerEndpoint extends Endpoint {
             finishClose();
             return;
         }
-        BoundExecutable<Object, ?> bound;
-        try {
-            WebSocketState state = new WebSocketState(micronautSession, context.originatingRequest());
-            bound = new DefaultExecutableBinder<WebSocketState>(preBind(closeMethod.getExecutableMethod(), reason))
-                .bind(closeMethod.getExecutableMethod(), support.binderRegistry(), state);
-        } catch (Exception e) {
-            LOG.error("Error binding @OnClose handler: {}", e.getMessage(), e);
-            finishClose();
-            return;
-        }
-        invokeBound(closeMethod, bound).onComplete((ignored, error) -> {
+        invokeHandler(closeMethod, preBind(closeMethod.getExecutableMethod(), reason)).onComplete((ignored, error) -> {
             if (error != null && LOG.isErrorEnabled()) {
                 LOG.error("Error invoking @OnClose handler: {}", error.getMessage(), error);
             }
@@ -469,8 +467,13 @@ public class MicronautServerEndpoint extends Endpoint {
     }
 
     private void finishClose() {
-        if (micronautSession != null) {
-            support.sessionRegistry().deregister(micronautSession);
+        if (micronautSession == null) {
+            return;
+        }
+        support.sessionRegistry().deregister(micronautSession);
+        if (opened) {
+            // A session that never reached the open event must not produce a close event,
+            // or listeners see a close with no matching open.
             support.applicationContext().publishEvent(new WebSocketSessionClosedEvent(micronautSession));
         }
     }
@@ -483,18 +486,13 @@ public class MicronautServerEndpoint extends Endpoint {
             handleUnexpected(cause);
             return;
         }
-        BoundExecutable<Object, ?> bound;
-        try {
-            WebSocketState state = new WebSocketState(micronautSession, context.originatingRequest());
-            bound = new DefaultExecutableBinder<WebSocketState>(preBind(errorMethod.getExecutableMethod(), cause))
-                .bind(errorMethod.getExecutableMethod(), support.binderRegistry(), state);
-        } catch (Exception e) {
-            handleUnexpected(cause);
-            return;
-        }
-        invokeBound(errorMethod, bound).onComplete((ignored, error) -> {
+        invokeHandler(errorMethod, preBind(errorMethod.getExecutableMethod(), cause)).onComplete((ignored, error) -> {
             if (error != null) {
-                handleUnexpected(error);
+                if (LOG.isErrorEnabled()) {
+                    LOG.error("Error invoking @OnError handler: {}", error.getMessage(), error);
+                }
+                // The original failure is what the connection has to be closed for.
+                handleUnexpected(cause);
             }
         });
     }

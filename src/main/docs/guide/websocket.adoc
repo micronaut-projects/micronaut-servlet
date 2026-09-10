@@ -130,4 +130,5 @@ a POJA application answers one request at a time over a single stream, so neithe
 long lived full duplex connection.
 
 WAR deployment is supported on any container implementing Jakarta WebSocket 2.1. On an older
-container the upgrade is answered with a `501` and a warning is logged at startup.
+container the upgrade is answered with a `501`, and a warning is logged the first time an
+upgrade is attempted.

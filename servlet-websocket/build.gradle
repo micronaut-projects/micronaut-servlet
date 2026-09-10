@@ -7,8 +7,12 @@ dependencies {
 
     api(projects.micronautServletEngine)
     api(mn.micronaut.websocket)
-    api(libs.managed.jakarta.websocket.api)
-    api(libs.managed.jakarta.websocket.client.api)
+    // The container supplies the Jakarta WebSocket API at runtime: Jetty and Undertow bring
+    // it transitively and Tomcat bundles its own copy, at a newer API level. Exporting these
+    // would put a second copy on the classpath, where Tomcat's WsSession can then fail with
+    // NoSuchMethodError if the older one wins ordering.
+    compileOnly(libs.managed.jakarta.websocket.api)
+    compileOnly(libs.managed.jakarta.websocket.client.api)
 
     implementation(mnReactor.micronaut.reactor)
 
@@ -17,6 +21,9 @@ dependencies {
     compileOnly(libs.jetty.websocket.jakarta.server)
     compileOnly(libs.tomcat.embed.websocket)
     compileOnly(libs.undertow.websockets.jsr)
+
+    testImplementation(libs.managed.jakarta.websocket.api)
+    testImplementation(libs.managed.jakarta.websocket.client.api)
 
     testAnnotationProcessor(mn.micronaut.inject.java)
     testImplementation(libs.junit.jupiter.engine)

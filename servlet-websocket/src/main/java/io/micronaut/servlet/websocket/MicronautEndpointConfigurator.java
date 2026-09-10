@@ -73,13 +73,17 @@ final class MicronautEndpointConfigurator extends ServerEndpointConfig.Configura
      */
     private static final Pattern NEVER_MATCHES = Pattern.compile("(?!)");
 
+    /**
+     * Shared, because a configurator is created for every upgrade.
+     */
+    private static final Map<String, Pattern> COMPILED_ORIGIN_PATTERNS = new ConcurrentHashMap<>();
+
     private final WebSocketUpgradeContext context;
     private final boolean compressionEnabled;
     private final Map<String, List<String>> handshakeHeaders;
     private final HttpServerConfiguration.CorsConfiguration corsConfiguration;
     private final @Nullable String sameOrigin;
     private final @Nullable CorsOriginConfiguration routeCorsConfiguration;
-    private final Map<String, Pattern> compiledOriginPatterns = new ConcurrentHashMap<>();
 
     MicronautEndpointConfigurator(WebSocketUpgradeContext context,
                                   boolean compressionEnabled,
@@ -147,7 +151,7 @@ final class MicronautEndpointConfigurator extends ServerEndpointConfig.Configura
         return allowed;
     }
 
-    private boolean matchesOrigin(CorsOriginConfiguration configuration, String requestOrigin) {
+    private static boolean matchesOrigin(CorsOriginConfiguration configuration, String requestOrigin) {
         String regex = configuration.getAllowedOriginsRegex().orElse(null);
         if (regex != null && matchesRegex(regex, requestOrigin)) {
             return true;
@@ -162,8 +166,8 @@ final class MicronautEndpointConfigurator extends ServerEndpointConfig.Configura
         return allowedOrigins.contains(requestOrigin);
     }
 
-    private boolean matchesRegex(String regex, String requestOrigin) {
-        Pattern pattern = compiledOriginPatterns.computeIfAbsent(regex, candidate -> {
+    private static boolean matchesRegex(String regex, String requestOrigin) {
+        Pattern pattern = COMPILED_ORIGIN_PATTERNS.computeIfAbsent(regex, candidate -> {
             try {
                 return Pattern.compile(candidate);
             } catch (PatternSyntaxException e) {
