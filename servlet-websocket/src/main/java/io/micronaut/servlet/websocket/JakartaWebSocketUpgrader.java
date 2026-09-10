@@ -24,6 +24,7 @@ import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.http.server.HttpServerConfiguration;
+import io.micronaut.http.server.cors.CrossOriginUtil;
 import io.micronaut.http.server.util.HttpHostResolver;
 import io.micronaut.servlet.http.ServletExchange;
 import io.micronaut.servlet.http.websocket.ServletWebSocketUpgrader;
@@ -129,6 +130,7 @@ public final class JakartaWebSocketUpgrader implements ServletWebSocketUpgrader 
                 configuration.getCompression().isEnabled(),
                 handshakeHeaders(handshakeResponse),
                 serverConfiguration.getCors(),
+                CrossOriginUtil.getCorsOriginConfiguration(routeMatch.getRouteInfo().getAnnotationMetadata()).orElse(null),
                 httpHostResolver.resolve(request)
             ));
         List<String> subprotocols = subprotocols(webSocketBean);

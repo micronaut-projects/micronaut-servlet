@@ -62,6 +62,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
@@ -89,6 +90,7 @@ public class MicronautServerEndpoint extends Endpoint {
 
     private static final Logger LOG = LoggerFactory.getLogger(MicronautServerEndpoint.class);
     private static final String CONNECTION_RESET = "Connection reset";
+    private static final String MAX_PAYLOAD_LENGTH = "maxPayloadLength";
 
     private final AtomicBoolean closed = new AtomicBoolean();
 
@@ -188,17 +190,30 @@ public class MicronautServerEndpoint extends Endpoint {
 
     private void applyLimits(Session session) {
         ServletWebSocketConfiguration configuration = support.configuration();
-        MethodExecutionHandle<Object, ?> messageMethod = webSocketBean.messageMethod().orElse(null);
-        int maxPayloadLength = messageMethod != null
-            ? messageMethod.intValue(OnMessage.class, "maxPayloadLength").orElse(ServletWebSocketConfiguration.DEFAULT_MAX_MESSAGE_SIZE)
-            : ServletWebSocketConfiguration.DEFAULT_MAX_MESSAGE_SIZE;
-        // The annotation carries a default, so it can only be distinguished from an
-        // unset value by comparing against that default. An explicit annotation value
-        // therefore wins, otherwise the configured size applies.
-        boolean annotated = maxPayloadLength != ServletWebSocketConfiguration.DEFAULT_MAX_MESSAGE_SIZE;
-        session.setMaxTextMessageBufferSize(annotated ? maxPayloadLength : configuration.getMaxTextMessageSize());
-        session.setMaxBinaryMessageBufferSize(annotated ? maxPayloadLength : configuration.getMaxBinaryMessageSize());
+        Integer maxPayloadLength = webSocketBean.messageMethod()
+            .flatMap(MicronautServerEndpoint::declaredMaxPayloadLength)
+            .orElse(null);
+        session.setMaxTextMessageBufferSize(
+            maxPayloadLength != null ? maxPayloadLength : configuration.getMaxTextMessageSize());
+        session.setMaxBinaryMessageBufferSize(
+            maxPayloadLength != null ? maxPayloadLength : configuration.getMaxBinaryMessageSize());
         session.setMaxIdleTimeout(support.idleTimeout().toMillis());
+    }
+
+    /**
+     * Reads {@code maxPayloadLength} only when the endpoint actually declared it.
+     *
+     * <p>The annotation carries a default, so a value read straight from the metadata cannot
+     * be told apart from an unset one, and the configured size would then never apply.</p>
+     *
+     * @param messageMethod The message handler
+     * @return The declared payload length, or empty when the endpoint did not declare one
+     */
+    private static Optional<Integer> declaredMaxPayloadLength(MethodExecutionHandle<Object, ?> messageMethod) {
+        return messageMethod.getAnnotationMetadata()
+            .findAnnotation(OnMessage.class)
+            .filter(annotation -> annotation.contains(MAX_PAYLOAD_LENGTH))
+            .flatMap(annotation -> annotation.intValue(MAX_PAYLOAD_LENGTH).stream().boxed().findFirst());
     }
 
     private void onTextMessage(String message) {

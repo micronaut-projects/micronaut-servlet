@@ -37,7 +37,7 @@ class MicronautEndpointConfiguratorTest {
             origin.setAllowedOriginsRegex(allowedOriginsRegex);
         }
         cors.setConfigurations(Map.of("web", origin));
-        return new MicronautEndpointConfigurator(null, true, Map.of(), cors, SAME_ORIGIN);
+        return new MicronautEndpointConfigurator(null, true, Map.of(), cors, null, SAME_ORIGIN);
     }
 
     @Test
@@ -93,10 +93,42 @@ class MicronautEndpointConfiguratorTest {
     }
 
     @Test
+    void aRouteLevelCrossOriginDecidesOnItsOwn() {
+        CorsOriginConfiguration route = new CorsOriginConfiguration();
+        route.setAllowedOrigins(List.of("https://route.example"));
+        HttpServerConfiguration.CorsConfiguration globalOff = new HttpServerConfiguration.CorsConfiguration();
+        globalOff.setEnabled(false);
+        MicronautEndpointConfigurator configurator =
+            new MicronautEndpointConfigurator(null, true, Map.of(), globalOff, route, SAME_ORIGIN);
+
+        assertTrue(configurator.checkOrigin("https://route.example"));
+        assertFalse(configurator.checkOrigin("https://evil.example"),
+            "an endpoint-level @CrossOrigin is enforced even with global CORS disabled");
+        assertTrue(configurator.checkOrigin(SAME_ORIGIN));
+    }
+
+    @Test
+    void aRouteLevelCrossOriginIsNotWidenedByTheGlobalConfiguration() {
+        CorsOriginConfiguration route = new CorsOriginConfiguration();
+        route.setAllowedOrigins(List.of("https://route.example"));
+        HttpServerConfiguration.CorsConfiguration globalOn = new HttpServerConfiguration.CorsConfiguration();
+        globalOn.setEnabled(true);
+        CorsOriginConfiguration global = new CorsOriginConfiguration();
+        global.setAllowedOrigins(List.of("https://global.example"));
+        globalOn.setConfigurations(Map.of("web", global));
+        MicronautEndpointConfigurator configurator =
+            new MicronautEndpointConfigurator(null, true, Map.of(), globalOn, route, SAME_ORIGIN);
+
+        assertTrue(configurator.checkOrigin("https://route.example"));
+        assertFalse(configurator.checkOrigin("https://global.example"),
+            "the endpoint states its own policy rather than adding to the global one");
+    }
+
+    @Test
     void compressionCanBeTurnedOff() {
         List<Extension> installed = List.of();
         MicronautEndpointConfigurator disabled =
-            new MicronautEndpointConfigurator(null, false, Map.of(), new HttpServerConfiguration.CorsConfiguration(), null);
+            new MicronautEndpointConfigurator(null, false, Map.of(), new HttpServerConfiguration.CorsConfiguration(), null, null);
 
         assertTrue(disabled.getNegotiatedExtensions(installed, installed).isEmpty(),
             "no extension is negotiated when per-message compression is turned off");
@@ -109,7 +141,7 @@ class MicronautEndpointConfiguratorTest {
         filterHeaders.put("Upgrade", List.of("nonsense"));
         filterHeaders.put("Sec-WebSocket-Accept", List.of("nonsense"));
         MicronautEndpointConfigurator configurator = new MicronautEndpointConfigurator(
-            null, true, filterHeaders, new HttpServerConfiguration.CorsConfiguration(), null);
+            null, true, filterHeaders, new HttpServerConfiguration.CorsConfiguration(), null, null);
         TestHandshakeResponse response = new TestHandshakeResponse();
 
         configurator.modifyHandshake(new TestServerEndpointConfig(), new TestHandshakeRequest(), response);

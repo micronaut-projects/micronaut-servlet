@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -66,21 +67,31 @@ final class MicronautEndpointConfigurator extends ServerEndpointConfig.Configura
 
     private static final Logger LOG = LoggerFactory.getLogger(MicronautEndpointConfigurator.class);
 
+    /**
+     * Stands in for a regex that could not be compiled, so an invalid configuration rejects
+     * rather than throwing on every handshake.
+     */
+    private static final Pattern NEVER_MATCHES = Pattern.compile("(?!)");
+
     private final WebSocketUpgradeContext context;
     private final boolean compressionEnabled;
     private final Map<String, List<String>> handshakeHeaders;
     private final HttpServerConfiguration.CorsConfiguration corsConfiguration;
     private final @Nullable String sameOrigin;
+    private final @Nullable CorsOriginConfiguration routeCorsConfiguration;
+    private final Map<String, Pattern> compiledOriginPatterns = new ConcurrentHashMap<>();
 
     MicronautEndpointConfigurator(WebSocketUpgradeContext context,
                                   boolean compressionEnabled,
                                   Map<String, List<String>> handshakeHeaders,
                                   HttpServerConfiguration.CorsConfiguration corsConfiguration,
+                                  @Nullable CorsOriginConfiguration routeCorsConfiguration,
                                   @Nullable String sameOrigin) {
         this.context = context;
         this.compressionEnabled = compressionEnabled;
         this.handshakeHeaders = handshakeHeaders;
         this.corsConfiguration = corsConfiguration;
+        this.routeCorsConfiguration = routeCorsConfiguration;
         this.sameOrigin = sameOrigin;
     }
 
@@ -105,7 +116,7 @@ final class MicronautEndpointConfigurator extends ServerEndpointConfig.Configura
      */
     @Override
     public boolean checkOrigin(String originHeaderValue) {
-        if (!corsConfiguration.isEnabled()) {
+        if (routeCorsConfiguration == null && !corsConfiguration.isEnabled()) {
             return true;
         }
         if (StringUtils.isEmpty(originHeaderValue)) {
@@ -117,15 +128,26 @@ final class MicronautEndpointConfigurator extends ServerEndpointConfig.Configura
             // same-origin socket, which a CORS allow-list is not meant to govern.
             return true;
         }
-        boolean allowed = corsConfiguration.getConfigurations().values().stream()
-            .anyMatch(configuration -> matchesOrigin(configuration, originHeaderValue));
+        if (routeCorsConfiguration != null) {
+            // A @CrossOrigin on the endpoint states the policy for that endpoint, so it
+            // decides on its own rather than being combined with the global one.
+            return allowed(matchesOrigin(routeCorsConfiguration, originHeaderValue), originHeaderValue);
+        }
+        return allowed(
+            corsConfiguration.getConfigurations().values().stream()
+                .anyMatch(configuration -> matchesOrigin(configuration, originHeaderValue)),
+            originHeaderValue
+        );
+    }
+
+    private static boolean allowed(boolean allowed, String originHeaderValue) {
         if (!allowed && LOG.isDebugEnabled()) {
             LOG.debug("Rejecting WebSocket handshake from origin [{}]: no CORS configuration allows it", originHeaderValue);
         }
         return allowed;
     }
 
-    private static boolean matchesOrigin(CorsOriginConfiguration configuration, String requestOrigin) {
+    private boolean matchesOrigin(CorsOriginConfiguration configuration, String requestOrigin) {
         String regex = configuration.getAllowedOriginsRegex().orElse(null);
         if (regex != null && matchesRegex(regex, requestOrigin)) {
             return true;
@@ -140,13 +162,16 @@ final class MicronautEndpointConfigurator extends ServerEndpointConfig.Configura
         return allowedOrigins.contains(requestOrigin);
     }
 
-    private static boolean matchesRegex(String regex, String requestOrigin) {
-        try {
-            return Pattern.compile(regex).matcher(requestOrigin).matches();
-        } catch (PatternSyntaxException e) {
-            LOG.warn("Invalid CORS allowed-origins-regex [{}]: {}", regex, e.getMessage());
-            return false;
-        }
+    private boolean matchesRegex(String regex, String requestOrigin) {
+        Pattern pattern = compiledOriginPatterns.computeIfAbsent(regex, candidate -> {
+            try {
+                return Pattern.compile(candidate);
+            } catch (PatternSyntaxException e) {
+                LOG.warn("Invalid CORS allowed-origins-regex [{}]: {}", candidate, e.getMessage());
+                return NEVER_MATCHES;
+            }
+        });
+        return pattern.matcher(requestOrigin).matches();
     }
 
     @Override

@@ -70,13 +70,21 @@ for HTTP requests.
 
 === Origin checking
 
-When `micronaut.server.cors.enabled` is set, the handshake is refused unless the `Origin`
-header is same-origin or matches one of the configured CORS origins. This check happens
+When the endpoint declares ann:http.server.cors.CrossOrigin[], or when
+`micronaut.server.cors.enabled` is set, the handshake is refused unless the `Origin` header
+is same-origin or matches an allowed origin. A `@CrossOrigin` on the endpoint states the
+policy for that endpoint and is used on its own; otherwise the global CORS configurations
+apply. This check happens
 during the handshake rather than on the response, because a browser applies its usual CORS
 response check to ordinary requests but not to a WebSocket handshake, so nothing else would
 stop a hostile page from opening an authenticated socket.
 
-With CORS disabled every origin is accepted, matching the Netty server.
+With no `@CrossOrigin` and CORS disabled every origin is accepted, matching the Netty
+server.
+
+NOTE: `@PreMatching` filters do not run on the handshake. The upgrade is
+matched to its route before the filter chain runs, so only filters resolved after route
+matching apply. The Netty server behaves the same way.
 
 === Configuration
 
@@ -107,6 +115,12 @@ sizes for that endpoint.
   were at handshake time. The authenticated principal is carried over with it, including one
   supplied by container-managed authentication in a WAR.
 * The handshake enforces the configured CORS origins, which the Netty server does not.
+* Handlers for one session are dispatched as each message arrives rather than being
+  serialised, so with a multi-threaded `@ExecuteOn` executor two messages on the same
+  session can run concurrently and complete out of order, and a message handler can overlap
+  `@OnOpen`. This matches the Netty server. An endpoint that needs ordering should either
+  keep its handlers non-blocking, so they run on the container thread that delivered the
+  message, or synchronize on the session itself.
 
 === Unsupported runtimes
 

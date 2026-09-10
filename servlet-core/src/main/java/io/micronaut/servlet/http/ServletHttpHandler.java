@@ -365,6 +365,7 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
                 .get();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
+            exchange.getResponse().status(HttpStatus.SERVICE_UNAVAILABLE);
             requestTerminated.run();
             return;
         } catch (Throwable e) {
@@ -384,6 +385,7 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
             executionResult = process(filteredResponse, req, exchange.getResponse()).toCompletableFuture().get();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
+            exchange.getResponse().status(HttpStatus.SERVICE_UNAVAILABLE);
             requestTerminated.run();
             return;
         } catch (Throwable e) {

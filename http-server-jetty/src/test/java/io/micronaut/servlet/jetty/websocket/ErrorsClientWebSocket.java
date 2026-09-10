@@ -6,7 +6,7 @@ import io.micronaut.websocket.annotation.ClientWebSocket;
 import io.micronaut.websocket.annotation.OnClose;
 import io.micronaut.websocket.annotation.OnMessage;
 
-@Requires(property = "spec.name", value = "JettyWebSocketSpec")
+@Requires(property = "spec.name", pattern = "JettyWebSocketSpec|JettyWebSocketOriginSpec")
 @ClientWebSocket
 public abstract class ErrorsClientWebSocket implements AutoCloseable {
 

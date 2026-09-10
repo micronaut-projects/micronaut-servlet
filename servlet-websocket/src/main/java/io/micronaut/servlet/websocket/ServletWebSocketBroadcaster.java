@@ -17,6 +17,7 @@ package io.micronaut.servlet.websocket;
 
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.util.StringUtils;
 import io.micronaut.http.MediaType;
 import io.micronaut.websocket.WebSocketBroadcaster;
 import io.micronaut.websocket.WebSocketSession;
@@ -44,6 +45,7 @@ import java.util.function.Predicate;
 @Singleton
 @Requires(classes = ServerContainer.class)
 @Requires(beans = ServletWebSocketSessionRegistry.class)
+@Requires(property = ServletWebSocketConfiguration.ENABLED_PROPERTY, notEquals = StringUtils.FALSE, defaultValue = StringUtils.TRUE)
 public final class ServletWebSocketBroadcaster implements WebSocketBroadcaster {
 
     private final ServletWebSocketSessionRegistry sessionRegistry;

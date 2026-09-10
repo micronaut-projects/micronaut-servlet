@@ -7,7 +7,7 @@ import io.micronaut.websocket.annotation.OnMessage;
 import java.util.Collection;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-@Requires(property = "spec.name", value = "JettyWebSocketSecuritySpec")
+@Requires(property = "spec.name", pattern = "JettyWebSocketSecuritySpec|JettyWebSocketOriginSpec")
 @ClientWebSocket
 public abstract class ChatReplyClientWebSocket implements AutoCloseable {
 

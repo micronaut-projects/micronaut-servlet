@@ -73,10 +73,13 @@ public final class ServletWebSocketMessageEncoder {
             return EncodedMessage.ofBinary(ByteBuffer.wrap(bytes));
         }
         if (message instanceof ByteBuffer nioBuffer) {
-            return EncodedMessage.ofBinary(nioBuffer);
+            // Containers write straight from the buffer they are given, advancing its
+            // position, so a caller that broadcasts one buffer would send the payload to the
+            // first session and empty frames to the rest.
+            return EncodedMessage.ofBinary(nioBuffer.duplicate());
         }
         if (message instanceof io.micronaut.core.io.buffer.ByteBuffer<?> micronautBuffer) {
-            return EncodedMessage.ofBinary(micronautBuffer.asNioBuffer());
+            return EncodedMessage.ofBinary(micronautBuffer.asNioBuffer().duplicate());
         }
         if (message instanceof CharSequence charSequence) {
             return EncodedMessage.ofText(charSequence.toString());

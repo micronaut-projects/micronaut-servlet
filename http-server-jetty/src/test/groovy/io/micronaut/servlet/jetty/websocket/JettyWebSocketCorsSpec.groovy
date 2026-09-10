@@ -22,6 +22,9 @@ class JettyWebSocketCorsSpec extends Specification {
     EmbeddedServer embeddedServer = ApplicationContext.run(EmbeddedServer, [
             'spec.name'                                              : 'JettyWebSocketSpec',
             'micronaut.server.cors.enabled'                          : true,
+            // core denies a foreign origin to a localhost host before the handshake is
+            // reached, so that protection is turned off to exercise the origin check itself
+            'micronaut.server.cors.localhost-pass-through'           : true,
             'micronaut.server.cors.configurations.web.allowed-origins': ['https://trusted.example']
     ])
 

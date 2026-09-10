@@ -62,6 +62,20 @@ class ServletWebSocketMessageEncoderTest {
     }
 
     @Test
+    void encodingDoesNotConsumeTheCallersBuffer() {
+        // A broadcast encodes the same message once per session, and containers write
+        // straight from the buffer they are given.
+        ByteBuffer payload = ByteBuffer.wrap(new byte[]{1, 2, 3});
+
+        EncodedMessage first = empty.encode(payload, MediaType.APPLICATION_OCTET_STREAM_TYPE);
+        first.binary().position(first.binary().limit());
+        EncodedMessage second = empty.encode(payload, MediaType.APPLICATION_OCTET_STREAM_TYPE);
+
+        assertEquals(3, second.binary().remaining(), "every session must get the whole payload");
+        assertEquals(3, payload.remaining(), "the caller's buffer is left untouched");
+    }
+
+    @Test
     void encodedMessagesCarryExactlyOnePayload() {
         EncodedMessage text = EncodedMessage.ofText("a");
         EncodedMessage binary = EncodedMessage.ofBinary(ByteBuffer.allocate(1));
