@@ -97,6 +97,35 @@ class HttpExchangeHttpServletResponseTest {
     }
 
     @Test
+    void attributesTheCookieApiCannotCarryAreStillWritten() {
+        HttpExchangeHttpServletResponse response = newResponse("GET");
+        Cookie cookie = new Cookie("session", "abc");
+        cookie.setPath("/");
+        cookie.setAttribute("SameSite", "Lax");
+        cookie.setAttribute("Partitioned", "");
+        cookie.setAttribute("X-Vendor", "something");
+        response.addCookie(cookie);
+
+        String encoded = response.getHeader("Set-Cookie");
+        assertTrue(encoded.contains("Partitioned"), () -> "valueless attribute dropped: " + encoded);
+        assertTrue(encoded.contains("X-Vendor=something"), () -> "custom attribute dropped: " + encoded);
+        assertEquals(1, countOccurrences(encoded.toLowerCase(Locale.ROOT), "samesite"),
+            () -> "SameSite must not be written twice: " + encoded);
+        assertEquals(1, countOccurrences(encoded.toLowerCase(Locale.ROOT), "path="),
+            () -> "Path must not be written twice: " + encoded);
+    }
+
+    private static int countOccurrences(String haystack, String needle) {
+        int count = 0;
+        int from = haystack.indexOf(needle);
+        while (from >= 0) {
+            count++;
+            from = haystack.indexOf(needle, from + needle.length());
+        }
+        return count;
+    }
+
+    @Test
     void intAndDateHeadersAreWritten() {
         HttpExchangeHttpServletResponse response = newResponse("GET");
         response.setIntHeader("X-Count", 1);

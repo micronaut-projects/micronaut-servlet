@@ -45,6 +45,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 
 /**
@@ -56,6 +57,13 @@ final class HttpExchangeHttpServletResponse implements HttpServletResponse {
     private static final int DEFAULT_STATUS = HttpStatus.OK.getCode();
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter
         .ofPattern("EEE, dd MMM yyyy HH:mm:ss 'GMT'", Locale.ENGLISH);
+
+    /**
+     * Attribute names the cookie encoder already writes, lower case for comparison.
+     */
+    private static final Set<String> ENCODED_COOKIE_ATTRIBUTES = Set.of(
+        "domain", "path", "max-age", "expires", "secure", "httponly", "samesite", "comment", "version"
+    );
 
     /**
      * Header names are case-insensitive per RFC 9110, and a header may legitimately carry several values
@@ -236,8 +244,36 @@ final class HttpExchangeHttpServletResponse implements HttpServletResponse {
     @Override
     public void addCookie(Cookie cookie) {
         for (String encoded : ServerCookieEncoder.INSTANCE.encode(toMicronautCookie(cookie))) {
-            addHeader(HttpHeaders.SET_COOKIE, encoded);
+            addHeader(HttpHeaders.SET_COOKIE, encoded + extraAttributes(cookie));
         }
+    }
+
+    /**
+     * Renders the attributes the conversion to a Micronaut cookie cannot carry.
+     *
+     * <p>{@code Cookie} models a fixed set of attributes plus SameSite, so anything else the caller set through
+     * {@link Cookie#setAttribute(String, String)}, {@code Partitioned} or an attribute newer than the API among them,
+     * would be dropped and the header would not say what the caller asked for. Those are appended verbatim.</p>
+     *
+     * @param cookie The servlet cookie
+     * @return The attributes to append to the encoded header, empty when there are none
+     */
+    private static String extraAttributes(Cookie cookie) {
+        Map<String, String> attributes = cookie.getAttributes();
+        if (CollectionUtils.isEmpty(attributes)) {
+            return "";
+        }
+        StringBuilder builder = new StringBuilder();
+        for (Map.Entry<String, String> attribute : attributes.entrySet()) {
+            if (ENCODED_COOKIE_ATTRIBUTES.contains(attribute.getKey().toLowerCase(Locale.ROOT))) {
+                continue;
+            }
+            builder.append("; ").append(attribute.getKey());
+            if (StringUtils.isNotEmpty(attribute.getValue())) {
+                builder.append('=').append(attribute.getValue());
+            }
+        }
+        return builder.toString();
     }
 
     private static io.micronaut.http.cookie.Cookie toMicronautCookie(Cookie cookie) {

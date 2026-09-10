@@ -55,6 +55,7 @@ class HttpServerEmbeddedServer extends AbstractServletServer<HttpServer> {
 
     private static final String SCHEME_HTTP = "http";
     private final HttpServerConfiguration httpServerConfiguration;
+    private final JdkServerExecutorOwnership executorOwnership;
     private final AtomicBoolean running = new AtomicBoolean(false);
 
     /**
@@ -68,9 +69,11 @@ class HttpServerEmbeddedServer extends AbstractServletServer<HttpServer> {
                                        ApplicationConfiguration applicationConfiguration,
                                        HttpServerConfiguration httpServerConfiguration,
                                        @Nullable ApplicationEventPublisher<ServerShutdownEvent> serverShutdownEventPublisher,
+                                       JdkServerExecutorOwnership executorOwnership,
                                        HttpServer server) {
         super(applicationContextProvider != null ? applicationContextProvider.getApplicationContext() : applicationContext, applicationConfiguration, serverShutdownEventPublisher, server);
         this.httpServerConfiguration = httpServerConfiguration;
+        this.executorOwnership = executorOwnership;
     }
 
     @Override
@@ -86,20 +89,22 @@ class HttpServerEmbeddedServer extends AbstractServletServer<HttpServer> {
         if (running.compareAndSet(true, false)) {
             HttpServer server = getServer();
             server.stop(0);
-            shutdownExecutor(server);
+            shutdownOwnedExecutor(server);
         }
     }
 
     /**
-     * Shuts down the executor the server was given, so its workers do not outlive the server that created them.
+     * Shuts down the request executor, provided this module is the one that created it.
      *
      * <p>{@link HttpServer#stop(int)} leaves the executor running, and the fallback pool's workers are not daemon
-     * threads, so a stopped server would otherwise leak them and could keep the JVM alive.</p>
+     * threads, so a stopped server would otherwise leak them and could keep the JVM alive. An executor the
+     * application supplied with its own server bean is left alone: it may be shared with work that outlives this
+     * server.</p>
      *
      * @param server The server that has just been stopped
      */
-    private static void shutdownExecutor(HttpServer server) {
-        if (server.getExecutor() instanceof ExecutorService executorService) {
+    private void shutdownOwnedExecutor(HttpServer server) {
+        if (executorOwnership.isOwned(server.getExecutor()) && server.getExecutor() instanceof ExecutorService executorService) {
             executorService.shutdown();
             try {
                 if (!executorService.awaitTermination(EXECUTOR_SHUTDOWN_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {

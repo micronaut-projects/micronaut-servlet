@@ -63,6 +63,8 @@ public class HttpServerFactory {
      *
      * @param applicationContext Application Context
      * @param httpServerConfiguration HTTP Server Configuration
+     * @param servletConfiguration Servlet Configuration
+     * @param executorOwnership Records the executor created here, so only that one is shut down with the server
      * @param httpHandlers Handlers
      * @return An HTTP Server
      * @throws IOException If an error occurs creating the server
@@ -72,9 +74,12 @@ public class HttpServerFactory {
     HttpServer createHttpServer(ApplicationContext applicationContext,
                                 HttpServerConfiguration httpServerConfiguration,
                                 ServletConfiguration servletConfiguration,
+                                JdkServerExecutorOwnership executorOwnership,
                                 List<HttpHandlerPath> httpHandlers) throws IOException {
         HttpServer server = HttpServer.create(serverAddress(applicationContext, httpServerConfiguration), 0);
-        server.setExecutor(createExecutor(servletConfiguration));
+        ExecutorService executorService = createExecutor(servletConfiguration);
+        executorOwnership.owns(executorService);
+        server.setExecutor(executorService);
         for (HttpHandlerPath handler : httpHandlers) {
             server.createContext(handler.getPath(), handler.getHttpHandler());
         }
