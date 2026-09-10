@@ -31,6 +31,7 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -95,15 +96,17 @@ class ServletStreamsTest {
     }
 
     @Test
-    void theOutputStreamDiscardsWritesWhenThereIsNoExchange() throws IOException {
+    void theOutputStreamDiscardsWritesWhenThereIsNoExchange() {
         // a response that may not carry a body is given no exchange, so writes go nowhere instead of corrupting one
         // that was announced as body-less
         HttpExchangeServletOutputStream stream = new HttpExchangeServletOutputStream(null);
 
-        stream.write('a');
-        stream.write("bcdef".getBytes(StandardCharsets.UTF_8), 0, 5);
-        stream.flush();
-        stream.close();
+        assertDoesNotThrow(() -> {
+            stream.write('a');
+            stream.write("bcdef".getBytes(StandardCharsets.UTF_8), 0, 5);
+            stream.flush();
+            stream.close();
+        }, "a body-less response still has to tolerate writes");
     }
 
     @Test
@@ -124,7 +127,8 @@ class ServletStreamsTest {
     private static final class RecordingExchange extends HttpExchange {
         private final InputStream requestBody;
         private final ByteArrayOutputStream responseBody = new ByteArrayOutputStream();
-        private final Headers headers = new Headers();
+        private final Headers requestHeaders = new Headers();
+        private final Headers responseHeaders = new Headers();
 
         private RecordingExchange(byte[] body) {
             this.requestBody = new ByteArrayInputStream(body);
@@ -132,12 +136,12 @@ class ServletStreamsTest {
 
         @Override
         public Headers getRequestHeaders() {
-            return headers;
+            return requestHeaders;
         }
 
         @Override
         public Headers getResponseHeaders() {
-            return headers;
+            return responseHeaders;
         }
 
         @Override

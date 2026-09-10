@@ -1,6 +1,5 @@
 package io.micronaut.servlet.http
 
-import io.micronaut.core.convert.value.ConvertibleMultiValues
 import io.micronaut.http.HttpHeaders
 import io.micronaut.http.HttpParameters
 import io.micronaut.http.HttpRequest
