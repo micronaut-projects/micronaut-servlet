@@ -151,7 +151,7 @@ public final class JakartaWebSocketUpgrader implements ServletWebSocketUpgrader 
         }
     }
 
-    private static ServerContainer resolveServerContainer(HttpServletRequest servletRequest) {
+    static ServerContainer resolveServerContainer(HttpServletRequest servletRequest) {
         Object attribute = servletRequest.getServletContext().getAttribute(SERVER_CONTAINER_ATTRIBUTE);
         if (attribute instanceof ServerContainer serverContainer) {
             return serverContainer;

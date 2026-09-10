@@ -375,28 +375,7 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
 
         UriRouteMatch<Object, Object> routeMatch = lc.getRouteMatch();
         if (lc.shouldProceedNormally() && routeMatch != null) {
-            try {
-                upgrader.upgrade(exchange, req, routeMatch, filteredResponse);
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("Request [{} - {}] upgraded to WebSocket", req.getMethodName(), req.getUri());
-                }
-                // The connection now belongs to the WebSocket implementation, so the exchange
-                // is deliberately not closed here: closing it would touch container streams
-                // that the protocol switch has already taken over.
-                applicationContext.publishEvent(new HttpRequestTerminatedEvent(req));
-            } catch (HttpStatusException e) {
-                if (LOG.isWarnEnabled()) {
-                    LOG.warn("Cannot upgrade request [{} - {}] to WebSocket: {}", req.getMethodName(), req.getUri(), e.getMessage());
-                }
-                exchange.getResponse().status(e.getStatus(), e.getMessage());
-                requestTerminated.run();
-            } catch (Throwable e) {
-                if (LOG.isErrorEnabled()) {
-                    LOG.error("Error upgrading request [{} - {}] to WebSocket: {}", req.getMethodName(), req.getUri(), e.getMessage(), e);
-                }
-                handleFallback(exchange.getResponse(), e);
-                requestTerminated.run();
-            }
+            switchProtocols(exchange, req, upgrader, routeMatch, filteredResponse, requestTerminated);
             return;
         }
 
@@ -413,6 +392,49 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
             return;
         }
         transfer(executionResult, exchange, false, requestTerminated);
+    }
+
+    /**
+     * Hands the connection to the WebSocket implementation, reporting a runtime that cannot
+     * upgrade as {@code 501 Not Implemented} rather than a generic failure.
+     *
+     * @param exchange          The exchange
+     * @param req               The request
+     * @param upgrader          The upgrader
+     * @param routeMatch        The matched WebSocket route
+     * @param handshakeResponse The response the filter chain produced
+     * @param requestTerminated Callback to run once the HTTP request is finished with
+     */
+    private void switchProtocols(ServletExchange<REQ, RES> exchange,
+                                 HttpRequest<Object> req,
+                                 ServletWebSocketUpgrader upgrader,
+                                 UriRouteMatch<Object, Object> routeMatch,
+                                 HttpResponse<?> handshakeResponse,
+                                 Runnable requestTerminated) {
+        try {
+            upgrader.upgrade(exchange, req, routeMatch, handshakeResponse);
+        } catch (HttpStatusException e) {
+            if (LOG.isWarnEnabled()) {
+                LOG.warn("Cannot upgrade request [{} - {}] to WebSocket: {}", req.getMethodName(), req.getUri(), e.getMessage());
+            }
+            exchange.getResponse().status(e.getStatus(), e.getMessage());
+            requestTerminated.run();
+            return;
+        } catch (Throwable e) {
+            if (LOG.isErrorEnabled()) {
+                LOG.error("Error upgrading request [{} - {}] to WebSocket: {}", req.getMethodName(), req.getUri(), e.getMessage(), e);
+            }
+            handleFallback(exchange.getResponse(), e);
+            requestTerminated.run();
+            return;
+        }
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Request [{} - {}] upgraded to WebSocket", req.getMethodName(), req.getUri());
+        }
+        // The connection now belongs to the WebSocket implementation, so the exchange is
+        // deliberately not closed here: closing it would touch container streams that the
+        // protocol switch has already taken over.
+        applicationContext.publishEvent(new HttpRequestTerminatedEvent(req));
     }
 
     private ExecutionFlow<ExecutionResult> process(HttpResponse<?> response,

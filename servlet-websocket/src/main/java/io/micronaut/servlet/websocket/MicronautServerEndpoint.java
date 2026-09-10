@@ -522,7 +522,7 @@ public class MicronautServerEndpoint extends Endpoint {
      * @param value  The value to pre-bind
      * @return The pre-bound arguments, empty when no argument accepts the value
      */
-    private static Map<Argument<?>, Object> preBind(ExecutableMethod<?, ?> method, Object value) {
+    static Map<Argument<?>, Object> preBind(ExecutableMethod<?, ?> method, Object value) {
         for (Argument<?> argument : method.getArguments()) {
             if (argument.getType().isInstance(value)) {
                 return Map.of(argument, value);

@@ -162,7 +162,9 @@ final class MicronautEndpointConfigurator extends ServerEndpointConfig.Configura
         // Undertow rebuilds the ServerEndpointConfig during the upgrade and does not carry
         // the user properties across, so the context is put on whichever config the
         // endpoint will actually be opened with.
-        sec.getUserProperties().put(MicronautServerEndpoint.CONTEXT_PROPERTY, context);
+        if (sec != null && context != null) {
+            sec.getUserProperties().put(MicronautServerEndpoint.CONTEXT_PROPERTY, context);
+        }
         if (handshakeHeaders.isEmpty()) {
             return;
         }
