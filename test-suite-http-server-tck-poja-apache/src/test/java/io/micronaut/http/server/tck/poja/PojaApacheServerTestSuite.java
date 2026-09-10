@@ -28,8 +28,8 @@ import org.junit.platform.suite.api.SuiteDisplayName;
 @SuiteDisplayName("HTTP Server TCK for POJA")
 @ExcludeTags("multipart") // this runtime has a hand written request implementation that does not parse multipart bodies
 @ExcludeClassNamePatterns({
+    "io.micronaut.http.server.tck.tests.forms.FormBindingDeadlockTest", // asserts the server detects a form binding deadlock; a container that parses the whole form before the route runs has none to detect and completes the request instead
     "io.micronaut.http.server.tck.tests.forms.UploadTest", // unannotated StreamingFileUpload argument has no typed servlet binder yet
-    "io.micronaut.http.server.tck.tests.forms.FormBindingDeadlockTest", // form binding parks the container thread waiting on a body the same thread must read
     "io.micronaut.http.server.tck.tests.BodyWithoutContentLengthTest", // POJA resolves the request body on its own path, which still decodes a body that was never sent
     "io.micronaut.http.server.tck.tests.cors.SimpleRequestWithCorsNotEnabledTest", // posts multipart to /refresh; the unconsumed multipart body desynchronises the single POJA input stream
     // See https://github.com/micronaut-projects/micronaut-oracle-cloud/issues/925
