@@ -279,7 +279,9 @@ public final class DefaultServletHttpResponse<B> implements ServletHttpResponse<
                         if (LOG.isWarnEnabled()) {
                             LOG.warn("Reactive response received an error after some data has already been written. This error cannot be forwarded to the client.", t);
                         }
-                        maybeReportErrorDownstream(new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, HttpStatus.INTERNAL_SERVER_ERROR.getReason() + ": " + t.getMessage()));
+                        // the throwable is logged above with its stack trace; the client gets the status reason
+                        // only, so an arbitrary exception message does not become the response body
+                        maybeReportErrorDownstream(new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, HttpStatus.INTERNAL_SERVER_ERROR.getReason()));
                     }
                     subscription().cancel();
                 }
