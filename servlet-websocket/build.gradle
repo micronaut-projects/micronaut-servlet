@@ -1,0 +1,37 @@
+plugins {
+    id("io.micronaut.build.internal.servlet.module")
+}
+
+dependencies {
+    annotationProcessor(mn.micronaut.graal)
+
+    api(projects.micronautServletEngine)
+    api(mn.micronaut.websocket)
+    // The container supplies the Jakarta WebSocket API at runtime: Jetty and Undertow bring
+    // it transitively and Tomcat bundles its own copy, at a newer API level. Exporting these
+    // would put a second copy on the classpath, where Tomcat's WsSession can then fail with
+    // NoSuchMethodError if the older one wins ordering.
+    compileOnly(libs.managed.jakarta.websocket.api)
+    compileOnly(libs.managed.jakarta.websocket.client.api)
+
+    implementation(mnReactor.micronaut.reactor)
+
+    // Container bootstrap classes are guarded by @Requires(classes = ...), so each
+    // container's WebSocket implementation is only needed to compile against.
+    compileOnly(libs.jetty.websocket.jakarta.server)
+    compileOnly(libs.tomcat.embed.websocket)
+    compileOnly(libs.undertow.websockets.jsr)
+
+    testImplementation(libs.managed.jakarta.websocket.api)
+    testImplementation(libs.managed.jakarta.websocket.client.api)
+
+    testAnnotationProcessor(mn.micronaut.inject.java)
+    testImplementation(libs.junit.jupiter.engine)
+    testImplementation(mn.micronaut.jackson.databind)
+    testRuntimeOnly(mnLogging.logback.classic)
+}
+
+micronautBuild {
+    // New module: there is no previously released version to compare against.
+    binaryCompatibility.enabled = false
+}

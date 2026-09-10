@@ -2,6 +2,7 @@ introduction: Introduction
 releaseHistory: Release History
 servletApi: Working with the Servlet API
 servletAnnotation: Servlet Annotation Support
+websocket: WebSocket Support
 warDeployment:
   title: WAR Deployment
   versioning: Container version considerations

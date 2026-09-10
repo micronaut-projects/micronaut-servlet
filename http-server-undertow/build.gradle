@@ -6,4 +6,7 @@ dependencies {
     implementation libs.undertow.servlet
     testImplementation libs.bcpkix
     testImplementation(mnSerde.micronaut.serde.jackson)
+    testAnnotationProcessor(mnSerde.micronaut.serde.processor)
+    testImplementation(projects.micronautServletWebsocket)
+    testImplementation libs.undertow.websockets.jsr
 }

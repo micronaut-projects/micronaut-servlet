@@ -1,0 +1,21 @@
+plugins {
+    id("io.micronaut.build.internal.servlet.implementation")
+}
+
+// Groovy equivalents of the guide sources in test-suite, under the same fully qualified
+// names so that the `snippet::` macro can render a Groovy tab.
+dependencies {
+    testImplementation(projects.micronautServletWebsocket)
+    testImplementation(projects.micronautHttpServerJetty)
+    testImplementation(libs.jetty.websocket.jakarta.server) {
+        exclude(group: "org.eclipse.jetty.ee10", module: "jetty-ee10-annotations")
+    }
+    testImplementation(mn.micronaut.jackson.databind)
+    testImplementation(mnLogging.logback.classic)
+}
+
+micronautBuild {
+    binaryCompatibility {
+        enabled = false
+    }
+}
