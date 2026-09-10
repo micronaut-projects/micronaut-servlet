@@ -141,17 +141,17 @@ public final class JakartaWebSocketUpgrader implements ServletWebSocketUpgrader 
         );
     }
 
-    private static List<String> subprotocols(WebSocketBean<?> webSocketBean) {
+    static List<String> subprotocols(WebSocketBean<?> webSocketBean) {
         String value = webSocketBean.getBeanDefinition()
             .stringValue(ServerWebSocket.class, "subprotocols")
-            .orElse(null);
-        if (StringUtils.isEmpty(value)) {
+            .orElse("");
+        if (value.isEmpty()) {
             return List.of();
         }
         List<String> result = new ArrayList<>();
         for (String protocol : value.split(",")) {
             String trimmed = protocol.trim();
-            if (StringUtils.isNotEmpty(trimmed)) {
+            if (!trimmed.isEmpty()) {
                 result.add(trimmed);
             }
         }

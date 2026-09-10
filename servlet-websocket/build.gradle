@@ -20,6 +20,8 @@ dependencies {
 
     testAnnotationProcessor(mn.micronaut.inject.java)
     testImplementation(libs.junit.jupiter.engine)
+    testImplementation(mn.micronaut.jackson.databind)
+    testRuntimeOnly(mnLogging.logback.classic)
 }
 
 micronautBuild {
