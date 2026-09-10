@@ -47,7 +47,7 @@ import java.time.Duration;
 @Internal
 @Singleton
 @Requires(classes = {WebSocketDeploymentInfo.class, DeploymentInfo.class})
-@Requires(property = ServletWebSocketConfiguration.ENABLED, notEquals = StringUtils.FALSE, defaultValue = StringUtils.TRUE)
+@Requires(property = ServletWebSocketConfiguration.ENABLED_PROPERTY, notEquals = StringUtils.FALSE, defaultValue = StringUtils.TRUE)
 public final class UndertowWebSocketDeploymentCustomizer implements BeanCreatedEventListener<DeploymentInfo> {
 
     private final ServletWebSocketConfiguration configuration;

@@ -265,12 +265,10 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
         final HttpRequest<Object> req = exchange.getRequest();
         applicationContext.publishEvent(new HttpRequestReceivedEvent(req));
 
-        if (ServletWebSocketUpgrader.isWebSocketUpgrade(req)) {
-            ServletWebSocketUpgrader upgrader = webSocketUpgrader.get();
-            if (upgrader != null) {
-                serviceWebSocketUpgrade(exchange, req, upgrader, requestTerminated);
-                return;
-            }
+        ServletWebSocketUpgrader upgrader = resolveWebSocketUpgrader(req);
+        if (upgrader != null) {
+            serviceWebSocketUpgrade(exchange, req, upgrader, requestTerminated);
+            return;
         }
 
         ServletRequestLifecycle lc = new ServletRequestLifecycle(routeExecutor);
@@ -295,20 +293,47 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
                 });
             });
         } else {
-            ExecutionResult executionResult;
-            CompletableFuture<ExecutionResult> cfExecutionResult = PropagatedContext.getOrEmpty().plus(new ServerHttpRequestContext(req)).propagate(() -> lc.handleNormal(req)
-                .flatMap(response -> process(response, req, exchange.getResponse())).toCompletableFuture());
-            try {
-                executionResult = cfExecutionResult.get();
-            } catch (InterruptedException ie) {
-                Thread.currentThread().interrupt();
-                return;
-            } catch (Throwable ee) {
-                handleFallback(exchange.getResponse(), Optional.ofNullable(ee.getCause()).orElse(ee));
-                return;
-            }
-            transfer(executionResult, exchange, false, requestTerminated);
+            serviceBlocking(exchange, req, lc, requestTerminated);
         }
+    }
+
+    /**
+     * Whether this request should be switched over to the WebSocket protocol.
+     *
+     * @param request The request
+     * @return The upgrader to use, or {@code null} when this is not a WebSocket upgrade or
+     * the server has no WebSocket support on the classpath
+     */
+    private @Nullable ServletWebSocketUpgrader resolveWebSocketUpgrader(HttpRequest<?> request) {
+        return ServletWebSocketUpgrader.isWebSocketUpgrade(request) ? webSocketUpgrader.get() : null;
+    }
+
+    /**
+     * Handles a request on a container that does not support asynchronous processing, by
+     * blocking the container thread until the response is ready.
+     *
+     * @param exchange          The exchange
+     * @param req               The request
+     * @param lc                The request lifecycle
+     * @param requestTerminated Callback to run once the request is finished with
+     */
+    private void serviceBlocking(ServletExchange<REQ, RES> exchange,
+                                 HttpRequest<Object> req,
+                                 ServletRequestLifecycle lc,
+                                 Runnable requestTerminated) {
+        ExecutionResult executionResult;
+        CompletableFuture<ExecutionResult> cfExecutionResult = PropagatedContext.getOrEmpty().plus(new ServerHttpRequestContext(req)).propagate(() -> lc.handleNormal(req)
+            .flatMap(response -> process(response, req, exchange.getResponse())).toCompletableFuture());
+        try {
+            executionResult = cfExecutionResult.get();
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+            return;
+        } catch (Throwable ee) {
+            handleFallback(exchange.getResponse(), Optional.ofNullable(ee.getCause()).orElse(ee));
+            return;
+        }
+        transfer(executionResult, exchange, false, requestTerminated);
     }
 
     /**

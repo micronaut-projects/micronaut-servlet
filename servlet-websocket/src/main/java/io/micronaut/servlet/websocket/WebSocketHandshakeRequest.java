@@ -76,7 +76,7 @@ final class WebSocketHandshakeRequest extends SimpleHttpRequest<Object> {
             copy.cookies(cookies);
         }
         MutableConvertibleValues<Object> attributes = copy.getAttributes();
-        request.getAttributes().forEach((name, value) -> attributes.put(name, value));
+        request.getAttributes().forEach(attributes::put);
         return copy;
     }
 

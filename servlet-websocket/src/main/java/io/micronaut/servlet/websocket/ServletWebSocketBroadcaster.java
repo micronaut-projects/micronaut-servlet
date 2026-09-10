@@ -62,31 +62,45 @@ public final class ServletWebSocketBroadcaster implements WebSocketBroadcaster {
         return Mono.defer(() -> {
             List<CompletableFuture<?>> sends = new ArrayList<>();
             for (WebSocketSession session : sessionRegistry.getOpenSessions()) {
-                if (!filter.test(session)) {
-                    continue;
+                if (filter.test(session)) {
+                    sends.add(sendTo(session, message, mediaType));
                 }
-                CompletableFuture<?> send;
-                try {
-                    send = session.sendAsync(message, mediaType);
-                } catch (Exception e) {
-                    send = CompletableFuture.failedFuture(e);
-                }
-                // A peer that went away during the broadcast is not a broadcast failure,
-                // matching the Netty broadcaster which ignores ClosedChannelException.
-                sends.add(send.exceptionally(error -> {
-                    if (session.isOpen()) {
-                        throw error instanceof CompletionException completion
-                            ? completion
-                            : new CompletionException(error);
-                    }
-                    return null;
-                }));
             }
             if (sends.isEmpty()) {
                 return Mono.just(message);
             }
             return Mono.fromCompletionStage(CompletableFuture.allOf(sends.toArray(CompletableFuture[]::new)))
                 .thenReturn(message);
+        });
+    }
+
+    /**
+     * Sends to one session, treating a peer that went away as a success.
+     *
+     * <p>The Netty broadcaster ignores {@code ClosedChannelException}. Containers report a
+     * vanished peer in their own way, so the session state decides instead of the exception
+     * type: a failure is only a broadcast failure while the session is still open.</p>
+     *
+     * @param session   The session to send to
+     * @param message   The message
+     * @param mediaType The media type
+     * @param <T>       The message type
+     * @return A future completing when the message is written, or when the peer is gone
+     */
+    private <T> CompletableFuture<?> sendTo(WebSocketSession session, T message, MediaType mediaType) {
+        CompletableFuture<?> send;
+        try {
+            send = session.sendAsync(message, mediaType);
+        } catch (Exception e) {
+            send = CompletableFuture.failedFuture(e);
+        }
+        return send.exceptionally(error -> {
+            if (session.isOpen()) {
+                throw error instanceof CompletionException completion
+                    ? completion
+                    : new CompletionException(error);
+            }
+            return null;
         });
     }
 }

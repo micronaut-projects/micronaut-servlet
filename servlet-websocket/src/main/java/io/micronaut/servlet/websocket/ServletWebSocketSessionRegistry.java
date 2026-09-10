@@ -69,10 +69,10 @@ public final class ServletWebSocketSessionRegistry implements ApplicationEventLi
     /**
      * @return The currently open sessions
      */
-    public Set<? extends WebSocketSession> getOpenSessions() {
+    public Set<WebSocketSession> getOpenSessions() {
         return sessions.stream()
             .filter(WebSocketSession::isOpen)
-            .collect(Collectors.collectingAndThen(Collectors.toSet(), Collections::unmodifiableSet));
+            .collect(Collectors.collectingAndThen(Collectors.<WebSocketSession>toSet(), Collections::unmodifiableSet));
     }
 
     /**

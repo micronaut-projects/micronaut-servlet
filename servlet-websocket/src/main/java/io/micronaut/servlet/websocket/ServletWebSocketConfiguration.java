@@ -41,7 +41,7 @@ public class ServletWebSocketConfiguration {
     /**
      * The property used to enable or disable WebSocket support.
      */
-    public static final String ENABLED = PREFIX + ".enabled";
+    public static final String ENABLED_PROPERTY = PREFIX + ".enabled";
 
     /**
      * The default maximum message size in bytes.

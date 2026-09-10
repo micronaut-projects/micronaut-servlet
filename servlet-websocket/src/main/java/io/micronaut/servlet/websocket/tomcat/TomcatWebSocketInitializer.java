@@ -46,7 +46,7 @@ import java.util.Set;
 @Internal
 @Singleton
 @Requires(classes = WsSci.class)
-@Requires(property = ServletWebSocketConfiguration.ENABLED, notEquals = StringUtils.FALSE, defaultValue = StringUtils.TRUE)
+@Requires(property = ServletWebSocketConfiguration.ENABLED_PROPERTY, notEquals = StringUtils.FALSE, defaultValue = StringUtils.TRUE)
 public final class TomcatWebSocketInitializer implements ServletContainerInitializer {
 
     private static final String SERVER_CONTAINER_ATTRIBUTE = "jakarta.websocket.server.ServerContainer";

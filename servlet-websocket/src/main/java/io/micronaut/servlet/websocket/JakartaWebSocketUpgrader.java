@@ -37,7 +37,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -59,7 +58,7 @@ import java.util.Map;
 @Internal
 @Singleton
 @Requires(classes = {ServerContainer.class, ServerWebSocket.class})
-@Requires(property = ServletWebSocketConfiguration.ENABLED, notEquals = StringUtils.FALSE, defaultValue = StringUtils.TRUE)
+@Requires(property = ServletWebSocketConfiguration.ENABLED_PROPERTY, notEquals = StringUtils.FALSE, defaultValue = StringUtils.TRUE)
 public final class JakartaWebSocketUpgrader implements ServletWebSocketUpgrader {
 
     private static final Logger LOG = LoggerFactory.getLogger(JakartaWebSocketUpgrader.class);
@@ -163,7 +162,7 @@ public final class JakartaWebSocketUpgrader implements ServletWebSocketUpgrader 
         if (variableValues.isEmpty()) {
             return Map.of();
         }
-        Map<String, String> pathParameters = new HashMap<>(variableValues.size());
+        Map<String, String> pathParameters = HashMap.newHashMap(variableValues.size());
         variableValues.forEach((name, value) -> {
             if (value != null) {
                 pathParameters.put(name, value.toString());

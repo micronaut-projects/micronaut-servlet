@@ -124,7 +124,7 @@ public class MicronautServerEndpoint extends Endpoint {
         this.support = ctx.support();
         this.webSocketBean = ctx.webSocketBean();
 
-        ConvertibleValues<Object> uriVariables = ConvertibleValues.of((Map<String, Object>) ctx.routeMatch().getVariableValues());
+        ConvertibleValues<Object> uriVariables = ConvertibleValues.of(ctx.routeMatch().getVariableValues());
         this.micronautSession = new ServletWebSocketSession(
             session,
             ctx.originatingRequest(),
@@ -335,12 +335,12 @@ public class MicronautServerEndpoint extends Endpoint {
             return ExecutionFlow.just(null);
         }
         if (Publishers.isConvertibleToPublisher(result)) {
-            return (ExecutionFlow<Object>) (ExecutionFlow) ReactiveExecutionFlow.fromPublisher(
+            return ReactiveExecutionFlow.fromPublisher(
                 Publishers.convertToPublisher(support.conversionService(), result)
             );
         }
         if (result instanceof CompletionStage<?> stage) {
-            return (ExecutionFlow<Object>) (ExecutionFlow) CompletableFutureExecutionFlow.just(stage);
+            return CompletableFutureExecutionFlow.just((CompletionStage<Object>) stage);
         }
         return ExecutionFlow.just(result);
     }

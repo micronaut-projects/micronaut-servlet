@@ -48,7 +48,7 @@ import java.util.Set;
 @Internal
 @Singleton
 @Requires(classes = {JakartaWebSocketServletContainerInitializer.class, ServletContextHandler.class})
-@Requires(property = ServletWebSocketConfiguration.ENABLED, notEquals = StringUtils.FALSE, defaultValue = StringUtils.TRUE)
+@Requires(property = ServletWebSocketConfiguration.ENABLED_PROPERTY, notEquals = StringUtils.FALSE, defaultValue = StringUtils.TRUE)
 public final class JettyWebSocketInitializer implements ServletContainerInitializer {
 
     private final ServletWebSocketConfiguration configuration;

@@ -22,7 +22,6 @@ import io.micronaut.core.convert.value.ConvertibleValues;
 import io.micronaut.core.convert.value.MutableConvertibleValues;
 import io.micronaut.core.convert.value.MutableConvertibleValuesMap;
 import io.micronaut.core.util.StringUtils;
-import io.micronaut.http.HttpAttributes;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.MediaType;
 import io.micronaut.websocket.CloseReason;
@@ -170,7 +169,7 @@ public final class ServletWebSocketSession implements WebSocketSession {
 
     @Override
     public Optional<Principal> getUserPrincipal() {
-        Optional<Principal> fromRequest = originatingRequest.getAttribute(HttpAttributes.PRINCIPAL, Principal.class);
+        Optional<Principal> fromRequest = originatingRequest.getUserPrincipal();
         if (fromRequest.isPresent()) {
             return fromRequest;
         }
