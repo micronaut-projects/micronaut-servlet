@@ -197,7 +197,7 @@ final class HttpExchangeHttpServletRequest implements HttpServletRequest {
         }
         try {
             return Long.parseLong(headerValue);
-        } catch (NumberFormatException e) {
+        } catch (NumberFormatException _) {
             return -1L;
         }
     }

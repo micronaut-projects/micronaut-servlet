@@ -126,7 +126,7 @@ final class HttpExchangeHttpServletResponse implements HttpServletResponse {
         }
         try {
             return Long.parseLong(value);
-        } catch (NumberFormatException e) {
+        } catch (NumberFormatException _) {
             return -1L;
         }
     }
