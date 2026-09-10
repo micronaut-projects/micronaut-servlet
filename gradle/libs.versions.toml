@@ -1,6 +1,7 @@
 [versions]
 micronaut = "5.1.3"
 managed-servlet-api = '6.1.0'
+managed-jakarta-websocket-api = '2.1.1'
 kotest-runner = '6.1.11'
 undertow = '2.3.25.Final'
 tomcat = '11.0.23'
@@ -25,6 +26,8 @@ micronaut-core = { module = 'io.micronaut:micronaut-core-bom', version.ref = 'mi
 boms-jetty = { module = 'org.eclipse.jetty:jetty-bom', version.ref = 'managed-jetty' }
 
 managed-servlet-api = { module = 'jakarta.servlet:jakarta.servlet-api', version.ref = 'managed-servlet-api' }
+managed-jakarta-websocket-api = { module = 'jakarta.websocket:jakarta.websocket-api', version.ref = 'managed-jakarta-websocket-api' }
+managed-jakarta-websocket-client-api = { module = 'jakarta.websocket:jakarta.websocket-client-api', version.ref = 'managed-jakarta-websocket-api' }
 
 micronaut-logging = { module = "io.micronaut.logging:micronaut-logging-bom", version.ref = "micronaut-logging" }
 micronaut-reactor = { module = "io.micronaut.reactor:micronaut-reactor-bom", version.ref = "micronaut-reactor" }
@@ -40,8 +43,11 @@ kotlin-reflect = { module = 'org.jetbrains.kotlin:kotlin-reflect' }
 
 apache-http-core5 = { module = 'org.apache.httpcomponents.core5:httpcore5', version.ref = 'managed-apache-http-core5' }
 tomcat-embed-core = { module = 'org.apache.tomcat.embed:tomcat-embed-core', version.ref = 'tomcat' }
+tomcat-embed-websocket = { module = 'org.apache.tomcat.embed:tomcat-embed-websocket', version.ref = 'tomcat' }
 undertow-servlet = { module = 'io.undertow:undertow-servlet', version.ref = 'undertow' }
+undertow-websockets-jsr = { module = 'io.undertow:undertow-websockets-jsr', version.ref = 'undertow' }
 jetty-servlet = { module = 'org.eclipse.jetty.ee10:jetty-ee10-servlet', version.ref = 'managed-jetty' }
+jetty-websocket-jakarta-server = { module = 'org.eclipse.jetty.ee10.websocket:jetty-ee10-websocket-jakarta-server', version.ref = 'managed-jetty' }
 jetty-http2-server = { module = 'org.eclipse.jetty.http2:jetty-http2-server', version.ref = 'managed-jetty' }
 jetty-alpn-server = { module = 'org.eclipse.jetty:jetty-alpn-server', version.ref = 'managed-jetty' }
 jetty-alpn-java-server = { module = 'org.eclipse.jetty:jetty-alpn-java-server', version.ref = 'managed-jetty' }

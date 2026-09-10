@@ -1,0 +1,28 @@
+plugins {
+    id("io.micronaut.build.internal.servlet.module")
+}
+
+dependencies {
+    annotationProcessor(mn.micronaut.graal)
+
+    api(projects.micronautServletEngine)
+    api(mn.micronaut.websocket)
+    api(libs.managed.jakarta.websocket.api)
+    api(libs.managed.jakarta.websocket.client.api)
+
+    implementation(mnReactor.micronaut.reactor)
+
+    // Container bootstrap classes are guarded by @Requires(classes = ...), so each
+    // container's WebSocket implementation is only needed to compile against.
+    compileOnly(libs.jetty.websocket.jakarta.server)
+    compileOnly(libs.tomcat.embed.websocket)
+    compileOnly(libs.undertow.websockets.jsr)
+
+    testAnnotationProcessor(mn.micronaut.inject.java)
+    testImplementation(libs.junit.jupiter.engine)
+}
+
+micronautBuild {
+    // New module: there is no previously released version to compare against.
+    binaryCompatibility.enabled = false
+}

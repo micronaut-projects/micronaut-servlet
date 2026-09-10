@@ -1,0 +1,5 @@
+# Globally disable micronaut-security for the test environment, matching the other modules,
+# so that the documented sources can be exercised without security configuration.
+micronaut:
+  security:
+    enabled: false

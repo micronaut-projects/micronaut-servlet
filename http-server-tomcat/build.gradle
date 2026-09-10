@@ -6,5 +6,8 @@ dependencies {
     implementation libs.tomcat.embed.core
     testImplementation libs.bcpkix
     testImplementation(mnSerde.micronaut.serde.jackson)
+    testAnnotationProcessor(mnSerde.micronaut.serde.processor)
+    testImplementation(projects.micronautServletWebsocket)
+    testImplementation libs.tomcat.embed.websocket
 }
 

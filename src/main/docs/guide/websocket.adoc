@@ -1,0 +1,107 @@
+Micronaut's WebSocket programming model works on Jetty, Tomcat and Undertow. The
+`@ServerWebSocket` beans, the `WebSocketSession`, the `WebSocketBroadcaster` and the
+argument binding of `@OnOpen`, `@OnMessage`, `@OnClose` and `@OnError` behave the same as
+they do on the Netty server.
+
+To enable it, add the WebSocket module:
+
+dependency:io.micronaut.servlet:micronaut-servlet-websocket[]
+
+and the Jakarta WebSocket implementation of the container you are using, which is a
+separate artifact in all three cases:
+
+.Jetty
+dependency:org.eclipse.jetty.ee10.websocket:jetty-ee10-websocket-jakarta-server[scope="runtimeOnly"]
+
+.Tomcat
+dependency:org.apache.tomcat.embed:tomcat-embed-websocket[scope="runtimeOnly"]
+
+.Undertow
+dependency:io.undertow:undertow-websockets-jsr[scope="runtimeOnly"]
+
+[TIP]
+====
+The Jetty artifact pulls in `jetty-ee10-annotations`, which only Jetty's `WebAppContext`
+configuration uses and which the embedded server never loads. You can exclude it:
+
+[source,groovy]
+----
+runtimeOnly("org.eclipse.jetty.ee10.websocket:jetty-ee10-websocket-jakarta-server") {
+    exclude group: "org.eclipse.jetty.ee10", module: "jetty-ee10-annotations"
+}
+----
+====
+
+An endpoint is written exactly as it is on the Netty server:
+
+snippet::io.micronaut.servlet.docs.websocket.ChatServerWebSocket[tags="class", indent=0]
+
+<1> The `@ServerWebSocket` annotation defines the URI the endpoint is mapped to, including
+any path variables.
+<2> `@OnOpen` runs once the handshake has completed. Its arguments are bound from the path
+variables, the originating request and the session.
+<3> `@OnMessage` receives each message. The single argument that cannot be bound from
+anywhere else is the message body.
+<4> `WebSocketBroadcaster` sends a message to every open session that matches the given
+predicate.
+<5> `@OnClose` runs when the connection is closed, whichever side closed it.
+
+Clients are written with `@ClientWebSocket` and are unchanged from the Netty server:
+
+snippet::io.micronaut.servlet.docs.websocket.ChatClientWebSocket[tags="class", indent=0]
+
+<1> The client endpoint is mapped to the same URI template.
+<2> The class is abstract so that Micronaut can implement the send methods.
+<3> `@OnMessage` receives messages sent by the server.
+<4> Any abstract method whose name begins with `send` or `broadcast` is implemented to send
+a message over the session.
+
+=== Filters and security run on the handshake
+
+The upgrade request reaches the Micronaut servlet like any other request, so the Micronaut
+filter chain, including `micronaut-security`, runs against it before the connection is
+handed to the container. A filter that produces its own response cancels the upgrade and
+that response is written as an ordinary HTTP response, so `@Secured` on a `@ServerWebSocket`
+class rejects the handshake with a `401` rather than opening a socket.
+
+Servlet filters registered with ann:servlet.api.annotation.ServletFilterBean[] still run
+before the Micronaut servlet, and therefore before Micronaut filters, exactly as they do
+for HTTP requests.
+
+=== Configuration
+
+include::{includedir}configurationProperties/io.micronaut.servlet.websocket.ServletWebSocketConfiguration.adoc[]
+
+Message sizes and the idle timeout are always applied explicitly, because the three
+containers ship different defaults. The values above match those of the Netty server. When
+`micronaut.servlet.websocket.idle-timeout` is not set, `micronaut.server.idle-timeout` is
+used, and an idle session is closed with close code `1001`.
+
+An explicit `maxPayloadLength` on `@OnMessage` takes precedence over the configured message
+sizes for that endpoint.
+
+=== Differences from the Netty server
+
+* `maxPayloadLength` bounds a whole message here, whereas on Netty it bounds a single frame.
+  Handlers always receive whole messages on both servers, and a message over the limit closes
+  the session with close code `1009`.
+* `WebSocketSession#getId()` is the identifier the container assigns, not the
+  `Sec-WebSocket-Key` header.
+* Outbound writes are queued per session with one write outstanding on the container at a
+  time, because Jakarta containers reject a second asynchronous send while one is in flight.
+  `WebSocketSession#isWritable()` reports `false` once more than
+  `micronaut.servlet.websocket.max-pending-sends` writes are queued.
+* The HTTP request that produced the handshake is copied before the protocol switch, since a
+  servlet request is only valid for the duration of its dispatch. Handler arguments bound
+  from the request, such as `@Header` and `@QueryValue`, therefore see the values as they
+  were at handshake time.
+
+=== Unsupported runtimes
+
+WebSocket is not available on the built-in Java HTTP server runtime or on POJA.
+`com.sun.net.httpserver.HttpServer` has no protocol upgrade API and no `ServletContext`, and
+a POJA application answers one request at a time over a single stream, so neither can hold a
+long lived full duplex connection.
+
+WAR deployment is supported on any container implementing Jakarta WebSocket 2.1. On an older
+container the upgrade is answered with a `501` and a warning is logged at startup.

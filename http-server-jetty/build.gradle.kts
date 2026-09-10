@@ -16,5 +16,11 @@ dependencies {
     testAnnotationProcessor(projects.micronautServletProcessor)
     testImplementation(mnValidation.micronaut.validation)
     testImplementation(mnSerde.micronaut.serde.jackson)
+    testAnnotationProcessor(mnSerde.micronaut.serde.processor)
     testImplementation(mnLogging.logback.classic)
+    testImplementation(projects.micronautServletWebsocket)
+    testImplementation(libs.jetty.websocket.jakarta.server) {
+        // Only used by Jetty's WebAppContext configuration, which embedded mode never loads.
+        exclude(group = "org.eclipse.jetty.ee10", module = "jetty-ee10-annotations")
+    }
 }

@@ -1,0 +1,34 @@
+plugins {
+    id 'io.micronaut.build.internal.servlet.base'
+    id("io.micronaut.build.internal.kotlin-kapt")
+}
+
+repositories {
+    mavenCentral()
+}
+
+// Kotlin equivalents of the guide sources in test-suite, under the same fully qualified
+// names so that the `snippet::` macro can render a Kotlin tab.
+dependencies {
+    kaptTest mn.micronaut.inject.java
+
+    testRuntimeOnly mnTest.junit.jupiter.engine
+
+    testImplementation libs.kotlin.stdlib.jdk8
+    testImplementation libs.kotlin.reflect
+    testImplementation libs.kotest.runner
+    testImplementation mn.micronaut.http.client
+    testImplementation mn.micronaut.jackson.databind
+    testImplementation(mnReactor.micronaut.reactor)
+
+    testImplementation(projects.micronautServletWebsocket)
+    testImplementation(projects.micronautHttpServerJetty)
+    testImplementation(libs.jetty.websocket.jakarta.server) {
+        exclude(group: "org.eclipse.jetty.ee10", module: "jetty-ee10-annotations")
+    }
+    testRuntimeOnly(mnLogging.logback.classic)
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
