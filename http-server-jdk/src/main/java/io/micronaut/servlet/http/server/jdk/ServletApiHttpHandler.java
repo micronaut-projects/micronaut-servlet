@@ -64,13 +64,22 @@ final class ServletApiHttpHandler implements HttpHandler {
             rsp -> populateAndSendResponseHeaders(rsp, httpExchange)
         );
         HttpServletRequest request = new HttpExchangeHttpServletRequest(httpExchange, formUrlEncodedDecoder);
+        boolean completed = false;
         try {
             httpHandler.exchange(request, response);
             // nothing requested the output stream, so the response has no body and the headers are still unsent
             response.commitHeaders();
+            completed = true;
         } finally {
             response.setCommitted(true);
-            httpExchange.close();
+            if (completed) {
+                httpExchange.close();
+            }
+            // otherwise the exchange is deliberately left unterminated. The headers went out when the body stream
+            // was asked for, so a body that fails partway cannot be corrected to an error status; closing here would
+            // write a well-formed terminator and hand the client a complete looking response with a truncated body.
+            // Leaving it open makes the JDK server drop the connection, which is what a truncated transfer should
+            // look like
         }
     }
 

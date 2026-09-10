@@ -50,6 +50,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.Principal;
 import java.util.Collection;
@@ -168,7 +169,16 @@ final class HttpExchangeHttpServletRequest implements HttpServletRequest {
 
     @Override
     public String getCharacterEncoding() {
-        return parseCharacterEncoding(getHeader(HttpHeaders.CONTENT_TYPE), getHeader(HttpHeaders.ACCEPT_CHARSET)).toString();
+        return requestCharset().name();
+    }
+
+    /**
+     * @return The charset the request body is encoded in, taken from {@code Content-Type} and defaulting to UTF-8
+     */
+    private Charset requestCharset() {
+        // deliberately not Accept-Charset: that says what the client accepts in the response, not how it encoded
+        // the body it sent
+        return parseCharacterEncoding(getHeader(HttpHeaders.CONTENT_TYPE), null);
     }
 
     @Override
@@ -261,10 +271,7 @@ final class HttpExchangeHttpServletRequest implements HttpServletRequest {
     @Override
     public BufferedReader getReader() throws IOException {
         // go through the servlet input stream so a body is not consumed twice, and honour the request charset
-        return new BufferedReader(new InputStreamReader(
-            getInputStream(),
-            parseCharacterEncoding(getHeader(HttpHeaders.CONTENT_TYPE), getHeader(HttpHeaders.ACCEPT_CHARSET))
-        ));
+        return new BufferedReader(new InputStreamReader(getInputStream(), requestCharset()));
     }
 
     @Override
