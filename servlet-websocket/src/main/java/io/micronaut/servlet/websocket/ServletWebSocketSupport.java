@@ -21,11 +21,13 @@ import io.micronaut.core.convert.ConversionService;
 import io.micronaut.http.bind.RequestBinderRegistry;
 import io.micronaut.http.body.MessageBodyHandlerRegistry;
 import io.micronaut.http.server.HttpServerConfiguration;
+import io.micronaut.http.server.CoroutineHelper;
 import io.micronaut.http.server.RouteExecutor;
 import io.micronaut.scheduling.executor.ExecutorSelector;
 import io.micronaut.scheduling.executor.ThreadSelectionConfiguration;
 import io.micronaut.websocket.bind.WebSocketStateBinderRegistry;
 import jakarta.inject.Singleton;
+import org.jspecify.annotations.Nullable;
 
 import java.time.Duration;
 
@@ -50,6 +52,7 @@ public final class ServletWebSocketSupport {
     private final ExecutorSelector executorSelector;
     private final ThreadSelectionConfiguration threadSelectionConfiguration;
     private final Duration idleTimeout;
+    private final @Nullable CoroutineHelper coroutineHelper;
 
     /**
      * Default constructor.
@@ -81,6 +84,7 @@ public final class ServletWebSocketSupport {
         this.sessionRegistry = sessionRegistry;
         this.configuration = configuration;
         this.executorSelector = routeExecutor.getExecutorSelector();
+        this.coroutineHelper = routeExecutor.getCoroutineHelper().orElse(null);
         this.threadSelectionConfiguration = serverConfiguration;
         Duration configured = configuration.getIdleTimeout();
         this.idleTimeout = configured != null ? configured : serverConfiguration.getIdleTimeout();
@@ -154,5 +158,12 @@ public final class ServletWebSocketSupport {
      */
     public Duration idleTimeout() {
         return idleTimeout;
+    }
+
+    /**
+     * @return The coroutine helper, or {@code null} when Kotlin coroutines are not on the classpath
+     */
+    public @Nullable CoroutineHelper coroutineHelper() {
+        return coroutineHelper;
     }
 }

@@ -24,12 +24,16 @@ import io.micronaut.core.convert.value.ConvertibleValues;
 import io.micronaut.core.execution.CompletableFutureExecutionFlow;
 import io.micronaut.core.execution.ExecutionFlow;
 import io.micronaut.core.io.buffer.ByteArrayBufferFactory;
+import io.micronaut.core.util.KotlinUtils;
 import io.micronaut.core.propagation.PropagatedContext;
 import io.micronaut.http.context.ServerHttpRequestContext;
 import io.micronaut.core.type.Argument;
+import io.micronaut.http.HttpRequest;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.Consumes;
 import io.micronaut.http.body.MessageBodyReader;
+import io.micronaut.http.bind.binders.ContinuationArgumentBinder;
+import io.micronaut.http.server.CoroutineHelper;
 import io.micronaut.http.simple.SimpleHttpHeaders;
 import io.micronaut.inject.MethodExecutionHandle;
 import io.micronaut.inject.ExecutableMethod;
@@ -50,6 +54,7 @@ import jakarta.websocket.Session;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import reactor.util.context.Context;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -57,9 +62,11 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 
 /**
  * The {@link Endpoint} that adapts a Jakarta WebSocket connection onto a Micronaut
@@ -161,7 +168,7 @@ public class MicronautServerEndpoint extends Endpoint {
 
         MethodExecutionHandle<Object, ?> openMethod = webSocketBean.openMethod().orElse(null);
         if (openMethod != null) {
-            invoke(openMethod, Map.of(), null);
+            invokeOpen(openMethod);
         }
         support.applicationContext().publishEvent(new WebSocketSessionOpenEvent(micronautSession));
     }
@@ -214,6 +221,44 @@ public class MicronautServerEndpoint extends Endpoint {
         applicationData.get(bytes);
         WebSocketPongMessage pong = new WebSocketPongMessage(ByteArrayBufferFactory.INSTANCE.wrap(bytes));
         invoke(pongMethod, Map.of(pongBodyArgument, pong), null);
+    }
+
+    /**
+     * Invokes {@code @OnOpen}, closing the connection if it fails.
+     *
+     * <p>A handler failure is offered to {@code @OnError} first, but unlike a message
+     * failure the session is always closed afterwards: an endpoint whose initialization
+     * failed must not go on receiving messages. This matches the Netty server, which closes
+     * unconditionally when the open method or its binding fails.</p>
+     *
+     * @param openMethod The open handler
+     */
+    private void invokeOpen(MethodExecutionHandle<Object, ?> openMethod) {
+        BoundExecutable<Object, ?> bound;
+        try {
+            WebSocketState state = new WebSocketState(micronautSession, context.originatingRequest());
+            bound = new DefaultExecutableBinder<WebSocketState>(Map.of())
+                .bind(openMethod.getExecutableMethod(), support.binderRegistry(), state);
+        } catch (Exception e) {
+            failOpen(e);
+            return;
+        }
+        invokeBound(openMethod, bound).onComplete((ignored, error) -> {
+            if (error != null) {
+                failOpen(error);
+            }
+        });
+    }
+
+    private void failOpen(Throwable cause) {
+        if (LOG.isErrorEnabled()) {
+            LOG.error("Error opening WebSocket session: {}", cause.getMessage(), cause);
+        }
+        try {
+            forwardError(cause);
+        } finally {
+            closeSession(CloseReason.INTERNAL_ERROR);
+        }
     }
 
     private void handleMessage(@Nullable String text, byte @Nullable [] bytes) {
@@ -322,11 +367,45 @@ public class MicronautServerEndpoint extends Endpoint {
             .plus(new ServerHttpRequestContext(context.originatingRequest()));
         return ExecutionFlow.async(executor, () -> propagatedContext.propagate(() -> {
             try {
+                if (handle.getExecutableMethod().isSuspend()) {
+                    return invokeSuspend(bound);
+                }
                 return toFlow(bound.invoke(webSocketBean.getTarget()));
             } catch (Throwable e) {
                 return ExecutionFlow.error(e);
             }
         }));
+    }
+
+    /**
+     * Invokes a Kotlin {@code suspend} handler.
+     *
+     * <p>The coroutine context has to be set up before the call, and a handler that really
+     * suspends returns the {@code COROUTINE_SUSPENDED} marker rather than its result, so the
+     * completion has to be picked up from the continuation instead. Without this a suspending
+     * handler would be treated as already finished and neither its result nor its failure
+     * would be seen.</p>
+     *
+     * @param bound The bound handler
+     * @return A flow completing when the coroutine completes
+     */
+    private ExecutionFlow<Object> invokeSuspend(BoundExecutable<Object, ?> bound) {
+        CoroutineHelper coroutineHelper = support.coroutineHelper();
+        if (coroutineHelper == null) {
+            return toFlow(bound.invoke(webSocketBean.getTarget()));
+        }
+        HttpRequest<?> request = context.originatingRequest();
+        coroutineHelper.setupCoroutineContext(request, Context.empty(), PropagatedContext.getOrEmpty());
+        Object result = bound.invoke(webSocketBean.getTarget());
+        if (!KotlinUtils.isKotlinCoroutineSuspended(result)) {
+            return ExecutionFlow.just(null);
+        }
+        Supplier<CompletableFuture<?>> completion =
+            ContinuationArgumentBinder.extractContinuationCompletableFutureSupplier(request);
+        if (completion == null) {
+            return ExecutionFlow.just(null);
+        }
+        return CompletableFutureExecutionFlow.just(completion.get().thenApply(value -> (Object) value));
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})

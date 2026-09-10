@@ -24,7 +24,9 @@ import io.micronaut.http.simple.SimpleHttpRequest;
 import org.jspecify.annotations.Nullable;
 
 import java.net.InetSocketAddress;
+import java.security.Principal;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -77,6 +79,9 @@ final class WebSocketHandshakeRequest extends SimpleHttpRequest<Object> {
         }
         MutableConvertibleValues<Object> attributes = copy.getAttributes();
         request.getAttributes().forEach(attributes::put);
+        // The principal is not necessarily an attribute: a servlet request falls back to
+        // HttpServletRequest#getUserPrincipal, which stops answering once it is recycled.
+        principalOf(request).ifPresent(copy::setUserPrincipal);
         return copy;
     }
 
@@ -93,6 +98,14 @@ final class WebSocketHandshakeRequest extends SimpleHttpRequest<Object> {
     @Override
     public boolean isSecure() {
         return secure;
+    }
+
+    private static Optional<Principal> principalOf(HttpRequest<?> request) {
+        try {
+            return request.getUserPrincipal();
+        } catch (Exception e) {
+            return Optional.empty();
+        }
     }
 
     private static @Nullable InetSocketAddress addressOf(HttpRequest<?> request, boolean remote) {

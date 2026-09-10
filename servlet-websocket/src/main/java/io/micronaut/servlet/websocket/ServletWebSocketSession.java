@@ -275,11 +275,21 @@ public final class ServletWebSocketSession implements WebSocketSession {
         if (reason == null) {
             return "";
         }
-        byte[] bytes = reason.getBytes(StandardCharsets.UTF_8);
-        if (bytes.length <= MAX_CLOSE_REASON_BYTES) {
+        if (reason.getBytes(StandardCharsets.UTF_8).length <= MAX_CLOSE_REASON_BYTES) {
             return reason;
         }
-        return new String(bytes, 0, MAX_CLOSE_REASON_BYTES, StandardCharsets.UTF_8);
+        // Cutting the encoded form at a fixed byte offset can split a multi byte sequence,
+        // and the replacement character it decodes to is itself three bytes, which can push
+        // the result back over the limit. Drop whole code points instead.
+        int end = reason.length();
+        while (end > 0) {
+            end = reason.offsetByCodePoints(end, -1);
+            String candidate = reason.substring(0, end);
+            if (candidate.getBytes(StandardCharsets.UTF_8).length <= MAX_CLOSE_REASON_BYTES) {
+                return candidate;
+            }
+        }
+        return "";
     }
 
     private CompletableFuture<Void> enqueue(PendingSend pending) {

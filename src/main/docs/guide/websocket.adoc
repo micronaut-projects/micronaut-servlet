@@ -68,6 +68,16 @@ Servlet filters registered with ann:servlet.api.annotation.ServletFilterBean[] s
 before the Micronaut servlet, and therefore before Micronaut filters, exactly as they do
 for HTTP requests.
 
+=== Origin checking
+
+When `micronaut.server.cors.enabled` is set, the handshake is refused unless the `Origin`
+header is same-origin or matches one of the configured CORS origins. This check happens
+during the handshake rather than on the response, because a browser applies its usual CORS
+response check to ordinary requests but not to a WebSocket handshake, so nothing else would
+stop a hostile page from opening an authenticated socket.
+
+With CORS disabled every origin is accepted, matching the Netty server.
+
 === Configuration
 
 include::{includedir}configurationProperties/io.micronaut.servlet.websocket.ServletWebSocketConfiguration.adoc[]
@@ -94,7 +104,9 @@ sizes for that endpoint.
 * The HTTP request that produced the handshake is copied before the protocol switch, since a
   servlet request is only valid for the duration of its dispatch. Handler arguments bound
   from the request, such as `@Header` and `@QueryValue`, therefore see the values as they
-  were at handshake time.
+  were at handshake time. The authenticated principal is carried over with it, including one
+  supplied by container-managed authentication in a WAR.
+* The handshake enforces the configured CORS origins, which the Netty server does not.
 
 === Unsupported runtimes
 

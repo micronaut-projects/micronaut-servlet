@@ -384,6 +384,12 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
                 // is deliberately not closed here: closing it would touch container streams
                 // that the protocol switch has already taken over.
                 applicationContext.publishEvent(new HttpRequestTerminatedEvent(req));
+            } catch (HttpStatusException e) {
+                if (LOG.isWarnEnabled()) {
+                    LOG.warn("Cannot upgrade request [{} - {}] to WebSocket: {}", req.getMethodName(), req.getUri(), e.getMessage());
+                }
+                exchange.getResponse().status(e.getStatus(), e.getMessage());
+                requestTerminated.run();
             } catch (Throwable e) {
                 if (LOG.isErrorEnabled()) {
                     LOG.error("Error upgrading request [{} - {}] to WebSocket: {}", req.getMethodName(), req.getUri(), e.getMessage(), e);
