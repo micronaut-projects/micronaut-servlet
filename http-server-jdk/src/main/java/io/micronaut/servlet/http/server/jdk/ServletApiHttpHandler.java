@@ -28,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.util.ArrayList;
 
 /**
@@ -74,8 +75,23 @@ final class ServletApiHttpHandler implements HttpHandler {
         for (String headerName : response.getHeaderNames()) {
             exchange.getResponseHeaders().put(headerName, new ArrayList<>(response.getHeaders(headerName)));
         }
-        int contentLength = 0; // If == 0, then chunked encoding is used, and an arbitrary number of bytes may be written.
-        exchange.sendResponseHeaders(response.getStatus(), contentLength);
+        int status = response.getStatus();
+        // A response length of 0 tells the JDK HTTP server to use chunked encoding and expect
+        // an arbitrary number of bytes to be written before close(). That's wrong for statuses
+        // which must never carry a body (1xx, 204, 205, 304) or for HEAD requests, since nothing will
+        // ever be written to the output stream; use -1 (no body) instead so the exchange completes.
+        int contentLength = isBodyAllowed(status, exchange.getRequestMethod()) ? 0 : -1;
+        exchange.sendResponseHeaders(status, contentLength);
+    }
+
+    private static boolean isBodyAllowed(int status, String method) {
+        if ("HEAD".equalsIgnoreCase(method)) {
+            return false;
+        }
+        return status != HttpURLConnection.HTTP_NOT_MODIFIED
+            && status != HttpURLConnection.HTTP_NO_CONTENT
+            && status != HttpURLConnection.HTTP_RESET
+            && status >= HttpURLConnection.HTTP_OK;
     }
 
 }
