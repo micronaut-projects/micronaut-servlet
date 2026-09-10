@@ -110,7 +110,7 @@ class HttpServerEmbeddedServer extends AbstractServletServer<HttpServer> {
                 if (!executorService.awaitTermination(EXECUTOR_SHUTDOWN_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
                     executorService.shutdownNow();
                 }
-            } catch (InterruptedException e) {
+            } catch (InterruptedException _) {
                 Thread.currentThread().interrupt();
                 executorService.shutdownNow();
             }

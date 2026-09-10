@@ -36,6 +36,7 @@ import io.micronaut.web.router.RouteMatch;
 import jakarta.inject.Singleton;
 
 import java.io.EOFException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.PushbackInputStream;
 import java.util.Set;
@@ -64,33 +65,44 @@ public class DefaultBodyBuilder implements BodyBuilder {
         final MediaType contentType = request.getContentType().orElse(MediaType.APPLICATION_JSON_TYPE);
         if (BodyBuilder.isFormSubmission(contentType)) {
             return request.getParameters().asMap();
-        } else {
-            BodyPresence presence = bodyPresence(request);
-            if (presence == BodyPresence.ABSENT) {
-                return null;
-            }
-            Argument<?> resolvedBodyType = resolveBodyType(request);
-            try (InputStream inputStream = openBody(bodySupplier, presence))  {
-                if (inputStream == null) {
-                    return null;
-                }
-                if (resolvedBodyType != null && RAW_BODY_TYPES.contains(resolvedBodyType.getType())) {
-                    return inputStream.readAllBytes();
-                }
-                @SuppressWarnings("unchecked")
-                Argument<Object> targetType = (Argument<Object>) (resolvedBodyType == null ? Argument.OBJECT_ARGUMENT : resolvedBodyType);
-                MessageBodyReader<Object> reader = messageBodyHandlerRegistry.findReader(targetType, contentType).orElse(null);
-                if (reader != null) {
-                    return reader.read(targetType, contentType, request.getHeaders(), inputStream);
-                }
-                return inputStream.readAllBytes();
-            } catch (EOFException e) {
-                // no content
-                return null;
-            } catch (Exception e) {
-                throw new CodecException("Error decoding request body: " + e.getMessage(), e);
-            }
         }
+        BodyPresence presence = bodyPresence(request);
+        if (presence == BodyPresence.ABSENT) {
+            return null;
+        }
+        try (InputStream inputStream = openBody(bodySupplier, presence)) {
+            return inputStream == null ? null : decode(inputStream, contentType, request);
+        } catch (EOFException _) {
+            // no content
+            return null;
+        } catch (Exception e) {
+            throw new CodecException("Error decoding request body: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Decodes an open request body into the type the route declared.
+     *
+     * @param inputStream The body
+     * @param contentType The content type
+     * @param request The request
+     * @return The decoded body
+     * @throws IOException If the body could not be read
+     */
+    private Object decode(@NonNull InputStream inputStream,
+                          @NonNull MediaType contentType,
+                          @NonNull HttpRequest<?> request) throws IOException {
+        Argument<?> resolvedBodyType = resolveBodyType(request);
+        if (resolvedBodyType != null && RAW_BODY_TYPES.contains(resolvedBodyType.getType())) {
+            return inputStream.readAllBytes();
+        }
+        @SuppressWarnings("unchecked")
+        Argument<Object> targetType = (Argument<Object>) (resolvedBodyType == null ? Argument.OBJECT_ARGUMENT : resolvedBodyType);
+        MessageBodyReader<Object> reader = messageBodyHandlerRegistry.findReader(targetType, contentType).orElse(null);
+        if (reader != null) {
+            return reader.read(targetType, contentType, request.getHeaders(), inputStream);
+        }
+        return inputStream.readAllBytes();
     }
 
     /**
