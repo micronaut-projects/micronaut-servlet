@@ -543,16 +543,26 @@ public class JettyFactory extends ServletServerFactory {
         contextHandler.setHandler(cors);
     }
 
+    /**
+     * Builds the origin pattern for a configured allowed origin.
+     *
+     * <p>Anchored deliberately: an unanchored pattern for {@code https://example.com} also appears inside
+     * {@code https://example.com.attacker.test}, so whether that origin is allowed would depend on the matcher
+     * rather than on the configuration.</p>
+     *
+     * @param origin The configured origin
+     * @return A regular expression matching exactly that origin
+     */
     private static String getOriginPattern(String origin) {
         String p;
         if ("*".equals(origin)) {
             p = ".*";
         } else if (origin.startsWith("http://") || origin.startsWith("https://")) {
             String base = origin.replace(".", "\\.");
-            p = base + "(:\\d+)?";
+            p = "^" + base + "(:\\d+)?$";
         } else {
             String host = java.util.regex.Pattern.quote(origin);
-            p = "https?://" + host + "(:\\d+)?";
+            p = "^https?://" + host + "(:\\d+)?$";
         }
         return p;
     }
