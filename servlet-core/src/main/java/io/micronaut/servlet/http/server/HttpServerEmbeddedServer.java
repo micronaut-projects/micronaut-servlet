@@ -38,6 +38,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Internal
@@ -46,6 +48,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Requires(beans = HttpServer.class)
 @Singleton
 class HttpServerEmbeddedServer extends AbstractServletServer<HttpServer> {
+    /**
+     * How long the request executor is given to finish in-flight exchanges before it is interrupted.
+     */
+    private static final long EXECUTOR_SHUTDOWN_TIMEOUT_SECONDS = 5L;
+
     private static final String SCHEME_HTTP = "http";
     private final HttpServerConfiguration httpServerConfiguration;
     private final AtomicBoolean running = new AtomicBoolean(false);
@@ -79,6 +86,29 @@ class HttpServerEmbeddedServer extends AbstractServletServer<HttpServer> {
         if (running.compareAndSet(true, false)) {
             HttpServer server = getServer();
             server.stop(0);
+            shutdownExecutor(server);
+        }
+    }
+
+    /**
+     * Shuts down the executor the server was given, so its workers do not outlive the server that created them.
+     *
+     * <p>{@link HttpServer#stop(int)} leaves the executor running, and the fallback pool's workers are not daemon
+     * threads, so a stopped server would otherwise leak them and could keep the JVM alive.</p>
+     *
+     * @param server The server that has just been stopped
+     */
+    private static void shutdownExecutor(HttpServer server) {
+        if (server.getExecutor() instanceof ExecutorService executorService) {
+            executorService.shutdown();
+            try {
+                if (!executorService.awaitTermination(EXECUTOR_SHUTDOWN_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
+                    executorService.shutdownNow();
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                executorService.shutdownNow();
+            }
         }
     }
 

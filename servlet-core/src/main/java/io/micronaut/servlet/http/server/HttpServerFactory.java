@@ -31,6 +31,9 @@ import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Factory for creating beans of type {@link HttpServer}.
@@ -45,6 +48,16 @@ public class HttpServerFactory {
      * default the servlet containers use.
      */
     private static final int DEFAULT_MAX_THREADS = 200;
+
+    /**
+     * Queued requests allowed per worker before the dispatcher thread starts running them itself.
+     */
+    private static final int QUEUE_DEPTH_PER_THREAD = 4;
+
+    /**
+     * How long an idle worker is kept before it is retired.
+     */
+    private static final long THREAD_KEEP_ALIVE_SECONDS = 60L;
 
     /**
      *
@@ -75,6 +88,8 @@ public class HttpServerFactory {
      * request that waits blocks every other request on the server. Give it a real pool: virtual threads when they
      * are available and enabled, otherwise a bounded platform pool.</p>
      *
+     * <p>The pool is closed by {@link HttpServerEmbeddedServer} when the server stops.</p>
+     *
      * @param servletConfiguration The servlet configuration
      * @return The executor to run handlers on
      */
@@ -84,10 +99,21 @@ public class HttpServerFactory {
                 LoomSupport.newVirtualThreadFactory("micronaut-jdk-server-", builder -> { })
             );
         }
-        Integer maxThreads = servletConfiguration.getMaxThreads();
-        return Executors.newFixedThreadPool(
-            maxThreads != null && maxThreads > 0 ? maxThreads : DEFAULT_MAX_THREADS
+        Integer configuredMaxThreads = servletConfiguration.getMaxThreads();
+        int maxThreads = configuredMaxThreads != null && configuredMaxThreads > 0 ? configuredMaxThreads : DEFAULT_MAX_THREADS;
+        // a fixed pool queues without limit, so handlers that block let exchanges pile up until the heap is gone.
+        // Bound the queue and let the dispatcher thread run the overflow, which stops it accepting for as long as
+        // the work takes and so pushes back on the client rather than buffering the burst
+        ThreadPoolExecutor executor = new ThreadPoolExecutor(
+            maxThreads,
+            maxThreads,
+            THREAD_KEEP_ALIVE_SECONDS,
+            TimeUnit.SECONDS,
+            new ArrayBlockingQueue<>(maxThreads * QUEUE_DEPTH_PER_THREAD),
+            new ThreadPoolExecutor.CallerRunsPolicy()
         );
+        executor.allowCoreThreadTimeOut(true);
+        return executor;
     }
 
     /**

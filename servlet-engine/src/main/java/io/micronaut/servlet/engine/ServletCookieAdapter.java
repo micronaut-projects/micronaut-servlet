@@ -189,7 +189,9 @@ public final class ServletCookieAdapter implements Cookie {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof Cookie other)) {
+        // deliberately not any Cookie: an implementation that inherits Object.equals would make this asymmetric,
+        // which breaks the contract and makes Set and Map behaviour depend on argument order
+        if (!(o instanceof ServletCookieAdapter other)) {
             return false;
         }
         return getName().equals(other.getName())
