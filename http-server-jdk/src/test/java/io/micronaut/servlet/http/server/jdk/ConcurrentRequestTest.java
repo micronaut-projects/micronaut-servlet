@@ -95,6 +95,7 @@ class ConcurrentRequestTest {
     static class ConcurrentController {
 
         @Get(value = "/slow", produces = MediaType.TEXT_PLAIN)
+        @SuppressWarnings("java:S2925") // sleeping is the subject of the test: the endpoint has to occupy its thread
         String slow() throws InterruptedException {
             Thread.sleep(DELAY_MILLIS);
             return "slept";

@@ -165,12 +165,14 @@ final class HttpExchangeHttpServletResponse implements HttpServletResponse {
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
-        if (outputStream == null) {
+        ServletOutputStream stream = outputStream;
+        if (stream == null) {
             // a response that may not carry a body still has to tolerate writes; they are discarded rather than
             // corrupting an exchange that was announced as body-less
-            outputStream = new HttpExchangeServletOutputStream(isBodyAllowed() ? httpExchange : null);
+            stream = new HttpExchangeServletOutputStream(isBodyAllowed() ? httpExchange : null);
+            outputStream = stream;
         }
-        return outputStream;
+        return stream;
     }
 
     @Override

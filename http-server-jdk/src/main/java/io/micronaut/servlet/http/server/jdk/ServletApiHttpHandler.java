@@ -79,7 +79,7 @@ final class ServletApiHttpHandler implements HttpHandler {
         for (String headerName : response.getHeaderNames()) {
             exchange.getResponseHeaders().put(headerName, new ArrayList<>(response.getHeaders(headerName)));
         }
-        exchange.sendResponseHeaders(response.getStatus(), responseLength(response, exchange));
+        exchange.sendResponseHeaders(response.getStatus(), responseLength(response));
     }
 
     /**
@@ -91,10 +91,9 @@ final class ServletApiHttpHandler implements HttpHandler {
      * <a href="https://github.com/micronaut-projects/micronaut-servlet/issues/1117">#1117</a>.</p>
      *
      * @param response The response
-     * @param exchange The exchange
      * @return {@code -1} for no body, {@code 0} for a chunked body of unknown length, otherwise the fixed body length
      */
-    private static long responseLength(HttpExchangeHttpServletResponse response, HttpExchange exchange) {
+    private static long responseLength(HttpExchangeHttpServletResponse response) {
         if (!response.isBodyAllowed() || !response.isOutputStreamRequested()) {
             return NO_BODY;
         }

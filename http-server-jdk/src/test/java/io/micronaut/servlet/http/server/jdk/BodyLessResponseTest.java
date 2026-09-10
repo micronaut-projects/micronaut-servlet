@@ -134,6 +134,7 @@ class BodyLessResponseTest {
         @Get("/no-content")
         @Status(HttpStatus.NO_CONTENT)
         void noContent() {
+            // deliberately empty: a void route returning 204 is exactly the case under test
         }
 
         @Get("/not-modified")
