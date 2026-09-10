@@ -10,3 +10,34 @@ configurations.all {
         preferProjectModules()
     }
 }
+
+// The HTTP Server TCK suites, and the other test-suite modules, exercise the servlet engine from projects that hold
+// no production code. Their coverage would otherwise be discarded, leaving the request and response pipeline looking
+// untested when it is the most heavily exercised code in the repository. Feed their execution data back into the
+// report of every module that owns code, so what the suites cover is measured against the classes they run.
+gradle.projectsEvaluated {
+    def coverageProducers = subprojects.findAll { candidate ->
+        candidate.path.startsWith(':test-suite') || candidate.path == ':test-sample-poja'
+    }
+    if (coverageProducers.isEmpty()) {
+        return
+    }
+    subprojects.each { owner ->
+        if (coverageProducers.contains(owner) || !owner.plugins.hasPlugin('jacoco')) {
+            return
+        }
+        def report = owner.tasks.findByName('jacocoTestReport')
+        if (report == null) {
+            return
+        }
+        coverageProducers.each { producer ->
+            def producerTest = producer.tasks.findByName('test')
+            if (producerTest != null) {
+                report.executionData producer.layout.buildDirectory.file('jacoco/test.exec')
+                report.mustRunAfter producerTest
+            }
+        }
+        // a suite that has not been run yet simply contributes nothing, rather than failing the report
+        report.executionData.setFrom(report.executionData.filter { it.exists() })
+    }
+}
