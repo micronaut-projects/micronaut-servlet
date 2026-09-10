@@ -3,10 +3,10 @@ micronaut = "5.1.3"
 managed-servlet-api = '6.1.0'
 kotest-runner = '6.1.11'
 undertow = '2.3.25.Final'
-tomcat = '11.0.23'
+tomcat = '11.0.25'
 bcpkix = "1.70"
 
-managed-apache-http-core5 = "5.4.2"
+managed-apache-http-core5 = "5.4.3"
 managed-jetty = '12.1.10'
 micronaut-reactor = "4.1.0"
 micronaut-security = "5.2.0"
