@@ -29,6 +29,7 @@ import io.micronaut.http.util.HttpHeadersUtil;
 import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
@@ -166,6 +167,7 @@ final class HttpExchangeHttpServletResponse implements HttpServletResponse {
     }
 
     @Override
+    @NonNull
     public ServletOutputStream getOutputStream() {
         outputStreamRequested = true;
         try {

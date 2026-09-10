@@ -21,6 +21,7 @@ import jakarta.inject.Singleton;
 import org.jspecify.annotations.Nullable;
 
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Records the request executor this module created, so stopping the server shuts down that one and no other.
@@ -36,13 +37,13 @@ import java.util.concurrent.ExecutorService;
 @Singleton
 final class JdkServerExecutorOwnership {
 
-    private volatile @Nullable ExecutorService created;
+    private final AtomicReference<ExecutorService> created = new AtomicReference<>();
 
     /**
      * @param executorService The executor this module created for the server
      */
     void owns(ExecutorService executorService) {
-        this.created = executorService;
+        created.set(executorService);
     }
 
     /**
@@ -50,6 +51,6 @@ final class JdkServerExecutorOwnership {
      * @return Whether that executor was created by this module and may therefore be shut down with the server
      */
     boolean isOwned(@Nullable Object executorService) {
-        return executorService != null && executorService == created;
+        return executorService != null && executorService == created.get();
     }
 }
