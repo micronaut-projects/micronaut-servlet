@@ -22,11 +22,15 @@ import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.http.server.HttpServerConfiguration;
+import io.micronaut.scheduling.LoomSupport;
+import io.micronaut.servlet.http.ServletConfiguration;
 import jakarta.inject.Singleton;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Factory for creating beans of type {@link HttpServer}.
@@ -36,6 +40,12 @@ import java.util.List;
 @Factory
 @Requires(property = "micronaut.server.jdk.enabled", value = "true", defaultValue = "true")
 public class HttpServerFactory {
+    /**
+     * Thread count used when virtual threads are unavailable or disabled and no maximum is configured. Matches the
+     * default the servlet containers use.
+     */
+    private static final int DEFAULT_MAX_THREADS = 200;
+
     /**
      *
      * @param applicationContext Application Context
@@ -48,12 +58,36 @@ public class HttpServerFactory {
     @Singleton
     HttpServer createHttpServer(ApplicationContext applicationContext,
                                 HttpServerConfiguration httpServerConfiguration,
+                                ServletConfiguration servletConfiguration,
                                 List<HttpHandlerPath> httpHandlers) throws IOException {
         HttpServer server = HttpServer.create(serverAddress(applicationContext, httpServerConfiguration), 0);
+        server.setExecutor(createExecutor(servletConfiguration));
         for (HttpHandlerPath handler : httpHandlers) {
             server.createContext(handler.getPath(), handler.getHttpHandler());
         }
         return server;
+    }
+
+    /**
+     * Creates the executor that runs request handlers.
+     *
+     * <p>{@link HttpServer} runs every handler on its own dispatcher thread when no executor is set, so a single
+     * request that waits blocks every other request on the server. Give it a real pool: virtual threads when they
+     * are available and enabled, otherwise a bounded platform pool.</p>
+     *
+     * @param servletConfiguration The servlet configuration
+     * @return The executor to run handlers on
+     */
+    private ExecutorService createExecutor(ServletConfiguration servletConfiguration) {
+        if (servletConfiguration.isEnableVirtualThreads() && LoomSupport.isSupported()) {
+            return Executors.newThreadPerTaskExecutor(
+                LoomSupport.newVirtualThreadFactory("micronaut-jdk-server-", builder -> { })
+            );
+        }
+        Integer maxThreads = servletConfiguration.getMaxThreads();
+        return Executors.newFixedThreadPool(
+            maxThreads != null && maxThreads > 0 ? maxThreads : DEFAULT_MAX_THREADS
+        );
     }
 
     /**

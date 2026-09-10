@@ -557,6 +557,8 @@ public final class DefaultServletHttpResponse<B> implements ServletHttpResponse<
             c.setSecure(cookie.isSecure());
             c.setHttpOnly(cookie.isHttpOnly());
             c.setMaxAge((int) cookie.getMaxAge());
+            // SameSite has no setter of its own in the Servlet API; it travels as a cookie attribute
+            cookie.getSameSite().ifPresent(sameSite -> c.setAttribute(Cookie.ATTRIBUTE_SAME_SITE, sameSite.name()));
             delegate.addCookie(
                     c
             );
