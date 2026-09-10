@@ -27,6 +27,7 @@ import io.micronaut.http.server.exceptions.ServerStartupException;
 import io.micronaut.http.ssl.SslConfiguration;
 import io.micronaut.servlet.engine.MicronautServletConfiguration;
 import io.micronaut.servlet.engine.initializer.MicronautServletInitializer;
+import io.micronaut.servlet.engine.ServletCompressionConfiguration;
 import io.micronaut.servlet.http.server.ServletServerFactory;
 import io.micronaut.servlet.http.server.ServletStaticResourceConfiguration;
 import io.micronaut.web.router.Router;
@@ -35,6 +36,12 @@ import io.undertow.Undertow;
 import io.undertow.UndertowOptions;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.handlers.accesslog.AccessLogHandler;
+import io.undertow.server.handlers.encoding.ContentEncodingRepository;
+import io.undertow.server.handlers.encoding.EncodingHandler;
+import io.undertow.server.handlers.encoding.GzipEncodingProvider;
+import io.undertow.predicate.Predicate;
+import io.undertow.util.Headers;
+
 import io.undertow.servlet.Servlets;
 import io.undertow.servlet.api.DeploymentInfo;
 import io.undertow.servlet.api.DeploymentManager;
@@ -59,6 +66,10 @@ import org.xnio.Options;
  */
 @Factory
 public class UndertowFactory extends ServletServerFactory {
+    /**
+     * Priority of the gzip encoder; there is only one, so any positive value will do.
+     */
+    private static final int GZIP_ENCODING_PRIORITY = 100;
 
     private final UndertowConfiguration configuration;
     private final @Nullable Router router;
@@ -114,6 +125,8 @@ public class UndertowFactory extends ServletServerFactory {
         } catch (ServletException e) {
             throw new ServerStartupException("Error starting Undertow server: " + e.getMessage(), e);
         }
+        // compression sits inside the access log, so the log records the bytes that actually went out
+        httpHandler = compressIfEnabled(httpHandler);
         UndertowConfiguration serverConfiguration = getServerConfiguration();
         UndertowConfiguration.AccessLogConfiguration accessLogConfiguration = serverConfiguration.getAccessLogConfiguration().orElse(null);
         if (accessLogConfiguration != null) {
@@ -211,6 +224,56 @@ public class UndertowFactory extends ServletServerFactory {
             }
         });
         return builder;
+    }
+
+    /**
+     * Wraps the handler so responses are compressed when the client accepts it.
+     *
+     * <p>Undertow compresses responses itself, so the shared configuration is wired to its encoder rather than
+     * reimplemented: it already settles HEAD, ranges, already encoded bodies and the {@code Vary} header.</p>
+     *
+     * @param httpHandler The handler serving requests
+     * @return The handler to install on the builder
+     */
+    private HttpHandler compressIfEnabled(HttpHandler httpHandler) {
+        ServletCompressionConfiguration compression = getApplicationContext()
+            .findBean(ServletCompressionConfiguration.class)
+            .orElse(null);
+        if (compression == null || !compression.isEnabled()) {
+            return httpHandler;
+        }
+        Set<String> contentTypes = compression.getContentTypes();
+        long threshold = compression.getThreshold();
+        // Undertow's own size predicates read the request, so the response is inspected here instead: a body is
+        // worth compressing when its type benefits and it is large enough to pay for the encoding
+        Predicate compressible = exchange -> {
+            String contentType = exchange.getResponseHeaders().getFirst(Headers.CONTENT_TYPE);
+            if (contentType == null) {
+                return false;
+            }
+            int parameters = contentType.indexOf(';');
+            String bare = (parameters == -1 ? contentType : contentType.substring(0, parameters)).trim();
+            if (contentTypes.stream().noneMatch(bare::equalsIgnoreCase)) {
+                return false;
+            }
+            String length = exchange.getResponseHeaders().getFirst(Headers.CONTENT_LENGTH);
+            if (length == null) {
+                return true;
+            }
+            try {
+                return Long.parseLong(length) >= threshold;
+            } catch (NumberFormatException _) {
+                return true;
+            }
+        };
+        return new EncodingHandler(new ContentEncodingRepository()
+            .addEncodingHandler(
+                "gzip",
+                new GzipEncodingProvider(),
+                GZIP_ENCODING_PRIORITY,
+                compressible
+            ))
+            .setNext(httpHandler);
     }
 
     private void applyAdditionalPorts(Undertow.Builder builder, String host, int serverPort, @Nullable SSLContext sslContext) {

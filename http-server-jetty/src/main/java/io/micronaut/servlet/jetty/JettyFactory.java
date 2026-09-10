@@ -33,6 +33,7 @@ import io.micronaut.http.ssl.ClientAuthentication;
 import io.micronaut.http.ssl.SslConfiguration;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.scheduling.LoomSupport;
+import io.micronaut.servlet.engine.ServletCompressionConfiguration;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.servlet.engine.MicronautServletConfiguration;
 import io.micronaut.servlet.http.server.ServletServerFactory;
@@ -62,7 +63,9 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.SslConnectionFactory;
 import org.eclipse.jetty.server.handler.ContextHandler;
+import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
+import org.eclipse.jetty.server.handler.gzip.GzipHandler;
 import org.eclipse.jetty.server.handler.ResourceHandler;
 import org.eclipse.jetty.server.handler.CrossOriginHandler;
 import org.eclipse.jetty.util.resource.Resource;
@@ -393,7 +396,7 @@ public class JettyFactory extends ServletServerFactory {
         ContextHandlerCollection contextHandlerCollection = new ContextHandlerCollection(
             resourceHandlers.toArray(new ContextHandler[0])
         );
-        server.setHandler(contextHandlerCollection);
+        server.setHandler(compressIfEnabled(contextHandlerCollection));
     }
 
     /**
@@ -507,6 +510,29 @@ public class JettyFactory extends ServletServerFactory {
         }
 
         return contextHandler;
+    }
+
+    /**
+     * Wraps the server's handler so responses are compressed when the client accepts it.
+     *
+     * <p>Jetty compresses responses itself, so the shared configuration is wired to its encoder rather than
+     * reimplemented: it already settles HEAD, ranges, already encoded bodies and the {@code Vary} header.</p>
+     *
+     * @param handler The handler serving requests
+     * @return The handler to install on the server
+     */
+    private Handler compressIfEnabled(Handler handler) {
+        ServletCompressionConfiguration compression = getApplicationContext()
+            .findBean(ServletCompressionConfiguration.class)
+            .orElse(null);
+        if (compression == null || !compression.isEnabled()) {
+            return handler;
+        }
+        GzipHandler gzipHandler = new GzipHandler();
+        gzipHandler.setMinGzipSize(compression.getThreshold());
+        compression.getContentTypes().forEach(type -> gzipHandler.addIncludedMimeTypes(type));
+        gzipHandler.setHandler(handler);
+        return gzipHandler;
     }
 
     private void addCorsHandler(ContextHandler contextHandler) {

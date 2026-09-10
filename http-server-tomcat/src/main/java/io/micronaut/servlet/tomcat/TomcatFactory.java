@@ -39,6 +39,7 @@ import io.micronaut.http.ssl.ClientAuthentication;
 import io.micronaut.http.ssl.SslConfiguration;
 import io.micronaut.servlet.engine.DefaultMicronautServlet;
 import io.micronaut.servlet.engine.MicronautServletConfiguration;
+import io.micronaut.servlet.engine.ServletCompressionConfiguration;
 import io.micronaut.servlet.http.server.ServletServerFactory;
 import io.micronaut.servlet.http.server.ServletStaticResourceConfiguration;
 import jakarta.inject.Singleton;
@@ -125,6 +126,8 @@ public class TomcatFactory extends ServletServerFactory {
         configuration.setAsyncFileServingEnabled(false);
 
         Tomcat tomcat = newTomcat();
+        applyCompression(connector);
+        applyCompression(httpsConnector);
         if (configuration.getMaxThreads() != null) {
             StandardThreadExecutor executor = new StandardThreadExecutor();
             executor.setName("tomcatThreadPool");
@@ -181,6 +184,29 @@ public class TomcatFactory extends ServletServerFactory {
                 );
             }
         }
+    }
+
+    /**
+     * Turns on response compression for a connector when the shared configuration asks for it.
+     *
+     * <p>Tomcat compresses responses itself, so the configuration is wired to its connector rather than
+     * reimplemented: it already settles HEAD, ranges, already encoded bodies and the {@code Vary} header.</p>
+     *
+     * @param connector The connector to configure, which may be {@code null}
+     */
+    private void applyCompression(@Nullable Connector connector) {
+        if (connector == null) {
+            return;
+        }
+        ServletCompressionConfiguration compression = getApplicationContext()
+            .findBean(ServletCompressionConfiguration.class)
+            .orElse(null);
+        if (compression == null || !compression.isEnabled()) {
+            return;
+        }
+        connector.setProperty("compression", "on");
+        connector.setProperty("compressionMinSize", String.valueOf(compression.getThreshold()));
+        connector.setProperty("compressibleMimeType", String.join(",", compression.getContentTypes()));
     }
 
     /**
