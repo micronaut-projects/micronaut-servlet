@@ -69,7 +69,11 @@ public class MicronautServletConfiguration implements Named, ServletConfiguratio
         this.mapping = mapping != null ? mapping : "/*";
         this.name = name != null ? name : Environment.MICRONAUT;
         final HttpServerConfiguration.MultipartConfiguration multipart = serverConfiguration.getMultipart();
-        if (multipart != null && multipart.isEnabled()) {
+        // micronaut.server.multipart.enabled has no default of its own: isEnabled() reports false when the user has
+        // not set it, while both the Netty server and the shared RequestLifecycle read the raw Optional and treat an
+        // unset value as enabled. Following isEnabled() here left the container with no multipart configuration, so
+        // it never parsed parts: getParts() was unavailable and multipart form fields reached no controller argument
+        if (multipart != null && multipart.getEnabled().orElse(true)) {
             this.multipartConfigElement = new MultipartConfigElement(
                     multipart.getLocation().map(File::getAbsolutePath).orElse(null),
                     multipart.getMaxFileSize(),

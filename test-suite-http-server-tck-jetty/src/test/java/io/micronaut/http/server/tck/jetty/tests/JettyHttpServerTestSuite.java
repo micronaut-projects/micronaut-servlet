@@ -12,10 +12,9 @@ import org.junit.platform.suite.api.SuiteDisplayName;
 })
 @SuiteDisplayName("HTTP Server TCK for Jetty")
 @ExcludeClassNamePatterns({
+    "io.micronaut.http.server.tck.tests.forms.UploadTest", // unannotated StreamingFileUpload argument has no typed servlet binder yet
+    "io.micronaut.http.server.tck.tests.forms.FormBindingDeadlockTest", // form binding parks the container thread waiting on a body the same thread must read
     "io.micronaut.http.server.tck.tests.FilterProxyTest", // see https://github.com/micronaut-projects/micronaut-core/issues/9725
-    "io.micronaut.http.server.tck.tests.cors.CorsSimpleRequestTest",
-    "io.micronaut.http.server.tck.tests.forms.UploadTest", // multipart
-    "io.micronaut.http.server.tck.tests.forms.FormBindingDeadlockTest",
 })
 public class JettyHttpServerTestSuite {
 }

@@ -23,6 +23,7 @@ import org.jspecify.annotations.Nullable;
 import io.micronaut.core.io.buffer.ByteBuffer;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.CollectionUtils;
+import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.Body;
@@ -62,7 +63,7 @@ public class DefaultBodyBuilder implements BodyBuilder {
         if (BodyBuilder.isFormSubmission(contentType)) {
             return request.getParameters().asMap();
         } else {
-            if (request.getContentLength() == 0) {
+            if (!hasBody(request)) {
                 return null;
             }
             Argument<?> resolvedBodyType = resolveBodyType(request);
@@ -84,6 +85,30 @@ public class DefaultBodyBuilder implements BodyBuilder {
                 throw new CodecException("Error decoding request body: " + e.getMessage(), e);
             }
         }
+    }
+
+    /**
+     * Decides whether a request carries a body at all, without reading from it.
+     *
+     * <p>A request that omits {@code Content-Length} reports a length of {@code -1}, which means "unknown", not
+     * "empty". Treating that as a body present makes an ordinary GET, which carries only query parameters, fail to
+     * decode and answer 400; see <a href="https://github.com/micronaut-projects/micronaut-servlet/issues/1097">#1097</a>.
+     * RFC 9112 settles it without touching the stream: a request that supplies neither {@code Content-Length} nor
+     * {@code Transfer-Encoding} has no body. Reading a byte to find out instead would block on containers that wait
+     * for data that is never coming.</p>
+     *
+     * @param request The request
+     * @return Whether the request carries a body
+     */
+    private static boolean hasBody(@NonNull HttpRequest<?> request) {
+        long contentLength = request.getContentLength();
+        if (contentLength > 0) {
+            return true;
+        }
+        if (contentLength == 0) {
+            return false;
+        }
+        return request.getHeaders().contains(HttpHeaders.TRANSFER_ENCODING);
     }
 
     private Argument<?> resolveBodyType(@NonNull HttpRequest<?> request) {

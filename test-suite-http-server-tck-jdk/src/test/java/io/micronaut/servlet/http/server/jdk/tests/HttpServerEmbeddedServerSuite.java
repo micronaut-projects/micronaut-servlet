@@ -11,12 +11,12 @@ import org.junit.platform.suite.api.SuiteDisplayName;
     "io.micronaut.http.server.tck.tests"
 })
 @SuiteDisplayName("TCK for Built-in Java HTTP Server")
-@ExcludeTags("multipart") // multipart form fields are not bound to controller/endpoint parameters on servlet runtimes yet; the CORS refresh tests only passed on core 5.1.x because the first environment refresh reported a spurious diff
+@ExcludeTags("multipart") // this runtime has a hand written request implementation that does not parse multipart bodies
 @ExcludeClassNamePatterns({
+    "io.micronaut.http.server.tck.tests.forms.UploadTest", // unannotated StreamingFileUpload argument has no typed servlet binder yet
+    "io.micronaut.http.server.tck.tests.forms.FormBindingDeadlockTest", // form binding parks the container thread waiting on a body the same thread must read
     "io.micronaut.http.server.tck.tests.FilterProxyTest", // see https://github.com/micronaut-projects/micronaut-core/issues/9725
     "io.micronaut.http.server.tck.tests.RemoteAddressTest", // the JDK HTTP server reports the bridged client IP in containerized runs, not always 127.0.0.1
-    "io.micronaut.http.server.tck.tests.forms.UploadTest", // multipart
-    "io.micronaut.http.server.tck.tests.forms.FormBindingDeadlockTest",
 })
 public class HttpServerEmbeddedServerSuite {
 }

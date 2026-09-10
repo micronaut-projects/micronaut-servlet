@@ -97,11 +97,13 @@ final class HttpExchangeHttpServletResponse implements HttpServletResponse {
     }
 
     /**
-     * @return Whether the response status permits a body at all. 1xx, 204 and 304 never carry one (RFC 9110)
+     * @return Whether the response status permits a body at all. 1xx, 204, 205 and 304 never carry one, and neither
+     * does a response to HEAD (RFC 9110)
      */
     boolean isBodyAllowed() {
         return status >= HttpStatus.OK.getCode()
             && status != HttpStatus.NO_CONTENT.getCode()
+            && status != HttpStatus.RESET_CONTENT.getCode()
             && status != HttpStatus.NOT_MODIFIED.getCode()
             && !HttpMethod.HEAD.name().equalsIgnoreCase(httpExchange.getRequestMethod());
     }
