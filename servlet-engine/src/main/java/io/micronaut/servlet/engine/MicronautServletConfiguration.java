@@ -62,6 +62,7 @@ public class MicronautServletConfiguration implements Named, ServletConfiguratio
      * @param serverConfiguration The http server configuration
      */
     @ConfigurationInject
+    @SuppressWarnings("java:S2589") // the multipart null check is reachable: see the comment on the guard below
     public MicronautServletConfiguration(
             @Bindable(defaultValue = Environment.MICRONAUT) String name,
             @Bindable(defaultValue = "/*") String mapping,
@@ -73,7 +74,9 @@ public class MicronautServletConfiguration implements Named, ServletConfiguratio
         // not set it, while both the Netty server and the shared RequestLifecycle read the raw Optional and treat an
         // unset value as enabled. Following isEnabled() here left the container with no multipart configuration, so
         // it never parsed parts: getParts() was unavailable and multipart form fields reached no controller argument
-        if (multipart.getEnabled().orElse(true)) {
+        // HttpServerConfiguration.setMultipart accepts null, so the getter can return it despite the field's
+        // initializer; static analysis that only sees the initializer reads this guard as always true
+        if (multipart != null && multipart.getEnabled().orElse(true)) {
             this.multipartConfigElement = new MultipartConfigElement(
                     multipart.getLocation().map(File::getAbsolutePath).orElse(null),
                     multipart.getMaxFileSize(),

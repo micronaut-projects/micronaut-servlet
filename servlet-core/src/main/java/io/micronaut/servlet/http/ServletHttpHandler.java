@@ -301,18 +301,28 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
                               ServletRequestLifecycle lc,
                               Runnable requestTerminated) {
         exchange.getRequest().executeAsync(ctx -> PropagatedContext.getOrEmpty().plus(new ServerHttpRequestContext(req)).propagate(() -> {
+            // completing the async context twice throws, so this has to run exactly once however the exchange ends
+            AtomicBoolean finished = new AtomicBoolean();
+            Runnable finish = () -> {
+                if (finished.compareAndSet(false, true)) {
+                    ctx.complete();
+                    requestTerminated.run();
+                }
+            };
             lc.handleNormal(req)
                 .flatMap(response -> process(response, req, exchange.getResponse()))
                 .onComplete((bbhr, t) -> {
                     if (t == null) {
-                        transfer(bbhr, exchange, true, () -> {
-                            ctx.complete();
-                            requestTerminated.run();
-                        });
+                        try {
+                            transfer(bbhr, exchange, true, finish);
+                        } catch (Throwable transferFailure) {
+                            // transfer throws on a write failure, before it can run the callback itself
+                            handleFallback(exchange.getResponse(), transferFailure);
+                            finish.run();
+                        }
                     } else {
                         handleFallback(exchange.getResponse(), t);
-                        ctx.complete();
-                        requestTerminated.run();
+                        finish.run();
                     }
                 });
             return null;
