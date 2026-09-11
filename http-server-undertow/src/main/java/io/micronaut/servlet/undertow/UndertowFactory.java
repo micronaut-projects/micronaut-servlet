@@ -27,6 +27,7 @@ import io.micronaut.http.server.exceptions.ServerStartupException;
 import io.micronaut.http.ssl.SslConfiguration;
 import io.micronaut.servlet.engine.MicronautServletConfiguration;
 import io.micronaut.servlet.engine.initializer.MicronautServletInitializer;
+import io.micronaut.scheduling.LoomSupport;
 import io.micronaut.servlet.engine.ServletCompressionConfiguration;
 import io.micronaut.servlet.http.server.ServletServerFactory;
 import io.micronaut.servlet.http.server.ServletStaticResourceConfiguration;
@@ -53,6 +54,7 @@ import jakarta.servlet.ServletException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executors;
 import java.util.Set;
 import javax.net.ssl.SSLContext;
 import org.xnio.Option;
@@ -355,6 +357,13 @@ public class UndertowFactory extends ServletServerFactory {
             .setDeploymentName(servletConfiguration.getName())
             .setClassLoader(getEnvironment().getClassLoader())
             .setContextPath(cp);
+        if (servletConfiguration.isEnableVirtualThreads() && LoomSupport.isSupported()) {
+            // without this every servlet invocation runs on the XNIO worker pool, eight threads per core by default,
+            // and enable-virtual-threads was silently ignored: a blocking controller capped out at that pool's size
+            deploymentInfo.setExecutor(Executors.newThreadPerTaskExecutor(
+                LoomSupport.newVirtualThreadFactory("undertow-handler-", builder -> { })
+            ));
+        }
         for (ServletContainerInitializer servletInitializer : servletInitializers) {
             deploymentInfo
                 .addServletContainerInitializer(new ServletContainerInitializerInfo(

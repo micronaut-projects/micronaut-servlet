@@ -128,7 +128,10 @@ public class TomcatFactory extends ServletServerFactory {
         Tomcat tomcat = newTomcat();
         applyCompression(connector);
         applyCompression(httpsConnector);
-        if (configuration.getMaxThreads() != null) {
+        // a platform pool sized by max-threads used to replace the virtual thread executor the connector had been
+        // given, so setting a thread limit silently turned virtual threads off. Virtual threads are not pooled, so
+        // there is nothing for the limit to size; when they are enabled the connector keeps its executor
+        if (configuration.getMaxThreads() != null && !configuration.isEnableVirtualThreads()) {
             StandardThreadExecutor executor = new StandardThreadExecutor();
             executor.setName("tomcatThreadPool");
             executor.setMaxThreads(configuration.getMaxThreads());
