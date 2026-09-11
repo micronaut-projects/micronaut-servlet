@@ -250,7 +250,10 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
         if (byteBodyResponse.byteBody() instanceof AvailableByteBody available && available.length() == 0) {
             // special case, don't call getOutputStream. the controller may have written manually.
             onComplete.run();
-        } else if (async) {
+        } else if (async && !(byteBodyResponse.byteBody() instanceof AvailableByteBody)) {
+            // a body that is still being produced is written as it arrives, through a WriteListener; a body that
+            // is already complete is written below on this thread instead, because the listener costs a dispatch
+            // through the container on every response and buys nothing when there is nothing to wait for
             servletResponse.stream(byteBodyResponse.byteBody().move()).whenComplete((ignored, t) -> {
                 if (t != null) {
                     if (t instanceof EOFException) {
