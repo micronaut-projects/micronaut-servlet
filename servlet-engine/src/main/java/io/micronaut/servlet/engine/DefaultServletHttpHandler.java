@@ -18,6 +18,8 @@ package io.micronaut.servlet.engine;
 import io.micronaut.context.ApplicationContext;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.convert.ConversionService;
+import io.micronaut.core.util.SupplierUtil;
+import io.micronaut.http.body.stream.BodySizeLimits;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.servlet.http.BodyBuilder;
 import io.micronaut.servlet.http.SSLSessionProvider;
@@ -32,6 +34,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import javax.net.ssl.SSLSession;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ForkJoinPool;
+import java.util.function.Supplier;
 
 /**
  * Default implementation of {@link ServletHttpHandler} for the Servlet API.
@@ -44,6 +47,7 @@ public class DefaultServletHttpHandler extends ServletHttpHandler<HttpServletReq
 
     private final Executor ioExecutor;
     private final @Nullable SSLSessionProvider sslSessionProvider;
+    private final Supplier<BodySizeLimits> bodySizeLimits = SupplierUtil.memoized(this::bodySizeLimits);
 
     /**
      * Default constructor.
@@ -99,7 +103,7 @@ public class DefaultServletHttpHandler extends ServletHttpHandler<HttpServletReq
     protected ServletExchange<HttpServletRequest, HttpServletResponse> createExchange(
             HttpServletRequest request,
             HttpServletResponse response) {
-        return new DefaultServletHttpRequest<>(applicationContext.getConversionService(), request, response, getMessageBodyHandlerRegistry(), applicationContext.getBean(BodyBuilder.class), ioExecutor, sslSessionProvider);
+        return new DefaultServletHttpRequest<>(applicationContext.getConversionService(), request, response, getMessageBodyHandlerRegistry(), applicationContext.getBean(BodyBuilder.class), ioExecutor, sslSessionProvider, bodySizeLimits.get());
     }
 
     @Override

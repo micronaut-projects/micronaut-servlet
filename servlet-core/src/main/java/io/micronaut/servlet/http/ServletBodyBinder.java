@@ -36,6 +36,7 @@ import io.micronaut.http.body.CloseableByteBody;
 import io.micronaut.http.body.MessageBodyHandlerRegistry;
 import io.micronaut.http.body.MessageBodyReader;
 import io.micronaut.http.codec.CodecException;
+import io.micronaut.http.exceptions.HttpException;
 import io.micronaut.http.form.FormCapableHttpRequest;
 import io.micronaut.http.multipart.RawFormField;
 import io.micronaut.json.JsonMapper;
@@ -73,6 +74,7 @@ import java.util.concurrent.CompletionStage;
  */
 public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body, T> {
     private static final Argument<byte[]> BYTE_ARRAY = Argument.of(byte[].class);
+    private static final int MAX_CAUSE_DEPTH = 8;
 
     protected final ConversionService conversionService;
     private final MessageBodyHandlerRegistry messageBodyHandlerRegistry;
@@ -117,6 +119,10 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
                     String text = IOUtils.readText(bufferedReader);
                     return () -> (Optional<T>) Optional.of(text);
                 } catch (IOException e) {
+                    HttpException httpException = httpFailure(e);
+                    if (httpException != null) {
+                        throw httpException;
+                    }
                     return new BindingResult<>() {
                         @Override
                         public Optional<T> getValue() {
@@ -178,7 +184,7 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
                         T content = conversionService.convert(value, argument).orElse(null);
                         return () -> Optional.ofNullable(content);
                     } catch (CodecException | IOException e) {
-                        throw new CodecException("Unable to decode request body: " + e.getMessage(), e);
+                        throw decodingFailure("Unable to decode request body: ", e);
                     }
                 }
             }
@@ -218,7 +224,7 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
                     }
                     return () -> (Optional<T>) Optional.ofNullable(content);
                 } catch (CodecException | IOException e) {
-                    throw new CodecException("Unable to decode request body: " + e.getMessage(), e);
+                    throw decodingFailure("Unable to decode request body: ", e);
                 }
             }
 
@@ -227,7 +233,7 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
                     byte[] content = inputStream.readAllBytes();
                     return () -> Optional.of((T) content);
                 } catch (IOException e) {
-                    throw new CodecException("Unable to read request body: " + e.getMessage(), e);
+                    throw decodingFailure("Unable to read request body: ", e);
                 }
             }
 
@@ -248,7 +254,7 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
                         }
                         return () -> Optional.of((T) array);
                     } catch (CodecException | IOException e) {
-                        throw new CodecException("Unable to decode request body: " + e.getMessage(), e);
+                        throw decodingFailure("Unable to decode request body: ", e);
                     }
                 }
             } else {
@@ -261,7 +267,7 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
                         }
                         return () -> (Optional<T>) Optional.ofNullable(content);
                     } catch (CodecException | IOException e) {
-                        throw new CodecException("Unable to decode request body: " + e.getMessage(), e);
+                        throw decodingFailure("Unable to decode request body: ", e);
                     }
                 }
             }
@@ -383,7 +389,7 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
                     publisher = body != null ? Flux.fromIterable((Iterable<?>) body) : Flux.empty();
                 }
             } catch (CodecException | IOException e) {
-                throw new CodecException("Unable to decode request body: " + e.getMessage(), e);
+                throw decodingFailure("Unable to decode request body: ", e);
             }
         }
         return conversionService.convertRequired(publisher, type);
@@ -396,13 +402,50 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
                 try {
                     return jsonMapper.readValueFromTree(node, typeArgument);
                 } catch (IOException e) {
-                    throw new CodecException("Unable to decode JSON stream: " + e.getMessage(), e);
+                    throw decodingFailure("Unable to decode JSON stream: ", e);
                 }
             });
     }
 
     private boolean isFormSubmission(MediaType contentType) {
         return MediaType.APPLICATION_FORM_URLENCODED_TYPE.equals(contentType) || MediaType.MULTIPART_FORM_DATA_TYPE.equals(contentType);
+    }
+
+    /**
+     * Turns a failure to read or decode the body into the exception to throw: an HTTP failure that the body
+     * itself raised, such as {@link io.micronaut.http.exceptions.ContentLengthExceededException} when
+     * {@code micronaut.server.max-request-size} is exceeded, is rethrown as is so that it maps to its own status,
+     * and anything else becomes a {@link CodecException}.
+     *
+     * @param message The message prefix for a codec failure
+     * @param e The failure
+     * @return The exception to throw
+     */
+    private static RuntimeException decodingFailure(String message, Exception e) {
+        HttpException httpException = httpFailure(e);
+        if (httpException != null) {
+            return httpException;
+        }
+        return new CodecException(message + e.getMessage(), e);
+    }
+
+    /**
+     * Finds an HTTP failure in the cause chain of a body read error. The streaming body wraps its errors in
+     * {@link IOException} when it is read as a stream, so the original exception has to be dug out.
+     *
+     * @param e The failure
+     * @return The HTTP failure, or {@code null} if there is none
+     */
+    private static @Nullable HttpException httpFailure(Throwable e) {
+        Throwable current = e;
+        for (int depth = 0; current != null && depth < MAX_CAUSE_DEPTH; depth++) {
+            if (current instanceof HttpException httpException && !(current instanceof CodecException)) {
+                // a codec failure is a decoding problem to report as such, not a status of its own
+                return httpException;
+            }
+            current = current.getCause();
+        }
+        return null;
     }
 
     private record ServletReadable(

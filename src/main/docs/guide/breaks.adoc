@@ -2,6 +2,10 @@ This section documents breaking changes between Micronaut Servlet versions:
 
 == Micronaut Servlet 6.2.0
 
+=== The request size limit applies to every body
+
+`micronaut.server.max-request-size` (10MB by default) was only passed to the container's multipart configuration, so a plain JSON, text or binary body of any size was accepted. The servlet runtimes now enforce it as the Netty server does: a body that declares a larger `Content-Length` is refused with `413 Request Entity Too Large` without being read, and a body without a declared length is cut off with the same status once it grows past the limit. Raise `micronaut.server.max-request-size` for applications that receive larger bodies.
+
 === Jetty serves static resources through the Micronaut resolver
 
 Jetty served `micronaut.router.static-resources` with its own `ResourceHandler`, outside the Micronaut servlet, while Tomcat, Undertow, the JDK server and the Netty server all resolve them with Micronaut's `StaticResourceResolver` inside the request pipeline. Jetty now uses the shared path too, so static resources behave the same on every runtime:
