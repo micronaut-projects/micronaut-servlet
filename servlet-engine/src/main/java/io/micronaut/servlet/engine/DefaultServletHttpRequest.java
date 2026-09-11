@@ -229,7 +229,14 @@ public final class DefaultServletHttpRequest<B> implements
             // 413 as on the Netty server, while the route itself is still resolved for filters and security
             ContentLengthExceededException tooLarge = new ContentLengthExceededException(bodySizeLimits.maxBodySize(), contentLengthLong);
             this.byteBody = byteBodyFactory.adapt(Flux.error(tooLarge), length);
-        } else if (delegate.isAsyncSupported() && !readsInline(contentLengthLong, bodySizeLimits, delegate)) {
+        } else if (readsInline(contentLengthLong, bodySizeLimits, delegate)) {
+            // a small body with a known length is read with a blocking read on first use, on the thread that runs
+            // the route: that is what a blocking servlet application does, and it keeps the request on the
+            // container thread instead of paying a dispatch and a ReadListener round trip (or, on a container
+            // without asynchronous support, an IO executor hop) for a few bytes. It is deferred rather than read
+            // here so that the request is already counted for graceful shutdown
+            inlineLength = contentLengthLong;
+        } else if (delegate.isAsyncSupported()) {
             // the shared streaming body applies the size limits itself
             ReadBufferFactory readBufferFactory = byteBodyFactory.readBufferFactory();
             this.byteBody = byteBodyFactory.adapt(
@@ -239,12 +246,6 @@ public final class DefaultServletHttpRequest<B> implements
                 null
             );
             this.bodyReadsAsynchronously = true;
-        } else if (delegate.isAsyncSupported()) {
-            // a small body with a known length is read with a blocking read on first use, on the thread that runs
-            // the route: that is what a blocking servlet application does, and it keeps the request on the
-            // container thread instead of paying a dispatch and a ReadListener round trip for a few bytes. It is
-            // deferred rather than read here so that the request is already counted for graceful shutdown
-            inlineLength = contentLengthLong;
         } else {
             InputStream stream = new LazyDelegateInputStream(delegate);
             if (bodySizeLimits.maxBodySize() < Long.MAX_VALUE) {
