@@ -12,6 +12,7 @@ import org.junit.platform.suite.api.SuiteDisplayName;
 })
 @SuiteDisplayName("HTTP Server TCK for Jetty")
 @ExcludeClassNamePatterns({
+    "io.micronaut.http.server.tck.tests.cors.CorsSimpleRequestTest", // the two rejection cases race the client's upload: Jetty answers 403 without reading the multipart body and closes the connection, so the client sees an IOException instead of the status. Passes on Tomcat and Undertow. See https://github.com/micronaut-projects/micronaut-servlet/issues/929
     "io.micronaut.http.server.tck.tests.forms.FormBindingDeadlockTest", // asserts the server detects a form binding deadlock; a container that parses the whole form before the route runs has none to detect and completes the request instead
     "io.micronaut.http.server.tck.tests.forms.UploadTest", // unannotated StreamingFileUpload argument: the shared FormFactory builds one, but its completer never emits for a body the container has already parsed
     "io.micronaut.http.server.tck.tests.FilterProxyTest", // see https://github.com/micronaut-projects/micronaut-core/issues/9725
