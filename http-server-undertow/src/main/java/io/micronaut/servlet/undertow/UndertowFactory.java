@@ -178,6 +178,12 @@ public class UndertowFactory extends ServletServerFactory {
             applyAdditionalPorts(builder, host, port, null);
         }
 
+        if (getServerConfiguration().getHttpVersion() == io.micronaut.http.HttpVersion.HTTP_2_0) {
+            // Undertow supports HTTP/2 natively, over TLS via ALPN and in the clear via the h2c upgrade, but only
+            // when asked; Jetty and Tomcat already honour micronaut.server.http-version, so this brings Undertow level
+            builder.setServerOption(UndertowOptions.ENABLE_HTTP2, true);
+        }
+
         if (servletConfiguration.getMaxThreads() != null) {
             builder.setServerOption(Options.WORKER_TASK_MAX_THREADS, servletConfiguration.getMaxThreads());
             if (servletConfiguration.getMinThreads() != null) {
