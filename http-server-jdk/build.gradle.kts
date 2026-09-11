@@ -6,7 +6,7 @@ dependencies {
     api(projects.micronautServletEngine)
     testAnnotationProcessor(mnSerde.micronaut.serde.processor)
     testImplementation(mnSerde.micronaut.serde.jackson)
-    testRuntimeOnly(mnLogging.logback.classic)
+    testImplementation(mnLogging.logback.classic)
 }
 
 micronautBuild {
