@@ -330,9 +330,10 @@ final class HttpExchangeHttpServletResponse implements HttpServletResponse {
     }
 
     @Override
-    public void sendError(int i, String s) throws IOException {
+    public void sendError(int i, @Nullable String s) throws IOException {
         setStatus(i);
-        if (StringUtils.isNotEmpty(s)) {
+        // an explicit null check rather than StringUtils.isNotEmpty, so that the analyser can see the guard
+        if (s != null && !s.isEmpty()) {
             byte[] body = s.getBytes(StandardCharsets.UTF_8);
             setContentLength(body.length);
             getOutputStream().write(body);
