@@ -131,6 +131,11 @@ public final class DefaultServletHttpRequest<B> implements
     private final ConcurrentLinkedQueue<Runnable> disposalResources = new ConcurrentLinkedQueue<>();
 
     private boolean bodyIsReadAsync;
+    /**
+     * Whether the body is fed by a {@code ReadListener}, which the container only drives once the service
+     * method has returned; such a request must leave the service thread before its body can be consumed.
+     */
+    private boolean bodyReadsAsynchronously;
     private @Nullable B parsedBody;
     private @Nullable AsyncContext asyncContext;
 
@@ -211,7 +216,7 @@ public final class DefaultServletHttpRequest<B> implements
             // 413 as on the Netty server, while the route itself is still resolved for filters and security
             ContentLengthExceededException tooLarge = new ContentLengthExceededException(bodySizeLimits.maxBodySize(), contentLengthLong);
             this.byteBody = byteBodyFactory.adapt(Flux.error(tooLarge), length);
-        } else if (delegate.isAsyncSupported()) {
+        } else if (delegate.isAsyncSupported() && !readsInline(contentLengthLong, bodySizeLimits, delegate)) {
             // the shared streaming body applies the size limits itself
             ReadBufferFactory readBufferFactory = byteBodyFactory.readBufferFactory();
             this.byteBody = byteBodyFactory.adapt(
@@ -220,6 +225,12 @@ public final class DefaultServletHttpRequest<B> implements
                 headers,
                 null
             );
+            this.bodyReadsAsynchronously = true;
+        } else if (delegate.isAsyncSupported()) {
+            // a small body with a known length is read here, on the container thread that already holds the
+            // request, before the route runs: that is what a blocking servlet application does, and it keeps the
+            // request on this thread instead of paying a dispatch and a ReadListener round trip for a few bytes
+            this.byteBody = readInline(delegate, contentLengthLong, byteBodyFactory);
         } else {
             InputStream stream = new LazyDelegateInputStream(delegate);
             if (bodySizeLimits.maxBodySize() < Long.MAX_VALUE) {
@@ -376,7 +387,7 @@ public final class DefaultServletHttpRequest<B> implements
         }
         AsyncContext startedAsyncContext = delegate.startAsync();
         this.asyncContext = startedAsyncContext;
-        if (mayHaveBody()) {
+        if (bodyReadsAsynchronously && mayHaveBody()) {
             // the body is read through a ReadListener, which the container only drives once the service
             // method has returned, so a request with a body has to leave this thread first
             startedAsyncContext.start(() -> asyncExecutionCallback.run(startedAsyncContext::complete));
@@ -385,6 +396,31 @@ public final class DefaultServletHttpRequest<B> implements
             // would hand it to another pool thread first, a hop that is pure overhead for the common GET, and
             // completing the context from the service thread is allowed by the specification
             asyncExecutionCallback.run(startedAsyncContext::complete);
+        }
+    }
+
+    /**
+     * Whether a body with the given declared length is read on the container thread before the route runs
+     * rather than streamed through a {@code ReadListener}: it has to be non-empty, declare its length, fit the
+     * buffer limit, and not be a form, whose bytes the container parses itself.
+     */
+    private static boolean readsInline(long contentLength, BodySizeLimits bodySizeLimits) {
+        return contentLength > 0 && contentLength <= bodySizeLimits.maxBufferSize();
+    }
+
+    private static boolean readsInline(long contentLength, BodySizeLimits bodySizeLimits, HttpServletRequest request) {
+        if (!readsInline(contentLength, bodySizeLimits)) {
+            return false;
+        }
+        String contentType = request.getContentType();
+        return contentType == null || !isFormContentType(MediaType.of(contentType));
+    }
+
+    private static CloseableByteBody readInline(HttpServletRequest request, long contentLength, ByteBodyFactory byteBodyFactory) {
+        try (InputStream inputStream = request.getInputStream()) {
+            return byteBodyFactory.copyOf(inputStream);
+        } catch (IOException e) {
+            throw new InternalServerException("Error reading request body: " + e.getMessage(), e);
         }
     }
 
@@ -628,7 +664,7 @@ public final class DefaultServletHttpRequest<B> implements
     @Override
     public boolean hasFormBody() {
         return getContentType()
-            .map(this::isFormContentType)
+            .map(DefaultServletHttpRequest::isFormContentType)
             .orElse(false);
     }
 
@@ -662,7 +698,7 @@ public final class DefaultServletHttpRequest<B> implements
         disposalResources.add(runnable);
     }
 
-    private boolean isFormContentType(MediaType mediaType) {
+    private static boolean isFormContentType(MediaType mediaType) {
         return mediaType.matches(MediaType.APPLICATION_FORM_URLENCODED_TYPE)
             || mediaType.matches(MediaType.MULTIPART_FORM_DATA_TYPE);
     }

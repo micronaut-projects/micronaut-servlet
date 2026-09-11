@@ -2,6 +2,15 @@ In general, you can follow the https://docs.micronaut.io/latest/guide/index.html
 
 There are a couple of additional extensions within Micronaut Servlet that make it easier to work with the Servlet API which are detailed in the following sections.
 
+=== Threading Model
+
+On a container that supports asynchronous servlets (Jetty, Tomcat and Undertow) a request is handled as follows:
+
+* A request without a body, or with a body that declares a `Content-Length` no larger than `micronaut.server.max-request-buffer-size` (10MB by default) and is not a form submission, is handled entirely on the container thread that received it. The body, if any, is read on that thread before the route runs, as a blocking servlet application would, and the response is written from the same thread unless the route returns a reactive or asynchronous type.
+* A request with a larger body, a chunked body, or a form or multipart body is dispatched through `AsyncContext.start` and its body is read through a `ReadListener` as it arrives, so no container thread waits for it.
+
+Reactive and asynchronous return types complete the response from whichever thread produces the result, and `@ExecuteOn` moves the route to the named executor as on the Netty server. When `micronaut.servlet.async-supported` is `false`, or on the built-in JDK server, every request is handled on the container thread and its body is read from a blocking stream.
+
 === Injecting the Servlet Request and Response
 
 You can receive the `HttpServletRequest` and `HttpServletResponse` objects directly as parameters:
