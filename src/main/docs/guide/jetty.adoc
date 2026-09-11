@@ -29,6 +29,15 @@ include::http-server-jetty/src/test/java/io/micronaut/servlet/jetty/docs/JettySe
 include::http-server-jetty/src/test/java/io/micronaut/servlet/jetty/docs/JettyServerCustomizer.java[tags=class, indent=0]
 ----
 
+=== Static Resources
+
+Static resources configured with `micronaut.router.static-resources` are served by the Micronaut static resource resolver, as on the other runtimes, so filters, CORS and the `micronaut.server.responses.file` settings apply to them. To have Jetty's own `ResourceHandler` serve them instead, which supports range requests natively but bypasses the Micronaut filter chain, set:
+
+[configuration]
+----
+micronaut.server.jetty.native-static-resources: true
+----
+
 === Access Log Configuration
 
 To configure the https://eclipse.dev/jetty/documentation/jetty-12/programming-guide/index.html#pg-server-http-request-logging[Jetty Access Log]:

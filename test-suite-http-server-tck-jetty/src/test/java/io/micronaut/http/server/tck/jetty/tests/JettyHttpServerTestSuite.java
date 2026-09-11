@@ -16,7 +16,7 @@ import org.junit.platform.suite.api.SuiteDisplayName;
     "io.micronaut.http.server.tck.tests.forms.FormBindingDeadlockTest", // asserts the server detects a form binding deadlock; a container that parses the whole form before the route runs has none to detect and completes the request instead
     "io.micronaut.http.server.tck.tests.forms.UploadTest", // unannotated StreamingFileUpload argument: the shared FormFactory builds one, but its completer never emits for a body the container has already parsed
     "io.micronaut.http.server.tck.tests.FilterProxyTest", // see https://github.com/micronaut-projects/micronaut-core/issues/9725
-    "io.micronaut.http.server.tck.tests.cors.CorsDisabledByDefaultTest", // asserts no Vary header at all; Jetty's GzipHandler adds Vary: Accept-Encoding to every compressible response, which is unrelated to CORS. Fixed in the core TCK (micronaut-core#13147) to check only for Vary: Origin; re-enable once that release is used here
+    "io.micronaut.http.server.tck.tests.cors.CorsDisabledByDefaultTest", // asserts no Vary header at all; Jetty's GzipHandler adds Vary: Accept-Encoding to every compressible response, which is unrelated to CORS. Fixed in the core TCK to check only for Vary: Origin; re-enable once that release is used here
     "io.micronaut.http.server.tck.tests.cors.SimpleRequestWithCorsNotEnabledTest", // same Vary: Accept-Encoding assertion as above
 })
 public class JettyHttpServerTestSuite {

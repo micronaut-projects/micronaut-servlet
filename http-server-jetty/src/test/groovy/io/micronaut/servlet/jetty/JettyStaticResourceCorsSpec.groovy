@@ -6,14 +6,15 @@ import io.micronaut.http.HttpRequest
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.client.HttpClient
+import io.micronaut.http.client.exceptions.HttpClientResponseException
 import io.micronaut.http.client.annotation.Client
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import spock.lang.Specification
 
 /**
- * Static resources are served outside the Micronaut filter chain, so their CORS handling is configured separately.
- * It must still allow exactly the origins that were configured.
+ * Static resources are served through the Micronaut filter chain, so the CORS filter applies to them exactly as it
+ * does to controllers and on the Netty server: the configured origin is allowed and any other is refused.
  */
 @MicronautTest
 @Property(name = 'spec.name', value = 'JettyStaticResourceCorsSpec')
@@ -37,21 +38,25 @@ class JettyStaticResourceCorsSpec extends Specification {
         response.header(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN) == 'https://example.com'
     }
 
-    void "an origin that merely starts with the configured one is not allowed"() {
+    void "an origin that merely starts with the configured one is refused"() {
         when: "an unanchored pattern would find the configured origin inside this one"
-        HttpResponse<String> response = client.toBlocking().exchange(
+        client.toBlocking().exchange(
             HttpRequest.GET('/static/index.txt').header(HttpHeaders.ORIGIN, 'https://example.com.attacker.test'), String)
 
         then:
-        response.header(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN) == null
+        HttpClientResponseException e = thrown()
+        e.status == HttpStatus.FORBIDDEN
+        e.response.header(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN) == null
     }
 
-    void "an unrelated origin is not allowed"() {
+    void "an unrelated origin is refused"() {
         when:
-        HttpResponse<String> response = client.toBlocking().exchange(
+        client.toBlocking().exchange(
             HttpRequest.GET('/static/index.txt').header(HttpHeaders.ORIGIN, 'https://attacker.test'), String)
 
         then:
-        response.header(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN) == null
+        HttpClientResponseException e = thrown()
+        e.status == HttpStatus.FORBIDDEN
+        e.response.header(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN) == null
     }
 }

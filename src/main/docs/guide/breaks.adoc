@@ -2,6 +2,16 @@ This section documents breaking changes between Micronaut Servlet versions:
 
 == Micronaut Servlet 6.2.0
 
+=== Jetty serves static resources through the Micronaut resolver
+
+Jetty served `micronaut.router.static-resources` with its own `ResourceHandler`, outside the Micronaut servlet, while Tomcat, Undertow, the JDK server and the Netty server all resolve them with Micronaut's `StaticResourceResolver` inside the request pipeline. Jetty now uses the shared path too, so static resources behave the same on every runtime:
+
+- Micronaut filters see static resource requests. In particular the CORS filter applies, so a request from an origin that is not allowed is refused with `403 Forbidden`, where Jetty's handler answered `200` without CORS headers.
+- The `Cache-Control` header comes from `micronaut.server.responses.file` (`private, max-age=60` by default), and conditional requests with `If-Modified-Since` receive `304 Not Modified`.
+- The Jetty-only `micronaut.router.static-resources.*.cache-control` setting is not applied.
+
+Set `micronaut.server.jetty.native-static-resources` to `true` to restore Jetty's `ResourceHandler`, including the `cache-control` setting and its own CORS handling.
+
 === Responses are compressed by default
 
 Servlet containers did not compress responses at all, while the Netty server compresses anything above 1KB that the client accepts. `micronaut.servlet.compression.enabled` now defaults to `true`, and is wired to each container's own encoder rather than reimplemented as a filter, so the cases that make compression awkward, HEAD, ranges, already encoded bodies and the `Vary` header, are settled by code that already handles them.
