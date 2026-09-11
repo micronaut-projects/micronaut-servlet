@@ -34,6 +34,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -65,17 +66,34 @@ class AccessLogTest {
             assertEquals(200, response.statusCode());
             client.send(HttpRequest.newBuilder(server.getURI().resolve("/logged/health")).build(),
                 HttpResponse.BodyHandlers.ofString());
+            // the line is written after the response has gone out, so a request that is logged has to follow
+            // the excluded one to prove the exclusion held
+            client.send(HttpRequest.newBuilder(server.getURI().resolve("/logged/hello")).build(),
+                HttpResponse.BodyHandlers.ofString());
 
-            List<String> lines = appender.list.stream().map(ILoggingEvent::getFormattedMessage).toList();
-            assertEquals(1, lines.size(), "the excluded path must not be logged: " + lines);
+            List<String> lines = awaitLines(appender, 2);
+            assertEquals(2, lines.size(), "the excluded path must not be logged: " + lines);
             String line = lines.get(0);
             assertTrue(line.startsWith("127.0.0.1 - - ["), line);
             assertTrue(line.contains("\"GET /logged/hello?name=x HTTP/1.1\" 200 5"), line);
-            assertFalse(line.contains("health"), line);
+            assertTrue(lines.get(1).contains("\"GET /logged/hello HTTP/1.1\" 200 5"), lines.get(1));
+            assertFalse(lines.stream().anyMatch(l -> l.contains("health")), lines.toString());
         } finally {
             server.close();
             accessLogger.detachAppender(appender);
         }
+    }
+
+    /**
+     * Waits for the access log to catch up: lines are written once the exchange is done, after the client has
+     * already received the response.
+     */
+    private static List<String> awaitLines(ListAppender<ILoggingEvent> appender, int expected) throws InterruptedException {
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+        while (appender.list.size() < expected && System.nanoTime() < deadline) {
+            Thread.sleep(20);
+        }
+        return appender.list.stream().map(ILoggingEvent::getFormattedMessage).toList();
     }
 
     @Requires(property = "spec.name", value = "AccessLogTest")
