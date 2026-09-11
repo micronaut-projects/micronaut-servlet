@@ -19,12 +19,16 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.LifeCycle;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import io.micronaut.core.async.subscriber.LazySendingSubscriber;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.execution.ExecutionFlow;
 import io.micronaut.core.io.buffer.ByteArrayBufferFactory;
+import io.micronaut.core.io.buffer.ReadBuffer;
 import io.micronaut.core.propagation.PropagatedContext;
+import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.core.util.SupplierUtil;
 import io.micronaut.http.ByteBodyHttpResponse;
+import io.micronaut.http.ByteBodyHttpResponseWrapper;
 import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
@@ -50,6 +54,7 @@ import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.web.router.Router;
 import io.micronaut.web.router.UriRouteMatch;
 import io.micronaut.web.router.resource.StaticResourceResolver;
+import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -535,7 +540,7 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
         if (shr.isCommitted()) {
             return ExecutionFlow.just(new ExecutionResult(null));
         }
-        return new ServletResponseLifecycle().encodeHttpResponseSafe(req, response).map(ExecutionResult::new);
+        return new ServletResponseLifecycle(req).encodeHttpResponseSafe(req, response).map(ExecutionResult::new);
     }
 
     private static void handleFallback(ServletHttpResponse<?, ?> shr, Throwable t) {
@@ -624,14 +629,47 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
 
     private final class ServletResponseLifecycle extends ResponseLifecycle {
         private static final ByteBodyFactory BBF = ByteBodyFactory.createDefault(ByteArrayBufferFactory.INSTANCE);
+        /**
+         * Whether the Netty HTTP types are on the classpath; {@link NettyStreamedResponses} must not be loaded
+         * otherwise.
+         */
+        private static final boolean NETTY_PRESENT = ClassUtils.isPresent(
+            "io.micronaut.http.netty.NettyHttpResponseBuilder", ServletHttpHandler.class.getClassLoader()
+        );
 
-        ServletResponseLifecycle() {
+        private final HttpRequest<?> request;
+
+        ServletResponseLifecycle(HttpRequest<?> request) {
             super(routeExecutor, messageBodyHandlerRegistry, conversionService, BBF);
+            this.request = request;
         }
 
         @Override
         protected @NonNull Executor ioExecutor() {
             return ioExecutor.get();
+        }
+
+        /**
+         * A response with no object body may still carry bytes: the Netty HTTP client's {@code ProxyHttpClient}
+         * returns the upstream response as a content stream that only the Netty types expose. The Netty server
+         * unwraps it in its response lifecycle, and so must this one, or a proxying filter answers with an empty
+         * body (micronaut-core#9725).
+         */
+        @Override
+        @SuppressWarnings({"unchecked", "rawtypes"})
+        protected ExecutionFlow<? extends ByteBodyHttpResponse<?>> encodeNoBody(HttpResponse<?> response) {
+            if (NETTY_PRESENT) {
+                Publisher<ReadBuffer> content = NettyStreamedResponses.streamedContent(response, BBF.readBufferFactory());
+                if (content != null) {
+                    return LazySendingSubscriber.create(content)
+                        .map(buffers -> (ByteBodyHttpResponse<?>) ByteBodyHttpResponseWrapper.wrap(
+                            response,
+                            BBF.adapt(buffers, response.getHeaders().contentLength())
+                        ))
+                        .onErrorResume(e -> (ExecutionFlow) handleStreamingError(request, e));
+                }
+            }
+            return super.encodeNoBody(response);
         }
     }
 
