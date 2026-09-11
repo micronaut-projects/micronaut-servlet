@@ -384,6 +384,7 @@ public class JettyFactory extends ServletServerFactory {
      * @param servletContainerInitializers The servlet initializers
      */
     protected void configureServletInitializer(Server server, ServletContextHandler contextHandler, Collection<ServletContainerInitializer> servletContainerInitializers) {
+        boolean nativeStaticResources = jettyConfiguration.isNativeStaticResources();
         for (ServletContainerInitializer servletContainerInitializer : servletContainerInitializers) {
             contextHandler.addServletContainerInitializer(servletContainerInitializer);
         }
@@ -391,7 +392,7 @@ public class JettyFactory extends ServletServerFactory {
         // by default static resources are served through the Micronaut servlet by the same static resource resolver
         // the other runtimes use, so filters, CORS and the file response configuration apply to them uniformly;
         // Jetty's own ResourceHandler is an opt-in
-        Stream<ContextHandler> staticResourceHandlers = jettyConfiguration.isNativeStaticResources()
+        Stream<ContextHandler> staticResourceHandlers = nativeStaticResources
             ? getStaticResourceConfigurations().stream().map(servletStaticResourceConfiguration -> toHandler(servletStaticResourceConfiguration, ResourceFactory.of(contextHandler)))
             : Stream.empty();
         List<ContextHandler> resourceHandlers = Stream.concat(Stream.of(contextHandler), staticResourceHandlers).toList();

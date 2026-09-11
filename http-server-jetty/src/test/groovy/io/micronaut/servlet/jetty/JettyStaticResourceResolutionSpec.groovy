@@ -327,4 +327,25 @@ class JettyStaticResourceResolutionSpec extends Specification implements TestPro
         embeddedServer.stop()
         embeddedServer.close()
     }
+
+    void "static resources outside a narrowed servlet mapping are served by the native handler"() {
+        given: "the Micronaut servlet only covers /api, so the resolver never sees /static; Jetty's own handler does"
+        EmbeddedServer embeddedServer = ApplicationContext.run(EmbeddedServer, [
+                'micronaut.servlet.mapping': '/api/*',
+                'micronaut.server.jetty.native-static-resources': true,
+                'micronaut.router.static-resources.default.paths': ['classpath:public'],
+                'micronaut.router.static-resources.default.mapping': '/static/**'])
+        HttpClient rxClient = embeddedServer.applicationContext.createBean(HttpClient, embeddedServer.getURL())
+
+        when:
+        def response = rxClient.toBlocking().exchange(HttpRequest.GET("/static/index.html"), String)
+
+        then:
+        response.status == HttpStatus.OK
+        response.body().contains("<html>")
+
+        cleanup:
+        rxClient.close()
+        embeddedServer.stop()
+    }
 }

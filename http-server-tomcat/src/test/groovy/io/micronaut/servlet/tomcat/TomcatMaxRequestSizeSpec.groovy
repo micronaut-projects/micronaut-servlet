@@ -61,6 +61,23 @@ class TomcatMaxRequestSizeSpec extends Specification {
         response.statusCode() == 413
     }
 
+    void "an oversized form submission is refused with 413 even though the container parses forms itself"() {
+        given:
+        SizeController controller = embeddedServer.applicationContext.getBean(SizeController)
+        controller.reached = false
+        String form = 'name=' + ('x' * 4096)
+
+        when:
+        HttpResponse<String> response = client.send(HttpRequest.newBuilder(embeddedServer.URI.resolve('/size/form'))
+            .header('Content-Type', MediaType.APPLICATION_FORM_URLENCODED)
+            .POST(HttpRequest.BodyPublishers.ofString(form))
+            .build(), HttpResponse.BodyHandlers.ofString())
+
+        then:
+        response.statusCode() == 413
+        !controller.reached
+    }
+
     private HttpResponse<String> send(String body, boolean declareLength) {
         HttpRequest.BodyPublisher publisher = declareLength
             ? HttpRequest.BodyPublishers.ofString(body)
@@ -82,6 +99,13 @@ class TomcatMaxRequestSizeSpec extends Specification {
         String size(@Body String body) {
             reached = true
             String.valueOf(body.length())
+        }
+
+        @Post('/form')
+        @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+        String form(String name) {
+            reached = true
+            String.valueOf(name.length())
         }
     }
 }

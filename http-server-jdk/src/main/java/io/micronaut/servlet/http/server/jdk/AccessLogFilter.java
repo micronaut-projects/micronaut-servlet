@@ -24,7 +24,9 @@ import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.FilterOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -58,11 +60,19 @@ final class AccessLogFilter extends Filter {
     @Override
     public void doFilter(HttpExchange exchange, Chain chain) throws IOException {
         ZonedDateTime received = ZonedDateTime.now();
+        boolean log = logger.isInfoEnabled() && !excluded(exchange);
+        CountingOutputStream body = null;
+        if (log) {
+            // the common log format reports the bytes actually sent, which a chunked response never declares in a
+            // header, so the response stream is wrapped to count them
+            body = new CountingOutputStream(exchange.getResponseBody());
+            exchange.setStreams(null, body);
+        }
         try {
             chain.doFilter(exchange);
         } finally {
-            if (logger.isInfoEnabled() && !excluded(exchange)) {
-                logger.info(line(exchange, received));
+            if (log) {
+                logger.info(line(exchange, received, body.count));
             }
         }
     }
@@ -83,16 +93,38 @@ final class AccessLogFilter extends Filter {
     /**
      * Formats the common log format line: remote host, identity, user, time, request line, status and bytes.
      */
-    private static String line(HttpExchange exchange, ZonedDateTime received) {
+    private static String line(HttpExchange exchange, ZonedDateTime received, long bytes) {
         InetSocketAddress remote = exchange.getRemoteAddress();
         String host = remote == null ? "-" : remote.getAddress().getHostAddress();
         String user = exchange.getPrincipal() == null ? "-" : exchange.getPrincipal().getUsername();
         // the request line carries the HTTP version whether or not TLS transports it
         String protocol = exchange.getProtocol();
         int status = exchange.getResponseCode();
-        String length = exchange.getResponseHeaders().getFirst("Content-Length");
         return host + " - " + user + " [" + TIMESTAMP.format(received) + "] \""
             + exchange.getRequestMethod() + ' ' + exchange.getRequestURI() + ' ' + protocol + "\" "
-            + (status < 0 ? "-" : String.valueOf(status)) + ' ' + (length == null ? "-" : length);
+            + (status < 0 ? "-" : String.valueOf(status)) + ' ' + (bytes == 0 ? "-" : String.valueOf(bytes));
+    }
+
+    /**
+     * Counts the body bytes written to the exchange.
+     */
+    private static final class CountingOutputStream extends FilterOutputStream {
+        private long count;
+
+        CountingOutputStream(OutputStream out) {
+            super(out);
+        }
+
+        @Override
+        public void write(int b) throws IOException {
+            out.write(b);
+            count++;
+        }
+
+        @Override
+        public void write(byte[] b, int off, int len) throws IOException {
+            out.write(b, off, len);
+            count += len;
+        }
     }
 }

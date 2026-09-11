@@ -390,8 +390,15 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
             AtomicBoolean finished = new AtomicBoolean();
             Runnable finish = () -> {
                 if (finished.compareAndSet(false, true)) {
-                    ctx.complete();
-                    requestTerminated.run();
+                    try {
+                        ctx.complete();
+                    } catch (IllegalStateException alreadyCompleted) {
+                        // the container completed the context itself, on an asynchronous timeout or error; the
+                        // request still has to be accounted for and its resources released
+                        LOG.debug("Async context already completed for request [{} - {}]", req.getMethodName(), req.getUri(), alreadyCompleted);
+                    } finally {
+                        requestTerminated.run();
+                    }
                 }
             };
             lc.handleNormal(req)

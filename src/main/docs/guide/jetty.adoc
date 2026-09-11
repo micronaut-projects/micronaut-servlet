@@ -31,7 +31,7 @@ include::http-server-jetty/src/test/java/io/micronaut/servlet/jetty/docs/JettySe
 
 === Static Resources
 
-Static resources configured with `micronaut.router.static-resources` are served by the Micronaut static resource resolver, as on the other runtimes, so filters, CORS and the `micronaut.server.responses.file` settings apply to them. To have Jetty's own `ResourceHandler` serve them instead, which supports range requests natively but bypasses the Micronaut filter chain, set:
+Static resources configured with `micronaut.router.static-resources` are served by the Micronaut static resource resolver, as on the other runtimes, so filters, CORS and the `micronaut.server.responses.file` settings apply to them. Because the resolver runs inside the Micronaut servlet, static resource paths must fall under `micronaut.servlet.mapping` (the default `/*` covers everything); a narrowed mapping such as `/api/*` leaves paths outside it unreachable, as on Tomcat and Undertow. To have Jetty's own `ResourceHandler` serve them instead, which supports range requests natively, works outside the servlet mapping, but bypasses the Micronaut filter chain, set:
 
 [configuration]
 ----
