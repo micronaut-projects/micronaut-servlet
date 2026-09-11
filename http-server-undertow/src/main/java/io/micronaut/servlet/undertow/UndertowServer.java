@@ -23,6 +23,7 @@ import io.micronaut.runtime.ApplicationConfiguration;
 import io.micronaut.runtime.server.event.ServerShutdownEvent;
 import io.micronaut.servlet.http.server.AbstractServletServer;
 import io.undertow.Undertow;
+import io.undertow.server.handlers.GracefulShutdownHandler;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
@@ -92,6 +93,18 @@ public class UndertowServer extends AbstractServletServer<Undertow> {
     @Override
     protected void stopServer() throws Exception {
         getServer().stop();
+    }
+
+    /**
+     * Makes the server answer new requests with {@code 503 Service Unavailable} while requests already in progress
+     * complete. Undertow's own listener suspension is not used because it closes every connection, including those
+     * with a request in flight.
+     */
+    @Override
+    protected void stopAcceptingRequests() {
+        getApplicationContext().findBean(UndertowFactory.class)
+            .map(UndertowFactory::getGracefulShutdownHandler)
+            .ifPresent(GracefulShutdownHandler::shutdown);
     }
 
     @Override

@@ -36,6 +36,7 @@ import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.UndertowOptions;
 import io.undertow.server.HttpHandler;
+import io.undertow.server.handlers.GracefulShutdownHandler;
 import io.undertow.server.handlers.accesslog.AccessLogHandler;
 import io.undertow.server.handlers.encoding.ContentEncodingRepository;
 import io.undertow.server.handlers.encoding.EncodingHandler;
@@ -75,6 +76,7 @@ public class UndertowFactory extends ServletServerFactory {
 
     private final UndertowConfiguration configuration;
     private final @Nullable Router router;
+    private volatile @Nullable GracefulShutdownHandler gracefulShutdownHandler;
 
     /**
      * Default constructor.
@@ -99,6 +101,17 @@ public class UndertowFactory extends ServletServerFactory {
     @Override
     public UndertowConfiguration getServerConfiguration() {
         return (UndertowConfiguration) super.getServerConfiguration();
+    }
+
+    /**
+     * The handler that {@link UndertowServer} uses to stop accepting requests during a graceful shutdown.
+     *
+     * @return The graceful shutdown handler wrapping the deployment, or {@code null} if the server has not been built
+     * @since 6.2.0
+     */
+    @Nullable
+    GracefulShutdownHandler getGracefulShutdownHandler() {
+        return gracefulShutdownHandler;
     }
 
     /**
@@ -129,6 +142,11 @@ public class UndertowFactory extends ServletServerFactory {
         }
         // compression sits inside the access log, so the log records the bytes that actually went out
         httpHandler = compressIfEnabled(httpHandler);
+        // a graceful shutdown refuses new requests through this handler while in-flight ones complete; it sits inside
+        // the access log so that the refusals are logged too
+        GracefulShutdownHandler shutdownHandler = new GracefulShutdownHandler(httpHandler);
+        this.gracefulShutdownHandler = shutdownHandler;
+        httpHandler = shutdownHandler;
         UndertowConfiguration serverConfiguration = getServerConfiguration();
         UndertowConfiguration.AccessLogConfiguration accessLogConfiguration = serverConfiguration.getAccessLogConfiguration().orElse(null);
         if (accessLogConfiguration != null) {
