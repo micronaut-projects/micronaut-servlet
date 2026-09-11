@@ -972,6 +972,11 @@ public final class DefaultServletHttpResponse<B> implements ServletHttpResponse<
         }
 
         @Override
+        public boolean contains(String name) {
+            return delegate.containsHeader(name);
+        }
+
+        @Override
         public List<String> getAll(CharSequence name) {
             final Collection<String> values = delegate.getHeaders(
                     Objects.requireNonNull(name, "Header name cannot be null").toString()

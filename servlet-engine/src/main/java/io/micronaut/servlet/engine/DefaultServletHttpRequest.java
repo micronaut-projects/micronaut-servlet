@@ -220,7 +220,11 @@ public final class DefaultServletHttpRequest<B> implements
         this.byteBodyFactory = ByteBodyFactory.createDefault(ByteArrayBufferFactory.INSTANCE);
         this.headers = new ServletRequestHeaders();
         long inlineLength = -1;
-        if (contentLengthLong > bodySizeLimits.maxBodySize()) {
+        if (contentLengthLong == 0 || (contentLengthLong < 0 && !mayHaveBody())) {
+            // no body by the framing rules, so no stream, publisher or shared buffer is set up for it: most GET
+            // requests take this path and it is otherwise the largest allocation of the request
+            this.byteBody = byteBodyFactory.createEmpty();
+        } else if (contentLengthLong > bodySizeLimits.maxBodySize()) {
             // refused without reading a byte: every read of the body fails, so a route that binds it answers
             // 413 as on the Netty server, while the route itself is still resolved for filters and security
             ContentLengthExceededException tooLarge = new ContentLengthExceededException(bodySizeLimits.maxBodySize(), contentLengthLong);

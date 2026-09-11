@@ -85,6 +85,8 @@ public class JettyConfiguration extends HttpServerConfiguration implements Toggl
     public JettyConfiguration(@Nullable MultipartConfiguration multipartConfiguration, @Nullable JettyRequestLog requestLog) {
         this.multipartConfiguration = multipartConfiguration;
         this.requestLog = requestLog;
+        // the container sends its own Date header, so formatting one per response here is wasted work
+        setDateHeader(false);
     }
 
     /**
