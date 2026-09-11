@@ -131,6 +131,11 @@ public final class DefaultServletHttpRequest<B> implements
      * when the body is created up front.
      */
     private final long inlineBodyLength;
+    /**
+     * Set when the declared length exceeds {@code micronaut.server.max-request-size}: the body fails on every read,
+     * and a form, whose fields the container parses from the same stream, is refused through the parameters too.
+     */
+    private @Nullable ContentLengthExceededException bodyTooLarge;
     private final ByteBodyFactory byteBodyFactory;
     private final Executor ioExecutor;
     private final @Nullable SSLSessionProvider sslSessionProvider;
@@ -227,8 +232,8 @@ public final class DefaultServletHttpRequest<B> implements
         } else if (contentLengthLong > bodySizeLimits.maxBodySize()) {
             // refused without reading a byte: every read of the body fails, so a route that binds it answers
             // 413 as on the Netty server, while the route itself is still resolved for filters and security
-            ContentLengthExceededException tooLarge = new ContentLengthExceededException(bodySizeLimits.maxBodySize(), contentLengthLong);
-            this.byteBody = byteBodyFactory.adapt(Flux.error(tooLarge), length);
+            this.bodyTooLarge = new ContentLengthExceededException(bodySizeLimits.maxBodySize(), contentLengthLong);
+            this.byteBody = byteBodyFactory.adapt(Flux.error(bodyTooLarge), length);
         } else if (readsInline(contentLengthLong, bodySizeLimits, delegate)) {
             // a small body with a known length is read with a blocking read on first use, on the thread that runs
             // the route: that is what a blocking servlet application does, and it keeps the request on the
@@ -573,7 +578,18 @@ public final class DefaultServletHttpRequest<B> implements
     @NonNull
     @Override
     public HttpParameters getParameters() {
+        if (bodyTooLarge != null && isFormSubmission()) {
+            // form fields come from the container's parsing of the body, not from the byte body, so the size limit
+            // has to be enforced here or an oversized form would be accepted whenever the container's own limit
+            // is higher
+            throw bodyTooLarge;
+        }
         return parameters;
+    }
+
+    private boolean isFormSubmission() {
+        String contentType = delegate.getContentType();
+        return contentType != null && isFormContentType(MediaType.of(contentType));
     }
 
     @Override
