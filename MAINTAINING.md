@@ -213,3 +213,36 @@ Micronaut `2.2.0` BOM. If the next version you want to publish is:
   * Set the `githubCoreBranch` property to `3.0.x` (or `2.3.x` if this new major version doesn't introduce breaking changes).
   * Edit the draft release setting the version to `2.0.0` in the release title, body, tag, etc.
   * Publish the release.
+
+## Running the HTTP server TCK against a local micronaut-core
+
+Every servlet runtime runs the shared HTTP server TCK from micronaut-core (`test-suite-http-server-tck-*`). When a
+behavioural gap is found, the fix is written here and the portable test is written in core, and the test has to pass
+on every servlet runtime before the core pull request is opened. To run the suites against a local core checkout:
+
+```bash
+./gradlew -PcoreDir=/path/to/micronaut-core \
+  :test-suite-http-server-tck-jetty:test :test-suite-http-server-tck-tomcat:test \
+  :test-suite-http-server-tck-undertow:test :test-suite-http-server-tck-jdk:test \
+  :test-suite-http-server-tck-poja-apache:test --continue
+```
+
+Gradle substitutes the `io.micronaut:*` dependencies with the included build. Two things to know:
+
+- The suites are JUnit `@Suite` classes with `@ExcludeClassNamePatterns`; each exclusion carries a comment saying
+  why the runtime cannot pass that test. When a test is excluded because of a core TCK bug that has since been
+  fixed, drop the exclusion when the core version is bumped.
+- `--rerun` does not recompile a changed `@Suite` class. After editing a suite's exclusions, run `clean` on that
+  module (in a separate invocation from `test`), or the old exclusion set runs silently.
+
+The `parity.adoc` page in the guide records what each runtime supports; update it when a row changes.
+
+## Measuring throughput
+
+Performance changes are accepted on evidence from an interleaved A/B on a quiet machine: publish the two variants
+to Maven local under distinct versions (`./gradlew -PprojectVersion=6.x.y-VARIANT-SNAPSHOT publishToMavenLocal`
+for the runtime modules), then run the same `wrk` load against each in alternation, at least two rounds, and
+compare requests per second and p99. Single runs on a shared machine have swung by 30 percent on unchanged code;
+the interleaving and the repetition are what make the comparison trustworthy. Profile with JFR
+(`-XX:StartFlightRecording=settings=profile`), which needs no extra tooling, and read `jdk.ExecutionSample` for
+CPU and `jdk.ObjectAllocationSample` for allocation.
