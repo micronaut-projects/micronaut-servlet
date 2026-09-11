@@ -15,6 +15,8 @@
  */
 package io.micronaut.servlet.http.server;
 
+import com.sun.net.httpserver.Filter;
+import com.sun.net.httpserver.HttpContext;
 import com.sun.net.httpserver.HttpServer;
 import com.sun.net.httpserver.HttpsConfigurator;
 import com.sun.net.httpserver.HttpsParameters;
@@ -76,6 +78,7 @@ public class HttpServerFactory {
      * @param servletConfiguration Servlet Configuration
      * @param executorOwnership Records the executor created here, so only that one is shut down with the server
      * @param httpHandlers Handlers
+     * @param filters {@link Filter} beans applied to every context, in bean order, such as the access log
      * @return An HTTP Server
      * @throws IOException If an error occurs creating the server
      */
@@ -87,7 +90,8 @@ public class HttpServerFactory {
                                 ServerSslConfiguration sslConfiguration,
                                 ResourceResolver resourceResolver,
                                 JdkServerExecutorOwnership executorOwnership,
-                                List<HttpHandlerPath> httpHandlers) throws IOException {
+                                List<HttpHandlerPath> httpHandlers,
+                                List<Filter> filters) throws IOException {
         HttpServer server = sslConfiguration.isEnabled()
             ? createHttpsServer(applicationContext, sslConfiguration, resourceResolver)
             : HttpServer.create(serverAddress(applicationContext, httpServerConfiguration), 0);
@@ -95,7 +99,8 @@ public class HttpServerFactory {
         executorOwnership.owns(executorService);
         server.setExecutor(executorService);
         for (HttpHandlerPath handler : httpHandlers) {
-            server.createContext(handler.getPath(), handler.getHttpHandler());
+            HttpContext context = server.createContext(handler.getPath(), handler.getHttpHandler());
+            context.getFilters().addAll(filters);
         }
         return server;
     }
