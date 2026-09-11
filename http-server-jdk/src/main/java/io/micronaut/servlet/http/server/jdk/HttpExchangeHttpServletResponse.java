@@ -46,6 +46,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
 
@@ -175,14 +176,13 @@ final class HttpExchangeHttpServletResponse implements HttpServletResponse {
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
-        ServletOutputStream stream = outputStream;
-        if (stream == null) {
+        if (outputStream == null) {
             // a response that may not carry a body still has to tolerate writes; they are discarded rather than
             // corrupting an exchange that was announced as body-less
-            stream = new HttpExchangeServletOutputStream(isBodyAllowed() ? httpExchange : null);
-            outputStream = stream;
+            outputStream = new HttpExchangeServletOutputStream(isBodyAllowed() ? httpExchange : null);
         }
-        return stream;
+        // the field is nullable only because the stream is built on first use; it is never null past this point
+        return Objects.requireNonNull(outputStream);
     }
 
     @Override
