@@ -115,6 +115,45 @@ class HttpExchangeHttpServletResponseTest {
             () -> "Path must not be written twice: " + encoded);
     }
 
+    @Test
+    void anExplicitExpiresIsKeptWhenNoMaxAgeDerivesIt() {
+        HttpExchangeHttpServletResponse response = newResponse("GET");
+        Cookie cookie = new Cookie("session", "abc");
+        cookie.setAttribute("Expires", "Wed, 21 Oct 2026 07:28:00 GMT");
+        cookie.setAttribute("Comment", "legacy");
+        response.addCookie(cookie);
+
+        String encoded = response.getHeader("Set-Cookie");
+        assertTrue(encoded.contains("Expires=Wed, 21 Oct 2026 07:28:00 GMT"), () -> "explicit Expires dropped: " + encoded);
+        assertTrue(encoded.contains("Comment=legacy"), () -> "Comment dropped: " + encoded);
+    }
+
+    @Test
+    void anExplicitExpiresYieldsToTheOneDerivedFromMaxAge() {
+        HttpExchangeHttpServletResponse response = newResponse("GET");
+        Cookie cookie = new Cookie("session", "abc");
+        cookie.setMaxAge(60);
+        cookie.setAttribute("Expires", "Wed, 21 Oct 2026 07:28:00 GMT");
+        response.addCookie(cookie);
+
+        String encoded = response.getHeader("Set-Cookie");
+        assertEquals(1, countOccurrences(encoded.toLowerCase(Locale.ROOT), "expires="),
+            () -> "Expires must not be written twice: " + encoded);
+    }
+
+    @Test
+    void flushingCommitsTheResponseAndKeepsTheBodyChannelOpen() throws IOException {
+        FakeExchange exchange = new FakeExchange("GET");
+        HttpExchangeHttpServletResponse response = new HttpExchangeHttpServletResponse(exchange, r -> { });
+
+        response.flushBuffer();
+
+        assertTrue(response.isCommitted(), "a flush commits the response");
+        assertTrue(response.isOutputStreamRequested(), "a flushed response must be framed as able to carry a body");
+        response.getOutputStream().write("late".getBytes());
+        assertEquals("late", exchange.responseBody.toString(), "a write after an explicit flush still reaches the wire");
+    }
+
     private static int countOccurrences(String haystack, String needle) {
         int count = 0;
         int from = haystack.indexOf(needle);

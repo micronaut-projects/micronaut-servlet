@@ -61,10 +61,12 @@ final class HttpExchangeHttpServletResponse implements HttpServletResponse {
         .ofPattern("EEE, dd MMM yyyy HH:mm:ss 'GMT'", Locale.ENGLISH);
 
     /**
-     * Attribute names the cookie encoder already writes, lower case for comparison.
+     * Attribute names that the conversion to a Micronaut cookie carries and the encoder therefore writes itself,
+     * lower case for comparison. {@code Expires} is only among them when it was derived from {@code Max-Age}, and
+     * attributes the encoder does not know, such as {@code Comment} or {@code Version}, are appended as given.
      */
     private static final Set<String> ENCODED_COOKIE_ATTRIBUTES = Set.of(
-        "domain", "path", "max-age", "expires", "secure", "httponly", "samesite", "comment", "version"
+        "domain", "path", "max-age", "secure", "httponly", "samesite"
     );
 
     /**
@@ -222,6 +224,11 @@ final class HttpExchangeHttpServletResponse implements HttpServletResponse {
 
     @Override
     public void flushBuffer() throws IOException {
+        // flushing commits the response (Servlet 6.0, section 5.3), and a body may still follow: the exchange has
+        // to be framed as carrying one, or a later legal getOutputStream().write() would meet an exchange already
+        // announced as body-less
+        outputStreamRequested = true;
+        committed = true;
         commitHeaders();
         if (outputStream != null) {
             outputStream.flush();
@@ -265,9 +272,12 @@ final class HttpExchangeHttpServletResponse implements HttpServletResponse {
         if (CollectionUtils.isEmpty(attributes)) {
             return "";
         }
+        // the encoder derives Expires from Max-Age, so an explicit Expires is only redundant when Max-Age is set
+        boolean expiresEncoded = cookie.getMaxAge() >= 0;
         StringBuilder builder = new StringBuilder();
         for (Map.Entry<String, String> attribute : attributes.entrySet()) {
-            if (ENCODED_COOKIE_ATTRIBUTES.contains(attribute.getKey().toLowerCase(Locale.ROOT))) {
+            String name = attribute.getKey().toLowerCase(Locale.ROOT);
+            if (ENCODED_COOKIE_ATTRIBUTES.contains(name) || (expiresEncoded && "expires".equals(name))) {
                 continue;
             }
             builder.append("; ").append(attribute.getKey());
