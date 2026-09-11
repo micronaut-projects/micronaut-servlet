@@ -37,6 +37,7 @@ import io.micronaut.context.env.Environment;
 import io.micronaut.core.io.ResourceResolver;
 import io.micronaut.http.ssl.ClientAuthentication;
 import io.micronaut.http.ssl.SslConfiguration;
+import io.micronaut.scheduling.LoomSupport;
 import io.micronaut.servlet.engine.DefaultMicronautServlet;
 import io.micronaut.servlet.engine.MicronautServletConfiguration;
 import io.micronaut.servlet.engine.ServletCompressionConfiguration;
@@ -130,8 +131,9 @@ public class TomcatFactory extends ServletServerFactory {
         applyCompression(httpsConnector);
         // a platform pool sized by max-threads used to replace the virtual thread executor the connector had been
         // given, so setting a thread limit silently turned virtual threads off. Virtual threads are not pooled, so
-        // there is nothing for the limit to size; when they are enabled the connector keeps its executor
-        if (configuration.getMaxThreads() != null && !configuration.isEnableVirtualThreads()) {
+        // there is nothing for the limit to size; when they are enabled and available the connector keeps its
+        // executor, otherwise the limit applies as before
+        if (configuration.getMaxThreads() != null && !(configuration.isEnableVirtualThreads() && LoomSupport.isSupported())) {
             StandardThreadExecutor executor = new StandardThreadExecutor();
             executor.setName("tomcatThreadPool");
             executor.setMaxThreads(configuration.getMaxThreads());

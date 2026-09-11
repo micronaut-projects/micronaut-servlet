@@ -122,7 +122,15 @@ public final class DefaultServletHttpRequest<B> implements
     private DefaultServletHttpResponse<B> primaryResponse;
     private final MessageBodyHandlerRegistry messageBodyHandlerRegistry;
     private final MutableConvertibleValues<Object> attributes;
-    private final CloseableByteBody byteBody;
+    /**
+     * The body, or {@code null} until it is read when {@link #inlineBodyLength} is set.
+     */
+    private volatile @Nullable CloseableByteBody byteBody;
+    /**
+     * The declared length of a body that is read on first use, on the thread running the route, or {@code -1}
+     * when the body is created up front.
+     */
+    private final long inlineBodyLength;
     private final ByteBodyFactory byteBodyFactory;
     private final Executor ioExecutor;
     private final @Nullable SSLSessionProvider sslSessionProvider;
@@ -211,6 +219,7 @@ public final class DefaultServletHttpRequest<B> implements
         OptionalLong length = contentLengthLong < 0 ? OptionalLong.empty() : OptionalLong.of(contentLengthLong);
         this.byteBodyFactory = ByteBodyFactory.createDefault(ByteArrayBufferFactory.INSTANCE);
         this.headers = new ServletRequestHeaders();
+        long inlineLength = -1;
         if (contentLengthLong > bodySizeLimits.maxBodySize()) {
             // refused without reading a byte: every read of the body fails, so a route that binds it answers
             // 413 as on the Netty server, while the route itself is still resolved for filters and security
@@ -227,10 +236,11 @@ public final class DefaultServletHttpRequest<B> implements
             );
             this.bodyReadsAsynchronously = true;
         } else if (delegate.isAsyncSupported()) {
-            // a small body with a known length is read here, on the container thread that already holds the
-            // request, before the route runs: that is what a blocking servlet application does, and it keeps the
-            // request on this thread instead of paying a dispatch and a ReadListener round trip for a few bytes
-            this.byteBody = readInline(delegate, contentLengthLong, byteBodyFactory);
+            // a small body with a known length is read with a blocking read on first use, on the thread that runs
+            // the route: that is what a blocking servlet application does, and it keeps the request on the
+            // container thread instead of paying a dispatch and a ReadListener round trip for a few bytes. It is
+            // deferred rather than read here so that the request is already counted for graceful shutdown
+            inlineLength = contentLengthLong;
         } else {
             InputStream stream = new LazyDelegateInputStream(delegate);
             if (bodySizeLimits.maxBodySize() < Long.MAX_VALUE) {
@@ -238,6 +248,8 @@ public final class DefaultServletHttpRequest<B> implements
             }
             this.byteBody = InputStreamByteBody.create(stream, length, ioExecutor, byteBodyFactory);
         }
+
+        this.inlineBodyLength = inlineLength;
 
         String requestURI = resolveRequestUri(delegate);
 
@@ -639,7 +651,17 @@ public final class DefaultServletHttpRequest<B> implements
 
     @Override
     public @NonNull ByteBody byteBody() {
-        return byteBody;
+        CloseableByteBody body = byteBody;
+        if (body == null) {
+            synchronized (this) {
+                body = byteBody;
+                if (body == null) {
+                    body = readInline(delegate, inlineBodyLength, byteBodyFactory);
+                    byteBody = body;
+                }
+            }
+        }
+        return body;
     }
 
     @Override
@@ -649,7 +671,10 @@ public final class DefaultServletHttpRequest<B> implements
 
     @Override
     public void close() {
-        byteBody.close();
+        CloseableByteBody body = byteBody;
+        if (body != null) {
+            body.close();
+        }
         runDisposalResources();
     }
 
