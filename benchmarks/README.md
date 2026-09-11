@@ -29,3 +29,18 @@ Scripts:
 
 Compare with Spring Boot MVC by running the same three endpoints on the same container with the same JVM flags and
 200 platform threads; the numbers in the parity plan were taken that way.
+
+## Reference results
+
+`results/` holds the run taken on 11 September 2026 on a quiet Apple Silicon host (JDK 25, `-Xmx1g
+-XX:+UseParallelGC`, virtual threads off, 64 and 256 connections): released 6.1.0 on core 5.1.3, the 6.2 branch on
+core 5.2.0, and Spring Boot 4.0.2 MVC on the same containers. Headline numbers, requests per second at 64
+connections for plain text / JSON / JSON echo:
+
+| Runtime | 6.1.0 | 6.2 | Spring Boot 4 |
+|---|---|---|---|
+| Tomcat | 68k / 74k / 71k | 80k / 79k / 78k | 79k / 62k / 63k |
+| Jetty | 89k / 89k / 67k | 131k / 133k / 121k | 86k / 66k / 63k |
+| Undertow | 79k / 78k / 51k | 128k / 125k / 118k | n/a |
+| JDK HttpServer | 44k / 43k / 37k | 64k / 64k / 63k | n/a |
+| Netty | 86k / 82k / 82k | 96k / 95k / 95k | n/a |

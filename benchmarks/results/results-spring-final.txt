@@ -1,0 +1,55 @@
+=== spring-tomcat
+STARTUP_MS=949 server=spring-tomcat
+HTTP/1.1 200 
+Content-Type: text/plain;charset=UTF-8
+Content-Length: 13
+Date: Fri, 11 Sep 2026 18:06:10 GMT
+
+Hello, World!--- GET /plaintext c=64
+    Latency   793.19us  315.21us   7.68ms   84.25%
+  Latency Distribution
+     99%    1.50ms
+Requests/sec:  78931.91
+--- GET /json c=64
+    Latency     1.01ms  407.98us  21.69ms   93.28%
+  Latency Distribution
+     99%    1.81ms
+Requests/sec:  62399.42
+--- POST /echo c=64
+    Latency     0.99ms  298.49us   8.34ms   91.48%
+  Latency Distribution
+     99%    1.80ms
+Requests/sec:  63342.45
+--- GET /plaintext c=256
+    Latency     3.30ms    1.09ms  10.62ms   69.19%
+  Latency Distribution
+     99%    5.93ms
+Requests/sec:  75709.58
+=== spring-jetty
+STARTUP_MS=914 server=spring-jetty
+HTTP/1.1 200 OK
+Date: Fri, 11 Sep 2026 18:07:33 GMT
+Content-Type: text/plain;charset=utf-8
+Content-Length: 13
+
+Hello, World!--- GET /plaintext c=64
+    Latency   716.82us  128.69us   6.00ms   90.65%
+  Latency Distribution
+     99%    1.18ms
+Requests/sec:  85709.70
+--- GET /json c=64
+    Latency     0.96ms  415.43us  26.70ms   96.92%
+  Latency Distribution
+     99%    1.69ms
+Requests/sec:  65528.70
+--- POST /echo c=64
+    Latency     0.98ms    0.92ms  16.60ms   93.43%
+  Latency Distribution
+     99%    5.34ms
+Requests/sec:  63303.30
+--- GET /plaintext c=256
+    Latency     2.87ms    1.00ms  19.15ms   83.64%
+  Latency Distribution
+     99%    6.38ms
+Requests/sec:  81506.86
+DONE
