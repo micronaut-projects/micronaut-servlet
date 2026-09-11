@@ -78,6 +78,8 @@ public class TomcatConfiguration extends HttpServerConfiguration implements Togg
         this.multipartConfiguration = multipartConfiguration;
         this.protocol = protocol != null ? protocol : DEFAULT_PROTOCOL;
         this.tomcatConnector = new Connector(this.protocol);
+        // the container sends its own Date header, so formatting one per response here is wasted work
+        setDateHeader(false);
     }
 
     /**

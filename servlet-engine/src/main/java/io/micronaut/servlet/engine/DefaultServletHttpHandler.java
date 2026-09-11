@@ -48,6 +48,7 @@ public class DefaultServletHttpHandler extends ServletHttpHandler<HttpServletReq
     private final Executor ioExecutor;
     private final @Nullable SSLSessionProvider sslSessionProvider;
     private final Supplier<BodySizeLimits> bodySizeLimits = SupplierUtil.memoized(this::bodySizeLimits);
+    private final Supplier<BodyBuilder> bodyBuilder = SupplierUtil.memoized(() -> applicationContext.getBean(BodyBuilder.class));
 
     /**
      * Default constructor.
@@ -103,7 +104,7 @@ public class DefaultServletHttpHandler extends ServletHttpHandler<HttpServletReq
     protected ServletExchange<HttpServletRequest, HttpServletResponse> createExchange(
             HttpServletRequest request,
             HttpServletResponse response) {
-        return new DefaultServletHttpRequest<>(applicationContext.getConversionService(), request, response, getMessageBodyHandlerRegistry(), applicationContext.getBean(BodyBuilder.class), ioExecutor, sslSessionProvider, bodySizeLimits.get());
+        return new DefaultServletHttpRequest<>(applicationContext.getConversionService(), request, response, getMessageBodyHandlerRegistry(), bodyBuilder.get(), ioExecutor, sslSessionProvider, bodySizeLimits.get());
     }
 
     @Override

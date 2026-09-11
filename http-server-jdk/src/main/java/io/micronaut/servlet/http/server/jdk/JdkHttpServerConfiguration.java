@@ -36,6 +36,14 @@ public class JdkHttpServerConfiguration extends HttpServerConfiguration implemen
     private boolean enabled = true;
     private AccessLogger accessLogger = new AccessLogger();
 
+    /**
+     * Default constructor.
+     */
+    public JdkHttpServerConfiguration() {
+        // the server sends its own Date header, so formatting one per response here is wasted work
+        setDateHeader(false);
+    }
+
     @Override
     public boolean isEnabled() {
         return enabled;

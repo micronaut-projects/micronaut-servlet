@@ -16,6 +16,7 @@
 package io.micronaut.servlet.http;
 
 import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.context.LifeCycle;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -67,11 +68,9 @@ import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Paths;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -102,6 +101,12 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
     private final Supplier<Executor> ioExecutor;
     private final Supplier<ServletWebSocketUpgrader> webSocketUpgrader;
     private final Supplier<Router> router;
+    /**
+     * Typed publishers resolve their listeners once; publishing through the context would look them up, with the
+     * bean resolution that entails, on every request.
+     */
+    private final Supplier<ApplicationEventPublisher<HttpRequestReceivedEvent>> requestReceivedPublisher;
+    private final Supplier<ApplicationEventPublisher<HttpRequestTerminatedEvent>> requestTerminatedPublisher;
 
     /**
      * Requests received and not yet terminated. Drives graceful shutdown: the server stops accepting, then waits for
@@ -129,6 +134,8 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
         this.ioExecutor = SupplierUtil.memoized(() -> applicationContext.getBean(Executor.class, Qualifiers.byName(TaskExecutors.BLOCKING)));
         this.webSocketUpgrader = SupplierUtil.memoized(() -> applicationContext.findBean(ServletWebSocketUpgrader.class).orElse(null));
         this.router = SupplierUtil.memoized(() -> applicationContext.getBean(Router.class));
+        this.requestReceivedPublisher = SupplierUtil.memoized(() -> applicationContext.getEventPublisher(HttpRequestReceivedEvent.class));
+        this.requestTerminatedPublisher = SupplierUtil.memoized(() -> applicationContext.getEventPublisher(HttpRequestTerminatedEvent.class));
     }
 
     /**
@@ -219,22 +226,29 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
             servletResponse.status(byteBodyResponse.code(), byteBodyResponse.reason());
             HttpHeaders sourceHeaders = byteBodyResponse.getHeaders();
             MutableHttpHeaders servletResponseHeaders = servletResponse.getHeaders();
-            Set<String> sourceNames = new LinkedHashSet<>(sourceHeaders.names());
-            for (String servletResponseHeader : List.copyOf(servletResponseHeaders.names())) {
-                if (sourceNames.remove(servletResponseHeader)) {
-                    List<String> all = sourceHeaders.getAll(servletResponseHeader);
-                    boolean previouslyRemovedCalled = false;
-                    for (String v : all) {
-                        if (!previouslyRemovedCalled) {
-                            // Some implementations don't like to remove some headers so we don't use remove method
-                            servletResponseHeaders.set(servletResponseHeader, v);
-                            previouslyRemovedCalled = true;
+            for (String name : sourceHeaders.names()) {
+                List<String> values = sourceHeaders.getAll(name);
+                if (servletResponseHeaders.contains(name)) {
+                    // some implementations don't like to remove some headers, so the first value replaces what the
+                    // container set and the rest are added
+                    boolean first = true;
+                    for (String value : values) {
+                        if (first) {
+                            servletResponseHeaders.set(name, value);
+                            first = false;
                         } else {
-                            servletResponseHeaders.add(servletResponseHeader, v);
+                            servletResponseHeaders.add(name, value);
                         }
                     }
                 } else {
-                    if (debugEnabled) {
+                    for (String value : values) {
+                        servletResponseHeaders.add(name, value);
+                    }
+                }
+            }
+            if (debugEnabled) {
+                for (String servletResponseHeader : servletResponseHeaders.names()) {
+                    if (!sourceHeaders.contains(servletResponseHeader)) {
                         LOG.debug("Request [{} - {}] custom native response header '{}': '{}'",
                             exchange.getRequest().getMethodName(),
                             exchange.getRequest().getUri(),
@@ -242,9 +256,6 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
                             servletResponseHeaders.get(servletResponseHeader));
                     }
                 }
-            }
-            for (String k : sourceNames) {
-                sourceHeaders.getAll(k).forEach(v -> servletResponseHeaders.add(k, v));
             }
         }
         if (byteBodyResponse.byteBody() instanceof AvailableByteBody available && available.length() == 0) {
@@ -332,7 +343,7 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
                 return;
             }
             requestFinished();
-            applicationContext.publishEvent(new HttpRequestTerminatedEvent(exchange.getRequest()));
+            requestTerminatedPublisher.get().publishEvent(new HttpRequestTerminatedEvent(exchange.getRequest()));
             exchange.close();
             if (LOG.isTraceEnabled()) {
                 final HttpRequest<? super Object> r = exchange.getRequest();
@@ -345,7 +356,7 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
         };
 
         final HttpRequest<Object> req = exchange.getRequest();
-        applicationContext.publishEvent(new HttpRequestReceivedEvent(req));
+        requestReceivedPublisher.get().publishEvent(new HttpRequestReceivedEvent(req));
 
         ServletWebSocketUpgrader upgrader = resolveWebSocketUpgrader(req);
         if (upgrader != null) {
@@ -551,7 +562,7 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
         // protocol switch has already taken over. The HTTP request is over, though, so it no
         // longer counts towards graceful shutdown; the socket's lifetime is the WebSocket's concern.
         requestFinished();
-        applicationContext.publishEvent(new HttpRequestTerminatedEvent(req));
+        requestTerminatedPublisher.get().publishEvent(new HttpRequestTerminatedEvent(req));
     }
 
     private ExecutionFlow<ExecutionResult> process(HttpResponse<?> response,
