@@ -15,3 +15,7 @@ Static resources are not enabled by default. See https://docs.micronaut.io/lates
 ==== How do I enable HTTPS for the embedded server?
 
 See https://docs.micronaut.io/latest/guide/index.html#https[Securing the Server with HTTPS] and the https://docs.micronaut.io/latest/guide/configurationreference.html#io.micronaut.http.ssl.ServerSslConfiguration$DefaultKeyStoreConfiguration[configuration properties] for https://docs.micronaut.io/latest/api/io/micronaut/http/ssl/ServerSslConfiguration.html[ServerSslConfiguration].
+
+==== How do I shut the server down gracefully?
+
+Set `micronaut.lifecycle.graceful-shutdown.enabled` to `true`, as for the Netty server. When the application stops, the embedded server first stops taking new requests and then waits, for up to the configured grace period, for the requests already in progress to complete before the container is stopped. How new requests are refused depends on the container: Jetty stops accepting connections, Tomcat pauses its connectors, and Undertow answers new requests with `503 Service Unavailable`. The built-in Java HTTP server only waits for in-flight requests.

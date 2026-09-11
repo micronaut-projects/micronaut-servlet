@@ -66,7 +66,10 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.Executor;
 import java.util.function.Supplier;
 
@@ -92,6 +95,17 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
     private final Supplier<Executor> ioExecutor;
     private final Supplier<ServletWebSocketUpgrader> webSocketUpgrader;
     private final Supplier<Router> router;
+
+    /**
+     * Requests received and not yet terminated. Drives graceful shutdown: the server stops accepting, then waits for
+     * this to reach zero.
+     */
+    private final AtomicLong activeRequests = new AtomicLong();
+
+    /**
+     * Completed once a drain has been requested and the last active request has terminated.
+     */
+    private final AtomicReference<CompletableFuture<Void>> drained = new AtomicReference<>();
 
     /**
      * Default constructor.
@@ -244,6 +258,41 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
     }
 
     /**
+     * @return The number of requests received and not yet terminated
+     * @since 6.2.0
+     */
+    public long getActiveRequests() {
+        return activeRequests.get();
+    }
+
+    /**
+     * Waits for every active request to terminate. The caller is expected to have stopped the server accepting new
+     * requests first; this only tracks what is already in flight.
+     *
+     * @return A stage that completes when no request is active
+     * @since 6.2.0
+     */
+    public @NonNull CompletionStage<Void> awaitIdle() {
+        CompletableFuture<Void> future = new CompletableFuture<>();
+        if (!drained.compareAndSet(null, future)) {
+            return drained.get();
+        }
+        if (activeRequests.get() == 0) {
+            future.complete(null);
+        }
+        return future;
+    }
+
+    private void requestFinished() {
+        if (activeRequests.decrementAndGet() == 0) {
+            CompletableFuture<Void> future = drained.get();
+            if (future != null) {
+                future.complete(null);
+            }
+        }
+    }
+
+    /**
      * Handles a {@link ServletExchange}.
      *
      * @param exchange The exchange
@@ -253,11 +302,13 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
         // every exit path has to run this exactly once: it closes the request byte body, runs the disposal
         // resources that delete multipart temp files, and publishes the terminated event. The error paths used to
         // return without it, leaking a temp file per failed upload
+        activeRequests.incrementAndGet();
         AtomicBoolean terminated = new AtomicBoolean();
         Runnable requestTerminated = () -> {
             if (!terminated.compareAndSet(false, true)) {
                 return;
             }
+            requestFinished();
             applicationContext.publishEvent(new HttpRequestTerminatedEvent(exchange.getRequest()));
             exchange.close();
             if (LOG.isTraceEnabled()) {

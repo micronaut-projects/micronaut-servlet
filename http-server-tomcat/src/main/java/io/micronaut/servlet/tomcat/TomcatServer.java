@@ -95,6 +95,17 @@ public class TomcatServer extends AbstractServletServer<Tomcat> {
         }
     }
 
+    /**
+     * Pauses every connector so that no new request is read from the network while requests already being
+     * processed run to completion.
+     */
+    @Override
+    protected void stopAcceptingRequests() {
+        for (Connector connector : getServer().getService().findConnectors()) {
+            connector.pause();
+        }
+    }
+
     @Override
     public int getPort() {
         Connector[] connectors = getServer().getService().findConnectors();
