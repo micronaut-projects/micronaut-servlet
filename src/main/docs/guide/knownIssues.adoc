@@ -1,4 +1,4 @@
-There are some known issues with Servlet integration to the Micronaut Framework
+There are some known issues with Servlet integration to the Micronaut Framework. See also xref:parity.adoc[Parity with the Netty server] for what each runtime supports.
 
 === Payara deployment annotation scanning
 
@@ -8,11 +8,10 @@ When that happens, deployment can fail on internal Micronaut classes such as `De
 Add an application `src/main/webapp/WEB-INF/web.xml` with `metadata-complete="true"` as described in the
 xref:warDeployment/payara.adoc[Payara deployment] section.
 
-=== HttpProxyClient and Server Filters
+=== Static resources outside the servlet mapping
 
-It is not currently possible to use the HttpProxyClient with Servlet Filters.
+Static resources are served by the Micronaut servlet, so their paths must fall under `micronaut.servlet.mapping`. A narrowed mapping such as `/api/*` leaves paths outside it unreachable on every container; on Jetty, `micronaut.server.jetty.native-static-resources` serves them with the container's own handler instead.
 
-=== Error handlers re-reading the request body
+=== Unannotated `StreamingFileUpload` arguments
 
-Local error handlers that require the request body to be reparsed will not work in Servlet based applications.
-The body is read from the request input-stream and so attempting to reparse it for the error handler will fail.
+A `StreamingFileUpload` controller argument without `@Part` is not bound on the servlet runtimes, because the container has already parsed the multipart body. Annotate the argument with `@Part`, or use `CompletedFileUpload`.

@@ -70,4 +70,34 @@ class Listener implements ServletContextListener {
         getBean(context, 'test.Filter1')
         getBean(context, 'test.Filter2')
     }
+
+    void "a filter pattern with a glob before the end is rejected, whether given as value or urlPatterns"() {
+        when:
+        buildContext("""
+package test;
+
+import jakarta.servlet.GenericFilter;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
+import jakarta.servlet.annotation.WebFilter;
+import java.io.IOException;
+
+@WebFilter(${attribute} = "/bad/**")
+class BadFilter extends GenericFilter {
+    @Override
+    public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain) throws IOException, ServletException {
+        chain.doFilter(req, res);
+    }
+}
+""")
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains('Servlet Spec 12.2 violation')
+
+        where:
+        attribute << ['value', 'urlPatterns']
+    }
 }

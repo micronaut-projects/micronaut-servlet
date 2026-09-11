@@ -149,7 +149,7 @@ public class JettyFactory extends ServletServerFactory {
             applicationContext,
             configuration,
             jettySslConfiguration,
-            applicationContext.getBeansOfType(ServletContainerInitializer.class),
+            servletContainerInitializers,
             null
         );
     }

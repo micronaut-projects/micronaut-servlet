@@ -65,6 +65,7 @@ import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Paths;
@@ -92,6 +93,7 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
      * Logger to be used by subclasses for logging.
      */
     protected static final Logger LOG = LoggerFactory.getLogger(ServletHttpHandler.class);
+    private static final int STREAM_BUFFER_SIZE = 8192;
 
     protected final ApplicationContext applicationContext;
     private final RouteExecutor routeExecutor;
@@ -282,8 +284,21 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
         } else {
             byteBodyResponse.byteBody().expectedLength()
                 .ifPresent(l -> servletResponse.getHeaders().set(HttpHeaders.CONTENT_LENGTH, String.valueOf(l)));
+            boolean complete = byteBodyResponse.byteBody() instanceof AvailableByteBody;
             try (InputStream is = byteBodyResponse.byteBody().toInputStream()) {
-                is.transferTo(servletResponse.getOutputStream());
+                OutputStream out = servletResponse.getOutputStream();
+                if (complete) {
+                    is.transferTo(out);
+                } else {
+                    // a body still being produced, such as an event stream, is flushed as each piece arrives so
+                    // that the client sees it then rather than when the stream ends
+                    byte[] buffer = new byte[STREAM_BUFFER_SIZE];
+                    int read;
+                    while ((read = is.read(buffer)) != -1) {
+                        out.write(buffer, 0, read);
+                        out.flush();
+                    }
+                }
             } catch (IOException e) {
                 throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, Optional.ofNullable(e.getMessage()).orElse(e.toString()));
             }
