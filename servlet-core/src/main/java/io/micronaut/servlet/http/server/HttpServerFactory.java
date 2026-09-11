@@ -16,16 +16,26 @@
 package io.micronaut.servlet.http.server;
 
 import com.sun.net.httpserver.HttpServer;
+import com.sun.net.httpserver.HttpsConfigurator;
+import com.sun.net.httpserver.HttpsParameters;
+import com.sun.net.httpserver.HttpsServer;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Requires;
+import io.micronaut.context.env.Environment;
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.io.ResourceResolver;
 import io.micronaut.http.server.HttpServerConfiguration;
+import io.micronaut.http.server.exceptions.HttpServerException;
+import io.micronaut.http.ssl.ServerSslConfiguration;
+import io.micronaut.http.ssl.SslConfiguration;
 import io.micronaut.scheduling.LoomSupport;
 import io.micronaut.servlet.http.ServletConfiguration;
 import jakarta.inject.Singleton;
 
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLParameters;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.List;
@@ -74,15 +84,63 @@ public class HttpServerFactory {
     HttpServer createHttpServer(ApplicationContext applicationContext,
                                 HttpServerConfiguration httpServerConfiguration,
                                 ServletConfiguration servletConfiguration,
+                                ServerSslConfiguration sslConfiguration,
+                                ResourceResolver resourceResolver,
                                 JdkServerExecutorOwnership executorOwnership,
                                 List<HttpHandlerPath> httpHandlers) throws IOException {
-        HttpServer server = HttpServer.create(serverAddress(applicationContext, httpServerConfiguration), 0);
+        HttpServer server = sslConfiguration.isEnabled()
+            ? createHttpsServer(applicationContext, sslConfiguration, resourceResolver)
+            : HttpServer.create(serverAddress(applicationContext, httpServerConfiguration), 0);
         ExecutorService executorService = createExecutor(servletConfiguration);
         executorOwnership.owns(executorService);
         server.setExecutor(executorService);
         for (HttpHandlerPath handler : httpHandlers) {
             server.createContext(handler.getPath(), handler.getHttpHandler());
         }
+        return server;
+    }
+
+    /**
+     * Creates a TLS server on the SSL port.
+     *
+     * <p>A {@link HttpServer} listens on a single address, so when TLS is enabled the server is HTTPS only, as the
+     * Netty server is; there is no additional plain-text port. In the test environment the default SSL port is
+     * replaced by a random one, as the servlet containers do.</p>
+     *
+     * @param applicationContext The application context
+     * @param sslConfiguration   The SSL configuration
+     * @param resourceResolver   Resolves the key and trust stores
+     * @return The HTTPS server
+     * @throws IOException If the server cannot be bound
+     */
+    private HttpsServer createHttpsServer(ApplicationContext applicationContext,
+                                          ServerSslConfiguration sslConfiguration,
+                                          ResourceResolver resourceResolver) throws IOException {
+        int port = sslConfiguration.getPort();
+        if (port == SslConfiguration.DEFAULT_PORT && applicationContext.getEnvironment().getActiveNames().contains(Environment.TEST)) {
+            port = 0;
+        }
+        SSLContext sslContext = new JdkSslContextBuilder(resourceResolver).build(sslConfiguration)
+            .orElseThrow(() -> new HttpServerException("SSL is enabled but no SSL context could be built"));
+        HttpsServer server = HttpsServer.create(new InetSocketAddress(port), 0);
+        server.setHttpsConfigurator(new HttpsConfigurator(sslContext) {
+            @Override
+            public void configure(HttpsParameters params) {
+                SSLParameters parameters = getSSLContext().getDefaultSSLParameters();
+                sslConfiguration.getProtocols().ifPresent(parameters::setProtocols);
+                sslConfiguration.getCiphers().ifPresent(parameters::setCipherSuites);
+                sslConfiguration.getClientAuthentication().ifPresent(clientAuthentication -> {
+                    switch (clientAuthentication) {
+                        case NEED -> parameters.setNeedClientAuth(true);
+                        case WANT -> parameters.setWantClientAuth(true);
+                        default -> {
+                            // no client authentication
+                        }
+                    }
+                });
+                params.setSSLParameters(parameters);
+            }
+        });
         return server;
     }
 

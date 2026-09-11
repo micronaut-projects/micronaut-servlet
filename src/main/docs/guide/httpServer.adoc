@@ -12,3 +12,7 @@ To disable the built-in JDK HTTP server runtime when it is present on the classp
 ----
 micronaut.server.jdk.enabled: false
 ----
+
+==== HTTPS
+
+The built-in server supports TLS through the same https://docs.micronaut.io/latest/guide/index.html#https[SSL configuration] as the other runtimes. With `micronaut.ssl.enabled` set to `true` the server listens for HTTPS on `micronaut.server.ssl.port` (default `8443`, or a random port in the `test` environment) instead of the HTTP port. The key store, trust store, protocols, ciphers and client authentication are read from `micronaut.server.ssl`. Unlike the servlet containers the built-in server has a single listener, so it does not also serve plain HTTP when TLS is enabled.
