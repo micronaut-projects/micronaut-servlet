@@ -53,6 +53,11 @@ public class JettyConfiguration extends HttpServerConfiguration implements Toggl
 
     public static final String PREFIX = HttpServerConfiguration.PREFIX + ".jetty";
     public static final String ENABLED_PROPERTY = PREFIX + ".enabled";
+    /**
+     * The default value for {@link #setNativeStaticResources(boolean)}.
+     */
+    @SuppressWarnings("WeakerAccess")
+    public static final boolean DEFAULT_NATIVE_STATIC_RESOURCES = false;
 
     @ConfigurationBuilder
     protected HttpConfiguration httpConfiguration = new HttpConfiguration();
@@ -60,6 +65,7 @@ public class JettyConfiguration extends HttpServerConfiguration implements Toggl
 
     private final @Nullable MultipartConfiguration multipartConfiguration;
     private boolean enabled = true;
+    private boolean nativeStaticResources = DEFAULT_NATIVE_STATIC_RESOURCES;
     private @Nullable Map<String, String> initParameters;
 
     /**
@@ -114,6 +120,31 @@ public class JettyConfiguration extends HttpServerConfiguration implements Toggl
      */
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    /**
+     * Whether static resources are served by Jetty's own {@code ResourceHandler} rather than by the Micronaut static
+     * resource resolver that the other runtimes use.
+     *
+     * @return True if Jetty serves static resources itself
+     * @since 6.2.0
+     */
+    public boolean isNativeStaticResources() {
+        return nativeStaticResources;
+    }
+
+    /**
+     * Serve static resources with Jetty's own {@code ResourceHandler} instead of the Micronaut static resource
+     * resolver. Jetty's handler supports range requests and conditional caching natively, but sits outside the
+     * Micronaut filter chain, so Micronaut filters (including CORS) do not see those requests and the
+     * {@code cache-control} setting of each static resource configuration applies instead of
+     * {@code micronaut.server.responses.file}. Default value ({@value #DEFAULT_NATIVE_STATIC_RESOURCES}).
+     *
+     * @param nativeStaticResources True to let Jetty serve static resources
+     * @since 6.2.0
+     */
+    public void setNativeStaticResources(boolean nativeStaticResources) {
+        this.nativeStaticResources = nativeStaticResources;
     }
 
     /**

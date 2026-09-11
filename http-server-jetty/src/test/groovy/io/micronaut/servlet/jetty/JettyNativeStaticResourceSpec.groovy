@@ -1,6 +1,10 @@
 package io.micronaut.servlet.jetty
 
+import ch.qos.logback.classic.Level
+import ch.qos.logback.classic.spi.ILoggingEvent
+import ch.qos.logback.core.AppenderBase
 import io.micronaut.context.ApplicationContext
+import io.micronaut.context.annotation.Property
 import io.micronaut.context.env.Environment
 import io.micronaut.context.exceptions.BeanInstantiationException
 import io.micronaut.http.HttpRequest
@@ -15,32 +19,47 @@ import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.micronaut.test.support.TestPropertyProvider
 import io.micronaut.web.router.resource.StaticResourceConfiguration
 import jakarta.inject.Inject
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import spock.lang.Issue
 import spock.lang.Specification
 
+import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.Paths
+import java.util.concurrent.BlockingQueue
+import java.util.concurrent.LinkedBlockingQueue
 
+import static io.micronaut.http.HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN
 import static io.micronaut.http.HttpHeaders.CACHE_CONTROL
 import static io.micronaut.http.HttpHeaders.CONTENT_LENGTH
 import static io.micronaut.http.HttpHeaders.CONTENT_TYPE
+import static io.micronaut.http.HttpHeaders.ORIGIN
 
 @MicronautTest
-class JettyStaticResourceResolutionSpec extends Specification implements TestPropertyProvider {
+/**
+ * Jetty can be asked to serve static resources with its own ResourceHandler instead of the shared Micronaut
+ * resolver. That path keeps its own cache-control setting and CORS handling.
+ */
+class JettyNativeStaticResourceSpec extends Specification implements TestPropertyProvider {
 
+    private static Path tempDir
     private static File tempFile
-    private static String DEFAULT_CACHE_CONTROL = "private, max-age=60"
 
     static {
-        tempFile = File.createTempFile("staticResourceResolutionSpec", ".html")
+        tempDir = Files.createTempDirectory(Paths.get(System.getProperty("user.dir")+"/build"),"tmp")
+        tempFile = Files.createTempFile(tempDir,"staticResourceResolutionSpec", ".html").toFile()
         tempFile.write("<html><head></head><body>HTML Page from static file</body></html>")
-        tempFile
+        tempDir.toFile().deleteOnExit()
     }
 
     @Override
     Map<String, Object> getProperties() {
         [
+                'micronaut.server.jetty.native-static-resources': true,
                 'micronaut.router.static-resources.default.paths': ['classpath:public', 'file:' + tempFile.parent],
-                'micronaut.router.static-resources.default.mapping':'/public/**',
+                'micronaut.router.static-resources.default.mapping':'/public',
+                'micronaut.server.jetty.init-parameters.cacheControl':'max-age=3600,public'
         ]
     }
 
@@ -75,7 +94,7 @@ class JettyStaticResourceResolutionSpec extends Specification implements TestPro
         response.header(CONTENT_TYPE) == "text/html"
         Integer.parseInt(response.header(CONTENT_LENGTH)) > 0
         response.headers.contains(CACHE_CONTROL)
-        response.header(CACHE_CONTROL) == DEFAULT_CACHE_CONTROL
+        response.header(CACHE_CONTROL) == "private,max-age=60"
         response.body() == "<html><head></head><body>HTML Page from static file</body></html>"
     }
 
@@ -85,7 +104,7 @@ class JettyStaticResourceResolutionSpec extends Specification implements TestPro
                 HttpRequest.GET('/public/index.html'), String
         )
 
-        File file = Paths.get(JettyStaticResourceResolutionSpec.classLoader.getResource("public/index.html").toURI()).toFile()
+        File file = Paths.get(JettyNativeStaticResourceSpec.classLoader.getResource("public/index.html").toURI()).toFile()
 
         then:
         file.exists()
@@ -93,7 +112,7 @@ class JettyStaticResourceResolutionSpec extends Specification implements TestPro
         response.header(CONTENT_TYPE) == "text/html"
         Integer.parseInt(response.header(CONTENT_LENGTH)) > 0
         response.headers.contains(CACHE_CONTROL)
-        response.header(CACHE_CONTROL) == DEFAULT_CACHE_CONTROL
+        response.header(CACHE_CONTROL) == "private,max-age=60"
 
         response.body() == "<html><head></head><body>HTML Page from resources</body></html>"
     }
@@ -104,7 +123,7 @@ class JettyStaticResourceResolutionSpec extends Specification implements TestPro
                 HttpRequest.GET('/public'), String
         )
 
-        File file = Paths.get(JettyStaticResourceResolutionSpec.classLoader.getResource("public/index.html").toURI()).toFile()
+        File file = Paths.get(JettyNativeStaticResourceSpec.classLoader.getResource("public/index.html").toURI()).toFile()
 
         then:
         file.exists()
@@ -112,7 +131,7 @@ class JettyStaticResourceResolutionSpec extends Specification implements TestPro
         response.header(CONTENT_TYPE) == "text/html"
         Integer.parseInt(response.header(CONTENT_LENGTH)) > 0
         response.headers.contains(CACHE_CONTROL)
-        response.header(CACHE_CONTROL) == DEFAULT_CACHE_CONTROL
+        response.header(CACHE_CONTROL) == "private,max-age=60"
 
         response.body() == "<html><head></head><body>HTML Page from resources</body></html>"
     }
@@ -120,6 +139,7 @@ class JettyStaticResourceResolutionSpec extends Specification implements TestPro
     void "test resources with configured mapping"() {
         given:
         EmbeddedServer embeddedServer = ApplicationContext.run(EmbeddedServer, [
+                'micronaut.server.jetty.native-static-resources': true,
                 'micronaut.router.static-resources.default.paths': ['classpath:public', 'file:' + tempFile.parent],
                 'micronaut.router.static-resources.default.mapping': '/static/**'])
         HttpClient rxClient = embeddedServer.applicationContext.createBean(HttpClient, embeddedServer.getURL())
@@ -129,7 +149,7 @@ class JettyStaticResourceResolutionSpec extends Specification implements TestPro
         HttpResponse<String> response = rxClient.toBlocking().exchange(
                 HttpRequest.GET("/static/index.html"), String
         )
-        File file = Paths.get(JettyStaticResourceResolutionSpec.classLoader.getResource("public/index.html").toURI()).toFile()
+        File file = Paths.get(JettyNativeStaticResourceSpec.classLoader.getResource("public/index.html").toURI()).toFile()
 
         then:
         file.exists()
@@ -145,9 +165,43 @@ class JettyStaticResourceResolutionSpec extends Specification implements TestPro
         embeddedServer.stop()
     }
 
+    void "test cors for static resources uses configured allowed origins"() {
+        given:
+        EmbeddedServer embeddedServer = ApplicationContext.run(EmbeddedServer, [
+                'micronaut.server.jetty.native-static-resources': true,
+                'micronaut.router.static-resources.default.paths': ['classpath:public'],
+                'micronaut.router.static-resources.default.mapping': '/static/**',
+                'micronaut.server.cors.enabled': true,
+                'micronaut.server.cors.configurations.foo.allowedOrigins': ['foo.com']])
+        HttpClient rxClient = embeddedServer.applicationContext.createBean(HttpClient, embeddedServer.getURL())
+
+        when:
+        def allowedResponse = rxClient.toBlocking().exchange(
+                HttpRequest.GET("/static/index.html").header(ORIGIN, 'http://foo.com'), String
+        )
+
+        then:
+        allowedResponse.status == HttpStatus.OK
+        allowedResponse.header(ACCESS_CONTROL_ALLOW_ORIGIN) == 'http://foo.com'
+
+        when:
+        def forbiddenResponse = rxClient.toBlocking().exchange(
+                HttpRequest.GET("/static/index.html").header(ORIGIN, 'http://bar.com'), String
+        )
+
+        then:
+        forbiddenResponse.status == HttpStatus.OK
+        forbiddenResponse.header(ACCESS_CONTROL_ALLOW_ORIGIN) == null
+
+        cleanup:
+        rxClient.close()
+        embeddedServer.stop()
+    }
+
     void "test resources with multiple configured mappings and one is disabled"() {
         given:
         EmbeddedServer embeddedServer = ApplicationContext.run(EmbeddedServer, [
+                'micronaut.server.jetty.native-static-resources': true,
                 'micronaut.router.static-resources.cp.paths': ['classpath:public', 'file:' + tempFile.parent],
                 'micronaut.router.static-resources.cp.mapping': '/static/**',
                 'micronaut.router.static-resources.file.paths': ['file:' + tempFile.parent],
@@ -162,7 +216,7 @@ class JettyStaticResourceResolutionSpec extends Specification implements TestPro
         HttpResponse<String> response = rxClient.toBlocking().exchange(
                 HttpRequest.GET("/static/index.html"), String
         )
-        File file = Paths.get(JettyStaticResourceResolutionSpec.classLoader.getResource("public/index.html").toURI()).toFile()
+        File file = Paths.get(JettyNativeStaticResourceSpec.classLoader.getResource("public/index.html").toURI()).toFile()
 
         then:
         file.exists()
@@ -188,6 +242,7 @@ class JettyStaticResourceResolutionSpec extends Specification implements TestPro
     void "test resources with configured mapping automatically resolves index.html"() {
         given:
         EmbeddedServer embeddedServer = ApplicationContext.run(EmbeddedServer, [
+                'micronaut.server.jetty.native-static-resources': true,
                 'micronaut.router.static-resources.default.paths': ['classpath:public', 'file:' + tempFile.parent],
                 'micronaut.router.static-resources.default.mapping': '/static/**'])
         HttpClient rxClient = embeddedServer.applicationContext.createBean(HttpClient, embeddedServer.getURL())
@@ -196,7 +251,7 @@ class JettyStaticResourceResolutionSpec extends Specification implements TestPro
         def response = rxClient.toBlocking().exchange(
                 HttpRequest.GET("/static"), String
         )
-        File file = Paths.get(JettyStaticResourceResolutionSpec.classLoader.getResource("public/index.html").toURI()).toFile()
+        File file = Paths.get(JettyNativeStaticResourceSpec.classLoader.getResource("public/index.html").toURI()).toFile()
 
         then:
         file.exists()
@@ -214,8 +269,11 @@ class JettyStaticResourceResolutionSpec extends Specification implements TestPro
     void "test resources with configured mapping automatically resolves index.html in path"() {
         given:
         EmbeddedServer embeddedServer = ApplicationContext.run(EmbeddedServer, [
+                'micronaut.server.jetty.native-static-resources': true,
                 'micronaut.router.static-resources.default.paths': ['classpath:public'],
-                'micronaut.router.static-resources.default.mapping': '/static/**'])
+                'micronaut.router.static-resources.default.mapping': '/static/**',
+                'micronaut.router.static-resources.default.cache-control': 'no-cache', // clear the cache control header
+        ])
         HttpClient rxClient = embeddedServer.applicationContext.createBean(HttpClient, embeddedServer.getURL())
 
 
@@ -223,15 +281,17 @@ class JettyStaticResourceResolutionSpec extends Specification implements TestPro
         def response = rxClient.toBlocking().exchange(
                 HttpRequest.GET("/static/foo"), String
         )
-        File file = Paths.get(JettyStaticResourceResolutionSpec.classLoader.getResource("public/foo/index.html").toURI()).toFile()
+        File file = Paths.get(JettyNativeStaticResourceSpec.classLoader.getResource("public/foo/index.html").toURI()).toFile()
 
         then:
         file.exists()
         response.code() == HttpStatus.OK.code
         response.header(CONTENT_TYPE) == "text/html"
         Integer.parseInt(response.header(CONTENT_LENGTH)) > 0
-        response.headers.contains(CACHE_CONTROL)
         response.body() == "<html><head></head><body>HTML Page from resources/foo</body></html>"
+
+        and: 'the cache control header is not set'
+        response.header(CACHE_CONTROL) == 'no-cache'
 
         cleanup:
         embeddedServer.stop()
@@ -241,6 +301,7 @@ class JettyStaticResourceResolutionSpec extends Specification implements TestPro
     void "test its not possible to configure a path with 'classpath:'"() {
         when:
         EmbeddedServer embeddedServer = ApplicationContext.run(EmbeddedServer, [
+                'micronaut.server.jetty.native-static-resources': true,
                 'micronaut.router.static-resources.default.paths': ['classpath:'],
                 'micronaut.router.static-resources.default.mapping': '/static/**'])
 
@@ -257,6 +318,7 @@ class JettyStaticResourceResolutionSpec extends Specification implements TestPro
     void "test resources with mapping names that are prefixes of one another can resolve index.html and a resource"() {
         given:
         EmbeddedServer embeddedServer = ApplicationContext.run(EmbeddedServer, [
+                'micronaut.server.jetty.native-static-resources': true,
                 'micronaut.router.static-resources.nest.paths': ['classpath:nest-test/nested'],
                 'micronaut.router.static-resources.nest.mapping': '/nest/**', // This mapping
                 'micronaut.router.static-resources.nest-test.paths': ['classpath:nest-test'],
@@ -293,7 +355,15 @@ class JettyStaticResourceResolutionSpec extends Specification implements TestPro
     @Issue("https://github.com/micronaut-projects/micronaut-servlet/issues/251")
     void "multiple index.html files causes issues with the static resource handling"() {
         given:
+        MemoryAppender appender = new MemoryAppender()
+        Logger log = LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME)
+        ch.qos.logback.classic.Logger logger = (ch.qos.logback.classic.Logger) log
+        logger.addAppender(appender)
+        logger.setLevel(Level.WARN)
+        appender.start()
+
         EmbeddedServer embeddedServer = ApplicationContext.run(EmbeddedServer, [
+                'micronaut.server.jetty.native-static-resources': true,
                 'micronaut.router.static-resources.nest.paths': ['classpath:nest-test/nested'],
                 'micronaut.router.static-resources.nest.mapping': '/nest/**',
                 'micronaut.router.static-resources.public.paths': ['classpath:public'],
@@ -323,8 +393,21 @@ class JettyStaticResourceResolutionSpec extends Specification implements TestPro
             body() == publicText
         }
 
+        and: 'No warning logs'
+        appender.events.empty
+
         cleanup:
         embeddedServer.stop()
         embeddedServer.close()
+        appender.stop()
+    }
+
+    static class MemoryAppender extends AppenderBase<ILoggingEvent> {
+        final BlockingQueue<ILoggingEvent> events = new LinkedBlockingQueue<>()
+
+        @Override
+        protected void append(ILoggingEvent e) {
+            events.add(e)
+        }
     }
 }
