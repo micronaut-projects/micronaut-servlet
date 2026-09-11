@@ -37,10 +37,12 @@ import io.micronaut.http.MutableHttpHeaders;
 import io.micronaut.http.body.AvailableByteBody;
 import io.micronaut.http.body.ByteBodyFactory;
 import io.micronaut.http.body.MessageBodyHandlerRegistry;
+import io.micronaut.http.body.stream.BodySizeLimits;
 import io.micronaut.http.context.ServerHttpRequestContext;
 import io.micronaut.http.context.event.HttpRequestReceivedEvent;
 import io.micronaut.http.context.event.HttpRequestTerminatedEvent;
 import io.micronaut.http.exceptions.HttpStatusException;
+import io.micronaut.http.server.HttpServerConfiguration;
 import io.micronaut.http.server.RequestLifecycle;
 import io.micronaut.http.server.ResponseLifecycle;
 import io.micronaut.http.server.RouteExecutor;
@@ -127,6 +129,19 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
         this.ioExecutor = SupplierUtil.memoized(() -> applicationContext.getBean(Executor.class, Qualifiers.byName(TaskExecutors.BLOCKING)));
         this.webSocketUpgrader = SupplierUtil.memoized(() -> applicationContext.findBean(ServletWebSocketUpgrader.class).orElse(null));
         this.router = SupplierUtil.memoized(() -> applicationContext.getBean(Router.class));
+    }
+
+    /**
+     * The limits from {@code micronaut.server.max-request-size} and {@code micronaut.server.max-request-buffer-size},
+     * for runtimes to apply while a request body is read.
+     *
+     * @return The body size limits
+     * @since 6.2.0
+     */
+    protected @NonNull BodySizeLimits bodySizeLimits() {
+        return applicationContext.findBean(HttpServerConfiguration.class)
+            .map(configuration -> new BodySizeLimits(configuration.getMaxRequestSize(), configuration.getMaxRequestBufferSize()))
+            .orElse(BodySizeLimits.UNLIMITED);
     }
 
     /**

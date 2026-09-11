@@ -21,6 +21,7 @@ import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.convert.value.MutableConvertibleValues;
 import io.micronaut.core.io.buffer.ByteArrayBufferFactory;
+import io.micronaut.core.io.buffer.ReadBufferFactory;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
@@ -36,12 +37,13 @@ import io.micronaut.http.MutableHttpRequest;
 import io.micronaut.http.ServerHttpRequest;
 import io.micronaut.http.body.ByteBody;
 import io.micronaut.http.body.ByteBodyFactory;
-import io.micronaut.http.body.ByteBufferBodyAdapter;
 import io.micronaut.http.body.CloseableByteBody;
 import io.micronaut.http.body.MessageBodyHandlerRegistry;
 import io.micronaut.http.body.stream.AvailableByteArrayBody;
+import io.micronaut.http.body.stream.BodySizeLimits;
 import io.micronaut.http.body.stream.InputStreamByteBody;
 import io.micronaut.http.cookie.Cookies;
+import io.micronaut.http.exceptions.ContentLengthExceededException;
 import io.micronaut.http.form.FormCapableHttpRequest;
 import io.micronaut.http.multipart.FormFieldMetadata;
 import io.micronaut.http.multipart.RawFormField;
@@ -169,6 +171,31 @@ public final class DefaultServletHttpRequest<B> implements
                               BodyBuilder bodyBuilder,
                               Executor ioExecutor,
                               @Nullable SSLSessionProvider sslSessionProvider) {
+        this(conversionService, delegate, response, messageBodyHandlerRegistry, bodyBuilder, ioExecutor, sslSessionProvider, BodySizeLimits.UNLIMITED);
+    }
+
+    /**
+     * Constructor applying the server's body size limits.
+     *
+     * @param conversionService  The servlet request
+     * @param delegate           The servlet request
+     * @param response           The servlet response
+     * @param messageBodyHandlerRegistry      The message body handler registry
+     * @param bodyBuilder        Body Builder
+     * @param ioExecutor         Executor for blocking operations
+     * @param sslSessionProvider The {@link SSLSession} provider from attribute
+     * @param bodySizeLimits     The limits from {@code micronaut.server.max-request-size} and
+     *                           {@code micronaut.server.max-request-buffer-size}, enforced while the body is read
+     * @since 6.2.0
+     */
+    DefaultServletHttpRequest(ConversionService conversionService,
+                              HttpServletRequest delegate,
+                              HttpServletResponse response,
+                              MessageBodyHandlerRegistry messageBodyHandlerRegistry,
+                              BodyBuilder bodyBuilder,
+                              Executor ioExecutor,
+                              @Nullable SSLSessionProvider sslSessionProvider,
+                              BodySizeLimits bodySizeLimits) {
         super();
         this.conversionService = conversionService;
         this.delegate = delegate;
@@ -178,10 +205,27 @@ public final class DefaultServletHttpRequest<B> implements
         long contentLengthLong = delegate.getContentLengthLong();
         OptionalLong length = contentLengthLong < 0 ? OptionalLong.empty() : OptionalLong.of(contentLengthLong);
         this.byteBodyFactory = ByteBodyFactory.createDefault(ByteArrayBufferFactory.INSTANCE);
-        if (delegate.isAsyncSupported()) {
-            this.byteBody = ByteBufferBodyAdapter.adapt(new ServletStreamPublisher(delegate::getInputStream), length);
+        this.headers = new ServletRequestHeaders();
+        if (contentLengthLong > bodySizeLimits.maxBodySize()) {
+            // refused without reading a byte: every read of the body fails, so a route that binds it answers
+            // 413 as on the Netty server, while the route itself is still resolved for filters and security
+            ContentLengthExceededException tooLarge = new ContentLengthExceededException(bodySizeLimits.maxBodySize(), contentLengthLong);
+            this.byteBody = byteBodyFactory.adapt(Flux.error(tooLarge), length);
+        } else if (delegate.isAsyncSupported()) {
+            // the shared streaming body applies the size limits itself
+            ReadBufferFactory readBufferFactory = byteBodyFactory.readBufferFactory();
+            this.byteBody = byteBodyFactory.adapt(
+                Flux.from(new ServletStreamPublisher(delegate::getInputStream)).map(readBufferFactory::adapt),
+                bodySizeLimits,
+                headers,
+                null
+            );
         } else {
-            this.byteBody = InputStreamByteBody.create(new LazyDelegateInputStream(delegate), length, ioExecutor, byteBodyFactory);
+            InputStream stream = new LazyDelegateInputStream(delegate);
+            if (bodySizeLimits.maxBodySize() < Long.MAX_VALUE) {
+                stream = new LimitedInputStream(stream, bodySizeLimits.maxBodySize());
+            }
+            this.byteBody = InputStreamByteBody.create(stream, length, ioExecutor, byteBodyFactory);
         }
 
         String requestURI = resolveRequestUri(delegate);
@@ -199,7 +243,6 @@ public final class DefaultServletHttpRequest<B> implements
             method = HttpMethod.CUSTOM;
         }
         this.method = method;
-        this.headers = new ServletRequestHeaders();
         this.parameters = new ServletParameters();
         this.primaryResponse = new DefaultServletHttpResponse<>(conversionService, this, response);
         this.body = SupplierUtil.memoizedNonEmpty(() -> {
