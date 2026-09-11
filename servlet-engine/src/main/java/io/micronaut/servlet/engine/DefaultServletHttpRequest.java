@@ -376,7 +376,33 @@ public final class DefaultServletHttpRequest<B> implements
         }
         AsyncContext startedAsyncContext = delegate.startAsync();
         this.asyncContext = startedAsyncContext;
-        startedAsyncContext.start(() -> asyncExecutionCallback.run(startedAsyncContext::complete));
+        if (mayHaveBody()) {
+            // the body is read through a ReadListener, which the container only drives once the service
+            // method has returned, so a request with a body has to leave this thread first
+            startedAsyncContext.start(() -> asyncExecutionCallback.run(startedAsyncContext::complete));
+        } else {
+            // otherwise the route runs on the thread already handling the request: AsyncContext.start(Runnable)
+            // would hand it to another pool thread first, a hop that is pure overhead for the common GET, and
+            // completing the context from the service thread is allowed by the specification
+            asyncExecutionCallback.run(startedAsyncContext::complete);
+        }
+    }
+
+    /**
+     * Whether the request may carry a body, by the framing rules: on HTTP/1 a body is announced by a
+     * {@code Content-Length} or {@code Transfer-Encoding}; on HTTP/2 the headers cannot say, so a body is assumed.
+     */
+    private boolean mayHaveBody() {
+        if (delegate.getContentLengthLong() > 0) {
+            return true;
+        }
+        if (delegate.getContentLengthLong() == 0) {
+            return false;
+        }
+        if (delegate.getHeader(HttpHeaders.TRANSFER_ENCODING) != null) {
+            return true;
+        }
+        return getHttpVersion() != HttpVersion.HTTP_1_0 && getHttpVersion() != HttpVersion.HTTP_1_1;
     }
 
     @NonNull
