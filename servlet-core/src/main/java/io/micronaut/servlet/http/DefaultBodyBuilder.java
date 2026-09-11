@@ -76,12 +76,13 @@ public class DefaultBodyBuilder implements BodyBuilder {
         } catch (EOFException _) {
             // no content
             return null;
-        } catch (CodecException e) {
-            throw new CodecException("Error decoding request body: " + e.getMessage(), e);
-        } catch (HttpException e) {
-            // a failure raised by the body itself, such as the request size limit, keeps its own status
-            throw e;
         } catch (Exception e) {
+            // a failure raised by the body itself, such as the request size limit, keeps its own status even when
+            // a codec wrapped it while reading; anything else is a decoding problem
+            HttpException httpException = BodyReadFailures.httpFailure(e);
+            if (httpException != null) {
+                throw httpException;
+            }
             throw new CodecException("Error decoding request body: " + e.getMessage(), e);
         }
     }

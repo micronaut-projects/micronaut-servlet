@@ -74,7 +74,6 @@ import java.util.concurrent.CompletionStage;
  */
 public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body, T> {
     private static final Argument<byte[]> BYTE_ARRAY = Argument.of(byte[].class);
-    private static final int MAX_CAUSE_DEPTH = 8;
 
     protected final ConversionService conversionService;
     private final MessageBodyHandlerRegistry messageBodyHandlerRegistry;
@@ -119,7 +118,7 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
                     String text = IOUtils.readText(bufferedReader);
                     return () -> (Optional<T>) Optional.of(text);
                 } catch (IOException e) {
-                    HttpException httpException = httpFailure(e);
+                    HttpException httpException = BodyReadFailures.httpFailure(e);
                     if (httpException != null) {
                         throw httpException;
                     }
@@ -185,6 +184,8 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
                         return () -> Optional.ofNullable(content);
                     } catch (CodecException | IOException e) {
                         throw decodingFailure("Unable to decode request body: ", e);
+                    } catch (RuntimeException e) {
+                        throw BodyReadFailures.httpFailureOr(e);
                     }
                 }
             }
@@ -225,6 +226,8 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
                     return () -> (Optional<T>) Optional.ofNullable(content);
                 } catch (CodecException | IOException e) {
                     throw decodingFailure("Unable to decode request body: ", e);
+                } catch (RuntimeException e) {
+                    throw BodyReadFailures.httpFailureOr(e);
                 }
             }
 
@@ -255,6 +258,8 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
                         return () -> Optional.of((T) array);
                     } catch (CodecException | IOException e) {
                         throw decodingFailure("Unable to decode request body: ", e);
+                    } catch (RuntimeException e) {
+                        throw BodyReadFailures.httpFailureOr(e);
                     }
                 }
             } else {
@@ -268,6 +273,8 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
                         return () -> (Optional<T>) Optional.ofNullable(content);
                     } catch (CodecException | IOException e) {
                         throw decodingFailure("Unable to decode request body: ", e);
+                    } catch (RuntimeException e) {
+                        throw BodyReadFailures.httpFailureOr(e);
                     }
                 }
             }
@@ -390,6 +397,8 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
                 }
             } catch (CodecException | IOException e) {
                 throw decodingFailure("Unable to decode request body: ", e);
+            } catch (RuntimeException e) {
+                throw BodyReadFailures.httpFailureOr(e);
             }
         }
         return conversionService.convertRequired(publisher, type);
@@ -422,30 +431,11 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
      * @return The exception to throw
      */
     private static RuntimeException decodingFailure(String message, Exception e) {
-        HttpException httpException = httpFailure(e);
+        HttpException httpException = BodyReadFailures.httpFailure(e);
         if (httpException != null) {
             return httpException;
         }
         return new CodecException(message + e.getMessage(), e);
-    }
-
-    /**
-     * Finds an HTTP failure in the cause chain of a body read error. The streaming body wraps its errors in
-     * {@link IOException} when it is read as a stream, so the original exception has to be dug out.
-     *
-     * @param e The failure
-     * @return The HTTP failure, or {@code null} if there is none
-     */
-    private static @Nullable HttpException httpFailure(Throwable e) {
-        Throwable current = e;
-        for (int depth = 0; current != null && depth < MAX_CAUSE_DEPTH; depth++) {
-            if (current instanceof HttpException httpException && !(current instanceof CodecException)) {
-                // a codec failure is a decoding problem to report as such, not a status of its own
-                return httpException;
-            }
-            current = current.getCause();
-        }
-        return null;
     }
 
     private record ServletReadable(

@@ -78,6 +78,20 @@ class TomcatMaxRequestSizeSpec extends Specification {
         !controller.reached
     }
 
+    void "an oversized JSON body is refused with 413"() {
+        given:
+        String json = '{"value":"' + ('x' * 4096) + '"}'
+
+        when:
+        HttpResponse<String> response = client.send(HttpRequest.newBuilder(embeddedServer.URI.resolve('/size/json'))
+            .header('Content-Type', MediaType.APPLICATION_JSON)
+            .POST(HttpRequest.BodyPublishers.ofString(json))
+            .build(), HttpResponse.BodyHandlers.ofString())
+
+        then:
+        response.statusCode() == 413
+    }
+
     private HttpResponse<String> send(String body, boolean declareLength) {
         HttpRequest.BodyPublisher publisher = declareLength
             ? HttpRequest.BodyPublishers.ofString(body)
@@ -99,6 +113,12 @@ class TomcatMaxRequestSizeSpec extends Specification {
         String size(@Body String body) {
             reached = true
             String.valueOf(body.length())
+        }
+
+        @Post('/json')
+        String json(@Body Map<String, String> body) {
+            reached = true
+            String.valueOf(body.get('value').length())
         }
 
         @Post('/form')
