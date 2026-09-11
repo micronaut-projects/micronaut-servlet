@@ -17,7 +17,6 @@ package io.micronaut.servlet.http.server.jdk;
 
 import com.sun.net.httpserver.Filter;
 import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpsExchange;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.util.StringUtils;
@@ -88,7 +87,8 @@ final class AccessLogFilter extends Filter {
         InetSocketAddress remote = exchange.getRemoteAddress();
         String host = remote == null ? "-" : remote.getAddress().getHostAddress();
         String user = exchange.getPrincipal() == null ? "-" : exchange.getPrincipal().getUsername();
-        String protocol = exchange instanceof HttpsExchange ? "HTTPS" : exchange.getProtocol();
+        // the request line carries the HTTP version whether or not TLS transports it
+        String protocol = exchange.getProtocol();
         int status = exchange.getResponseCode();
         String length = exchange.getResponseHeaders().getFirst("Content-Length");
         return host + " - " + user + " [" + TIMESTAMP.format(received) + "] \""

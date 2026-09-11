@@ -548,7 +548,9 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
         }
         // The connection now belongs to the WebSocket implementation, so the exchange is
         // deliberately not closed here: closing it would touch container streams that the
-        // protocol switch has already taken over.
+        // protocol switch has already taken over. The HTTP request is over, though, so it no
+        // longer counts towards graceful shutdown; the socket's lifetime is the WebSocket's concern.
+        requestFinished();
         applicationContext.publishEvent(new HttpRequestTerminatedEvent(req));
     }
 
