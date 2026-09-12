@@ -151,7 +151,7 @@
         <h1>Micronaut Servlet</h1>
         <p></p>
         <p>Provides integration between Micronaut and the Servlet API</p>
-        <p><strong>Version:</strong> 6.1.1-SNAPSHOT </p>
+        <p><strong>Version:</strong> 6.2.0-SNAPSHOT </p>
     </div>
     
 <h1 id="introduction"><a class="anchor" href="#introduction"></a>1 Introduction</h1>
@@ -1347,6 +1347,12 @@ If you plan to produce a WAR file then the dependency should be <code>developmen
 <td class="tableblock halign-left valign-top"></td>
 </tr>
 <tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.error-response-include-message</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/http/server/HttpServerConfiguration.ErrorResponseIncludeMessageMode.html">HttpServerConfiguration$ErrorResponseIncludeMessageMode</a></p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.client-address-header</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">java.lang.String</p></td>
 <td class="tableblock halign-left valign-top"></td>
@@ -1744,6 +1750,12 @@ If you plan to produce a WAR file then the dependency should be <code>developmen
 <td class="tableblock halign-left valign-top"></td>
 </tr>
 <tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.error-response-include-message</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/http/server/HttpServerConfiguration.ErrorResponseIncludeMessageMode.html">HttpServerConfiguration$ErrorResponseIncludeMessageMode</a></p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.client-address-header</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">java.lang.String</p></td>
 <td class="tableblock halign-left valign-top"></td>
@@ -2106,6 +2118,12 @@ If you plan to produce a WAR file then the dependency should be <code>developmen
 <td class="tableblock halign-left valign-top"></td>
 </tr>
 <tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.error-response-include-message</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/http/server/HttpServerConfiguration.ErrorResponseIncludeMessageMode.html">HttpServerConfiguration$ErrorResponseIncludeMessageMode</a></p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.client-address-header</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">java.lang.String</p></td>
 <td class="tableblock halign-left valign-top"></td>
@@ -2452,6 +2470,12 @@ micronaut.server.undertow.accessLog.outputDirectory = "/var/logs"</code></pre>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.log-handled-exceptions</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.error-response-include-message</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/http/server/HttpServerConfiguration.ErrorResponseIncludeMessageMode.html">HttpServerConfiguration$ErrorResponseIncludeMessageMode</a></p></td>
 <td class="tableblock halign-left valign-top"></td>
 <td class="tableblock halign-left valign-top"></td>
 </tr>
@@ -2996,7 +3020,7 @@ The body is read from the request input-stream and so attempting to reparse it f
 <div class="sect3">
 <h4 id="_how_do_i_configure_multipart_handling">How do I configure Multipart handling?</h4>
 <div class="paragraph">
-<p>Multipart handling is disabled by default. You can enable it with the <a href="https://docs.micronaut.io/latest/guide/configurationreference.html#io.micronaut.http.server.HttpServerConfiguration$MultipartConfiguration">following configuration properties</a>.</p>
+<p>Multipart handling is enabled by default, as it is on the Netty server. Set <code>micronaut.server.multipart.enabled</code> to <code>false</code> to turn it off, and see the <a href="https://docs.micronaut.io/latest/guide/configurationreference.html#io.micronaut.http.server.HttpServerConfiguration$MultipartConfiguration">configuration properties</a> for the limits that apply to uploads.</p>
 </div>
 </div>
 <div class="sect3">
@@ -3023,6 +3047,33 @@ The body is read from the request input-stream and so attempting to reparse it f
 
 <div class="paragraph">
 <p>This section documents breaking changes between Micronaut Servlet versions:</p>
+</div>
+<div class="sect1">
+<h2 id="_micronaut_servlet_6_2_0">Micronaut Servlet 6.2.0</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_multipart_handling_is_enabled_by_default">Multipart handling is enabled by default</h3>
+<div class="paragraph">
+<p><code>micronaut.server.multipart.enabled</code> has no default of its own. Its <code>isEnabled()</code> reported <code>false</code> when the property was unset, while the Netty server and the shared request lifecycle read the raw value and treat unset as enabled. The servlet configuration followed <code>isEnabled()</code>, so no <code>MultipartConfigElement</code> was registered and the container never parsed multipart bodies: parts reached no controller argument and <code>getParts()</code> was unavailable.</p>
+</div>
+<div class="paragraph">
+<p>Servlet containers now follow the same rule as the rest of the framework, so an unset value means enabled.</p>
+</div>
+<div class="paragraph">
+<p>Two consequences for Jetty, Tomcat and Undertow applications:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Multipart requests are parsed where they previously were not, so <code>@Part</code> arguments, <code>CompletedFileUpload</code> and <code>getParts()</code> start working without configuration.</p>
+</li>
+<li>
+<p>Micronaut&#8217;s multipart limits now apply to those uploads. <code>micronaut.server.multipart.max-file-size</code> defaults to 1MB and <code>micronaut.server.max-request-size</code> to 10MB, so an upload that previously passed unchecked may now be rejected. Raise the limits, or set <code>micronaut.server.multipart.enabled</code> to <code>false</code> to restore the previous behaviour.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
 </div>
 <div class="sect1">
 <h2 id="_micronaut_servlet_5_0_0">Micronaut Servlet 5.0.0</h2>
