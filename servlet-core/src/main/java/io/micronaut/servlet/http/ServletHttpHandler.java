@@ -16,27 +16,35 @@
 package io.micronaut.servlet.http;
 
 import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.context.LifeCycle;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import io.micronaut.core.async.subscriber.LazySendingSubscriber;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.execution.ExecutionFlow;
 import io.micronaut.core.io.buffer.ByteArrayBufferFactory;
+import io.micronaut.core.io.buffer.ReadBuffer;
 import io.micronaut.core.propagation.PropagatedContext;
+import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.core.util.SupplierUtil;
 import io.micronaut.http.ByteBodyHttpResponse;
+import io.micronaut.http.ByteBodyHttpResponseWrapper;
 import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MutableHttpHeaders;
 import io.micronaut.http.body.AvailableByteBody;
+import io.micronaut.http.body.ByteBody;
 import io.micronaut.http.body.ByteBodyFactory;
 import io.micronaut.http.body.MessageBodyHandlerRegistry;
+import io.micronaut.http.body.stream.BodySizeLimits;
 import io.micronaut.http.context.ServerHttpRequestContext;
 import io.micronaut.http.context.event.HttpRequestReceivedEvent;
 import io.micronaut.http.context.event.HttpRequestTerminatedEvent;
 import io.micronaut.http.exceptions.HttpStatusException;
+import io.micronaut.http.server.HttpServerConfiguration;
 import io.micronaut.http.server.RequestLifecycle;
 import io.micronaut.http.server.ResponseLifecycle;
 import io.micronaut.http.server.RouteExecutor;
@@ -50,6 +58,7 @@ import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.web.router.Router;
 import io.micronaut.web.router.UriRouteMatch;
 import io.micronaut.web.router.resource.StaticResourceResolver;
+import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,16 +66,17 @@ import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Paths;
-import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.Executor;
 import java.util.function.Supplier;
 
@@ -83,6 +93,7 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
      * Logger to be used by subclasses for logging.
      */
     protected static final Logger LOG = LoggerFactory.getLogger(ServletHttpHandler.class);
+    private static final int STREAM_BUFFER_SIZE = 8192;
 
     protected final ApplicationContext applicationContext;
     private final RouteExecutor routeExecutor;
@@ -92,6 +103,23 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
     private final Supplier<Executor> ioExecutor;
     private final Supplier<ServletWebSocketUpgrader> webSocketUpgrader;
     private final Supplier<Router> router;
+    /**
+     * Typed publishers resolve their listeners once; publishing through the context would look them up, with the
+     * bean resolution that entails, on every request.
+     */
+    private final Supplier<ApplicationEventPublisher<HttpRequestReceivedEvent>> requestReceivedPublisher;
+    private final Supplier<ApplicationEventPublisher<HttpRequestTerminatedEvent>> requestTerminatedPublisher;
+
+    /**
+     * Requests received and not yet terminated. Drives graceful shutdown: the server stops accepting, then waits for
+     * this to reach zero.
+     */
+    private final AtomicLong activeRequests = new AtomicLong();
+
+    /**
+     * Completed once a drain has been requested and the last active request has terminated.
+     */
+    private final AtomicReference<CompletableFuture<Void>> drained = new AtomicReference<>();
 
     /**
      * Default constructor.
@@ -108,6 +136,21 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
         this.ioExecutor = SupplierUtil.memoized(() -> applicationContext.getBean(Executor.class, Qualifiers.byName(TaskExecutors.BLOCKING)));
         this.webSocketUpgrader = SupplierUtil.memoized(() -> applicationContext.findBean(ServletWebSocketUpgrader.class).orElse(null));
         this.router = SupplierUtil.memoized(() -> applicationContext.getBean(Router.class));
+        this.requestReceivedPublisher = SupplierUtil.memoized(() -> applicationContext.getEventPublisher(HttpRequestReceivedEvent.class));
+        this.requestTerminatedPublisher = SupplierUtil.memoized(() -> applicationContext.getEventPublisher(HttpRequestTerminatedEvent.class));
+    }
+
+    /**
+     * The limits from {@code micronaut.server.max-request-size} and {@code micronaut.server.max-request-buffer-size},
+     * for runtimes to apply while a request body is read.
+     *
+     * @return The body size limits
+     * @since 6.2.0
+     */
+    protected @NonNull BodySizeLimits bodySizeLimits() {
+        return applicationContext.findBean(HttpServerConfiguration.class)
+            .map(configuration -> new BodySizeLimits(configuration.getMaxRequestSize(), configuration.getMaxRequestBufferSize()))
+            .orElse(BodySizeLimits.UNLIMITED);
     }
 
     /**
@@ -165,81 +208,132 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
 
     private static void transfer(ExecutionResult executionResult, ServletExchange<?, ?> exchange, boolean async, Runnable onComplete) {
         ByteBodyHttpResponse<?> byteBodyResponse = executionResult.byteBodyHttpResponse;
-        boolean debugEnabled = LOG.isDebugEnabled();
-        if (debugEnabled) {
-            if (byteBodyResponse == null) {
-                LOG.debug("Request [{} - {}] completed commited manually", exchange.getRequest().getMethodName(), exchange.getRequest().getUri());
-            } else {
-                LOG.debug("Request [{} - {}] completed successfully", exchange.getRequest().getMethodName(), exchange.getRequest().getUri());
-            }
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Request [{} - {}] completed {}", exchange.getRequest().getMethodName(), exchange.getRequest().getUri(),
+                byteBodyResponse == null ? "committed manually" : "successfully");
         }
         if (byteBodyResponse == null) {
             onComplete.run();
             return;
         }
-
         traceHeaders(byteBodyResponse.getHeaders());
-
         ServletHttpResponse<?, ?> servletResponse = exchange.getResponse();
-        if (byteBodyResponse.getHeaders() != exchange.getResponse().getHeaders()) {
+        if (byteBodyResponse.getHeaders() != servletResponse.getHeaders()) {
             servletResponse.status(byteBodyResponse.code(), byteBodyResponse.reason());
-            HttpHeaders sourceHeaders = byteBodyResponse.getHeaders();
-            MutableHttpHeaders servletResponseHeaders = servletResponse.getHeaders();
-            Set<String> sourceNames = new LinkedHashSet<>(sourceHeaders.names());
-            for (String servletResponseHeader : List.copyOf(servletResponseHeaders.names())) {
-                if (sourceNames.remove(servletResponseHeader)) {
-                    List<String> all = sourceHeaders.getAll(servletResponseHeader);
-                    boolean previouslyRemovedCalled = false;
-                    for (String v : all) {
-                        if (!previouslyRemovedCalled) {
-                            // Some implementations don't like to remove some headers so we don't use remove method
-                            servletResponseHeaders.set(servletResponseHeader, v);
-                            previouslyRemovedCalled = true;
-                        } else {
-                            servletResponseHeaders.add(servletResponseHeader, v);
-                        }
-                    }
-                } else {
-                    if (debugEnabled) {
-                        LOG.debug("Request [{} - {}] custom native response header '{}': '{}'",
-                            exchange.getRequest().getMethodName(),
-                            exchange.getRequest().getUri(),
-                            servletResponseHeader,
-                            servletResponseHeaders.get(servletResponseHeader));
-                    }
-                }
-            }
-            for (String k : sourceNames) {
-                sourceHeaders.getAll(k).forEach(v -> servletResponseHeaders.add(k, v));
-            }
+            copyHeaders(byteBodyResponse.getHeaders(), servletResponse.getHeaders(), exchange);
         }
-        if (byteBodyResponse.byteBody() instanceof AvailableByteBody available && available.length() == 0) {
+        ByteBody body = byteBodyResponse.byteBody();
+        if (body instanceof AvailableByteBody available && available.length() == 0) {
             // special case, don't call getOutputStream. the controller may have written manually.
             onComplete.run();
-        } else if (async) {
-            servletResponse.stream(byteBodyResponse.byteBody().move()).whenComplete((ignored, t) -> {
+        } else if (async && !(body instanceof AvailableByteBody)) {
+            // a body that is still being produced is written as it arrives, through a WriteListener; a body that
+            // is already complete is written below on this thread instead, because the listener costs a dispatch
+            // through the container on every response and buys nothing when there is nothing to wait for
+            servletResponse.stream(body.move()).whenComplete((ignored, t) -> {
                 if (t != null) {
-                    if (t instanceof EOFException) {
-                        if (LOG.isDebugEnabled()) {
-                            LOG.debug("Error while writing response body", t);
-                        }
-                    } else {
-                        if (LOG.isWarnEnabled()) {
-                            LOG.warn("Error while writing response body", t);
-                        }
-                    }
+                    logWriteFailure(t);
                 }
                 onComplete.run();
             });
         } else {
-            byteBodyResponse.byteBody().expectedLength()
-                .ifPresent(l -> servletResponse.getHeaders().set(HttpHeaders.CONTENT_LENGTH, String.valueOf(l)));
-            try (InputStream is = byteBodyResponse.byteBody().toInputStream()) {
-                is.transferTo(servletResponse.getOutputStream());
-            } catch (IOException e) {
-                throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, Optional.ofNullable(e.getMessage()).orElse(e.toString()));
-            }
+            writeBlocking(body, servletResponse);
             onComplete.run();
+        }
+    }
+
+    /**
+     * Applies the response headers to the container's response. A header the container already set is replaced
+     * by the first value and extended by the rest, because some containers do not like headers being removed.
+     */
+    private static void copyHeaders(HttpHeaders sourceHeaders, MutableHttpHeaders servletResponseHeaders, ServletExchange<?, ?> exchange) {
+        for (String name : sourceHeaders.names()) {
+            boolean replace = servletResponseHeaders.contains(name);
+            for (String value : sourceHeaders.getAll(name)) {
+                if (replace) {
+                    servletResponseHeaders.set(name, value);
+                    replace = false;
+                } else {
+                    servletResponseHeaders.add(name, value);
+                }
+            }
+        }
+        if (LOG.isDebugEnabled()) {
+            for (String servletResponseHeader : servletResponseHeaders.names()) {
+                if (!sourceHeaders.contains(servletResponseHeader)) {
+                    LOG.debug("Request [{} - {}] custom native response header '{}': '{}'",
+                        exchange.getRequest().getMethodName(), exchange.getRequest().getUri(),
+                        servletResponseHeader, servletResponseHeaders.get(servletResponseHeader));
+                }
+            }
+        }
+    }
+
+    /**
+     * Writes the body on the current thread. A body still being produced, such as an event stream, is flushed as
+     * each piece arrives so that the client sees it then rather than when the stream ends.
+     */
+    private static void writeBlocking(ByteBody body, ServletHttpResponse<?, ?> servletResponse) {
+        body.expectedLength().ifPresent(l -> servletResponse.getHeaders().set(HttpHeaders.CONTENT_LENGTH, String.valueOf(l)));
+        try (InputStream is = body.toInputStream()) {
+            OutputStream out = servletResponse.getOutputStream();
+            if (body instanceof AvailableByteBody) {
+                is.transferTo(out);
+            } else {
+                byte[] buffer = new byte[STREAM_BUFFER_SIZE];
+                int read;
+                while ((read = is.read(buffer)) != -1) {
+                    out.write(buffer, 0, read);
+                    out.flush();
+                }
+            }
+        } catch (IOException e) {
+            throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, Optional.ofNullable(e.getMessage()).orElse(e.toString()));
+        }
+    }
+
+    private static void logWriteFailure(Throwable t) {
+        if (t instanceof EOFException) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Error while writing response body", t);
+            }
+        } else if (LOG.isWarnEnabled()) {
+            LOG.warn("Error while writing response body", t);
+        }
+    }
+
+    /**
+     * @return The number of requests received and not yet terminated
+     * @since 6.2.0
+     */
+    public long getActiveRequests() {
+        return activeRequests.get();
+    }
+
+    /**
+     * Waits for every active request to terminate. The caller is expected to have stopped the server accepting new
+     * requests first; this only tracks what is already in flight.
+     *
+     * @return A stage that completes when no request is active
+     * @since 6.2.0
+     */
+    public @NonNull CompletionStage<Void> awaitIdle() {
+        CompletableFuture<Void> future = new CompletableFuture<>();
+        if (!drained.compareAndSet(null, future)) {
+            return drained.get();
+        }
+        if (activeRequests.get() == 0) {
+            future.complete(null);
+        }
+        return future;
+    }
+
+    private void requestFinished() {
+        if (activeRequests.decrementAndGet() == 0) {
+            CompletableFuture<Void> future = drained.get();
+            if (future != null) {
+                future.complete(null);
+            }
         }
     }
 
@@ -253,12 +347,14 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
         // every exit path has to run this exactly once: it closes the request byte body, runs the disposal
         // resources that delete multipart temp files, and publishes the terminated event. The error paths used to
         // return without it, leaking a temp file per failed upload
+        activeRequests.incrementAndGet();
         AtomicBoolean terminated = new AtomicBoolean();
         Runnable requestTerminated = () -> {
             if (!terminated.compareAndSet(false, true)) {
                 return;
             }
-            applicationContext.publishEvent(new HttpRequestTerminatedEvent(exchange.getRequest()));
+            requestFinished();
+            requestTerminatedPublisher.get().publishEvent(new HttpRequestTerminatedEvent(exchange.getRequest()));
             exchange.close();
             if (LOG.isTraceEnabled()) {
                 final HttpRequest<? super Object> r = exchange.getRequest();
@@ -271,7 +367,7 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
         };
 
         final HttpRequest<Object> req = exchange.getRequest();
-        applicationContext.publishEvent(new HttpRequestReceivedEvent(req));
+        requestReceivedPublisher.get().publishEvent(new HttpRequestReceivedEvent(req));
 
         ServletWebSocketUpgrader upgrader = resolveWebSocketUpgrader(req);
         if (upgrader != null) {
@@ -301,32 +397,47 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
                               ServletRequestLifecycle lc,
                               Runnable requestTerminated) {
         exchange.getRequest().executeAsync(ctx -> PropagatedContext.getOrEmpty().plus(new ServerHttpRequestContext(req)).propagate(() -> {
-            // completing the async context twice throws, so this has to run exactly once however the exchange ends
-            AtomicBoolean finished = new AtomicBoolean();
-            Runnable finish = () -> {
-                if (finished.compareAndSet(false, true)) {
-                    ctx.complete();
-                    requestTerminated.run();
-                }
-            };
+            Runnable finish = completeOnce(ctx, req, requestTerminated);
             lc.handleNormal(req)
                 .flatMap(response -> process(response, req, exchange.getResponse()))
-                .onComplete((bbhr, t) -> {
-                    if (t == null) {
-                        try {
-                            transfer(bbhr, exchange, true, finish);
-                        } catch (Exception transferFailure) {
-                            // transfer throws on a write failure, before it can run the callback itself
-                            handleFallback(exchange.getResponse(), transferFailure);
-                            finish.run();
-                        }
-                    } else {
-                        handleFallback(exchange.getResponse(), t);
-                        finish.run();
-                    }
-                });
+                .onComplete((bbhr, t) -> completeAsync(exchange, bbhr, t, finish));
             return null;
         }));
+    }
+
+    /**
+     * Completes the async context exactly once, however the exchange ends: completing it twice throws, and a
+     * container that completed it itself (on an asynchronous timeout or error) must not stop the request from
+     * being accounted for and its resources released.
+     */
+    private Runnable completeOnce(ServletHttpRequest.AsyncExecution ctx, HttpRequest<Object> req, Runnable requestTerminated) {
+        AtomicBoolean finished = new AtomicBoolean();
+        return () -> {
+            if (finished.compareAndSet(false, true)) {
+                try {
+                    ctx.complete();
+                } catch (IllegalStateException alreadyCompleted) {
+                    LOG.debug("Async context already completed for request [{} - {}]", req.getMethodName(), req.getUri(), alreadyCompleted);
+                } finally {
+                    requestTerminated.run();
+                }
+            }
+        };
+    }
+
+    private void completeAsync(ServletExchange<REQ, RES> exchange, @Nullable ExecutionResult result, @Nullable Throwable failure, Runnable finish) {
+        if (failure != null) {
+            handleFallback(exchange.getResponse(), failure);
+            finish.run();
+            return;
+        }
+        try {
+            transfer(result, exchange, true, finish);
+        } catch (Exception transferFailure) {
+            // transfer throws on a write failure, before it can run the callback itself
+            handleFallback(exchange.getResponse(), transferFailure);
+            finish.run();
+        }
     }
 
     /**
@@ -474,8 +585,10 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
         }
         // The connection now belongs to the WebSocket implementation, so the exchange is
         // deliberately not closed here: closing it would touch container streams that the
-        // protocol switch has already taken over.
-        applicationContext.publishEvent(new HttpRequestTerminatedEvent(req));
+        // protocol switch has already taken over. The HTTP request is over, though, so it no
+        // longer counts towards graceful shutdown; the socket's lifetime is the WebSocket's concern.
+        requestFinished();
+        requestTerminatedPublisher.get().publishEvent(new HttpRequestTerminatedEvent(req));
     }
 
     private ExecutionFlow<ExecutionResult> process(HttpResponse<?> response,
@@ -484,7 +597,7 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
         if (shr.isCommitted()) {
             return ExecutionFlow.just(new ExecutionResult(null));
         }
-        return new ServletResponseLifecycle().encodeHttpResponseSafe(req, response).map(ExecutionResult::new);
+        return new ServletResponseLifecycle(req).encodeHttpResponseSafe(req, response).map(ExecutionResult::new);
     }
 
     private static void handleFallback(ServletHttpResponse<?, ?> shr, Throwable t) {
@@ -573,14 +686,47 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
 
     private final class ServletResponseLifecycle extends ResponseLifecycle {
         private static final ByteBodyFactory BBF = ByteBodyFactory.createDefault(ByteArrayBufferFactory.INSTANCE);
+        /**
+         * Whether the Netty HTTP types are on the classpath; {@link NettyStreamedResponses} must not be loaded
+         * otherwise.
+         */
+        private static final boolean NETTY_PRESENT = ClassUtils.isPresent(
+            "io.micronaut.http.netty.NettyHttpResponseBuilder", ServletHttpHandler.class.getClassLoader()
+        );
 
-        ServletResponseLifecycle() {
+        private final HttpRequest<?> request;
+
+        ServletResponseLifecycle(HttpRequest<?> request) {
             super(routeExecutor, messageBodyHandlerRegistry, conversionService, BBF);
+            this.request = request;
         }
 
         @Override
         protected @NonNull Executor ioExecutor() {
             return ioExecutor.get();
+        }
+
+        /**
+         * A response with no object body may still carry bytes: the Netty HTTP client's {@code ProxyHttpClient}
+         * returns the upstream response as a content stream that only the Netty types expose. The Netty server
+         * unwraps it in its response lifecycle, and so must this one, or a proxying filter answers with an empty
+         * body (micronaut-core#9725).
+         */
+        @Override
+        @SuppressWarnings({"unchecked", "rawtypes"})
+        protected ExecutionFlow<? extends ByteBodyHttpResponse<?>> encodeNoBody(HttpResponse<?> response) {
+            if (NETTY_PRESENT) {
+                Publisher<ReadBuffer> content = NettyStreamedResponses.streamedContent(response, BBF.readBufferFactory());
+                if (content != null) {
+                    return LazySendingSubscriber.create(content)
+                        .map(buffers -> (ByteBodyHttpResponse<?>) ByteBodyHttpResponseWrapper.wrap(
+                            response,
+                            BBF.adapt(buffers, response.getHeaders().contentLength())
+                        ))
+                        .onErrorResume(e -> (ExecutionFlow) handleStreamingError(request, e));
+                }
+            }
+            return super.encodeNoBody(response);
         }
     }
 

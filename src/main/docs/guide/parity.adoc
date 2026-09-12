@@ -1,0 +1,82 @@
+The servlet runtimes implement the same https://docs.micronaut.io/latest/guide/index.html#httpServer[Micronaut HTTP server] contract as the default Netty server and are checked against the same HTTP server TCK. The table below records where each runtime stands for the capabilities that have historically differed. "Yes" means supported and covered by a test in this repository or in the TCK.
+
+[cols="3,1,1,1,1,1,4"]
+|===
+|Capability |Jetty |Tomcat |Undertow |JDK `HttpServer` |POJA |Notes
+
+|Request bodies streamed as they arrive
+|Yes |Yes |Yes |Blocking |Blocking
+|Containers with asynchronous support read a large or chunked body through a `ReadListener`; a body with a declared length up to `micronaut.server.max-request-size` is read on the container thread before the route runs. The JDK server and POJA read from a blocking stream.
+
+|Request without `Content-Length` or `Transfer-Encoding` has no body
+|Yes |Yes |Yes |Yes |No
+|RFC 9112 framing. POJA still decodes a body that was never sent.
+
+|Multipart: `CompletedFileUpload`, `@Part`, `MultipartBody`
+|Yes |Yes |Yes |No |No
+|Parsed by the container (`getParts()`), enabled by default since 6.2. An unannotated `StreamingFileUpload` argument is not supported. The JDK server and POJA do not parse multipart.
+
+|`micronaut.server.max-request-size` → 413
+|Yes |Yes |Yes |Yes |No
+|Applies to text, JSON, form and multipart bodies; a declared length over the limit is refused without reading the body.
+
+|`Content-Length` on complete responses
+|Yes |Yes |Yes |Yes |Yes
+|Bodies that are complete when the route returns announce their length; streamed bodies are chunked.
+
+|Body-less responses: HEAD, 204, 304
+|Yes |Yes |Yes |Yes |Yes
+|
+
+|File responses: `SystemFile`, `StreamedFile`, conditional 304
+|Yes |Yes |Yes |Yes |Yes
+|`Cache-Control` and `Last-Modified` follow `micronaut.server.responses.file`. Byte ranges (206) are served by the containers, not by the JDK server or POJA.
+
+|Server-sent events
+|Yes |Yes |Yes |Yes |Yes
+|Events are flushed as they are produced.
+
+|Response compression
+|Yes |Yes |Yes |No |No
+|`micronaut.servlet.compression.*`, on by default, wired to each container's own encoder. Compressed responses carry `Vary: Accept-Encoding`; Jetty sends it on every compressible response.
+
+|HTTP/2
+|Yes |Yes |Yes |No |No
+|`micronaut.server.http-version: 2.0`. Jetty and Tomcat support h2c; Undertow enables its native HTTP/2 over TLS.
+
+|TLS
+|Yes |Yes |Yes |Yes |No
+|Shared `micronaut.server.ssl` configuration. The containers listen on both ports; the JDK server listens for HTTPS only when TLS is enabled.
+
+|Virtual threads (`micronaut.servlet.enable-virtual-threads`)
+|Yes |Yes |Yes |Yes |No
+|Tomcat keeps its virtual-thread executor when `max-threads` is set; Undertow supplies one to the servlet deployment; the JDK server uses one for its handlers.
+
+|Graceful shutdown (`micronaut.lifecycle.graceful-shutdown.enabled`)
+|Yes |Yes |Yes |Yes |No
+|The server stops accepting (Jetty connector shutdown, Tomcat connector pause, Undertow 503) and waits for in-flight requests within the grace period. The JDK server only waits.
+
+|Access log
+|Yes |Yes |Yes |Yes |No
+|Each container's own log; the JDK server under `micronaut.server.jdk.access-logger`.
+
+|`ProxyHttpClient` inside a server filter
+|Yes |Yes |Yes |Yes |No
+|The proxied response body is forwarded. POJA has no server to proxy to.
+
+|Cookie attributes (SameSite, Max-Age, several `Set-Cookie`)
+|Yes |Yes |Yes |Yes |Yes
+|
+
+|Static resources: mappings, `index.html`, context path
+|Yes |Yes |Yes |Yes |Yes
+|One resolver on every runtime, inside the filter chain. Jetty's own handler is available with `micronaut.server.jetty.native-static-resources`.
+
+|WebSocket (`@ServerWebSocket`)
+|Yes |Yes |Yes |No |No
+|Bridged onto each container's Jakarta WebSocket implementation.
+|===
+
+=== Runtime positioning
+
+Jetty, Tomcat and Undertow are full runtimes for production use. The built-in JDK `HttpServer` runtime is intended for development and small tools: it has no HTTP/2, no compression and no multipart parsing, and it keeps at most 200 idle connections. POJA (plain old Java application) runs one request at a time over standard input and output and receives correctness fixes only.

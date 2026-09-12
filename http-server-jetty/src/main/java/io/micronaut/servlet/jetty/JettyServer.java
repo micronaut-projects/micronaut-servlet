@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import org.eclipse.jetty.http.HttpVersion;
+import org.eclipse.jetty.server.AbstractConnector;
 import org.eclipse.jetty.server.ConnectionFactory;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.HttpConnectionFactory;
@@ -127,6 +128,19 @@ public class JettyServer extends AbstractServletServer<Server> {
     @Override
     protected void stopServer() throws Exception {
         getServer().stop();
+    }
+
+    /**
+     * Interrupts the acceptors of every connector so that no new connection is accepted and idle keep-alive
+     * connections are closed, while connections with a request in progress are left to complete.
+     */
+    @Override
+    protected void stopAcceptingRequests() {
+        for (Connector connector : getServer().getConnectors()) {
+            if (connector instanceof AbstractConnector abstractConnector) {
+                abstractConnector.shutdown();
+            }
+        }
     }
 
     @Override

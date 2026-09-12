@@ -6,6 +6,7 @@ import io.micronaut.http.HttpStatus
 import io.micronaut.http.client.HttpClient
 import io.micronaut.http.client.exceptions.HttpClientResponseException
 import io.micronaut.runtime.server.EmbeddedServer
+import io.micronaut.servlet.http.ServletHttpHandler
 import io.micronaut.websocket.CloseReason
 import io.micronaut.websocket.WebSocketClient
 import io.micronaut.websocket.exceptions.WebSocketClientException
@@ -64,6 +65,9 @@ class JettyWebSocketSpec extends Specification {
         conditions.eventually {
             fred.replies.contains("[bob] Hi fred. How are things?")
         }
+
+        and: "the upgrade requests no longer count as in flight, so a graceful shutdown would not wait for them"
+        embeddedServer.applicationContext.getBean(ServletHttpHandler).activeRequests == 0
 
         cleanup:
         fred.close()

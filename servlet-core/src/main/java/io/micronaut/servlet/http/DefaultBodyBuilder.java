@@ -31,6 +31,7 @@ import io.micronaut.http.annotation.Body;
 import io.micronaut.http.body.MessageBodyHandlerRegistry;
 import io.micronaut.http.body.MessageBodyReader;
 import io.micronaut.http.codec.CodecException;
+import io.micronaut.http.exceptions.HttpException;
 import io.micronaut.inject.ExecutionHandle;
 import io.micronaut.web.router.RouteMatch;
 import jakarta.inject.Singleton;
@@ -76,6 +77,12 @@ public class DefaultBodyBuilder implements BodyBuilder {
             // no content
             return null;
         } catch (Exception e) {
+            // a failure raised by the body itself, such as the request size limit, keeps its own status even when
+            // a codec wrapped it while reading; anything else is a decoding problem
+            HttpException httpException = BodyReadFailures.httpFailure(e);
+            if (httpException != null) {
+                throw httpException;
+            }
             throw new CodecException("Error decoding request body: " + e.getMessage(), e);
         }
     }

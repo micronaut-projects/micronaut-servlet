@@ -27,6 +27,7 @@ import io.micronaut.http.server.exceptions.ServerStartupException;
 import io.micronaut.http.ssl.SslConfiguration;
 import io.micronaut.servlet.engine.MicronautServletConfiguration;
 import io.micronaut.servlet.engine.initializer.MicronautServletInitializer;
+import io.micronaut.scheduling.LoomSupport;
 import io.micronaut.servlet.engine.ServletCompressionConfiguration;
 import io.micronaut.servlet.http.server.ServletServerFactory;
 import io.micronaut.servlet.http.server.ServletStaticResourceConfiguration;
@@ -35,6 +36,7 @@ import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.UndertowOptions;
 import io.undertow.server.HttpHandler;
+import io.undertow.server.handlers.GracefulShutdownHandler;
 import io.undertow.server.handlers.accesslog.AccessLogHandler;
 import io.undertow.server.handlers.encoding.ContentEncodingRepository;
 import io.undertow.server.handlers.encoding.EncodingHandler;
@@ -53,7 +55,9 @@ import jakarta.servlet.ServletException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executors;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.net.ssl.SSLContext;
 import org.xnio.Option;
 import org.xnio.Options;
@@ -73,6 +77,7 @@ public class UndertowFactory extends ServletServerFactory {
 
     private final UndertowConfiguration configuration;
     private final @Nullable Router router;
+    private final AtomicReference<@Nullable GracefulShutdownHandler> gracefulShutdownHandler = new AtomicReference<>();
 
     /**
      * Default constructor.
@@ -97,6 +102,17 @@ public class UndertowFactory extends ServletServerFactory {
     @Override
     public UndertowConfiguration getServerConfiguration() {
         return (UndertowConfiguration) super.getServerConfiguration();
+    }
+
+    /**
+     * The handler that {@link UndertowServer} uses to stop accepting requests during a graceful shutdown.
+     *
+     * @return The graceful shutdown handler wrapping the deployment, or {@code null} if the server has not been built
+     * @since 6.2.0
+     */
+    @Nullable
+    GracefulShutdownHandler getGracefulShutdownHandler() {
+        return gracefulShutdownHandler.get();
     }
 
     /**
@@ -127,6 +143,11 @@ public class UndertowFactory extends ServletServerFactory {
         }
         // compression sits inside the access log, so the log records the bytes that actually went out
         httpHandler = compressIfEnabled(httpHandler);
+        // a graceful shutdown refuses new requests through this handler while in-flight ones complete; it sits inside
+        // the access log so that the refusals are logged too
+        GracefulShutdownHandler shutdownHandler = new GracefulShutdownHandler(httpHandler);
+        this.gracefulShutdownHandler.set(shutdownHandler);
+        httpHandler = shutdownHandler;
         UndertowConfiguration serverConfiguration = getServerConfiguration();
         UndertowConfiguration.AccessLogConfiguration accessLogConfiguration = serverConfiguration.getAccessLogConfiguration().orElse(null);
         if (accessLogConfiguration != null) {
@@ -174,6 +195,12 @@ public class UndertowFactory extends ServletServerFactory {
                 host
             );
             applyAdditionalPorts(builder, host, port, null);
+        }
+
+        if (getServerConfiguration().getHttpVersion() == io.micronaut.http.HttpVersion.HTTP_2_0) {
+            // Undertow supports HTTP/2 natively, over TLS via ALPN and in the clear via the h2c upgrade, but only
+            // when asked; Jetty and Tomcat already honour micronaut.server.http-version, so this brings Undertow level
+            builder.setServerOption(UndertowOptions.ENABLE_HTTP2, true);
         }
 
         if (servletConfiguration.getMaxThreads() != null) {
@@ -355,6 +382,13 @@ public class UndertowFactory extends ServletServerFactory {
             .setDeploymentName(servletConfiguration.getName())
             .setClassLoader(getEnvironment().getClassLoader())
             .setContextPath(cp);
+        if (servletConfiguration.isEnableVirtualThreads() && LoomSupport.isSupported()) {
+            // without this every servlet invocation runs on the XNIO worker pool, eight threads per core by default,
+            // and enable-virtual-threads was silently ignored: a blocking controller capped out at that pool's size
+            deploymentInfo.setExecutor(Executors.newThreadPerTaskExecutor(
+                LoomSupport.newVirtualThreadFactory("undertow-handler-", builder -> { })
+            ));
+        }
         for (ServletContainerInitializer servletInitializer : servletInitializers) {
             deploymentInfo
                 .addServletContainerInitializer(new ServletContainerInitializerInfo(

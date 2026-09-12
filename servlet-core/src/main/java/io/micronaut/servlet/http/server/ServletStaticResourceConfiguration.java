@@ -53,6 +53,10 @@ public interface ServletStaticResourceConfiguration extends Toggleable {
     /**
      * For Jetty based servers, allow configuring the cache control header for static resource mappings (defaults to {@value #DEFAULT_CACHE_CONTROL_HEADER}).
      *
+     * <p>Only applied when {@code micronaut.server.jetty.native-static-resources} is {@code true}. Otherwise static
+     * resources are served by the Micronaut static resource resolver, on Jetty as on every other runtime, and the
+     * header is governed by {@code micronaut.server.responses.file}.</p>
+     *
      * @return The cache control header
      * @since 4.0.4
      */

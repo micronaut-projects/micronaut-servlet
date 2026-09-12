@@ -23,6 +23,7 @@ import io.micronaut.runtime.ApplicationConfiguration;
 import io.micronaut.runtime.server.event.ServerShutdownEvent;
 import io.micronaut.servlet.http.server.AbstractServletServer;
 import io.undertow.Undertow;
+import io.undertow.server.handlers.GracefulShutdownHandler;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
@@ -31,9 +32,12 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 /**
  * Implementation of {@link AbstractServletServer} for Undertow.
@@ -43,6 +47,12 @@ import java.util.Optional;
  */
 @Singleton
 public class UndertowServer extends AbstractServletServer<Undertow> {
+
+    /**
+     * How long to wait for Undertow to end the exchanges of already handled requests; the graceful shutdown grace
+     * period bounds the whole wait anyway.
+     */
+    private static final Duration EXCHANGE_DRAIN_TIMEOUT = Duration.ofSeconds(30);
 
     private Map<String, Undertow.ListenerInfo> listenersByProtocol = new HashMap<>();
 
@@ -92,6 +102,43 @@ public class UndertowServer extends AbstractServletServer<Undertow> {
     @Override
     protected void stopServer() throws Exception {
         getServer().stop();
+    }
+
+    /**
+     * Makes the server answer new requests with {@code 503 Service Unavailable} while requests already in progress
+     * complete. Undertow's own listener suspension is not used because it closes every connection, including those
+     * with a request in flight.
+     */
+    @Override
+    protected void stopAcceptingRequests() {
+        shutdownHandler().ifPresent(GracefulShutdownHandler::shutdown);
+    }
+
+    /**
+     * Waits for the requests the handler counted, and then for Undertow's own exchanges: the handler is done once
+     * the response has been handed to the container, but Undertow ends an exchange on its IO thread afterwards,
+     * and stopping the server before that drops a response that was written but not yet flushed (seen with
+     * {@code Connection: close} requests).
+     */
+    @Override
+    public CompletionStage<?> shutdownGracefully() {
+        CompletionStage<?> idle = super.shutdownGracefully();
+        GracefulShutdownHandler handler = shutdownHandler().orElse(null);
+        if (handler == null) {
+            return idle;
+        }
+        return idle.thenCompose(ignored -> CompletableFuture.runAsync(() -> {
+            try {
+                handler.awaitShutdown(EXCHANGE_DRAIN_TIMEOUT.toMillis());
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }));
+    }
+
+    private Optional<GracefulShutdownHandler> shutdownHandler() {
+        return getApplicationContext().findBean(UndertowFactory.class)
+            .map(UndertowFactory::getGracefulShutdownHandler);
     }
 
     @Override
