@@ -92,6 +92,7 @@ import java.util.OptionalLong;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 /**
@@ -123,14 +124,9 @@ public final class DefaultServletHttpRequest<B> implements
     private final MessageBodyHandlerRegistry messageBodyHandlerRegistry;
     private final MutableConvertibleValues<Object> attributes;
     /**
-     * The body, or {@code null} until it is read when {@link #inlineBodyLength} is set.
+     * The body, or {@code null} until a small declared body is read on first use, on the thread running the route.
      */
-    private volatile @Nullable CloseableByteBody byteBody;
-    /**
-     * The declared length of a body that is read on first use, on the thread running the route, or {@code -1}
-     * when the body is created up front.
-     */
-    private final long inlineBodyLength;
+    private final AtomicReference<@Nullable CloseableByteBody> byteBody = new AtomicReference<>();
     /**
      * Set when the declared length exceeds {@code micronaut.server.max-request-size}: the body fails on every read,
      * and a form, whose fields the container parses from the same stream, is refused through the parameters too.
@@ -206,6 +202,7 @@ public final class DefaultServletHttpRequest<B> implements
      *                           {@code micronaut.server.max-request-buffer-size}, enforced while the body is read
      * @since 6.2.0
      */
+    @SuppressWarnings("java:S107") // the previous constructor's parameters plus the limits; package-private
     DefaultServletHttpRequest(ConversionService conversionService,
                               HttpServletRequest delegate,
                               HttpServletResponse response,
@@ -220,46 +217,9 @@ public final class DefaultServletHttpRequest<B> implements
         this.messageBodyHandlerRegistry = messageBodyHandlerRegistry;
         this.ioExecutor = ioExecutor;
         this.sslSessionProvider = sslSessionProvider;
-        long contentLengthLong = delegate.getContentLengthLong();
-        OptionalLong length = contentLengthLong < 0 ? OptionalLong.empty() : OptionalLong.of(contentLengthLong);
         this.byteBodyFactory = ByteBodyFactory.createDefault(ByteArrayBufferFactory.INSTANCE);
         this.headers = new ServletRequestHeaders();
-        long inlineLength = -1;
-        if (contentLengthLong == 0 || (contentLengthLong < 0 && !mayHaveBody())) {
-            // no body by the framing rules, so no stream, publisher or shared buffer is set up for it: most GET
-            // requests take this path and it is otherwise the largest allocation of the request
-            this.byteBody = byteBodyFactory.createEmpty();
-        } else if (contentLengthLong > bodySizeLimits.maxBodySize()) {
-            // refused without reading a byte: every read of the body fails, so a route that binds it answers
-            // 413 as on the Netty server, while the route itself is still resolved for filters and security
-            this.bodyTooLarge = new ContentLengthExceededException(bodySizeLimits.maxBodySize(), contentLengthLong);
-            this.byteBody = byteBodyFactory.adapt(Flux.error(bodyTooLarge), length);
-        } else if (readsInline(contentLengthLong, bodySizeLimits, delegate)) {
-            // a small body with a known length is read with a blocking read on first use, on the thread that runs
-            // the route: that is what a blocking servlet application does, and it keeps the request on the
-            // container thread instead of paying a dispatch and a ReadListener round trip (or, on a container
-            // without asynchronous support, an IO executor hop) for a few bytes. It is deferred rather than read
-            // here so that the request is already counted for graceful shutdown
-            inlineLength = contentLengthLong;
-        } else if (delegate.isAsyncSupported()) {
-            // the shared streaming body applies the size limits itself
-            ReadBufferFactory readBufferFactory = byteBodyFactory.readBufferFactory();
-            this.byteBody = byteBodyFactory.adapt(
-                Flux.from(new ServletStreamPublisher(delegate::getInputStream)).map(readBufferFactory::adapt),
-                bodySizeLimits,
-                headers,
-                null
-            );
-            this.bodyReadsAsynchronously = true;
-        } else {
-            InputStream stream = new LazyDelegateInputStream(delegate);
-            if (bodySizeLimits.maxBodySize() < Long.MAX_VALUE) {
-                stream = new LimitedInputStream(stream, bodySizeLimits.maxBodySize());
-            }
-            this.byteBody = InputStreamByteBody.create(stream, length, ioExecutor, byteBodyFactory);
-        }
-
-        this.inlineBodyLength = inlineLength;
+        this.byteBody.set(createBody(delegate.getContentLengthLong(), bodySizeLimits));
 
         String requestURI = resolveRequestUri(delegate);
 
@@ -422,6 +382,51 @@ public final class DefaultServletHttpRequest<B> implements
     }
 
     /**
+     * Chooses how the body is read, by the framing rules and the size limits.
+     *
+     * @return The body, or {@code null} for a small declared body that is read on first use, on the thread that
+     * runs the route
+     */
+    private @Nullable CloseableByteBody createBody(long contentLength, BodySizeLimits bodySizeLimits) {
+        OptionalLong length = contentLength < 0 ? OptionalLong.empty() : OptionalLong.of(contentLength);
+        if (contentLength == 0 || (contentLength < 0 && !mayHaveBody())) {
+            // no body by the framing rules, so no stream, publisher or shared buffer is set up for it: most GET
+            // requests take this path and it is otherwise the largest allocation of the request
+            return byteBodyFactory.createEmpty();
+        }
+        if (contentLength > bodySizeLimits.maxBodySize()) {
+            // refused without reading a byte: every read of the body fails, so a route that binds it answers
+            // 413 as on the Netty server, while the route itself is still resolved for filters and security
+            this.bodyTooLarge = new ContentLengthExceededException(bodySizeLimits.maxBodySize(), contentLength);
+            return byteBodyFactory.adapt(Flux.error(bodyTooLarge), length);
+        }
+        if (readsInline(contentLength, bodySizeLimits, delegate)) {
+            // a small body with a known length is read with a blocking read on first use, on the thread that runs
+            // the route: that is what a blocking servlet application does, and it keeps the request on the
+            // container thread instead of paying a dispatch and a ReadListener round trip (or, on a container
+            // without asynchronous support, an IO executor hop) for a few bytes. It is deferred rather than read
+            // here so that the request is already counted for graceful shutdown
+            return null;
+        }
+        if (delegate.isAsyncSupported()) {
+            // the shared streaming body applies the size limits itself
+            ReadBufferFactory readBufferFactory = byteBodyFactory.readBufferFactory();
+            this.bodyReadsAsynchronously = true;
+            return byteBodyFactory.adapt(
+                Flux.from(new ServletStreamPublisher(delegate::getInputStream)).map(readBufferFactory::adapt),
+                bodySizeLimits,
+                headers,
+                null
+            );
+        }
+        InputStream stream = new LazyDelegateInputStream(delegate);
+        if (bodySizeLimits.maxBodySize() < Long.MAX_VALUE) {
+            stream = new LimitedInputStream(stream, bodySizeLimits.maxBodySize());
+        }
+        return InputStreamByteBody.create(stream, length, ioExecutor, byteBodyFactory);
+    }
+
+    /**
      * Whether a body with the given declared length is read on the container thread before the route runs
      * rather than streamed through a {@code ReadListener}: it has to be non-empty, declare its length, fit the
      * buffer limit, and not be a form, whose bytes the container parses itself.
@@ -438,7 +443,7 @@ public final class DefaultServletHttpRequest<B> implements
         return contentType == null || !isFormContentType(MediaType.of(contentType));
     }
 
-    private static CloseableByteBody readInline(HttpServletRequest request, long contentLength, ByteBodyFactory byteBodyFactory) {
+    private static CloseableByteBody readInline(HttpServletRequest request, ByteBodyFactory byteBodyFactory) {
         try (InputStream inputStream = request.getInputStream()) {
             return byteBodyFactory.copyOf(inputStream);
         } catch (IOException e) {
@@ -672,17 +677,17 @@ public final class DefaultServletHttpRequest<B> implements
 
     @Override
     public @NonNull ByteBody byteBody() {
-        CloseableByteBody body = byteBody;
-        if (body == null) {
-            synchronized (this) {
-                body = byteBody;
-                if (body == null) {
-                    body = readInline(delegate, inlineBodyLength, byteBodyFactory);
-                    byteBody = body;
+        CloseableByteBody current = byteBody.get();
+        if (current == null) {
+            synchronized (byteBody) {
+                current = byteBody.get();
+                if (current == null) {
+                    current = readInline(delegate, byteBodyFactory);
+                    byteBody.set(current);
                 }
             }
         }
-        return body;
+        return current;
     }
 
     @Override
@@ -692,9 +697,9 @@ public final class DefaultServletHttpRequest<B> implements
 
     @Override
     public void close() {
-        CloseableByteBody body = byteBody;
-        if (body != null) {
-            body.close();
+        CloseableByteBody current = byteBody.get();
+        if (current != null) {
+            current.close();
         }
         runDisposalResources();
     }

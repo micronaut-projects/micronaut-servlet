@@ -57,6 +57,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.net.ssl.SSLContext;
 import org.xnio.Option;
 import org.xnio.Options;
@@ -76,7 +77,7 @@ public class UndertowFactory extends ServletServerFactory {
 
     private final UndertowConfiguration configuration;
     private final @Nullable Router router;
-    private volatile @Nullable GracefulShutdownHandler gracefulShutdownHandler;
+    private final AtomicReference<@Nullable GracefulShutdownHandler> gracefulShutdownHandler = new AtomicReference<>();
 
     /**
      * Default constructor.
@@ -111,7 +112,7 @@ public class UndertowFactory extends ServletServerFactory {
      */
     @Nullable
     GracefulShutdownHandler getGracefulShutdownHandler() {
-        return gracefulShutdownHandler;
+        return gracefulShutdownHandler.get();
     }
 
     /**
@@ -145,7 +146,7 @@ public class UndertowFactory extends ServletServerFactory {
         // a graceful shutdown refuses new requests through this handler while in-flight ones complete; it sits inside
         // the access log so that the refusals are logged too
         GracefulShutdownHandler shutdownHandler = new GracefulShutdownHandler(httpHandler);
-        this.gracefulShutdownHandler = shutdownHandler;
+        this.gracefulShutdownHandler.set(shutdownHandler);
         httpHandler = shutdownHandler;
         UndertowConfiguration serverConfiguration = getServerConfiguration();
         UndertowConfiguration.AccessLogConfiguration accessLogConfiguration = serverConfiguration.getAccessLogConfiguration().orElse(null);

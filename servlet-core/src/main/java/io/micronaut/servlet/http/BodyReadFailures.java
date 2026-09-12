@@ -36,12 +36,6 @@ final class BodyReadFailures {
     }
 
     /**
-     * Finds an HTTP failure in the cause chain of a body read error.
-     *
-     * @param e The failure
-     * @return The HTTP failure, or {@code null} if the failure is a decoding problem or unrelated
-     */
-    /**
      * For a runtime failure raised while reading the body, such as the unchecked exceptions of a JSON parser
      * wrapping a stream error: the HTTP failure in its cause chain if there is one, otherwise the failure itself.
      *
@@ -53,6 +47,12 @@ final class BodyReadFailures {
         return httpException != null ? httpException : e;
     }
 
+    /**
+     * Finds an HTTP failure in the cause chain of a body read error.
+     *
+     * @param e The failure
+     * @return The HTTP failure, or {@code null} if the failure is a decoding problem or unrelated
+     */
     static @Nullable HttpException httpFailure(Throwable e) {
         Throwable current = e;
         for (int depth = 0; current != null && depth < MAX_CAUSE_DEPTH; depth++) {

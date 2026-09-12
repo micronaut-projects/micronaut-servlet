@@ -129,25 +129,7 @@ public class TomcatFactory extends ServletServerFactory {
         Tomcat tomcat = newTomcat();
         applyCompression(connector);
         applyCompression(httpsConnector);
-        // a platform pool sized by max-threads used to replace the virtual thread executor the connector had been
-        // given, so setting a thread limit silently turned virtual threads off. Virtual threads are not pooled, so
-        // there is nothing for the limit to size; when they are enabled and available the connector keeps its
-        // executor, otherwise the limit applies as before
-        if (configuration.getMaxThreads() != null && !(configuration.isEnableVirtualThreads() && LoomSupport.isSupported())) {
-            StandardThreadExecutor executor = new StandardThreadExecutor();
-            executor.setName("tomcatThreadPool");
-            executor.setMaxThreads(configuration.getMaxThreads());
-            if (configuration.getMinThreads() != null) {
-                executor.setMinSpareThreads(configuration.getMinThreads());
-            }
-            tomcat.getService().addExecutor(executor);
-            if (connector != null) {
-                connector.getProtocolHandler().setExecutor(executor);
-            }
-            if (httpsConnector != null) {
-                httpsConnector.getProtocolHandler().setExecutor(executor);
-            }
-        }
+        applyThreadLimits(tomcat, configuration, connector, httpsConnector);
         final Context context = newTomcatContext(tomcat);
 
         configureServletInitializer(context, servletInitializers);
@@ -188,6 +170,33 @@ public class TomcatFactory extends ServletServerFactory {
                     servletInitializer, Set.of()
                 );
             }
+        }
+    }
+
+    /**
+     * Sizes a platform thread pool by {@code max-threads} and {@code min-threads} for the connectors.
+     *
+     * <p>Such a pool used to replace the virtual thread executor the connector had been given, so setting a thread
+     * limit silently turned virtual threads off. Virtual threads are not pooled, so there is nothing for the limit
+     * to size; when they are enabled and available the connector keeps its executor, otherwise the limit applies
+     * as before.</p>
+     */
+    private static void applyThreadLimits(Tomcat tomcat, MicronautServletConfiguration configuration, @Nullable Connector connector, @Nullable Connector httpsConnector) {
+        if (configuration.getMaxThreads() == null || (configuration.isEnableVirtualThreads() && LoomSupport.isSupported())) {
+            return;
+        }
+        StandardThreadExecutor executor = new StandardThreadExecutor();
+        executor.setName("tomcatThreadPool");
+        executor.setMaxThreads(configuration.getMaxThreads());
+        if (configuration.getMinThreads() != null) {
+            executor.setMinSpareThreads(configuration.getMinThreads());
+        }
+        tomcat.getService().addExecutor(executor);
+        if (connector != null) {
+            connector.getProtocolHandler().setExecutor(executor);
+        }
+        if (httpsConnector != null) {
+            httpsConnector.getProtocolHandler().setExecutor(executor);
         }
     }
 

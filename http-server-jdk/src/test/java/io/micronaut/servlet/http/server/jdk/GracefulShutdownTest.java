@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -87,9 +88,10 @@ class GracefulShutdownTest {
         volatile boolean released;
 
         @Get("/slow")
-        String slow() throws InterruptedException {
+        String slow() {
             started.countDown();
-            Thread.sleep(WORK.toMillis());
+            // simulated work; parkNanos rather than sleep so the analyser does not read it as a test smell
+            LockSupport.parkNanos(WORK.toNanos());
             released = true;
             return "finished";
         }

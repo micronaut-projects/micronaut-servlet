@@ -32,9 +32,12 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 /**
  * Implementation of {@link AbstractServletServer} for Undertow.
@@ -44,6 +47,12 @@ import java.util.Optional;
  */
 @Singleton
 public class UndertowServer extends AbstractServletServer<Undertow> {
+
+    /**
+     * How long to wait for Undertow to end the exchanges of already handled requests; the graceful shutdown grace
+     * period bounds the whole wait anyway.
+     */
+    private static final Duration EXCHANGE_DRAIN_TIMEOUT = Duration.ofSeconds(30);
 
     private Map<String, Undertow.ListenerInfo> listenersByProtocol = new HashMap<>();
 
@@ -102,9 +111,34 @@ public class UndertowServer extends AbstractServletServer<Undertow> {
      */
     @Override
     protected void stopAcceptingRequests() {
-        getApplicationContext().findBean(UndertowFactory.class)
-            .map(UndertowFactory::getGracefulShutdownHandler)
-            .ifPresent(GracefulShutdownHandler::shutdown);
+        shutdownHandler().ifPresent(GracefulShutdownHandler::shutdown);
+    }
+
+    /**
+     * Waits for the requests the handler counted, and then for Undertow's own exchanges: the handler is done once
+     * the response has been handed to the container, but Undertow ends an exchange on its IO thread afterwards,
+     * and stopping the server before that drops a response that was written but not yet flushed (seen with
+     * {@code Connection: close} requests).
+     */
+    @Override
+    public CompletionStage<?> shutdownGracefully() {
+        CompletionStage<?> idle = super.shutdownGracefully();
+        GracefulShutdownHandler handler = shutdownHandler().orElse(null);
+        if (handler == null) {
+            return idle;
+        }
+        return idle.thenCompose(ignored -> CompletableFuture.runAsync(() -> {
+            try {
+                handler.awaitShutdown(EXCHANGE_DRAIN_TIMEOUT.toMillis());
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }));
+    }
+
+    private Optional<GracefulShutdownHandler> shutdownHandler() {
+        return getApplicationContext().findBean(UndertowFactory.class)
+            .map(UndertowFactory::getGracefulShutdownHandler);
     }
 
     @Override
