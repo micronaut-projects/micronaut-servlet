@@ -23,7 +23,9 @@ import org.jspecify.annotations.Nullable;
 import io.micronaut.core.io.buffer.ByteBuffer;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.CollectionUtils;
+import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpRequest;
+import io.micronaut.http.HttpVersion;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.Body;
 import io.micronaut.http.body.MessageBodyHandlerRegistry;
@@ -34,7 +36,9 @@ import io.micronaut.web.router.RouteMatch;
 import jakarta.inject.Singleton;
 
 import java.io.EOFException;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.PushbackInputStream;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
@@ -61,29 +65,113 @@ public class DefaultBodyBuilder implements BodyBuilder {
         final MediaType contentType = request.getContentType().orElse(MediaType.APPLICATION_JSON_TYPE);
         if (BodyBuilder.isFormSubmission(contentType)) {
             return request.getParameters().asMap();
-        } else {
-            if (request.getContentLength() == 0) {
-                return null;
-            }
-            Argument<?> resolvedBodyType = resolveBodyType(request);
-            try (InputStream inputStream = bodySupplier.call())  {
-                if (resolvedBodyType != null && RAW_BODY_TYPES.contains(resolvedBodyType.getType())) {
-                    return inputStream.readAllBytes();
-                }
-                @SuppressWarnings("unchecked")
-                Argument<Object> targetType = (Argument<Object>) (resolvedBodyType == null ? Argument.OBJECT_ARGUMENT : resolvedBodyType);
-                MessageBodyReader<Object> reader = messageBodyHandlerRegistry.findReader(targetType, contentType).orElse(null);
-                if (reader != null) {
-                    return reader.read(targetType, contentType, request.getHeaders(), inputStream);
-                }
-                return inputStream.readAllBytes();
-            } catch (EOFException e) {
-                // no content
-                return null;
-            } catch (Exception e) {
-                throw new CodecException("Error decoding request body: " + e.getMessage(), e);
-            }
         }
+        BodyPresence presence = bodyPresence(request);
+        if (presence == BodyPresence.ABSENT) {
+            return null;
+        }
+        try (InputStream inputStream = openBody(bodySupplier, presence)) {
+            return inputStream == null ? null : decode(inputStream, contentType, request);
+        } catch (EOFException _) {
+            // no content
+            return null;
+        } catch (Exception e) {
+            throw new CodecException("Error decoding request body: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Decodes an open request body into the type the route declared.
+     *
+     * @param inputStream The body
+     * @param contentType The content type
+     * @param request The request
+     * @return The decoded body
+     * @throws IOException If the body could not be read
+     */
+    private Object decode(@NonNull InputStream inputStream,
+                          @NonNull MediaType contentType,
+                          @NonNull HttpRequest<?> request) throws IOException {
+        Argument<?> resolvedBodyType = resolveBodyType(request);
+        if (resolvedBodyType != null && RAW_BODY_TYPES.contains(resolvedBodyType.getType())) {
+            return inputStream.readAllBytes();
+        }
+        @SuppressWarnings("unchecked")
+        Argument<Object> targetType = (Argument<Object>) (resolvedBodyType == null ? Argument.OBJECT_ARGUMENT : resolvedBodyType);
+        MessageBodyReader<Object> reader = messageBodyHandlerRegistry.findReader(targetType, contentType).orElse(null);
+        if (reader != null) {
+            return reader.read(targetType, contentType, request.getHeaders(), inputStream);
+        }
+        return inputStream.readAllBytes();
+    }
+
+    /**
+     * What is known about the presence of a request body before reading it.
+     */
+    private enum BodyPresence {
+        /** Framing says a body is present, or one is declared with a length. */
+        PRESENT,
+        /** Framing says there is no body. */
+        ABSENT,
+        /** Framing cannot say; the stream itself has to be consulted. */
+        UNKNOWN
+    }
+
+    /**
+     * Decides what framing says about the presence of a request body, without reading from it.
+     *
+     * <p>A request that omits {@code Content-Length} reports a length of {@code -1}, which means "unknown", not
+     * "empty". Treating that as a body present makes an ordinary GET, which carries only query parameters, fail to
+     * decode and answer 400; see <a href="https://github.com/micronaut-projects/micronaut-servlet/issues/1097">#1097</a>.</p>
+     *
+     * <p>For HTTP/1, RFC 9112 settles it without touching the stream: a request supplying neither
+     * {@code Content-Length} nor {@code Transfer-Encoding} has no body. Reading a byte to find out instead blocks on
+     * containers that wait for data that is never coming.</p>
+     *
+     * <p>That rule does not carry over to HTTP/2 and later, which frame the payload in DATA frames and forbid
+     * {@code Transfer-Encoding}, so both headers are legitimately absent whether or not a body follows. There the
+     * answer is UNKNOWN and the stream decides; a read returns promptly either way, because the end of the stream is
+     * signalled explicitly rather than inferred from framing.</p>
+     *
+     * @param request The request
+     * @return What framing says about the body
+     */
+    private static BodyPresence bodyPresence(@NonNull HttpRequest<?> request) {
+        long contentLength = request.getContentLength();
+        if (contentLength > 0) {
+            return BodyPresence.PRESENT;
+        }
+        if (contentLength == 0) {
+            return BodyPresence.ABSENT;
+        }
+        if (request.getHeaders().contains(HttpHeaders.TRANSFER_ENCODING)) {
+            return BodyPresence.PRESENT;
+        }
+        return request.getHttpVersion() == HttpVersion.HTTP_1_1 ? BodyPresence.ABSENT : BodyPresence.UNKNOWN;
+    }
+
+    /**
+     * Opens the request body, returning {@code null} when the stream turns out to be empty.
+     *
+     * @param bodySupplier Supplies the body stream
+     * @param presence What framing said about the body
+     * @return The body stream, or {@code null} when there is no body to read
+     * @throws Exception If the body stream could not be opened or read
+     */
+    private static @Nullable InputStream openBody(@NonNull Callable<InputStream> bodySupplier,
+                                                  @NonNull BodyPresence presence) throws Exception {
+        InputStream inputStream = bodySupplier.call();
+        if (presence != BodyPresence.UNKNOWN) {
+            return inputStream;
+        }
+        PushbackInputStream pushbackInputStream = new PushbackInputStream(inputStream, 1);
+        int first = pushbackInputStream.read();
+        if (first == -1) {
+            pushbackInputStream.close();
+            return null;
+        }
+        pushbackInputStream.unread(first);
+        return pushbackInputStream;
     }
 
     private Argument<?> resolveBodyType(@NonNull HttpRequest<?> request) {

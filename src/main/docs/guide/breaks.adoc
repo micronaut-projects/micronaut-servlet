@@ -1,5 +1,18 @@
 This section documents breaking changes between Micronaut Servlet versions:
 
+== Micronaut Servlet 6.2.0
+
+=== Multipart handling is enabled by default
+
+`micronaut.server.multipart.enabled` has no default of its own. Its `isEnabled()` reported `false` when the property was unset, while the Netty server and the shared request lifecycle read the raw value and treat unset as enabled. The servlet configuration followed `isEnabled()`, so no `MultipartConfigElement` was registered and the container never parsed multipart bodies: parts reached no controller argument and `getParts()` was unavailable.
+
+Servlet containers now follow the same rule as the rest of the framework, so an unset value means enabled.
+
+Two consequences for Jetty, Tomcat and Undertow applications:
+
+- Multipart requests are parsed where they previously were not, so `@Part` arguments, `CompletedFileUpload` and `getParts()` start working without configuration.
+- Micronaut's multipart limits now apply to those uploads. `micronaut.server.multipart.max-file-size` defaults to 1MB and `micronaut.server.max-request-size` to 10MB, so an upload that previously passed unchecked may now be rejected. Raise the limits, or set `micronaut.server.multipart.enabled` to `false` to restore the previous behaviour.
+
 == Micronaut Servlet 5.0.0
 
 === Deprecations

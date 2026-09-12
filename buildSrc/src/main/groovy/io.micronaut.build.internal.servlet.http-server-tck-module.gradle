@@ -1,5 +1,6 @@
 plugins {
     id("java")
+    id 'jacoco'
     id 'org.graalvm.buildtools.native'
 }
 
@@ -24,6 +25,13 @@ dependencies {
 
 tasks.named("test") {
     useJUnitPlatform()
+}
+
+// this module has no production code of its own; it exists to run the shared TCK against a server implementation.
+// Its own report would be empty, and the coverage it produces is attributed back to the modules that own the code
+// by the aggregation in the root build
+tasks.named("jacocoTestReport") {
+    enabled = false
 }
 
 graalvmNative {

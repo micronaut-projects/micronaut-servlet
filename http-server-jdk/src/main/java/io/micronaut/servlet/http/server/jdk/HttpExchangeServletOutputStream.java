@@ -20,49 +20,77 @@ import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.Internal;
 import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.WriteListener;
+import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
+import java.io.OutputStream;
 
+/**
+ * {@link ServletOutputStream} backed by {@link HttpExchange#getResponseBody()}.
+ *
+ * <p>Constructed with a {@code null} exchange when the response may not carry a body (1xx, 204, 304, or a response to
+ * HEAD), in which case writes are discarded rather than corrupting an exchange that was announced as body-less.</p>
+ */
 @Internal
 @Experimental
 final class HttpExchangeServletOutputStream extends ServletOutputStream {
 
-    private final HttpExchange httpExchange;
+    private final @Nullable HttpExchange httpExchange;
+    private @Nullable OutputStream responseBody;
 
-    HttpExchangeServletOutputStream(HttpExchange httpExchange) {
+    HttpExchangeServletOutputStream(@Nullable HttpExchange httpExchange) {
         this.httpExchange = httpExchange;
     }
 
     @Override
     public boolean isReady() {
-        throw new UnsupportedOperationException("Not implemented");
+        // this stream is always blocking; the JDK HTTP server has no non-blocking write API
+        return true;
     }
 
     @Override
     public void setWriteListener(WriteListener writeListener) {
-        throw new UnsupportedOperationException("Not implemented");
-    }
-
-    @Override
-    public void close() throws IOException {
-        super.close();
-        if (httpExchange.getResponseBody() != null) {
-            httpExchange.getResponseBody().close();
-        }
+        throw new UnsupportedOperationException("The JDK HTTP server does not support non-blocking writes");
     }
 
     @Override
     public void write(int b) throws IOException {
-        if (httpExchange.getResponseBody() != null) {
-            httpExchange.getResponseBody().write(b);
+        OutputStream out = responseBody();
+        if (out != null) {
+            out.write(b);
+        }
+    }
+
+    @Override
+    public void write(byte[] b, int off, int len) throws IOException {
+        OutputStream out = responseBody();
+        if (out != null) {
+            out.write(b, off, len);
         }
     }
 
     @Override
     public void flush() throws IOException {
         super.flush();
-        if (httpExchange.getResponseBody() != null) {
-            httpExchange.getResponseBody().flush();
+        OutputStream out = responseBody();
+        if (out != null) {
+            out.flush();
         }
+    }
+
+    @Override
+    public void close() throws IOException {
+        super.close();
+        OutputStream out = responseBody();
+        if (out != null) {
+            out.close();
+        }
+    }
+
+    private @Nullable OutputStream responseBody() {
+        if (responseBody == null && httpExchange != null) {
+            responseBody = httpExchange.getResponseBody();
+        }
+        return responseBody;
     }
 }

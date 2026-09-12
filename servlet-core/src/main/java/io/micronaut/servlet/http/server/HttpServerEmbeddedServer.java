@@ -38,6 +38,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Internal
@@ -46,8 +48,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Requires(beans = HttpServer.class)
 @Singleton
 class HttpServerEmbeddedServer extends AbstractServletServer<HttpServer> {
+    /**
+     * How long the request executor is given to finish in-flight exchanges before it is interrupted.
+     */
+    private static final long EXECUTOR_SHUTDOWN_TIMEOUT_SECONDS = 5L;
+
     private static final String SCHEME_HTTP = "http";
     private final HttpServerConfiguration httpServerConfiguration;
+    private final JdkServerExecutorOwnership executorOwnership;
     private final AtomicBoolean running = new AtomicBoolean(false);
 
     /**
@@ -61,9 +69,11 @@ class HttpServerEmbeddedServer extends AbstractServletServer<HttpServer> {
                                        ApplicationConfiguration applicationConfiguration,
                                        HttpServerConfiguration httpServerConfiguration,
                                        @Nullable ApplicationEventPublisher<ServerShutdownEvent> serverShutdownEventPublisher,
+                                       JdkServerExecutorOwnership executorOwnership,
                                        HttpServer server) {
         super(applicationContextProvider != null ? applicationContextProvider.getApplicationContext() : applicationContext, applicationConfiguration, serverShutdownEventPublisher, server);
         this.httpServerConfiguration = httpServerConfiguration;
+        this.executorOwnership = executorOwnership;
     }
 
     @Override
@@ -79,6 +89,31 @@ class HttpServerEmbeddedServer extends AbstractServletServer<HttpServer> {
         if (running.compareAndSet(true, false)) {
             HttpServer server = getServer();
             server.stop(0);
+            shutdownOwnedExecutor(server);
+        }
+    }
+
+    /**
+     * Shuts down the request executor, provided this module is the one that created it.
+     *
+     * <p>{@link HttpServer#stop(int)} leaves the executor running, and the fallback pool's workers are not daemon
+     * threads, so a stopped server would otherwise leak them and could keep the JVM alive. An executor the
+     * application supplied with its own server bean is left alone: it may be shared with work that outlives this
+     * server.</p>
+     *
+     * @param server The server that has just been stopped
+     */
+    private void shutdownOwnedExecutor(HttpServer server) {
+        if (executorOwnership.isOwned(server.getExecutor()) && server.getExecutor() instanceof ExecutorService executorService) {
+            executorService.shutdown();
+            try {
+                if (!executorService.awaitTermination(EXECUTOR_SHUTDOWN_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
+                    executorService.shutdownNow();
+                }
+            } catch (InterruptedException _) {
+                Thread.currentThread().interrupt();
+                executorService.shutdownNow();
+            }
         }
     }
 
