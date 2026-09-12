@@ -2,6 +2,17 @@ This section documents breaking changes between Micronaut Servlet versions:
 
 == Micronaut Servlet 6.2.0
 
+=== Responses are compressed by default
+
+Servlet containers did not compress responses at all, while the Netty server compresses anything above 1KB that the client accepts. `micronaut.servlet.compression.enabled` now defaults to `true`, and is wired to each container's own encoder rather than reimplemented as a filter, so the cases that make compression awkward, HEAD, ranges, already encoded bodies and the `Vary` header, are settled by code that already handles them.
+
+Two things change for Jetty, Tomcat and Undertow applications:
+
+- A response over `micronaut.servlet.compression.threshold` (1KB) whose content type is in `micronaut.servlet.compression.content-types` is sent gzipped when the client sends `Accept-Encoding: gzip`.
+- Those responses carry `Vary: Accept-Encoding`, which is required so a cache does not serve a compressed body to a client that cannot read it.
+
+Set `micronaut.servlet.compression.enabled` to `false` to restore the previous behaviour. The JDK server runtime does not support compression.
+
 === Multipart handling is enabled by default
 
 `micronaut.server.multipart.enabled` has no default of its own. Its `isEnabled()` reported `false` when the property was unset, while the Netty server and the shared request lifecycle read the raw value and treat unset as enabled. The servlet configuration followed `isEnabled()`, so no `MultipartConfigElement` was registered and the container never parsed multipart bodies: parts reached no controller argument and `getParts()` was unavailable.

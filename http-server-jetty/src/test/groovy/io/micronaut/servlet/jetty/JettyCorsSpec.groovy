@@ -4,6 +4,7 @@ import io.micronaut.context.annotation.Property
 import io.micronaut.context.annotation.Requires
 import io.micronaut.http.HttpRequest
 import io.micronaut.http.HttpResponse
+import io.micronaut.http.HttpHeaders
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Error
@@ -48,7 +49,8 @@ class JettyCorsSpec extends Specification implements TestPropertyProvider {
         then:
         response.status == HttpStatus.NO_CONTENT
         response.contentLength == -1
-        headerNames.size() == 2
+        // Vary comes from response compression, which has to declare that the body depends on Accept-Encoding
+        headerNames.findAll { it != HttpHeaders.VARY }.size() == 2
         // Client is now keep-alive so we don't get the connection header
         !headerNames.contains(CONNECTION)
         headerNames.contains(DATE)
