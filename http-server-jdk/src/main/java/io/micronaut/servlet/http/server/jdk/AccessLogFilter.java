@@ -28,6 +28,7 @@ import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -59,7 +60,7 @@ final class AccessLogFilter extends Filter {
 
     @Override
     public void doFilter(HttpExchange exchange, Chain chain) throws IOException {
-        ZonedDateTime received = ZonedDateTime.now();
+        ZonedDateTime received = ZonedDateTime.now(ZoneId.systemDefault());
         boolean log = logger.isInfoEnabled() && !excluded(exchange);
         CountingOutputStream body = null;
         if (log) {
@@ -71,8 +72,9 @@ final class AccessLogFilter extends Filter {
         try {
             chain.doFilter(exchange);
         } finally {
-            if (log) {
-                logger.info(line(exchange, received, body.count));
+            if (log && logger.isInfoEnabled()) {
+                String line = line(exchange, received, body.count);
+                logger.info("{}", line);
             }
         }
     }
@@ -100,9 +102,27 @@ final class AccessLogFilter extends Filter {
         // the request line carries the HTTP version whether or not TLS transports it
         String protocol = exchange.getProtocol();
         int status = exchange.getResponseCode();
-        return host + " - " + user + " [" + TIMESTAMP.format(received) + "] \""
-            + exchange.getRequestMethod() + ' ' + exchange.getRequestURI() + ' ' + protocol + "\" "
+        return host + " - " + sanitize(user) + " [" + TIMESTAMP.format(received) + "] \""
+            + sanitize(exchange.getRequestMethod()) + ' ' + sanitize(exchange.getRequestURI().toString()) + ' ' + sanitize(protocol) + "\" "
             + (status < 0 ? "-" : String.valueOf(status)) + ' ' + (bytes == 0 ? "-" : String.valueOf(bytes));
+    }
+
+    /**
+     * Keeps client-supplied text from forging log lines: control characters, including line breaks, are replaced.
+     */
+    private static String sanitize(String value) {
+        StringBuilder builder = null;
+        for (int i = 0; i < value.length(); i++) {
+            char c = value.charAt(i);
+            boolean control = c < ' ' || c == 0x7f;
+            if (builder == null && control) {
+                builder = new StringBuilder(value.length()).append(value, 0, i);
+            }
+            if (builder != null) {
+                builder.append(control ? '_' : c);
+            }
+        }
+        return builder == null ? value : builder.toString();
     }
 
     /**

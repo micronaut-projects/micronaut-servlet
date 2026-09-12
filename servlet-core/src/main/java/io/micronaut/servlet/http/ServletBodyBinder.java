@@ -74,6 +74,7 @@ import java.util.concurrent.CompletionStage;
  */
 public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body, T> {
     private static final Argument<byte[]> BYTE_ARRAY = Argument.of(byte[].class);
+    private static final String UNABLE_TO_DECODE = "Unable to decode request body: ";
 
     protected final ConversionService conversionService;
     private final MessageBodyHandlerRegistry messageBodyHandlerRegistry;
@@ -183,7 +184,7 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
                         T content = conversionService.convert(value, argument).orElse(null);
                         return () -> Optional.ofNullable(content);
                     } catch (CodecException | IOException e) {
-                        throw decodingFailure("Unable to decode request body: ", e);
+                        throw decodingFailure(UNABLE_TO_DECODE, e);
                     } catch (RuntimeException e) {
                         throw BodyReadFailures.httpFailureOr(e);
                     }
@@ -225,7 +226,7 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
                     }
                     return () -> (Optional<T>) Optional.ofNullable(content);
                 } catch (CodecException | IOException e) {
-                    throw decodingFailure("Unable to decode request body: ", e);
+                    throw decodingFailure(UNABLE_TO_DECODE, e);
                 } catch (RuntimeException e) {
                     throw BodyReadFailures.httpFailureOr(e);
                 }
@@ -257,7 +258,7 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
                         }
                         return () -> Optional.of((T) array);
                     } catch (CodecException | IOException e) {
-                        throw decodingFailure("Unable to decode request body: ", e);
+                        throw decodingFailure(UNABLE_TO_DECODE, e);
                     } catch (RuntimeException e) {
                         throw BodyReadFailures.httpFailureOr(e);
                     }
@@ -272,7 +273,7 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
                         }
                         return () -> (Optional<T>) Optional.ofNullable(content);
                     } catch (CodecException | IOException e) {
-                        throw decodingFailure("Unable to decode request body: ", e);
+                        throw decodingFailure(UNABLE_TO_DECODE, e);
                     } catch (RuntimeException e) {
                         throw BodyReadFailures.httpFailureOr(e);
                     }
@@ -332,76 +333,78 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
         if (servletHttpRequest instanceof ServerHttpRequest<?> serverHttpRequest) {
             if (mediaType.equals(MediaType.APPLICATION_JSON_STREAM_TYPE) || !single && mediaType.equals(MediaType.APPLICATION_JSON_TYPE)) {
                 Flux<Object> jsonStream = streamJson(serverHttpRequest, typeArgument);
-                if (single) {
-                    publisher = jsonStream.single();
-                } else {
-                    publisher = jsonStream;
-                }
+                publisher = single ? jsonStream.single() : jsonStream;
             } else {
                 publisher = Mono.fromCompletionStage(serverHttpRequest.byteBody().buffer())
-                    .flatMapMany(bb -> {
-                        Class<Object> typeArgumentClass = typeArgument.getType();
-                        if (CharSequence.class.isAssignableFrom(typeArgumentClass)) {
-                            Charset characterEncoding = servletHttpRequest.getCharacterEncoding();
-                            return Mono.just(bb.toString(characterEncoding));
-                        }
-                        if (BYTE_ARRAY.getType().isAssignableFrom(typeArgumentClass)) {
-                            return Mono.just(bb.toByteArray());
-                        }
-                        if (single) {
-                            Object body = null;
-                            if (name != null) {
-                                Argument<Map<String, Object>> mapArgument = Argument.mapOf(String.class, Object.class);
-                                MessageBodyReader<Map<String, Object>> reader = messageBodyHandlerRegistry.findReader(mapArgument, mediaType).orElse(null);
-                                if (reader != null) {
-                                    Map<String, Object> map = reader.read(mapArgument, mediaType, source.getHeaders(), bb.toByteBuffer());
-                                    body = map == null ? null : map.get(name);
-                                }
-                            } else {
-                                body = messageBodyReader.read(typeArgument, mediaType, source.getHeaders(), bb.toByteBuffer());
-                            }
-                            if (body != null && servletHttpRequest instanceof ParsedBodyHolder parsedBody) {
-                                parsedBody.setParsedBody(body);
-                            }
-                            return body != null ? Flux.just(body) : Flux.empty();
-                        } else {
-                            @SuppressWarnings("unchecked")
-                            Argument<Object> listArgument = (Argument<Object>) (Argument<?>) Argument.listOf(typeArgument);
-                            Object body = messageBodyReader.read(listArgument, mediaType, source.getHeaders(), bb.toByteBuffer());
-                            if (body != null && servletHttpRequest instanceof ParsedBodyHolder parsedBody) {
-                                parsedBody.setParsedBody(body);
-                            }
-                            return body != null ? Flux.fromIterable((Iterable<?>) body) : Flux.empty();
-                        }
-                    });
+                    .flatMapMany(bb -> publishBuffered(bb, source, servletHttpRequest, mediaType, messageBodyReader, typeArgument, single, name));
             }
         } else {
             if (mediaType.equals(MediaType.APPLICATION_JSON_STREAM_TYPE)) {
                 throw new IllegalStateException("Expected ServerHttpRequest");
             }
             try (InputStream is = servletHttpRequest.getInputStream()) {
-                if (single) {
-                    Object body = messageBodyReader.read(typeArgument, mediaType, source.getHeaders(), is);
-                    if (body != null && servletHttpRequest instanceof ParsedBodyHolder parsedBody) {
-                        parsedBody.setParsedBody(body);
-                    }
-                    publisher = body != null ? Flux.just(body) : Flux.empty();
-                } else {
-                    @SuppressWarnings("unchecked")
-                    Argument<Object> listArgument = (Argument<Object>) (Argument<?>) Argument.listOf(typeArgument);
-                    Object body = messageBodyReader.read(listArgument, mediaType, source.getHeaders(), is);
-                    if (body != null && servletHttpRequest instanceof ParsedBodyHolder parsedBody) {
-                        parsedBody.setParsedBody(body);
-                    }
-                    publisher = body != null ? Flux.fromIterable((Iterable<?>) body) : Flux.empty();
-                }
+                Object body = single
+                    ? messageBodyReader.read(typeArgument, mediaType, source.getHeaders(), is)
+                    : messageBodyReader.read(listOf(typeArgument), mediaType, source.getHeaders(), is);
+                publisher = publishParsed(body, single, servletHttpRequest);
             } catch (CodecException | IOException e) {
-                throw decodingFailure("Unable to decode request body: ", e);
+                throw decodingFailure(UNABLE_TO_DECODE, e);
             } catch (RuntimeException e) {
                 throw BodyReadFailures.httpFailureOr(e);
             }
         }
         return conversionService.convertRequired(publisher, type);
+    }
+
+    /**
+     * Turns a buffered body into the publisher a reactive body argument expects.
+     */
+    @SuppressWarnings("java:S107") // every value the read needs, passed once from the caller
+    private Publisher<?> publishBuffered(AvailableByteBody bb,
+                                         HttpRequest<?> source,
+                                         ServletHttpRequest<?, ?> servletHttpRequest,
+                                         MediaType mediaType,
+                                         MessageBodyReader<Object> messageBodyReader,
+                                         Argument<Object> typeArgument,
+                                         boolean single,
+                                         @Nullable String name) {
+        Class<Object> typeArgumentClass = typeArgument.getType();
+        if (CharSequence.class.isAssignableFrom(typeArgumentClass)) {
+            return Mono.just(bb.toString(servletHttpRequest.getCharacterEncoding()));
+        }
+        if (BYTE_ARRAY.getType().isAssignableFrom(typeArgumentClass)) {
+            return Mono.just(bb.toByteArray());
+        }
+        Object body;
+        if (!single) {
+            body = messageBodyReader.read(listOf(typeArgument), mediaType, source.getHeaders(), bb.toByteBuffer());
+        } else if (name != null) {
+            Argument<Map<String, Object>> mapArgument = Argument.mapOf(String.class, Object.class);
+            MessageBodyReader<Map<String, Object>> reader = messageBodyHandlerRegistry.findReader(mapArgument, mediaType).orElse(null);
+            Map<String, Object> map = reader == null ? null : reader.read(mapArgument, mediaType, source.getHeaders(), bb.toByteBuffer());
+            body = map == null ? null : map.get(name);
+        } else {
+            body = messageBodyReader.read(typeArgument, mediaType, source.getHeaders(), bb.toByteBuffer());
+        }
+        return publishParsed(body, single, servletHttpRequest);
+    }
+
+    /**
+     * Records a parsed body on the request and publishes it: as one item, or item by item for a list.
+     */
+    private static Publisher<?> publishParsed(@Nullable Object body, boolean single, ServletHttpRequest<?, ?> servletHttpRequest) {
+        if (body == null) {
+            return Flux.empty();
+        }
+        if (servletHttpRequest instanceof ParsedBodyHolder parsedBody) {
+            parsedBody.setParsedBody(body);
+        }
+        return single ? Flux.just(body) : Flux.fromIterable((Iterable<?>) body);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Argument<Object> listOf(Argument<Object> typeArgument) {
+        return (Argument<Object>) (Argument<?>) Argument.listOf(typeArgument);
     }
 
     private Flux<Object> streamJson(ServerHttpRequest<?> serverRequest, Argument<Object> typeArgument) {

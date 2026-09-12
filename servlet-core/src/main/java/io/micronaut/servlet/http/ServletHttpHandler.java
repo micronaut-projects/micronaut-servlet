@@ -36,6 +36,7 @@ import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MutableHttpHeaders;
 import io.micronaut.http.body.AvailableByteBody;
+import io.micronaut.http.body.ByteBody;
 import io.micronaut.http.body.ByteBodyFactory;
 import io.micronaut.http.body.MessageBodyHandlerRegistry;
 import io.micronaut.http.body.stream.BodySizeLimits;
@@ -69,7 +70,6 @@ import java.io.OutputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Paths;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -208,101 +208,97 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
 
     private static void transfer(ExecutionResult executionResult, ServletExchange<?, ?> exchange, boolean async, Runnable onComplete) {
         ByteBodyHttpResponse<?> byteBodyResponse = executionResult.byteBodyHttpResponse;
-        boolean debugEnabled = LOG.isDebugEnabled();
-        if (debugEnabled) {
-            if (byteBodyResponse == null) {
-                LOG.debug("Request [{} - {}] completed commited manually", exchange.getRequest().getMethodName(), exchange.getRequest().getUri());
-            } else {
-                LOG.debug("Request [{} - {}] completed successfully", exchange.getRequest().getMethodName(), exchange.getRequest().getUri());
-            }
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Request [{} - {}] completed {}", exchange.getRequest().getMethodName(), exchange.getRequest().getUri(),
+                byteBodyResponse == null ? "committed manually" : "successfully");
         }
         if (byteBodyResponse == null) {
             onComplete.run();
             return;
         }
-
         traceHeaders(byteBodyResponse.getHeaders());
-
         ServletHttpResponse<?, ?> servletResponse = exchange.getResponse();
-        if (byteBodyResponse.getHeaders() != exchange.getResponse().getHeaders()) {
+        if (byteBodyResponse.getHeaders() != servletResponse.getHeaders()) {
             servletResponse.status(byteBodyResponse.code(), byteBodyResponse.reason());
-            HttpHeaders sourceHeaders = byteBodyResponse.getHeaders();
-            MutableHttpHeaders servletResponseHeaders = servletResponse.getHeaders();
-            for (String name : sourceHeaders.names()) {
-                List<String> values = sourceHeaders.getAll(name);
-                if (servletResponseHeaders.contains(name)) {
-                    // some implementations don't like to remove some headers, so the first value replaces what the
-                    // container set and the rest are added
-                    boolean first = true;
-                    for (String value : values) {
-                        if (first) {
-                            servletResponseHeaders.set(name, value);
-                            first = false;
-                        } else {
-                            servletResponseHeaders.add(name, value);
-                        }
-                    }
-                } else {
-                    for (String value : values) {
-                        servletResponseHeaders.add(name, value);
-                    }
-                }
-            }
-            if (debugEnabled) {
-                for (String servletResponseHeader : servletResponseHeaders.names()) {
-                    if (!sourceHeaders.contains(servletResponseHeader)) {
-                        LOG.debug("Request [{} - {}] custom native response header '{}': '{}'",
-                            exchange.getRequest().getMethodName(),
-                            exchange.getRequest().getUri(),
-                            servletResponseHeader,
-                            servletResponseHeaders.get(servletResponseHeader));
-                    }
-                }
-            }
+            copyHeaders(byteBodyResponse.getHeaders(), servletResponse.getHeaders(), exchange);
         }
-        if (byteBodyResponse.byteBody() instanceof AvailableByteBody available && available.length() == 0) {
+        ByteBody body = byteBodyResponse.byteBody();
+        if (body instanceof AvailableByteBody available && available.length() == 0) {
             // special case, don't call getOutputStream. the controller may have written manually.
             onComplete.run();
-        } else if (async && !(byteBodyResponse.byteBody() instanceof AvailableByteBody)) {
+        } else if (async && !(body instanceof AvailableByteBody)) {
             // a body that is still being produced is written as it arrives, through a WriteListener; a body that
             // is already complete is written below on this thread instead, because the listener costs a dispatch
             // through the container on every response and buys nothing when there is nothing to wait for
-            servletResponse.stream(byteBodyResponse.byteBody().move()).whenComplete((ignored, t) -> {
+            servletResponse.stream(body.move()).whenComplete((ignored, t) -> {
                 if (t != null) {
-                    if (t instanceof EOFException) {
-                        if (LOG.isDebugEnabled()) {
-                            LOG.debug("Error while writing response body", t);
-                        }
-                    } else {
-                        if (LOG.isWarnEnabled()) {
-                            LOG.warn("Error while writing response body", t);
-                        }
-                    }
+                    logWriteFailure(t);
                 }
                 onComplete.run();
             });
         } else {
-            byteBodyResponse.byteBody().expectedLength()
-                .ifPresent(l -> servletResponse.getHeaders().set(HttpHeaders.CONTENT_LENGTH, String.valueOf(l)));
-            boolean complete = byteBodyResponse.byteBody() instanceof AvailableByteBody;
-            try (InputStream is = byteBodyResponse.byteBody().toInputStream()) {
-                OutputStream out = servletResponse.getOutputStream();
-                if (complete) {
-                    is.transferTo(out);
-                } else {
-                    // a body still being produced, such as an event stream, is flushed as each piece arrives so
-                    // that the client sees it then rather than when the stream ends
-                    byte[] buffer = new byte[STREAM_BUFFER_SIZE];
-                    int read;
-                    while ((read = is.read(buffer)) != -1) {
-                        out.write(buffer, 0, read);
-                        out.flush();
-                    }
-                }
-            } catch (IOException e) {
-                throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, Optional.ofNullable(e.getMessage()).orElse(e.toString()));
-            }
+            writeBlocking(body, servletResponse);
             onComplete.run();
+        }
+    }
+
+    /**
+     * Applies the response headers to the container's response. A header the container already set is replaced
+     * by the first value and extended by the rest, because some containers do not like headers being removed.
+     */
+    private static void copyHeaders(HttpHeaders sourceHeaders, MutableHttpHeaders servletResponseHeaders, ServletExchange<?, ?> exchange) {
+        for (String name : sourceHeaders.names()) {
+            boolean replace = servletResponseHeaders.contains(name);
+            for (String value : sourceHeaders.getAll(name)) {
+                if (replace) {
+                    servletResponseHeaders.set(name, value);
+                    replace = false;
+                } else {
+                    servletResponseHeaders.add(name, value);
+                }
+            }
+        }
+        if (LOG.isDebugEnabled()) {
+            for (String servletResponseHeader : servletResponseHeaders.names()) {
+                if (!sourceHeaders.contains(servletResponseHeader)) {
+                    LOG.debug("Request [{} - {}] custom native response header '{}': '{}'",
+                        exchange.getRequest().getMethodName(), exchange.getRequest().getUri(),
+                        servletResponseHeader, servletResponseHeaders.get(servletResponseHeader));
+                }
+            }
+        }
+    }
+
+    /**
+     * Writes the body on the current thread. A body still being produced, such as an event stream, is flushed as
+     * each piece arrives so that the client sees it then rather than when the stream ends.
+     */
+    private static void writeBlocking(ByteBody body, ServletHttpResponse<?, ?> servletResponse) {
+        body.expectedLength().ifPresent(l -> servletResponse.getHeaders().set(HttpHeaders.CONTENT_LENGTH, String.valueOf(l)));
+        try (InputStream is = body.toInputStream()) {
+            OutputStream out = servletResponse.getOutputStream();
+            if (body instanceof AvailableByteBody) {
+                is.transferTo(out);
+            } else {
+                byte[] buffer = new byte[STREAM_BUFFER_SIZE];
+                int read;
+                while ((read = is.read(buffer)) != -1) {
+                    out.write(buffer, 0, read);
+                    out.flush();
+                }
+            }
+        } catch (IOException e) {
+            throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, Optional.ofNullable(e.getMessage()).orElse(e.toString()));
+        }
+    }
+
+    private static void logWriteFailure(Throwable t) {
+        if (t instanceof EOFException) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Error while writing response body", t);
+            }
+        } else if (LOG.isWarnEnabled()) {
+            LOG.warn("Error while writing response body", t);
         }
     }
 
@@ -401,39 +397,47 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
                               ServletRequestLifecycle lc,
                               Runnable requestTerminated) {
         exchange.getRequest().executeAsync(ctx -> PropagatedContext.getOrEmpty().plus(new ServerHttpRequestContext(req)).propagate(() -> {
-            // completing the async context twice throws, so this has to run exactly once however the exchange ends
-            AtomicBoolean finished = new AtomicBoolean();
-            Runnable finish = () -> {
-                if (finished.compareAndSet(false, true)) {
-                    try {
-                        ctx.complete();
-                    } catch (IllegalStateException alreadyCompleted) {
-                        // the container completed the context itself, on an asynchronous timeout or error; the
-                        // request still has to be accounted for and its resources released
-                        LOG.debug("Async context already completed for request [{} - {}]", req.getMethodName(), req.getUri(), alreadyCompleted);
-                    } finally {
-                        requestTerminated.run();
-                    }
-                }
-            };
+            Runnable finish = completeOnce(ctx, req, requestTerminated);
             lc.handleNormal(req)
                 .flatMap(response -> process(response, req, exchange.getResponse()))
-                .onComplete((bbhr, t) -> {
-                    if (t == null) {
-                        try {
-                            transfer(bbhr, exchange, true, finish);
-                        } catch (Exception transferFailure) {
-                            // transfer throws on a write failure, before it can run the callback itself
-                            handleFallback(exchange.getResponse(), transferFailure);
-                            finish.run();
-                        }
-                    } else {
-                        handleFallback(exchange.getResponse(), t);
-                        finish.run();
-                    }
-                });
+                .onComplete((bbhr, t) -> completeAsync(exchange, bbhr, t, finish));
             return null;
         }));
+    }
+
+    /**
+     * Completes the async context exactly once, however the exchange ends: completing it twice throws, and a
+     * container that completed it itself (on an asynchronous timeout or error) must not stop the request from
+     * being accounted for and its resources released.
+     */
+    private Runnable completeOnce(ServletHttpRequest.AsyncExecution ctx, HttpRequest<Object> req, Runnable requestTerminated) {
+        AtomicBoolean finished = new AtomicBoolean();
+        return () -> {
+            if (finished.compareAndSet(false, true)) {
+                try {
+                    ctx.complete();
+                } catch (IllegalStateException alreadyCompleted) {
+                    LOG.debug("Async context already completed for request [{} - {}]", req.getMethodName(), req.getUri(), alreadyCompleted);
+                } finally {
+                    requestTerminated.run();
+                }
+            }
+        };
+    }
+
+    private void completeAsync(ServletExchange<REQ, RES> exchange, @Nullable ExecutionResult result, @Nullable Throwable failure, Runnable finish) {
+        if (failure != null) {
+            handleFallback(exchange.getResponse(), failure);
+            finish.run();
+            return;
+        }
+        try {
+            transfer(result, exchange, true, finish);
+        } catch (Exception transferFailure) {
+            // transfer throws on a write failure, before it can run the callback itself
+            handleFallback(exchange.getResponse(), transferFailure);
+            finish.run();
+        }
     }
 
     /**

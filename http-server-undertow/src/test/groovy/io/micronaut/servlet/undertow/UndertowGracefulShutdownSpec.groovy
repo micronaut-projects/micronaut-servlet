@@ -2,7 +2,6 @@ package io.micronaut.servlet.undertow
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.context.annotation.Requires
-import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Get
 import io.micronaut.runtime.graceful.GracefulShutdownCapable
@@ -10,11 +9,7 @@ import io.micronaut.runtime.server.EmbeddedServer
 import io.micronaut.servlet.http.ServletHttpHandler
 import spock.lang.Specification
 
-import java.net.http.HttpClient
-import java.net.http.HttpRequest
-import java.net.http.HttpResponse
 import java.time.Duration
-import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
@@ -44,26 +39,39 @@ class UndertowGracefulShutdownSpec extends Specification {
             'micronaut.lifecycle.graceful-shutdown.enabled': true
         ])
         SlowController controller = server.applicationContext.getBean(SlowController)
-        HttpClient client = HttpClient.newHttpClient()
-        HttpRequest request = HttpRequest.newBuilder(server.URI.resolve('/graceful/slow')).build()
+        // a raw socket rather than the JDK HttpClient: the client retries a GET on a new connection when it decides
+        // the first one failed, which turns an in-flight response into a ConnectException against a stopped server
+        Socket socket = new Socket('localhost', server.port)
+        socket.outputStream.write("GET /graceful/slow HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n".bytes)
+        socket.outputStream.flush()
+        StringBuilder raw = new StringBuilder()
+        Thread reader = Thread.startVirtualThread {
+            try {
+                socket.inputStream.withReader('ISO-8859-1') { r -> int ch; while ((ch = r.read()) != -1) { raw.append((char) ch) } }
+            } catch (IOException e) {
+                raw.append('<<').append(e).append('>>')
+            }
+        }
 
         when: "a request is in progress while the application is stopped"
-        CompletableFuture<HttpResponse<String>> response = client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
         assert controller.started.await(10, TimeUnit.SECONDS)
         GracefulShutdownCapable capable = (GracefulShutdownCapable) server
         long activeDuringRequest = capable.reportActiveTasks().asLong
         long stopStarted = System.nanoTime()
         server.applicationContext.stop()
         long stopMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - stopStarted)
+        reader.join(10_000)
+        String response = raw.toString()
 
         then: "the request was counted and the stop waited for it"
         activeDuringRequest == 1
-        response.get(10, TimeUnit.SECONDS).statusCode() == 200
-        response.get().body() == 'finished'
+        response.startsWith('HTTP/1.1 200')
+        response.endsWith('finished')
         controller.released
         stopMillis >= SlowController.WORK.toMillis() / 2
 
         cleanup:
+        socket.close()
         server.close()
     }
 

@@ -87,7 +87,7 @@ public abstract class AbstractServletServer<T> implements EmbeddedServer, Gracef
     public CompletionStage<?> shutdownGracefully() {
         try {
             stopAcceptingRequests();
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             LOG.warn("Failed to stop the server accepting requests during graceful shutdown", e);
         }
         return handler().map(ServletHttpHandler::awaitIdle)
@@ -104,10 +104,9 @@ public abstract class AbstractServletServer<T> implements EmbeddedServer, Gracef
      * container has its own way of doing this; the default does nothing, and the graceful shutdown then only waits
      * for in-flight requests.
      *
-     * @throws Exception If the server could not be paused
      * @since 6.2.0
      */
-    protected void stopAcceptingRequests() throws Exception {
+    protected void stopAcceptingRequests() {
         // by default there is nothing to pause
     }
 

@@ -35,6 +35,7 @@ import java.net.http.HttpResponse;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -88,10 +89,10 @@ class AccessLogTest {
      * Waits for the access log to catch up: lines are written once the exchange is done, after the client has
      * already received the response.
      */
-    private static List<String> awaitLines(ListAppender<ILoggingEvent> appender, int expected) throws InterruptedException {
+    private static List<String> awaitLines(ListAppender<ILoggingEvent> appender, int expected) {
         long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
         while (appender.list.size() < expected && System.nanoTime() < deadline) {
-            Thread.sleep(20);
+            LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(20));
         }
         return appender.list.stream().map(ILoggingEvent::getFormattedMessage).toList();
     }
