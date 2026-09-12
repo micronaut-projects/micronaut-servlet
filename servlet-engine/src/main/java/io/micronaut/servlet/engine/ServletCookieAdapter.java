@@ -18,8 +18,10 @@ package io.micronaut.servlet.engine;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.http.cookie.Cookie;
+import io.micronaut.http.cookie.SameSite;
 
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Adapts the Servlet Cookie API to {@link Cookie}.
@@ -130,10 +132,32 @@ public final class ServletCookieAdapter implements Cookie {
         return this;
     }
 
+    @NonNull
+    @Override
+    public Cookie sameSite(@Nullable SameSite sameSite) {
+        cookie.setAttribute(Cookie.ATTRIBUTE_SAME_SITE, sameSite == null ? null : sameSite.name());
+        return this;
+    }
+
+    @Override
+    public Optional<SameSite> getSameSite() {
+        String value = cookie.getAttribute(Cookie.ATTRIBUTE_SAME_SITE);
+        if (value == null) {
+            return Optional.empty();
+        }
+        for (SameSite candidate : SameSite.values()) {
+            if (candidate.name().equalsIgnoreCase(value)) {
+                return Optional.of(candidate);
+            }
+        }
+        return Optional.empty();
+    }
+
     @Override
     public int compareTo(Cookie o) {
         Objects.requireNonNull(o, "Cookie to compare to cannot be null");
-        int v = getName().compareTo(o.getDomain());
+        // name, then path, then domain: the triple that identifies a cookie per RFC 6265
+        int v = getName().compareTo(o.getName());
         if (v != 0) {
             return v;
         }
@@ -152,16 +176,35 @@ public final class ServletCookieAdapter implements Cookie {
         }
 
         if (getDomain() == null) {
-            if (o.getDomain() != null) {
-                return -1;
-            }
-        } else if (o.getPath() == null) {
+            return o.getDomain() == null ? 0 : -1;
+        } else if (o.getDomain() == null) {
             return 1;
         } else {
-            v = getDomain().compareToIgnoreCase(o.getDomain());
-            return v;
+            return getDomain().compareToIgnoreCase(o.getDomain());
         }
+    }
 
-        return 0;
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        // deliberately not any Cookie: an implementation that inherits Object.equals would make this asymmetric,
+        // which breaks the contract and makes Set and Map behaviour depend on argument order
+        if (!(o instanceof ServletCookieAdapter other)) {
+            return false;
+        }
+        return getName().equals(other.getName())
+            && Objects.equals(getPath(), other.getPath())
+            && (getDomain() == null ? other.getDomain() == null : getDomain().equalsIgnoreCase(other.getDomain()));
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(
+            getName(),
+            getPath(),
+            getDomain() == null ? null : getDomain().toLowerCase(java.util.Locale.ROOT)
+        );
     }
 }

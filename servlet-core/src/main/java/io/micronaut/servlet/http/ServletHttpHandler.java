@@ -66,6 +66,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.Executor;
 import java.util.function.Supplier;
 
@@ -249,7 +250,14 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
      */
     public void service(ServletExchange<REQ, RES> exchange) {
         final long time = System.currentTimeMillis();
+        // every exit path has to run this exactly once: it closes the request byte body, runs the disposal
+        // resources that delete multipart temp files, and publishes the terminated event. The error paths used to
+        // return without it, leaking a temp file per failed upload
+        AtomicBoolean terminated = new AtomicBoolean();
         Runnable requestTerminated = () -> {
+            if (!terminated.compareAndSet(false, true)) {
+                return;
+            }
             applicationContext.publishEvent(new HttpRequestTerminatedEvent(exchange.getRequest()));
             exchange.close();
             if (LOG.isTraceEnabled()) {
@@ -274,27 +282,51 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
         ServletRequestLifecycle lc = new ServletRequestLifecycle(routeExecutor);
 
         if (exchange.getRequest().isAsyncSupported()) {
-            exchange.getRequest().executeAsync(ctx -> {
-                PropagatedContext.getOrEmpty().plus(new ServerHttpRequestContext(req)).propagate(() -> {
-                    lc.handleNormal(req)
-                        .flatMap(response -> process(response, req, exchange.getResponse()))
-                        .onComplete((bbhr, t) -> {
-                            if (t == null) {
-                                transfer(bbhr, exchange, true, () -> {
-                                    ctx.complete();
-                                    requestTerminated.run();
-                                });
-                            } else {
-                                handleFallback(exchange.getResponse(), t);
-                                ctx.complete();
-                            }
-                        });
-                    return null;
-                });
-            });
+            serviceAsync(exchange, req, lc, requestTerminated);
         } else {
             serviceBlocking(exchange, req, lc, requestTerminated);
         }
+    }
+
+    /**
+     * Handles a request on the container's asynchronous path, releasing the container thread while the route runs.
+     *
+     * @param exchange The exchange
+     * @param req The request
+     * @param lc The request lifecycle
+     * @param requestTerminated Runs once the request is finished with, however it ends
+     */
+    private void serviceAsync(ServletExchange<REQ, RES> exchange,
+                              HttpRequest<Object> req,
+                              ServletRequestLifecycle lc,
+                              Runnable requestTerminated) {
+        exchange.getRequest().executeAsync(ctx -> PropagatedContext.getOrEmpty().plus(new ServerHttpRequestContext(req)).propagate(() -> {
+            // completing the async context twice throws, so this has to run exactly once however the exchange ends
+            AtomicBoolean finished = new AtomicBoolean();
+            Runnable finish = () -> {
+                if (finished.compareAndSet(false, true)) {
+                    ctx.complete();
+                    requestTerminated.run();
+                }
+            };
+            lc.handleNormal(req)
+                .flatMap(response -> process(response, req, exchange.getResponse()))
+                .onComplete((bbhr, t) -> {
+                    if (t == null) {
+                        try {
+                            transfer(bbhr, exchange, true, finish);
+                        } catch (Exception transferFailure) {
+                            // transfer throws on a write failure, before it can run the callback itself
+                            handleFallback(exchange.getResponse(), transferFailure);
+                            finish.run();
+                        }
+                    } else {
+                        handleFallback(exchange.getResponse(), t);
+                        finish.run();
+                    }
+                });
+            return null;
+        }));
     }
 
     /**
@@ -328,12 +360,19 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
             executionResult = cfExecutionResult.get();
         } catch (InterruptedException ie) {
             Thread.currentThread().interrupt();
+            requestTerminated.run();
             return;
         } catch (Throwable ee) {
             handleFallback(exchange.getResponse(), Optional.ofNullable(ee.getCause()).orElse(ee));
+            requestTerminated.run();
             return;
         }
-        transfer(executionResult, exchange, false, requestTerminated);
+        try {
+            transfer(executionResult, exchange, false, requestTerminated);
+        } finally {
+            // transfer throws on a write failure, before it can run the callback itself
+            requestTerminated.run();
+        }
     }
 
     /**

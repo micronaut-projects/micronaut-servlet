@@ -6,7 +6,7 @@ https://github.com/{githubSlug}[https://github.com/{githubSlug}]
 
 ==== How do I configure Multipart handling?
 
-Multipart handling is disabled by default. You can enable it with the https://docs.micronaut.io/latest/guide/configurationreference.html#io.micronaut.http.server.HttpServerConfiguration$MultipartConfiguration[following configuration properties].
+Multipart handling is enabled by default, as it is on the Netty server. Set `micronaut.server.multipart.enabled` to `false` to turn it off, and see the https://docs.micronaut.io/latest/guide/configurationreference.html#io.micronaut.http.server.HttpServerConfiguration$MultipartConfiguration[configuration properties] for the limits that apply to uploads.
 
 ==== How do I configure Static Resource handling for the embedded server?
 

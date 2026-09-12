@@ -27,6 +27,7 @@ import io.micronaut.core.convert.value.MutableConvertibleValuesMap;
 import io.micronaut.core.io.IOUtils;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.StringUtils;
+import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.MutableHttpRequest;
 import io.micronaut.http.ServerHttpRequest;
@@ -129,6 +130,10 @@ public abstract class PojaHttpRequest<B, REQ, RES>
             targetArgument = arg;
         }
 
+        if (!hasBody()) {
+            return Optional.empty();
+        }
+
         MessageBodyReader<Object> reader = findReader(targetArgument, contentType);
         if (reader == null) {
             return Optional.empty();
@@ -146,6 +151,27 @@ public abstract class PojaHttpRequest<B, REQ, RES>
         }
         return Optional.of((T) decoded);
 }
+
+    /**
+     * Decides whether this request carries a body at all, without reading from it.
+     *
+     * <p>An absent {@code Content-Length} means the length is unknown, not that the body is empty. RFC 9112 settles
+     * it: a request supplying neither {@code Content-Length} nor {@code Transfer-Encoding} has no body, so an
+     * ordinary GET binds an empty body instead of failing to decode one that was never sent.</p>
+     *
+     * @return Whether the request carries a body
+     * @since 6.2.0
+     */
+    protected boolean hasBody() {
+        long contentLength = getContentLength();
+        if (contentLength > 0) {
+            return true;
+        }
+        if (contentLength == 0) {
+            return false;
+        }
+        return getHeaders().contains(HttpHeaders.TRANSFER_ENCODING);
+    }
 
     /**
      * A method used for retrieving form data. Can be overridden by specific implementations.

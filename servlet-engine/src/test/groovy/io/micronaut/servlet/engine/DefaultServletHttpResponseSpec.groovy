@@ -264,7 +264,7 @@ class DefaultServletHttpResponseSpec extends Specification {
         output.toString() == "[{message=bad request}"
     }
 
-    void "stream publisher converts non-status errors before data is written"() {
+    void "stream publisher reports non-status errors without leaking the exception message"() {
         given:
         def output = new CapturingServletOutputStream()
         int status = 0
@@ -281,7 +281,8 @@ class DefaultServletHttpResponseSpec extends Specification {
         then:
         emitted.is(response)
         status == HttpStatus.INTERNAL_SERVER_ERROR.code
-        output.toString() == "Internal Server Error: boom"
+        // the throwable is logged with its stack trace; "boom" must not reach the client
+        output.toString() == "Internal Server Error"
     }
 
     void "stream publisher forwards converted errors after data is written"() {
