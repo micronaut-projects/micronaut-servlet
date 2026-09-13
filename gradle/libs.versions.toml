@@ -17,7 +17,7 @@ micronaut-validation = "5.0.0"
 micronaut-logging = "2.1.0"
 # Micronaut
 micronaut-gradle-plugin = "5.0.2"
-logback-access = "2.0.12"
+logback-access = "2.0.15"
 
 [libraries]
 # Core
