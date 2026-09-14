@@ -518,9 +518,15 @@ public class JettyFactory extends ServletServerFactory {
      * <p>Jetty compresses responses itself, so the shared configuration is wired to its encoder rather than
      * reimplemented: it already settles HEAD, ranges, already encoded bodies and the {@code Vary} header.</p>
      *
+     * <p>Jetty 12.1 deprecates {@code GzipHandler} in favour of {@code CompressionHandler} from the separate
+     * {@code jetty-compression-server} module. It still ships and works, and the replacement is an additional
+     * dependency with its own configuration model; moving to it is a change of its own, not part of enabling
+     * compression.</p>
+     *
      * @param handler The handler serving requests
      * @return The handler to install on the server
      */
+    @SuppressWarnings({"java:S5738", "removal"})
     private Handler compressIfEnabled(Handler handler) {
         ServletCompressionConfiguration compression = getApplicationContext()
             .findBean(ServletCompressionConfiguration.class)
@@ -530,7 +536,7 @@ public class JettyFactory extends ServletServerFactory {
         }
         GzipHandler gzipHandler = new GzipHandler();
         gzipHandler.setMinGzipSize(compression.getThreshold());
-        compression.getContentTypes().forEach(type -> gzipHandler.addIncludedMimeTypes(type));
+        compression.getContentTypes().forEach(gzipHandler::addIncludedMimeTypes);
         gzipHandler.setHandler(handler);
         return gzipHandler;
     }
