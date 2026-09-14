@@ -3052,6 +3052,28 @@ The body is read from the request input-stream and so attempting to reparse it f
 <h2 id="_micronaut_servlet_6_2_0">Micronaut Servlet 6.2.0</h2>
 <div class="sectionbody">
 <div class="sect2">
+<h3 id="_responses_are_compressed_by_default">Responses are compressed by default</h3>
+<div class="paragraph">
+<p>Servlet containers did not compress responses at all, while the Netty server compresses anything above 1KB that the client accepts. <code>micronaut.servlet.compression.enabled</code> now defaults to <code>true</code>, and is wired to each container&#8217;s own encoder rather than reimplemented as a filter, so the cases that make compression awkward, HEAD, ranges, already encoded bodies and the <code>Vary</code> header, are settled by code that already handles them.</p>
+</div>
+<div class="paragraph">
+<p>Two things change for Jetty, Tomcat and Undertow applications:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>A response over <code>micronaut.servlet.compression.threshold</code> (1KB) whose content type is in <code>micronaut.servlet.compression.content-types</code> is sent gzipped when the client sends <code>Accept-Encoding: gzip</code>.</p>
+</li>
+<li>
+<p>Those responses carry <code>Vary: Accept-Encoding</code>, which is required so a cache does not serve a compressed body to a client that cannot read it.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Set <code>micronaut.servlet.compression.enabled</code> to <code>false</code> to restore the previous behaviour. The JDK server runtime does not support compression.</p>
+</div>
+</div>
+<div class="sect2">
 <h3 id="_multipart_handling_is_enabled_by_default">Multipart handling is enabled by default</h3>
 <div class="paragraph">
 <p><code>micronaut.server.multipart.enabled</code> has no default of its own. Its <code>isEnabled()</code> reported <code>false</code> when the property was unset, while the Netty server and the shared request lifecycle read the raw value and treat unset as enabled. The servlet configuration followed <code>isEnabled()</code>, so no <code>MultipartConfigElement</code> was registered and the container never parsed multipart bodies: parts reached no controller argument and <code>getParts()</code> was unavailable.</p>

@@ -383,6 +383,10 @@ loadScripts(document, 'script');</script>
 &nbsp;</dd>
 <dt><a href="io/micronaut/servlet/http/server/ServletStaticResourceConfiguration.html#DEFAULT_CACHE_CONTROL_HEADER" class="member-name-link">DEFAULT_CACHE_CONTROL_HEADER</a> - Static variable in interface io.micronaut.servlet.http.server.<a href="io/micronaut/servlet/http/server/ServletStaticResourceConfiguration.html" title="interface in io.micronaut.servlet.http.server">ServletStaticResourceConfiguration</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/engine/ServletCompressionConfiguration.html#DEFAULT_ENABLED" class="member-name-link">DEFAULT_ENABLED</a> - Static variable in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/ServletCompressionConfiguration.html" title="class in io.micronaut.servlet.engine">ServletCompressionConfiguration</a></dt>
+<dd>
+<div class="block">Whether compression is enabled by default.</div>
+</dd>
 <dt><a href="io/micronaut/servlet/websocket/ServletWebSocketConfiguration.html#DEFAULT_MAX_MESSAGE_SIZE" class="member-name-link">DEFAULT_MAX_MESSAGE_SIZE</a> - Static variable in class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/ServletWebSocketConfiguration.html" title="class in io.micronaut.servlet.websocket">ServletWebSocketConfiguration</a></dt>
 <dd>
 <div class="block">The default maximum message size in bytes.</div>
@@ -391,6 +395,10 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">The default number of sends that may be queued before a session reports that it is
 no longer writable.</div>
+</dd>
+<dt><a href="io/micronaut/servlet/engine/ServletCompressionConfiguration.html#DEFAULT_THRESHOLD" class="member-name-link">DEFAULT_THRESHOLD</a> - Static variable in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/ServletCompressionConfiguration.html" title="class in io.micronaut.servlet.engine">ServletCompressionConfiguration</a></dt>
+<dd>
+<div class="block">The default size a response must reach before it is worth compressing, in bytes.</div>
 </dd>
 <dt><a href="io/micronaut/servlet/http/DefaultBodyBuilder.html" class="type-name-link" title="class in io.micronaut.servlet.http">DefaultBodyBuilder</a> - Class in <a href="io/micronaut/servlet/http/package-summary.html">io.micronaut.servlet.http</a></dt>
 <dd>
@@ -728,6 +736,8 @@ thread pool, to run the specified <a href="io/micronaut/servlet/http/ServletHttp
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/engine/DefaultServletHttpResponse.html#getContentType()" class="member-name-link">getContentType()</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/DefaultServletHttpResponse.html" title="class in io.micronaut.servlet.engine">DefaultServletHttpResponse</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/engine/ServletCompressionConfiguration.html#getContentTypes()" class="member-name-link">getContentTypes()</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/ServletCompressionConfiguration.html" title="class in io.micronaut.servlet.engine">ServletCompressionConfiguration</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html#getContextPath()" class="member-name-link">getContextPath()</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html" title="class in io.micronaut.servlet.engine">DefaultServletHttpRequest</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/engine/server/ServletServerFactory.html#getContextPath()" class="member-name-link">getContextPath()</a> - Method in class io.micronaut.servlet.engine.server.<a href="io/micronaut/servlet/engine/server/ServletServerFactory.html" title="class in io.micronaut.servlet.engine.server">ServletServerFactory</a></dt>
@@ -1024,6 +1034,8 @@ thread pool, to run the specified <a href="io/micronaut/servlet/http/ServletHttp
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/annotation/processor/ServletAnnotationVisitor.html#getSupportedAnnotationNames()" class="member-name-link">getSupportedAnnotationNames()</a> - Method in class io.micronaut.servlet.annotation.processor.<a href="io/micronaut/servlet/annotation/processor/ServletAnnotationVisitor.html" title="class in io.micronaut.servlet.annotation.processor">ServletAnnotationVisitor</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/engine/ServletCompressionConfiguration.html#getThreshold()" class="member-name-link">getThreshold()</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/ServletCompressionConfiguration.html" title="class in io.micronaut.servlet.engine">ServletCompressionConfiguration</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/tomcat/TomcatConfiguration.html#getTomcatConnector()" class="member-name-link">getTomcatConnector()</a> - Method in class io.micronaut.servlet.tomcat.<a href="io/micronaut/servlet/tomcat/TomcatConfiguration.html" title="class in io.micronaut.servlet.tomcat">TomcatConfiguration</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/undertow/UndertowConfiguration.html#getUndertowBuilder()" class="member-name-link">getUndertowBuilder()</a> - Method in class io.micronaut.servlet.undertow.<a href="io/micronaut/servlet/undertow/UndertowConfiguration.html" title="class in io.micronaut.servlet.undertow">UndertowConfiguration</a></dt>
@@ -1258,6 +1270,8 @@ implement Jakarta WebSocket 2.1.</div>
 <dd>
 <div class="deprecation-block"><span class="deprecated-label">Deprecated.</span></div>
 &nbsp;</dd>
+<dt><a href="io/micronaut/servlet/engine/ServletCompressionConfiguration.html#isEnabled()" class="member-name-link">isEnabled()</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/ServletCompressionConfiguration.html" title="class in io.micronaut.servlet.engine">ServletCompressionConfiguration</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/http/server/jdk/JdkHttpServerConfiguration.html#isEnabled()" class="member-name-link">isEnabled()</a> - Method in class io.micronaut.servlet.http.server.jdk.<a href="io/micronaut/servlet/http/server/jdk/JdkHttpServerConfiguration.html" title="class in io.micronaut.servlet.http.server.jdk">JdkHttpServerConfiguration</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/http/server/ServletStaticResourceConfiguration.html#isEnabled()" class="member-name-link">isEnabled()</a> - Method in interface io.micronaut.servlet.http.server.<a href="io/micronaut/servlet/http/server/ServletStaticResourceConfiguration.html" title="interface in io.micronaut.servlet.http.server">ServletStaticResourceConfiguration</a></dt>
@@ -1734,6 +1748,10 @@ to be reused for body and binding.</div>
 <dd>
 <div class="block">The prefix used for configuration.</div>
 </dd>
+<dt><a href="io/micronaut/servlet/engine/ServletCompressionConfiguration.html#PREFIX" class="member-name-link">PREFIX</a> - Static variable in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/ServletCompressionConfiguration.html" title="class in io.micronaut.servlet.engine">ServletCompressionConfiguration</a></dt>
+<dd>
+<div class="block">The configuration prefix.</div>
+</dd>
 <dt><a href="io/micronaut/servlet/http/server/jdk/JdkHttpServerConfiguration.html#PREFIX" class="member-name-link">PREFIX</a> - Static variable in class io.micronaut.servlet.http.server.jdk.<a href="io/micronaut/servlet/http/server/jdk/JdkHttpServerConfiguration.html" title="class in io.micronaut.servlet.http.server.jdk">JdkHttpServerConfiguration</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/jetty/JettyConfiguration.html#PREFIX" class="member-name-link">PREFIX</a> - Static variable in class io.micronaut.servlet.jetty.<a href="io/micronaut/servlet/jetty/JettyConfiguration.html" title="class in io.micronaut.servlet.jetty">JettyConfiguration</a></dt>
@@ -1939,6 +1957,12 @@ specified charset.</div>
 <dd>
 <div class="block">Default constructor.</div>
 </dd>
+<dt><a href="io/micronaut/servlet/engine/ServletCompressionConfiguration.html" class="type-name-link" title="class in io.micronaut.servlet.engine">ServletCompressionConfiguration</a> - Class in <a href="io/micronaut/servlet/engine/package-summary.html">io.micronaut.servlet.engine</a></dt>
+<dd>
+<div class="block">Response compression, applied by the container.</div>
+</dd>
+<dt><a href="io/micronaut/servlet/engine/ServletCompressionConfiguration.html#%3Cinit%3E()" class="member-name-link">ServletCompressionConfiguration()</a> - Constructor for class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/ServletCompressionConfiguration.html" title="class in io.micronaut.servlet.engine">ServletCompressionConfiguration</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/http/ServletConfiguration.html" class="type-name-link" title="interface in io.micronaut.servlet.http">ServletConfiguration</a> - Interface in <a href="io/micronaut/servlet/http/package-summary.html">io.micronaut.servlet.http</a></dt>
 <dd>
 <div class="block">Configuration for the servlet environment.</div>
@@ -2119,6 +2143,8 @@ implementation once the Micronaut filter chain has approved the handshake.</div>
 </dd>
 <dt><a href="io/micronaut/servlet/websocket/ServletWebSocketConfiguration.html#setCompression(io.micronaut.servlet.websocket.ServletWebSocketConfiguration.CompressionConfiguration)" class="member-name-link">setCompression(ServletWebSocketConfiguration.CompressionConfiguration)</a> - Method in class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/ServletWebSocketConfiguration.html" title="class in io.micronaut.servlet.websocket">ServletWebSocketConfiguration</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/engine/ServletCompressionConfiguration.html#setContentTypes(java.util.Set)" class="member-name-link">setContentTypes(Set)</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/ServletCompressionConfiguration.html" title="class in io.micronaut.servlet.engine">ServletCompressionConfiguration</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/http/poja/apache/ApacheServletHttpRequest.html#setConversionService(io.micronaut.core.convert.ConversionService)" class="member-name-link">setConversionService(ConversionService)</a> - Method in class io.micronaut.http.poja.apache.<a href="io/micronaut/http/poja/apache/ApacheServletHttpRequest.html" title="class in io.micronaut.http.poja.apache">ApacheServletHttpRequest</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/http/poja/util/MultiValueHeaders.html#setConversionService(io.micronaut.core.convert.ConversionService)" class="member-name-link">setConversionService(ConversionService)</a> - Method in record class io.micronaut.http.poja.util.<a href="io/micronaut/http/poja/util/MultiValueHeaders.html" title="class in io.micronaut.http.poja.util">MultiValueHeaders</a></dt>
@@ -2137,6 +2163,8 @@ implementation once the Micronaut filter chain has approved the handshake.</div>
 <dd>
 <div class="block">Sets whether the Apache POJA runtime is enabled.</div>
 </dd>
+<dt><a href="io/micronaut/servlet/engine/ServletCompressionConfiguration.html#setEnabled(boolean)" class="member-name-link">setEnabled(boolean)</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/ServletCompressionConfiguration.html" title="class in io.micronaut.servlet.engine">ServletCompressionConfiguration</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/http/server/jdk/JdkHttpServerConfiguration.html#setEnabled(boolean)" class="member-name-link">setEnabled(boolean)</a> - Method in class io.micronaut.servlet.http.server.jdk.<a href="io/micronaut/servlet/http/server/jdk/JdkHttpServerConfiguration.html" title="class in io.micronaut.servlet.http.server.jdk">JdkHttpServerConfiguration</a></dt>
 <dd>
 <div class="block">Sets whether the JDK HTTP server runtime is enabled.</div>
@@ -2225,6 +2253,8 @@ implementation once the Micronaut filter chain has approved the handshake.</div>
 <div class="deprecation-comment">Use <a href="io/micronaut/servlet/engine/MicronautServletConfiguration.html#setAsyncSupported(boolean)"><code>MicronautServletConfiguration.setAsyncSupported(boolean)</code></a> instead</div>
 </div>
 </dd>
+<dt><a href="io/micronaut/servlet/engine/ServletCompressionConfiguration.html#setThreshold(int)" class="member-name-link">setThreshold(int)</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/ServletCompressionConfiguration.html" title="class in io.micronaut.servlet.engine">ServletCompressionConfiguration</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/undertow/UndertowConfiguration.html#setWorkerOptions(java.util.Map)" class="member-name-link">setWorkerOptions(Map)</a> - Method in class io.micronaut.servlet.undertow.<a href="io/micronaut/servlet/undertow/UndertowConfiguration.html" title="class in io.micronaut.servlet.undertow">UndertowConfiguration</a></dt>
 <dd>
 <div class="block">Sets the worker options.</div>
