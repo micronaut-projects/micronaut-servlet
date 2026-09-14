@@ -965,7 +965,10 @@ public final class DefaultServletHttpResponse<B> implements ServletHttpResponse<
         @Override
         public MutableHttpHeaders remove(CharSequence header) {
             final String headerName = Objects.requireNonNull(header, "Header name cannot be null").toString();
-            if (delegate.containsHeader(headerName)) {
+            if (isContentLength(headerName)) {
+                // the container tracks the length itself, and Tomcat cannot parse an empty header value into it
+                delegate.setContentLengthLong(-1);
+            } else if (delegate.containsHeader(headerName)) {
                 delegate.setHeader(headerName, "");
             }
             return this;

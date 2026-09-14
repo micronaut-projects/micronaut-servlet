@@ -242,6 +242,8 @@ public class TomcatFactory extends ServletServerFactory {
                     if (!exposedPort.equals(serverConnector.getLocalPort())) {
                         Connector newConnector = cloneConnectorSettings(serverConnector);
                         newConnector.setPort(exposedPort);
+                        // compression lives on the connector, so a port exposed by a route needs it applied too
+                        applyCompression(newConnector);
                         server.getService().addConnector(newConnector);
                     }
                 }

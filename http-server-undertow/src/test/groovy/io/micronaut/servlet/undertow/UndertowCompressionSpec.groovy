@@ -1,5 +1,6 @@
 package io.micronaut.servlet.undertow
 
+import io.micronaut.context.ApplicationContext
 import io.micronaut.context.annotation.Property
 import io.micronaut.context.annotation.Requires
 import io.micronaut.http.HttpHeaders
@@ -9,6 +10,7 @@ import io.micronaut.http.annotation.Get
 import io.micronaut.runtime.server.EmbeddedServer
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
+import reactor.core.publisher.Flux
 import spock.lang.Specification
 
 import java.net.http.HttpClient
@@ -63,14 +65,88 @@ class UndertowCompressionSpec extends Specification {
         new String(response.body()) == LARGE
     }
 
+    void "compression can be turned off"() {
+        given:
+        EmbeddedServer server = ApplicationContext.run(EmbeddedServer, [
+            'spec.name'                            : 'UndertowCompressionSpec',
+            'micronaut.servlet.compression.enabled': false,
+        ])
+
+        when:
+        HttpResponse<byte[]> response = send(server, '/compression/large', 'gzip')
+
+        then:
+        response.statusCode() == 200
+        !isGzip(response)
+        new String(response.body()) == LARGE
+
+        cleanup:
+        server.close()
+    }
+
+    void "the threshold and the content types are configurable"() {
+        given: "only JSON is compressed, and only from 2KB"
+        EmbeddedServer server = ApplicationContext.run(EmbeddedServer, [
+            'spec.name'                                  : 'UndertowCompressionSpec',
+            'micronaut.servlet.compression.threshold'    : '2kb',
+            'micronaut.servlet.compression.content-types': ['application/json'],
+        ])
+
+        when: "a large text response"
+        HttpResponse<byte[]> text = send(server, '/compression/large', 'gzip')
+
+        then: "its type is no longer compressed"
+        !isGzip(text)
+        new String(text.body()) == LARGE
+
+        when: "a JSON response above the default threshold but below the configured one"
+        HttpResponse<byte[]> smallJson = send(server, '/compression/json-small', 'gzip')
+
+        then:
+        !isGzip(smallJson)
+
+        when: "a JSON response above the configured threshold"
+        HttpResponse<byte[]> largeJson = send(server, '/compression/json-large', 'gzip')
+
+        then:
+        isGzip(largeJson)
+        gunzip(largeJson.body()).contains(LARGE)
+
+        cleanup:
+        server.close()
+    }
+
+    void "a response without a content type is left alone"() {
+        when:
+        HttpResponse<byte[]> response = send('/compression/empty', 'gzip')
+
+        then:
+        response.statusCode() == 204
+        !isGzip(response)
+    }
+
+    void "a response without a declared length is compressed by its type alone"() {
+        when:
+        HttpResponse<byte[]> response = send('/compression/stream', 'gzip')
+
+        then:
+        response.statusCode() == 200
+        isGzip(response)
+        gunzip(response.body()) == LARGE * 3
+    }
+
     private static boolean isGzip(HttpResponse<byte[]> response) {
         response.headers().firstValue(HttpHeaders.CONTENT_ENCODING.toLowerCase()).orElse(null) == 'gzip'
     }
 
     private HttpResponse<byte[]> send(String path, String acceptEncoding) {
+        send(embeddedServer, path, acceptEncoding)
+    }
+
+    private static HttpResponse<byte[]> send(EmbeddedServer server, String path, String acceptEncoding) {
         try (HttpClient client = HttpClient.newHttpClient()) {
             client.send(
-                HttpRequest.newBuilder(embeddedServer.getURI().resolve(path))
+                HttpRequest.newBuilder(server.getURI().resolve(path))
                     .header('Accept-Encoding', acceptEncoding)
                     .GET()
                     .build(),
@@ -94,6 +170,26 @@ class UndertowCompressionSpec extends Specification {
         @Get(value = '/small', produces = MediaType.TEXT_PLAIN)
         String small() {
             SMALL
+        }
+
+        @Get(value = '/json-small', produces = MediaType.APPLICATION_JSON)
+        Map<String, String> jsonSmall() {
+            [text: 'x' * 1500]
+        }
+
+        @Get(value = '/json-large', produces = MediaType.APPLICATION_JSON)
+        Map<String, String> jsonLarge() {
+            [text: LARGE]
+        }
+
+        @Get('/empty')
+        io.micronaut.http.HttpResponse<?> empty() {
+            io.micronaut.http.HttpResponse.noContent()
+        }
+
+        @Get(value = '/stream', produces = MediaType.TEXT_PLAIN)
+        Flux<String> stream() {
+            Flux.just(LARGE, LARGE, LARGE)
         }
     }
 }

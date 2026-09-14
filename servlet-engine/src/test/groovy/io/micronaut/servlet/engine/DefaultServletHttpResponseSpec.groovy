@@ -404,6 +404,26 @@ class DefaultServletHttpResponseSpec extends Specification {
         !plainHeaders.containsKey(HttpHeaders.CONTENT_LENGTH)
     }
 
+    void "removing the content length clears the container's own length"() {
+        given:
+        long contentLength = -1
+        Map<String, String> plainHeaders = [:]
+        HttpServletResponse servletResponse = Stub(HttpServletResponse) {
+            setContentLengthLong(_ as Long) >> { long length -> contentLength = length }
+            setHeader(_ as String, _ as String) >> { String name, String value -> plainHeaders[name] = value }
+            containsHeader(HttpHeaders.CONTENT_LENGTH) >> true
+        }
+        def response = newResponse(servletResponse)
+        response.getHeaders().set(HttpHeaders.CONTENT_LENGTH, "512")
+
+        when:
+        response.getHeaders().remove(HttpHeaders.CONTENT_LENGTH)
+
+        then: "Tomcat cannot parse an empty value into its tracked length, so the setter is told there is none"
+        contentLength == -1L
+        !plainHeaders.containsKey(HttpHeaders.CONTENT_LENGTH)
+    }
+
     void "an unparseable content length is ignored rather than announced"() {
         given:
         long contentLength = -1
