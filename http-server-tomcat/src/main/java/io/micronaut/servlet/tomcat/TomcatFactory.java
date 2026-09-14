@@ -50,6 +50,7 @@ import org.apache.catalina.connector.Connector;
 import org.apache.catalina.core.ContainerBase;
 import org.apache.catalina.core.StandardThreadExecutor;
 import org.apache.catalina.startup.Tomcat;
+import org.apache.coyote.http11.AbstractHttp11Protocol;
 import org.apache.coyote.ProtocolHandler;
 import org.apache.coyote.http2.Http2Protocol;
 import org.apache.tomcat.util.net.SSLHostConfig;
@@ -204,9 +205,13 @@ public class TomcatFactory extends ServletServerFactory {
         if (compression == null || !compression.isEnabled()) {
             return;
         }
-        connector.setProperty("compression", "on");
-        connector.setProperty("compressionMinSize", String.valueOf(compression.getThreshold()));
-        connector.setProperty("compressibleMimeType", String.join(",", compression.getContentTypes()));
+        // set on the protocol directly rather than through Connector.setProperty, which reaches the same setters
+        // by reflection and so needs metadata in a native image
+        if (connector.getProtocolHandler() instanceof AbstractHttp11Protocol<?> http11) {
+            http11.setCompression("on");
+            http11.setCompressionMinSize(compression.getThreshold());
+            http11.setCompressibleMimeType(String.join(",", compression.getContentTypes()));
+        }
     }
 
     /**
