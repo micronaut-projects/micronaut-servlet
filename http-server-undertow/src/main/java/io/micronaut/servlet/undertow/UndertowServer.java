@@ -130,7 +130,7 @@ public class UndertowServer extends AbstractServletServer<Undertow> {
         return idle.thenCompose(ignored -> CompletableFuture.runAsync(() -> {
             try {
                 handler.awaitShutdown(EXCHANGE_DRAIN_TIMEOUT.toMillis());
-            } catch (InterruptedException e) {
+            } catch (InterruptedException _) {
                 Thread.currentThread().interrupt();
             }
         }));

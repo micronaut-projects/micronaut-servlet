@@ -679,7 +679,7 @@ public final class DefaultServletHttpRequest<B> implements
     public @NonNull ByteBody byteBody() {
         CloseableByteBody current = byteBody.get();
         if (current == null) {
-            synchronized (byteBody) {
+            synchronized (this) {
                 current = byteBody.get();
                 if (current == null) {
                     current = readInline(delegate, byteBodyFactory);

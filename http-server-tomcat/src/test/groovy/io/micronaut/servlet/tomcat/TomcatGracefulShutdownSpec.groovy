@@ -47,13 +47,7 @@ class TomcatGracefulShutdownSpec extends Specification {
         socket.outputStream.write("GET /graceful/slow HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n".bytes)
         socket.outputStream.flush()
         StringBuilder raw = new StringBuilder()
-        Thread reader = Thread.startVirtualThread {
-            try {
-                socket.inputStream.withReader('ISO-8859-1') { r -> int ch; while ((ch = r.read()) != -1) { raw.append((char) ch) } }
-            } catch (IOException e) {
-                raw.append('<<').append(e).append('>>')
-            }
-        }
+        Thread reader = Thread.startVirtualThread { readAll(socket, raw) }
 
         when: "a request is in progress while the application is stopped"
         assert controller.started.await(10, TimeUnit.SECONDS)
@@ -75,6 +69,14 @@ class TomcatGracefulShutdownSpec extends Specification {
         cleanup:
         socket.close()
         server.close()
+    }
+
+    private static void readAll(Socket socket, StringBuilder into) {
+        try {
+            into.append(new String(socket.inputStream.readAllBytes(), 'ISO-8859-1'))
+        } catch (IOException e) {
+            into.append('<<').append(e).append('>>')
+        }
     }
 
     @Requires(property = 'spec.name', value = 'TomcatGracefulShutdownSpec')

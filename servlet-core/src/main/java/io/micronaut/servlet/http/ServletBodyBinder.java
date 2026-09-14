@@ -339,21 +339,32 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
                     .flatMapMany(bb -> publishBuffered(bb, source, servletHttpRequest, mediaType, messageBodyReader, typeArgument, single, name));
             }
         } else {
-            if (mediaType.equals(MediaType.APPLICATION_JSON_STREAM_TYPE)) {
-                throw new IllegalStateException("Expected ServerHttpRequest");
-            }
-            try (InputStream is = servletHttpRequest.getInputStream()) {
-                Object body = single
-                    ? messageBodyReader.read(typeArgument, mediaType, source.getHeaders(), is)
-                    : messageBodyReader.read(listOf(typeArgument), mediaType, source.getHeaders(), is);
-                publisher = publishParsed(body, single, servletHttpRequest);
-            } catch (CodecException | IOException e) {
-                throw decodingFailure(UNABLE_TO_DECODE, e);
-            } catch (RuntimeException e) {
-                throw BodyReadFailures.httpFailureOr(e);
-            }
+            publisher = publishFromStream(source, servletHttpRequest, mediaType, messageBodyReader, typeArgument, single);
         }
         return conversionService.convertRequired(publisher, type);
+    }
+
+    /**
+     * Reads the body from the request stream for a request that is not a {@link ServerHttpRequest}.
+     */
+    private static Publisher<?> publishFromStream(HttpRequest<?> source,
+                                                  ServletHttpRequest<?, ?> servletHttpRequest,
+                                                  MediaType mediaType,
+                                                  MessageBodyReader<Object> messageBodyReader,
+                                                  Argument<Object> typeArgument,
+                                                  boolean single) {
+        if (mediaType.equals(MediaType.APPLICATION_JSON_STREAM_TYPE)) {
+            throw new IllegalStateException("Expected ServerHttpRequest");
+        }
+        try (InputStream is = servletHttpRequest.getInputStream()) {
+            Argument<Object> readAs = single ? typeArgument : listOf(typeArgument);
+            Object body = messageBodyReader.read(readAs, mediaType, source.getHeaders(), is);
+            return publishParsed(body, single, servletHttpRequest);
+        } catch (CodecException | IOException e) {
+            throw decodingFailure(UNABLE_TO_DECODE, e);
+        } catch (RuntimeException e) {
+            throw BodyReadFailures.httpFailureOr(e);
+        }
     }
 
     /**
@@ -377,7 +388,8 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
         }
         Object body;
         if (!single) {
-            body = messageBodyReader.read(listOf(typeArgument), mediaType, source.getHeaders(), bb.toByteBuffer());
+            Argument<Object> listArgument = listOf(typeArgument);
+            body = messageBodyReader.read(listArgument, mediaType, source.getHeaders(), bb.toByteBuffer());
         } else if (name != null) {
             Argument<Map<String, Object>> mapArgument = Argument.mapOf(String.class, Object.class);
             MessageBodyReader<Map<String, Object>> reader = messageBodyHandlerRegistry.findReader(mapArgument, mediaType).orElse(null);

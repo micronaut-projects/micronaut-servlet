@@ -26,12 +26,15 @@ import io.micronaut.http.annotation.Get;
 import io.micronaut.runtime.server.EmbeddedServer;
 import io.micronaut.security.annotation.Secured;
 import io.micronaut.security.rules.SecurityRule;
+import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -85,6 +88,49 @@ class AccessLogTest {
         }
     }
 
+    @Test
+    void bodyBytesWrittenOneAtATimeAreCounted() throws Exception {
+        Logger accessLogger = (Logger) LoggerFactory.getLogger("test-access-log-raw");
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        accessLogger.addAppender(appender);
+        accessLogger.setLevel(Level.INFO);
+
+        EmbeddedServer server = ApplicationContext.run(EmbeddedServer.class, Map.of(
+            "spec.name", "AccessLogTest",
+            "micronaut.server.jdk.access-logger.enabled", "true",
+            "micronaut.server.jdk.access-logger.logger-name", "test-access-log-raw"
+        ));
+        try (HttpClient client = HttpClient.newHttpClient()) {
+            HttpResponse<String> response = client.send(
+                HttpRequest.newBuilder(server.getURI().resolve("/logged/raw")).build(),
+                HttpResponse.BodyHandlers.ofString());
+            assertEquals("raw", response.body());
+
+            List<String> lines = awaitLines(appender, 1);
+            assertEquals(1, lines.size(), lines.toString());
+            assertTrue(lines.get(0).endsWith("\"GET /logged/raw HTTP/1.1\" 200 3"), lines.get(0));
+        } finally {
+            server.close();
+            accessLogger.detachAppender(appender);
+        }
+    }
+
+    @Test
+    void controlCharactersCannotForgeLogLines() {
+        assertEquals("plain", AccessLogFilter.sanitize("plain"));
+        assertEquals("a_b__c_", AccessLogFilter.sanitize("a\nb\r\tc\u007f"));
+        assertEquals("", AccessLogFilter.sanitize(""));
+    }
+
+    @Test
+    void theFilterDescribesItself() {
+        try (ApplicationContext context = ApplicationContext.run(Map.of(
+            "micronaut.server.jdk.access-logger.enabled", "true"))) {
+            assertEquals("Micronaut access log", context.getBean(AccessLogFilter.class).description());
+        }
+    }
+
     /**
      * Waits for the access log to catch up: lines are written once the exchange is done, after the client has
      * already received the response.
@@ -110,6 +156,14 @@ class AccessLogTest {
         @Get("/health")
         String health() {
             return "up";
+        }
+
+        @Get("/raw")
+        void raw(HttpServletResponse response) throws IOException {
+            response.setContentType("text/plain");
+            for (byte b : "raw".getBytes(StandardCharsets.US_ASCII)) {
+                response.getOutputStream().write(b);
+            }
         }
     }
 }

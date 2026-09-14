@@ -109,8 +109,11 @@ final class AccessLogFilter extends Filter {
 
     /**
      * Keeps client-supplied text from forging log lines: control characters, including line breaks, are replaced.
+     *
+     * @param value The text as the client sent it
+     * @return The text with every control character replaced
      */
-    private static String sanitize(String value) {
+    static String sanitize(String value) {
         StringBuilder builder = null;
         for (int i = 0; i < value.length(); i++) {
             char c = value.charAt(i);

@@ -40,3 +40,6 @@ src/main/docs/resources/img/micronaut-logo-white.svg
 
 # OpenCode files
 .sisyphus/
+
+# Tomcat writes its work directory next to the module when a spec starts it on a fixed port
+http-server-tomcat/tomcat.*/
