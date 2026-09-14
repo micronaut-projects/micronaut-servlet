@@ -102,6 +102,7 @@ public class UndertowServer extends AbstractServletServer<Undertow> {
     @Override
     protected void stopServer() throws Exception {
         getServer().stop();
+        getApplicationContext().findBean(UndertowFactory.class).ifPresent(UndertowFactory::shutdownHandlerExecutor);
     }
 
     /**

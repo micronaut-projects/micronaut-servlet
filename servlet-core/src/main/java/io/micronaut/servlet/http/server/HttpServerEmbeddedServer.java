@@ -86,6 +86,15 @@ class HttpServerEmbeddedServer extends AbstractServletServer<HttpServer> {
         }
     }
 
+    /**
+     * Closes the gate on new requests: {@link HttpServer} cannot pause accepting, so each new request is answered
+     * {@code 503} instead while the requests in flight complete.
+     */
+    @Override
+    protected void stopAcceptingRequests() {
+        getApplicationContext().findBean(JdkServerShutdownGate.class).ifPresent(JdkServerShutdownGate::close);
+    }
+
     @Override
     protected void stopServer() throws Exception {
         if (running.compareAndSet(true, false)) {

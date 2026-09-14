@@ -1,4 +1,4 @@
-package io.micronaut.servlet.tomcat
+package io.micronaut.servlet.undertow
 
 import io.micronaut.context.annotation.Property
 import io.micronaut.context.annotation.Requires
@@ -23,9 +23,9 @@ import java.net.http.HttpResponse
  * length is cut off with the same status once it grows past the limit.
  */
 @MicronautTest
-@Property(name = 'spec.name', value = 'TomcatMaxRequestSizeSpec')
+@Property(name = 'spec.name', value = 'UndertowMaxRequestSizeSpec')
 @Property(name = 'micronaut.server.max-request-size', value = '1024')
-class TomcatMaxRequestSizeSpec extends Specification {
+class UndertowMaxRequestSizeSpec extends Specification {
 
     @Inject
     EmbeddedServer embeddedServer
@@ -136,7 +136,7 @@ class TomcatMaxRequestSizeSpec extends Specification {
         client.send(request, HttpResponse.BodyHandlers.ofString())
     }
 
-    @Requires(property = 'spec.name', value = 'TomcatMaxRequestSizeSpec')
+    @Requires(property = 'spec.name', value = 'UndertowMaxRequestSizeSpec')
     @Controller('/size')
     static class SizeController {
         volatile boolean reached

@@ -90,17 +90,21 @@ public class HttpServerFactory {
                                 ServerSslConfiguration sslConfiguration,
                                 ResourceResolver resourceResolver,
                                 JdkServerExecutorOwnership executorOwnership,
+                                JdkServerShutdownGate shutdownGate,
                                 List<HttpHandlerPath> httpHandlers,
                                 List<Filter> filters) throws IOException {
         HttpServer server = sslConfiguration.isEnabled()
-            ? createHttpsServer(applicationContext, sslConfiguration, resourceResolver)
-            : HttpServer.create(serverAddress(applicationContext, httpServerConfiguration), 0);
+            ? createHttpsServer(applicationContext, httpServerConfiguration, sslConfiguration, resourceResolver)
+            : HttpServer.create(serverAddress(httpServerConfiguration, ServerPort.of(httpServerConfiguration,
+                applicationContext.getEnvironment().getActiveNames()).port()), 0);
         ExecutorService executorService = createExecutor(servletConfiguration);
         executorOwnership.owns(executorService);
         server.setExecutor(executorService);
         for (HttpHandlerPath handler : httpHandlers) {
             HttpContext context = server.createContext(handler.getPath(), handler.getHttpHandler());
-            context.getFilters().addAll(filters);
+            // the gate goes first so that a request turned away during shutdown is not logged or otherwise handled
+            context.getFilters().add(shutdownGate);
+            filters.stream().filter(filter -> filter != shutdownGate).forEach(context.getFilters()::add);
         }
         return server;
     }
@@ -119,6 +123,7 @@ public class HttpServerFactory {
      * @throws IOException If the server cannot be bound
      */
     private HttpsServer createHttpsServer(ApplicationContext applicationContext,
+                                          HttpServerConfiguration httpServerConfiguration,
                                           ServerSslConfiguration sslConfiguration,
                                           ResourceResolver resourceResolver) throws IOException {
         int port = sslConfiguration.getPort();
@@ -127,7 +132,7 @@ public class HttpServerFactory {
         }
         SSLContext sslContext = new JdkSslContextBuilder(resourceResolver).build(sslConfiguration)
             .orElseThrow(() -> new HttpServerException("SSL is enabled but no SSL context could be built"));
-        HttpsServer server = HttpsServer.create(new InetSocketAddress(port), 0);
+        HttpsServer server = HttpsServer.create(serverAddress(httpServerConfiguration, port), 0);
         server.setHttpsConfigurator(new HttpsConfigurator(sslContext) {
             @Override
             public void configure(HttpsParameters params) {
@@ -190,10 +195,13 @@ public class HttpServerFactory {
      * @param httpServerConfiguration HTTP Server Configuration
      * @return Server address to listen on
      */
-    private InetSocketAddress serverAddress(ApplicationContext applicationContext,
-                     HttpServerConfiguration httpServerConfiguration) {
-        ServerPort serverPort = ServerPort.of(httpServerConfiguration,
-            applicationContext.getEnvironment().getActiveNames());
-        return new InetSocketAddress(serverPort.port());
+    /**
+     * The address to bind: the configured {@code micronaut.server.host} when there is one, so that the server, TLS
+     * or not, listens on the interface the application asked for rather than on every interface.
+     */
+    private static InetSocketAddress serverAddress(HttpServerConfiguration httpServerConfiguration, int port) {
+        return httpServerConfiguration.getHost()
+            .map(host -> new InetSocketAddress(host, port))
+            .orElseGet(() -> new InetSocketAddress(port));
     }
 }

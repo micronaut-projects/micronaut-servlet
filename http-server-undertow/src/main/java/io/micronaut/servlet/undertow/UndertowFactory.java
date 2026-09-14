@@ -55,6 +55,7 @@ import jakarta.servlet.ServletException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
@@ -78,6 +79,7 @@ public class UndertowFactory extends ServletServerFactory {
     private final UndertowConfiguration configuration;
     private final @Nullable Router router;
     private final AtomicReference<@Nullable GracefulShutdownHandler> gracefulShutdownHandler = new AtomicReference<>();
+    private final AtomicReference<@Nullable ExecutorService> handlerExecutor = new AtomicReference<>();
 
     /**
      * Default constructor.
@@ -113,6 +115,17 @@ public class UndertowFactory extends ServletServerFactory {
     @Nullable
     GracefulShutdownHandler getGracefulShutdownHandler() {
         return gracefulShutdownHandler.get();
+    }
+
+    /**
+     * Shuts down the executor the servlet deployment runs on, if this factory supplied one. Called by
+     * {@link UndertowServer} when the server stops; Undertow only stops executors it created itself.
+     */
+    void shutdownHandlerExecutor() {
+        ExecutorService executor = handlerExecutor.getAndSet(null);
+        if (executor != null) {
+            executor.shutdown();
+        }
     }
 
     /**
@@ -387,9 +400,11 @@ public class UndertowFactory extends ServletServerFactory {
         if (servletConfiguration.isEnableVirtualThreads() && LoomSupport.isSupported()) {
             // without this every servlet invocation runs on the XNIO worker pool, eight threads per core by default,
             // and enable-virtual-threads was silently ignored: a blocking controller capped out at that pool's size
-            deploymentInfo.setExecutor(Executors.newThreadPerTaskExecutor(
+            ExecutorService executor = Executors.newThreadPerTaskExecutor(
                 LoomSupport.newVirtualThreadFactory("undertow-handler-", builder -> { })
-            ));
+            );
+            handlerExecutor.set(executor);
+            deploymentInfo.setExecutor(executor);
         }
         for (ServletContainerInitializer servletInitializer : servletInitializers) {
             deploymentInfo

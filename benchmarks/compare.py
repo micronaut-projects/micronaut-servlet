@@ -13,7 +13,17 @@ def parse(f):
     return out
 if len(sys.argv)>1 and sys.argv[1]=='--ab':
     d=parse(sys.argv[2]); va,vb=sys.argv[3],sys.argv[4]
-    servers=sorted({k[0].rsplit('-',2)[0] for k in d}); rounds=sorted({k[0].rsplit('-',1)[1] for k in d})
+    # keys are <server>-<version>-<round>; a version can carry hyphens itself (6.2.0-SNAPSHOT), so split on the
+    # versions that were asked for rather than on the last two hyphens
+    def split(key):
+        for v in (va,vb):
+            marker=f'-{v}-'
+            if marker in key:
+                srv,rnd=key.split(marker,1)
+                return srv,rnd
+        return None
+    parts=[p for p in (split(k[0]) for k in d) if p]
+    servers=sorted({p[0] for p in parts}); rounds=sorted({p[1] for p in parts})
     for c in servers:
         for ep in ['GET /plaintext c=64','GET /json c=64','POST /echo c=64']:
             row=f'{c:9}{ep:22}'

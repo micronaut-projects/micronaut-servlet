@@ -79,6 +79,38 @@ class GracefulShutdownTest {
         }
     }
 
+    @Test
+    void newRequestsAreTurnedAwayWhileInFlightOnesFinish() throws Exception {
+        EmbeddedServer server = ApplicationContext.run(EmbeddedServer.class, Map.of(
+            "spec.name", "GracefulShutdownTest",
+            "micronaut.lifecycle.graceful-shutdown.enabled", "true"
+        ));
+        try (HttpClient client = HttpClient.newHttpClient()) {
+            SlowController controller = server.getApplicationContext().getBean(SlowController.class);
+            HttpRequest slow = HttpRequest.newBuilder(server.getURI().resolve("/graceful/slow")).build();
+            HttpRequest quick = HttpRequest.newBuilder(server.getURI().resolve("/graceful/quick")).build();
+            assertEquals(200, client.send(quick, HttpResponse.BodyHandlers.ofString()).statusCode(), "the server answers before shutdown");
+
+            CompletableFuture<HttpResponse<String>> inFlight = client.sendAsync(slow, HttpResponse.BodyHandlers.ofString());
+            assertTrue(controller.started.await(10, TimeUnit.SECONDS), "the request must reach the controller");
+            // the HttpServer cannot pause accepting, so the drain is observed through what a new request gets back
+            CompletableFuture<Void> stopping = CompletableFuture.runAsync(() -> server.getApplicationContext().stop());
+            int status = 0;
+            long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+            while (status != 503 && System.nanoTime() < deadline) {
+                status = client.send(quick, HttpResponse.BodyHandlers.ofString()).statusCode();
+            }
+            assertEquals(503, status, "a request arriving during the drain is turned away");
+
+            HttpResponse<String> completed = inFlight.get(10, TimeUnit.SECONDS);
+            assertEquals(200, completed.statusCode(), "the request already in flight still completes");
+            assertEquals("finished", completed.body());
+            stopping.get(10, TimeUnit.SECONDS);
+        } finally {
+            server.close();
+        }
+    }
+
     @Requires(property = "spec.name", value = "GracefulShutdownTest")
     @Controller("/graceful")
     @Secured(SecurityRule.IS_ANONYMOUS)
@@ -86,6 +118,11 @@ class GracefulShutdownTest {
         static final Duration WORK = Duration.ofMillis(1500);
         final CountDownLatch started = new CountDownLatch(1);
         volatile boolean released;
+
+        @Get("/quick")
+        String quick() {
+            return "quick";
+        }
 
         @Get("/slow")
         String slow() {

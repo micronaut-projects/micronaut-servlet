@@ -7,7 +7,8 @@ There are a couple of additional extensions within Micronaut Servlet that make i
 On a container that supports asynchronous servlets (Jetty, Tomcat and Undertow) a request is handled as follows:
 
 * A request without a body, or with a body that declares a `Content-Length` no larger than `micronaut.server.max-request-buffer-size` (10MB by default) and is not a form submission, is handled entirely on the container thread that received it. The body, if any, is read on that thread before the route runs, as a blocking servlet application would, and the response is written from the same thread unless the route returns a reactive or asynchronous type.
-* A request with a larger body, a chunked body, or a form or multipart body is dispatched through `AsyncContext.start` and its body is read through a `ReadListener` as it arrives, so no container thread waits for it.
+* A request with a larger body or a chunked body is dispatched through `AsyncContext.start` and its body is read through a `ReadListener` as it arrives, so no container thread waits for it.
+* A form or multipart body is dispatched the same way, but its fields are not streamed: the container parses them itself when the route asks for its parameters or parts. A URL-encoded form without a declared length is the one exception, which the servlet runtime reads through `micronaut.server.max-request-size` and decodes itself, since the container would otherwise parse it unbounded.
 
 Reactive and asynchronous return types complete the response from whichever thread produces the result, and `@ExecuteOn` moves the route to the named executor as on the Netty server. When `micronaut.servlet.async-supported` is `false`, or on the built-in JDK server, every request is handled on the container thread and its body is read from a blocking stream.
 

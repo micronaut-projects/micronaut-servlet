@@ -56,6 +56,8 @@ import org.apache.coyote.ProtocolHandler;
 import org.apache.coyote.http2.Http2Protocol;
 import org.apache.tomcat.util.net.SSLHostConfig;
 import org.apache.tomcat.util.net.SSLHostConfigCertificate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Factory for the {@link Tomcat} instance.
@@ -65,6 +67,8 @@ import org.apache.tomcat.util.net.SSLHostConfigCertificate;
  */
 @Factory
 public class TomcatFactory extends ServletServerFactory {
+
+    private static final Logger LOG = LoggerFactory.getLogger(TomcatFactory.class);
 
     private static final String HTTPS = "HTTPS";
     private static final String CLIENT_AUTH = "clientAuth";
@@ -183,7 +187,14 @@ public class TomcatFactory extends ServletServerFactory {
      * as before.</p>
      */
     private static void applyThreadLimits(Tomcat tomcat, MicronautServletConfiguration configuration, @Nullable Connector connector, @Nullable Connector httpsConnector) {
-        if (configuration.getMaxThreads() == null || (configuration.isEnableVirtualThreads() && LoomSupport.isSupported())) {
+        if (configuration.getMaxThreads() == null) {
+            return;
+        }
+        if (configuration.isEnableVirtualThreads() && LoomSupport.isSupported()) {
+            LOG.warn("micronaut.servlet.max-threads ({}) does not apply while virtual threads are enabled: "
+                + "virtual threads are not pooled, so request concurrency is not bounded by it. "
+                + "Set micronaut.servlet.enable-virtual-threads to false to size a platform thread pool instead.",
+                configuration.getMaxThreads());
             return;
         }
         StandardThreadExecutor executor = new StandardThreadExecutor();

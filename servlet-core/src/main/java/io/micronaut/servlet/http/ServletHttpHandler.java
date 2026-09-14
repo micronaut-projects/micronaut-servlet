@@ -94,6 +94,12 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
      */
     protected static final Logger LOG = LoggerFactory.getLogger(ServletHttpHandler.class);
     private static final int STREAM_BUFFER_SIZE = 8192;
+    /**
+     * The largest complete body written with a blocking write from a thread that is not the container's: it fits
+     * the response buffer of the containers, so the write fills a buffer rather than waiting on the socket, and a
+     * slow client cannot stall an event loop or a scheduler thread that happened to complete the response.
+     */
+    private static final int INLINE_WRITE_LIMIT = 16 * 1024;
 
     protected final ApplicationContext applicationContext;
     private final RouteExecutor routeExecutor;
@@ -206,7 +212,18 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
         return getApplicationContext().isRunning();
     }
 
-    private static void transfer(ExecutionResult executionResult, ServletExchange<?, ?> exchange, boolean async, Runnable onComplete) {
+    /**
+     * Writes the response.
+     *
+     * @param executionResult   The response to write
+     * @param exchange          The exchange
+     * @param async             Whether the request is being handled asynchronously, so a body still being produced
+     *                          can be written through a {@code WriteListener}
+     * @param onContainerThread Whether the current thread is one the container handed the request to, on which
+     *                          a blocking write is what a servlet application does
+     * @param onComplete        Runs once the response has been written
+     */
+    private static void transfer(ExecutionResult executionResult, ServletExchange<?, ?> exchange, boolean async, boolean onContainerThread, Runnable onComplete) {
         ByteBodyHttpResponse<?> byteBodyResponse = executionResult.byteBodyHttpResponse;
         if (LOG.isDebugEnabled()) {
             LOG.debug("Request [{} - {}] completed {}", exchange.getRequest().getMethodName(), exchange.getRequest().getUri(),
@@ -226,7 +243,7 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
         if (body instanceof AvailableByteBody available && available.length() == 0) {
             // special case, don't call getOutputStream. the controller may have written manually.
             onComplete.run();
-        } else if (async && !(body instanceof AvailableByteBody)) {
+        } else if (async && !writesInline(body, onContainerThread)) {
             // a body that is still being produced is written as it arrives, through a WriteListener; a body that
             // is already complete is written below on this thread instead, because the listener costs a dispatch
             // through the container on every response and buys nothing when there is nothing to wait for
@@ -240,6 +257,17 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
             writeBlocking(body, servletResponse);
             onComplete.run();
         }
+    }
+
+    /**
+     * Whether a body is written with a blocking write on the current thread rather than through a listener: it
+     * has to be complete, and either the thread is the container's, which is what a blocking servlet application
+     * does, or the body is small enough to fit the response buffer. A large body that completed on another
+     * thread, such as an event loop delivering an HTTP client response, is left to the listener so that a slow
+     * client cannot block that thread.
+     */
+    private static boolean writesInline(ByteBody body, boolean onContainerThread) {
+        return body instanceof AvailableByteBody available && (onContainerThread || available.length() <= INLINE_WRITE_LIMIT);
     }
 
     /**
@@ -398,9 +426,15 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
                               Runnable requestTerminated) {
         exchange.getRequest().executeAsync(ctx -> PropagatedContext.getOrEmpty().plus(new ServerHttpRequestContext(req)).propagate(() -> {
             Runnable finish = completeOnce(ctx, req, requestTerminated);
+            // a container that times the request out, or loses its connection, ends the execution before the
+            // route's publisher does: the request still has to be released and counted as done
+            ctx.onEndedByContainer(finish);
+            // the thread the container runs the route on, whether it dispatched or not; a flow that completes
+            // on it may write blocking, one that completes elsewhere is a different matter
+            Thread containerThread = Thread.currentThread();
             lc.handleNormal(req)
                 .flatMap(response -> process(response, req, exchange.getResponse()))
-                .onComplete((bbhr, t) -> completeAsync(exchange, bbhr, t, finish));
+                .onComplete((bbhr, t) -> completeAsync(exchange, bbhr, t, Thread.currentThread() == containerThread, finish));
             return null;
         }));
     }
@@ -425,14 +459,14 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
         };
     }
 
-    private void completeAsync(ServletExchange<REQ, RES> exchange, @Nullable ExecutionResult result, @Nullable Throwable failure, Runnable finish) {
+    private void completeAsync(ServletExchange<REQ, RES> exchange, @Nullable ExecutionResult result, @Nullable Throwable failure, boolean onContainerThread, Runnable finish) {
         if (failure != null) {
             handleFallback(exchange.getResponse(), failure);
             finish.run();
             return;
         }
         try {
-            transfer(Objects.requireNonNull(result, "a completed flow carries a result"), exchange, true, finish);
+            transfer(Objects.requireNonNull(result, "a completed flow carries a result"), exchange, true, onContainerThread, finish);
         } catch (Exception transferFailure) {
             // transfer throws on a write failure, before it can run the callback itself
             handleFallback(exchange.getResponse(), transferFailure);
@@ -479,7 +513,7 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
             return;
         }
         try {
-            transfer(executionResult, exchange, false, requestTerminated);
+            transfer(executionResult, exchange, false, true, requestTerminated);
         } finally {
             // transfer throws on a write failure, before it can run the callback itself
             requestTerminated.run();
@@ -543,7 +577,7 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
             requestTerminated.run();
             return;
         }
-        transfer(executionResult, exchange, false, requestTerminated);
+        transfer(executionResult, exchange, false, true, requestTerminated);
     }
 
     /**

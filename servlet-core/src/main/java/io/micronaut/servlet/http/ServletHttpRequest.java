@@ -122,6 +122,19 @@ public interface ServletHttpRequest<N, B> extends HttpRequest<B> {
          */
         void complete();
 
+        /**
+         * Registers what to run if the container ends the asynchronous execution itself, on a timeout or an I/O
+         * error, before {@link #complete()} has been called. The hook runs at most once, and a subsequent
+         * {@link #complete()} is then expected to be tolerated. The default registers nothing, for a runtime whose
+         * container never ends an execution on its own.
+         *
+         * @param hook What to run when the container ends the execution
+         * @since 6.2.0
+         */
+        default void onEndedByContainer(Runnable hook) {
+            // the container never ends the execution itself
+        }
+
     }
 
 }

@@ -56,6 +56,8 @@ import io.micronaut.servlet.http.ServletHttpRequest;
 import io.micronaut.servlet.http.ServletHttpResponse;
 import io.micronaut.servlet.http.StreamedServletMessage;
 import jakarta.servlet.AsyncContext;
+import jakarta.servlet.AsyncEvent;
+import jakarta.servlet.AsyncListener;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.http.HttpServletMapping;
@@ -76,16 +78,19 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.InetSocketAddress;
 import java.net.URI;
+import java.net.URLDecoder;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalLong;
@@ -132,6 +137,12 @@ public final class DefaultServletHttpRequest<B> implements
      * and a form, whose fields the container parses from the same stream, is refused through the parameters too.
      */
     private @Nullable ContentLengthExceededException bodyTooLarge;
+    private final long maxBodySize;
+    /**
+     * The fields of a URL-encoded form that declared no length, read through the size limit before the container
+     * could parse the same bytes unbounded; {@code null} until such a form is asked for, and for every other request.
+     */
+    private @Nullable Map<String, List<String>> unboundedForm;
     private final ByteBodyFactory byteBodyFactory;
     private final Executor ioExecutor;
     private final @Nullable SSLSessionProvider sslSessionProvider;
@@ -219,6 +230,7 @@ public final class DefaultServletHttpRequest<B> implements
         this.sslSessionProvider = sslSessionProvider;
         this.byteBodyFactory = ByteBodyFactory.createDefault(ByteArrayBufferFactory.INSTANCE);
         this.headers = new ServletRequestHeaders();
+        this.maxBodySize = bodySizeLimits.maxBodySize();
         this.byteBody.set(createBody(delegate.getContentLengthLong(), bodySizeLimits));
 
         String requestURI = resolveRequestUri(delegate);
@@ -369,15 +381,17 @@ public final class DefaultServletHttpRequest<B> implements
         }
         AsyncContext startedAsyncContext = delegate.startAsync();
         this.asyncContext = startedAsyncContext;
+        ContainerAsyncExecution execution = new ContainerAsyncExecution(startedAsyncContext);
+        startedAsyncContext.addListener(execution);
         if (bodyReadsAsynchronously && mayHaveBody()) {
             // the body is read through a ReadListener, which the container only drives once the service
             // method has returned, so a request with a body has to leave this thread first
-            startedAsyncContext.start(() -> asyncExecutionCallback.run(startedAsyncContext::complete));
+            startedAsyncContext.start(() -> asyncExecutionCallback.run(execution));
         } else {
             // otherwise the route runs on the thread already handling the request: AsyncContext.start(Runnable)
             // would hand it to another pool thread first, a hop that is pure overhead for the common GET, and
             // completing the context from the service thread is allowed by the specification
-            asyncExecutionCallback.run(startedAsyncContext::complete);
+            asyncExecutionCallback.run(execution);
         }
     }
 
@@ -583,11 +597,14 @@ public final class DefaultServletHttpRequest<B> implements
     @NonNull
     @Override
     public HttpParameters getParameters() {
-        if (bodyTooLarge != null && isFormSubmission()) {
+        if (isFormSubmission()) {
             // form fields come from the container's parsing of the body, not from the byte body, so the size limit
             // has to be enforced here or an oversized form would be accepted whenever the container's own limit
             // is higher
-            throw bodyTooLarge;
+            if (bodyTooLarge != null) {
+                throw bodyTooLarge;
+            }
+            readUnboundedForm();
         }
         return parameters;
     }
@@ -595,6 +612,45 @@ public final class DefaultServletHttpRequest<B> implements
     private boolean isFormSubmission() {
         String contentType = delegate.getContentType();
         return contentType != null && isFormContentType(MediaType.of(contentType));
+    }
+
+    private boolean isUrlEncodedForm() {
+        String contentType = delegate.getContentType();
+        return contentType != null && MediaType.of(contentType).matches(MediaType.APPLICATION_FORM_URLENCODED_TYPE);
+    }
+
+    /**
+     * Reads a URL-encoded form that declared no length through the size limit, before the container parses it.
+     *
+     * <p>A declared length is checked against the limit up front, and a multipart body is bounded by the
+     * {@code MultipartConfigElement} the container is given, but a chunked URL-encoded form would otherwise be
+     * parsed by the container straight from the stream, subject only to its own limit. The fields are decoded
+     * here instead, from bytes that passed through the limit, and the container contributes the query
+     * parameters only, which is what it parses once the stream has been consumed.</p>
+     */
+    private synchronized void readUnboundedForm() {
+        if (unboundedForm != null || delegate.getContentLengthLong() >= 0 || !mayHaveBody() || !isUrlEncodedForm()) {
+            return;
+        }
+        byte[] bytes;
+        try (InputStream stream = new LimitedInputStream(delegate.getInputStream(), maxBodySize)) {
+            bytes = stream.readAllBytes();
+        } catch (IOException e) {
+            throw new InternalServerException("Error reading request body: " + e.getMessage(), e);
+        }
+        Map<String, List<String>> fields = new LinkedHashMap<>();
+        delegate.getParameterMap().forEach((name, values) -> fields.put(name, new ArrayList<>(Arrays.asList(values))));
+        Charset charset = getCharacterEncoding();
+        for (String pair : new String(bytes, charset).split("&")) {
+            if (pair.isEmpty()) {
+                continue;
+            }
+            int equals = pair.indexOf('=');
+            String name = URLDecoder.decode(equals == -1 ? pair : pair.substring(0, equals), charset);
+            String value = equals == -1 ? "" : URLDecoder.decode(pair.substring(equals + 1), charset);
+            fields.computeIfAbsent(name, k -> new ArrayList<>(1)).add(value);
+        }
+        this.unboundedForm = fields;
     }
 
     @Override
@@ -736,9 +792,10 @@ public final class DefaultServletHttpRequest<B> implements
                 }
             });
         } else {
-            return Flux.fromIterable(delegate().getParameterMap().entrySet().stream()
-                .flatMap(entry -> Arrays.stream(entry.getValue())
-                    .map(value -> new RawFormField(new FormFieldMetadata(entry.getKey(), null, null), byteBodyFactory().adapt(value.getBytes(StandardCharsets.UTF_8)))))
+            HttpParameters formParameters = getParameters();
+            return Flux.fromIterable(formParameters.names().stream()
+                .flatMap(name -> formParameters.getAll(name).stream()
+                    .map(value -> new RawFormField(new FormFieldMetadata(name, null, null), byteBodyFactory().adapt(value.getBytes(StandardCharsets.UTF_8)))))
                 .toList());
         }
     }
@@ -837,13 +894,81 @@ public final class DefaultServletHttpRequest<B> implements
     /**
      * The servlet request parameters.
      */
+    /**
+     * The asynchronous execution, which also hears from the container when it ends the execution itself.
+     *
+     * <p>A container times an asynchronous request out (30 seconds by default on Jetty, Tomcat and Undertow)
+     * or errors it when the connection fails, and without a listener it then completes the context on its own.
+     * The handler's completion callback would never run, so the request stayed counted as active, holding a
+     * graceful shutdown up for the whole grace period, and its resources were never released. The listener hands
+     * such an ending to the hook the handler registers; the container's own completion then follows.</p>
+     */
+    private static final class ContainerAsyncExecution implements AsyncExecution, AsyncListener {
+
+        private final AsyncContext asyncContext;
+        private final AtomicReference<@Nullable Runnable> endedByContainer = new AtomicReference<>();
+
+        ContainerAsyncExecution(AsyncContext asyncContext) {
+            this.asyncContext = asyncContext;
+        }
+
+        @Override
+        public void complete() {
+            asyncContext.complete();
+        }
+
+        @Override
+        public void onEndedByContainer(Runnable hook) {
+            endedByContainer.set(hook);
+        }
+
+        @Override
+        public void onTimeout(AsyncEvent event) {
+            // the container would answer 500 for a timeout it completes itself; say the same when the response
+            // has not gone out yet, rather than letting an untouched 200 through
+            if (event.getSuppliedResponse() instanceof HttpServletResponse response && !response.isCommitted()) {
+                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            }
+            ended();
+        }
+
+        @Override
+        public void onError(AsyncEvent event) {
+            ended();
+        }
+
+        @Override
+        public void onComplete(AsyncEvent event) {
+            // the execution completed through complete(), or after the hook has run
+        }
+
+        @Override
+        public void onStartAsync(AsyncEvent event) {
+            // a re-dispatch is not something this engine does
+        }
+
+        private void ended() {
+            Runnable hook = endedByContainer.getAndSet(null);
+            if (hook != null) {
+                hook.run();
+            }
+        }
+    }
+
     private final class ServletParameters implements HttpParameters {
+
+        private @Nullable String[] values(String name) {
+            Map<String, List<String>> form = unboundedForm;
+            if (form != null) {
+                List<String> values = form.get(name);
+                return values == null ? null : values.toArray(String[]::new);
+            }
+            return delegate.getParameterValues(name);
+        }
 
         @Override
         public List<String> getAll(CharSequence name) {
-            final String[] values = delegate.getParameterValues(
-                Objects.requireNonNull(name, NULL_PARAMETER_NAME).toString()
-            );
+            final String[] values = values(Objects.requireNonNull(name, NULL_PARAMETER_NAME).toString());
             if (values == null) {
                 return Collections.emptyList();
             }
@@ -853,13 +978,16 @@ public final class DefaultServletHttpRequest<B> implements
         @Nullable
         @Override
         public String get(CharSequence name) {
-            return delegate.getParameter(
-                Objects.requireNonNull(name, NULL_PARAMETER_NAME).toString()
-            );
+            final String[] values = values(Objects.requireNonNull(name, NULL_PARAMETER_NAME).toString());
+            return values == null || values.length == 0 ? null : values[0];
         }
 
         @Override
         public Set<String> names() {
+            Map<String, List<String>> form = unboundedForm;
+            if (form != null) {
+                return form.keySet();
+            }
             return CollectionUtils.enumerationToSet(delegate.getParameterNames());
         }
 
@@ -885,7 +1013,7 @@ public final class DefaultServletHttpRequest<B> implements
             final boolean isIterable = Iterable.class.isAssignableFrom(rawType);
             final String paramName = Objects.requireNonNull(name, "Parameter name should not be null").toString();
             if (isIterable) {
-                final String[] parameterValues = delegate.getParameterValues(paramName);
+                final String[] parameterValues = values(paramName);
                 if (ArrayUtils.isNotEmpty(parameterValues)) {
                     if (parameterValues.length == 1) {
                         return conversionService.convert(parameterValues[0], conversionContext);

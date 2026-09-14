@@ -4,7 +4,7 @@ This section documents breaking changes between Micronaut Servlet versions:
 
 === The request size limit applies to every body
 
-`micronaut.server.max-request-size` (10MB by default) was only passed to the container's multipart configuration, so a plain JSON, text or binary body of any size was accepted. The servlet runtimes now enforce it as the Netty server does: a body that declares a larger `Content-Length` is refused with `413 Request Entity Too Large` without being read, and a body without a declared length is cut off with the same status once it grows past the limit. Raise `micronaut.server.max-request-size` for applications that receive larger bodies.
+`micronaut.server.max-request-size` (10MB by default) was only passed to the container's multipart configuration, so a plain JSON, text or binary body of any size was accepted. The servlet runtimes now enforce it as the Netty server does: a body that declares a larger `Content-Length` is refused with `413 Request Entity Too Large` without being read, and a body without a declared length is cut off with the same status once it grows past the limit. That includes a URL-encoded form without a declared length, whose fields are decoded from bytes that passed through the limit rather than parsed by the container unbounded. Raise `micronaut.server.max-request-size` for applications that receive larger bodies.
 
 === Jetty serves static resources through the Micronaut resolver
 
@@ -26,6 +26,12 @@ Two things change for Jetty, Tomcat and Undertow applications:
 - Those responses carry `Vary: Accept-Encoding`, which is required so a cache does not serve a compressed body to a client that cannot read it.
 
 Set `micronaut.servlet.compression.enabled` to `false` to restore the previous behaviour. The JDK server runtime does not support compression.
+
+=== Virtual threads take effect on Undertow, and set thread limits aside
+
+`micronaut.servlet.enable-virtual-threads` has defaulted to `true` since Micronaut Servlet 4, but it only took effect on Jetty and Tomcat. Undertow ignored it and ran every servlet invocation on its XNIO worker pool, eight threads per core by default, so a blocking controller was capped at that pool's size. On JDK 21 and later Undertow now runs the servlet deployment on a virtual thread per request, as the other containers do.
+
+A consequence on Tomcat and Undertow: virtual threads are not pooled, so `micronaut.servlet.max-threads` and `micronaut.servlet.min-threads` no longer bound request concurrency while they are enabled. Tomcat used to replace its virtual-thread executor with a platform pool of that size, silently turning virtual threads off; it now keeps the virtual threads and logs a warning that the limit does not apply. Undertow's `WORKER_TASK_MAX_THREADS` still sizes the worker pool that accepts connections, but not the threads that run routes. An application that relied on `max-threads` to cap load on a downstream resource, such as a JDBC pool, should set `micronaut.servlet.enable-virtual-threads` to `false` to size a platform pool as before, or bound the resource itself.
 
 === Multipart handling is enabled by default
 

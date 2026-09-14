@@ -6,7 +6,7 @@ The servlet runtimes implement the same https://docs.micronaut.io/latest/guide/i
 
 |Request bodies streamed as they arrive
 |Yes |Yes |Yes |Blocking |Blocking
-|Containers with asynchronous support read a large or chunked body through a `ReadListener`; a body with a declared length up to `micronaut.server.max-request-size` is read on the container thread before the route runs. The JDK server and POJA read from a blocking stream.
+|Containers with asynchronous support read a large or chunked body through a `ReadListener`; a body with a declared length up to `micronaut.server.max-request-buffer-size` is read on the container thread before the route runs. Either way `micronaut.server.max-request-size` is the limit past which a body is refused. The JDK server and POJA read from a blocking stream.
 
 |Request without `Content-Length` or `Transfer-Encoding` has no body
 |Yes |Yes |Yes |Yes |No
@@ -50,7 +50,7 @@ The servlet runtimes implement the same https://docs.micronaut.io/latest/guide/i
 
 |Virtual threads (`micronaut.servlet.enable-virtual-threads`)
 |Yes |Yes |Yes |Yes |No
-|Tomcat keeps its virtual-thread executor when `max-threads` is set; Undertow supplies one to the servlet deployment; the JDK server uses one for its handlers.
+|Tomcat keeps its virtual-thread executor when `max-threads` is set, and logs that the limit does not apply; Undertow supplies one to the servlet deployment; the JDK server uses one for its handlers. Virtual threads are not pooled, so `max-threads` bounds concurrency only when they are off.
 
 |Graceful shutdown (`micronaut.lifecycle.graceful-shutdown.enabled`)
 |Yes |Yes |Yes |Yes |No
