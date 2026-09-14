@@ -40,6 +40,7 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -84,13 +85,13 @@ public class HttpServerFactory {
      */
     @Requires(beans = HttpHandlerPath.class)
     @Singleton
+    @SuppressWarnings("java:S107") // one parameter per collaborator the server is assembled from; package-private
     HttpServer createHttpServer(ApplicationContext applicationContext,
                                 HttpServerConfiguration httpServerConfiguration,
                                 ServletConfiguration servletConfiguration,
                                 ServerSslConfiguration sslConfiguration,
                                 ResourceResolver resourceResolver,
                                 JdkServerExecutorOwnership executorOwnership,
-                                JdkServerShutdownGate shutdownGate,
                                 List<HttpHandlerPath> httpHandlers,
                                 List<Filter> filters) throws IOException {
         HttpServer server = sslConfiguration.isEnabled()
@@ -100,11 +101,14 @@ public class HttpServerFactory {
         ExecutorService executorService = createExecutor(servletConfiguration);
         executorOwnership.owns(executorService);
         server.setExecutor(executorService);
+        // the shutdown gate goes first so that a request turned away during shutdown is not logged or otherwise
+        // handled; it is one of the filter beans, so it is only moved, not added
+        List<Filter> ordered = new ArrayList<>(filters.size());
+        filters.stream().filter(JdkServerShutdownGate.class::isInstance).forEach(ordered::add);
+        filters.stream().filter(filter -> !(filter instanceof JdkServerShutdownGate)).forEach(ordered::add);
         for (HttpHandlerPath handler : httpHandlers) {
             HttpContext context = server.createContext(handler.getPath(), handler.getHttpHandler());
-            // the gate goes first so that a request turned away during shutdown is not logged or otherwise handled
-            context.getFilters().add(shutdownGate);
-            filters.stream().filter(filter -> filter != shutdownGate).forEach(context.getFilters()::add);
+            context.getFilters().addAll(ordered);
         }
         return server;
     }
