@@ -12,3 +12,25 @@ To disable the built-in JDK HTTP server runtime when it is present on the classp
 ----
 micronaut.server.jdk.enabled: false
 ----
+
+==== HTTPS
+
+The built-in server supports TLS through the same https://docs.micronaut.io/latest/guide/index.html#https[SSL configuration] as the other runtimes. With `micronaut.ssl.enabled` set to `true` the server listens for HTTPS on `micronaut.server.ssl.port` (default `8443`, or a random port in the `test` environment) instead of the HTTP port. The key store, trust store, protocols, ciphers and client authentication are read from `micronaut.server.ssl`. Unlike the servlet containers the built-in server has a single listener, so it does not also serve plain HTTP when TLS is enabled.
+
+==== Access Log
+
+The built-in server can write an access log in the common log format, one line per request, to an SLF4J logger:
+
+[configuration]
+----
+micronaut:
+  server:
+    jdk:
+      access-logger:
+        enabled: true
+        logger-name: HTTP_ACCESS_LOGGER
+        exclusions:
+          - /health.*
+----
+
+`logger-name` defaults to `HTTP_ACCESS_LOGGER`, as on the Netty server, and `exclusions` are regular expressions matched against the request path. Beans of type `com.sun.net.httpserver.Filter` are applied to every context of the server in bean order, which is how the access log is installed and can be used for other per-exchange concerns.

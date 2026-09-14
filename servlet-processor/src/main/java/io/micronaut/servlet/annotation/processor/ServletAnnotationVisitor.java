@@ -53,9 +53,10 @@ public class ServletAnnotationVisitor implements TypeElementVisitor<Object, Obje
             throw new ProcessingException(element, "Types annotated with @WebListener must implement java.util.EventListener");
         }
 
+        // both annotations accept their patterns either as the value or as urlPatterns
         @NonNull String[] patterns = concat(concat(
                 element.stringValues(WebFilter.class),
-                element.stringValues(WebServlet.class, "urlPatterns")
+                element.stringValues(WebFilter.class, "urlPatterns")
             ),
             concat(
                 element.stringValues(WebServlet.class),

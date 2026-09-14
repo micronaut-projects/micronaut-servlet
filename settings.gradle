@@ -48,3 +48,12 @@ include 'test-suite-jetty-default-access-log'
 include 'test-suite-jetty-logback-access-log'
 include 'test-suite-kotlin-jetty'
 include 'test-sample-poja'
+
+// Develop against a local checkout of micronaut-core (for example while adding HTTP server TCK tests) with
+//   ./gradlew -PcoreDir=/path/to/micronaut-core :test-suite-http-server-tck-jetty:test
+// Gradle substitutes the io.micronaut:* dependencies with that build, so a TCK test can be run against every
+// servlet runtime here before it is upstreamed. Equivalent to --include-build on the command line.
+def coreDir = providers.gradleProperty('coreDir').orNull
+if (coreDir) {
+    includeBuild(coreDir)
+}

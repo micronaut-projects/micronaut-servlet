@@ -31,6 +31,7 @@ import org.junit.platform.suite.api.SuiteDisplayName;
     "io.micronaut.http.server.tck.tests.forms.FormBindingDeadlockTest", // asserts the server detects a form binding deadlock; a container that parses the whole form before the route runs has none to detect and completes the request instead
     "io.micronaut.http.server.tck.tests.forms.UploadTest", // unannotated StreamingFileUpload argument has no typed servlet binder yet
     "io.micronaut.http.server.tck.tests.BodyWithoutContentLengthTest", // POJA resolves the request body on its own path, which still decodes a body that was never sent
+    "io.micronaut.http.server.tck.tests.MaxRequestSizeTest", // POJA reads the body on its own path and does not enforce micronaut.server.max-request-size; correctness-only scope
     "io.micronaut.http.server.tck.tests.cors.SimpleRequestWithCorsNotEnabledTest", // posts multipart to /refresh; the unconsumed multipart body desynchronises the single POJA input stream
     // See https://github.com/micronaut-projects/micronaut-oracle-cloud/issues/925
     "io.micronaut.http.server.tck.tests.constraintshandler.ControllerConstraintHandlerTest",

@@ -71,6 +71,8 @@ public class UndertowConfiguration extends HttpServerConfiguration implements To
      */
     public UndertowConfiguration(@Nullable MultipartConfiguration multipartConfiguration) {
         this.multipartConfiguration = multipartConfiguration;
+        // the container sends its own Date header, so formatting one per response here is wasted work
+        setDateHeader(false);
     }
 
     /**

@@ -16,6 +16,7 @@
 package io.micronaut.servlet.http.server;
 
 import com.sun.net.httpserver.HttpServer;
+import com.sun.net.httpserver.HttpsServer;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.ApplicationContextProvider;
 import io.micronaut.context.annotation.Requires;
@@ -54,6 +55,7 @@ class HttpServerEmbeddedServer extends AbstractServletServer<HttpServer> {
     private static final long EXECUTOR_SHUTDOWN_TIMEOUT_SECONDS = 5L;
 
     private static final String SCHEME_HTTP = "http";
+    private static final String SCHEME_HTTPS = "https";
     private final HttpServerConfiguration httpServerConfiguration;
     private final JdkServerExecutorOwnership executorOwnership;
     private final AtomicBoolean running = new AtomicBoolean(false);
@@ -82,6 +84,15 @@ class HttpServerEmbeddedServer extends AbstractServletServer<HttpServer> {
             HttpServer server = getServer();
             server.start();
         }
+    }
+
+    /**
+     * Closes the gate on new requests: {@link HttpServer} cannot pause accepting, so each new request is answered
+     * {@code 503} instead while the requests in flight complete.
+     */
+    @Override
+    protected void stopAcceptingRequests() {
+        getApplicationContext().findBean(JdkServerShutdownGate.class).ifPresent(JdkServerShutdownGate::close);
     }
 
     @Override
@@ -130,7 +141,7 @@ class HttpServerEmbeddedServer extends AbstractServletServer<HttpServer> {
 
     @Override
     public String getScheme() {
-        return SCHEME_HTTP;
+        return getServer() instanceof HttpsServer ? SCHEME_HTTPS : SCHEME_HTTP;
     }
 
     @Override

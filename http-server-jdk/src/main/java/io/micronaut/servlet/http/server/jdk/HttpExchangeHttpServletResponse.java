@@ -333,6 +333,8 @@ final class HttpExchangeHttpServletResponse implements HttpServletResponse {
     public void sendError(int i, @Nullable String s) throws IOException {
         setStatus(i);
         // an explicit null check rather than StringUtils.isNotEmpty, so that the analyser can see the guard
+        // an error sent natively is a complete response, as for sendRedirect
+        committed = true;
         if (s != null && !s.isEmpty()) {
             byte[] body = s.getBytes(StandardCharsets.UTF_8);
             setContentLength(body.length);
@@ -351,6 +353,8 @@ final class HttpExchangeHttpServletResponse implements HttpServletResponse {
     public void sendRedirect(String s, int i, boolean b) throws IOException {
         setStatus(i);
         setHeader(HttpHeaders.LOCATION, s);
+        // a redirect sent natively is a complete response: the handler must not write the route's body after it
+        committed = true;
         commitHeaders();
     }
 

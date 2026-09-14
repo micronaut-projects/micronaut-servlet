@@ -15,19 +15,32 @@
  */
 package io.micronaut.servlet.http.server;
 
+import com.sun.net.httpserver.Filter;
+import com.sun.net.httpserver.HttpContext;
 import com.sun.net.httpserver.HttpServer;
+import com.sun.net.httpserver.HttpsConfigurator;
+import com.sun.net.httpserver.HttpsParameters;
+import com.sun.net.httpserver.HttpsServer;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Requires;
+import io.micronaut.context.env.Environment;
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.io.ResourceResolver;
 import io.micronaut.http.server.HttpServerConfiguration;
+import io.micronaut.http.server.exceptions.HttpServerException;
+import io.micronaut.http.ssl.ServerSslConfiguration;
+import io.micronaut.http.ssl.SslConfiguration;
 import io.micronaut.scheduling.LoomSupport;
 import io.micronaut.servlet.http.ServletConfiguration;
 import jakarta.inject.Singleton;
 
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLParameters;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -66,23 +79,82 @@ public class HttpServerFactory {
      * @param servletConfiguration Servlet Configuration
      * @param executorOwnership Records the executor created here, so only that one is shut down with the server
      * @param httpHandlers Handlers
+     * @param filters {@link Filter} beans applied to every context, in bean order, such as the access log
      * @return An HTTP Server
      * @throws IOException If an error occurs creating the server
      */
     @Requires(beans = HttpHandlerPath.class)
     @Singleton
+    @SuppressWarnings("java:S107") // one parameter per collaborator the server is assembled from; package-private
     HttpServer createHttpServer(ApplicationContext applicationContext,
                                 HttpServerConfiguration httpServerConfiguration,
                                 ServletConfiguration servletConfiguration,
+                                ServerSslConfiguration sslConfiguration,
+                                ResourceResolver resourceResolver,
                                 JdkServerExecutorOwnership executorOwnership,
-                                List<HttpHandlerPath> httpHandlers) throws IOException {
-        HttpServer server = HttpServer.create(serverAddress(applicationContext, httpServerConfiguration), 0);
+                                List<HttpHandlerPath> httpHandlers,
+                                List<Filter> filters) throws IOException {
+        HttpServer server = sslConfiguration.isEnabled()
+            ? createHttpsServer(applicationContext, httpServerConfiguration, sslConfiguration, resourceResolver)
+            : HttpServer.create(serverAddress(httpServerConfiguration, ServerPort.of(httpServerConfiguration,
+                applicationContext.getEnvironment().getActiveNames()).port()), 0);
         ExecutorService executorService = createExecutor(servletConfiguration);
         executorOwnership.owns(executorService);
         server.setExecutor(executorService);
+        // the shutdown gate goes first so that a request turned away during shutdown is not logged or otherwise
+        // handled; it is one of the filter beans, so it is only moved, not added
+        List<Filter> ordered = new ArrayList<>(filters.size());
+        filters.stream().filter(JdkServerShutdownGate.class::isInstance).forEach(ordered::add);
+        filters.stream().filter(filter -> !(filter instanceof JdkServerShutdownGate)).forEach(ordered::add);
         for (HttpHandlerPath handler : httpHandlers) {
-            server.createContext(handler.getPath(), handler.getHttpHandler());
+            HttpContext context = server.createContext(handler.getPath(), handler.getHttpHandler());
+            context.getFilters().addAll(ordered);
         }
+        return server;
+    }
+
+    /**
+     * Creates a TLS server on the SSL port.
+     *
+     * <p>A {@link HttpServer} listens on a single address, so when TLS is enabled the server is HTTPS only, as the
+     * Netty server is; there is no additional plain-text port. In the test environment the default SSL port is
+     * replaced by a random one, as the servlet containers do.</p>
+     *
+     * @param applicationContext The application context
+     * @param sslConfiguration   The SSL configuration
+     * @param resourceResolver   Resolves the key and trust stores
+     * @return The HTTPS server
+     * @throws IOException If the server cannot be bound
+     */
+    private HttpsServer createHttpsServer(ApplicationContext applicationContext,
+                                          HttpServerConfiguration httpServerConfiguration,
+                                          ServerSslConfiguration sslConfiguration,
+                                          ResourceResolver resourceResolver) throws IOException {
+        int port = sslConfiguration.getPort();
+        if (port == SslConfiguration.DEFAULT_PORT && applicationContext.getEnvironment().getActiveNames().contains(Environment.TEST)) {
+            port = 0;
+        }
+        SSLContext sslContext = new JdkSslContextBuilder(resourceResolver).build(sslConfiguration)
+            .orElseThrow(() -> new HttpServerException("SSL is enabled but no SSL context could be built"));
+        HttpsServer server = HttpsServer.create(serverAddress(httpServerConfiguration, port), 0);
+        server.setHttpsConfigurator(new HttpsConfigurator(sslContext) {
+            @Override
+            public void configure(HttpsParameters params) {
+                SSLParameters parameters = getSSLContext().getDefaultSSLParameters();
+                sslConfiguration.getProtocols().ifPresent(parameters::setProtocols);
+                sslConfiguration.getCiphers().ifPresent(parameters::setCipherSuites);
+                sslConfiguration.getClientAuthentication().ifPresent(clientAuthentication -> {
+                    switch (clientAuthentication) {
+                        case NEED -> parameters.setNeedClientAuth(true);
+                        case WANT -> parameters.setWantClientAuth(true);
+                        default -> {
+                            // no client authentication
+                        }
+                    }
+                });
+                params.setSSLParameters(parameters);
+            }
+        });
         return server;
     }
 
@@ -122,15 +194,16 @@ public class HttpServerFactory {
     }
 
     /**
+     * The address to bind: the configured {@code micronaut.server.host} when there is one, so that the server, TLS
+     * or not, listens on the interface the application asked for rather than on every interface.
      *
-     * @param applicationContext Application Context
      * @param httpServerConfiguration HTTP Server Configuration
+     * @param port                    The port to listen on
      * @return Server address to listen on
      */
-    private InetSocketAddress serverAddress(ApplicationContext applicationContext,
-                     HttpServerConfiguration httpServerConfiguration) {
-        ServerPort serverPort = ServerPort.of(httpServerConfiguration,
-            applicationContext.getEnvironment().getActiveNames());
-        return new InetSocketAddress(serverPort.port());
+    private static InetSocketAddress serverAddress(HttpServerConfiguration httpServerConfiguration, int port) {
+        return httpServerConfiguration.getHost()
+            .map(host -> new InetSocketAddress(host, port))
+            .orElseGet(() -> new InetSocketAddress(port));
     }
 }

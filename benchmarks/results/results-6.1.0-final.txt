@@ -1,0 +1,140 @@
+=== netty
+STARTUP_MS=539 server=netty
+HTTP/1.1 200 OK
+date: Fri, 11 Sep 2026 18:08:57 GMT
+X-Filter-Thread: default-eventLoopGroup-2-2
+content-type: text/plain
+content-length: 13
+
+Hello, World!--- GET /plaintext c=64
+    Latency   718.22us  305.46us  12.11ms   94.31%
+  Latency Distribution
+     99%    1.48ms
+Requests/sec:  85635.26
+--- GET /json c=64
+    Latency   755.69us    1.18ms  72.15ms   97.54%
+  Latency Distribution
+     99%    3.19ms
+Requests/sec:  82058.01
+--- POST /echo c=64
+    Latency   773.45us    1.11ms  67.45ms   97.71%
+  Latency Distribution
+     99%    3.15ms
+Requests/sec:  82138.90
+--- GET /plaintext c=256
+    Latency     3.14ms    4.11ms 137.89ms   96.18%
+  Latency Distribution
+     99%   13.43ms
+Requests/sec:  82276.49
+=== tomcat
+HTTP/1.1 200 
+Date: Fri, 11 Sep 2026 18:10:20 GMT
+X-Filter-Thread: http-nio-8085-exec-5
+Content-Type: text/plain
+Content-Length: 13
+
+Hello, World!--- GET /plaintext c=64
+    Latency     0.94ms  823.68us  40.16ms   92.47%
+  Latency Distribution
+     99%    4.32ms
+Requests/sec:  68357.97
+--- GET /json c=64
+    Latency   845.77us  576.87us  20.66ms   92.93%
+  Latency Distribution
+     99%    2.79ms
+Requests/sec:  73656.04
+--- POST /echo c=64
+    Latency     0.88ms  543.32us  19.00ms   87.68%
+  Latency Distribution
+     99%    2.61ms
+Requests/sec:  70803.89
+--- GET /plaintext c=256
+    Latency     3.33ms    2.14ms  69.40ms   88.46%
+  Latency Distribution
+     99%    9.60ms
+Requests/sec:  74984.47
+=== jetty
+HTTP/1.1 200 OK
+Server: Jetty(12.1.10)
+Date: Fri, 11 Sep 2026 18:11:43 GMT
+Content-Type: text/plain
+X-Filter-Thread: qtp1302227152-56
+Content-Length: 13
+
+Hello, World!--- GET /plaintext c=64
+    Latency     1.01ms    1.75ms  44.84ms   92.13%
+  Latency Distribution
+     99%    8.14ms
+Requests/sec:  88833.79
+--- GET /json c=64
+    Latency     0.91ms    1.33ms  28.86ms   91.08%
+  Latency Distribution
+     99%    6.19ms
+Requests/sec:  89267.55
+--- POST /echo c=64
+    Latency     1.06ms    1.05ms  21.41ms   89.12%
+  Latency Distribution
+     99%    5.13ms
+Requests/sec:  66961.86
+--- GET /plaintext c=256
+    Latency     2.39ms    2.33ms  26.29ms   83.83%
+  Latency Distribution
+     99%    9.68ms
+Requests/sec: 127134.81
+=== undertow
+HTTP/1.1 200 OK
+X-Filter-Thread: XNIO-1 task-3
+Connection: keep-alive
+Content-Type: text/plain
+Content-Length: 13
+Date: Fri, 11 Sep 2026 18:13:06 GMT
+
+Hello, World!--- GET /plaintext c=64
+    Latency     2.11ms    6.80ms 148.56ms   95.46%
+  Latency Distribution
+     99%   27.30ms
+Requests/sec:  78642.53
+--- GET /json c=64
+    Latency     2.11ms    5.69ms 128.65ms   93.79%
+  Latency Distribution
+     99%   25.65ms
+Requests/sec:  77943.83
+--- POST /echo c=64
+    Latency     4.32ms    9.84ms 126.54ms   91.26%
+  Latency Distribution
+     99%   49.81ms
+Requests/sec:  50727.07
+--- GET /plaintext c=256
+    Latency     6.81ms   11.78ms 137.63ms   89.42%
+  Latency Distribution
+     99%   59.06ms
+Requests/sec:  84078.61
+=== jdk
+HTTP/1.1 200 OK
+Date: Fri, 11 Sep 2026 18:14:29 GMT
+Transfer-encoding: chunked
+Content-type: text/plain
+X-filter-thread: HTTP-Dispatcher
+
+Hello, World!--- GET /plaintext c=64
+    Latency     1.45ms  653.05us  35.17ms   73.03%
+  Latency Distribution
+     99%    2.69ms
+Requests/sec:  44293.07
+--- GET /json c=64
+    Latency     1.52ms    0.98ms  57.52ms   89.96%
+  Latency Distribution
+     99%    2.83ms
+Requests/sec:  42655.65
+--- POST /echo c=64
+    Latency     1.74ms  844.77us  45.25ms   76.15%
+  Latency Distribution
+     99%    3.23ms
+Requests/sec:  37066.61
+--- GET /plaintext c=256
+    Latency    28.69ms   62.25ms 304.71ms   88.74%
+  Latency Distribution
+     99%  275.62ms
+  Socket errors: connect 0, read 2556, write 0, timeout 0
+Requests/sec:  35300.91
+DONE
