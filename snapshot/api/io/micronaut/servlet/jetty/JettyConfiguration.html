@@ -62,6 +62,7 @@ loadScripts(document, 'script');</script>
 <ol class="toc-list">
 <li><a href="#PREFIX" tabindex="0">PREFIX</a></li>
 <li><a href="#ENABLED_PROPERTY" tabindex="0">ENABLED_PROPERTY</a></li>
+<li><a href="#DEFAULT_NATIVE_STATIC_RESOURCES" tabindex="0">DEFAULT_NATIVE_STATIC_RESOURCES</a></li>
 <li><a href="#httpConfiguration" tabindex="0">httpConfiguration</a></li>
 </ol>
 </li>
@@ -78,6 +79,8 @@ loadScripts(document, 'script');</script>
 <li><a href="#getRequestLog()" tabindex="0">getRequestLog()</a></li>
 <li><a href="#isEnabled()" tabindex="0">isEnabled()</a></li>
 <li><a href="#setEnabled(boolean)" tabindex="0">setEnabled(boolean)</a></li>
+<li><a href="#isNativeStaticResources()" tabindex="0">isNativeStaticResources()</a></li>
+<li><a href="#setNativeStaticResources(boolean)" tabindex="0">setNativeStaticResources(boolean)</a></li>
 <li><a href="#getInitParameters()" tabindex="0">getInitParameters()</a></li>
 <li><a href="#setInitParameters(java.util.Map)" tabindex="0">setInitParameters(Map)</a></li>
 </ol>
@@ -156,15 +159,20 @@ implements io.micronaut.core.util.Toggleable</span></div>
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Field</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color"><code><a href="#ENABLED_PROPERTY" class="member-name-link">ENABLED_PROPERTY</a></code></div>
-<div class="col-last even-row-color">&nbsp;</div>
-<div class="col-first odd-row-color"><code>protected org.eclipse.jetty.server.HttpConfiguration</code></div>
-<div class="col-second odd-row-color"><code><a href="#httpConfiguration" class="member-name-link">httpConfiguration</a></code></div>
+<div class="col-first even-row-color"><code>static final boolean</code></div>
+<div class="col-second even-row-color"><code><a href="#DEFAULT_NATIVE_STATIC_RESOURCES" class="member-name-link">DEFAULT_NATIVE_STATIC_RESOURCES</a></code></div>
+<div class="col-last even-row-color">
+<div class="block">The default value for <a href="#setNativeStaticResources(boolean)"><code>setNativeStaticResources(boolean)</code></a>.</div>
+</div>
+<div class="col-first odd-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#ENABLED_PROPERTY" class="member-name-link">ENABLED_PROPERTY</a></code></div>
 <div class="col-last odd-row-color">&nbsp;</div>
-<div class="col-first even-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color"><code><a href="#PREFIX" class="member-name-link">PREFIX</a></code></div>
+<div class="col-first even-row-color"><code>protected org.eclipse.jetty.server.HttpConfiguration</code></div>
+<div class="col-second even-row-color"><code><a href="#httpConfiguration" class="member-name-link">httpConfiguration</a></code></div>
 <div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#PREFIX" class="member-name-link">PREFIX</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
 </div>
 <div class="inherited-list">
 <h3 id="fields-inherited-from-class-io.micronaut.http.server.HttpServerConfiguration">Fields inherited from class&nbsp;io.micronaut.http.server.HttpServerConfiguration</h3>
@@ -217,15 +225,27 @@ implements io.micronaut.core.util.Toggleable</span></div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isEnabled()" class="member-name-link">isEnabled</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setEnabled(boolean)" class="member-name-link">setEnabled</a><wbr>(boolean&nbsp;enabled)</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isNativeStaticResources()" class="member-name-link">isNativeStaticResources</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Sets whether the Jetty runtime is enabled.</div>
+<div class="block">Whether static resources are served by Jetty's own <code>ResourceHandler</code> rather than by the Micronaut static
+resource resolver that the other runtimes use.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setInitParameters(java.util.Map)" class="member-name-link">setInitParameters</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;initParameters)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setEnabled(boolean)" class="member-name-link">setEnabled</a><wbr>(boolean&nbsp;enabled)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Sets whether the Jetty runtime is enabled.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setInitParameters(java.util.Map)" class="member-name-link">setInitParameters</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;initParameters)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Sets the servlet init parameters.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setNativeStaticResources(boolean)" class="member-name-link">setNativeStaticResources</a><wbr>(boolean&nbsp;nativeStaticResources)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Serve static resources with Jetty's own <code>ResourceHandler</code> instead of the Micronaut static resource
+resolver.</div>
 </div>
 </div>
 </div>
@@ -273,6 +293,23 @@ implements io.micronaut.core.util.Toggleable</span></div>
 <dd>
 <ul class="tag-list">
 <li><a href="../../../../constant-values.html#io.micronaut.servlet.jetty.JettyConfiguration.ENABLED_PROPERTY">Constant Field Values</a></li>
+</ul>
+</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="DEFAULT_NATIVE_STATIC_RESOURCES">
+<h3>DEFAULT_NATIVE_STATIC_RESOURCES</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">DEFAULT_NATIVE_STATIC_RESOURCES</span></div>
+<div class="block">The default value for <a href="#setNativeStaticResources(boolean)"><code>setNativeStaticResources(boolean)</code></a>.</div>
+<dl class="notes">
+<dt>See Also:</dt>
+<dd>
+<ul class="tag-list">
+<li><a href="../../../../constant-values.html#io.micronaut.servlet.jetty.JettyConfiguration.DEFAULT_NATIVE_STATIC_RESOURCES">Constant Field Values</a></li>
 </ul>
 </dd>
 </dl>
@@ -390,6 +427,41 @@ implements io.micronaut.core.util.Toggleable</span></div>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>enabled</code> - True if the runtime is enabled</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="isNativeStaticResources()">
+<h3>isNativeStaticResources</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">isNativeStaticResources</span>()</div>
+<div class="block">Whether static resources are served by Jetty's own <code>ResourceHandler</code> rather than by the Micronaut static
+resource resolver that the other runtimes use.</div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd>True if Jetty serves static resources itself</dd>
+<dt>Since:</dt>
+<dd>6.2.0</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="setNativeStaticResources(boolean)">
+<h3>setNativeStaticResources</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">setNativeStaticResources</span><wbr><span class="parameters">(boolean&nbsp;nativeStaticResources)</span></div>
+<div class="block">Serve static resources with Jetty's own <code>ResourceHandler</code> instead of the Micronaut static resource
+resolver. Jetty's handler supports range requests and conditional caching natively, but sits outside the
+Micronaut filter chain, so Micronaut filters (including CORS) do not see those requests and the
+<code>cache-control</code> setting of each static resource configuration applies instead of
+<code>micronaut.server.responses.file</code>. Default value (<a href="#DEFAULT_NATIVE_STATIC_RESOURCES">false</a>).</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>nativeStaticResources</code> - True to let Jetty serve static resources</dd>
+<dt>Since:</dt>
+<dd>6.2.0</dd>
 </dl>
 </div>
 </section>

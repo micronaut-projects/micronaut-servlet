@@ -64,6 +64,9 @@ loadScripts(document, 'script');</script>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
 <ol class="toc-list">
 <li><a href="#getServer()" tabindex="0">getServer()</a></li>
+<li><a href="#shutdownGracefully()" tabindex="0">shutdownGracefully()</a></li>
+<li><a href="#reportActiveTasks()" tabindex="0">reportActiveTasks()</a></li>
+<li><a href="#stopAcceptingRequests()" tabindex="0">stopAcceptingRequests()</a></li>
 <li><a href="#getApplicationContext()" tabindex="0">getApplicationContext()</a></li>
 <li><a href="#getApplicationConfiguration()" tabindex="0">getApplicationConfiguration()</a></li>
 <li><a href="#start()" tabindex="0">start()</a></li>
@@ -89,7 +92,7 @@ loadScripts(document, 'script');</script>
 </dl>
 <dl class="notes">
 <dt>All Implemented Interfaces:</dt>
-<dd><code>io.micronaut.context.ApplicationContextLifeCycle&lt;io.micronaut.runtime.server.EmbeddedServer&gt;, io.micronaut.context.ApplicationContextProvider, io.micronaut.context.LifeCycle&lt;io.micronaut.runtime.server.EmbeddedServer&gt;, io.micronaut.runtime.EmbeddedApplication&lt;io.micronaut.runtime.server.EmbeddedServer&gt;, io.micronaut.runtime.server.EmbeddedServer, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/Closeable.html" title="class or interface in java.io" class="external-link">Closeable</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/AutoCloseable.html" title="class or interface in java.lang" class="external-link">AutoCloseable</a></code></dd>
+<dd><code>io.micronaut.context.ApplicationContextLifeCycle&lt;io.micronaut.runtime.server.EmbeddedServer&gt;, io.micronaut.context.ApplicationContextProvider, io.micronaut.context.LifeCycle&lt;io.micronaut.runtime.server.EmbeddedServer&gt;, io.micronaut.runtime.EmbeddedApplication&lt;io.micronaut.runtime.server.EmbeddedServer&gt;, io.micronaut.runtime.graceful.GracefulShutdownCapable, io.micronaut.runtime.server.EmbeddedServer, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/Closeable.html" title="class or interface in java.io" class="external-link">Closeable</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/AutoCloseable.html" title="class or interface in java.lang" class="external-link">AutoCloseable</a></code></dd>
 </dl>
 <dl class="notes">
 <dt>Direct Known Subclasses:</dt>
@@ -100,7 +103,7 @@ loadScripts(document, 'script');</script>
 <div class="type-signature"><span class="annotations">@Internal
 </span><span class="modifiers">public abstract class </span><span class="element-name type-name-label">AbstractServletServer&lt;T&gt;</span>
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>
-implements io.micronaut.runtime.server.EmbeddedServer</span></div>
+implements io.micronaut.runtime.server.EmbeddedServer, io.micronaut.runtime.graceful.GracefulShutdownCapable</span></div>
 <div class="block">Abstract base class for servlet embedded servers.</div>
 </div>
 </section>
@@ -146,6 +149,15 @@ implements io.micronaut.runtime.server.EmbeddedServer</span></div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final <a href="#type-param-T" title="type parameter in AbstractServletServer">T</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getServer()" class="member-name-link">getServer</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/OptionalLong.html" title="class or interface in java.util" class="external-link">OptionalLong</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#reportActiveTasks()" class="member-name-link">reportActiveTasks</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletionStage.html" title="class or interface in java.util.concurrent" class="external-link">CompletionStage</a><wbr>&lt;?&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#shutdownGracefully()" class="member-name-link">shutdownGracefully</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Shuts the server down gracefully: it stops accepting new requests, then completes once every request that was
+already in flight has terminated.</div>
+</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final io.micronaut.runtime.server.EmbeddedServer</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#start()" class="member-name-link">start</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
@@ -157,9 +169,14 @@ implements io.micronaut.runtime.server.EmbeddedServer</span></div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final io.micronaut.runtime.server.EmbeddedServer</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#stop()" class="member-name-link">stop</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>protected abstract void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#stopServer()" class="member-name-link">stopServer</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#stopAcceptingRequests()" class="member-name-link">stopAcceptingRequests</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Stops the underlying server accepting new requests while leaving in-flight requests to complete.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>protected abstract void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#stopServer()" class="member-name-link">stopServer</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Stop the server.</div>
 </div>
 </div>
@@ -223,6 +240,52 @@ implements io.micronaut.runtime.server.EmbeddedServer</span></div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>The server object.</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="shutdownGracefully()">
+<h3>shutdownGracefully</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletionStage.html" title="class or interface in java.util.concurrent" class="external-link">CompletionStage</a>&lt;?&gt;</span>&nbsp;<span class="element-name">shutdownGracefully</span>()</div>
+<div class="block">Shuts the server down gracefully: it stops accepting new requests, then completes once every request that was
+already in flight has terminated. Called by the <code>GracefulShutdownManager</code> when
+<code>micronaut.lifecycle.graceful-shutdown.enabled</code> is set, before the server is stopped.</div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code>shutdownGracefully</code>&nbsp;in interface&nbsp;<code>io.micronaut.runtime.graceful.GracefulShutdownCapable</code></dd>
+<dt>Returns:</dt>
+<dd>A stage that completes when no request is active</dd>
+<dt>Since:</dt>
+<dd>6.2.0</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="reportActiveTasks()">
+<h3>reportActiveTasks</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/OptionalLong.html" title="class or interface in java.util" class="external-link">OptionalLong</a></span>&nbsp;<span class="element-name">reportActiveTasks</span>()</div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code>reportActiveTasks</code>&nbsp;in interface&nbsp;<code>io.micronaut.runtime.graceful.GracefulShutdownCapable</code></dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="stopAcceptingRequests()">
+<h3>stopAcceptingRequests</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">stopAcceptingRequests</span>()</div>
+<div class="block">Stops the underlying server accepting new requests while leaving in-flight requests to complete. Each
+container has its own way of doing this; the default does nothing, and the graceful shutdown then only waits
+for in-flight requests.</div>
+<dl class="notes">
+<dt>Since:</dt>
+<dd>6.2.0</dd>
 </dl>
 </div>
 </section>

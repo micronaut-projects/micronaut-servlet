@@ -132,7 +132,7 @@ loadScripts(document, 'script');</script>
 </ul>
 </li>
 <li class="circle">io.micronaut.servlet.engine.server.<a href="io/micronaut/servlet/engine/server/AbstractServletServer.html" class="type-name-link" title="class in io.micronaut.servlet.engine.server">AbstractServletServer</a>&lt;T&gt; (implements io.micronaut.runtime.server.EmbeddedServer)</li>
-<li class="circle">io.micronaut.servlet.http.server.<a href="io/micronaut/servlet/http/server/AbstractServletServer.html" class="type-name-link" title="class in io.micronaut.servlet.http.server">AbstractServletServer</a>&lt;T&gt; (implements io.micronaut.runtime.server.EmbeddedServer)
+<li class="circle">io.micronaut.servlet.http.server.<a href="io/micronaut/servlet/http/server/AbstractServletServer.html" class="type-name-link" title="class in io.micronaut.servlet.http.server">AbstractServletServer</a>&lt;T&gt; (implements io.micronaut.runtime.server.EmbeddedServer, io.micronaut.runtime.graceful.GracefulShutdownCapable)
 <ul>
 <li class="circle">io.micronaut.servlet.jetty.<a href="io/micronaut/servlet/jetty/JettyServer.html" class="type-name-link" title="class in io.micronaut.servlet.jetty">JettyServer</a></li>
 <li class="circle">io.micronaut.servlet.tomcat.<a href="io/micronaut/servlet/tomcat/TomcatServer.html" class="type-name-link" title="class in io.micronaut.servlet.tomcat">TomcatServer</a></li>
@@ -177,6 +177,7 @@ loadScripts(document, 'script');</script>
 </ul>
 </li>
 <li class="circle">io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/JakartaWebSocketUpgrader.html" class="type-name-link" title="class in io.micronaut.servlet.websocket">JakartaWebSocketUpgrader</a> (implements io.micronaut.servlet.http.websocket.<a href="io/micronaut/servlet/http/websocket/ServletWebSocketUpgrader.html" title="interface in io.micronaut.servlet.http.websocket">ServletWebSocketUpgrader</a>)</li>
+<li class="circle">io.micronaut.servlet.http.server.jdk.<a href="io/micronaut/servlet/http/server/jdk/JdkHttpServerConfiguration.AccessLogger.html" class="type-name-link" title="class in io.micronaut.servlet.http.server.jdk">JdkHttpServerConfiguration.AccessLogger</a> (implements io.micronaut.core.util.Toggleable)</li>
 <li class="circle">io.micronaut.servlet.jetty.<a href="io/micronaut/servlet/jetty/JettyConfiguration.JettyRequestLog.html" class="type-name-link" title="class in io.micronaut.servlet.jetty">JettyConfiguration.JettyRequestLog</a> (implements io.micronaut.core.util.Toggleable)</li>
 <li class="circle">io.micronaut.servlet.jetty.<a href="io/micronaut/servlet/jetty/JettySslContextReload.html" class="type-name-link" title="class in io.micronaut.servlet.jetty">JettySslContextReload</a> (implements io.micronaut.runtime.context.scope.refresh.RefreshEventListener)</li>
 <li class="circle">io.micronaut.servlet.websocket.jetty.<a href="io/micronaut/servlet/websocket/jetty/JettyWebSocketInitializer.html" class="type-name-link" title="class in io.micronaut.servlet.websocket.jetty">JettyWebSocketInitializer</a> (implements jakarta.servlet.ServletContainerInitializer)</li>

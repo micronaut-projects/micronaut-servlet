@@ -70,12 +70,15 @@ loadScripts(document, 'script');</script>
 </li>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
 <ol class="toc-list">
+<li><a href="#bodySizeLimits()" tabindex="0">bodySizeLimits()</a></li>
 <li><a href="#getApplicationContext()" tabindex="0">getApplicationContext()</a></li>
 <li><a href="#getMessageBodyHandlerRegistry()" tabindex="0">getMessageBodyHandlerRegistry()</a></li>
 <li><a href="#service(REQ,RES)" tabindex="0">service(REQ, RES)</a></li>
 <li><a href="#exchange(REQ,RES)" tabindex="0">exchange(REQ, RES)</a></li>
 <li><a href="#exchange(io.micronaut.servlet.http.ServletExchange)" tabindex="0">exchange(ServletExchange)</a></li>
 <li><a href="#isRunning()" tabindex="0">isRunning()</a></li>
+<li><a href="#getActiveRequests()" tabindex="0">getActiveRequests()</a></li>
+<li><a href="#awaitIdle()" tabindex="0">awaitIdle()</a></li>
 <li><a href="#service(io.micronaut.servlet.http.ServletExchange)" tabindex="0">service(ServletExchange)</a></li>
 <li><a href="#close()" tabindex="0">close()</a></li>
 <li><a href="#start()" tabindex="0">start()</a></li>
@@ -172,6 +175,17 @@ implements <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletionStage.html" title="class or interface in java.util.concurrent" class="external-link">CompletionStage</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Void.html" title="class or interface in java.lang" class="external-link">Void</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#awaitIdle()" class="member-name-link">awaitIdle</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Waits for every active request to terminate.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected @NonNull io.micronaut.http.body.stream.BodySizeLimits</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#bodySizeLimits()" class="member-name-link">bodySizeLimits</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">The limits from <code>micronaut.server.max-request-size</code> and <code>micronaut.server.max-request-buffer-size</code>,
+for runtimes to apply while a request body is read.</div>
+</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#close()" class="member-name-link">close</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
@@ -192,32 +206,35 @@ implements <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Handle the give native request and response and return the <a href="ServletExchange.html" title="interface in io.micronaut.servlet.http"><code>ServletExchange</code></a> object.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>io.micronaut.context.ApplicationContext</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getApplicationContext()" class="member-name-link">getApplicationContext</a>()</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>long</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getActiveRequests()" class="member-name-link">getActiveRequests</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>io.micronaut.http.body.MessageBodyHandlerRegistry</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getMessageBodyHandlerRegistry()" class="member-name-link">getMessageBodyHandlerRegistry</a>()</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>io.micronaut.context.ApplicationContext</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getApplicationContext()" class="member-name-link">getApplicationContext</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isRunning()" class="member-name-link">isRunning</a>()</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>io.micronaut.http.body.MessageBodyHandlerRegistry</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getMessageBodyHandlerRegistry()" class="member-name-link">getMessageBodyHandlerRegistry</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#service(io.micronaut.servlet.http.ServletExchange)" class="member-name-link">service</a><wbr>(<a href="ServletExchange.html" title="interface in io.micronaut.servlet.http">ServletExchange</a>&lt;<a href="#type-param-REQ" title="type parameter in ServletHttpHandler">REQ</a>,<wbr><a href="#type-param-RES" title="type parameter in ServletHttpHandler">RES</a>&gt;&nbsp;exchange)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isRunning()" class="member-name-link">isRunning</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#service(io.micronaut.servlet.http.ServletExchange)" class="member-name-link">service</a><wbr>(<a href="ServletExchange.html" title="interface in io.micronaut.servlet.http">ServletExchange</a>&lt;<a href="#type-param-REQ" title="type parameter in ServletHttpHandler">REQ</a>,<wbr><a href="#type-param-RES" title="type parameter in ServletHttpHandler">RES</a>&gt;&nbsp;exchange)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Handles a <a href="ServletExchange.html" title="interface in io.micronaut.servlet.http"><code>ServletExchange</code></a>.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#service(REQ,RES)" class="member-name-link">service</a><wbr>(<a href="#type-param-REQ" title="type parameter in ServletHttpHandler">REQ</a>&nbsp;request,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#service(REQ,RES)" class="member-name-link">service</a><wbr>(<a href="#type-param-REQ" title="type parameter in ServletHttpHandler">REQ</a>&nbsp;request,
  <a href="#type-param-RES" title="type parameter in ServletHttpHandler">RES</a>&nbsp;response)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Handle the give native request and response.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull <a href="ServletHttpHandler.html" title="class in io.micronaut.servlet.http">ServletHttpHandler</a><wbr>&lt;<a href="#type-param-REQ" title="type parameter in ServletHttpHandler">REQ</a>,<wbr><a href="#type-param-RES" title="type parameter in ServletHttpHandler">RES</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#start()" class="member-name-link">start</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull <a href="ServletHttpHandler.html" title="class in io.micronaut.servlet.http">ServletHttpHandler</a><wbr>&lt;<a href="#type-param-REQ" title="type parameter in ServletHttpHandler">REQ</a>,<wbr><a href="#type-param-RES" title="type parameter in ServletHttpHandler">RES</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#stop()" class="member-name-link">stop</a>()</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#start()" class="member-name-link">start</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull <a href="ServletHttpHandler.html" title="class in io.micronaut.servlet.http">ServletHttpHandler</a><wbr>&lt;<a href="#type-param-REQ" title="type parameter in ServletHttpHandler">REQ</a>,<wbr><a href="#type-param-RES" title="type parameter in ServletHttpHandler">RES</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#stop()" class="member-name-link">stop</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 </div>
 </div>
 </div>
@@ -286,6 +303,22 @@ implements <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base
 <section class="method-details" id="method-detail">
 <h2>Method Details</h2>
 <ul class="member-list">
+<li>
+<section class="detail" id="bodySizeLimits()">
+<h3>bodySizeLimits</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">@NonNull io.micronaut.http.body.stream.BodySizeLimits</span>&nbsp;<span class="element-name">bodySizeLimits</span>()</div>
+<div class="block">The limits from <code>micronaut.server.max-request-size</code> and <code>micronaut.server.max-request-buffer-size</code>,
+for runtimes to apply while a request body is read.</div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd>The body size limits</dd>
+<dt>Since:</dt>
+<dd>6.2.0</dd>
+</dl>
+</div>
+</section>
+</li>
 <li>
 <section class="detail" id="getApplicationContext()">
 <h3>getApplicationContext</h3>
@@ -365,6 +398,36 @@ implements <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code>isRunning</code>&nbsp;in interface&nbsp;<code>io.micronaut.context.LifeCycle&lt;<a href="#type-param-REQ" title="type parameter in ServletHttpHandler">REQ</a>&gt;</code></dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="getActiveRequests()">
+<h3>getActiveRequests</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">long</span>&nbsp;<span class="element-name">getActiveRequests</span>()</div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd>The number of requests received and not yet terminated</dd>
+<dt>Since:</dt>
+<dd>6.2.0</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="awaitIdle()">
+<h3>awaitIdle</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletionStage.html" title="class or interface in java.util.concurrent" class="external-link">CompletionStage</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Void.html" title="class or interface in java.lang" class="external-link">Void</a>&gt;</span>&nbsp;<span class="element-name">awaitIdle</span>()</div>
+<div class="block">Waits for every active request to terminate. The caller is expected to have stopped the server accepting new
+requests first; this only tracks what is already in flight.</div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd>A stage that completes when no request is active</dd>
+<dt>Since:</dt>
+<dd>6.2.0</dd>
 </dl>
 </div>
 </section>

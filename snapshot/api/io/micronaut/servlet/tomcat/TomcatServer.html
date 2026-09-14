@@ -66,6 +66,7 @@ loadScripts(document, 'script');</script>
 <ol class="toc-list">
 <li><a href="#startServer()" tabindex="0">startServer()</a></li>
 <li><a href="#stopServer()" tabindex="0">stopServer()</a></li>
+<li><a href="#stopAcceptingRequests()" tabindex="0">stopAcceptingRequests()</a></li>
 <li><a href="#getPort()" tabindex="0">getPort()</a></li>
 <li><a href="#getHost()" tabindex="0">getHost()</a></li>
 <li><a href="#getScheme()" tabindex="0">getScheme()</a></li>
@@ -89,7 +90,7 @@ loadScripts(document, 'script');</script>
 <section class="class-description" id="class-description">
 <dl class="notes">
 <dt>All Implemented Interfaces:</dt>
-<dd><code>io.micronaut.context.ApplicationContextLifeCycle&lt;io.micronaut.runtime.server.EmbeddedServer&gt;, io.micronaut.context.ApplicationContextProvider, io.micronaut.context.LifeCycle&lt;io.micronaut.runtime.server.EmbeddedServer&gt;, io.micronaut.runtime.EmbeddedApplication&lt;io.micronaut.runtime.server.EmbeddedServer&gt;, io.micronaut.runtime.server.EmbeddedServer, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/Closeable.html" title="class or interface in java.io" class="external-link">Closeable</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/AutoCloseable.html" title="class or interface in java.lang" class="external-link">AutoCloseable</a></code></dd>
+<dd><code>io.micronaut.context.ApplicationContextLifeCycle&lt;io.micronaut.runtime.server.EmbeddedServer&gt;, io.micronaut.context.ApplicationContextProvider, io.micronaut.context.LifeCycle&lt;io.micronaut.runtime.server.EmbeddedServer&gt;, io.micronaut.runtime.EmbeddedApplication&lt;io.micronaut.runtime.server.EmbeddedServer&gt;, io.micronaut.runtime.graceful.GracefulShutdownCapable, io.micronaut.runtime.server.EmbeddedServer, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/Closeable.html" title="class or interface in java.io" class="external-link">Closeable</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/AutoCloseable.html" title="class or interface in java.lang" class="external-link">AutoCloseable</a></code></dd>
 </dl>
 <hr>
 <div class="horizontal-scroll">
@@ -168,8 +169,14 @@ loadScripts(document, 'script');</script>
 <div class="block">Start the server.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#stopServer()" class="member-name-link">stopServer</a>()</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#stopAcceptingRequests()" class="member-name-link">stopAcceptingRequests</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Pauses every connector so that no new request is read from the network while requests already being
+processed run to completion.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#stopServer()" class="member-name-link">stopServer</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Stop the server.</div>
 </div>
 </div>
@@ -177,7 +184,7 @@ loadScripts(document, 'script');</script>
 </div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-io.micronaut.servlet.http.server.AbstractServletServer">Methods inherited from class&nbsp;<a href="../http/server/AbstractServletServer.html#method-summary" title="class in io.micronaut.servlet.http.server">AbstractServletServer</a></h3>
-<code><a href="../http/server/AbstractServletServer.html#getApplicationConfiguration()" title="getApplicationConfiguration()">getApplicationConfiguration</a>, <a href="../http/server/AbstractServletServer.html#getApplicationContext()" title="getApplicationContext()">getApplicationContext</a>, <a href="../http/server/AbstractServletServer.html#getServer()" title="getServer()">getServer</a>, <a href="../http/server/AbstractServletServer.html#start()" title="start()">start</a>, <a href="../http/server/AbstractServletServer.html#stop()" title="stop()">stop</a></code></div>
+<code><a href="../http/server/AbstractServletServer.html#getApplicationConfiguration()" title="getApplicationConfiguration()">getApplicationConfiguration</a>, <a href="../http/server/AbstractServletServer.html#getApplicationContext()" title="getApplicationContext()">getApplicationContext</a>, <a href="../http/server/AbstractServletServer.html#getServer()" title="getServer()">getServer</a>, <a href="../http/server/AbstractServletServer.html#reportActiveTasks()" title="reportActiveTasks()">reportActiveTasks</a>, <a href="../http/server/AbstractServletServer.html#shutdownGracefully()" title="shutdownGracefully()">shutdownGracefully</a>, <a href="../http/server/AbstractServletServer.html#start()" title="start()">start</a>, <a href="../http/server/AbstractServletServer.html#stop()" title="stop()">stop</a></code></div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-java.lang.Object">Methods inherited from class&nbsp;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#method-summary" title="class or interface in java.lang" class="external-link">Object</a></h3>
 <code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#clone()" title="class or interface in java.lang" class="external-link">clone</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#equals(java.lang.Object)" title="class or interface in java.lang" class="external-link">equals</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#finalize()" title="class or interface in java.lang" class="external-link">finalize</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#getClass()" title="class or interface in java.lang" class="external-link">getClass</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#hashCode()" title="class or interface in java.lang" class="external-link">hashCode</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#notify()" title="class or interface in java.lang" class="external-link">notify</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#notifyAll()" title="class or interface in java.lang" class="external-link">notifyAll</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#toString()" title="class or interface in java.lang" class="external-link">toString</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#wait()" title="class or interface in java.lang" class="external-link">wait</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#wait(long)" title="class or interface in java.lang" class="external-link">wait</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#wait(long,int)" title="class or interface in java.lang" class="external-link">wait</a></code></div>
@@ -281,6 +288,20 @@ loadScripts(document, 'script');</script>
 <dd><code><a href="../http/server/AbstractServletServer.html#stopServer()">stopServer</a></code>&nbsp;in class&nbsp;<code><a href="../http/server/AbstractServletServer.html" title="class in io.micronaut.servlet.http.server">AbstractServletServer</a>&lt;org.apache.catalina.startup.Tomcat&gt;</code></dd>
 <dt>Throws:</dt>
 <dd><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Exception.html" title="class or interface in java.lang" class="external-link">Exception</a></code> - when an error occurred stopping the server</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="stopAcceptingRequests()">
+<h3>stopAcceptingRequests</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">stopAcceptingRequests</span>()</div>
+<div class="block">Pauses every connector so that no new request is read from the network while requests already being
+processed run to completion.</div>
+<dl class="notes">
+<dt>Overrides:</dt>
+<dd><code><a href="../http/server/AbstractServletServer.html#stopAcceptingRequests()">stopAcceptingRequests</a></code>&nbsp;in class&nbsp;<code><a href="../http/server/AbstractServletServer.html" title="class in io.micronaut.servlet.http.server">AbstractServletServer</a>&lt;org.apache.catalina.startup.Tomcat&gt;</code></dd>
 </dl>
 </div>
 </section>

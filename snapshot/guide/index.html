@@ -68,13 +68,15 @@
                                 
                                 <div class="toc-item" style="margin-left:0"><a href="#httpPoja"><strong>11</strong><span>HTTP POJA Application</span></a></div>
                                 
-                                <div class="toc-item" style="margin-left:0"><a href="#knownIssues"><strong>12</strong><span>Known Issues</span></a></div>
+                                <div class="toc-item" style="margin-left:0"><a href="#parity"><strong>12</strong><span>Parity with the Netty Server</span></a></div>
                                 
-                                <div class="toc-item" style="margin-left:0"><a href="#faq"><strong>13</strong><span>FAQ</span></a></div>
+                                <div class="toc-item" style="margin-left:0"><a href="#knownIssues"><strong>13</strong><span>Known Issues</span></a></div>
                                 
-                                <div class="toc-item" style="margin-left:0"><a href="#breaks"><strong>14</strong><span>Breaking Changes</span></a></div>
+                                <div class="toc-item" style="margin-left:0"><a href="#faq"><strong>14</strong><span>FAQ</span></a></div>
                                 
-                                <div class="toc-item" style="margin-left:0"><a href="#repository"><strong>15</strong><span>Repository</span></a></div>
+                                <div class="toc-item" style="margin-left:0"><a href="#breaks"><strong>15</strong><span>Breaking Changes</span></a></div>
+                                
+                                <div class="toc-item" style="margin-left:0"><a href="#repository"><strong>16</strong><span>Repository</span></a></div>
                                 
                             </div>
                         </div>
@@ -135,13 +137,15 @@
         
         <div class="toc-item" style="margin-left:0px" id="toc-item-httpPoja"><a href="#httpPoja"><strong>11</strong><span>HTTP POJA Application</span></a></div>
         
-        <div class="toc-item" style="margin-left:0px" id="toc-item-knownIssues"><a href="#knownIssues"><strong>12</strong><span>Known Issues</span></a></div>
+        <div class="toc-item" style="margin-left:0px" id="toc-item-parity"><a href="#parity"><strong>12</strong><span>Parity with the Netty Server</span></a></div>
         
-        <div class="toc-item" style="margin-left:0px" id="toc-item-faq"><a href="#faq"><strong>13</strong><span>FAQ</span></a></div>
+        <div class="toc-item" style="margin-left:0px" id="toc-item-knownIssues"><a href="#knownIssues"><strong>13</strong><span>Known Issues</span></a></div>
         
-        <div class="toc-item" style="margin-left:0px" id="toc-item-breaks"><a href="#breaks"><strong>14</strong><span>Breaking Changes</span></a></div>
+        <div class="toc-item" style="margin-left:0px" id="toc-item-faq"><a href="#faq"><strong>14</strong><span>FAQ</span></a></div>
         
-        <div class="toc-item" style="margin-left:0px" id="toc-item-repository"><a href="#repository"><strong>15</strong><span>Repository</span></a></div>
+        <div class="toc-item" style="margin-left:0px" id="toc-item-breaks"><a href="#breaks"><strong>15</strong><span>Breaking Changes</span></a></div>
+        
+        <div class="toc-item" style="margin-left:0px" id="toc-item-repository"><a href="#repository"><strong>16</strong><span>Repository</span></a></div>
         
         </div>
     </div>
@@ -213,6 +217,28 @@
 </div>
 <div class="paragraph">
 <p>There are a couple of additional extensions within Micronaut Servlet that make it easier to work with the Servlet API which are detailed in the following sections.</p>
+</div>
+<div class="sect2">
+<h3 id="_threading_model">Threading Model</h3>
+<div class="paragraph">
+<p>On a container that supports asynchronous servlets (Jetty, Tomcat and Undertow) a request is handled as follows:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>A request without a body, or with a body that declares a <code>Content-Length</code> no larger than <code>micronaut.server.max-request-buffer-size</code> (10MB by default) and is not a form submission, is handled entirely on the container thread that received it. The body, if any, is read on that thread before the route runs, as a blocking servlet application would, and the response is written from the same thread unless the route returns a reactive or asynchronous type.</p>
+</li>
+<li>
+<p>A request with a larger body or a chunked body is dispatched through <code>AsyncContext.start</code> and its body is read through a <code>ReadListener</code> as it arrives, so no container thread waits for it.</p>
+</li>
+<li>
+<p>A form or multipart body is dispatched the same way, but its fields are not streamed: the container parses them itself when the route asks for its parameters or parts. A URL-encoded form without a declared length is the one exception, which the servlet runtime reads through <code>micronaut.server.max-request-size</code> and decodes itself, since the container would otherwise parse it unbounded.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Reactive and asynchronous return types complete the response from whichever thread produces the result, and <code>@ExecuteOn</code> moves the route to the named executor as on the Netty server. When <code>micronaut.servlet.async-supported</code> is <code>false</code>, or on the built-in JDK server, every request is handled on the container thread and its body is read from a blocking stream.</p>
+</div>
 </div>
 <div class="sect2">
 <h3 id="_injecting_the_servlet_request_and_response">Injecting the Servlet Request and Response</h3>
@@ -1419,6 +1445,16 @@ If you plan to produce a WAR file then the dependency should be <code>developmen
 <td class="tableblock halign-left valign-top"></td>
 </tr>
 <tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.jetty.native-static-resources</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Serve static resources with Jetty&#8217;s own {@code ResourceHandler} instead of the Micronaut static resource
+ resolver. Jetty&#8217;s handler supports range requests and conditional caching natively, but sits outside the
+ Micronaut filter chain, so Micronaut filters (including CORS) do not see those requests and the
+ {@code cache-control} setting of each static resource configuration applies instead of
+ {@code micronaut.server.responses.file}. Default value (false).</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.jetty.init-parameters</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">java.util.Map</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Sets the servlet init parameters.</p></td>
@@ -1490,6 +1526,50 @@ public class JettyServerCustomizer implements BeanCreatedEventListener&lt;Server
         return jettyServer;
     }
 }</code></pre>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_static_resources">Static Resources</h3>
+<div class="paragraph">
+<p>Static resources configured with <code>micronaut.router.static-resources</code> are served by the Micronaut static resource resolver, as on the other runtimes, so filters, CORS and the <code>micronaut.server.responses.file</code> settings apply to them. Because the resolver runs inside the Micronaut servlet, static resource paths must fall under <code>micronaut.servlet.mapping</code> (the default <code>/<strong></code> covers everything); a narrowed mapping such as <code>/api/</strong></code> leaves paths outside it unreachable, as on Tomcat and Undertow. To have Jetty&#8217;s own <code>ResourceHandler</code> serve them instead, which supports range requests natively, works outside the servlet mapping, but bypasses the Micronaut filter chain, set:</p>
+</div>
+<div class="openblock">
+<div class="content">
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-properties hljs" data-lang="properties">micronaut.server.jetty.native-static-resources=true</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">micronaut.server.jetty.native-static-resources: true</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">"micronaut.server.jetty.native-static-resources" = true</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy-config hljs" data-lang="groovy-config">micronaut.server.jetty.nativeStaticResources = true</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-hocon hljs" data-lang="hocon">{
+  "micronaut.server.jetty.native-static-resources" = true
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json-config hljs" data-lang="json-config">{
+  "micronaut.server.jetty.native-static-resources": true
+}</code></pre>
+</div>
+</div>
+</div>
 </div>
 </div>
 <div class="sect2">
@@ -2588,6 +2668,98 @@ micronaut.server.undertow.accessLog.outputDirectory = "/var/logs"</code></pre>
 </div>
 </div>
 </div>
+<div class="sect3">
+<h4 id="_https">HTTPS</h4>
+<div class="paragraph">
+<p>The built-in server supports TLS through the same <a href="https://docs.micronaut.io/latest/guide/index.html#https">SSL configuration</a> as the other runtimes. With <code>micronaut.ssl.enabled</code> set to <code>true</code> the server listens for HTTPS on <code>micronaut.server.ssl.port</code> (default <code>8443</code>, or a random port in the <code>test</code> environment) instead of the HTTP port. The key store, trust store, protocols, ciphers and client authentication are read from <code>micronaut.server.ssl</code>. Unlike the servlet containers the built-in server has a single listener, so it does not also serve plain HTTP when TLS is enabled.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_access_log">Access Log</h4>
+<div class="paragraph">
+<p>The built-in server can write an access log in the common log format, one line per request, to an SLF4J logger:</p>
+</div>
+<div class="openblock">
+<div class="content">
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-properties hljs" data-lang="properties">micronaut.server.jdk.access-logger.enabled=true
+micronaut.server.jdk.access-logger.logger-name=HTTP_ACCESS_LOGGER
+micronaut.server.jdk.access-logger.exclusions[0]=/health.*</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">micronaut:
+  server:
+    jdk:
+      access-logger:
+        enabled: true
+        logger-name: HTTP_ACCESS_LOGGER
+        exclusions:
+          - /health.*</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">micronaut = {server = {jdk = {access-logger = {enabled = true, logger-name = "HTTP_ACCESS_LOGGER", exclusions = ["/health.*"]}}}}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy-config hljs" data-lang="groovy-config">micronaut {
+  server {
+    jdk {
+      accessLogger {
+        enabled = true
+        loggerName = "HTTP_ACCESS_LOGGER"
+        exclusions = ["/health.*"]
+      }
+    }
+  }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-hocon hljs" data-lang="hocon">{
+  micronaut {
+    server {
+      jdk {
+        access-logger {
+          enabled = true
+          logger-name = "HTTP_ACCESS_LOGGER"
+          exclusions = ["/health.*"]
+        }
+      }
+    }
+  }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json-config hljs" data-lang="json-config">{
+  "micronaut": {
+    "server": {
+      "jdk": {
+        "access-logger": {
+          "enabled": true,
+          "logger-name": "HTTP_ACCESS_LOGGER",
+          "exclusions": ["/health.*"]
+        }
+      }
+    }
+  }
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p><code>logger-name</code> defaults to <code>HTTP_ACCESS_LOGGER</code>, as on the Netty server, and <code>exclusions</code> are regular expressions matched against the request path. Beans of type <code>com.sun.net.httpserver.Filter</code> are applied to every context of the server in bean order, which is how the access log is installed and can be used for other per-exchange concerns.</p>
+</div>
+</div>
 
 <h1 id="httpPoja"><a class="anchor" href="#httpPoja"></a>11 HTTP POJA Application</h1>
 
@@ -2962,7 +3134,212 @@ sudo systemctl start examplepoja.socket</code></pre>
 </div>
 </div>
 
-<h1 id="knownIssues"><a class="anchor" href="#knownIssues"></a>12 Known Issues</h1>
+<h1 id="parity"><a class="anchor" href="#parity"></a>12 Parity with the Netty Server</h1>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/6.2.x/src/main/docs/guide/parity.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>The servlet runtimes implement the same <a href="https://docs.micronaut.io/latest/guide/index.html#httpServer">Micronaut HTTP server</a> contract as the default Netty server and are checked against the same HTTP server TCK. The table below records where each runtime stands for the capabilities that have historically differed. "Yes" means supported and covered by a test in this repository or in the TCK.</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 8.3333%;">
+<col style="width: 8.3333%;">
+<col style="width: 8.3333%;">
+<col style="width: 8.3333%;">
+<col style="width: 8.3333%;">
+<col style="width: 33.3335%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Capability</th>
+<th class="tableblock halign-left valign-top">Jetty</th>
+<th class="tableblock halign-left valign-top">Tomcat</th>
+<th class="tableblock halign-left valign-top">Undertow</th>
+<th class="tableblock halign-left valign-top">JDK <code>HttpServer</code></th>
+<th class="tableblock halign-left valign-top">POJA</th>
+<th class="tableblock halign-left valign-top">Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Request bodies streamed as they arrive</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Blocking</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Blocking</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Containers with asynchronous support read a large or chunked body through a <code>ReadListener</code>; a body with a declared length up to <code>micronaut.server.max-request-buffer-size</code> is read on the container thread before the route runs. Either way <code>micronaut.server.max-request-size</code> is the limit past which a body is refused. The JDK server and POJA read from a blocking stream.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Request without <code>Content-Length</code> or <code>Transfer-Encoding</code> has no body</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">RFC 9112 framing. POJA still decodes a body that was never sent.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Multipart: <code>CompletedFileUpload</code>, <code>@Part</code>, <code>MultipartBody</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Parsed by the container (<code>getParts()</code>), enabled by default since 6.2. An unannotated <code>StreamingFileUpload</code> argument is not supported. The JDK server and POJA do not parse multipart.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.max-request-size</code> → 413</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Applies to text, JSON, form and multipart bodies; a declared length over the limit is refused without reading the body.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Content-Length</code> on complete responses</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Bodies that are complete when the route returns announce their length; streamed bodies are chunked.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Body-less responses: HEAD, 204, 304</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">File responses: <code>SystemFile</code>, <code>StreamedFile</code>, conditional 304</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Cache-Control</code> and <code>Last-Modified</code> follow <code>micronaut.server.responses.file</code>. Byte ranges (206) are served by the containers, not by the JDK server or POJA.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Server-sent events</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Events are flushed as they are produced.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Response compression</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.servlet.compression.*</code>, on by default, wired to each container&#8217;s own encoder. Compressed responses carry <code>Vary: Accept-Encoding</code>; Jetty sends it on every compressible response.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">HTTP/2</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.http-version: 2.0</code>. Jetty and Tomcat support h2c; Undertow enables its native HTTP/2 over TLS.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">TLS</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Shared <code>micronaut.server.ssl</code> configuration. The containers listen on both ports; the JDK server listens for HTTPS only when TLS is enabled.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Virtual threads (<code>micronaut.servlet.enable-virtual-threads</code>)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Tomcat keeps its virtual-thread executor when <code>max-threads</code> is set, and logs that the limit does not apply; Undertow supplies one to the servlet deployment; the JDK server uses one for its handlers. Virtual threads are not pooled, so <code>max-threads</code> bounds concurrency only when they are off.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Graceful shutdown (<code>micronaut.lifecycle.graceful-shutdown.enabled</code>)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The server stops accepting (Jetty connector shutdown, Tomcat connector pause, Undertow 503) and waits for in-flight requests within the grace period. The JDK server only waits.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Access log</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Each container&#8217;s own log; the JDK server under <code>micronaut.server.jdk.access-logger</code>.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ProxyHttpClient</code> inside a server filter</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The proxied response body is forwarded. POJA has no server to proxy to.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Cookie attributes (SameSite, Max-Age, several <code>Set-Cookie</code>)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Static resources: mappings, <code>index.html</code>, context path</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">One resolver on every runtime, inside the filter chain. Jetty&#8217;s own handler is available with <code>micronaut.server.jetty.native-static-resources</code>.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">WebSocket (<code>@ServerWebSocket</code>)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Bridged onto each container&#8217;s Jakarta WebSocket implementation.</p></td>
+</tr>
+</tbody>
+</table>
+<div class="sect2">
+<h3 id="_runtime_positioning">Runtime positioning</h3>
+<div class="paragraph">
+<p>Jetty, Tomcat and Undertow are full runtimes for production use. The built-in JDK <code>HttpServer</code> runtime is intended for development and small tools: it has no HTTP/2, no compression and no multipart parsing, and it keeps at most 200 idle connections. POJA (plain old Java application) runs one request at a time over standard input and output and receives correctness fixes only.</p>
+</div>
+</div>
+
+<h1 id="knownIssues"><a class="anchor" href="#knownIssues"></a>13 Known Issues</h1>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/6.2.x/src/main/docs/guide/knownIssues.adoc"'>
@@ -2972,7 +3349,7 @@ sudo systemctl start examplepoja.socket</code></pre>
 
 
 <div class="paragraph">
-<p>There are some known issues with Servlet integration to the Micronaut Framework</p>
+<p>There are some known issues with Servlet integration to the Micronaut Framework. See also <a href="parity.html">Parity with the Netty server</a> for what each runtime supports.</p>
 </div>
 <div class="sect2">
 <h3 id="_payara_deployment_annotation_scanning">Payara deployment annotation scanning</h3>
@@ -2986,20 +3363,19 @@ When that happens, deployment can fail on internal Micronaut classes such as <co
 </div>
 </div>
 <div class="sect2">
-<h3 id="_httpproxyclient_and_server_filters">HttpProxyClient and Server Filters</h3>
+<h3 id="_static_resources_outside_the_servlet_mapping">Static resources outside the servlet mapping</h3>
 <div class="paragraph">
-<p>It is not currently possible to use the HttpProxyClient with Servlet Filters.</p>
+<p>Static resources are served by the Micronaut servlet, so their paths must fall under <code>micronaut.servlet.mapping</code>. A narrowed mapping such as <code>/api/*</code> leaves paths outside it unreachable on every container; on Jetty, <code>micronaut.server.jetty.native-static-resources</code> serves them with the container&#8217;s own handler instead.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_error_handlers_re_reading_the_request_body">Error handlers re-reading the request body</h3>
+<h3 id="_unannotated_streamingfileupload_arguments">Unannotated <code>StreamingFileUpload</code> arguments</h3>
 <div class="paragraph">
-<p>Local error handlers that require the request body to be reparsed will not work in Servlet based applications.
-The body is read from the request input-stream and so attempting to reparse it for the error handler will fail.</p>
+<p>A <code>StreamingFileUpload</code> controller argument without <code>@Part</code> is not bound on the servlet runtimes, because the container has already parsed the multipart body. Annotate the argument with <code>@Part</code>, or use <code>CompletedFileUpload</code>.</p>
 </div>
 </div>
 
-<h1 id="faq"><a class="anchor" href="#faq"></a>13 FAQ</h1>
+<h1 id="faq"><a class="anchor" href="#faq"></a>14 FAQ</h1>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/6.2.x/src/main/docs/guide/faq.adoc"'>
@@ -3035,8 +3411,14 @@ The body is read from the request input-stream and so attempting to reparse it f
 <p>See <a href="https://docs.micronaut.io/latest/guide/index.html#https">Securing the Server with HTTPS</a> and the <a href="https://docs.micronaut.io/latest/guide/configurationreference.html#io.micronaut.http.ssl.ServerSslConfiguration$DefaultKeyStoreConfiguration">configuration properties</a> for <a href="https://docs.micronaut.io/latest/api/io/micronaut/http/ssl/ServerSslConfiguration.html">ServerSslConfiguration</a>.</p>
 </div>
 </div>
+<div class="sect3">
+<h4 id="_how_do_i_shut_the_server_down_gracefully">How do I shut the server down gracefully?</h4>
+<div class="paragraph">
+<p>Set <code>micronaut.lifecycle.graceful-shutdown.enabled</code> to <code>true</code>, as for the Netty server. When the application stops, the embedded server first stops taking new requests and then waits, for up to the configured grace period, for the requests already in progress to complete before the container is stopped. How new requests are refused depends on the container: Jetty stops accepting connections, Tomcat pauses its connectors, and Undertow answers new requests with <code>503 Service Unavailable</code>. The built-in Java HTTP server only waits for in-flight requests.</p>
+</div>
+</div>
 
-<h1 id="breaks"><a class="anchor" href="#breaks"></a>14 Breaking Changes</h1>
+<h1 id="breaks"><a class="anchor" href="#breaks"></a>15 Breaking Changes</h1>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/6.2.x/src/main/docs/guide/breaks.adoc"'>
@@ -3051,6 +3433,34 @@ The body is read from the request input-stream and so attempting to reparse it f
 <div class="sect1">
 <h2 id="_micronaut_servlet_6_2_0">Micronaut Servlet 6.2.0</h2>
 <div class="sectionbody">
+<div class="sect2">
+<h3 id="_the_request_size_limit_applies_to_every_body">The request size limit applies to every body</h3>
+<div class="paragraph">
+<p><code>micronaut.server.max-request-size</code> (10MB by default) was only passed to the container&#8217;s multipart configuration, so a plain JSON, text or binary body of any size was accepted. The servlet runtimes now enforce it as the Netty server does: a body that declares a larger <code>Content-Length</code> is refused with <code>413 Request Entity Too Large</code> without being read, and a body without a declared length is cut off with the same status once it grows past the limit. That includes a URL-encoded form without a declared length, whose fields are decoded from bytes that passed through the limit rather than parsed by the container unbounded. Raise <code>micronaut.server.max-request-size</code> for applications that receive larger bodies.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_jetty_serves_static_resources_through_the_micronaut_resolver">Jetty serves static resources through the Micronaut resolver</h3>
+<div class="paragraph">
+<p>Jetty served <code>micronaut.router.static-resources</code> with its own <code>ResourceHandler</code>, outside the Micronaut servlet, while Tomcat, Undertow, the JDK server and the Netty server all resolve them with Micronaut&#8217;s <code>StaticResourceResolver</code> inside the request pipeline. Jetty now uses the shared path too, so static resources behave the same on every runtime:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Micronaut filters see static resource requests. In particular the CORS filter applies, so a request from an origin that is not allowed is refused with <code>403 Forbidden</code>, where Jetty&#8217;s handler answered <code>200</code> without CORS headers.</p>
+</li>
+<li>
+<p>The <code>Cache-Control</code> header comes from <code>micronaut.server.responses.file</code> (<code>private, max-age=60</code> by default), and conditional requests with <code>If-Modified-Since</code> receive <code>304 Not Modified</code>.</p>
+</li>
+<li>
+<p>The Jetty-only <code>micronaut.router.static-resources.*.cache-control</code> setting is not applied.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Set <code>micronaut.server.jetty.native-static-resources</code> to <code>true</code> to restore Jetty&#8217;s <code>ResourceHandler</code>, including the <code>cache-control</code> setting and its own CORS handling.</p>
+</div>
+</div>
 <div class="sect2">
 <h3 id="_responses_are_compressed_by_default">Responses are compressed by default</h3>
 <div class="paragraph">
@@ -3071,6 +3481,15 @@ The body is read from the request input-stream and so attempting to reparse it f
 </div>
 <div class="paragraph">
 <p>Set <code>micronaut.servlet.compression.enabled</code> to <code>false</code> to restore the previous behaviour. The JDK server runtime does not support compression.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_virtual_threads_take_effect_on_undertow_and_set_thread_limits_aside">Virtual threads take effect on Undertow, and set thread limits aside</h3>
+<div class="paragraph">
+<p><code>micronaut.servlet.enable-virtual-threads</code> has defaulted to <code>true</code> since Micronaut Servlet 4, but it only took effect on Jetty and Tomcat. Undertow ignored it and ran every servlet invocation on its XNIO worker pool, eight threads per core by default, so a blocking controller was capped at that pool&#8217;s size. On JDK 21 and later Undertow now runs the servlet deployment on a virtual thread per request, as the other containers do.</p>
+</div>
+<div class="paragraph">
+<p>A consequence on Tomcat and Undertow: virtual threads are not pooled, so <code>micronaut.servlet.max-threads</code> and <code>micronaut.servlet.min-threads</code> no longer bound request concurrency while they are enabled. Tomcat used to replace its virtual-thread executor with a platform pool of that size, silently turning virtual threads off; it now keeps the virtual threads and logs a warning that the limit does not apply. Undertow&#8217;s <code>WORKER_TASK_MAX_THREADS</code> still sizes the worker pool that accepts connections, but not the threads that run routes. An application that relied on <code>max-threads</code> to cap load on a downstream resource, such as a JDBC pool, should set <code>micronaut.servlet.enable-virtual-threads</code> to <code>false</code> to size a platform pool as before, or bound the resource itself.</p>
 </div>
 </div>
 <div class="sect2">
@@ -3132,7 +3551,7 @@ To restore the original functionality, you need to configure <code>micronaut.ser
 </div>
 </div>
 
-<h1 id="repository"><a class="anchor" href="#repository"></a>15 Repository</h1>
+<h1 id="repository"><a class="anchor" href="#repository"></a>16 Repository</h1>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/6.2.x/src/main/docs/guide/repository.adoc"'>

@@ -90,6 +90,8 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Default constructor.</div>
 </dd>
+<dt><a href="io/micronaut/servlet/http/server/jdk/JdkHttpServerConfiguration.AccessLogger.html#%3Cinit%3E()" class="member-name-link">AccessLogger()</a> - Constructor for class io.micronaut.servlet.http.server.jdk.<a href="io/micronaut/servlet/http/server/jdk/JdkHttpServerConfiguration.AccessLogger.html" title="class in io.micronaut.servlet.http.server.jdk">JdkHttpServerConfiguration.AccessLogger</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/http/poja/util/MultiValueHeaders.html#add(java.lang.CharSequence,java.lang.CharSequence)" class="member-name-link">add(CharSequence, CharSequence)</a> - Method in record class io.micronaut.http.poja.util.<a href="io/micronaut/http/poja/util/MultiValueHeaders.html" title="class in io.micronaut.http.poja.util">MultiValueHeaders</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/http/poja/util/MultiValuesQueryParameters.html#add(java.lang.CharSequence,java.util.List)" class="member-name-link">add(CharSequence, List)</a> - Method in record class io.micronaut.http.poja.util.<a href="io/micronaut/http/poja/util/MultiValuesQueryParameters.html" title="class in io.micronaut.http.poja.util">MultiValuesQueryParameters</a></dt>
@@ -174,6 +176,10 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/http/poja/util/LimitingInputStream.html#available()" class="member-name-link">available()</a> - Method in class io.micronaut.http.poja.util.<a href="io/micronaut/http/poja/util/LimitingInputStream.html" title="class in io.micronaut.http.poja.util">LimitingInputStream</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/http/ServletHttpHandler.html#awaitIdle()" class="member-name-link">awaitIdle()</a> - Method in class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletHttpHandler.html" title="class in io.micronaut.servlet.http">ServletHttpHandler</a></dt>
+<dd>
+<div class="block">Waits for every active request to terminate.</div>
+</dd>
 </dl>
 <h2 class="title" id="I:B">B</h2>
 <dl class="index">
@@ -198,6 +204,11 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/servlet/http/BodyBuilder.html" class="type-name-link" title="interface in io.micronaut.servlet.http">BodyBuilder</a> - Interface in <a href="io/micronaut/servlet/http/package-summary.html">io.micronaut.servlet.http</a></dt>
 <dd>
 <div class="block">API to Read the Body of an HTTP Request where the body is supplied as an InputStream.</div>
+</dd>
+<dt><a href="io/micronaut/servlet/http/ServletHttpHandler.html#bodySizeLimits()" class="member-name-link">bodySizeLimits()</a> - Method in class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletHttpHandler.html" title="class in io.micronaut.servlet.http">ServletHttpHandler</a></dt>
+<dd>
+<div class="block">The limits from <code>micronaut.server.max-request-size</code> and <code>micronaut.server.max-request-buffer-size</code>,
+for runtimes to apply while a request body is read.</div>
 </dd>
 <dt><a href="io/micronaut/servlet/websocket/ServletWebSocketBroadcaster.html#broadcast(T,io.micronaut.http.MediaType,java.util.function.Predicate)" class="member-name-link">broadcast(T, MediaType, Predicate)</a> - Method in class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/ServletWebSocketBroadcaster.html" title="class in io.micronaut.servlet.websocket">ServletWebSocketBroadcaster</a></dt>
 <dd>&nbsp;</dd>
@@ -387,6 +398,10 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Whether compression is enabled by default.</div>
 </dd>
+<dt><a href="io/micronaut/servlet/http/server/jdk/JdkHttpServerConfiguration.AccessLogger.html#DEFAULT_LOGGER_NAME" class="member-name-link">DEFAULT_LOGGER_NAME</a> - Static variable in class io.micronaut.servlet.http.server.jdk.<a href="io/micronaut/servlet/http/server/jdk/JdkHttpServerConfiguration.AccessLogger.html" title="class in io.micronaut.servlet.http.server.jdk">JdkHttpServerConfiguration.AccessLogger</a></dt>
+<dd>
+<div class="block">The default logger name.</div>
+</dd>
 <dt><a href="io/micronaut/servlet/websocket/ServletWebSocketConfiguration.html#DEFAULT_MAX_MESSAGE_SIZE" class="member-name-link">DEFAULT_MAX_MESSAGE_SIZE</a> - Static variable in class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/ServletWebSocketConfiguration.html" title="class in io.micronaut.servlet.websocket">ServletWebSocketConfiguration</a></dt>
 <dd>
 <div class="block">The default maximum message size in bytes.</div>
@@ -395,6 +410,10 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">The default number of sends that may be queued before a session reports that it is
 no longer writable.</div>
+</dd>
+<dt><a href="io/micronaut/servlet/jetty/JettyConfiguration.html#DEFAULT_NATIVE_STATIC_RESOURCES" class="member-name-link">DEFAULT_NATIVE_STATIC_RESOURCES</a> - Static variable in class io.micronaut.servlet.jetty.<a href="io/micronaut/servlet/jetty/JettyConfiguration.html" title="class in io.micronaut.servlet.jetty">JettyConfiguration</a></dt>
+<dd>
+<div class="block">The default value for <a href="io/micronaut/servlet/jetty/JettyConfiguration.html#setNativeStaticResources(boolean)"><code>JettyConfiguration.setNativeStaticResources(boolean)</code></a>.</div>
 </dd>
 <dt><a href="io/micronaut/servlet/engine/ServletCompressionConfiguration.html#DEFAULT_THRESHOLD" class="member-name-link">DEFAULT_THRESHOLD</a> - Static variable in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/ServletCompressionConfiguration.html" title="class in io.micronaut.servlet.engine">ServletCompressionConfiguration</a></dt>
 <dd>
@@ -639,6 +658,12 @@ thread pool, to run the specified <a href="io/micronaut/servlet/http/ServletHttp
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/undertow/UndertowConfiguration.html#getAccessLogConfiguration()" class="member-name-link">getAccessLogConfiguration()</a> - Method in class io.micronaut.servlet.undertow.<a href="io/micronaut/servlet/undertow/UndertowConfiguration.html" title="class in io.micronaut.servlet.undertow">UndertowConfiguration</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/http/server/jdk/JdkHttpServerConfiguration.html#getAccessLogger()" class="member-name-link">getAccessLogger()</a> - Method in class io.micronaut.servlet.http.server.jdk.<a href="io/micronaut/servlet/http/server/jdk/JdkHttpServerConfiguration.html" title="class in io.micronaut.servlet.http.server.jdk">JdkHttpServerConfiguration</a></dt>
+<dd>
+<div class="block">The access log configuration.</div>
+</dd>
+<dt><a href="io/micronaut/servlet/http/ServletHttpHandler.html#getActiveRequests()" class="member-name-link">getActiveRequests()</a> - Method in class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletHttpHandler.html" title="class in io.micronaut.servlet.http">ServletHttpHandler</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/engine/DefaultServletCookies.html#getAll()" class="member-name-link">getAll()</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/DefaultServletCookies.html" title="class in io.micronaut.servlet.engine">DefaultServletCookies</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/http/poja/util/MultiValueHeaders.html#getAll(java.lang.CharSequence)" class="member-name-link">getAll(CharSequence)</a> - Method in record class io.micronaut.http.poja.util.<a href="io/micronaut/http/poja/util/MultiValueHeaders.html" title="class in io.micronaut.http.poja.util">MultiValueHeaders</a></dt>
@@ -764,6 +789,8 @@ thread pool, to run the specified <a href="io/micronaut/servlet/http/ServletHttp
 &nbsp;</dd>
 <dt><a href="io/micronaut/servlet/http/server/ServletServerFactory.html#getEnvironment()" class="member-name-link">getEnvironment()</a> - Method in class io.micronaut.servlet.http.server.<a href="io/micronaut/servlet/http/server/ServletServerFactory.html" title="class in io.micronaut.servlet.http.server">ServletServerFactory</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/http/server/jdk/JdkHttpServerConfiguration.AccessLogger.html#getExclusions()" class="member-name-link">getExclusions()</a> - Method in class io.micronaut.servlet.http.server.jdk.<a href="io/micronaut/servlet/http/server/jdk/JdkHttpServerConfiguration.AccessLogger.html" title="class in io.micronaut.servlet.http.server.jdk">JdkHttpServerConfiguration.AccessLogger</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/jetty/JettyConfiguration.JettyRequestLog.html#getFileName()" class="member-name-link">getFileName()</a> - Method in class io.micronaut.servlet.jetty.<a href="io/micronaut/servlet/jetty/JettyConfiguration.JettyRequestLog.html" title="class in io.micronaut.servlet.jetty">JettyConfiguration.JettyRequestLog</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/http/poja/PojaHttpRequest.html#getFormData()" class="member-name-link">getFormData()</a> - Method in class io.micronaut.http.poja.<a href="io/micronaut/http/poja/PojaHttpRequest.html" title="class in io.micronaut.http.poja">PojaHttpRequest</a></dt>
@@ -807,6 +834,8 @@ thread pool, to run the specified <a href="io/micronaut/servlet/http/ServletHttp
 <div class="block">Returns an <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/InputStream.html" title="class or interface in java.io" class="external-link"><code>InputStream</code></a> that can be used to read the body of this HTTP request.</div>
 </dd>
 <dt><a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html#getLocale()" class="member-name-link">getLocale()</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html" title="class in io.micronaut.servlet.engine">DefaultServletHttpRequest</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/http/server/jdk/JdkHttpServerConfiguration.AccessLogger.html#getLoggerName()" class="member-name-link">getLoggerName()</a> - Method in class io.micronaut.servlet.http.server.jdk.<a href="io/micronaut/servlet/http/server/jdk/JdkHttpServerConfiguration.AccessLogger.html" title="class in io.micronaut.servlet.http.server.jdk">JdkHttpServerConfiguration.AccessLogger</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/engine/MicronautServletConfiguration.html#getMapping()" class="member-name-link">getMapping()</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/MicronautServletConfiguration.html" title="class in io.micronaut.servlet.engine">MicronautServletConfiguration</a></dt>
 <dd>&nbsp;</dd>
@@ -1272,6 +1301,8 @@ implement Jakarta WebSocket 2.1.</div>
 &nbsp;</dd>
 <dt><a href="io/micronaut/servlet/engine/ServletCompressionConfiguration.html#isEnabled()" class="member-name-link">isEnabled()</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/ServletCompressionConfiguration.html" title="class in io.micronaut.servlet.engine">ServletCompressionConfiguration</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/http/server/jdk/JdkHttpServerConfiguration.AccessLogger.html#isEnabled()" class="member-name-link">isEnabled()</a> - Method in class io.micronaut.servlet.http.server.jdk.<a href="io/micronaut/servlet/http/server/jdk/JdkHttpServerConfiguration.AccessLogger.html" title="class in io.micronaut.servlet.http.server.jdk">JdkHttpServerConfiguration.AccessLogger</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/http/server/jdk/JdkHttpServerConfiguration.html#isEnabled()" class="member-name-link">isEnabled()</a> - Method in class io.micronaut.servlet.http.server.jdk.<a href="io/micronaut/servlet/http/server/jdk/JdkHttpServerConfiguration.html" title="class in io.micronaut.servlet.http.server.jdk">JdkHttpServerConfiguration</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/http/server/ServletStaticResourceConfiguration.html#isEnabled()" class="member-name-link">isEnabled()</a> - Method in interface io.micronaut.servlet.http.server.<a href="io/micronaut/servlet/http/server/ServletStaticResourceConfiguration.html" title="interface in io.micronaut.servlet.http.server">ServletStaticResourceConfiguration</a></dt>
@@ -1306,6 +1337,11 @@ implement Jakarta WebSocket 2.1.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/engine/ServletCookieAdapter.html#isHttpOnly()" class="member-name-link">isHttpOnly()</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/ServletCookieAdapter.html" title="class in io.micronaut.servlet.engine">ServletCookieAdapter</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/jetty/JettyConfiguration.html#isNativeStaticResources()" class="member-name-link">isNativeStaticResources()</a> - Method in class io.micronaut.servlet.jetty.<a href="io/micronaut/servlet/jetty/JettyConfiguration.html" title="class in io.micronaut.servlet.jetty">JettyConfiguration</a></dt>
+<dd>
+<div class="block">Whether static resources are served by Jetty's own <code>ResourceHandler</code> rather than by the Micronaut static
+resource resolver that the other runtimes use.</div>
+</dd>
 <dt><a href="io/micronaut/servlet/websocket/ServletWebSocketSession.html#isOpen()" class="member-name-link">isOpen()</a> - Method in class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/ServletWebSocketSession.html" title="class in io.micronaut.servlet.websocket">ServletWebSocketSession</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/jetty/JettyConfiguration.JettyRequestLog.html#isQuiet()" class="member-name-link">isQuiet()</a> - Method in class io.micronaut.servlet.jetty.<a href="io/micronaut/servlet/jetty/JettyConfiguration.JettyRequestLog.html" title="class in io.micronaut.servlet.jetty">JettyConfiguration.JettyRequestLog</a></dt>
@@ -1361,7 +1397,14 @@ implementation.</div>
 <div class="block">Configuration for the built-in JDK HTTP server runtime.</div>
 </dd>
 <dt><a href="io/micronaut/servlet/http/server/jdk/JdkHttpServerConfiguration.html#%3Cinit%3E()" class="member-name-link">JdkHttpServerConfiguration()</a> - Constructor for class io.micronaut.servlet.http.server.jdk.<a href="io/micronaut/servlet/http/server/jdk/JdkHttpServerConfiguration.html" title="class in io.micronaut.servlet.http.server.jdk">JdkHttpServerConfiguration</a></dt>
-<dd>&nbsp;</dd>
+<dd>
+<div class="block">Default constructor.</div>
+</dd>
+<dt><a href="io/micronaut/servlet/http/server/jdk/JdkHttpServerConfiguration.AccessLogger.html" class="type-name-link" title="class in io.micronaut.servlet.http.server.jdk">JdkHttpServerConfiguration.AccessLogger</a> - Class in <a href="io/micronaut/servlet/http/server/jdk/package-summary.html">io.micronaut.servlet.http.server.jdk</a></dt>
+<dd>
+<div class="block">Access log configuration for the built-in server, named as the Netty server's
+<code>micronaut.server.netty.access-logger</code>.</div>
+</dd>
 <dt><a href="io/micronaut/servlet/jetty/JettyConfiguration.html" class="type-name-link" title="class in io.micronaut.servlet.jetty">JettyConfiguration</a> - Class in <a href="io/micronaut/servlet/jetty/package-summary.html">io.micronaut.servlet.jetty</a></dt>
 <dd>
 <div class="block">Configuration properties for Jetty.</div>
@@ -1678,6 +1721,11 @@ instances reflectively rather than through the configurator.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/websocket/undertow/UndertowWebSocketDeploymentCustomizer.html#onCreated(io.micronaut.context.event.BeanCreatedEvent)" class="member-name-link">onCreated(BeanCreatedEvent)</a> - Method in class io.micronaut.servlet.websocket.undertow.<a href="io/micronaut/servlet/websocket/undertow/UndertowWebSocketDeploymentCustomizer.html" title="class in io.micronaut.servlet.websocket.undertow">UndertowWebSocketDeploymentCustomizer</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/http/ServletHttpRequest.AsyncExecution.html#onEndedByContainer(java.lang.Runnable)" class="member-name-link">onEndedByContainer(Runnable)</a> - Method in interface io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletHttpRequest.AsyncExecution.html" title="interface in io.micronaut.servlet.http">ServletHttpRequest.AsyncExecution</a></dt>
+<dd>
+<div class="block">Registers what to run if the container ends the asynchronous execution itself, on a timeout or an I/O
+error, before <a href="io/micronaut/servlet/http/ServletHttpRequest.AsyncExecution.html#complete()"><code>ServletHttpRequest.AsyncExecution.complete()</code></a> has been called.</div>
+</dd>
 <dt><a href="io/micronaut/servlet/websocket/MicronautServerEndpoint.html#onError(jakarta.websocket.Session,java.lang.Throwable)" class="member-name-link">onError(Session, Throwable)</a> - Method in class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/MicronautServerEndpoint.html" title="class in io.micronaut.servlet.websocket">MicronautServerEndpoint</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/websocket/MicronautServerEndpoint.html#onOpen(jakarta.websocket.Session,jakarta.websocket.EndpointConfig)" class="member-name-link">onOpen(Session, EndpointConfig)</a> - Method in class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/MicronautServerEndpoint.html" title="class in io.micronaut.servlet.websocket">MicronautServerEndpoint</a></dt>
@@ -1879,6 +1927,8 @@ specified charset.</div>
 <dt><a href="io/micronaut/http/poja/util/MultiValueHeaders.html#remove(java.lang.CharSequence)" class="member-name-link">remove(CharSequence)</a> - Method in record class io.micronaut.http.poja.util.<a href="io/micronaut/http/poja/util/MultiValueHeaders.html" title="class in io.micronaut.http.poja.util">MultiValueHeaders</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/websocket/ServletWebSocketSession.html#remove(java.lang.CharSequence)" class="member-name-link">remove(CharSequence)</a> - Method in class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/ServletWebSocketSession.html" title="class in io.micronaut.servlet.websocket">ServletWebSocketSession</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/http/server/AbstractServletServer.html#reportActiveTasks()" class="member-name-link">reportActiveTasks()</a> - Method in class io.micronaut.servlet.http.server.<a href="io/micronaut/servlet/http/server/AbstractServletServer.html" title="class in io.micronaut.servlet.http.server">AbstractServletServer</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/websocket/WebSocketUpgradeContext.html#routeMatch()" class="member-name-link">routeMatch()</a> - Method in record class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/WebSocketUpgradeContext.html" title="class in io.micronaut.servlet.websocket">WebSocketUpgradeContext</a></dt>
 <dd>
@@ -2131,6 +2181,10 @@ implementation once the Micronaut filter chain has approved the handshake.</div>
 <dd>
 <div class="block">The access log configuration.</div>
 </dd>
+<dt><a href="io/micronaut/servlet/http/server/jdk/JdkHttpServerConfiguration.html#setAccessLogger(io.micronaut.servlet.http.server.jdk.JdkHttpServerConfiguration.AccessLogger)" class="member-name-link">setAccessLogger(JdkHttpServerConfiguration.AccessLogger)</a> - Method in class io.micronaut.servlet.http.server.jdk.<a href="io/micronaut/servlet/http/server/jdk/JdkHttpServerConfiguration.html" title="class in io.micronaut.servlet.http.server.jdk">JdkHttpServerConfiguration</a></dt>
+<dd>
+<div class="block">Sets the access log configuration.</div>
+</dd>
 <dt><a href="io/micronaut/servlet/engine/MicronautServletConfiguration.html#setAsyncFileServingEnabled(boolean)" class="member-name-link">setAsyncFileServingEnabled(boolean)</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/MicronautServletConfiguration.html" title="class in io.micronaut.servlet.engine">MicronautServletConfiguration</a></dt>
 <dd>
 <div class="block">Is async file serving enabled.</div>
@@ -2165,6 +2219,10 @@ implementation once the Micronaut filter chain has approved the handshake.</div>
 </dd>
 <dt><a href="io/micronaut/servlet/engine/ServletCompressionConfiguration.html#setEnabled(boolean)" class="member-name-link">setEnabled(boolean)</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/ServletCompressionConfiguration.html" title="class in io.micronaut.servlet.engine">ServletCompressionConfiguration</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/http/server/jdk/JdkHttpServerConfiguration.AccessLogger.html#setEnabled(boolean)" class="member-name-link">setEnabled(boolean)</a> - Method in class io.micronaut.servlet.http.server.jdk.<a href="io/micronaut/servlet/http/server/jdk/JdkHttpServerConfiguration.AccessLogger.html" title="class in io.micronaut.servlet.http.server.jdk">JdkHttpServerConfiguration.AccessLogger</a></dt>
+<dd>
+<div class="block">Enables the access log.</div>
+</dd>
 <dt><a href="io/micronaut/servlet/http/server/jdk/JdkHttpServerConfiguration.html#setEnabled(boolean)" class="member-name-link">setEnabled(boolean)</a> - Method in class io.micronaut.servlet.http.server.jdk.<a href="io/micronaut/servlet/http/server/jdk/JdkHttpServerConfiguration.html" title="class in io.micronaut.servlet.http.server.jdk">JdkHttpServerConfiguration</a></dt>
 <dd>
 <div class="block">Sets whether the JDK HTTP server runtime is enabled.</div>
@@ -2195,6 +2253,10 @@ implementation once the Micronaut filter chain has approved the handshake.</div>
 <dd>
 <div class="block">Whether virtual threads are enabled.</div>
 </dd>
+<dt><a href="io/micronaut/servlet/http/server/jdk/JdkHttpServerConfiguration.AccessLogger.html#setExclusions(java.util.List)" class="member-name-link">setExclusions(List)</a> - Method in class io.micronaut.servlet.http.server.jdk.<a href="io/micronaut/servlet/http/server/jdk/JdkHttpServerConfiguration.AccessLogger.html" title="class in io.micronaut.servlet.http.server.jdk">JdkHttpServerConfiguration.AccessLogger</a></dt>
+<dd>
+<div class="block">Sets the paths to exclude from the log, as regular expressions matched against the request path.</div>
+</dd>
 <dt><a href="io/micronaut/servlet/jetty/JettyConfiguration.JettyRequestLog.html#setFileName(java.lang.String)" class="member-name-link">setFileName(String)</a> - Method in class io.micronaut.servlet.jetty.<a href="io/micronaut/servlet/jetty/JettyConfiguration.JettyRequestLog.html" title="class in io.micronaut.servlet.jetty">JettyConfiguration.JettyRequestLog</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/websocket/ServletWebSocketConfiguration.html#setIdleTimeout(java.time.Duration)" class="member-name-link">setIdleTimeout(Duration)</a> - Method in class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/ServletWebSocketConfiguration.html" title="class in io.micronaut.servlet.websocket">ServletWebSocketConfiguration</a></dt>
@@ -2202,6 +2264,10 @@ implementation once the Micronaut filter chain has approved the handshake.</div>
 <dt><a href="io/micronaut/servlet/jetty/JettyConfiguration.html#setInitParameters(java.util.Map)" class="member-name-link">setInitParameters(Map)</a> - Method in class io.micronaut.servlet.jetty.<a href="io/micronaut/servlet/jetty/JettyConfiguration.html" title="class in io.micronaut.servlet.jetty">JettyConfiguration</a></dt>
 <dd>
 <div class="block">Sets the servlet init parameters.</div>
+</dd>
+<dt><a href="io/micronaut/servlet/http/server/jdk/JdkHttpServerConfiguration.AccessLogger.html#setLoggerName(java.lang.String)" class="member-name-link">setLoggerName(String)</a> - Method in class io.micronaut.servlet.http.server.jdk.<a href="io/micronaut/servlet/http/server/jdk/JdkHttpServerConfiguration.AccessLogger.html" title="class in io.micronaut.servlet.http.server.jdk">JdkHttpServerConfiguration.AccessLogger</a></dt>
+<dd>
+<div class="block">Sets the logger name.</div>
 </dd>
 <dt><a href="io/micronaut/servlet/websocket/ServletWebSocketConfiguration.html#setMaxBinaryMessageSize(int)" class="member-name-link">setMaxBinaryMessageSize(int)</a> - Method in class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/ServletWebSocketConfiguration.html" title="class in io.micronaut.servlet.websocket">ServletWebSocketConfiguration</a></dt>
 <dd>&nbsp;</dd>
@@ -2216,6 +2282,11 @@ implementation once the Micronaut filter chain has approved the handshake.</div>
 <dt><a href="io/micronaut/servlet/engine/MicronautServletConfiguration.html#setMinThreads(java.lang.Integer)" class="member-name-link">setMinThreads(Integer)</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/MicronautServletConfiguration.html" title="class in io.micronaut.servlet.engine">MicronautServletConfiguration</a></dt>
 <dd>
 <div class="block">Specify the minimum number of threads in the created thread pool.</div>
+</dd>
+<dt><a href="io/micronaut/servlet/jetty/JettyConfiguration.html#setNativeStaticResources(boolean)" class="member-name-link">setNativeStaticResources(boolean)</a> - Method in class io.micronaut.servlet.jetty.<a href="io/micronaut/servlet/jetty/JettyConfiguration.html" title="class in io.micronaut.servlet.jetty">JettyConfiguration</a></dt>
+<dd>
+<div class="block">Serve static resources with Jetty's own <code>ResourceHandler</code> instead of the Micronaut static resource
+resolver.</div>
 </dd>
 <dt><a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html#setParsedBody(B)" class="member-name-link">setParsedBody(B)</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html" title="class in io.micronaut.servlet.engine">DefaultServletHttpRequest</a></dt>
 <dd>&nbsp;</dd>
@@ -2261,6 +2332,18 @@ implementation once the Micronaut filter chain has approved the handshake.</div>
 </dd>
 <dt><a href="io/micronaut/servlet/http/websocket/WebSocketUpgradeRequestLifecycle.html#shouldProceedNormally()" class="member-name-link">shouldProceedNormally()</a> - Method in class io.micronaut.servlet.http.websocket.<a href="io/micronaut/servlet/http/websocket/WebSocketUpgradeRequestLifecycle.html" title="class in io.micronaut.servlet.http.websocket">WebSocketUpgradeRequestLifecycle</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/http/server/AbstractServletServer.html#shutdownGracefully()" class="member-name-link">shutdownGracefully()</a> - Method in class io.micronaut.servlet.http.server.<a href="io/micronaut/servlet/http/server/AbstractServletServer.html" title="class in io.micronaut.servlet.http.server">AbstractServletServer</a></dt>
+<dd>
+<div class="block">Shuts the server down gracefully: it stops accepting new requests, then completes once every request that was
+already in flight has terminated.</div>
+</dd>
+<dt><a href="io/micronaut/servlet/undertow/UndertowServer.html#shutdownGracefully()" class="member-name-link">shutdownGracefully()</a> - Method in class io.micronaut.servlet.undertow.<a href="io/micronaut/servlet/undertow/UndertowServer.html" title="class in io.micronaut.servlet.undertow">UndertowServer</a></dt>
+<dd>
+<div class="block">Waits for the requests the handler counted, and then for Undertow's own exchanges: the handler is done once
+the response has been handed to the container, but Undertow ends an exchange on its IO thread afterwards,
+and stopping the server before that drops a response that was written but not yet flushed (seen with
+<code>Connection: close</code> requests).</div>
+</dd>
 <dt><a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html#slice(int,int)" class="member-name-link">slice(int, int)</a> - Method in class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html" title="class in io.micronaut.servlet.http">ByteArrayByteBuffer</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/tomcat/TomcatFactory.html#sslConnector(io.micronaut.http.ssl.SslConfiguration)" class="member-name-link">sslConnector(SslConfiguration)</a> - Method in class io.micronaut.servlet.tomcat.<a href="io/micronaut/servlet/tomcat/TomcatFactory.html" title="class in io.micronaut.servlet.tomcat">TomcatFactory</a></dt>
@@ -2324,6 +2407,25 @@ implementation once the Micronaut filter chain has approved the handshake.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/http/ServletHttpHandler.html#stop()" class="member-name-link">stop()</a> - Method in class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletHttpHandler.html" title="class in io.micronaut.servlet.http">ServletHttpHandler</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/http/server/AbstractServletServer.html#stopAcceptingRequests()" class="member-name-link">stopAcceptingRequests()</a> - Method in class io.micronaut.servlet.http.server.<a href="io/micronaut/servlet/http/server/AbstractServletServer.html" title="class in io.micronaut.servlet.http.server">AbstractServletServer</a></dt>
+<dd>
+<div class="block">Stops the underlying server accepting new requests while leaving in-flight requests to complete.</div>
+</dd>
+<dt><a href="io/micronaut/servlet/jetty/JettyServer.html#stopAcceptingRequests()" class="member-name-link">stopAcceptingRequests()</a> - Method in class io.micronaut.servlet.jetty.<a href="io/micronaut/servlet/jetty/JettyServer.html" title="class in io.micronaut.servlet.jetty">JettyServer</a></dt>
+<dd>
+<div class="block">Interrupts the acceptors of every connector so that no new connection is accepted and idle keep-alive
+connections are closed, while connections with a request in progress are left to complete.</div>
+</dd>
+<dt><a href="io/micronaut/servlet/tomcat/TomcatServer.html#stopAcceptingRequests()" class="member-name-link">stopAcceptingRequests()</a> - Method in class io.micronaut.servlet.tomcat.<a href="io/micronaut/servlet/tomcat/TomcatServer.html" title="class in io.micronaut.servlet.tomcat">TomcatServer</a></dt>
+<dd>
+<div class="block">Pauses every connector so that no new request is read from the network while requests already being
+processed run to completion.</div>
+</dd>
+<dt><a href="io/micronaut/servlet/undertow/UndertowServer.html#stopAcceptingRequests()" class="member-name-link">stopAcceptingRequests()</a> - Method in class io.micronaut.servlet.undertow.<a href="io/micronaut/servlet/undertow/UndertowServer.html" title="class in io.micronaut.servlet.undertow">UndertowServer</a></dt>
+<dd>
+<div class="block">Makes the server answer new requests with <code>503 Service Unavailable</code> while requests already in progress
+complete.</div>
+</dd>
 <dt><a href="io/micronaut/servlet/engine/server/AbstractServletServer.html#stopServer()" class="member-name-link">stopServer()</a> - Method in class io.micronaut.servlet.engine.server.<a href="io/micronaut/servlet/engine/server/AbstractServletServer.html" title="class in io.micronaut.servlet.engine.server">AbstractServletServer</a></dt>
 <dd>
 <div class="deprecation-block"><span class="deprecated-label">Deprecated.</span></div>
