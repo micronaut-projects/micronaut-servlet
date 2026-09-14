@@ -33,6 +33,7 @@ import io.micronaut.http.ssl.ClientAuthentication;
 import io.micronaut.http.ssl.SslConfiguration;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.scheduling.LoomSupport;
+import io.micronaut.servlet.engine.ServletCompressionConfiguration;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.servlet.engine.MicronautServletConfiguration;
 import io.micronaut.servlet.http.server.ServletServerFactory;
@@ -62,7 +63,9 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.SslConnectionFactory;
 import org.eclipse.jetty.server.handler.ContextHandler;
+import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
+import org.eclipse.jetty.server.handler.gzip.GzipHandler;
 import org.eclipse.jetty.server.handler.ResourceHandler;
 import org.eclipse.jetty.server.handler.CrossOriginHandler;
 import org.eclipse.jetty.util.resource.Resource;
@@ -393,7 +396,7 @@ public class JettyFactory extends ServletServerFactory {
         ContextHandlerCollection contextHandlerCollection = new ContextHandlerCollection(
             resourceHandlers.toArray(new ContextHandler[0])
         );
-        server.setHandler(contextHandlerCollection);
+        server.setHandler(compressIfEnabled(contextHandlerCollection));
     }
 
     /**
@@ -509,6 +512,35 @@ public class JettyFactory extends ServletServerFactory {
         return contextHandler;
     }
 
+    /**
+     * Wraps the server's handler so responses are compressed when the client accepts it.
+     *
+     * <p>Jetty compresses responses itself, so the shared configuration is wired to its encoder rather than
+     * reimplemented: it already settles HEAD, ranges, already encoded bodies and the {@code Vary} header.</p>
+     *
+     * <p>Jetty 12.1 deprecates {@code GzipHandler} in favour of {@code CompressionHandler} from the separate
+     * {@code jetty-compression-server} module. It still ships and works, and the replacement is an additional
+     * dependency with its own configuration model; moving to it is a change of its own, not part of enabling
+     * compression.</p>
+     *
+     * @param handler The handler serving requests
+     * @return The handler to install on the server
+     */
+    @SuppressWarnings({"java:S5738", "removal"})
+    private Handler compressIfEnabled(Handler handler) {
+        ServletCompressionConfiguration compression = getApplicationContext()
+            .findBean(ServletCompressionConfiguration.class)
+            .orElse(null);
+        if (compression == null || !compression.isEnabled()) {
+            return handler;
+        }
+        GzipHandler gzipHandler = new GzipHandler();
+        gzipHandler.setMinGzipSize(compression.getThreshold());
+        compression.getContentTypes().forEach(gzipHandler::addIncludedMimeTypes);
+        gzipHandler.setHandler(handler);
+        return gzipHandler;
+    }
+
     private void addCorsHandler(ContextHandler contextHandler) {
         CrossOriginHandler cors = new CrossOriginHandler();
         var configs = getServerConfiguration().getCors().getConfigurations().values();
@@ -543,16 +575,26 @@ public class JettyFactory extends ServletServerFactory {
         contextHandler.setHandler(cors);
     }
 
+    /**
+     * Builds the origin pattern for a configured allowed origin.
+     *
+     * <p>Anchored deliberately: an unanchored pattern for {@code https://example.com} also appears inside
+     * {@code https://example.com.attacker.test}, so whether that origin is allowed would depend on the matcher
+     * rather than on the configuration.</p>
+     *
+     * @param origin The configured origin
+     * @return A regular expression matching exactly that origin
+     */
     private static String getOriginPattern(String origin) {
         String p;
         if ("*".equals(origin)) {
             p = ".*";
         } else if (origin.startsWith("http://") || origin.startsWith("https://")) {
             String base = origin.replace(".", "\\.");
-            p = base + "(:\\d+)?";
+            p = "^" + base + "(:\\d+)?$";
         } else {
             String host = java.util.regex.Pattern.quote(origin);
-            p = "https?://" + host + "(:\\d+)?";
+            p = "^https?://" + host + "(:\\d+)?$";
         }
         return p;
     }

@@ -881,10 +881,39 @@ public final class DefaultServletHttpResponse<B> implements ServletHttpResponse<
             this.conversionService = conversionService;
         }
 
+        /**
+         * @param name The header name
+         * @return Whether the container refuses to have this header set through the header map
+         */
         private static boolean isBanned(String name) {
             // transfer-encoding cannot be cleared on tomcat, so we must never set it
-            return name.equalsIgnoreCase(HttpHeaders.TRANSFER_ENCODING) ||
-                name.equalsIgnoreCase(HttpHeaders.CONTENT_LENGTH);
+            return name.equalsIgnoreCase(HttpHeaders.TRANSFER_ENCODING);
+        }
+
+        /**
+         * @param name The header name
+         * @return Whether the container owns this header and has a dedicated setter for it
+         */
+        private static boolean isContentLength(String name) {
+            return name.equalsIgnoreCase(HttpHeaders.CONTENT_LENGTH);
+        }
+
+        /**
+         * Applies a content length through the container's own setter.
+         *
+         * <p>Content-Length used to be refused along with Transfer-Encoding, so a response written on the blocking
+         * path lost the length its body already knew and went out chunked. Containers track this header themselves,
+         * so it has to be set through {@code setContentLengthLong} rather than the header map.</p>
+         *
+         * @param value The header value
+         */
+        private void setContentLength(String value) {
+            try {
+                delegate.setContentLengthLong(Long.parseLong(value.trim()));
+            } catch (NumberFormatException _) {
+                // an unparseable length is no length at all; leaving it unset means the container frames the
+                // response itself rather than announcing a length it cannot honour
+            }
         }
 
         @Override
@@ -896,6 +925,10 @@ public final class DefaultServletHttpResponse<B> implements ServletHttpResponse<
                 Objects.requireNonNull(value, "Header value cannot be null").toString();
 
             if (isBanned(headerName)) {
+                return this;
+            }
+            if (isContentLength(headerName)) {
+                setContentLength(headerValue);
                 return this;
             }
 
@@ -917,6 +950,10 @@ public final class DefaultServletHttpResponse<B> implements ServletHttpResponse<
             if (isBanned(headerName)) {
                 return this;
             }
+            if (isContentLength(headerName)) {
+                setContentLength(headerValue);
+                return this;
+            }
 
             delegate.addHeader(
                     headerName,
@@ -928,7 +965,10 @@ public final class DefaultServletHttpResponse<B> implements ServletHttpResponse<
         @Override
         public MutableHttpHeaders remove(CharSequence header) {
             final String headerName = Objects.requireNonNull(header, "Header name cannot be null").toString();
-            if (delegate.containsHeader(headerName)) {
+            if (isContentLength(headerName)) {
+                // the container tracks the length itself, and Tomcat cannot parse an empty header value into it
+                delegate.setContentLengthLong(-1);
+            } else if (delegate.containsHeader(headerName)) {
                 delegate.setHeader(headerName, "");
             }
             return this;

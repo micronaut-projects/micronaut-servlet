@@ -39,6 +39,7 @@ import io.micronaut.http.ssl.ClientAuthentication;
 import io.micronaut.http.ssl.SslConfiguration;
 import io.micronaut.servlet.engine.DefaultMicronautServlet;
 import io.micronaut.servlet.engine.MicronautServletConfiguration;
+import io.micronaut.servlet.engine.ServletCompressionConfiguration;
 import io.micronaut.servlet.http.server.ServletServerFactory;
 import io.micronaut.servlet.http.server.ServletStaticResourceConfiguration;
 import jakarta.inject.Singleton;
@@ -49,6 +50,7 @@ import org.apache.catalina.connector.Connector;
 import org.apache.catalina.core.ContainerBase;
 import org.apache.catalina.core.StandardThreadExecutor;
 import org.apache.catalina.startup.Tomcat;
+import org.apache.coyote.http11.AbstractHttp11Protocol;
 import org.apache.coyote.ProtocolHandler;
 import org.apache.coyote.http2.Http2Protocol;
 import org.apache.tomcat.util.net.SSLHostConfig;
@@ -125,6 +127,8 @@ public class TomcatFactory extends ServletServerFactory {
         configuration.setAsyncFileServingEnabled(false);
 
         Tomcat tomcat = newTomcat();
+        applyCompression(connector);
+        applyCompression(httpsConnector);
         if (configuration.getMaxThreads() != null) {
             StandardThreadExecutor executor = new StandardThreadExecutor();
             executor.setName("tomcatThreadPool");
@@ -184,6 +188,33 @@ public class TomcatFactory extends ServletServerFactory {
     }
 
     /**
+     * Turns on response compression for a connector when the shared configuration asks for it.
+     *
+     * <p>Tomcat compresses responses itself, so the configuration is wired to its connector rather than
+     * reimplemented: it already settles HEAD, ranges, already encoded bodies and the {@code Vary} header.</p>
+     *
+     * @param connector The connector to configure, which may be {@code null}
+     */
+    private void applyCompression(@Nullable Connector connector) {
+        if (connector == null) {
+            return;
+        }
+        ServletCompressionConfiguration compression = getApplicationContext()
+            .findBean(ServletCompressionConfiguration.class)
+            .orElse(null);
+        if (compression == null || !compression.isEnabled()) {
+            return;
+        }
+        // set on the protocol directly rather than through Connector.setProperty, which reaches the same setters
+        // by reflection and so needs metadata in a native image
+        if (connector.getProtocolHandler() instanceof AbstractHttp11Protocol<?> http11) {
+            http11.setCompression("on");
+            http11.setCompressionMinSize(compression.getThreshold());
+            http11.setCompressibleMimeType(String.join(",", compression.getContentTypes()));
+        }
+    }
+
+    /**
      * Configures the available connectors.
      *
      * @param tomcat         The tomcat instance
@@ -216,6 +247,8 @@ public class TomcatFactory extends ServletServerFactory {
                     if (!exposedPort.equals(serverConnector.getLocalPort())) {
                         Connector newConnector = cloneConnectorSettings(serverConnector);
                         newConnector.setPort(exposedPort);
+                        // compression lives on the connector, so a port exposed by a route needs it applied too
+                        applyCompression(newConnector);
                         server.getService().addConnector(newConnector);
                     }
                 }

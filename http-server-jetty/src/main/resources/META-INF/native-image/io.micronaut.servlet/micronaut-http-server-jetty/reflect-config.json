@@ -1,0 +1,10 @@
+[
+  {
+    "name": "org.eclipse.jetty.http.pathmap.PathSpecSet",
+    "methods": [{ "name": "<init>", "parameterTypes": [] }]
+  },
+  {
+    "name": "org.eclipse.jetty.util.AsciiLowerCaseSet",
+    "methods": [{ "name": "<init>", "parameterTypes": [] }]
+  }
+]
