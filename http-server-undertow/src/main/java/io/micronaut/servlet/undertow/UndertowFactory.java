@@ -245,7 +245,9 @@ public class UndertowFactory extends ServletServerFactory {
         Set<String> contentTypes = compression.getContentTypes();
         long threshold = compression.getThreshold();
         // Undertow's own size predicates read the request, so the response is inspected here instead: a body is
-        // worth compressing when its type benefits and it is large enough to pay for the encoding
+        // worth compressing when its type benefits and it is large enough to pay for the encoding. The response
+        // headers are available because Undertow resolves this predicate when it wraps the response conduit, as
+        // the response is committed after the handler has run, not when the EncodingHandler receives the request
         Predicate compressible = exchange -> {
             String contentType = exchange.getResponseHeaders().getFirst(Headers.CONTENT_TYPE);
             if (contentType == null) {
