@@ -190,14 +190,12 @@ public class HttpServerFactory {
     }
 
     /**
-     *
-     * @param applicationContext Application Context
-     * @param httpServerConfiguration HTTP Server Configuration
-     * @return Server address to listen on
-     */
-    /**
      * The address to bind: the configured {@code micronaut.server.host} when there is one, so that the server, TLS
      * or not, listens on the interface the application asked for rather than on every interface.
+     *
+     * @param httpServerConfiguration HTTP Server Configuration
+     * @param port                    The port to listen on
+     * @return Server address to listen on
      */
     private static InetSocketAddress serverAddress(HttpServerConfiguration httpServerConfiguration, int port) {
         return httpServerConfiguration.getHost()

@@ -892,9 +892,6 @@ public final class DefaultServletHttpRequest<B> implements
     }
 
     /**
-     * The servlet request parameters.
-     */
-    /**
      * The asynchronous execution, which also hears from the container when it ends the execution itself.
      *
      * <p>A container times an asynchronous request out (30 seconds by default on Jetty, Tomcat and Undertow)
@@ -955,6 +952,9 @@ public final class DefaultServletHttpRequest<B> implements
         }
     }
 
+    /**
+     * The servlet request parameters.
+     */
     private final class ServletParameters implements HttpParameters {
 
         private @Nullable String[] values(String name) {
