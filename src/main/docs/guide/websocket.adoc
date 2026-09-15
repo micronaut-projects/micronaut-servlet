@@ -100,17 +100,19 @@ whole), a `maxMessageSize` beyond `Integer.MAX_VALUE`, and `@ClientEndpoint`, fo
 ==== Decoders, encoders and the configurator
 
 `decoders`, `encoders` and `configurator` name classes the container would instantiate with
-`Class.newInstance()`. Here each class is resolved through the first of these that can
-produce it:
+`Class.newInstance()`. Here the annotation processor generates an introspection for every
+class the endpoint names, so a class with a public no-argument constructor - the Jakarta
+contract - is instantiated through that, without reflection, and needs nothing else. A class
+is resolved through the first of these that can produce it:
 
 . As a bean, when the class carries a scope such as `@Singleton` or `@Prototype`. The bean
 can inject an `ObjectMapper` or anything else, and its scope decides whether it is shared.
-. Through its introspection, when the class is `@Introspected` or listed in
-`@Introspected(classes = ...)` on the endpoint.
+. Through its generated introspection, when it has a no-argument constructor.
 . Reflectively, when `io.micronaut:micronaut-reflection` is on the classpath _and_ the type
 matches a `micronaut.introspection.allow-reflection` pattern. That is the same switch that
 lets the shared introspector describe a type reflectively, so there is one place to opt a
-package into reflection:
+package into reflection. This is only needed for a class whose constructor takes arguments
+without being a bean; they are then injected.
 +
 [configuration]
 ----
@@ -120,20 +122,22 @@ micronaut:
       - com.example.legacy.codecs.*
 ----
 
-A class none of these can produce is reported at compilation time, unless
-`micronaut-reflection` is on the compile classpath, in which case the runtime policy decides
-and the first handshake fails with a message naming the class and the three options.
+A class none of these can produce - one whose constructor takes arguments, when
+`micronaut-reflection` is not on the compile classpath - is reported at compilation time.
 
-Decoders run before Micronaut's own conversion and message body readers, so a message type
-with no decoder is still decoded from JSON as it is for a Micronaut endpoint. Encoders apply
-to the value an `@OnMessage` method returns; the type an encoder handles is read from its
-bean definition, or from its generic signature when `micronaut-reflection` is present, and
-an encoder whose type is unknown is offered every value and stands aside for one it cannot
-encode. Declaring encoders as beans is therefore the simplest choice. `RemoteEndpoint#sendObject` on the raw session
-is served by the container, which instantiates the encoders itself, reflectively; the
-encoders are therefore only passed to the container for classes the reflection policy
-allows. Without that, return a value from the handler or send through the Micronaut
-`WebSocketSession` instead.
+Decoders run before Micronaut's own conversion and message body readers, and encoders apply
+to the value an `@OnMessage` method returns, before Micronaut's message body writers. Either
+can be left out: a message type no decoder produces is read by the `MessageBodyReader` for the
+media type the handler `@Consumes` (JSON by default), and a return value no encoder accepts is
+written by the `MessageBodyWriter` for the media type it `@Produces` (JSON by default), exactly
+as for a Micronaut endpoint. The type an encoder handles is read from its bean definition, or
+from its generic signature when `micronaut-reflection` is present; an encoder whose type is
+unknown is offered every value and stands aside for one it cannot encode.
+
+`RemoteEndpoint#sendObject` on the raw session is served by the container, which instantiates
+the encoders itself, reflectively; the encoders are therefore only passed to the container for
+classes the reflection policy allows. Without that, return a value from the handler or send
+through the Micronaut `WebSocketSession` instead.
 
 A declared configurator has its `modifyHandshake`, `checkOrigin`, `getNegotiatedSubprotocol`
 and `getNegotiatedExtensions` honoured; an origin must pass both its check and the

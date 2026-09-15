@@ -31,6 +31,7 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.Consumes;
+import io.micronaut.http.annotation.Produces;
 import io.micronaut.http.body.MessageBodyReader;
 import io.micronaut.http.bind.binders.ContinuationArgumentBinder;
 import io.micronaut.http.server.CoroutineHelper;
@@ -569,10 +570,10 @@ public class MicronautServerEndpoint extends Endpoint {
         if (suspend) {
             ExecutionFlow<Object> completion = invokeSuspend(bound, request, propagatedContext);
             // A suspend handler's value is only known once the coroutine completes.
-            return sendResult ? completion.flatMap(value -> sendResult(value, propagatedContext)) : completion;
+            return sendResult ? completion.flatMap(value -> sendResult(method, value, propagatedContext)) : completion;
         }
         Object result = bound.invoke(webSocketBean.getTarget());
-        return sendResult ? sendResult(result, propagatedContext) : toFlow(result, propagatedContext);
+        return sendResult ? sendResult(method, result, propagatedContext) : toFlow(result, propagatedContext);
     }
 
     /**
@@ -615,28 +616,36 @@ public class MicronautServerEndpoint extends Endpoint {
      * plain value straight away, the value of a {@link CompletionStage} once it completes. A
      * publisher keeps the Micronaut meaning, completion of the handler, and is not sent.
      *
+     * @param method            The handler
      * @param result            The handler's return value
      * @param propagatedContext The context the handler ran under
      * @return A flow completing once the value is sent
      */
     @SuppressWarnings("unchecked")
-    private ExecutionFlow<Object> sendResult(@Nullable Object result, PropagatedContext propagatedContext) {
+    private ExecutionFlow<Object> sendResult(ExecutableMethod<Object, ?> method,
+                                             @Nullable Object result,
+                                             PropagatedContext propagatedContext) {
         if (result == null || Publishers.isConvertibleToPublisher(result)) {
             return toFlow(result, propagatedContext);
         }
         if (result instanceof CompletionStage<?> stage) {
             return CompletableFutureExecutionFlow.just(((CompletionStage<Object>) stage).thenApply(value -> {
                 if (value != null) {
-                    sendReturnValue(value);
+                    sendReturnValue(method, value);
                 }
                 return null;
             }));
         }
-        sendReturnValue(result);
+        sendReturnValue(method, result);
         return ExecutionFlow.just(null);
     }
 
-    private void sendReturnValue(Object value) {
+    /**
+     * Sends a handler's return value: through a declared Jakarta encoder that accepts it, else
+     * through Micronaut's message body writers, as the media type the handler {@code @Produces}
+     * or JSON.
+     */
+    private void sendReturnValue(ExecutableMethod<Object, ?> method, Object value) {
         Object message = value;
         if (codecs != null && !codecs.isEmpty()) {
             try {
@@ -645,7 +654,10 @@ public class MicronautServerEndpoint extends Endpoint {
                 throw new WebSocketSessionException("Error encoding WebSocket message: " + e.getMessage(), e);
             }
         }
-        micronautSession.sendSync(message);
+        MediaType mediaType = method.stringValue(Produces.class)
+            .map(MediaType::of)
+            .orElse(MediaType.APPLICATION_JSON_TYPE);
+        micronautSession.sendSync(message, mediaType);
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})

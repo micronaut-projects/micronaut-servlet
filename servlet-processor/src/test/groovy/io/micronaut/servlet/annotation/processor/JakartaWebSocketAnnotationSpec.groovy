@@ -2,6 +2,8 @@ package io.micronaut.servlet.annotation.processor
 
 import io.micronaut.annotation.processing.test.AbstractTypeElementSpec
 import io.micronaut.context.annotation.Prototype
+import io.micronaut.core.annotation.Introspected
+import io.micronaut.core.beans.BeanIntrospection
 import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.Consumes
 import io.micronaut.http.annotation.PathVariable
@@ -117,6 +119,52 @@ class SharedEndpoint {
         !definition.hasDeclaredAnnotation(Prototype)
     }
 
+    void "a plain decoder, encoder or configurator gets an introspection generated for it"() {
+        given:
+        String source = IMPORTS + '''
+import jakarta.websocket.Decoder;
+import jakarta.websocket.Encoder;
+import jakarta.websocket.server.ServerEndpointConfig;
+
+@ServerEndpoint(value = "/codec", decoders = PlainCodecEndpoint.PlainDecoder.class, encoders = PlainCodecEndpoint.PlainEncoder.class,
+    configurator = PlainCodecEndpoint.PlainConfigurator.class)
+class PlainCodecEndpoint {
+
+    public static class PlainDecoder implements Decoder.Text<String> {
+        @Override public String decode(String s) { return s; }
+        @Override public boolean willDecode(String s) { return true; }
+    }
+
+    public static class PlainEncoder implements Encoder.Text<String> {
+        @Override public String encode(String s) { return s; }
+    }
+
+    public static class PlainConfigurator extends ServerEndpointConfig.Configurator {
+    }
+
+    @OnMessage
+    public String text(String message) {
+        return message;
+    }
+}
+'''
+
+        BeanDefinition definition = buildBeanDefinition('test.PlainCodecEndpoint', source)
+        ClassLoader classLoader = buildClassLoader('test.PlainCodecEndpoint', source)
+
+        expect: 'the three classes are listed for introspection on the endpoint, so no reflection is needed to create them'
+        definition.stringValues(Introspected, 'classNames') as Set == [
+            'test.PlainCodecEndpoint$PlainDecoder', 'test.PlainCodecEndpoint$PlainEncoder', 'test.PlainCodecEndpoint$PlainConfigurator'
+        ] as Set
+
+        and: 'the introspections were generated and instantiate the classes'
+        ['PlainDecoder', 'PlainEncoder', 'PlainConfigurator'].every { name ->
+            BeanIntrospection introspection = (BeanIntrospection) classLoader
+                .loadClass('test.$test_PlainCodecEndpoint$' + name + '$Introspection').getConstructor().newInstance()
+            introspection.instantiate().class.simpleName == name
+        }
+    }
+
     void "a decoder, encoder or configurator is accepted when it is a bean or introspected"() {
         given:
         BeanDefinition definition = buildBeanDefinition('test.CodecEndpoint', IMPORTS + '''
@@ -159,6 +207,10 @@ class CodecEndpoint {
         expect:
         definition.hasStereotype(ServerWebSocket)
         method(definition, 'text').hasAnnotation(OnMessage)
+
+        and: 'the bean is left alone, the introspected encoder is listed harmlessly, and the classes already listed are kept'
+        definition.stringValues(Introspected, 'classNames') as List == ['test.CodecEndpoint$MessageEncoder']
+        definition.classValues(Introspected, 'classes')*.name == ['test.CodecEndpoint$Configurator']
     }
 
     void "a binary decoder makes its object message a binary handler, so it can sit next to a text one"() {
@@ -295,12 +347,13 @@ class BadEndpoint {
     }
 }
 '''                                                                                                       | '@ClientEndpoint is not supported'
-        'unresolvable decoder'      | '''
+        'decoder needing injection' | '''
 import jakarta.websocket.Decoder;
 
-@ServerEndpoint(value = "/bad", decoders = BadEndpoint.PlainDecoder.class)
+@ServerEndpoint(value = "/bad", decoders = BadEndpoint.InjectedDecoder.class)
 class BadEndpoint {
-    static class PlainDecoder implements Decoder.Text<String> {
+    public static class InjectedDecoder implements Decoder.Text<String> {
+        public InjectedDecoder(io.micronaut.core.convert.ConversionService conversionService) { }
         @Override public String decode(String s) { return s; }
         @Override public boolean willDecode(String s) { return true; }
     }
@@ -308,7 +361,7 @@ class BadEndpoint {
     public void text(String message) {
     }
 }
-'''                                                                                                       | 'cannot instantiate without reflection: test.BadEndpoint$PlainDecoder'
+'''                                                                                                       | 'cannot instantiate: test.BadEndpoint$InjectedDecoder'
     }
 
     private static ExecutableMethod method(BeanDefinition definition, String name) {

@@ -130,6 +130,20 @@ class JettyJakartaWebSocketSpec extends Specification {
         }
     }
 
+    void "with no codec declared, messages are read and written by the Micronaut message body handlers"() {
+        when:
+        JakartaEchoClient client = Flux.from(wsClient.connect(JakartaEchoClient, "/jakarta/json")).blockFirst()
+        client.send('{"item":"lamp","quantity":2}')
+
+        then: 'the JSON message was read into the handler parameter and its return value written as JSON'
+        conditions.eventually {
+            client.replies.contains('{"item":"lamp","quantity":2,"status":"confirmed"}')
+        }
+
+        cleanup:
+        client.close()
+    }
+
     void "a declared scope wins over the per-connection default"() {
         when:
         JakartaEchoClient one = Flux.from(wsClient.connect(JakartaEchoClient, "/jakarta/shared")).blockFirst()
@@ -149,7 +163,7 @@ class JettyJakartaWebSocketSpec extends Specification {
         two.close()
     }
 
-    void "a plain codec class is instantiated reflectively only when the application allows it"() {
+    void "a codec whose constructor takes arguments is built reflectively only when the application allows it"() {
         when: "nothing allows the type"
         JakartaEchoClient client = Flux.from(wsClient.connect(JakartaEchoClient, "/jakarta/reflective")).blockFirst()
 

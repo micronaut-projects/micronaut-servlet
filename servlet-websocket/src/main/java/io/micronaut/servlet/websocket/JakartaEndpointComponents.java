@@ -36,10 +36,11 @@ import java.util.List;
  * through the first route that can produce it, and only the last one reflects:</p>
  * <ol>
  *     <li>as a bean, when it is one;</li>
- *     <li>through its introspection, when it is {@code @Introspected} or listed in
- *     {@code @Introspected(classes = ...)} on the endpoint;</li>
+ *     <li>through its introspection, which the annotation processor generates for every class the
+ *     endpoint names, when it has a no-argument constructor;</li>
  *     <li>reflectively, when {@code micronaut-reflection} is on the classpath and the type matches
- *     a {@code micronaut.introspection.allow-reflection} pattern, after which it is a bean.</li>
+ *     a {@code micronaut.introspection.allow-reflection} pattern, after which it is a bean whose
+ *     constructor arguments are injected.</li>
  * </ol>
  *
  * @author graemerocher
@@ -81,14 +82,14 @@ public final class JakartaEndpointComponents {
             return beanContext.getBean(type);
         }
         BeanIntrospection<T> introspection = BeanIntrospector.SHARED.findIntrospection(type).orElse(null);
-        if (introspection != null) {
+        if (introspection != null && introspection.getConstructorArguments().length == 0) {
             return introspection.instantiate();
         }
         if (reflective != null && reflective.register(type)) {
             return beanContext.getBean(type);
         }
         throw new WebSocketException("Cannot instantiate WebSocket component [" + type.getName() + "] without reflection. "
-            + "Make it a bean (@Singleton or @Prototype), add @Introspected to it or list it in @Introspected(classes = ...) on the endpoint, "
+            + "Give it a public no-argument constructor, make it a bean (@Singleton or @Prototype), "
             + "or add io.micronaut:micronaut-reflection and allow the type through micronaut.introspection.allow-reflection");
     }
 

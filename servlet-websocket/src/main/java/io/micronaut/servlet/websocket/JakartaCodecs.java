@@ -45,6 +45,12 @@ import java.util.List;
  * handler's parameter type. Encoding applies to the value an {@code @OnMessage} method returns,
  * choosing the encoder whose type argument the value is an instance of.</p>
  *
+ * <p>The codecs are only the first step. A message no declared decoder produces is handed to
+ * Micronaut's conversion service and {@link io.micronaut.http.body.MessageBodyReader}s, and a
+ * value no declared encoder accepts goes out through the
+ * {@link io.micronaut.http.body.MessageBodyWriter}s, so a Jakarta endpoint reads and writes
+ * JSON with no codec declared at all, as a Micronaut endpoint does.</p>
+ *
  * @author graemerocher
  * @since 6.2.0
  */
@@ -99,7 +105,8 @@ final class JakartaCodecs {
      *
      * @param text     The message
      * @param argument The handler's message parameter
-     * @return The decoded message, or {@code null} if no declared decoder produces the parameter type
+     * @return The decoded message, or {@code null} if no declared decoder produces the parameter
+     * type, in which case Micronaut's readers are tried
      * @throws DecodeException if a decoder fails
      * @throws IOException     if a stream decoder cannot read the message
      */
@@ -126,7 +133,8 @@ final class JakartaCodecs {
      *
      * @param bytes    The message
      * @param argument The handler's message parameter
-     * @return The decoded message, or {@code null} if no declared decoder produces the parameter type
+     * @return The decoded message, or {@code null} if no declared decoder produces the parameter
+     * type, in which case Micronaut's readers are tried
      * @throws DecodeException if a decoder fails
      * @throws IOException     if a stream decoder cannot read the message
      */
@@ -152,7 +160,8 @@ final class JakartaCodecs {
      * Encodes a value with the first declared encoder that accepts its type.
      *
      * @param value The value
-     * @return The encoded text or binary message, or the value itself when no encoder accepts it
+     * @return The encoded text or binary message, or the value itself when no encoder accepts it,
+     * for Micronaut's writers to encode
      * @throws EncodeException if the encoder fails
      * @throws IOException     if a stream encoder cannot write the message
      */

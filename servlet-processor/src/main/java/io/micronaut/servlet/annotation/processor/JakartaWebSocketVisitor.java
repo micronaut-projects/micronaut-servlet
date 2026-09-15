@@ -30,6 +30,7 @@ import org.jspecify.annotations.Nullable;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -49,7 +50,8 @@ import static io.micronaut.servlet.annotation.processor.JakartaOnMessageMapper.M
  * runtime cannot recover from and reports it against the source instead of the first handshake:
  * the endpoint has a message handler, has at most one handler per category, does not use partial
  * messages, and every class it names in {@code decoders}, {@code encoders} or {@code configurator}
- * can be instantiated by one of the routes the runtime resolves them through.</p>
+ * can be instantiated. The ones that are not beans get an introspection generated, so no
+ * reflection is needed to create them.</p>
  *
  * <p>An endpoint that declares no scope of its own is made a {@code @Prototype}, which is the
  * Jakarta contract of one endpoint instance per connection. A declared scope wins.</p>
@@ -105,7 +107,7 @@ public final class JakartaWebSocketVisitor implements TypeElementVisitor<Object,
             throw new ProcessingException(element, "@ServerEndpoint requires the Micronaut WebSocket API. Add io.micronaut.servlet:micronaut-servlet-websocket to the classpath");
         }
         validateHandlers(element, serverEndpoint, context);
-        validateComponents(element, serverEndpoint, context);
+        introspectComponents(element, serverEndpoint, context);
         if (!element.hasStereotype(AnnotationUtil.SCOPE)) {
             element.annotate(PROTOTYPE);
         }
@@ -240,66 +242,66 @@ public final class JakartaWebSocketVisitor implements TypeElementVisitor<Object,
     }
 
     /**
-     * Every class named in {@code decoders}, {@code encoders} and {@code configurator} has to be
-     * resolvable by the runtime: as a bean, through an introspection, or reflectively when
-     * {@code micronaut-reflection} is available and allows the type.
+     * Makes every class named in {@code decoders}, {@code encoders} and {@code configurator}
+     * instantiable without reflection.
+     *
+     * <p>A Jakarta container creates these with {@code Class.newInstance()}. Here a class that is
+     * not a bean is listed in {@code @Introspected(classNames = ...)} on the endpoint, so an
+     * introspection is generated for it and the runtime instantiates it through that. A class
+     * with a public no-argument constructor - the Jakarta contract - therefore needs nothing else.
+     * One whose constructor takes arguments has to be a bean, or be built reflectively through
+     * {@code micronaut-reflection}, which the runtime falls back to when the module is present.</p>
      */
-    private static void validateComponents(ClassElement element, AnnotationValue<Annotation> serverEndpoint, VisitorContext context) {
-        if (context.getClassElement(REFLECTION_BEAN_DEFINITION).isPresent()) {
-            // Reflection is possible; whether a type is allowed is runtime configuration.
-            return;
-        }
-        Set<String> introspected = introspectedClasses(element);
-        List<String> unresolvable = new ArrayList<>();
+    private static void introspectComponents(ClassElement element, AnnotationValue<Annotation> serverEndpoint, VisitorContext context) {
+        boolean reflectionAvailable = context.getClassElement(REFLECTION_BEAN_DEFINITION).isPresent();
+        Set<String> introspect = new LinkedHashSet<>();
         for (String member : COMPONENT_MEMBERS) {
             for (AnnotationClassValue<?> classValue : serverEndpoint.annotationClassValues(member)) {
                 String name = classValue.getName();
-                if (isDefaultConfigurator(name) || introspected.contains(name)) {
+                if (isDefaultConfigurator(name)) {
                     continue;
                 }
                 ClassElement component = context.getClassElement(name)
                     .orElseThrow(() -> new ProcessingException(element, "@ServerEndpoint " + member + " names a class that cannot be resolved: " + name));
-                if (!isInstantiable(component)) {
-                    unresolvable.add(name);
+                if (isBean(component)) {
+                    continue;
                 }
+                if (!reflectionAvailable && !hasDefaultConstructor(component)) {
+                    throw new ProcessingException(element, "@ServerEndpoint " + member + " names a class the runtime cannot instantiate: " + name
+                        + ". Give it a public no-argument constructor, make it a bean (@Singleton or @Prototype), "
+                        + "or add io.micronaut:micronaut-reflection and allow the type through micronaut.introspection.allow-reflection");
+                }
+                introspect.add(name);
             }
         }
-        if (!unresolvable.isEmpty()) {
-            throw new ProcessingException(element, "@ServerEndpoint names classes the runtime cannot instantiate without reflection: "
-                + String.join(", ", unresolvable)
-                + ". Make each one a bean (@Singleton or @Prototype), add @Introspected to it or list it in @Introspected(classes = ...) on the endpoint, "
-                + "or add io.micronaut:micronaut-reflection and allow the type through micronaut.introspection.allow-reflection");
+        if (introspect.isEmpty()) {
+            return;
         }
-    }
-
-    /**
-     * The classes listed in {@code @Introspected(classes = ...)} on the endpoint, which get an
-     * introspection whether or not they are annotated themselves.
-     */
-    private static Set<String> introspectedClasses(ClassElement element) {
-        AnnotationValue<Annotation> introspected = element.getAnnotation(INTROSPECTED);
-        if (introspected == null) {
-            return Set.of();
+        AnnotationValue<Annotation> existing = element.getAnnotation(INTROSPECTED);
+        if (existing != null) {
+            for (AnnotationClassValue<?> listed : existing.annotationClassValues("classes")) {
+                introspect.remove(listed.getName());
+            }
+            introspect.addAll(List.of(existing.stringValues("classNames")));
+            if (existing.annotationClassValues("classes").length == 0 && existing.stringValues("classNames").length == 0) {
+                // The endpoint was introspected itself; listing other classes would stop that.
+                introspect.add(element.getName());
+            }
         }
-        Set<String> names = new HashSet<>();
-        for (AnnotationClassValue<?> classValue : introspected.annotationClassValues("classes")) {
-            names.add(classValue.getName());
-        }
-        return names;
+        element.annotate(INTROSPECTED, builder -> builder.member("classNames", introspect.toArray(String[]::new)));
     }
 
     private static boolean isDefaultConfigurator(String name) {
         return DEFAULT_CONFIGURATOR.equals(name) || DEFAULT_CONFIGURATOR.replace('$', '.').equals(name);
     }
 
-    /**
-     * Whether the runtime can create the component without reflection: as a bean, or through
-     * its own introspection.
-     */
-    private static boolean isInstantiable(ClassElement component) {
-        return component.hasStereotype(AnnotationUtil.SCOPE)
-            || component.hasStereotype(BEAN)
-            || component.hasAnnotation(INTROSPECTED);
+    private static boolean isBean(ClassElement component) {
+        return component.hasStereotype(AnnotationUtil.SCOPE) || component.hasStereotype(BEAN);
+    }
+
+    private static boolean hasDefaultConstructor(ClassElement component) {
+        return !component.isAbstract()
+            && component.getDefaultConstructor().filter(constructor -> !constructor.isPrivate()).isPresent();
     }
 
     /**
