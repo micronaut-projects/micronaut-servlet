@@ -459,8 +459,10 @@ public class MicronautServerEndpoint extends Endpoint {
             return new StringReader(text);
         }
         if (type == InputStream.class) {
-            byte[] data = bytes != null ? bytes : text != null ? text.getBytes(StandardCharsets.UTF_8) : new byte[0];
-            return new ByteArrayInputStream(data);
+            if (bytes != null) {
+                return new ByteArrayInputStream(bytes);
+            }
+            return new ByteArrayInputStream(text != null ? text.getBytes(StandardCharsets.UTF_8) : new byte[0]);
         }
         if (type == ByteBuffer.class && bytes != null) {
             return ByteBuffer.wrap(bytes);
