@@ -46,6 +46,7 @@ import io.micronaut.websocket.event.WebSocketMessageProcessedEvent;
 import io.micronaut.websocket.event.WebSocketSessionClosedEvent;
 import io.micronaut.websocket.event.WebSocketSessionOpenEvent;
 import io.micronaut.websocket.exceptions.WebSocketSessionException;
+import jakarta.websocket.DecodeException;
 import jakarta.websocket.Endpoint;
 import jakarta.websocket.EndpointConfig;
 import jakarta.websocket.MessageHandler;
@@ -410,7 +411,7 @@ public class MicronautServerEndpoint extends Endpoint {
     private @Nullable Object decode(ExecutableMethod<Object, ?> messageMethod,
                                     Argument<?> bodyArgument,
                                     @Nullable String text,
-                                    byte @Nullable [] bytes) throws Exception {
+                                    byte @Nullable [] bytes) throws DecodeException, IOException {
         if (codecs != null && !codecs.isEmpty()) {
             Object decoded = text != null
                 ? codecs.decodeText(text, bodyArgument)
@@ -458,7 +459,8 @@ public class MicronautServerEndpoint extends Endpoint {
             return new StringReader(text);
         }
         if (type == InputStream.class) {
-            return new ByteArrayInputStream(bytes != null ? bytes : text.getBytes(StandardCharsets.UTF_8));
+            byte[] data = bytes != null ? bytes : text != null ? text.getBytes(StandardCharsets.UTF_8) : new byte[0];
+            return new ByteArrayInputStream(data);
         }
         if (type == ByteBuffer.class && bytes != null) {
             return ByteBuffer.wrap(bytes);
