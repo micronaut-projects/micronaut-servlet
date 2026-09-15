@@ -35,7 +35,6 @@ import io.micronaut.http.body.MessageBodyReader;
 import io.micronaut.http.bind.binders.ContinuationArgumentBinder;
 import io.micronaut.http.server.CoroutineHelper;
 import io.micronaut.http.simple.SimpleHttpHeaders;
-import io.micronaut.inject.MethodExecutionHandle;
 import io.micronaut.inject.ExecutableMethod;
 import io.micronaut.http.reactive.execution.ReactiveExecutionFlow;
 import io.micronaut.websocket.CloseReason;
@@ -46,6 +45,7 @@ import io.micronaut.websocket.context.WebSocketBean;
 import io.micronaut.websocket.event.WebSocketMessageProcessedEvent;
 import io.micronaut.websocket.event.WebSocketSessionClosedEvent;
 import io.micronaut.websocket.event.WebSocketSessionOpenEvent;
+import io.micronaut.websocket.exceptions.WebSocketSessionException;
 import jakarta.websocket.Endpoint;
 import jakarta.websocket.EndpointConfig;
 import jakarta.websocket.MessageHandler;
@@ -58,8 +58,12 @@ import reactor.util.context.Context;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.Reader;
+import java.io.StringReader;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -71,7 +75,14 @@ import java.util.function.Supplier;
 
 /**
  * The {@link Endpoint} that adapts a Jakarta WebSocket connection onto a Micronaut
- * {@code @ServerWebSocket} bean.
+ * {@code @ServerWebSocket} bean, or onto a Jakarta {@code @ServerEndpoint} the annotation
+ * processor mapped onto one.
+ *
+ * <p>The two models differ in what a handler receives and returns. A Jakarta endpoint has one
+ * handler per message category, may take the container's {@link Session}, the
+ * {@link EndpointConfig} and the Jakarta {@link jakarta.websocket.CloseReason}, decodes with the
+ * decoders it declares, and the value its {@code @OnMessage} returns is sent back to the peer.
+ * Each of those is bridged here; a Micronaut endpoint is handled as before.</p>
  *
  * <p>One instance exists per connection. All per-connection state arrives through the
  * {@link EndpointConfig} user properties, so the class also works on containers that
@@ -99,7 +110,15 @@ public class MicronautServerEndpoint extends Endpoint {
     private @Nullable ServletWebSocketSupport support;
     private @Nullable WebSocketBean<Object> webSocketBean;
     private @Nullable ServletWebSocketSession micronautSession;
-    private @Nullable Argument<?> messageBodyArgument;
+    private @Nullable Session nativeSession;
+    private @Nullable EndpointConfig endpointConfig;
+    private @Nullable JakartaEndpoint jakartaEndpoint;
+    private @Nullable JakartaCodecs codecs;
+    private @Nullable ExecutableMethod<Object, ?> textMethod;
+    private @Nullable ExecutableMethod<Object, ?> binaryMethod;
+    private @Nullable ExecutableMethod<Object, ?> pongMethod;
+    private @Nullable Argument<?> textBodyArgument;
+    private @Nullable Argument<?> binaryBodyArgument;
     private @Nullable Argument<?> pongBodyArgument;
 
     /**
@@ -133,6 +152,9 @@ public class MicronautServerEndpoint extends Endpoint {
         this.context = ctx;
         this.support = ctx.support();
         this.webSocketBean = ctx.webSocketBean();
+        this.nativeSession = session;
+        this.endpointConfig = config;
+        this.jakartaEndpoint = ctx.jakartaEndpoint();
 
         ConvertibleValues<Object> uriVariables = ConvertibleValues.of(ctx.routeMatch().getVariableValues());
         this.micronautSession = new ServletWebSocketSession(
@@ -144,36 +166,75 @@ public class MicronautServerEndpoint extends Endpoint {
             support.configuration().getMaxPendingSends()
         );
 
-        applyLimits(session);
-
-        MethodExecutionHandle<Object, ?> messageMethod = webSocketBean.messageMethod().orElse(null);
-        if (messageMethod != null) {
-            this.messageBodyArgument = resolveBodyArgument(messageMethod, false);
-            if (messageBodyArgument == null) {
-                // Validated before the session is registered and before the open event, so a
-                // listener never sees a close that had no matching open.
-                LOG.error("WebSocket @OnMessage method [{}] must declare exactly one message body argument", messageMethod.getExecutableMethod());
+        if (jakartaEndpoint != null) {
+            // The context is an implementation detail; user code sees the user properties
+            // through Session.getUserProperties() and EndpointConfig.getUserProperties().
+            config.getUserProperties().remove(CONTEXT_PROPERTY);
+            session.getUserProperties().remove(CONTEXT_PROPERTY);
+            try {
+                this.codecs = JakartaCodecs.create(jakartaEndpoint, support.components(), config);
+            } catch (Exception e) {
+                LOG.error("Error creating the decoders and encoders of WebSocket endpoint [{}]: {}",
+                    webSocketBean.getBeanDefinition().getBeanType().getName(), e.getMessage(), e);
                 closeQuietly(session, CloseReason.INTERNAL_ERROR);
                 return;
             }
-        }
-        support.sessionRegistry().register(micronautSession);
-        if (messageMethod != null) {
-            session.addMessageHandler(String.class, (MessageHandler.Whole<String>) this::onTextMessage);
-            session.addMessageHandler(ByteBuffer.class, (MessageHandler.Whole<ByteBuffer>) this::onBinaryMessage);
+            this.textMethod = jakartaEndpoint.textMethod();
+            this.binaryMethod = jakartaEndpoint.binaryMethod();
+            this.pongMethod = jakartaEndpoint.pongMethod();
+        } else {
+            // A Micronaut endpoint has one message handler for text and binary alike.
+            ExecutableMethod<Object, ?> messageMethod = webSocketBean.messageMethod()
+                .map(handle -> (ExecutableMethod<Object, ?>) handle.getExecutableMethod())
+                .orElse(null);
+            this.textMethod = messageMethod;
+            this.binaryMethod = messageMethod;
+            this.pongMethod = webSocketBean.pongMethod()
+                .map(handle -> (ExecutableMethod<Object, ?>) handle.getExecutableMethod())
+                .orElse(null);
         }
 
-        MethodExecutionHandle<Object, ?> pongMethod = webSocketBean.pongMethod().orElse(null);
+        applyLimits(session);
+
+        // Validated before the session is registered and before the open event, so a
+        // listener never sees a close that had no matching open.
+        if (textMethod != null) {
+            this.textBodyArgument = resolveBodyArgument(textMethod, false);
+            if (textBodyArgument == null) {
+                failHandler(session, textMethod, "must declare exactly one message body argument");
+                return;
+            }
+        }
+        if (binaryMethod != null) {
+            this.binaryBodyArgument = binaryMethod == textMethod
+                ? textBodyArgument
+                : resolveBodyArgument(binaryMethod, false);
+            if (binaryBodyArgument == null) {
+                failHandler(session, binaryMethod, "must declare exactly one message body argument");
+                return;
+            }
+        }
         if (pongMethod != null) {
             this.pongBodyArgument = resolveBodyArgument(pongMethod, true);
-            if (pongBodyArgument != null) {
-                session.addMessageHandler(PongMessage.class, (MessageHandler.Whole<PongMessage>) this::onPongMessage);
-            } else {
-                LOG.error("WebSocket pong handler [{}] must declare exactly one WebSocketPongMessage argument", pongMethod.getExecutableMethod());
+            if (pongBodyArgument == null) {
+                LOG.error("WebSocket pong handler [{}] must declare exactly one pong message argument", pongMethod);
             }
         }
 
-        MethodExecutionHandle<Object, ?> openMethod = webSocketBean.openMethod().orElse(null);
+        support.sessionRegistry().register(micronautSession);
+        if (textMethod != null) {
+            session.addMessageHandler(String.class, (MessageHandler.Whole<String>) this::onTextMessage);
+        }
+        if (binaryMethod != null) {
+            session.addMessageHandler(ByteBuffer.class, (MessageHandler.Whole<ByteBuffer>) this::onBinaryMessage);
+        }
+        if (pongBodyArgument != null) {
+            session.addMessageHandler(PongMessage.class, (MessageHandler.Whole<PongMessage>) this::onPongMessage);
+        }
+
+        ExecutableMethod<Object, ?> openMethod = webSocketBean.openMethod()
+            .map(handle -> (ExecutableMethod<Object, ?>) handle.getExecutableMethod())
+            .orElse(null);
         if (openMethod != null) {
             invokeOpen(openMethod);
         }
@@ -181,12 +242,17 @@ public class MicronautServerEndpoint extends Endpoint {
         support.applicationContext().publishEvent(new WebSocketSessionOpenEvent(micronautSession));
     }
 
+    private static void failHandler(Session session, ExecutableMethod<?, ?> handler, String problem) {
+        LOG.error("WebSocket @OnMessage method [{}] {}", handler, problem);
+        closeQuietly(session, CloseReason.INTERNAL_ERROR);
+    }
+
     @Override
     public void onClose(Session session, jakarta.websocket.CloseReason closeReason) {
         handleClose(new CloseReason(
             closeReason.getCloseCode().getCode(),
             closeReason.getReasonPhrase()
-        ));
+        ), closeReason);
     }
 
     @Override
@@ -194,15 +260,16 @@ public class MicronautServerEndpoint extends Endpoint {
         forwardError(throwable);
     }
 
+    /**
+     * Applies the payload limits. A Micronaut endpoint's one handler limits text and binary
+     * alike; a Jakarta endpoint declares {@code maxMessageSize} per handler.
+     */
     private void applyLimits(Session session) {
         ServletWebSocketConfiguration configuration = support.configuration();
-        Integer maxPayloadLength = webSocketBean.messageMethod()
-            .flatMap(MicronautServerEndpoint::declaredMaxPayloadLength)
-            .orElse(null);
         session.setMaxTextMessageBufferSize(
-            maxPayloadLength != null ? maxPayloadLength : configuration.getMaxTextMessageSize());
+            declaredMaxPayloadLength(textMethod).orElse(configuration.getMaxTextMessageSize()));
         session.setMaxBinaryMessageBufferSize(
-            maxPayloadLength != null ? maxPayloadLength : configuration.getMaxBinaryMessageSize());
+            declaredMaxPayloadLength(binaryMethod).orElse(configuration.getMaxBinaryMessageSize()));
         session.setMaxIdleTimeout(support.idleTimeout().toMillis());
     }
 
@@ -212,10 +279,13 @@ public class MicronautServerEndpoint extends Endpoint {
      * <p>The annotation carries a default, so a value read straight from the metadata cannot
      * be told apart from an unset one, and the configured size would then never apply.</p>
      *
-     * @param messageMethod The message handler
+     * @param messageMethod The message handler, or {@code null} when there is none
      * @return The declared payload length, or empty when the endpoint did not declare one
      */
-    private static Optional<Integer> declaredMaxPayloadLength(MethodExecutionHandle<Object, ?> messageMethod) {
+    private static Optional<Integer> declaredMaxPayloadLength(@Nullable ExecutableMethod<Object, ?> messageMethod) {
+        if (messageMethod == null) {
+            return Optional.empty();
+        }
         return messageMethod.getAnnotationMetadata()
             .findAnnotation(OnMessage.class)
             .filter(annotation -> annotation.contains(MAX_PAYLOAD_LENGTH))
@@ -223,24 +293,29 @@ public class MicronautServerEndpoint extends Endpoint {
     }
 
     private void onTextMessage(String message) {
-        handleMessage(message, null);
+        handleMessage(textMethod, textBodyArgument, message, null);
     }
 
     private void onBinaryMessage(ByteBuffer message) {
         byte[] bytes = new byte[message.remaining()];
         message.get(bytes);
-        handleMessage(null, bytes);
+        handleMessage(binaryMethod, binaryBodyArgument, null, bytes);
     }
 
     private void onPongMessage(PongMessage message) {
-        MethodExecutionHandle<Object, ?> pongMethod = webSocketBean.pongMethod().orElse(null);
         if (pongMethod == null || pongBodyArgument == null) {
             return;
         }
-        ByteBuffer applicationData = message.getApplicationData();
-        byte[] bytes = new byte[applicationData.remaining()];
-        applicationData.get(bytes);
-        WebSocketPongMessage pong = new WebSocketPongMessage(ByteArrayBufferFactory.INSTANCE.wrap(bytes));
+        Object pong;
+        if (pongBodyArgument.getType().isInstance(message)) {
+            // A Jakarta handler takes the container's PongMessage as it is.
+            pong = message;
+        } else {
+            ByteBuffer applicationData = message.getApplicationData();
+            byte[] bytes = new byte[applicationData.remaining()];
+            applicationData.get(bytes);
+            pong = new WebSocketPongMessage(ByteArrayBufferFactory.INSTANCE.wrap(bytes));
+        }
         invoke(pongMethod, Map.of(pongBodyArgument, pong), null);
     }
 
@@ -254,8 +329,8 @@ public class MicronautServerEndpoint extends Endpoint {
      *
      * @param openMethod The open handler
      */
-    private void invokeOpen(MethodExecutionHandle<Object, ?> openMethod) {
-        invokeHandler(openMethod, Map.of()).onComplete((ignored, error) -> {
+    private void invokeOpen(ExecutableMethod<Object, ?> openMethod) {
+        invokeHandler(openMethod, Map.of(), false).onComplete((ignored, error) -> {
             if (error != null) {
                 failOpen(error);
             }
@@ -273,15 +348,17 @@ public class MicronautServerEndpoint extends Endpoint {
         }
     }
 
-    private void handleMessage(@Nullable String text, byte @Nullable [] bytes) {
-        MethodExecutionHandle<Object, ?> messageMethod = webSocketBean.messageMethod().orElse(null);
-        if (messageMethod == null || messageBodyArgument == null) {
+    private void handleMessage(@Nullable ExecutableMethod<Object, ?> messageMethod,
+                               @Nullable Argument<?> bodyArgument,
+                               @Nullable String text,
+                               byte @Nullable [] bytes) {
+        if (messageMethod == null || bodyArgument == null) {
             closeSession(CloseReason.UNSUPPORTED_DATA);
             return;
         }
         Object decoded;
         try {
-            decoded = decode(messageMethod, messageBodyArgument, text, bytes);
+            decoded = decode(messageMethod, bodyArgument, text, bytes);
         } catch (Exception e) {
             forwardError(e);
             return;
@@ -289,18 +366,41 @@ public class MicronautServerEndpoint extends Endpoint {
         if (decoded == null) {
             closeSession(new CloseReason(
                 CloseReason.UNSUPPORTED_DATA.getCode(),
-                "Received data cannot be data to target type: " + messageBodyArgument
+                "Received data cannot be data to target type: " + bodyArgument
             ));
             return;
         }
-        invoke(messageMethod, Map.of(messageBodyArgument, decoded), decoded);
+        invoke(messageMethod, Map.of(bodyArgument, decoded), decoded);
     }
 
+    /**
+     * Decodes a message for the handler's parameter: the declared Jakarta decoders first, then
+     * the stream and buffer views of the payload, then Micronaut's conversion and message body
+     * readers.
+     */
     @SuppressWarnings("unchecked")
-    private @Nullable Object decode(MethodExecutionHandle<Object, ?> messageMethod,
+    private @Nullable Object decode(ExecutableMethod<Object, ?> messageMethod,
                                     Argument<?> bodyArgument,
                                     @Nullable String text,
-                                    byte @Nullable [] bytes) {
+                                    byte @Nullable [] bytes) throws Exception {
+        if (codecs != null && !codecs.isEmpty()) {
+            Object decoded = text != null
+                ? codecs.decodeText(text, bodyArgument)
+                : codecs.decodeBinary(bytes, bodyArgument);
+            if (decoded != null) {
+                return decoded;
+            }
+        }
+        Class<?> type = bodyArgument.getType();
+        if (type == Reader.class && text != null) {
+            return new StringReader(text);
+        }
+        if (type == InputStream.class) {
+            return new ByteArrayInputStream(bytes != null ? bytes : text.getBytes(StandardCharsets.UTF_8));
+        }
+        if (type == ByteBuffer.class && bytes != null) {
+            return ByteBuffer.wrap(bytes);
+        }
         Object raw = text != null ? text : bytes;
         Object converted = support.conversionService()
             .convert(raw, ConversionContext.of((Argument<Object>) bodyArgument))
@@ -326,25 +426,40 @@ public class MicronautServerEndpoint extends Endpoint {
         );
     }
 
-    private @Nullable Argument<?> resolveBodyArgument(MethodExecutionHandle<Object, ?> handle, boolean pong) {
+    private @Nullable Argument<?> resolveBodyArgument(ExecutableMethod<Object, ?> method, boolean pong) {
         WebSocketState state = new WebSocketState(micronautSession, context.originatingRequest());
-        BoundExecutable<Object, ?> probe = new DefaultExecutableBinder<WebSocketState>()
-            .tryBind(handle.getExecutableMethod(), support.binderRegistry(), state);
+        BoundExecutable<Object, ?> probe = new DefaultExecutableBinder<WebSocketState>(frameworkArguments(method))
+            .tryBind(method, support.binderRegistry(), state);
         List<Argument<?>> unbound = probe.getUnboundArguments();
         if (unbound.size() != 1) {
             return null;
         }
         Argument<?> argument = unbound.get(0);
-        if (pong && !argument.getType().isAssignableFrom(WebSocketPongMessage.class)) {
+        if (pong
+            && !argument.getType().isAssignableFrom(WebSocketPongMessage.class)
+            && !argument.getType().isAssignableFrom(PongMessage.class)) {
             return null;
         }
         return argument;
     }
 
-    private void invoke(MethodExecutionHandle<Object, ?> handle,
+    /**
+     * The arguments every handler may take by type and that no binder knows: the container's
+     * {@link Session} and the {@link EndpointConfig}, which is what a Jakarta handler declares.
+     *
+     * @param method The handler
+     * @return The pre-bound arguments
+     */
+    private Map<Argument<?>, Object> frameworkArguments(ExecutableMethod<?, ?> method) {
+        return preBind(method, nativeSession, endpointConfig);
+    }
+
+    private void invoke(ExecutableMethod<Object, ?> method,
                         Map<Argument<?>, Object> preBound,
                         @Nullable Object processedMessage) {
-        invokeHandler(handle, preBound).onComplete((ignored, error) -> {
+        // Jakarta sends what an @OnMessage method returns; Micronaut does not.
+        boolean sendResult = jakartaEndpoint != null && method.hasAnnotation(JakartaEndpoint.ON_MESSAGE);
+        invokeHandler(method, preBound, sendResult).onComplete((ignored, error) -> {
             if (error != null) {
                 forwardError(error);
             } else if (processedMessage != null) {
@@ -365,15 +480,23 @@ public class MicronautServerEndpoint extends Endpoint {
      * request that belongs to this invocation, keeps concurrent messages on one session from
      * overwriting each other's continuation.</p>
      *
-     * @param handle   The handler
-     * @param preBound Arguments already resolved, such as the message body
+     * @param method     The handler
+     * @param preBound   Arguments already resolved, such as the message body
+     * @param sendResult Whether a value the handler returns is sent to the peer
      * @return A flow completing when the handler, and any publisher it returned, completes
      */
-    private ExecutionFlow<Object> invokeHandler(MethodExecutionHandle<Object, ?> handle,
-                                                Map<Argument<?>, Object> preBound) {
+    private ExecutionFlow<Object> invokeHandler(ExecutableMethod<Object, ?> method,
+                                                Map<Argument<?>, Object> preBound,
+                                                boolean sendResult) {
         Executor executor = support.executorSelector()
-            .selectExecutor(handle.getExecutableMethod(), support.threadSelectionConfiguration());
-        boolean suspend = handle.getExecutableMethod().isSuspend();
+            .selectExecutor(method, support.threadSelectionConfiguration());
+        boolean suspend = method.isSuspend();
+        Map<Argument<?>, Object> arguments = frameworkArguments(method);
+        if (!preBound.isEmpty()) {
+            arguments = new LinkedHashMap<>(arguments);
+            arguments.putAll(preBound);
+        }
+        Map<Argument<?>, Object> bindings = arguments;
         PropagatedContext propagatedContext = PropagatedContext.getOrEmpty()
             .plus(new ServerHttpRequestContext(context.originatingRequest()));
         return ExecutionFlow.async(executor, () -> propagatedContext.propagate(() -> {
@@ -381,13 +504,14 @@ public class MicronautServerEndpoint extends Endpoint {
                 HttpRequest<?> request = suspend
                     ? WebSocketHandshakeRequest.snapshot(context.originatingRequest())
                     : context.originatingRequest();
-                BoundExecutable<Object, ?> bound = new DefaultExecutableBinder<WebSocketState>(preBound)
-                    .bind(handle.getExecutableMethod(), support.binderRegistry(),
+                BoundExecutable<Object, ?> bound = new DefaultExecutableBinder<WebSocketState>(bindings)
+                    .bind(method, support.binderRegistry(),
                         new WebSocketState(micronautSession, request));
                 if (suspend) {
                     return invokeSuspend(bound, request, propagatedContext);
                 }
-                return toFlow(bound.invoke(webSocketBean.getTarget()), propagatedContext);
+                Object result = bound.invoke(webSocketBean.getTarget());
+                return sendResult ? sendResult(result, propagatedContext) : toFlow(result, propagatedContext);
             } catch (Throwable e) {
                 return ExecutionFlow.error(e);
             }
@@ -428,6 +552,44 @@ public class MicronautServerEndpoint extends Endpoint {
         return CompletableFutureExecutionFlow.just(completion.get().thenApply(value -> (Object) value));
     }
 
+    /**
+     * Sends what a Jakarta {@code @OnMessage} handler returned, as the specification asks: a
+     * plain value straight away, the value of a {@link CompletionStage} once it completes. A
+     * publisher keeps the Micronaut meaning, completion of the handler, and is not sent.
+     *
+     * @param result            The handler's return value
+     * @param propagatedContext The context the handler ran under
+     * @return A flow completing once the value is sent
+     */
+    @SuppressWarnings("unchecked")
+    private ExecutionFlow<Object> sendResult(@Nullable Object result, PropagatedContext propagatedContext) {
+        if (result == null || Publishers.isConvertibleToPublisher(result)) {
+            return toFlow(result, propagatedContext);
+        }
+        if (result instanceof CompletionStage<?> stage) {
+            return CompletableFutureExecutionFlow.just(((CompletionStage<Object>) stage).thenApply(value -> {
+                if (value != null) {
+                    sendReturnValue(value);
+                }
+                return null;
+            }));
+        }
+        sendReturnValue(result);
+        return ExecutionFlow.just(null);
+    }
+
+    private void sendReturnValue(Object value) {
+        Object message = value;
+        if (codecs != null && !codecs.isEmpty()) {
+            try {
+                message = codecs.encode(value);
+            } catch (Exception e) {
+                throw new WebSocketSessionException("Error encoding WebSocket message: " + e.getMessage(), e);
+            }
+        }
+        micronautSession.sendSync(message);
+    }
+
     @SuppressWarnings({"unchecked", "rawtypes"})
     private ExecutionFlow<Object> toFlow(@Nullable Object result, PropagatedContext propagatedContext) {
         if (result == null) {
@@ -447,18 +609,18 @@ public class MicronautServerEndpoint extends Endpoint {
         return ExecutionFlow.just(result);
     }
 
-    private void handleClose(CloseReason reason) {
+    private void handleClose(CloseReason reason, jakarta.websocket.CloseReason nativeReason) {
         if (!closed.compareAndSet(false, true)) {
             return;
         }
-        MethodExecutionHandle<Object, ?> closeMethod = webSocketBean != null
-            ? webSocketBean.closeMethod().orElse(null)
+        ExecutableMethod<Object, ?> closeMethod = webSocketBean != null
+            ? webSocketBean.closeMethod().map(handle -> (ExecutableMethod<Object, ?>) handle.getExecutableMethod()).orElse(null)
             : null;
         if (closeMethod == null) {
             finishClose();
             return;
         }
-        invokeHandler(closeMethod, preBind(closeMethod.getExecutableMethod(), reason)).onComplete((ignored, error) -> {
+        invokeHandler(closeMethod, preBind(closeMethod, reason, nativeReason), false).onComplete((ignored, error) -> {
             if (error != null && LOG.isErrorEnabled()) {
                 LOG.error("Error invoking @OnClose handler: {}", error.getMessage(), error);
             }
@@ -467,6 +629,9 @@ public class MicronautServerEndpoint extends Endpoint {
     }
 
     private void finishClose() {
+        if (codecs != null) {
+            codecs.destroy();
+        }
         if (micronautSession == null) {
             return;
         }
@@ -479,14 +644,14 @@ public class MicronautServerEndpoint extends Endpoint {
     }
 
     private void forwardError(Throwable cause) {
-        MethodExecutionHandle<Object, ?> errorMethod = webSocketBean != null
-            ? webSocketBean.errorMethod().orElse(null)
+        ExecutableMethod<Object, ?> errorMethod = webSocketBean != null
+            ? webSocketBean.errorMethod().map(handle -> (ExecutableMethod<Object, ?>) handle.getExecutableMethod()).orElse(null)
             : null;
         if (errorMethod == null) {
             handleUnexpected(cause);
             return;
         }
-        invokeHandler(errorMethod, preBind(errorMethod.getExecutableMethod(), cause)).onComplete((ignored, error) -> {
+        invokeHandler(errorMethod, preBind(errorMethod, cause), false).onComplete((ignored, error) -> {
             if (error != null) {
                 if (LOG.isErrorEnabled()) {
                     LOG.error("Error invoking @OnError handler: {}", error.getMessage(), error);
@@ -528,19 +693,32 @@ public class MicronautServerEndpoint extends Endpoint {
     }
 
     /**
-     * Matches a value against the first handler argument that can hold it, the way the
-     * Netty implementation pre-binds the close reason and the error cause.
+     * Matches each value against the first handler argument that can hold it and is not taken
+     * yet, the way the Netty implementation pre-binds the close reason and the error cause.
      *
      * @param method The handler method
-     * @param value  The value to pre-bind
-     * @return The pre-bound arguments, empty when no argument accepts the value
+     * @param values The values to pre-bind; a {@code null} is skipped
+     * @return The pre-bound arguments, empty when no argument accepts any value
      */
-    static Map<Argument<?>, Object> preBind(ExecutableMethod<?, ?> method, Object value) {
-        for (Argument<?> argument : method.getArguments()) {
-            if (argument.getType().isInstance(value)) {
-                return Map.of(argument, value);
+    static Map<Argument<?>, Object> preBind(ExecutableMethod<?, ?> method, @Nullable Object... values) {
+        Map<Argument<?>, Object> preBound = null;
+        for (Object value : values) {
+            if (value == null) {
+                continue;
+            }
+            for (Argument<?> argument : method.getArguments()) {
+                // An Object parameter is the message, never a framework value.
+                if (argument.getType() != Object.class
+                    && argument.getType().isInstance(value)
+                    && (preBound == null || !preBound.containsKey(argument))) {
+                    if (preBound == null) {
+                        preBound = new LinkedHashMap<>(values.length);
+                    }
+                    preBound.put(argument, value);
+                    break;
+                }
             }
         }
-        return Map.of();
+        return preBound == null ? Map.of() : preBound;
     }
 }

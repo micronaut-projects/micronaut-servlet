@@ -53,6 +53,7 @@ public final class ServletWebSocketSupport {
     private final ThreadSelectionConfiguration threadSelectionConfiguration;
     private final Duration idleTimeout;
     private final @Nullable CoroutineHelper coroutineHelper;
+    private final JakartaEndpointComponents components;
 
     /**
      * Default constructor.
@@ -66,6 +67,7 @@ public final class ServletWebSocketSupport {
      * @param configuration              The WebSocket configuration
      * @param routeExecutor              The route executor, used for {@code @ExecuteOn} support
      * @param serverConfiguration        The server configuration
+     * @param components                 Instantiates the components a Jakarta endpoint declares
      */
     public ServletWebSocketSupport(ApplicationContext applicationContext,
                                    RequestBinderRegistry requestBinderRegistry,
@@ -75,7 +77,8 @@ public final class ServletWebSocketSupport {
                                    ServletWebSocketSessionRegistry sessionRegistry,
                                    ServletWebSocketConfiguration configuration,
                                    RouteExecutor routeExecutor,
-                                   HttpServerConfiguration serverConfiguration) {
+                                   HttpServerConfiguration serverConfiguration,
+                                   JakartaEndpointComponents components) {
         this.applicationContext = applicationContext;
         this.binderRegistry = new WebSocketStateBinderRegistry(requestBinderRegistry, conversionService);
         this.conversionService = conversionService;
@@ -88,6 +91,14 @@ public final class ServletWebSocketSupport {
         this.threadSelectionConfiguration = serverConfiguration;
         Duration configured = configuration.getIdleTimeout();
         this.idleTimeout = configured != null ? configured : serverConfiguration.getIdleTimeout();
+        this.components = components;
+    }
+
+    /**
+     * @return The resolver for the decoders, encoders and configurator a Jakarta endpoint declares
+     */
+    public JakartaEndpointComponents components() {
+        return components;
     }
 
     /**

@@ -16,6 +16,10 @@ dependencies {
 
     implementation(mnReactor.micronaut.reactor)
 
+    // Reflective instantiation of Jakarta decoders, encoders and configurators is an opt-in:
+    // the one bean that uses this module is guarded by @Requires(classes = ...).
+    compileOnly(mn.micronaut.reflection)
+
     // Container bootstrap classes are guarded by @Requires(classes = ...), so each
     // container's WebSocket implementation is only needed to compile against.
     compileOnly(libs.jetty.websocket.jakarta.server)
@@ -24,8 +28,11 @@ dependencies {
 
     testImplementation(libs.managed.jakarta.websocket.api)
     testImplementation(libs.managed.jakarta.websocket.client.api)
+    testImplementation(mn.micronaut.reflection)
 
     testAnnotationProcessor(mn.micronaut.inject.java)
+    // Maps the Jakarta annotations of the endpoints the tests declare.
+    testAnnotationProcessor(projects.micronautServletProcessor)
     testImplementation(libs.junit.jupiter.engine)
     testImplementation(mn.micronaut.jackson.databind)
     testRuntimeOnly(mnLogging.logback.classic)

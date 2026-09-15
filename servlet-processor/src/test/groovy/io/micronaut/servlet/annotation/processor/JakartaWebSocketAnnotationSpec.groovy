@@ -2,6 +2,8 @@ package io.micronaut.servlet.annotation.processor
 
 import io.micronaut.annotation.processing.test.AbstractTypeElementSpec
 import io.micronaut.context.annotation.Prototype
+import io.micronaut.http.MediaType
+import io.micronaut.http.annotation.Consumes
 import io.micronaut.http.annotation.PathVariable
 import io.micronaut.inject.BeanDefinition
 import io.micronaut.inject.ExecutableMethod
@@ -186,8 +188,10 @@ class BinaryCodecEndpoint {
 }
 ''')
 
-        expect:
+        expect: 'the decoded handler is recorded as binary for the runtime, the text one is untouched'
         definition.hasStereotype(ServerWebSocket)
+        method(definition, 'frame').stringValue(Consumes).get() == MediaType.APPLICATION_OCTET_STREAM
+        !method(definition, 'text').hasAnnotation(Consumes)
     }
 
     void "an endpoint that cannot be mapped is rejected at compilation time: #reason"() {

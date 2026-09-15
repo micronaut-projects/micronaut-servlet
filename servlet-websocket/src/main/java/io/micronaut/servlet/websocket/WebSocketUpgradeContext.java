@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.web.router.UriRouteMatch;
 import io.micronaut.websocket.context.WebSocketBean;
+import org.jspecify.annotations.Nullable;
 
 /**
  * The per-upgrade state a {@link MicronautServerEndpoint} needs, passed to the endpoint
@@ -28,6 +29,7 @@ import io.micronaut.websocket.context.WebSocketBean;
  * @param originatingRequest The HTTP request that produced the handshake
  * @param routeMatch         The matched route
  * @param support            The shared services
+ * @param jakartaEndpoint    What a {@code @ServerEndpoint} declared, or {@code null} for a Micronaut endpoint
  * @author graemerocher
  * @since 6.2.0
  */
@@ -35,5 +37,22 @@ import io.micronaut.websocket.context.WebSocketBean;
 public record WebSocketUpgradeContext(WebSocketBean<Object> webSocketBean,
                                       HttpRequest<?> originatingRequest,
                                       UriRouteMatch<?, ?> routeMatch,
-                                      ServletWebSocketSupport support) {
+                                      ServletWebSocketSupport support,
+                                      @Nullable JakartaEndpoint jakartaEndpoint) {
+
+    /**
+     * Constructor for a Micronaut {@code @ServerWebSocket}.
+     *
+     * @param webSocketBean      The WebSocket bean
+     * @param originatingRequest The handshake request
+     * @param routeMatch         The matched route
+     * @param support            The shared services
+ * @param jakartaEndpoint    What a {@code @ServerEndpoint} declared, or {@code null} for a Micronaut endpoint
+     */
+    public WebSocketUpgradeContext(WebSocketBean<Object> webSocketBean,
+                                   HttpRequest<?> originatingRequest,
+                                   UriRouteMatch<?, ?> routeMatch,
+                                   ServletWebSocketSupport support) {
+        this(webSocketBean, originatingRequest, routeMatch, support, null);
+    }
 }

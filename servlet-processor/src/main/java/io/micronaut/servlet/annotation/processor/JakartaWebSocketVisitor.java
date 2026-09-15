@@ -64,6 +64,9 @@ public final class JakartaWebSocketVisitor implements TypeElementVisitor<Object,
     static final String REFLECTION_BEAN_DEFINITION = "io.micronaut.reflection.ReflectionBeanDefinition";
     static final String DEFAULT_CONFIGURATOR = "jakarta.websocket.server.ServerEndpointConfig$Configurator";
 
+    static final String CONSUMES = "io.micronaut.http.annotation.Consumes";
+    static final String APPLICATION_OCTET_STREAM = "application/octet-stream";
+
     private static final String PONG_MESSAGE = "jakarta.websocket.PongMessage";
     private static final String DECODER_BINARY = "jakarta.websocket.Decoder$Binary";
     private static final String DECODER_BINARY_STREAM = "jakarta.websocket.Decoder$BinaryStream";
@@ -170,8 +173,13 @@ public final class JakartaWebSocketVisitor implements TypeElementVisitor<Object,
             }
         }
         // An object message is decoded; a declared binary decoder for it makes it a binary message.
+        // The runtime cannot tell without reflecting over the decoder's generic signature, so the
+        // outcome is recorded on the handler as the media type it consumes.
         for (ParameterElement parameter : handler.getParameters()) {
             if (hasBinaryDecoder(serverEndpoint, parameter.getType(), context)) {
+                if (!handler.hasAnnotation(CONSUMES)) {
+                    handler.annotate(CONSUMES, builder -> builder.value(APPLICATION_OCTET_STREAM));
+                }
                 return MessageKind.BINARY;
             }
         }

@@ -8,6 +8,8 @@ dependencies {
     testImplementation(mnSerde.micronaut.serde.jackson)
     testAnnotationProcessor(mnSerde.micronaut.serde.processor)
     testImplementation(projects.micronautServletWebsocket)
+    // Maps the Jakarta WebSocket annotations of the test endpoints.
+    testAnnotationProcessor(projects.micronautServletProcessor)
     testImplementation libs.tomcat.embed.websocket
 }
 
