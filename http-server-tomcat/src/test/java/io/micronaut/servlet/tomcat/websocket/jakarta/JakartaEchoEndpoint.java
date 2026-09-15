@@ -33,7 +33,6 @@ public class JakartaEchoEndpoint {
     public static volatile String lastPong;
     public static volatile boolean contextLeaked;
 
-    private Session session;
     private String room;
 
     public JakartaEchoEndpoint() {
@@ -42,7 +41,6 @@ public class JakartaEchoEndpoint {
 
     @OnOpen
     public void open(Session session, EndpointConfig config, @PathParam("room") String roomName) throws IOException {
-        this.session = session;
         this.room = roomName;
         contextLeaked = session.getUserProperties().containsKey("io.micronaut.servlet.websocket.CONTEXT")
             || config.getUserProperties().containsKey("io.micronaut.servlet.websocket.CONTEXT");

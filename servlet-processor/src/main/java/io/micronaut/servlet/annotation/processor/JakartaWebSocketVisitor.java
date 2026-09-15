@@ -25,6 +25,7 @@ import io.micronaut.inject.ast.ParameterElement;
 import io.micronaut.inject.processing.ProcessingException;
 import io.micronaut.inject.visitor.TypeElementVisitor;
 import io.micronaut.inject.visitor.VisitorContext;
+import org.jspecify.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
@@ -164,27 +165,23 @@ public final class JakartaWebSocketVisitor implements TypeElementVisitor<Object,
     }
 
     private static MessageKind messageKind(MethodElement handler, AnnotationValue<Annotation> serverEndpoint, VisitorContext context) {
+        List<ParameterElement> candidates = new ArrayList<>();
         for (ParameterElement parameter : handler.getParameters()) {
-            if (isBound(parameter)) {
-                continue;
+            if (!isBound(parameter)) {
+                candidates.add(parameter);
             }
-            ClassElement type = parameter.getType();
-            String name = type.getName();
-            if (PONG_MESSAGE.equals(name)) {
-                return MessageKind.PONG;
-            }
-            if (BINARY_TYPES.contains(name) || isByteArray(type)) {
-                return MessageKind.BINARY;
-            }
-            if (type.isPrimitive() || TEXT_TYPES.contains(name)) {
-                return MessageKind.TEXT;
+        }
+        for (ParameterElement parameter : candidates) {
+            MessageKind kind = kindOfPayloadType(parameter.getType());
+            if (kind != null) {
+                return kind;
             }
         }
         // An object message is decoded; a declared binary decoder for it makes it a binary message.
         // The runtime cannot tell without reflecting over the decoder's generic signature, so the
         // outcome is recorded on the handler as the media type it consumes.
-        for (ParameterElement parameter : handler.getParameters()) {
-            if (!isBound(parameter) && hasBinaryDecoder(serverEndpoint, parameter.getType(), context)) {
+        for (ParameterElement parameter : candidates) {
+            if (hasBinaryDecoder(serverEndpoint, parameter.getType(), context)) {
                 if (!handler.hasAnnotation(CONSUMES)) {
                     handler.annotate(CONSUMES, builder -> builder.value(APPLICATION_OCTET_STREAM));
                 }
@@ -192,6 +189,24 @@ public final class JakartaWebSocketVisitor implements TypeElementVisitor<Object,
             }
         }
         return MessageKind.TEXT;
+    }
+
+    /**
+     * The category a payload type of the specification decides on its own, or {@code null} for an
+     * object type that is decoded.
+     */
+    private static @Nullable MessageKind kindOfPayloadType(ClassElement type) {
+        String name = type.getName();
+        if (PONG_MESSAGE.equals(name)) {
+            return MessageKind.PONG;
+        }
+        if (BINARY_TYPES.contains(name) || isByteArray(type)) {
+            return MessageKind.BINARY;
+        }
+        if (type.isPrimitive() || TEXT_TYPES.contains(name)) {
+            return MessageKind.TEXT;
+        }
+        return null;
     }
 
     /**
@@ -230,31 +245,21 @@ public final class JakartaWebSocketVisitor implements TypeElementVisitor<Object,
      * {@code micronaut-reflection} is available and allows the type.
      */
     private static void validateComponents(ClassElement element, AnnotationValue<Annotation> serverEndpoint, VisitorContext context) {
-        Set<String> introspected = new HashSet<>();
-        AnnotationValue<Annotation> introspectedAnnotation = element.getAnnotation(INTROSPECTED);
-        if (introspectedAnnotation != null) {
-            for (AnnotationClassValue<?> classValue : introspectedAnnotation.annotationClassValues("classes")) {
-                introspected.add(classValue.getName());
-            }
+        if (context.getClassElement(REFLECTION_BEAN_DEFINITION).isPresent()) {
+            // Reflection is possible; whether a type is allowed is runtime configuration.
+            return;
         }
-        boolean reflectionAvailable = context.getClassElement(REFLECTION_BEAN_DEFINITION).isPresent();
+        Set<String> introspected = introspectedClasses(element);
         List<String> unresolvable = new ArrayList<>();
         for (String member : COMPONENT_MEMBERS) {
             for (AnnotationClassValue<?> classValue : serverEndpoint.annotationClassValues(member)) {
                 String name = classValue.getName();
-                if (DEFAULT_CONFIGURATOR.equals(name) || DEFAULT_CONFIGURATOR.replace('$', '.').equals(name)) {
+                if (isDefaultConfigurator(name) || introspected.contains(name)) {
                     continue;
                 }
-                if (reflectionAvailable || introspected.contains(name)) {
-                    continue;
-                }
-                ClassElement component = context.getClassElement(name).orElse(null);
-                if (component == null) {
-                    throw new ProcessingException(element, "@ServerEndpoint " + member + " names a class that cannot be resolved: " + name);
-                }
-                if (!component.hasStereotype(AnnotationUtil.SCOPE)
-                    && !component.hasStereotype(BEAN)
-                    && !component.hasAnnotation(INTROSPECTED)) {
+                ClassElement component = context.getClassElement(name)
+                    .orElseThrow(() -> new ProcessingException(element, "@ServerEndpoint " + member + " names a class that cannot be resolved: " + name));
+                if (!isInstantiable(component)) {
                     unresolvable.add(name);
                 }
             }
@@ -265,6 +270,36 @@ public final class JakartaWebSocketVisitor implements TypeElementVisitor<Object,
                 + ". Make each one a bean (@Singleton or @Prototype), add @Introspected to it or list it in @Introspected(classes = ...) on the endpoint, "
                 + "or add io.micronaut:micronaut-reflection and allow the type through micronaut.introspection.allow-reflection");
         }
+    }
+
+    /**
+     * The classes listed in {@code @Introspected(classes = ...)} on the endpoint, which get an
+     * introspection whether or not they are annotated themselves.
+     */
+    private static Set<String> introspectedClasses(ClassElement element) {
+        AnnotationValue<Annotation> introspected = element.getAnnotation(INTROSPECTED);
+        if (introspected == null) {
+            return Set.of();
+        }
+        Set<String> names = new HashSet<>();
+        for (AnnotationClassValue<?> classValue : introspected.annotationClassValues("classes")) {
+            names.add(classValue.getName());
+        }
+        return names;
+    }
+
+    private static boolean isDefaultConfigurator(String name) {
+        return DEFAULT_CONFIGURATOR.equals(name) || DEFAULT_CONFIGURATOR.replace('$', '.').equals(name);
+    }
+
+    /**
+     * Whether the runtime can create the component without reflection: as a bean, or through
+     * its own introspection.
+     */
+    private static boolean isInstantiable(ClassElement component) {
+        return component.hasStereotype(AnnotationUtil.SCOPE)
+            || component.hasStereotype(BEAN)
+            || component.hasAnnotation(INTROSPECTED);
     }
 
     /**

@@ -175,10 +175,12 @@ class JakartaCodecsTest {
     static class CodecEndpoint {
         @OnMessage
         public void text(Upper upper) {
+            // only the signature matters: the test reads how the handler is classified
         }
 
         @OnMessage
         public void binary(ByteBuffer bytes) {
+            // only the signature matters: the test reads how the handler is classified
         }
     }
 }

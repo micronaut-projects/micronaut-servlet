@@ -124,14 +124,17 @@ class JakartaEndpointTest {
 
         @OnMessage
         public void text(String message, Session session) {
+            // only the signature matters: the test reads how the handler is classified
         }
 
         @OnMessage
         public void binary(byte[] message) {
+            // only the signature matters: the test reads how the handler is classified
         }
 
         @OnMessage
         public void pong(PongMessage pong) {
+            // only the signature matters: the test reads how the handler is classified
         }
     }
 
@@ -156,10 +159,12 @@ class JakartaEndpointTest {
 
         @OnMessage
         public void text(String message) {
+            // only the signature matters: the test reads how the handler is classified
         }
 
         @OnMessage
         public void frame(Frame frame) {
+            // only the signature matters: the test reads how the handler is classified
         }
     }
 
@@ -168,10 +173,12 @@ class JakartaEndpointTest {
     static class Bound {
         @OnMessage
         public void binary(@PathParam("id") String id, ByteBuffer data) {
+            // only the signature matters: the test reads how the handler is classified
         }
 
         @OnMessage
         public void text(@PathParam("last") boolean last, String message) {
+            // only the signature matters: the test reads how the handler is classified
         }
     }
 
@@ -180,6 +187,7 @@ class JakartaEndpointTest {
     static class Micronaut {
         @io.micronaut.websocket.annotation.OnMessage
         public void message(String message) {
+            // only the signature matters: the test reads how the handler is classified
         }
     }
 }

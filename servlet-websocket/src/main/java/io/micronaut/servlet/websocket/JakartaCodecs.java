@@ -17,7 +17,9 @@ package io.micronaut.servlet.websocket;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.type.Argument;
+import jakarta.websocket.DecodeException;
 import jakarta.websocket.Decoder;
+import jakarta.websocket.EncodeException;
 import jakarta.websocket.Encoder;
 import jakarta.websocket.EndpointConfig;
 import org.jspecify.annotations.Nullable;
@@ -26,6 +28,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.nio.ByteBuffer;
@@ -97,9 +100,10 @@ final class JakartaCodecs {
      * @param text     The message
      * @param argument The handler's message parameter
      * @return The decoded message, or {@code null} if no declared decoder produces the parameter type
-     * @throws Exception if a decoder fails
+     * @throws DecodeException if a decoder fails
+     * @throws IOException     if a stream decoder cannot read the message
      */
-    @Nullable Object decodeText(String text, Argument<?> argument) throws Exception {
+    @Nullable Object decodeText(String text, Argument<?> argument) throws DecodeException, IOException {
         Class<?> type = argument.getType();
         for (Decoder decoder : decoders) {
             Object decoded = null;
@@ -123,9 +127,10 @@ final class JakartaCodecs {
      * @param bytes    The message
      * @param argument The handler's message parameter
      * @return The decoded message, or {@code null} if no declared decoder produces the parameter type
-     * @throws Exception if a decoder fails
+     * @throws DecodeException if a decoder fails
+     * @throws IOException     if a stream decoder cannot read the message
      */
-    @Nullable Object decodeBinary(byte[] bytes, Argument<?> argument) throws Exception {
+    @Nullable Object decodeBinary(byte[] bytes, Argument<?> argument) throws DecodeException, IOException {
         Class<?> type = argument.getType();
         for (Decoder decoder : decoders) {
             Object decoded = null;
@@ -148,9 +153,10 @@ final class JakartaCodecs {
      *
      * @param value The value
      * @return The encoded text or binary message, or the value itself when no encoder accepts it
-     * @throws Exception if the encoder fails
+     * @throws EncodeException if the encoder fails
+     * @throws IOException     if a stream encoder cannot write the message
      */
-    Object encode(Object value) throws Exception {
+    Object encode(Object value) throws EncodeException, IOException {
         for (TypedEncoder candidate : encoders) {
             if (candidate.type != null && !candidate.type.isInstance(value)) {
                 continue;
@@ -168,7 +174,7 @@ final class JakartaCodecs {
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
-    private static Object encode(Encoder encoder, Object value) throws Exception {
+    private static Object encode(Encoder encoder, Object value) throws EncodeException, IOException {
         if (encoder instanceof Encoder.Text textEncoder) {
             return textEncoder.encode(value);
         }

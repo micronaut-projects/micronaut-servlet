@@ -166,71 +166,19 @@ public class MicronautServerEndpoint extends Endpoint {
             support.configuration().getMaxPendingSends()
         );
 
-        if (jakartaEndpoint != null) {
-            // The context is an implementation detail; user code sees the user properties
-            // through Session.getUserProperties() and EndpointConfig.getUserProperties().
-            config.getUserProperties().remove(CONTEXT_PROPERTY);
-            session.getUserProperties().remove(CONTEXT_PROPERTY);
-            try {
-                this.codecs = JakartaCodecs.create(jakartaEndpoint, support.components(), config);
-            } catch (Exception e) {
-                LOG.error("Error creating the decoders and encoders of WebSocket endpoint [{}]: {}",
-                    webSocketBean.getBeanDefinition().getBeanType().getName(), e.getMessage(), e);
-                closeQuietly(session, CloseReason.INTERNAL_ERROR);
-                return;
-            }
-            this.textMethod = jakartaEndpoint.textMethod();
-            this.binaryMethod = jakartaEndpoint.binaryMethod();
-            this.pongMethod = jakartaEndpoint.pongMethod();
-        } else {
-            // A Micronaut endpoint has one message handler for text and binary alike.
-            ExecutableMethod<Object, ?> messageMethod = webSocketBean.messageMethod()
-                .map(handle -> (ExecutableMethod<Object, ?>) handle.getExecutableMethod())
-                .orElse(null);
-            this.textMethod = messageMethod;
-            this.binaryMethod = messageMethod;
-            this.pongMethod = webSocketBean.pongMethod()
-                .map(handle -> (ExecutableMethod<Object, ?>) handle.getExecutableMethod())
-                .orElse(null);
+        if (!resolveHandlers(session, config)) {
+            return;
         }
-
         applyLimits(session);
 
         // Validated before the session is registered and before the open event, so a
         // listener never sees a close that had no matching open.
-        if (textMethod != null) {
-            this.textBodyArgument = resolveBodyArgument(textMethod, false);
-            if (textBodyArgument == null) {
-                failHandler(session, textMethod, "must declare exactly one message body argument");
-                return;
-            }
-        }
-        if (binaryMethod != null) {
-            this.binaryBodyArgument = binaryMethod == textMethod
-                ? textBodyArgument
-                : resolveBodyArgument(binaryMethod, false);
-            if (binaryBodyArgument == null) {
-                failHandler(session, binaryMethod, "must declare exactly one message body argument");
-                return;
-            }
-        }
-        if (pongMethod != null) {
-            this.pongBodyArgument = resolveBodyArgument(pongMethod, true);
-            if (pongBodyArgument == null) {
-                LOG.error("WebSocket pong handler [{}] must declare exactly one pong message argument", pongMethod);
-            }
+        if (!resolveBodyArguments(session)) {
+            return;
         }
 
         support.sessionRegistry().register(micronautSession);
-        if (textMethod != null) {
-            session.addMessageHandler(String.class, (MessageHandler.Whole<String>) this::onTextMessage);
-        }
-        if (binaryMethod != null) {
-            session.addMessageHandler(ByteBuffer.class, (MessageHandler.Whole<ByteBuffer>) this::onBinaryMessage);
-        }
-        if (pongBodyArgument != null) {
-            session.addMessageHandler(PongMessage.class, (MessageHandler.Whole<PongMessage>) this::onPongMessage);
-        }
+        registerMessageHandlers(session);
 
         ExecutableMethod<Object, ?> openMethod = webSocketBean.openMethod()
             .map(handle -> (ExecutableMethod<Object, ?>) handle.getExecutableMethod())
@@ -242,8 +190,88 @@ public class MicronautServerEndpoint extends Endpoint {
         support.applicationContext().publishEvent(new WebSocketSessionOpenEvent(micronautSession));
     }
 
-    private static void failHandler(Session session, ExecutableMethod<?, ?> handler, String problem) {
-        LOG.error("WebSocket @OnMessage method [{}] {}", handler, problem);
+    /**
+     * Picks the message handlers: one per category for a Jakarta endpoint, together with its
+     * codecs; the one handler of a Micronaut endpoint for text and binary alike.
+     *
+     * @return {@code false} if the endpoint could not be set up and the session was closed
+     */
+    @SuppressWarnings("unchecked")
+    private boolean resolveHandlers(Session session, EndpointConfig config) {
+        if (jakartaEndpoint == null) {
+            ExecutableMethod<Object, ?> messageMethod = webSocketBean.messageMethod()
+                .map(handle -> (ExecutableMethod<Object, ?>) handle.getExecutableMethod())
+                .orElse(null);
+            this.textMethod = messageMethod;
+            this.binaryMethod = messageMethod;
+            this.pongMethod = webSocketBean.pongMethod()
+                .map(handle -> (ExecutableMethod<Object, ?>) handle.getExecutableMethod())
+                .orElse(null);
+            return true;
+        }
+        // The context is an implementation detail; user code sees the user properties
+        // through Session.getUserProperties() and EndpointConfig.getUserProperties().
+        config.getUserProperties().remove(CONTEXT_PROPERTY);
+        session.getUserProperties().remove(CONTEXT_PROPERTY);
+        try {
+            this.codecs = JakartaCodecs.create(jakartaEndpoint, support.components(), config);
+        } catch (Exception e) {
+            LOG.error("Error creating the decoders and encoders of WebSocket endpoint [{}]: {}",
+                webSocketBean.getBeanDefinition().getBeanType().getName(), e.getMessage(), e);
+            closeQuietly(session, CloseReason.INTERNAL_ERROR);
+            return false;
+        }
+        this.textMethod = jakartaEndpoint.textMethod();
+        this.binaryMethod = jakartaEndpoint.binaryMethod();
+        this.pongMethod = jakartaEndpoint.pongMethod();
+        return true;
+    }
+
+    /**
+     * Finds the message parameter of each handler.
+     *
+     * @return {@code false} if a handler has none and the session was closed
+     */
+    private boolean resolveBodyArguments(Session session) {
+        if (textMethod != null) {
+            this.textBodyArgument = resolveBodyArgument(textMethod, false);
+            if (textBodyArgument == null) {
+                failHandler(session, textMethod);
+                return false;
+            }
+        }
+        if (binaryMethod != null) {
+            this.binaryBodyArgument = binaryMethod == textMethod
+                ? textBodyArgument
+                : resolveBodyArgument(binaryMethod, false);
+            if (binaryBodyArgument == null) {
+                failHandler(session, binaryMethod);
+                return false;
+            }
+        }
+        if (pongMethod != null) {
+            this.pongBodyArgument = resolveBodyArgument(pongMethod, true);
+            if (pongBodyArgument == null) {
+                LOG.error("WebSocket pong handler [{}] must declare exactly one pong message argument", pongMethod);
+            }
+        }
+        return true;
+    }
+
+    private void registerMessageHandlers(Session session) {
+        if (textMethod != null) {
+            session.addMessageHandler(String.class, (MessageHandler.Whole<String>) this::onTextMessage);
+        }
+        if (binaryMethod != null) {
+            session.addMessageHandler(ByteBuffer.class, (MessageHandler.Whole<ByteBuffer>) this::onBinaryMessage);
+        }
+        if (pongBodyArgument != null) {
+            session.addMessageHandler(PongMessage.class, (MessageHandler.Whole<PongMessage>) this::onPongMessage);
+        }
+    }
+
+    private static void failHandler(Session session, ExecutableMethod<?, ?> handler) {
+        LOG.error("WebSocket @OnMessage method [{}] must declare exactly one message body argument", handler);
         closeQuietly(session, CloseReason.INTERNAL_ERROR);
     }
 
@@ -391,15 +419,9 @@ public class MicronautServerEndpoint extends Endpoint {
                 return decoded;
             }
         }
-        Class<?> type = bodyArgument.getType();
-        if (type == Reader.class && text != null) {
-            return new StringReader(text);
-        }
-        if (type == InputStream.class) {
-            return new ByteArrayInputStream(bytes != null ? bytes : text.getBytes(StandardCharsets.UTF_8));
-        }
-        if (type == ByteBuffer.class && bytes != null) {
-            return ByteBuffer.wrap(bytes);
+        Object view = payloadView(bodyArgument.getType(), text, bytes);
+        if (view != null) {
+            return view;
         }
         Object raw = text != null ? text : bytes;
         Object converted = support.conversionService()
@@ -424,6 +446,24 @@ public class MicronautServerEndpoint extends Endpoint {
             new SimpleHttpHeaders(support.conversionService()),
             new ByteArrayInputStream(data)
         );
+    }
+
+    /**
+     * The stream and buffer views of a payload that the specification lets a handler take.
+     *
+     * @return The view, or {@code null} when the parameter is not one of them
+     */
+    private static @Nullable Object payloadView(Class<?> type, @Nullable String text, byte @Nullable [] bytes) {
+        if (type == Reader.class && text != null) {
+            return new StringReader(text);
+        }
+        if (type == InputStream.class) {
+            return new ByteArrayInputStream(bytes != null ? bytes : text.getBytes(StandardCharsets.UTF_8));
+        }
+        if (type == ByteBuffer.class && bytes != null) {
+            return ByteBuffer.wrap(bytes);
+        }
+        return null;
     }
 
     private @Nullable Argument<?> resolveBodyArgument(ExecutableMethod<Object, ?> method, boolean pong) {
@@ -490,34 +530,45 @@ public class MicronautServerEndpoint extends Endpoint {
                                                 boolean sendResult) {
         Executor executor = support.executorSelector()
             .selectExecutor(method, support.threadSelectionConfiguration());
-        boolean suspend = method.isSuspend();
-        Map<Argument<?>, Object> arguments = frameworkArguments(method);
-        if (!preBound.isEmpty()) {
-            arguments = new LinkedHashMap<>(arguments);
-            arguments.putAll(preBound);
-        }
-        Map<Argument<?>, Object> bindings = arguments;
+        Map<Argument<?>, Object> bindings = bindings(method, preBound);
         PropagatedContext propagatedContext = PropagatedContext.getOrEmpty()
             .plus(new ServerHttpRequestContext(context.originatingRequest()));
         return ExecutionFlow.async(executor, () -> propagatedContext.propagate(() -> {
             try {
-                HttpRequest<?> request = suspend
-                    ? WebSocketHandshakeRequest.snapshot(context.originatingRequest())
-                    : context.originatingRequest();
-                BoundExecutable<Object, ?> bound = new DefaultExecutableBinder<WebSocketState>(bindings)
-                    .bind(method, support.binderRegistry(),
-                        new WebSocketState(micronautSession, request));
-                if (suspend) {
-                    ExecutionFlow<Object> completion = invokeSuspend(bound, request, propagatedContext);
-                    // A suspend handler's value is only known once the coroutine completes.
-                    return sendResult ? completion.flatMap(value -> sendResult(value, propagatedContext)) : completion;
-                }
-                Object result = bound.invoke(webSocketBean.getTarget());
-                return sendResult ? sendResult(result, propagatedContext) : toFlow(result, propagatedContext);
+                return bindAndInvoke(method, bindings, sendResult, propagatedContext);
             } catch (Throwable e) {
                 return ExecutionFlow.error(e);
             }
         }));
+    }
+
+    private Map<Argument<?>, Object> bindings(ExecutableMethod<Object, ?> method, Map<Argument<?>, Object> preBound) {
+        Map<Argument<?>, Object> arguments = frameworkArguments(method);
+        if (preBound.isEmpty()) {
+            return arguments;
+        }
+        Map<Argument<?>, Object> combined = new LinkedHashMap<>(arguments);
+        combined.putAll(preBound);
+        return combined;
+    }
+
+    private ExecutionFlow<Object> bindAndInvoke(ExecutableMethod<Object, ?> method,
+                                                Map<Argument<?>, Object> bindings,
+                                                boolean sendResult,
+                                                PropagatedContext propagatedContext) {
+        boolean suspend = method.isSuspend();
+        HttpRequest<?> request = suspend
+            ? WebSocketHandshakeRequest.snapshot(context.originatingRequest())
+            : context.originatingRequest();
+        BoundExecutable<Object, ?> bound = new DefaultExecutableBinder<WebSocketState>(bindings)
+            .bind(method, support.binderRegistry(), new WebSocketState(micronautSession, request));
+        if (suspend) {
+            ExecutionFlow<Object> completion = invokeSuspend(bound, request, propagatedContext);
+            // A suspend handler's value is only known once the coroutine completes.
+            return sendResult ? completion.flatMap(value -> sendResult(value, propagatedContext)) : completion;
+        }
+        Object result = bound.invoke(webSocketBean.getTarget());
+        return sendResult ? sendResult(result, propagatedContext) : toFlow(result, propagatedContext);
     }
 
     /**
@@ -715,7 +766,7 @@ public class MicronautServerEndpoint extends Endpoint {
                     && argument.getType().isInstance(value)
                     && (preBound == null || !preBound.containsKey(argument))) {
                     if (preBound == null) {
-                        preBound = new LinkedHashMap<>(values.length);
+                        preBound = LinkedHashMap.newLinkedHashMap(values.length);
                     }
                     preBound.put(argument, value);
                     break;
