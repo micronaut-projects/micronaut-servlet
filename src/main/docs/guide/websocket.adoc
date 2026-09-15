@@ -56,6 +56,87 @@ snippet::io.micronaut.servlet.docs.websocket.ChatClientWebSocket[tags="class", i
 <4> Any abstract method whose name begins with `send` or `broadcast` is implemented to send
 a message over the session.
 
+=== Jakarta WebSocket annotations
+
+An endpoint can also be written with the
+https://jakarta.ee/specifications/websocket/2.1/apidocs/[Jakarta WebSocket] annotations,
+`@ServerEndpoint`, `@OnOpen`, `@OnMessage`, `@OnClose`, `@OnError` and `@PathParam`, in the
+same way that `@WebServlet` and `@WebFilter` can be used to register servlets and filters.
+This needs the annotation processor:
+
+dependency:io.micronaut.servlet:micronaut-servlet-processor[scope="annotationProcessor"]
+
+The processor maps the Jakarta annotations onto their Micronaut equivalents at compilation
+time, so the endpoint is a `@ServerWebSocket` bean and takes the same path as one: the
+handshake goes through the Micronaut router and filter chain, and the handlers are invoked
+through the compiled bean metadata. The container never scans the class and nothing is
+reflected on, so a Jakarta endpoint works in a native image as any Micronaut bean does.
+
+snippet::io.micronaut.servlet.docs.websocket.jakarta.EchoEndpoint[tags="imports,class", indent=0]
+
+<1> `@ServerEndpoint` maps the endpoint. The URI template syntax is the same as
+`@ServerWebSocket`'s, and `subprotocols` is honoured.
+<2> A handler can take the container's `jakarta.websocket.Session` and `EndpointConfig` by
+type, `@PathParam` binds a path variable under the name it declares, and everything a
+Micronaut handler can take - the `WebSocketSession`, `@Header`, `@QueryValue`, the
+`HttpRequest` - can be taken too.
+<3> The `Session` is the container's own, so `getBasicRemote()`, `getAsyncRemote()`,
+`getOpenSessions()` and `getUserProperties()` all work as they do under the container.
+<4> A value returned by `@OnMessage` is sent to the peer, as the specification asks. An
+endpoint may declare one text, one binary and one pong `@OnMessage` method, chosen by the
+type of the message parameter.
+<5> `@OnClose` may take the Jakarta `CloseReason`, `@OnError` the `Throwable`.
+
+Unless the class declares a scope of its own, one endpoint instance is created per
+connection, which is the Jakarta contract and lets the endpoint keep the session and its
+state in fields. An explicit `@Singleton` shares one instance between all connections.
+
+The processor reports at compilation time what could not work at runtime: an endpoint
+without an `@OnMessage` method, more than one handler for a message category, a partial
+message handler (the `boolean` last-part parameter, since messages are always delivered
+whole), a `maxMessageSize` beyond `Integer.MAX_VALUE`, and `@ClientEndpoint`, for which
+`@ClientWebSocket` is the equivalent.
+
+==== Decoders, encoders and the configurator
+
+`decoders`, `encoders` and `configurator` name classes the container would instantiate with
+`Class.newInstance()`. Here each class is resolved through the first of these that can
+produce it:
+
+. As a bean, when the class carries a scope such as `@Singleton` or `@Prototype`. The bean
+can inject an `ObjectMapper` or anything else, and its scope decides whether it is shared.
+. Through its introspection, when the class is `@Introspected` or listed in
+`@Introspected(classes = ...)` on the endpoint.
+. Reflectively, when `io.micronaut:micronaut-reflection` is on the classpath _and_ the type
+matches a `micronaut.introspection.allow-reflection` pattern. That is the same switch that
+lets the shared introspector describe a type reflectively, so there is one place to opt a
+package into reflection:
++
+[configuration]
+----
+micronaut:
+  introspection:
+    allow-reflection:
+      - com.example.legacy.codecs.*
+----
+
+A class none of these can produce is reported at compilation time, unless
+`micronaut-reflection` is on the compile classpath, in which case the runtime policy decides
+and the first handshake fails with a message naming the class and the three options.
+
+Decoders run before Micronaut's own conversion and message body readers, so a message type
+with no decoder is still decoded from JSON as it is for a Micronaut endpoint. Encoders apply
+to the value an `@OnMessage` method returns. `RemoteEndpoint#sendObject` on the raw session
+is served by the container, which instantiates the encoders itself, reflectively; the
+encoders are therefore only passed to the container for classes the reflection policy
+allows. Without that, return a value from the handler or send through the Micronaut
+`WebSocketSession` instead.
+
+A declared configurator has its `modifyHandshake`, `checkOrigin`, `getNegotiatedSubprotocol`
+and `getNegotiatedExtensions` honoured; an origin must pass both its check and the
+<<websocket-origin, Micronaut policy>>. Its `getEndpointInstance` is not called: the endpoint
+is always the bean.
+
 === Filters and security run on the handshake
 
 The upgrade request reaches the Micronaut servlet like any other request, so the Micronaut
@@ -68,6 +149,7 @@ Servlet filters registered with ann:servlet.api.annotation.ServletFilterBean[] s
 before the Micronaut servlet, and therefore before Micronaut filters, exactly as they do
 for HTTP requests.
 
+[[websocket-origin]]
 === Origin checking
 
 When the endpoint declares ann:http.server.cors.CrossOrigin[], or when
