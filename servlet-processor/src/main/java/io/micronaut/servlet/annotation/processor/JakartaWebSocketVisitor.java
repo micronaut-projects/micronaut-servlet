@@ -70,6 +70,8 @@ public final class JakartaWebSocketVisitor implements TypeElementVisitor<Object,
 
     static final String CONSUMES = "io.micronaut.http.annotation.Consumes";
     static final String BINDABLE = "io.micronaut.core.bind.annotation.Bindable";
+    static final String CLASSES = "classes";
+    static final String CLASS_NAMES = "classNames";
     static final String APPLICATION_OCTET_STREAM = "application/octet-stream";
 
     private static final String PONG_MESSAGE = "jakarta.websocket.PongMessage";
@@ -253,6 +255,31 @@ public final class JakartaWebSocketVisitor implements TypeElementVisitor<Object,
      * {@code micronaut-reflection}, which the runtime falls back to when the module is present.</p>
      */
     private static void introspectComponents(ClassElement element, AnnotationValue<Annotation> serverEndpoint, VisitorContext context) {
+        Set<String> introspect = componentsToIntrospect(element, serverEndpoint, context);
+        if (introspect.isEmpty()) {
+            return;
+        }
+        AnnotationValue<Annotation> existing = element.getAnnotation(INTROSPECTED);
+        if (existing != null) {
+            for (AnnotationClassValue<?> listed : existing.annotationClassValues(CLASSES)) {
+                introspect.remove(listed.getName());
+            }
+            String[] listedNames = existing.stringValues(CLASS_NAMES);
+            introspect.addAll(List.of(listedNames));
+            if (existing.annotationClassValues(CLASSES).length == 0 && listedNames.length == 0) {
+                // The endpoint was introspected itself; listing other classes would stop that.
+                introspect.add(element.getName());
+            }
+        }
+        element.annotate(INTROSPECTED, builder -> builder.member(CLASS_NAMES, introspect.toArray(String[]::new)));
+    }
+
+    /**
+     * The declared components that are not beans, checked to be instantiable: through the
+     * introspection that will be generated when they have a no-argument constructor, else
+     * reflectively when {@code micronaut-reflection} is available.
+     */
+    private static Set<String> componentsToIntrospect(ClassElement element, AnnotationValue<Annotation> serverEndpoint, VisitorContext context) {
         boolean reflectionAvailable = context.getClassElement(REFLECTION_BEAN_DEFINITION).isPresent();
         Set<String> introspect = new LinkedHashSet<>();
         for (String member : COMPONENT_MEMBERS) {
@@ -274,21 +301,7 @@ public final class JakartaWebSocketVisitor implements TypeElementVisitor<Object,
                 introspect.add(name);
             }
         }
-        if (introspect.isEmpty()) {
-            return;
-        }
-        AnnotationValue<Annotation> existing = element.getAnnotation(INTROSPECTED);
-        if (existing != null) {
-            for (AnnotationClassValue<?> listed : existing.annotationClassValues("classes")) {
-                introspect.remove(listed.getName());
-            }
-            introspect.addAll(List.of(existing.stringValues("classNames")));
-            if (existing.annotationClassValues("classes").length == 0 && existing.stringValues("classNames").length == 0) {
-                // The endpoint was introspected itself; listing other classes would stop that.
-                introspect.add(element.getName());
-            }
-        }
-        element.annotate(INTROSPECTED, builder -> builder.member("classNames", introspect.toArray(String[]::new)));
+        return introspect;
     }
 
     private static boolean isDefaultConfigurator(String name) {
