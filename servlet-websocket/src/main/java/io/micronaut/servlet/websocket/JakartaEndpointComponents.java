@@ -19,7 +19,6 @@ import io.micronaut.context.BeanContext;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanIntrospector;
-import io.micronaut.core.reflect.GenericTypeUtils;
 import io.micronaut.core.type.Argument;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.websocket.exceptions.WebSocketException;
@@ -98,24 +97,28 @@ public final class JakartaEndpointComponents {
      * implements.
      *
      * <p>Read from the bean definition when the encoder is a bean, which the processors recorded
-     * at compilation time. Otherwise it is read from the class's generic signature, which is why
-     * an encoder is best declared as a bean on a native image.</p>
+     * at compilation time. Reading it from the class's generic signature is reflection, so that
+     * only happens with {@code micronaut-reflection} on the classpath. Otherwise the type is
+     * unknown and the encoder is offered every value, stepping aside for one it cannot encode;
+     * an encoder is therefore best declared as a bean.</p>
      *
      * @param encoder The encoder class
      * @return The encoded type, or {@code null} when it cannot be resolved
      */
     public @Nullable Class<?> encodedType(Class<?> encoder) {
+        BeanDefinition<?> definition = beanContext.findBeanDefinition(encoder).orElse(null);
         for (Class<?> encoderInterface : ENCODER_INTERFACES) {
-            BeanDefinition<?> definition = beanContext.findBeanDefinition(encoder).orElse(null);
             if (definition != null) {
                 List<Argument<?>> arguments = definition.getTypeArguments(encoderInterface);
                 if (!arguments.isEmpty()) {
                     return arguments.get(0).getType();
                 }
             }
-            Class<?>[] resolved = GenericTypeUtils.resolveInterfaceTypeArguments(encoder, encoderInterface);
-            if (resolved.length == 1) {
-                return resolved[0];
+            if (reflective != null) {
+                Class<?> resolved = reflective.resolveTypeArgument(encoder, encoderInterface);
+                if (resolved != null) {
+                    return resolved;
+                }
             }
         }
         return null;

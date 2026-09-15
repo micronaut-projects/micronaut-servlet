@@ -194,6 +194,29 @@ class BinaryCodecEndpoint {
         !method(definition, 'text').hasAnnotation(Consumes)
     }
 
+    void "a bound parameter next to the payload is never taken for the message"() {
+        given:
+        BeanDefinition definition = buildBeanDefinition('test.BoundEndpoint', IMPORTS + '''
+import io.micronaut.http.annotation.Header;
+
+@ServerEndpoint("/bound/{id}/{last}")
+class BoundEndpoint {
+    @OnMessage
+    public void binary(@PathParam("id") String id, ByteBuffer data) {
+    }
+
+    @OnMessage
+    public void text(@PathParam("last") boolean last, @Header String agent, String message) {
+    }
+}
+''')
+
+        expect: 'the String path parameter does not make the binary handler a text one, nor the boolean one a partial handler'
+        definition.hasStereotype(ServerWebSocket)
+        method(definition, 'binary').hasAnnotation(OnMessage)
+        method(definition, 'text').hasAnnotation(OnMessage)
+    }
+
     void "an endpoint that cannot be mapped is rejected at compilation time: #reason"() {
         when:
         buildBeanDefinition('test.BadEndpoint', IMPORTS + source)

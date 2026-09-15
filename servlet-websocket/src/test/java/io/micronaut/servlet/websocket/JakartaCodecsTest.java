@@ -54,6 +54,19 @@ class JakartaCodecsTest {
     }
 
     @Test
+    void anEncoderWhoseTypeIsUnknownStandsAsideForAValueItCannotEncode() throws Exception {
+        try (ApplicationContext context = ApplicationContext.run(Map.of("test.name", "JakartaCodecsTest"))) {
+            // Without the reflective route the introspected encoders' type arguments are unknown.
+            JakartaEndpointComponents components = new JakartaEndpointComponents(context, null);
+            JakartaEndpoint endpoint = JakartaEndpoint.of(context.getBeanDefinition(CodecEndpoint.class));
+            JakartaCodecs codecs = JakartaCodecs.create(endpoint, components, endpointConfig());
+
+            assertEquals("upper:HI", codecs.encode(new Upper("HI")));
+            assertEquals("size=3", codecs.encode(new Size(3)), "the Upper encoder is tried first and stands aside");
+        }
+    }
+
+    @Test
     void codecsAreInitializedOnCreationAndDestroyedOnce() {
         try (ApplicationContext context = ApplicationContext.run(Map.of("test.name", "JakartaCodecsTest"))) {
             UpperDecoder.initialized = false;

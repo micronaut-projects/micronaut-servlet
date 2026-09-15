@@ -19,11 +19,14 @@ import io.micronaut.context.BeanContext;
 import io.micronaut.context.annotation.Prototype;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.type.Argument;
+import io.micronaut.reflection.ReflectionArguments;
 import io.micronaut.reflection.ReflectionBeanDefinition;
 import io.micronaut.reflection.ReflectionIntrospectionPolicy;
 import io.micronaut.servlet.websocket.ReflectiveBeanDefinitions;
 import jakarta.inject.Scope;
 import jakarta.inject.Singleton;
+import org.jspecify.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
 import java.util.Map;
@@ -71,6 +74,12 @@ final class MicronautReflectionBeanDefinitions implements ReflectiveBeanDefiniti
             beanContext.registerBeanDefinition(builder.build());
             return true;
         });
+    }
+
+    @Override
+    public @Nullable Class<?> resolveTypeArgument(Class<?> type, Class<?> interfaceType) {
+        Argument<?> argument = ReflectionArguments.resolveGenericToArgument(type, interfaceType);
+        return argument != null ? argument.getFirstTypeVariable().map(Argument::getType).orElse(null) : null;
     }
 
     private static boolean declaresScope(Class<?> type) {

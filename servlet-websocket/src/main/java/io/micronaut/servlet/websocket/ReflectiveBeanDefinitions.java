@@ -16,6 +16,7 @@
 package io.micronaut.servlet.websocket;
 
 import io.micronaut.core.annotation.Internal;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Registers a class the annotation processors never saw as a bean, reflectively.
@@ -44,4 +45,14 @@ public interface ReflectiveBeanDefinitions {
      * @return {@code true} if a definition now exists for the type
      */
     boolean register(Class<?> type);
+
+    /**
+     * Resolves the type argument a class gives to one of its generic interfaces, from the
+     * class's generic signature.
+     *
+     * @param type          The class
+     * @param interfaceType The generic interface
+     * @return The type argument, or {@code null} when the class does not implement the interface
+     */
+    @Nullable Class<?> resolveTypeArgument(Class<?> type, Class<?> interfaceType);
 }

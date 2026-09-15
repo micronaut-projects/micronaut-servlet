@@ -33,6 +33,15 @@ class EchoEndpointTest : StringSpec() {
 
             client.close()
         }
+
+        "a suspending Jakarta handler's return value is sent once the coroutine completes" {
+            val client = Flux.from(wsClient.connect(EchoClient::class.java, "/ws/suspend-echo/lobby")).blockFirst()!!
+
+            client.send("Hello!")
+            eventually { client.replies.contains("[lobby] Hello!") } shouldBe true
+
+            client.close()
+        }
     }
 
     private fun eventually(condition: () -> Boolean): Boolean {

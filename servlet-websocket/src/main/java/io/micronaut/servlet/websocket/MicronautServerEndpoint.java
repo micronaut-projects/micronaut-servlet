@@ -508,7 +508,9 @@ public class MicronautServerEndpoint extends Endpoint {
                     .bind(method, support.binderRegistry(),
                         new WebSocketState(micronautSession, request));
                 if (suspend) {
-                    return invokeSuspend(bound, request, propagatedContext);
+                    ExecutionFlow<Object> completion = invokeSuspend(bound, request, propagatedContext);
+                    // A suspend handler's value is only known once the coroutine completes.
+                    return sendResult ? completion.flatMap(value -> sendResult(value, propagatedContext)) : completion;
                 }
                 Object result = bound.invoke(webSocketBean.getTarget());
                 return sendResult ? sendResult(result, propagatedContext) : toFlow(result, propagatedContext);
@@ -542,7 +544,8 @@ public class MicronautServerEndpoint extends Endpoint {
         coroutineHelper.setupCoroutineContext(request, Context.empty(), propagatedContext);
         Object result = bound.invoke(webSocketBean.getTarget());
         if (!KotlinUtils.isKotlinCoroutineSuspended(result)) {
-            return ExecutionFlow.just(null);
+            // The handler completed without suspending, so this is its actual return value.
+            return toFlow(result, propagatedContext);
         }
         Supplier<CompletableFuture<?>> completion =
             ContinuationArgumentBinder.extractContinuationCompletableFutureSupplier(request);

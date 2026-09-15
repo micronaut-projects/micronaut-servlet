@@ -36,6 +36,7 @@ import static io.micronaut.servlet.annotation.processor.AbstractJakartaWebSocket
 import static io.micronaut.servlet.annotation.processor.AbstractJakartaWebSocketMapper.JAKARTA_ON_ERROR;
 import static io.micronaut.servlet.annotation.processor.AbstractJakartaWebSocketMapper.JAKARTA_ON_MESSAGE;
 import static io.micronaut.servlet.annotation.processor.AbstractJakartaWebSocketMapper.JAKARTA_ON_OPEN;
+import static io.micronaut.servlet.annotation.processor.AbstractJakartaWebSocketMapper.PATH_PARAM;
 import static io.micronaut.servlet.annotation.processor.AbstractJakartaWebSocketMapper.SERVER_ENDPOINT;
 import static io.micronaut.servlet.annotation.processor.AbstractJakartaWebSocketMapper.SERVER_WEB_SOCKET;
 import static io.micronaut.servlet.annotation.processor.JakartaOnMessageMapper.MAX_MESSAGE_SIZE;
@@ -65,6 +66,7 @@ public final class JakartaWebSocketVisitor implements TypeElementVisitor<Object,
     static final String DEFAULT_CONFIGURATOR = "jakarta.websocket.server.ServerEndpointConfig$Configurator";
 
     static final String CONSUMES = "io.micronaut.http.annotation.Consumes";
+    static final String BINDABLE = "io.micronaut.core.bind.annotation.Bindable";
     static final String APPLICATION_OCTET_STREAM = "application/octet-stream";
 
     private static final String PONG_MESSAGE = "jakarta.websocket.PongMessage";
@@ -147,6 +149,9 @@ public final class JakartaWebSocketVisitor implements TypeElementVisitor<Object,
         boolean message = false;
         boolean flag = false;
         for (ParameterElement parameter : handler.getParameters()) {
+            if (isBound(parameter)) {
+                continue;
+            }
             ClassElement type = parameter.getType();
             String name = type.getName();
             if (PARTIAL_MESSAGE_TYPES.contains(name) || isByteArray(type)) {
@@ -160,6 +165,9 @@ public final class JakartaWebSocketVisitor implements TypeElementVisitor<Object,
 
     private static MessageKind messageKind(MethodElement handler, AnnotationValue<Annotation> serverEndpoint, VisitorContext context) {
         for (ParameterElement parameter : handler.getParameters()) {
+            if (isBound(parameter)) {
+                continue;
+            }
             ClassElement type = parameter.getType();
             String name = type.getName();
             if (PONG_MESSAGE.equals(name)) {
@@ -176,7 +184,7 @@ public final class JakartaWebSocketVisitor implements TypeElementVisitor<Object,
         // The runtime cannot tell without reflecting over the decoder's generic signature, so the
         // outcome is recorded on the handler as the media type it consumes.
         for (ParameterElement parameter : handler.getParameters()) {
-            if (hasBinaryDecoder(serverEndpoint, parameter.getType(), context)) {
+            if (!isBound(parameter) && hasBinaryDecoder(serverEndpoint, parameter.getType(), context)) {
                 if (!handler.hasAnnotation(CONSUMES)) {
                     handler.annotate(CONSUMES, builder -> builder.value(APPLICATION_OCTET_STREAM));
                 }
@@ -184,6 +192,14 @@ public final class JakartaWebSocketVisitor implements TypeElementVisitor<Object,
             }
         }
         return MessageKind.TEXT;
+    }
+
+    /**
+     * A parameter bound from the handshake - {@code @PathParam}, a header, a query value - is
+     * never the message, whatever its type.
+     */
+    private static boolean isBound(ParameterElement parameter) {
+        return parameter.hasStereotype(BINDABLE) || parameter.hasAnnotation(PATH_PARAM);
     }
 
     private static boolean isByteArray(ClassElement type) {

@@ -12,6 +12,7 @@ import jakarta.websocket.Encoder;
 import jakarta.websocket.OnMessage;
 import jakarta.websocket.PongMessage;
 import jakarta.websocket.Session;
+import jakarta.websocket.server.PathParam;
 import jakarta.websocket.server.ServerEndpoint;
 import jakarta.websocket.server.ServerEndpointConfig;
 import org.junit.jupiter.api.AfterAll;
@@ -65,6 +66,15 @@ class JakartaEndpointTest {
         assertEquals("text", endpoint.textMethod().getMethodName());
         assertEquals("frame", endpoint.binaryMethod().getMethodName());
         assertNull(endpoint.pongMethod());
+    }
+
+    @Test
+    void aBoundParameterNextToThePayloadIsNeverTakenForTheMessage() {
+        JakartaEndpoint endpoint = JakartaEndpoint.of(context.getBeanDefinition(Bound.class));
+
+        assertNotNull(endpoint);
+        assertEquals("binary", endpoint.binaryMethod().getMethodName());
+        assertEquals("text", endpoint.textMethod().getMethodName());
     }
 
     @Test
@@ -150,6 +160,18 @@ class JakartaEndpointTest {
 
         @OnMessage
         public void frame(Frame frame) {
+        }
+    }
+
+    @Requires(property = "test.name", value = "JakartaEndpointTest")
+    @ServerEndpoint("/bound/{id}/{last}")
+    static class Bound {
+        @OnMessage
+        public void binary(@PathParam("id") String id, ByteBuffer data) {
+        }
+
+        @OnMessage
+        public void text(@PathParam("last") boolean last, String message) {
         }
     }
 

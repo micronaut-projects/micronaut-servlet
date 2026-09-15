@@ -150,29 +150,40 @@ final class JakartaCodecs {
      * @return The encoded text or binary message, or the value itself when no encoder accepts it
      * @throws Exception if the encoder fails
      */
-    @SuppressWarnings({"unchecked", "rawtypes"})
     Object encode(Object value) throws Exception {
         for (TypedEncoder candidate : encoders) {
             if (candidate.type != null && !candidate.type.isInstance(value)) {
                 continue;
             }
-            Encoder encoder = candidate.encoder;
-            if (encoder instanceof Encoder.Text textEncoder) {
-                return textEncoder.encode(value);
+            try {
+                return encode(candidate.encoder, value);
+            } catch (ClassCastException e) {
+                if (candidate.type != null) {
+                    throw e;
+                }
+                // The encoder's type is unknown and this is not a value it takes; try the next one.
             }
-            if (encoder instanceof Encoder.Binary binaryEncoder) {
-                return binaryEncoder.encode(value);
-            }
-            if (encoder instanceof Encoder.TextStream textStreamEncoder) {
-                StringWriter writer = new StringWriter();
-                textStreamEncoder.encode(value, writer);
-                return writer.toString();
-            }
-            if (encoder instanceof Encoder.BinaryStream binaryStreamEncoder) {
-                ByteArrayOutputStream out = new ByteArrayOutputStream();
-                binaryStreamEncoder.encode(value, out);
-                return ByteBuffer.wrap(out.toByteArray());
-            }
+        }
+        return value;
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private static Object encode(Encoder encoder, Object value) throws Exception {
+        if (encoder instanceof Encoder.Text textEncoder) {
+            return textEncoder.encode(value);
+        }
+        if (encoder instanceof Encoder.Binary binaryEncoder) {
+            return binaryEncoder.encode(value);
+        }
+        if (encoder instanceof Encoder.TextStream textStreamEncoder) {
+            StringWriter writer = new StringWriter();
+            textStreamEncoder.encode(value, writer);
+            return writer.toString();
+        }
+        if (encoder instanceof Encoder.BinaryStream binaryStreamEncoder) {
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            binaryStreamEncoder.encode(value, out);
+            return ByteBuffer.wrap(out.toByteArray());
         }
         return value;
     }

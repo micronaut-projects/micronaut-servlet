@@ -17,6 +17,7 @@ package io.micronaut.servlet.websocket;
 
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.bind.annotation.Bindable;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.Consumes;
@@ -101,24 +102,11 @@ public record JakartaEndpoint(@Nullable ExecutableMethod<Object, ?> textMethod,
         return new JakartaEndpoint(text, binary, pong, decoders, encoders, configurator);
     }
 
-    /**
-     * The message body parameter of a handler: the one that is neither a Jakarta nor a Micronaut
-     * framework type. The compile time visitor has already checked there is such a parameter.
-     *
-     * @param handler The handler
-     * @return The message parameter, or {@code null} if the handler declares none
-     */
-    static @Nullable Argument<?> messageArgument(ExecutableMethod<?, ?> handler) {
-        for (Argument<?> argument : handler.getArguments()) {
-            if (isMessageType(argument.getType())) {
-                return argument;
-            }
-        }
-        return null;
-    }
-
     private static Kind classify(ExecutableMethod<?, ?> handler) {
         for (Argument<?> argument : handler.getArguments()) {
+            if (isBound(argument)) {
+                continue;
+            }
             Class<?> type = argument.getType();
             String name = type.getName();
             if (PONG_MESSAGE.equals(name)) {
@@ -153,9 +141,12 @@ public record JakartaEndpoint(@Nullable ExecutableMethod<Object, ?> textMethod,
             || type == Integer.class || type == Long.class || type == Float.class || type == Double.class;
     }
 
-    private static boolean isMessageType(Class<?> type) {
-        String name = type.getName();
-        return !name.startsWith("jakarta.websocket.") && !name.startsWith("io.micronaut.");
+    /**
+     * A parameter bound from the handshake - a path variable, header or query value - is never
+     * the message, whatever its type.
+     */
+    private static boolean isBound(Argument<?> argument) {
+        return argument.getAnnotationMetadata().hasStereotype(Bindable.class);
     }
 
     private enum Kind {

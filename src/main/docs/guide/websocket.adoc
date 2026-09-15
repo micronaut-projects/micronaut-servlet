@@ -126,7 +126,10 @@ and the first handshake fails with a message naming the class and the three opti
 
 Decoders run before Micronaut's own conversion and message body readers, so a message type
 with no decoder is still decoded from JSON as it is for a Micronaut endpoint. Encoders apply
-to the value an `@OnMessage` method returns. `RemoteEndpoint#sendObject` on the raw session
+to the value an `@OnMessage` method returns; the type an encoder handles is read from its
+bean definition, or from its generic signature when `micronaut-reflection` is present, and
+an encoder whose type is unknown is offered every value and stands aside for one it cannot
+encode. Declaring encoders as beans is therefore the simplest choice. `RemoteEndpoint#sendObject` on the raw session
 is served by the container, which instantiates the encoders itself, reflectively; the
 encoders are therefore only passed to the container for classes the reflection policy
 allows. Without that, return a value from the handler or send through the Micronaut
