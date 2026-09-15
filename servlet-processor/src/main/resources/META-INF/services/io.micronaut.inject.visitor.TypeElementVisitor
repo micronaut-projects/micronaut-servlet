@@ -1,1 +1,2 @@
 io.micronaut.servlet.annotation.processor.ServletAnnotationVisitor
+io.micronaut.servlet.annotation.processor.JakartaWebSocketVisitor
