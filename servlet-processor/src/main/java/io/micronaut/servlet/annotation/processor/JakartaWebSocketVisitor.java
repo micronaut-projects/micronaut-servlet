@@ -285,12 +285,11 @@ public final class JakartaWebSocketVisitor implements TypeElementVisitor<Object,
         for (String member : COMPONENT_MEMBERS) {
             for (AnnotationClassValue<?> classValue : serverEndpoint.annotationClassValues(member)) {
                 String name = classValue.getName();
-                if (isDefaultConfigurator(name)) {
-                    continue;
-                }
-                ClassElement component = context.getClassElement(name)
-                    .orElseThrow(() -> new ProcessingException(element, "@ServerEndpoint " + member + " names a class that cannot be resolved: " + name));
-                if (isBean(component)) {
+                ClassElement component = isDefaultConfigurator(name)
+                    ? null
+                    : context.getClassElement(name)
+                        .orElseThrow(() -> new ProcessingException(element, "@ServerEndpoint " + member + " names a class that cannot be resolved: " + name));
+                if (component == null || isBean(component)) {
                     continue;
                 }
                 if (!reflectionAvailable && !hasDefaultConstructor(component)) {
