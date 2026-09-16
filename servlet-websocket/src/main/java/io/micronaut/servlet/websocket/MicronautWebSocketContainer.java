@@ -23,6 +23,7 @@ import io.micronaut.http.HttpRequest;
 import io.micronaut.http.MutableHttpRequest;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.websocket.exceptions.WebSocketException;
+import io.micronaut.websocket.exceptions.WebSocketSessionException;
 import jakarta.inject.Singleton;
 import jakarta.websocket.ClientEndpointConfig;
 import jakarta.websocket.DeploymentException;
@@ -37,11 +38,14 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URI;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * The Jakarta {@link WebSocketContainer} of a Micronaut servlet application, for opening client
@@ -212,10 +216,17 @@ public final class MicronautWebSocketContainer implements WebSocketContainer {
     /**
      * Waits for {@code @OnOpen} to complete, as the specification has the session returned only
      * once the endpoint is open, and reports its failure the way the container reports its own.
+     * An open handler that has not completed within the configured connect timeout fails the
+     * connection rather than hanging the caller.
      */
-    private static void awaitOpen(MicronautClientEndpoint endpoint, Session session) throws DeploymentException, IOException {
+    private void awaitOpen(MicronautClientEndpoint endpoint, Session session) throws DeploymentException, IOException {
+        Duration timeout = support.configuration().getConnectTimeout();
         try {
-            endpoint.opened().get();
+            endpoint.opened().get(timeout.toMillis(), TimeUnit.MILLISECONDS);
+        } catch (TimeoutException e) {
+            closeQuietly(session);
+            throw deploymentException(new WebSocketSessionException("@OnOpen did not complete within " + timeout
+                + " (" + ServletWebSocketConfiguration.PREFIX + ".connect-timeout)", e));
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             closeQuietly(session);
@@ -233,7 +244,7 @@ public final class MicronautWebSocketContainer implements WebSocketContainer {
     private static void closeQuietly(Session session) {
         try {
             session.close();
-        } catch (Exception e) {
+        } catch (Exception _) {
             // the connection is going away anyway
         }
     }

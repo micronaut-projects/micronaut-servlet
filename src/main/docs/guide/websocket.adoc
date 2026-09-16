@@ -145,10 +145,11 @@ is always the bean.
 
 ==== Client endpoints
 
-A `@ClientEndpoint` is supported the same way. The class is a plain bean - concrete, with a
-public no-argument constructor, as the specification has it - whose handlers the processor
-makes executable; it is opened through the `jakarta.websocket.WebSocketContainer` bean rather
-than `ContainerProvider.getWebSocketContainer()`, whose result depends on which implementation
+A `@ClientEndpoint` is supported the same way. The class is a plain bean whose handlers the
+processor makes executable, so unlike under a Jakarta container - which needs a public
+no-argument constructor - it can inject its dependencies through its constructor. It is opened
+through the `jakarta.websocket.WebSocketContainer` bean rather than
+`ContainerProvider.getWebSocketContainer()`, whose result depends on which implementation
 `ServiceLoader` happens to find first.
 
 snippet::io.micronaut.servlet.docs.websocket.jakarta.EchoClientEndpoint[tags="imports,class", indent=0]
@@ -169,7 +170,8 @@ snippet::io.micronaut.servlet.docs.websocket.jakarta.EchoClientEndpointSpec[tags
 <1> The container is a bean; inject it where the connection is opened.
 <2> `connectToServer` takes the endpoint class, which creates one instance per connection, or an
 instance. It returns once `@OnOpen` has completed, and throws a `DeploymentException` carrying
-the cause when it failed, in which case the session is closed.
+the cause when it failed or did not complete within `micronaut.servlet.websocket.connect-timeout`
+(30 seconds by default), in which case the session is closed.
 
 The connection itself is opened by the servlet container's Jakarta client - the same
 `ServerContainer` the server side upgrades through is also a client container on Jetty, Tomcat

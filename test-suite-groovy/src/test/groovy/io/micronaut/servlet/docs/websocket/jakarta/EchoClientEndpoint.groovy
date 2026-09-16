@@ -33,6 +33,7 @@ class EchoClientEndpoint {
 
     @OnClose
     void onClose(CloseReason reason) {
+        // the session is gone; nothing to release
     }
 
     void send(String message) {

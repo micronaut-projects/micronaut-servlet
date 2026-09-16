@@ -245,16 +245,16 @@ final class TestSession implements Session {
         @Override
         public void sendText(String text, SendHandler handler) {
             sentText.add(text);
-            record(handler);
+            track(handler);
         }
 
         @Override
         public void sendBinary(ByteBuffer data, SendHandler handler) {
             sentBinary.add(data);
-            record(handler);
+            track(handler);
         }
 
-        private void record(SendHandler handler) {
+        private void track(SendHandler handler) {
             if (autoCompleteSends) {
                 handler.onResult(new SendResult());
                 return;

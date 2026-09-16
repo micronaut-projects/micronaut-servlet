@@ -16,6 +16,7 @@
 package io.micronaut.servlet.annotation.processor;
 
 import io.micronaut.core.annotation.AnnotationClassValue;
+import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationUtil;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.inject.ast.ClassElement;
@@ -116,7 +117,7 @@ public final class JakartaWebSocketVisitor implements TypeElementVisitor<Object,
         EndpointKind kind = serverEndpoint != null ? EndpointKind.SERVER : EndpointKind.CLIENT;
         AnnotationValue<Annotation> endpoint = serverEndpoint != null ? serverEndpoint : clientEndpoint;
         if (context.getClassElement(SERVER_WEB_SOCKET).isEmpty()) {
-            throw new ProcessingException(element, kind.name + " requires the Micronaut WebSocket API. Add io.micronaut.servlet:micronaut-servlet-websocket to the classpath");
+            throw new ProcessingException(element, kind.label + " requires the Micronaut WebSocket API. Add io.micronaut.servlet:micronaut-servlet-websocket to the classpath");
         }
         validateHandlers(element, endpoint, kind, context);
         introspectComponents(element, endpoint, kind, context);
@@ -129,13 +130,13 @@ public final class JakartaWebSocketVisitor implements TypeElementVisitor<Object,
         List<MethodElement> messageHandlers = handlers(element, JAKARTA_ON_MESSAGE);
         if (messageHandlers.isEmpty() && kind == EndpointKind.SERVER) {
             // A client may only send; a server route without a message handler never upgrades.
-            throw new ProcessingException(element, kind.name + " must declare at least one @OnMessage method");
+            throw new ProcessingException(element, kind.label + " must declare at least one @OnMessage method");
         }
         validateMessageHandlers(messageHandlers, endpoint, kind, context);
         for (String annotation : new String[] {JAKARTA_ON_OPEN, JAKARTA_ON_CLOSE, JAKARTA_ON_ERROR}) {
             List<MethodElement> lifecycle = handlers(element, annotation);
             if (lifecycle.size() > 1) {
-                throw new ProcessingException(lifecycle.get(1), kind.name + " declares more than one @" + annotation.substring(annotation.lastIndexOf('.') + 1) + " method");
+                throw new ProcessingException(lifecycle.get(1), kind.label + " declares more than one @" + annotation.substring(annotation.lastIndexOf('.') + 1) + " method");
             }
         }
         if (kind == EndpointKind.CLIENT) {
@@ -155,7 +156,7 @@ public final class JakartaWebSocketVisitor implements TypeElementVisitor<Object,
             }
             MessageKind messageKind = messageKind(handler, endpoint, context);
             if (!kinds.add(messageKind)) {
-                throw new ProcessingException(handler, kind.name + " declares more than one " + messageKind.description + " @OnMessage method");
+                throw new ProcessingException(handler, kind.label + " declares more than one " + messageKind.description + " @OnMessage method");
             }
         }
     }
@@ -165,13 +166,18 @@ public final class JakartaWebSocketVisitor implements TypeElementVisitor<Object,
      * be bound from (Jakarta WebSocket 4.3).
      */
     private static void rejectPathParams(ClassElement element) {
-        for (MethodElement handler : element.getEnclosedElements(ElementQuery.ALL_METHODS)) {
+        for (MethodElement handler : element.getEnclosedElements(ElementQuery.ALL_METHODS.annotated(JakartaWebSocketVisitor::isHandler))) {
             for (ParameterElement parameter : handler.getParameters()) {
                 if (parameter.hasAnnotation(PATH_PARAM)) {
                     throw new ProcessingException(parameter, "@PathParam is only supported on a @ServerEndpoint: a @ClientEndpoint connects to a URI, not a URI template");
                 }
             }
         }
+    }
+
+    private static boolean isHandler(AnnotationMetadata metadata) {
+        return metadata.hasAnnotation(JAKARTA_ON_OPEN) || metadata.hasAnnotation(JAKARTA_ON_MESSAGE)
+            || metadata.hasAnnotation(JAKARTA_ON_CLOSE) || metadata.hasAnnotation(JAKARTA_ON_ERROR);
     }
 
     private static List<MethodElement> handlers(ClassElement element, String annotation) {
@@ -320,12 +326,12 @@ public final class JakartaWebSocketVisitor implements TypeElementVisitor<Object,
                 ClassElement component = isDefaultConfigurator(name)
                     ? null
                     : context.getClassElement(name)
-                        .orElseThrow(() -> new ProcessingException(element, kind.name + " " + member + " names a class that cannot be resolved: " + name));
+                        .orElseThrow(() -> new ProcessingException(element, kind.label + " " + member + " names a class that cannot be resolved: " + name));
                 if (component == null || isBean(component)) {
                     continue;
                 }
                 if (!reflectionAvailable && !hasDefaultConstructor(component)) {
-                    throw new ProcessingException(element, kind.name + " " + member + " names a class the runtime cannot instantiate: " + name
+                    throw new ProcessingException(element, kind.label + " " + member + " names a class the runtime cannot instantiate: " + name
                         + ". Give it a public no-argument constructor, make it a bean (@Singleton or @Prototype), "
                         + "or add io.micronaut:micronaut-reflection and allow the type through micronaut.introspection.allow-reflection");
                 }
@@ -359,10 +365,10 @@ public final class JakartaWebSocketVisitor implements TypeElementVisitor<Object,
         SERVER("@ServerEndpoint"),
         CLIENT("@ClientEndpoint");
 
-        private final String name;
+        private final String label;
 
-        EndpointKind(String name) {
-            this.name = name;
+        EndpointKind(String label) {
+            this.label = label;
         }
     }
 

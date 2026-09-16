@@ -165,7 +165,7 @@ public abstract class AbstractMicronautEndpoint extends Endpoint {
         if (!resolveHandlers(session, config)) {
             return false;
         }
-        applyLimits(session);
+        applyLimits(session, declaredMaxPayloadLength(textMethod), declaredMaxPayloadLength(binaryMethod));
         if (!resolveBodyArguments(session)) {
             return false;
         }
@@ -193,13 +193,14 @@ public abstract class AbstractMicronautEndpoint extends Endpoint {
      * meantime is held back here.</p>
      */
     private void completeOpen() {
-        List<Runnable> held;
         synchronized (gate) {
-            held = deferred;
+            // Replayed under the gate: a message the container delivers meanwhile waits its turn
+            // behind the backlog rather than overtaking it.
+            List<Runnable> held = deferred;
             deferred = null;
-        }
-        if (held != null && !closed.get()) {
-            held.forEach(Runnable::run);
+            if (held != null && !closed.get()) {
+                held.forEach(Runnable::run);
+            }
         }
         openCompleted();
     }
@@ -264,11 +265,17 @@ public abstract class AbstractMicronautEndpoint extends Endpoint {
      * Applies the payload limits a handler declares as {@code maxMessageSize}; a limit no handler
      * declares is left to the container.
      *
-     * @param session The container's session
+     * @param session          The container's session
+     * @param declaredTextMax  The text limit the text handler declares, or {@code null}
+     * @param declaredBinaryMax The binary limit the binary handler declares, or {@code null}
      */
-    protected void applyLimits(Session session) {
-        declaredMaxPayloadLength(textMethod).ifPresent(session::setMaxTextMessageBufferSize);
-        declaredMaxPayloadLength(binaryMethod).ifPresent(session::setMaxBinaryMessageBufferSize);
+    protected void applyLimits(Session session, @Nullable Integer declaredTextMax, @Nullable Integer declaredBinaryMax) {
+        if (declaredTextMax != null) {
+            session.setMaxTextMessageBufferSize(declaredTextMax);
+        }
+        if (declaredBinaryMax != null) {
+            session.setMaxBinaryMessageBufferSize(declaredBinaryMax);
+        }
     }
 
     /**
@@ -296,24 +303,6 @@ public abstract class AbstractMicronautEndpoint extends Endpoint {
      */
     protected final @Nullable ServletWebSocketSession micronautSession() {
         return micronautSession;
-    }
-
-    /**
-     * The handler text messages go to.
-     *
-     * @return The handler, once {@link #open} was called
-     */
-    protected final @Nullable ExecutableMethod<Object, ?> textMethod() {
-        return textMethod;
-    }
-
-    /**
-     * The handler binary messages go to.
-     *
-     * @return The handler, once {@link #open} was called
-     */
-    protected final @Nullable ExecutableMethod<Object, ?> binaryMethod() {
-        return binaryMethod;
     }
 
     /**
@@ -417,16 +406,17 @@ public abstract class AbstractMicronautEndpoint extends Endpoint {
      * be told apart from an unset one, and the configured size would then never apply.</p>
      *
      * @param messageMethod The message handler, or {@code null} when there is none
-     * @return The declared payload length, or empty when the endpoint did not declare one
+     * @return The declared payload length, or {@code null} when the endpoint did not declare one
      */
-    protected static Optional<Integer> declaredMaxPayloadLength(@Nullable ExecutableMethod<Object, ?> messageMethod) {
+    private static @Nullable Integer declaredMaxPayloadLength(@Nullable ExecutableMethod<Object, ?> messageMethod) {
         if (messageMethod == null) {
-            return Optional.empty();
+            return null;
         }
         return messageMethod.getAnnotationMetadata()
             .findAnnotation(OnMessage.class)
             .filter(annotation -> annotation.contains(MAX_PAYLOAD_LENGTH))
-            .flatMap(annotation -> annotation.intValue(MAX_PAYLOAD_LENGTH).stream().boxed().findFirst());
+            .flatMap(annotation -> annotation.intValue(MAX_PAYLOAD_LENGTH).stream().boxed().findFirst())
+            .orElse(null);
     }
 
     private void onTextMessage(String message) {
@@ -727,7 +717,7 @@ public abstract class AbstractMicronautEndpoint extends Endpoint {
         if (completion == null) {
             return ExecutionFlow.just(null);
         }
-        return CompletableFutureExecutionFlow.just(completion.get().thenApply(value -> (Object) value));
+        return CompletableFutureExecutionFlow.just(completion.get().thenApply(Object.class::cast));
     }
 
     /**
@@ -883,7 +873,7 @@ public abstract class AbstractMicronautEndpoint extends Endpoint {
                 jakarta.websocket.CloseReason.CloseCodes.getCloseCode(reason.getCode()),
                 reason.getReason()
             ));
-        } catch (Exception e) {
+        } catch (Exception _) {
             // ignore, the connection is going away anyway
         }
     }

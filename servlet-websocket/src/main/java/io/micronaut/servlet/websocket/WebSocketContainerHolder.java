@@ -75,11 +75,18 @@ public final class WebSocketContainerHolder {
      */
     public WebSocketContainer get() {
         WebSocketContainer resolved = container.get();
-        if (resolved == null) {
-            container.compareAndSet(null, resolve());
-            resolved = container.get();
+        if (resolved != null) {
+            return resolved;
         }
-        return resolved;
+        synchronized (container) {
+            // Resolved once: a container found through the provider starts threads of its own.
+            resolved = container.get();
+            if (resolved == null) {
+                resolved = resolve();
+                container.set(resolved);
+            }
+            return resolved;
+        }
     }
 
     private WebSocketContainer resolve() {

@@ -187,6 +187,20 @@ class MicronautWebSocketContainerTest {
     }
 
     @Test
+    void anOpenHandlerThatNeverCompletesFailsTheConnectionAfterTheConnectTimeout() {
+        try (ApplicationContext impatient = ApplicationContext.run(Map.of(
+            "test.name", TEST, "micronaut.servlet.websocket.connect-timeout", "200ms"))) {
+            impatient.getBean(WebSocketContainerHolder.class).register(delegate);
+            WebSocketContainer container = impatient.getBean(WebSocketContainer.class);
+
+            DeploymentException e = assertThrows(DeploymentException.class, () -> container.connectToServer(new SlowOpenClient(), ECHO));
+
+            assertTrue(e.getMessage().contains("connect-timeout"), e.getMessage());
+            assertFalse(delegate.session.open, "the session is closed when the open handler does not complete");
+        }
+    }
+
+    @Test
     void theDeclaredConfiguratorIsCreatedPerConnection() throws Exception {
         int before = GreetingConfigurator.INSTANCES.get();
 

@@ -32,6 +32,7 @@ class EchoClientEndpoint {
 
     @OnClose
     fun onClose(reason: CloseReason) {
+        // the session is gone; nothing to release
     }
 
     fun send(message: String) {

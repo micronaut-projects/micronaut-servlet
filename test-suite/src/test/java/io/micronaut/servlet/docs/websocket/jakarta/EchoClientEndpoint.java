@@ -35,6 +35,7 @@ public class EchoClientEndpoint {
 
     @OnClose
     public void onClose(CloseReason reason) {
+        // the session is gone; nothing to release
     }
 
     public void send(String message) throws IOException {

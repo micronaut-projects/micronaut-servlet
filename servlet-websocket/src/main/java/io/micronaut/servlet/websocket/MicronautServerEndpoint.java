@@ -135,12 +135,10 @@ public class MicronautServerEndpoint extends AbstractMicronautEndpoint {
      * declares is the configured one.
      */
     @Override
-    protected void applyLimits(Session session) {
+    protected void applyLimits(Session session, @Nullable Integer declaredTextMax, @Nullable Integer declaredBinaryMax) {
         ServletWebSocketConfiguration configuration = support().configuration();
-        session.setMaxTextMessageBufferSize(
-            declaredMaxPayloadLength(textMethod()).orElse(configuration.getMaxTextMessageSize()));
-        session.setMaxBinaryMessageBufferSize(
-            declaredMaxPayloadLength(binaryMethod()).orElse(configuration.getMaxBinaryMessageSize()));
+        session.setMaxTextMessageBufferSize(declaredTextMax != null ? declaredTextMax : configuration.getMaxTextMessageSize());
+        session.setMaxBinaryMessageBufferSize(declaredBinaryMax != null ? declaredBinaryMax : configuration.getMaxBinaryMessageSize());
         session.setMaxIdleTimeout(support().idleTimeout().toMillis());
     }
 }

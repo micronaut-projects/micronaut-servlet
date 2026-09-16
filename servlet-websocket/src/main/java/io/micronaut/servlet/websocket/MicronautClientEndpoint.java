@@ -116,6 +116,8 @@ final class MicronautClientEndpoint extends AbstractMicronautEndpoint {
 
     @Override
     protected void sessionClosed(ServletWebSocketSession session, boolean wasOpened) {
-        opened.completeExceptionally(new WebSocketSessionException("WebSocket session closed before it was open"));
+        if (!opened.isDone()) {
+            opened.completeExceptionally(new WebSocketSessionException("WebSocket session closed before it was open"));
+        }
     }
 }
