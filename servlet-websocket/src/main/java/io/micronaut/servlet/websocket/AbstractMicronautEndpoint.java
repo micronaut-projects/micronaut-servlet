@@ -650,7 +650,7 @@ public abstract class AbstractMicronautEndpoint extends Endpoint {
         return ExecutionFlow.async(executor, () -> propagatedContext.propagate(() -> {
             try {
                 return bindAndInvoke(method, bindings, sendResult, propagatedContext);
-            } catch (Throwable e) {
+            } catch (Throwable e) { // NOSONAR an Error a handler throws must reach @OnError too, not the executor
                 return ExecutionFlow.error(e);
             }
         }));

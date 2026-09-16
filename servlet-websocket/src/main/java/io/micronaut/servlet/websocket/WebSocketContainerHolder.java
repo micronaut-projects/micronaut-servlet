@@ -23,8 +23,6 @@ import jakarta.websocket.ContainerProvider;
 import jakarta.websocket.WebSocketContainer;
 import org.jspecify.annotations.Nullable;
 
-import java.util.concurrent.atomic.AtomicReference;
-
 /**
  * The servlet container's Jakarta WebSocket container, for opening client connections.
  *
@@ -46,7 +44,8 @@ public final class WebSocketContainerHolder {
      */
     public static final String SERVER_CONTAINER_ATTRIBUTE = "jakarta.websocket.server.ServerContainer";
 
-    private final AtomicReference<WebSocketContainer> container = new AtomicReference<>();
+    private final Object lock = new Object();
+    private @Nullable WebSocketContainer container;
     private final @Nullable ServletContext servletContext;
 
     /**
@@ -64,7 +63,9 @@ public final class WebSocketContainerHolder {
      * @param webSocketContainer The container
      */
     public void register(WebSocketContainer webSocketContainer) {
-        container.set(webSocketContainer);
+        synchronized (lock) {
+            container = webSocketContainer;
+        }
     }
 
     /**
@@ -74,18 +75,12 @@ public final class WebSocketContainerHolder {
      * @throws WebSocketException if no Jakarta WebSocket implementation is available
      */
     public WebSocketContainer get() {
-        WebSocketContainer resolved = container.get();
-        if (resolved != null) {
-            return resolved;
-        }
-        synchronized (container) {
+        synchronized (lock) {
             // Resolved once: a container found through the provider starts threads of its own.
-            resolved = container.get();
-            if (resolved == null) {
-                resolved = resolve();
-                container.set(resolved);
+            if (container == null) {
+                container = resolve();
             }
-            return resolved;
+            return container;
         }
     }
 

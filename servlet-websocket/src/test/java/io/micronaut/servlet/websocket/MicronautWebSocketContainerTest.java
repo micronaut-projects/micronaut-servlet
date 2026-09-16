@@ -154,7 +154,7 @@ class MicronautWebSocketContainerTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    void messagesHeldForAnOpenHandlerDieWithTheSession() throws Exception {
+    void messagesHeldForAnOpenHandlerDieWithTheSession() {
         SlowOpenClient client = new SlowOpenClient();
         BeanDefinition<Object> definition = (BeanDefinition<Object>) (BeanDefinition<?>) context.getBeanDefinition(SlowOpenClient.class);
         MicronautClientEndpoint endpoint = new MicronautClientEndpoint(
@@ -191,9 +191,9 @@ class MicronautWebSocketContainerTest {
         try (ApplicationContext impatient = ApplicationContext.run(Map.of(
             "test.name", TEST, "micronaut.servlet.websocket.connect-timeout", "200ms"))) {
             impatient.getBean(WebSocketContainerHolder.class).register(delegate);
-            WebSocketContainer container = impatient.getBean(WebSocketContainer.class);
+            WebSocketContainer impatientContainer = impatient.getBean(WebSocketContainer.class);
 
-            DeploymentException e = assertThrows(DeploymentException.class, () -> container.connectToServer(new SlowOpenClient(), ECHO));
+            DeploymentException e = assertThrows(DeploymentException.class, () -> impatientContainer.connectToServer(new SlowOpenClient(), ECHO));
 
             assertTrue(e.getMessage().contains("connect-timeout"), e.getMessage());
             assertFalse(delegate.session.open, "the session is closed when the open handler does not complete");
