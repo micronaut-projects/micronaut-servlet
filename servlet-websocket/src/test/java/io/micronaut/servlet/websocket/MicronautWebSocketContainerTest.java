@@ -153,6 +153,40 @@ class MicronautWebSocketContainerTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
+    void messagesHeldForAnOpenHandlerDieWithTheSession() throws Exception {
+        SlowOpenClient client = new SlowOpenClient();
+        BeanDefinition<Object> definition = (BeanDefinition<Object>) (BeanDefinition<?>) context.getBeanDefinition(SlowOpenClient.class);
+        MicronautClientEndpoint endpoint = new MicronautClientEndpoint(
+            context.getBean(ServletWebSocketSupport.class),
+            ClientEndpointBean.of(definition, client),
+            JakartaEndpoint.of(definition),
+            HttpRequest.GET(ECHO),
+            PropagatedContext.empty()
+        );
+        endpoint.onOpen(delegate.session, ClientEndpointConfig.Builder.create().build());
+        delegate.session.receive(String.class, "early");
+
+        endpoint.onClose(delegate.session, new CloseReason(CloseReason.CloseCodes.GOING_AWAY, "bye"));
+        client.release.complete(null);
+
+        assertTrue(endpoint.opened().isCompletedExceptionally(), "the open failed: the session closed first");
+        assertTrue(client.received.isEmpty(), "a message held for @OnOpen is not delivered after @OnClose");
+    }
+
+    @Test
+    void aProgrammaticEndpointIsInstantiatedWithoutReflectionWhenItCanBeAndByTheContainerOtherwise() throws Exception {
+        ClientEndpointConfig config = ClientEndpointConfig.Builder.create().build();
+
+        container.connectToServer(IntrospectedEndpoint.class, config, ECHO);
+        assertInstanceOf(IntrospectedEndpoint.class, delegate.endpoint, "an introspected endpoint is created through its introspection");
+        assertNull(delegate.programmaticClass);
+
+        container.connectToServer(PlainEndpoint.class, config, ECHO);
+        assertEquals(PlainEndpoint.class, delegate.programmaticClass, "one nothing can build without reflection is left to the container");
+    }
+
+    @Test
     void theDeclaredConfiguratorIsCreatedPerConnection() throws Exception {
         int before = GreetingConfigurator.INSTANCES.get();
 
@@ -350,5 +384,20 @@ class MicronautWebSocketContainerTest {
     }
 
     static class NotABean {
+    }
+
+    @io.micronaut.core.annotation.Introspected
+    public static class IntrospectedEndpoint extends jakarta.websocket.Endpoint {
+        @Override
+        public void onOpen(Session session, EndpointConfig config) {
+            // only its instantiation matters
+        }
+    }
+
+    public static class PlainEndpoint extends jakarta.websocket.Endpoint {
+        @Override
+        public void onOpen(Session session, EndpointConfig config) {
+            // only its instantiation matters
+        }
     }
 }

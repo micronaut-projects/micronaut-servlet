@@ -198,7 +198,7 @@ public abstract class AbstractMicronautEndpoint extends Endpoint {
             held = deferred;
             deferred = null;
         }
-        if (held != null) {
+        if (held != null && !closed.get()) {
             held.forEach(Runnable::run);
         }
         openCompleted();
@@ -801,6 +801,10 @@ public abstract class AbstractMicronautEndpoint extends Endpoint {
     private void handleClose(CloseReason reason, jakarta.websocket.CloseReason nativeReason) {
         if (!closed.compareAndSet(false, true)) {
             return;
+        }
+        synchronized (gate) {
+            // Messages held for an open handler that is still running die with the session.
+            deferred = null;
         }
         ExecutableMethod<Object, ?> closeMethod = webSocketBean != null ? handler(webSocketBean.closeMethod()) : null;
         if (closeMethod == null) {

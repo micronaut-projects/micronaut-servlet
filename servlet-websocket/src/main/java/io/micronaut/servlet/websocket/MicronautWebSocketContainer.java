@@ -120,8 +120,10 @@ public final class MicronautWebSocketContainer implements WebSocketContainer {
     /**
      * {@inheritDoc}
      *
-     * <p>The endpoint is instantiated as a bean, through its introspection or reflectively under
-     * the reflection policy, the way the components an endpoint declares are.</p>
+     * <p>The endpoint is instantiated without reflection when it can be - as a bean, through its
+     * introspection, or reflectively under the reflection policy, the way the components an
+     * endpoint declares are. Otherwise the container instantiates it itself, as it would on its
+     * own.</p>
      */
     @Override
     public Session connectToServer(Class<? extends Endpoint> endpointClass, ClientEndpointConfig cec, URI path) throws DeploymentException, IOException {
@@ -129,7 +131,10 @@ public final class MicronautWebSocketContainer implements WebSocketContainer {
         try {
             endpoint = support.components().instantiate(endpointClass);
         } catch (WebSocketException e) {
-            throw deploymentException(e);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Endpoint [{}] is not a bean or introspected, leaving its instantiation to the container: {}", endpointClass.getName(), e.getMessage());
+            }
+            return container().connectToServer(endpointClass, cec, path);
         }
         return container().connectToServer(endpoint, cec, path);
     }

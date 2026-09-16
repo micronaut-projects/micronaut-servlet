@@ -26,6 +26,7 @@ final class TestContainer implements WebSocketContainer {
     URI uri;
     Class<?> scannedClass;
     Object scannedInstance;
+    Class<? extends Endpoint> programmaticClass;
     long asyncSendTimeout;
     long maxSessionIdleTimeout;
     int maxBinaryMessageBufferSize;
@@ -57,7 +58,10 @@ final class TestContainer implements WebSocketContainer {
 
     @Override
     public Session connectToServer(Class<? extends Endpoint> endpointClass, ClientEndpointConfig cec, URI path) {
-        throw new UnsupportedOperationException("the Micronaut container instantiates the endpoint itself");
+        this.programmaticClass = endpointClass;
+        this.config = cec;
+        this.uri = path;
+        return session;
     }
 
     @Override
