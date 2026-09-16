@@ -14,7 +14,7 @@ import java.io.IOException;
 
 import io.micronaut.context.annotation.Requires;
 
-@Requires(property = "spec.name", value = "EchoEndpointSpec")
+@Requires(property = "spec.name", pattern = "EchoEndpointSpec|EchoClientEndpointSpec")
 // tag::class[]
 @ServerEndpoint("/ws/echo/{room}") // <1>
 public class EchoEndpoint {

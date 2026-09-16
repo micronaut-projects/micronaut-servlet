@@ -48,10 +48,16 @@ import static io.micronaut.servlet.annotation.processor.JakartaOnMessageMapper.M
  *
  * <p>The mappers turn the Jakarta annotations into Micronaut ones; this visitor checks what the
  * runtime cannot recover from and reports it against the source instead of the first handshake:
- * the endpoint has a message handler, has at most one handler per category, does not use partial
- * messages, and every class it names in {@code decoders}, {@code encoders} or {@code configurator}
- * can be instantiated. The ones that are not beans get an introspection generated, so no
- * reflection is needed to create them.</p>
+ * a server endpoint has a message handler, an endpoint has at most one handler per category,
+ * does not use partial messages, and every class it names in {@code decoders}, {@code encoders}
+ * or {@code configurator} can be instantiated. The ones that are not beans get an introspection
+ * generated, so no reflection is needed to create them.</p>
+ *
+ * <p>A {@code @ServerEndpoint} is mapped onto {@code @ServerWebSocket}. A {@code @ClientEndpoint}
+ * maps onto no Micronaut annotation: it is a plain bean whose handlers the lifecycle mappers made
+ * executable, opened through the {@code WebSocketContainer} bean with the URI given to
+ * {@code connectToServer}. A client has no URI template, so {@code @PathParam} is rejected, and
+ * no reason to receive, so {@code @OnMessage} is optional.</p>
  *
  * <p>An endpoint that declares no scope of its own is made a {@code @Prototype}, which is the
  * Jakarta contract of one endpoint instance per connection. A declared scope wins.</p>
@@ -66,7 +72,8 @@ public final class JakartaWebSocketVisitor implements TypeElementVisitor<Object,
     static final String INTROSPECTED = "io.micronaut.core.annotation.Introspected";
     static final String BEAN = "io.micronaut.context.annotation.Bean";
     static final String REFLECTION_BEAN_DEFINITION = "io.micronaut.reflection.ReflectionBeanDefinition";
-    static final String DEFAULT_CONFIGURATOR = "jakarta.websocket.server.ServerEndpointConfig$Configurator";
+    static final String DEFAULT_SERVER_CONFIGURATOR = "jakarta.websocket.server.ServerEndpointConfig$Configurator";
+    static final String DEFAULT_CLIENT_CONFIGURATOR = "jakarta.websocket.ClientEndpointConfig$Configurator";
 
     static final String CONSUMES = "io.micronaut.http.annotation.Consumes";
     static final String BINDABLE = "io.micronaut.core.bind.annotation.Bindable";
@@ -98,28 +105,45 @@ public final class JakartaWebSocketVisitor implements TypeElementVisitor<Object,
 
     @Override
     public void visitClass(ClassElement element, VisitorContext context) {
-        if (element.hasDeclaredAnnotation(CLIENT_ENDPOINT)) {
-            throw new ProcessingException(element, "@ClientEndpoint is not supported. Use io.micronaut.websocket.annotation.ClientWebSocket instead");
-        }
         AnnotationValue<Annotation> serverEndpoint = element.getDeclaredAnnotation(SERVER_ENDPOINT);
-        if (serverEndpoint == null) {
+        AnnotationValue<Annotation> clientEndpoint = element.getDeclaredAnnotation(CLIENT_ENDPOINT);
+        if (serverEndpoint == null && clientEndpoint == null) {
             return;
         }
-        if (context.getClassElement(SERVER_WEB_SOCKET).isEmpty()) {
-            throw new ProcessingException(element, "@ServerEndpoint requires the Micronaut WebSocket API. Add io.micronaut.servlet:micronaut-servlet-websocket to the classpath");
+        if (serverEndpoint != null && clientEndpoint != null) {
+            throw new ProcessingException(element, "An endpoint cannot be both a @ServerEndpoint and a @ClientEndpoint");
         }
-        validateHandlers(element, serverEndpoint, context);
-        introspectComponents(element, serverEndpoint, context);
+        EndpointKind kind = serverEndpoint != null ? EndpointKind.SERVER : EndpointKind.CLIENT;
+        AnnotationValue<Annotation> endpoint = serverEndpoint != null ? serverEndpoint : clientEndpoint;
+        if (context.getClassElement(SERVER_WEB_SOCKET).isEmpty()) {
+            throw new ProcessingException(element, kind.name + " requires the Micronaut WebSocket API. Add io.micronaut.servlet:micronaut-servlet-websocket to the classpath");
+        }
+        validateHandlers(element, endpoint, kind, context);
+        introspectComponents(element, endpoint, kind, context);
         if (!element.hasStereotype(AnnotationUtil.SCOPE)) {
             element.annotate(PROTOTYPE);
         }
     }
 
-    private static void validateHandlers(ClassElement element, AnnotationValue<Annotation> serverEndpoint, VisitorContext context) {
+    private static void validateHandlers(ClassElement element, AnnotationValue<Annotation> endpoint, EndpointKind kind, VisitorContext context) {
         List<MethodElement> messageHandlers = handlers(element, JAKARTA_ON_MESSAGE);
-        if (messageHandlers.isEmpty()) {
-            throw new ProcessingException(element, "@ServerEndpoint must declare at least one @OnMessage method");
+        if (messageHandlers.isEmpty() && kind == EndpointKind.SERVER) {
+            // A client may only send; a server route without a message handler never upgrades.
+            throw new ProcessingException(element, kind.name + " must declare at least one @OnMessage method");
         }
+        validateMessageHandlers(messageHandlers, endpoint, kind, context);
+        for (String annotation : new String[] {JAKARTA_ON_OPEN, JAKARTA_ON_CLOSE, JAKARTA_ON_ERROR}) {
+            List<MethodElement> lifecycle = handlers(element, annotation);
+            if (lifecycle.size() > 1) {
+                throw new ProcessingException(lifecycle.get(1), kind.name + " declares more than one @" + annotation.substring(annotation.lastIndexOf('.') + 1) + " method");
+            }
+        }
+        if (kind == EndpointKind.CLIENT) {
+            rejectPathParams(element);
+        }
+    }
+
+    private static void validateMessageHandlers(List<MethodElement> messageHandlers, AnnotationValue<Annotation> endpoint, EndpointKind kind, VisitorContext context) {
         Set<MessageKind> kinds = new HashSet<>();
         for (MethodElement handler : messageHandlers) {
             long maxMessageSize = handler.longValue(JAKARTA_ON_MESSAGE, MAX_MESSAGE_SIZE).orElse(-1);
@@ -129,15 +153,23 @@ public final class JakartaWebSocketVisitor implements TypeElementVisitor<Object,
             if (isPartial(handler)) {
                 throw new ProcessingException(handler, "Partial message handlers are not supported: messages are always delivered whole, so remove the boolean last-part parameter");
             }
-            MessageKind kind = messageKind(handler, serverEndpoint, context);
-            if (!kinds.add(kind)) {
-                throw new ProcessingException(handler, "@ServerEndpoint declares more than one " + kind.description + " @OnMessage method");
+            MessageKind messageKind = messageKind(handler, endpoint, context);
+            if (!kinds.add(messageKind)) {
+                throw new ProcessingException(handler, kind.name + " declares more than one " + messageKind.description + " @OnMessage method");
             }
         }
-        for (String annotation : new String[] {JAKARTA_ON_OPEN, JAKARTA_ON_CLOSE, JAKARTA_ON_ERROR}) {
-            List<MethodElement> lifecycle = handlers(element, annotation);
-            if (lifecycle.size() > 1) {
-                throw new ProcessingException(lifecycle.get(1), "@ServerEndpoint declares more than one @" + annotation.substring(annotation.lastIndexOf('.') + 1) + " method");
+    }
+
+    /**
+     * A client connects to a URI, not a template, so there is nothing a {@code @PathParam} could
+     * be bound from (Jakarta WebSocket 4.3).
+     */
+    private static void rejectPathParams(ClassElement element) {
+        for (MethodElement handler : element.getEnclosedElements(ElementQuery.ALL_METHODS)) {
+            for (ParameterElement parameter : handler.getParameters()) {
+                if (parameter.hasAnnotation(PATH_PARAM)) {
+                    throw new ProcessingException(parameter, "@PathParam is only supported on a @ServerEndpoint: a @ClientEndpoint connects to a URI, not a URI template");
+                }
             }
         }
     }
@@ -168,7 +200,7 @@ public final class JakartaWebSocketVisitor implements TypeElementVisitor<Object,
         return message && flag;
     }
 
-    private static MessageKind messageKind(MethodElement handler, AnnotationValue<Annotation> serverEndpoint, VisitorContext context) {
+    private static MessageKind messageKind(MethodElement handler, AnnotationValue<Annotation> endpoint, VisitorContext context) {
         List<ParameterElement> candidates = new ArrayList<>();
         for (ParameterElement parameter : handler.getParameters()) {
             if (!isBound(parameter)) {
@@ -185,7 +217,7 @@ public final class JakartaWebSocketVisitor implements TypeElementVisitor<Object,
         // The runtime cannot tell without reflecting over the decoder's generic signature, so the
         // outcome is recorded on the handler as the media type it consumes.
         for (ParameterElement parameter : candidates) {
-            if (hasBinaryDecoder(serverEndpoint, parameter.getType(), context)) {
+            if (hasBinaryDecoder(endpoint, parameter.getType(), context)) {
                 if (!handler.hasAnnotation(CONSUMES)) {
                     handler.annotate(CONSUMES, builder -> builder.value(APPLICATION_OCTET_STREAM));
                 }
@@ -225,8 +257,8 @@ public final class JakartaWebSocketVisitor implements TypeElementVisitor<Object,
         return type.isArray() && "byte".equals(type.fromArray().getName());
     }
 
-    private static boolean hasBinaryDecoder(AnnotationValue<Annotation> serverEndpoint, ClassElement messageType, VisitorContext context) {
-        for (AnnotationClassValue<?> decoder : serverEndpoint.annotationClassValues("decoders")) {
+    private static boolean hasBinaryDecoder(AnnotationValue<Annotation> endpoint, ClassElement messageType, VisitorContext context) {
+        for (AnnotationClassValue<?> decoder : endpoint.annotationClassValues("decoders")) {
             ClassElement decoderType = context.getClassElement(decoder.getName()).orElse(null);
             if (decoderType == null) {
                 continue;
@@ -254,8 +286,8 @@ public final class JakartaWebSocketVisitor implements TypeElementVisitor<Object,
      * One whose constructor takes arguments has to be a bean, or be built reflectively through
      * {@code micronaut-reflection}, which the runtime falls back to when the module is present.</p>
      */
-    private static void introspectComponents(ClassElement element, AnnotationValue<Annotation> serverEndpoint, VisitorContext context) {
-        Set<String> introspect = componentsToIntrospect(element, serverEndpoint, context);
+    private static void introspectComponents(ClassElement element, AnnotationValue<Annotation> endpoint, EndpointKind kind, VisitorContext context) {
+        Set<String> introspect = componentsToIntrospect(element, endpoint, kind, context);
         if (introspect.isEmpty()) {
             return;
         }
@@ -279,21 +311,21 @@ public final class JakartaWebSocketVisitor implements TypeElementVisitor<Object,
      * introspection that will be generated when they have a no-argument constructor, else
      * reflectively when {@code micronaut-reflection} is available.
      */
-    private static Set<String> componentsToIntrospect(ClassElement element, AnnotationValue<Annotation> serverEndpoint, VisitorContext context) {
+    private static Set<String> componentsToIntrospect(ClassElement element, AnnotationValue<Annotation> endpoint, EndpointKind kind, VisitorContext context) {
         boolean reflectionAvailable = context.getClassElement(REFLECTION_BEAN_DEFINITION).isPresent();
         Set<String> introspect = new LinkedHashSet<>();
         for (String member : COMPONENT_MEMBERS) {
-            for (AnnotationClassValue<?> classValue : serverEndpoint.annotationClassValues(member)) {
+            for (AnnotationClassValue<?> classValue : endpoint.annotationClassValues(member)) {
                 String name = classValue.getName();
                 ClassElement component = isDefaultConfigurator(name)
                     ? null
                     : context.getClassElement(name)
-                        .orElseThrow(() -> new ProcessingException(element, "@ServerEndpoint " + member + " names a class that cannot be resolved: " + name));
+                        .orElseThrow(() -> new ProcessingException(element, kind.name + " " + member + " names a class that cannot be resolved: " + name));
                 if (component == null || isBean(component)) {
                     continue;
                 }
                 if (!reflectionAvailable && !hasDefaultConstructor(component)) {
-                    throw new ProcessingException(element, "@ServerEndpoint " + member + " names a class the runtime cannot instantiate: " + name
+                    throw new ProcessingException(element, kind.name + " " + member + " names a class the runtime cannot instantiate: " + name
                         + ". Give it a public no-argument constructor, make it a bean (@Singleton or @Prototype), "
                         + "or add io.micronaut:micronaut-reflection and allow the type through micronaut.introspection.allow-reflection");
                 }
@@ -304,7 +336,11 @@ public final class JakartaWebSocketVisitor implements TypeElementVisitor<Object,
     }
 
     private static boolean isDefaultConfigurator(String name) {
-        return DEFAULT_CONFIGURATOR.equals(name) || DEFAULT_CONFIGURATOR.replace('$', '.').equals(name);
+        return isDefaultConfigurator(name, DEFAULT_SERVER_CONFIGURATOR) || isDefaultConfigurator(name, DEFAULT_CLIENT_CONFIGURATOR);
+    }
+
+    private static boolean isDefaultConfigurator(String name, String defaultConfigurator) {
+        return defaultConfigurator.equals(name) || defaultConfigurator.replace('$', '.').equals(name);
     }
 
     private static boolean isBean(ClassElement component) {
@@ -314,6 +350,20 @@ public final class JakartaWebSocketVisitor implements TypeElementVisitor<Object,
     private static boolean hasDefaultConstructor(ClassElement component) {
         return !component.isAbstract()
             && component.getDefaultConstructor().filter(constructor -> !constructor.isPrivate()).isPresent();
+    }
+
+    /**
+     * The two sides an endpoint can be on, with the annotation naming it in messages.
+     */
+    private enum EndpointKind {
+        SERVER("@ServerEndpoint"),
+        CLIENT("@ClientEndpoint");
+
+        private final String name;
+
+        EndpointKind(String name) {
+            this.name = name;
+        }
     }
 
     /**

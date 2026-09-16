@@ -23,16 +23,20 @@ import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.Consumes;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.ExecutableMethod;
+import jakarta.websocket.Encoder;
 import org.jspecify.annotations.Nullable;
 
 import java.io.InputStream;
 import java.io.Reader;
 import java.lang.annotation.Annotation;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
- * What a {@code @ServerEndpoint} declares, read once from its bean definition.
+ * What a {@code @ServerEndpoint} or {@code @ClientEndpoint} declares, read once from its bean
+ * definition.
  *
  * <p>The Jakarta model allows one message handler per category - text, binary and pong - where
  * Micronaut has one that converts, so the handlers are classified here by the type of the message
@@ -47,6 +51,7 @@ import java.util.List;
  * @param decoders     The declared decoder classes
  * @param encoders     The declared encoder classes
  * @param configurator The declared configurator class, or {@code null} for the default
+ * @param subprotocols The declared subprotocols, in order of preference
  * @author graemerocher
  * @since 6.2.0
  */
@@ -56,34 +61,44 @@ public record JakartaEndpoint(@Nullable ExecutableMethod<Object, ?> textMethod,
                               @Nullable ExecutableMethod<Object, ?> pongMethod,
                               List<Class<?>> decoders,
                               List<Class<?>> encoders,
-                              @Nullable Class<?> configurator) {
+                              @Nullable Class<?> configurator,
+                              List<String> subprotocols) {
 
     /**
      * The Jakarta annotations, by name so that the API is not needed to load this class.
      */
     public static final String SERVER_ENDPOINT = "jakarta.websocket.server.ServerEndpoint";
+    public static final String CLIENT_ENDPOINT = "jakarta.websocket.ClientEndpoint";
     public static final String ON_MESSAGE = "jakarta.websocket.OnMessage";
 
     private static final String PONG_MESSAGE = "jakarta.websocket.PongMessage";
-    private static final String DEFAULT_CONFIGURATOR = "jakarta.websocket.server.ServerEndpointConfig$Configurator";
+    private static final Set<String> DEFAULT_CONFIGURATORS = Set.of(
+        "jakarta.websocket.server.ServerEndpointConfig$Configurator",
+        "jakarta.websocket.ClientEndpointConfig$Configurator"
+    );
 
     /**
      * Reads the endpoint from its bean definition.
      *
      * @param definition The bean definition
-     * @return The endpoint, or {@code null} when the bean is a Micronaut {@code @ServerWebSocket}
+     * @return The endpoint, or {@code null} when the bean declares neither Jakarta annotation
      */
-    @SuppressWarnings("unchecked")
     public static @Nullable JakartaEndpoint of(BeanDefinition<?> definition) {
-        AnnotationValue<Annotation> serverEndpoint = definition.getAnnotation(SERVER_ENDPOINT);
-        if (serverEndpoint == null) {
-            return null;
+        AnnotationValue<Annotation> endpoint = definition.getAnnotation(SERVER_ENDPOINT);
+        if (endpoint == null) {
+            endpoint = definition.getAnnotation(CLIENT_ENDPOINT);
         }
-        List<Class<?>> decoders = List.of(serverEndpoint.classValues("decoders"));
-        List<Class<?>> encoders = List.of(serverEndpoint.classValues("encoders"));
-        Class<?> configurator = serverEndpoint.classValue("configurator")
-            .filter(type -> !DEFAULT_CONFIGURATOR.equals(type.getName()))
+        return endpoint != null ? of(definition, endpoint) : null;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static JakartaEndpoint of(BeanDefinition<?> definition, AnnotationValue<Annotation> endpoint) {
+        List<Class<?>> decoders = List.of(endpoint.classValues("decoders"));
+        List<Class<?>> encoders = List.of(endpoint.classValues("encoders"));
+        Class<?> configurator = endpoint.classValue("configurator")
+            .filter(type -> !DEFAULT_CONFIGURATORS.contains(type.getName()))
             .orElse(null);
+        List<String> subprotocols = List.of(endpoint.stringValues("subprotocols"));
         ExecutableMethod<Object, ?> text = null;
         ExecutableMethod<Object, ?> binary = null;
         ExecutableMethod<Object, ?> pong = null;
@@ -99,7 +114,25 @@ public record JakartaEndpoint(@Nullable ExecutableMethod<Object, ?> textMethod,
                 default -> throw new IllegalStateException();
             }
         }
-        return new JakartaEndpoint(text, binary, pong, decoders, encoders, configurator);
+        return new JakartaEndpoint(text, binary, pong, decoders, encoders, configurator, subprotocols);
+    }
+
+    /**
+     * The declared encoders the container may instantiate itself, reflectively, for
+     * {@code RemoteEndpoint#sendObject}: those the application has opted into reflection.
+     *
+     * @param components The component resolver, which knows the reflection policy
+     * @return The encoder classes to pass to the container's endpoint configuration
+     */
+    @SuppressWarnings("unchecked")
+    public List<Class<? extends Encoder>> containerEncoders(JakartaEndpointComponents components) {
+        List<Class<? extends Encoder>> allowed = new ArrayList<>(encoders.size());
+        for (Class<?> encoder : encoders) {
+            if (components.isReflectionAllowed(encoder)) {
+                allowed.add((Class<? extends Encoder>) encoder);
+            }
+        }
+        return allowed;
     }
 
     private static Kind classify(ExecutableMethod<?, ?> handler) {

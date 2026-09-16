@@ -12,7 +12,7 @@ import jakarta.websocket.server.ServerEndpoint
 
 import io.micronaut.context.annotation.Requires
 
-@Requires(property = "spec.name", value = "EchoEndpointSpec")
+@Requires(property = "spec.name", pattern = "EchoEndpointSpec|EchoClientEndpointSpec")
 // tag::class[]
 @ServerEndpoint("/ws/echo/{room}") // <1>
 class EchoEndpoint {

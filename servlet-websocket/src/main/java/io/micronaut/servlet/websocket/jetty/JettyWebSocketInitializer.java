@@ -21,6 +21,7 @@ import io.micronaut.core.util.StringUtils;
 import io.micronaut.http.server.HttpServerConfiguration;
 import io.micronaut.servlet.websocket.ServerContainerCustomizer;
 import io.micronaut.servlet.websocket.ServletWebSocketConfiguration;
+import io.micronaut.servlet.websocket.WebSocketContainerHolder;
 import jakarta.inject.Singleton;
 import jakarta.servlet.ServletContainerInitializer;
 import jakarta.servlet.ServletContext;
@@ -53,16 +54,20 @@ public final class JettyWebSocketInitializer implements ServletContainerInitiali
 
     private final ServletWebSocketConfiguration configuration;
     private final Duration idleTimeout;
+    private final WebSocketContainerHolder holder;
 
     /**
      * Default constructor.
      *
      * @param configuration       The WebSocket configuration
      * @param serverConfiguration The server configuration, used for the default idle timeout
+     * @param holder              Where the container is registered for client connections
      */
     public JettyWebSocketInitializer(ServletWebSocketConfiguration configuration,
-                                     HttpServerConfiguration serverConfiguration) {
+                                     HttpServerConfiguration serverConfiguration,
+                                     WebSocketContainerHolder holder) {
         this.configuration = configuration;
+        this.holder = holder;
         this.idleTimeout = configuration.getIdleTimeout() != null
             ? configuration.getIdleTimeout()
             : serverConfiguration.getIdleTimeout();
@@ -73,5 +78,6 @@ public final class JettyWebSocketInitializer implements ServletContainerInitiali
         ServletContextHandler contextHandler = ServletContextHandler.getServletContextHandler(ctx, "Jakarta WebSocket");
         ServerContainer container = JakartaWebSocketServletContainerInitializer.initialize(contextHandler);
         ServerContainerCustomizer.apply(container, configuration, idleTimeout);
+        holder.register(container);
     }
 }
