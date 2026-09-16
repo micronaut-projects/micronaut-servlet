@@ -1,0 +1,43 @@
+plugins {
+    id("io.micronaut.build.internal.servlet.implementation")
+    id("io.micronaut.build.internal.python")
+}
+
+// Python (GraalPy) equivalents of the guide sources in test-suite, under the same fully qualified
+// names (without the leading `io.`) so that the `snippet::` macro can render a Python tab. The
+// tests only run with `-Ppython-ci`; the regular build compiles the sources.
+dependencies {
+    // Annotation processors MUST be testImplementation (not testAnnotationProcessor): the Python
+    // compiler takes the (jar-resolved) compile classpath as its annotation processor path.
+    testImplementation(projects.micronautServletProcessor)
+    testImplementation(mn.micronaut.inject.python.test)
+    testImplementation(mn.micronaut.context.python)
+    testImplementation(mnTest.micronaut.test.junit5)
+    testRuntimeOnly(mnTest.junit.jupiter.engine)
+
+    testImplementation(projects.micronautServletWebsocket)
+    testImplementation(projects.micronautHttpServerJetty)
+    testImplementation(projects.micronautHttpServerTomcat)
+    testImplementation(projects.micronautHttpServerUndertow)
+    // The server classes the customizers reference are implementation dependencies of the runtimes.
+    testImplementation(libs.tomcat.embed.core)
+    testImplementation(libs.undertow.servlet)
+    testImplementation(libs.jetty.websocket.jakarta.server) {
+        exclude(group: "org.eclipse.jetty.ee10", module: "jetty-ee10-annotations")
+    }
+    testImplementation(mn.micronaut.jackson.databind)
+    testRuntimeOnly(mnLogging.logback.classic)
+}
+
+micronautBuild {
+    binaryCompatibility {
+        enabled = false
+    }
+}
+
+tasks.withType(Test).configureEach {
+    useJUnitPlatform()
+    systemProperty "micronaut.python.pool.enabled", "false"
+    // a Truffle host-interop assertion trips on varargs overloads
+    enableAssertions = false
+}

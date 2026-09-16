@@ -49,6 +49,8 @@ import java.util.Set;
 @Internal
 @Singleton
 @Requires(classes = {JakartaWebSocketServletContainerInitializer.class, ServletContextHandler.class})
+// only for the Jetty runtime, so that another runtime enabled in its place on the same classpath does not receive it
+@Requires(property = HttpServerConfiguration.PREFIX + ".jetty.enabled", notEquals = StringUtils.FALSE, defaultValue = StringUtils.TRUE)
 @Requires(property = ServletWebSocketConfiguration.ENABLED_PROPERTY, notEquals = StringUtils.FALSE, defaultValue = StringUtils.TRUE)
 public final class JettyWebSocketInitializer implements ServletContainerInitializer {
 
