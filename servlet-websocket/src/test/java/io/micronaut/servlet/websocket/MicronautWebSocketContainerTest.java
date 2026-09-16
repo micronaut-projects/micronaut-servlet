@@ -2,7 +2,10 @@ package io.micronaut.servlet.websocket;
 
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Requires;
+import io.micronaut.core.propagation.PropagatedContext;
+import io.micronaut.http.HttpRequest;
 import io.micronaut.http.annotation.Header;
+import io.micronaut.inject.BeanDefinition;
 import io.micronaut.websocket.WebSocketSession;
 import jakarta.inject.Singleton;
 import jakarta.websocket.ClientEndpoint;
@@ -28,6 +31,9 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -119,13 +125,59 @@ class MicronautWebSocketContainerTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
+    void aMessageArrivingWhileOnOpenIsStillRunningIsDeliveredOnlyOnceItHasCompleted() throws Exception {
+        SlowOpenClient client = new SlowOpenClient();
+        BeanDefinition<Object> definition = (BeanDefinition<Object>) (BeanDefinition<?>) context.getBeanDefinition(SlowOpenClient.class);
+        MicronautClientEndpoint endpoint = new MicronautClientEndpoint(
+            context.getBean(ServletWebSocketSupport.class),
+            ClientEndpointBean.of(definition, client),
+            JakartaEndpoint.of(definition),
+            HttpRequest.GET(ECHO),
+            PropagatedContext.empty()
+        );
+
+        endpoint.onOpen(delegate.session, ClientEndpointConfig.Builder.create().build());
+        assertTrue(client.opening.await(5, TimeUnit.SECONDS), "@OnOpen was invoked");
+        assertFalse(endpoint.opened().isDone(), "an asynchronous @OnOpen has not completed yet");
+
+        delegate.session.receive(String.class, "early");
+        assertTrue(client.received.isEmpty(), "a message must not reach the endpoint before @OnOpen has completed");
+
+        client.release.complete(null);
+        endpoint.opened().get(5, TimeUnit.SECONDS);
+        assertEquals(List.of("early"), client.received, "the held message is delivered once @OnOpen has completed");
+
+        delegate.session.receive(String.class, "late");
+        assertEquals(List.of("early", "late"), client.received);
+    }
+
+    @Test
+    void theDeclaredConfiguratorIsCreatedPerConnection() throws Exception {
+        int before = GreetingConfigurator.INSTANCES.get();
+
+        container.connectToServer(new EchoClient(), ECHO);
+        container.connectToServer(new EchoClient(), ECHO);
+
+        assertEquals(before + 2, GreetingConfigurator.INSTANCES.get(), "no handshake state is shared between connections");
+    }
+
+    @Test
+    void aClientEndpointWithNoHandlerIsLeftToTheContainer() throws Exception {
+        container.connectToServer(HandlerlessClient.class, ECHO);
+
+        assertEquals(HandlerlessClient.class, delegate.scannedClass, "nothing was mapped, so nothing is lost by letting the container scan it");
+    }
+
+    @Test
     void aFailingOpenHandlerFailsTheConnectionAndClosesTheSession() {
         DeploymentException e = assertThrows(DeploymentException.class, () -> container.connectToServer(FailingClient.class, ECHO));
 
         assertInstanceOf(IllegalStateException.class, e.getCause());
         assertEquals("no", e.getCause().getMessage());
         assertFalse(delegate.session.open, "a session whose @OnOpen failed must not stay connected");
-        assertInstanceOf(IllegalStateException.class, FailingClient.lastError, "@OnError was offered the failure first");
+        assertInstanceOf(IllegalStateException.class, FailingClient.lastError,
+            "@OnError was offered the failure, and had completed on its own executor, before the failure was reported");
     }
 
     @Test
@@ -184,7 +236,12 @@ class MicronautWebSocketContainerTest {
     }
 
     public static class GreetingConfigurator extends ClientEndpointConfig.Configurator {
+        static final AtomicInteger INSTANCES = new AtomicInteger();
         static boolean beforeRequest;
+
+        public GreetingConfigurator() {
+            INSTANCES.incrementAndGet();
+        }
 
         @Override
         public void beforeRequest(Map<String, List<String>> headers) {
@@ -256,10 +313,40 @@ class MicronautWebSocketContainerTest {
             throw new IllegalStateException("no");
         }
 
+        /**
+         * Completes on another thread, so the failure may only be reported once this has.
+         */
         @OnError
-        public void error(Throwable error) {
-            lastError = error;
+        public CompletableFuture<Void> error(Throwable error) {
+            return CompletableFuture.runAsync(() -> lastError = error, CompletableFuture.delayedExecutor(100, TimeUnit.MILLISECONDS));
         }
+    }
+
+    /**
+     * An {@code @OnOpen} that completes asynchronously, as a reactive or suspending one does.
+     */
+    @Requires(property = "test.name", value = TEST)
+    @ClientEndpoint
+    static class SlowOpenClient {
+        final CountDownLatch opening = new CountDownLatch(1);
+        final CompletableFuture<Void> release = new CompletableFuture<>();
+        final List<String> received = new ArrayList<>();
+
+        @OnOpen
+        public CompletableFuture<Void> open() {
+            opening.countDown();
+            return release;
+        }
+
+        @OnMessage
+        public void text(String message) {
+            received.add(message);
+        }
+    }
+
+    @Requires(property = "test.name", value = TEST)
+    @ClientEndpoint
+    static class HandlerlessClient {
     }
 
     static class NotABean {

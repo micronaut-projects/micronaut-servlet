@@ -71,6 +71,10 @@ public record JakartaEndpoint(@Nullable ExecutableMethod<Object, ?> textMethod,
     public static final String CLIENT_ENDPOINT = "jakarta.websocket.ClientEndpoint";
     public static final String ON_MESSAGE = "jakarta.websocket.OnMessage";
 
+    private static final List<String> LIFECYCLE_ANNOTATIONS = List.of(
+        "jakarta.websocket.OnOpen", ON_MESSAGE, "jakarta.websocket.OnClose", "jakarta.websocket.OnError"
+    );
+
     private static final String PONG_MESSAGE = "jakarta.websocket.PongMessage";
     private static final Set<String> DEFAULT_CONFIGURATORS = Set.of(
         "jakarta.websocket.server.ServerEndpointConfig$Configurator",
@@ -89,6 +93,30 @@ public record JakartaEndpoint(@Nullable ExecutableMethod<Object, ?> textMethod,
             endpoint = definition.getAnnotation(CLIENT_ENDPOINT);
         }
         return endpoint != null ? of(definition, endpoint) : null;
+    }
+
+    /**
+     * Whether the annotation processor mapped the endpoint's handlers, so they can be invoked
+     * through the bean definition.
+     *
+     * <p>A Jakarta endpoint that is a bean for another reason - a {@code @Singleton} compiled
+     * without the servlet processor - keeps its class annotation in the metadata but none of its
+     * handlers are executable; dispatching to it would silently invoke nothing. A mapped handler
+     * carries its Jakarta annotation next to the Micronaut one. An endpoint with no handler at
+     * all is not mapped either, and nothing is lost by leaving it to the container.</p>
+     *
+     * @param definition The bean definition
+     * @return {@code true} if at least one handler was mapped
+     */
+    public static boolean isMapped(BeanDefinition<?> definition) {
+        for (ExecutableMethod<?, ?> method : definition.getExecutableMethods()) {
+            for (String annotation : LIFECYCLE_ANNOTATIONS) {
+                if (method.hasAnnotation(annotation)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     @SuppressWarnings("unchecked")

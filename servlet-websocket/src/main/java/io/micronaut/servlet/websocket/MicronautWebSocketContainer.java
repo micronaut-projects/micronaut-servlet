@@ -78,7 +78,6 @@ public final class MicronautWebSocketContainer implements WebSocketContainer {
     private final ServletWebSocketSupport support;
     private final WebSocketContainerHolder holder;
     private final Map<Class<?>, JakartaEndpoint> jakartaEndpoints = new ConcurrentHashMap<>();
-    private final Map<Class<?>, ClientEndpointConfig.Configurator> configurators = new ConcurrentHashMap<>();
 
     /**
      * Default constructor.
@@ -136,16 +135,19 @@ public final class MicronautWebSocketContainer implements WebSocketContainer {
     }
 
     /**
-     * The bean definition of a {@code @ClientEndpoint} the processor compiled.
+     * The bean definition of a {@code @ClientEndpoint} the processor compiled, whose handlers
+     * are therefore executable.
      *
      * @return The definition, or {@code null} when the class is not such a bean
      */
     private @Nullable BeanDefinition<Object> clientEndpointDefinition(Class<?> type) {
         @SuppressWarnings("unchecked")
         BeanDefinition<Object> definition = beanContext.findBeanDefinition((Class<Object>) type).orElse(null);
-        if (definition == null || !definition.hasAnnotation(JakartaEndpoint.CLIENT_ENDPOINT)) {
+        if (definition == null
+            || !definition.hasAnnotation(JakartaEndpoint.CLIENT_ENDPOINT)
+            || !JakartaEndpoint.isMapped(definition)) {
             if (LOG.isDebugEnabled()) {
-                LOG.debug("[{}] is not a @ClientEndpoint bean, connecting through the container directly", type.getName());
+                LOG.debug("[{}] is not a @ClientEndpoint compiled with the Micronaut servlet processor, connecting through the container directly", type.getName());
             }
             return null;
         }
@@ -156,7 +158,7 @@ public final class MicronautWebSocketContainer implements WebSocketContainer {
         Class<?> type = definition.getBeanType();
         JakartaEndpoint jakartaEndpoint = jakartaEndpoints.computeIfAbsent(type, ignored -> JakartaEndpoint.of(definition));
         MutableHttpRequest<Object> request = HttpRequest.GET(path);
-        ClientEndpointConfig config = clientEndpointConfig(type, jakartaEndpoint, request);
+        ClientEndpointConfig config = clientEndpointConfig(jakartaEndpoint, request);
         MicronautClientEndpoint endpoint = new MicronautClientEndpoint(
             support,
             ClientEndpointBean.of(definition, target),
@@ -172,9 +174,9 @@ public final class MicronautWebSocketContainer implements WebSocketContainer {
         return session;
     }
 
-    private ClientEndpointConfig clientEndpointConfig(Class<?> type, JakartaEndpoint jakartaEndpoint, MutableHttpRequest<?> request) throws DeploymentException {
+    private ClientEndpointConfig clientEndpointConfig(JakartaEndpoint jakartaEndpoint, MutableHttpRequest<?> request) throws DeploymentException {
         ClientEndpointConfig.Builder builder = ClientEndpointConfig.Builder.create()
-            .configurator(new MicronautClientConfigurator(request, configurator(type, jakartaEndpoint)));
+            .configurator(new MicronautClientConfigurator(request, configurator(jakartaEndpoint)));
         if (!jakartaEndpoint.subprotocols().isEmpty()) {
             builder = builder.preferredSubprotocols(jakartaEndpoint.subprotocols());
         }
@@ -185,14 +187,18 @@ public final class MicronautWebSocketContainer implements WebSocketContainer {
         return builder.build();
     }
 
-    private ClientEndpointConfig.@Nullable Configurator configurator(Class<?> type, JakartaEndpoint jakartaEndpoint) throws DeploymentException {
+    /**
+     * The configurator the endpoint declares, one per connection as a Jakarta container has it:
+     * a bean as its scope says, a plain class instantiated anew, so no handshake state is shared
+     * between connections.
+     */
+    private ClientEndpointConfig.@Nullable Configurator configurator(JakartaEndpoint jakartaEndpoint) throws DeploymentException {
         Class<?> configurator = jakartaEndpoint.configurator();
         if (configurator == null) {
             return null;
         }
         try {
-            return configurators.computeIfAbsent(type, ignored ->
-                (ClientEndpointConfig.Configurator) support.components().instantiate(configurator));
+            return (ClientEndpointConfig.Configurator) support.components().instantiate(configurator);
         } catch (WebSocketException e) {
             throw deploymentException(e);
         }

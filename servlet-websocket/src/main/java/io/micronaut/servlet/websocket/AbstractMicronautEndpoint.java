@@ -62,6 +62,7 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -98,7 +99,13 @@ public abstract class AbstractMicronautEndpoint extends Endpoint {
     private static final String MAX_PAYLOAD_LENGTH = "maxPayloadLength";
 
     private final AtomicBoolean closed = new AtomicBoolean();
+    private final Object gate = new Object();
     private volatile boolean opened;
+    /**
+     * Messages that arrived before {@code @OnOpen} completed, guarded by {@link #gate}; {@code null}
+     * once the open handler has completed and messages go straight through.
+     */
+    private @Nullable List<Runnable> deferred = new ArrayList<>();
 
     private @Nullable ServletWebSocketSupport support;
     private @Nullable WebSocketBean<Object> webSocketBean;
@@ -171,9 +178,40 @@ public abstract class AbstractMicronautEndpoint extends Endpoint {
         if (openMethod != null) {
             invokeOpen(openMethod);
         } else {
-            openCompleted();
+            completeOpen();
         }
         return true;
+    }
+
+    /**
+     * Lets messages through and delivers the ones that arrived while {@code @OnOpen} was running.
+     *
+     * <p>The specification has the open handler complete before the first message is delivered.
+     * That holds by itself when handlers run on the calling thread, but an {@code @ExecuteOn}
+     * handler completes later, so the message handlers are registered with the container at
+     * once - a container may refuse a message it has no handler for - and what arrives in the
+     * meantime is held back here.</p>
+     */
+    private void completeOpen() {
+        List<Runnable> held;
+        synchronized (gate) {
+            held = deferred;
+            deferred = null;
+        }
+        if (held != null) {
+            held.forEach(Runnable::run);
+        }
+        openCompleted();
+    }
+
+    private void dispatch(Runnable message) {
+        synchronized (gate) {
+            if (deferred != null) {
+                deferred.add(message);
+                return;
+            }
+        }
+        message.run();
     }
 
     /**
@@ -392,19 +430,25 @@ public abstract class AbstractMicronautEndpoint extends Endpoint {
     }
 
     private void onTextMessage(String message) {
-        handleMessage(textMethod, textBodyArgument, message, null);
+        dispatch(() -> handleMessage(textMethod, textBodyArgument, message, null));
     }
 
     private void onBinaryMessage(ByteBuffer message) {
+        // Copied before anything is deferred: the container may reuse the buffer once this returns.
         byte[] bytes = new byte[message.remaining()];
         message.get(bytes);
-        handleMessage(binaryMethod, binaryBodyArgument, null, bytes);
+        dispatch(() -> handleMessage(binaryMethod, binaryBodyArgument, null, bytes));
     }
 
     private void onPongMessage(PongMessage message) {
         if (pongMethod == null || pongBodyArgument == null) {
             return;
         }
+        Object pong = pongOf(message);
+        dispatch(() -> invoke(pongMethod, Map.of(pongBodyArgument, pong), null));
+    }
+
+    private Object pongOf(PongMessage message) {
         Object pong;
         if (pongBodyArgument.getType().isInstance(message)) {
             // A Jakarta handler takes the container's PongMessage as it is.
@@ -415,7 +459,7 @@ public abstract class AbstractMicronautEndpoint extends Endpoint {
             applicationData.get(bytes);
             pong = new WebSocketPongMessage(ByteArrayBufferFactory.INSTANCE.wrap(bytes));
         }
-        invoke(pongMethod, Map.of(pongBodyArgument, pong), null);
+        return pong;
     }
 
     /**
@@ -433,21 +477,26 @@ public abstract class AbstractMicronautEndpoint extends Endpoint {
             if (error != null) {
                 failOpen(error);
             } else {
-                openCompleted();
+                completeOpen();
             }
         });
     }
 
+    /**
+     * Offers the failure to {@code @OnError}, then reports it and closes the session, in that
+     * order, so a caller told of the failure can rely on the error handler having run.
+     */
     private void failOpen(Throwable cause) {
         if (LOG.isErrorEnabled()) {
             LOG.error("Error opening WebSocket session: {}", cause.getMessage(), cause);
         }
-        try {
-            forwardError(cause);
-            openFailed(cause);
-        } finally {
-            closeSession(CloseReason.INTERNAL_ERROR);
-        }
+        forwardError(cause).onComplete((ignored, error) -> {
+            try {
+                openFailed(cause);
+            } finally {
+                closeSession(CloseReason.INTERNAL_ERROR);
+            }
+        });
     }
 
     private void handleMessage(@Nullable ExecutableMethod<Object, ?> messageMethod,
@@ -775,20 +824,26 @@ public abstract class AbstractMicronautEndpoint extends Endpoint {
         }
     }
 
-    private void forwardError(Throwable cause) {
+    /**
+     * Offers a failure to {@code @OnError}, closing the connection when there is none or it fails
+     * itself.
+     *
+     * @param cause The failure
+     * @return A flow completing once the error handler has run
+     */
+    private ExecutionFlow<Object> forwardError(Throwable cause) {
         ExecutableMethod<Object, ?> errorMethod = webSocketBean != null ? handler(webSocketBean.errorMethod()) : null;
         if (errorMethod == null) {
             handleUnexpected(cause);
-            return;
+            return ExecutionFlow.just(null);
         }
-        invokeHandler(errorMethod, preBind(errorMethod, cause), false).onComplete((ignored, error) -> {
-            if (error != null) {
-                if (LOG.isErrorEnabled()) {
-                    LOG.error("Error invoking @OnError handler: {}", error.getMessage(), error);
-                }
-                // The original failure is what the connection has to be closed for.
-                handleUnexpected(cause);
+        return invokeHandler(errorMethod, preBind(errorMethod, cause), false).onErrorResume(error -> {
+            if (LOG.isErrorEnabled()) {
+                LOG.error("Error invoking @OnError handler: {}", error.getMessage(), error);
             }
+            // The original failure is what the connection has to be closed for.
+            handleUnexpected(cause);
+            return ExecutionFlow.just(null);
         });
     }
 
