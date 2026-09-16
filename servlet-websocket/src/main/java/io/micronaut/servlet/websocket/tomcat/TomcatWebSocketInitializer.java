@@ -46,6 +46,8 @@ import java.util.Set;
 @Internal
 @Singleton
 @Requires(classes = WsSci.class)
+// only for the Tomcat runtime, so that another runtime enabled in its place on the same classpath does not receive it
+@Requires(property = HttpServerConfiguration.PREFIX + ".tomcat.enabled", notEquals = StringUtils.FALSE, defaultValue = StringUtils.TRUE)
 @Requires(property = ServletWebSocketConfiguration.ENABLED_PROPERTY, notEquals = StringUtils.FALSE, defaultValue = StringUtils.TRUE)
 public final class TomcatWebSocketInitializer implements ServletContainerInitializer {
 

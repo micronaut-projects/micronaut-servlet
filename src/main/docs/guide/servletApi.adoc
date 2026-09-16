@@ -16,11 +16,7 @@ Reactive and asynchronous return types complete the response from whichever thre
 
 You can receive the `HttpServletRequest` and `HttpServletResponse` objects directly as parameters:
 
-.Using the Request and Response
-[source,java]
-----
-include::http-server-jetty/src/test/java/io/micronaut/servlet/jetty/docs/DocsController.java[tags=reqrep, indent=0]
-----
+snippet::io.micronaut.servlet.docs.servletapi.DocsController[tags="reqrep", indent=0, title="Using the Request and Response"]
 
 <1> The request object
 <2> The response object
@@ -29,24 +25,14 @@ include::http-server-jetty/src/test/java/io/micronaut/servlet/jetty/docs/DocsCon
 
 Writing to the response and reading from the request can be simplified with Micronaut's `Readable` and `Writable` interfaces:
 
-.Using Readable and Writable
-[source,java]
-----
-include::http-server-jetty/src/test/java/io/micronaut/servlet/jetty/docs/DocsController.java[tags=imports, indent=0]
-
-include::http-server-jetty/src/test/java/io/micronaut/servlet/jetty/docs/DocsController.java[tags=writable, indent=0]
-----
+snippet::io.micronaut.servlet.docs.servletapi.DocsController[tags="imports,writable", indent=0, title="Using Readable and Writable"]
 
 === Multipart support with `@Part`
 
 Multipart support is improved with the ability to inject parts using the annotation `io.micronaut.http.annotation.Part`. For example:
 
 
-.Using `@Part`
-[source,java]
-----
-include::http-server-jetty/src/test/java/io/micronaut/servlet/jetty/docs/DocsController.java[tags=multipart, indent=0]
-----
+snippet::io.micronaut.servlet.docs.servletapi.DocsController[tags="multipart", indent=0, title="Using @Part"]
 
 <1> You can receive attributes with just parameter names that match the attribute name
 <2> Parts that have a content type of `application/json` can be bound to POJOs

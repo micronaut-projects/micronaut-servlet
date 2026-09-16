@@ -47,6 +47,8 @@ import java.time.Duration;
 @Internal
 @Singleton
 @Requires(classes = {WebSocketDeploymentInfo.class, DeploymentInfo.class})
+// only for the Undertow runtime, so that another runtime enabled in its place on the same classpath does not receive it
+@Requires(property = HttpServerConfiguration.PREFIX + ".undertow.enabled", notEquals = StringUtils.FALSE, defaultValue = StringUtils.TRUE)
 @Requires(property = ServletWebSocketConfiguration.ENABLED_PROPERTY, notEquals = StringUtils.FALSE, defaultValue = StringUtils.TRUE)
 public final class UndertowWebSocketDeploymentCustomizer implements BeanCreatedEventListener<DeploymentInfo> {
 

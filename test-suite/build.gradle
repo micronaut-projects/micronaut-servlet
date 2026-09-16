@@ -6,12 +6,22 @@ plugins {
 // the tests that keep them working. The Groovy and Kotlin equivalents live in
 // test-suite-groovy and test-suite-kotlin under the same fully qualified names.
 dependencies {
+    testAnnotationProcessor(projects.micronautServletProcessor)
     testImplementation(projects.micronautServletWebsocket)
     testImplementation(projects.micronautHttpServerJetty)
+    // Jetty runs the tests; Tomcat and Undertow are disabled in application-test.yaml and enabled
+    // by the tests of their documented server customizers only.
+    testImplementation(projects.micronautHttpServerTomcat)
+    testImplementation(projects.micronautHttpServerUndertow)
+    // The server classes the customizers reference are implementation dependencies of the runtimes.
+    testImplementation(libs.tomcat.embed.core)
+    testImplementation(libs.undertow.servlet)
     testImplementation(libs.jetty.websocket.jakarta.server) {
         exclude(group: "org.eclipse.jetty.ee10", module: "jetty-ee10-annotations")
     }
     testImplementation(mn.micronaut.jackson.databind)
+    testImplementation(mnTest.micronaut.test.junit5)
+    testRuntimeOnly(mnTest.junit.jupiter.engine)
     testImplementation(mnLogging.logback.classic)
 }
 
