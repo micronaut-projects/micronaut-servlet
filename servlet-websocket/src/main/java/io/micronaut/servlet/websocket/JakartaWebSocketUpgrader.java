@@ -35,8 +35,10 @@ import io.micronaut.websocket.context.WebSocketBeanRegistry;
 import jakarta.inject.Singleton;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.websocket.Encoder;
 import jakarta.websocket.server.ServerContainer;
 import jakarta.websocket.server.ServerEndpointConfig;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,6 +47,8 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -75,6 +79,8 @@ public final class JakartaWebSocketUpgrader implements ServletWebSocketUpgrader 
     private final HttpServerConfiguration serverConfiguration;
     private final HttpHostResolver httpHostResolver;
     private final WebSocketBeanRegistry webSocketBeanRegistry;
+    private final Map<Class<?>, Optional<JakartaEndpoint>> jakartaEndpoints = new ConcurrentHashMap<>();
+    private final Map<Class<?>, ServerEndpointConfig.Configurator> configurators = new ConcurrentHashMap<>();
 
     /**
      * Default constructor.
@@ -113,6 +119,9 @@ public final class JakartaWebSocketUpgrader implements ServletWebSocketUpgrader 
         ServerContainer container = resolveServerContainer(servletRequest);
         Class<?> declaringType = routeMatch.getRouteInfo().getDeclaringType();
         WebSocketBean<Object> webSocketBean = (WebSocketBean<Object>) webSocketBeanRegistry.getWebSocket(declaringType);
+        JakartaEndpoint jakartaEndpoint = jakartaEndpoints
+            .computeIfAbsent(declaringType, type -> Optional.ofNullable(JakartaEndpoint.of(webSocketBean.getBeanDefinition())))
+            .orElse(null);
 
         // The servlet request is recycled the moment this dispatch returns, so it is copied
         // before the protocol switch: every handler runs after that point.
@@ -120,7 +129,8 @@ public final class JakartaWebSocketUpgrader implements ServletWebSocketUpgrader 
             webSocketBean,
             WebSocketHandshakeRequest.snapshot(request),
             routeMatch,
-            support
+            support,
+            jakartaEndpoint
         );
 
         ServerEndpointConfig.Builder builder = ServerEndpointConfig.Builder
@@ -131,11 +141,18 @@ public final class JakartaWebSocketUpgrader implements ServletWebSocketUpgrader 
                 handshakeHeaders(handshakeResponse),
                 serverConfiguration.getCors(),
                 CrossOriginUtil.getCorsOriginConfiguration(routeMatch.getRouteInfo().getAnnotationMetadata()).orElse(null),
-                httpHostResolver.resolve(request)
+                httpHostResolver.resolve(request),
+                jakartaEndpoint != null ? configurator(declaringType, jakartaEndpoint) : null
             ));
         List<String> subprotocols = subprotocols(webSocketBean);
         if (!subprotocols.isEmpty()) {
             builder = builder.subprotocols(subprotocols);
+        }
+        if (jakartaEndpoint != null) {
+            List<Class<? extends Encoder>> containerEncoders = containerEncoders(jakartaEndpoint);
+            if (!containerEncoders.isEmpty()) {
+                builder = builder.encoders(containerEncoders);
+            }
         }
         ServerEndpointConfig endpointConfig = builder.build();
         endpointConfig.getUserProperties().put(MicronautServerEndpoint.CONTEXT_PROPERTY, context);
@@ -151,6 +168,39 @@ public final class JakartaWebSocketUpgrader implements ServletWebSocketUpgrader 
             throw notImplemented("The servlet container implements Jakarta WebSocket 2.0, which has no "
                 + "upgradeHttpToWebSocket. WebSocket requires a container implementing Jakarta WebSocket 2.1 or later.");
         }
+    }
+
+    /**
+     * The configurator a {@code @ServerEndpoint} declared, one instance per endpoint class as the
+     * Jakarta container would keep (Jakarta WebSocket 3.1.7). That holds whatever route created
+     * it: a configurator declared as a {@code @Prototype} bean is still created once here and
+     * shared by every connection to the endpoint.
+     */
+    private ServerEndpointConfig.@Nullable Configurator configurator(Class<?> endpointType, JakartaEndpoint jakartaEndpoint) {
+        Class<?> type = jakartaEndpoint.configurator();
+        if (type == null) {
+            return null;
+        }
+        return configurators.computeIfAbsent(endpointType, ignored ->
+            (ServerEndpointConfig.Configurator) support.components().instantiate(type));
+    }
+
+    /**
+     * The encoders the container may use for {@code RemoteEndpoint.sendObject}.
+     *
+     * <p>A container instantiates the encoders of a {@link ServerEndpointConfig} reflectively, so
+     * only the ones the application has opted into reflection are handed over. The others still
+     * encode return values, on the Micronaut side.</p>
+     */
+    @SuppressWarnings("unchecked")
+    private List<Class<? extends Encoder>> containerEncoders(JakartaEndpoint jakartaEndpoint) {
+        List<Class<? extends Encoder>> allowed = new ArrayList<>(jakartaEndpoint.encoders().size());
+        for (Class<?> encoder : jakartaEndpoint.encoders()) {
+            if (support.components().isReflectionAllowed(encoder)) {
+                allowed.add((Class<? extends Encoder>) encoder);
+            }
+        }
+        return allowed;
     }
 
     static ServerContainer resolveServerContainer(HttpServletRequest servletRequest) {

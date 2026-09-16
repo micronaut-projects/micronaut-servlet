@@ -84,6 +84,7 @@ final class MicronautEndpointConfigurator extends ServerEndpointConfig.Configura
     private final HttpServerConfiguration.CorsConfiguration corsConfiguration;
     private final @Nullable String sameOrigin;
     private final @Nullable CorsOriginConfiguration routeCorsConfiguration;
+    private final ServerEndpointConfig.@Nullable Configurator delegate;
 
     MicronautEndpointConfigurator(WebSocketUpgradeContext context,
                                   boolean compressionEnabled,
@@ -91,12 +92,34 @@ final class MicronautEndpointConfigurator extends ServerEndpointConfig.Configura
                                   HttpServerConfiguration.CorsConfiguration corsConfiguration,
                                   @Nullable CorsOriginConfiguration routeCorsConfiguration,
                                   @Nullable String sameOrigin) {
+        this(context, compressionEnabled, handshakeHeaders, corsConfiguration, routeCorsConfiguration, sameOrigin, null);
+    }
+
+    /**
+     * @param context                The per-upgrade context
+     * @param compressionEnabled     Whether per-message compression may be negotiated
+     * @param handshakeHeaders       The headers the filter chain added to the handshake response
+     * @param corsConfiguration      The global CORS configuration
+     * @param routeCorsConfiguration The {@code @CrossOrigin} of the endpoint, if any
+     * @param sameOrigin             The origin of the server itself
+     * @param delegate               The configurator a {@code @ServerEndpoint} declared, if any. Its
+     *                               handshake, origin and negotiation hooks are honoured; its
+     *                               {@code getEndpointInstance} is not, the endpoint being a bean
+     */
+    MicronautEndpointConfigurator(WebSocketUpgradeContext context,
+                                  boolean compressionEnabled,
+                                  Map<String, List<String>> handshakeHeaders,
+                                  HttpServerConfiguration.CorsConfiguration corsConfiguration,
+                                  @Nullable CorsOriginConfiguration routeCorsConfiguration,
+                                  @Nullable String sameOrigin,
+                                  ServerEndpointConfig.@Nullable Configurator delegate) {
         this.context = context;
         this.compressionEnabled = compressionEnabled;
         this.handshakeHeaders = handshakeHeaders;
         this.corsConfiguration = corsConfiguration;
         this.routeCorsConfiguration = routeCorsConfiguration;
         this.sameOrigin = sameOrigin;
+        this.delegate = delegate;
     }
 
     @Override
@@ -120,6 +143,11 @@ final class MicronautEndpointConfigurator extends ServerEndpointConfig.Configura
      */
     @Override
     public boolean checkOrigin(String originHeaderValue) {
+        // Both the Micronaut policy and the declared configurator have to accept the origin.
+        return micronautCheckOrigin(originHeaderValue) && (delegate == null || delegate.checkOrigin(originHeaderValue));
+    }
+
+    private boolean micronautCheckOrigin(String originHeaderValue) {
         if (routeCorsConfiguration == null && !corsConfiguration.isEnabled()) {
             return true;
         }
@@ -183,7 +211,16 @@ final class MicronautEndpointConfigurator extends ServerEndpointConfig.Configura
         if (!compressionEnabled) {
             return List.of();
         }
-        return super.getNegotiatedExtensions(installed, requested);
+        return delegate != null
+            ? delegate.getNegotiatedExtensions(installed, requested)
+            : super.getNegotiatedExtensions(installed, requested);
+    }
+
+    @Override
+    public String getNegotiatedSubprotocol(List<String> supported, List<String> requested) {
+        return delegate != null
+            ? delegate.getNegotiatedSubprotocol(supported, requested)
+            : super.getNegotiatedSubprotocol(supported, requested);
     }
 
     @Override
@@ -194,14 +231,18 @@ final class MicronautEndpointConfigurator extends ServerEndpointConfig.Configura
         if (sec != null && context != null) {
             sec.getUserProperties().put(MicronautServerEndpoint.CONTEXT_PROPERTY, context);
         }
-        if (handshakeHeaders.isEmpty()) {
-            return;
+        if (!handshakeHeaders.isEmpty()) {
+            Map<String, List<String>> target = response.getHeaders();
+            handshakeHeaders.forEach((name, values) -> {
+                if (!RESERVED_HEADERS.contains(name.toLowerCase(Locale.ROOT))) {
+                    target.put(name, List.copyOf(values));
+                }
+            });
         }
-        Map<String, List<String>> target = response.getHeaders();
-        handshakeHeaders.forEach((name, values) -> {
-            if (!RESERVED_HEADERS.contains(name.toLowerCase(Locale.ROOT))) {
-                target.put(name, List.copyOf(values));
-            }
-        });
+        if (delegate != null) {
+            // Last, so the declared configurator sees the headers the filter chain produced and
+            // can still put what it needs into the user properties.
+            delegate.modifyHandshake(sec, request, response);
+        }
     }
 }

@@ -7,6 +7,8 @@ plugins {
 // test-suite-groovy and test-suite-kotlin under the same fully qualified names.
 dependencies {
     testImplementation(projects.micronautServletWebsocket)
+    // Maps the Jakarta WebSocket annotations of the documented endpoint.
+    testAnnotationProcessor(projects.micronautServletProcessor)
     testImplementation(projects.micronautHttpServerJetty)
     testImplementation(libs.jetty.websocket.jakarta.server) {
         exclude(group: "org.eclipse.jetty.ee10", module: "jetty-ee10-annotations")

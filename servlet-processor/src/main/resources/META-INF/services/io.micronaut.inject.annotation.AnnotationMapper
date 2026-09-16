@@ -1,3 +1,9 @@
 io.micronaut.servlet.annotation.processor.WebFilterMapper
 io.micronaut.servlet.annotation.processor.WebListenerMapper
 io.micronaut.servlet.annotation.processor.WebServletMapper
+io.micronaut.servlet.annotation.processor.JakartaServerEndpointMapper
+io.micronaut.servlet.annotation.processor.JakartaOnOpenMapper
+io.micronaut.servlet.annotation.processor.JakartaOnMessageMapper
+io.micronaut.servlet.annotation.processor.JakartaOnCloseMapper
+io.micronaut.servlet.annotation.processor.JakartaOnErrorMapper
+io.micronaut.servlet.annotation.processor.JakartaPathParamMapper

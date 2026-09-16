@@ -53,6 +53,23 @@ class MicronautServerEndpointTest {
     }
 
     @Test
+    void severalValuesArePreBoundEachToItsOwnArgumentAndAnObjectParameterIsNeverTaken() {
+        ExecutableMethod<?, ?> method = methodWithArguments(
+            Argument.of(Object.class, "message"),
+            Argument.of(CloseReason.class, "reason"),
+            Argument.of(Throwable.class, "error")
+        );
+        IllegalStateException cause = new IllegalStateException("boom");
+
+        Map<Argument<?>, Object> preBound = MicronautServerEndpoint.preBind(method, CloseReason.GOING_AWAY, null, cause);
+
+        assertEquals(2, preBound.size());
+        assertEquals(List.of("reason", "error"), preBound.keySet().stream().map(Argument::getName).toList());
+        assertFalse(preBound.keySet().stream().anyMatch(argument -> argument.getName().equals("message")),
+            "an Object parameter is the message, never a framework value");
+    }
+
+    @Test
     void closeReasonsArePreBoundByTypeWhereverTheyAppear() {
         ExecutableMethod<?, ?> method = methodWithArguments(
             Argument.of(CloseReason.class, "reason"),
