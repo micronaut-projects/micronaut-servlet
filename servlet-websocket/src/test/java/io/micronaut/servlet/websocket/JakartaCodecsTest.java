@@ -85,9 +85,11 @@ class JakartaCodecsTest {
         try (ApplicationContext context = ApplicationContext.run(Map.of("test.name", "JakartaCodecsTest"))) {
             UpperDecoder.destroyed = false;
             JakartaEndpoint endpoint = JakartaEndpoint.of(context.getBeanDefinition(FailingCodecEndpoint.class));
+            JakartaEndpointComponents components = context.getBean(JakartaEndpointComponents.class);
+            EndpointConfig config = endpointConfig();
 
             IllegalStateException e = assertThrows(IllegalStateException.class,
-                () -> JakartaCodecs.create(endpoint, context.getBean(JakartaEndpointComponents.class), endpointConfig()));
+                () -> JakartaCodecs.create(endpoint, components, config));
 
             assertEquals("cannot init", e.getMessage());
             assertTrue(UpperDecoder.destroyed, "the decoder initialized before the failing one is destroyed");
