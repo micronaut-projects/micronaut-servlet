@@ -24,6 +24,7 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class JakartaCodecsTest {
@@ -76,6 +77,20 @@ class JakartaCodecsTest {
             assertTrue(UpperDecoder.initialized);
             codecs.destroy();
             assertTrue(UpperDecoder.destroyed);
+        }
+    }
+
+    @Test
+    void aCodecThatFailsToInitializeTakesTheOnesAlreadyInitializedDownWithIt() {
+        try (ApplicationContext context = ApplicationContext.run(Map.of("test.name", "JakartaCodecsTest"))) {
+            UpperDecoder.destroyed = false;
+            JakartaEndpoint endpoint = JakartaEndpoint.of(context.getBeanDefinition(FailingCodecEndpoint.class));
+
+            IllegalStateException e = assertThrows(IllegalStateException.class,
+                () -> JakartaCodecs.create(endpoint, context.getBean(JakartaEndpointComponents.class), endpointConfig()));
+
+            assertEquals("cannot init", e.getMessage());
+            assertTrue(UpperDecoder.destroyed, "the decoder initialized before the failing one is destroyed");
         }
     }
 
@@ -163,6 +178,32 @@ class JakartaCodecsTest {
         @Override
         public void encode(Size size, Writer writer) throws java.io.IOException {
             writer.write("size=" + size.bytes());
+        }
+    }
+
+    public static class FailingDecoder implements Decoder.Text<Lower> {
+        @Override
+        public Lower decode(String s) {
+            return new Lower(s);
+        }
+
+        @Override
+        public boolean willDecode(String s) {
+            return true;
+        }
+
+        @Override
+        public void init(EndpointConfig config) {
+            throw new IllegalStateException("cannot init");
+        }
+    }
+
+    @Requires(property = "test.name", value = "JakartaCodecsTest")
+    @ServerEndpoint(value = "/failing-codecs", decoders = {UpperDecoder.class, FailingDecoder.class})
+    static class FailingCodecEndpoint {
+        @OnMessage
+        public void text(Upper upper) {
+            // only the signature matters: the test reads how the handler is classified
         }
     }
 

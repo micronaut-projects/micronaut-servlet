@@ -172,7 +172,9 @@ public final class JakartaWebSocketUpgrader implements ServletWebSocketUpgrader 
 
     /**
      * The configurator a {@code @ServerEndpoint} declared, one instance per endpoint class as the
-     * Jakarta container would keep.
+     * Jakarta container would keep (Jakarta WebSocket 3.1.7). That holds whatever route created
+     * it: a configurator declared as a {@code @Prototype} bean is still created once here and
+     * shared by every connection to the endpoint.
      */
     private ServerEndpointConfig.@Nullable Configurator configurator(Class<?> endpointType, JakartaEndpoint jakartaEndpoint) {
         Class<?> type = jakartaEndpoint.configurator();

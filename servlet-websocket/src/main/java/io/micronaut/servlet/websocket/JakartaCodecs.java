@@ -70,25 +70,35 @@ final class JakartaCodecs {
     /**
      * Creates and initializes the codecs an endpoint declares.
      *
+     * <p>Should creating or initializing one of them fail, the ones already initialized are
+     * destroyed before the failure is rethrown, so none is left half set up.</p>
+     *
      * @param endpoint   The endpoint
      * @param components The resolver for the declared classes
      * @param config     The configuration the codecs are initialized with
      * @return The codecs
      */
     static JakartaCodecs create(JakartaEndpoint endpoint, JakartaEndpointComponents components, EndpointConfig config) {
-        List<Decoder> decoders = new ArrayList<>(endpoint.decoders().size());
-        for (Class<?> type : endpoint.decoders()) {
-            Decoder decoder = (Decoder) components.instantiate(type);
-            decoder.init(config);
-            decoders.add(decoder);
+        JakartaCodecs codecs = new JakartaCodecs(
+            new ArrayList<>(endpoint.decoders().size()),
+            new ArrayList<>(endpoint.encoders().size())
+        );
+        try {
+            for (Class<?> type : endpoint.decoders()) {
+                Decoder decoder = (Decoder) components.instantiate(type);
+                decoder.init(config);
+                codecs.decoders.add(decoder);
+            }
+            for (Class<?> type : endpoint.encoders()) {
+                Encoder encoder = (Encoder) components.instantiate(type);
+                encoder.init(config);
+                codecs.encoders.add(new TypedEncoder(encoder, components.encodedType(type)));
+            }
+        } catch (RuntimeException e) {
+            codecs.destroy();
+            throw e;
         }
-        List<TypedEncoder> encoders = new ArrayList<>(endpoint.encoders().size());
-        for (Class<?> type : endpoint.encoders()) {
-            Encoder encoder = (Encoder) components.instantiate(type);
-            encoder.init(config);
-            encoders.add(new TypedEncoder(encoder, components.encodedType(type)));
-        }
-        return new JakartaCodecs(decoders, encoders);
+        return codecs;
     }
 
     /**

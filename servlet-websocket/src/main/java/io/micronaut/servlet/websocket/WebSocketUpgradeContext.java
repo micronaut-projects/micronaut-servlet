@@ -47,7 +47,6 @@ public record WebSocketUpgradeContext(WebSocketBean<Object> webSocketBean,
      * @param originatingRequest The handshake request
      * @param routeMatch         The matched route
      * @param support            The shared services
- * @param jakartaEndpoint    What a {@code @ServerEndpoint} declared, or {@code null} for a Micronaut endpoint
      */
     public WebSocketUpgradeContext(WebSocketBean<Object> webSocketBean,
                                    HttpRequest<?> originatingRequest,
