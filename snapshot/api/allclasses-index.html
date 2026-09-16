@@ -145,141 +145,183 @@ endpoint, as either a text or a binary frame.</div>
 <div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
 <div class="block">Factory for creating beans of type <a href="https://docs.oracle.com/en/java/javase/25/docs/api/jdk.httpserver/com/sun/net/httpserver/HttpServer.html" title="class or interface in com.sun.net.httpserver" class="external-link"><code>HttpServer</code></a>.</div>
 </div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab4"><a href="io/micronaut/servlet/websocket/JakartaEndpoint.html" title="class in io.micronaut.servlet.websocket">JakartaEndpoint</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab4">
+<div class="block">What a <code>@ServerEndpoint</code> declares, read once from its bean definition.</div>
+</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/websocket/JakartaEndpointComponents.html" title="class in io.micronaut.servlet.websocket">JakartaEndpointComponents</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
+<div class="block">Instantiates the classes a <code>@ServerEndpoint</code> names in <code>decoders</code>, <code>encoders</code>
+and <code>configurator</code>.</div>
+</div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/annotation/processor/JakartaOnCloseMapper.html" title="class in io.micronaut.servlet.annotation.processor">JakartaOnCloseMapper</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
+<div class="block">Maps <code>jakarta.websocket.OnClose</code> to <code>io.micronaut.websocket.annotation.OnClose</code>.</div>
+</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/annotation/processor/JakartaOnErrorMapper.html" title="class in io.micronaut.servlet.annotation.processor">JakartaOnErrorMapper</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
+<div class="block">Maps <code>jakarta.websocket.OnError</code> to <code>io.micronaut.websocket.annotation.OnError</code>.</div>
+</div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/annotation/processor/JakartaOnMessageMapper.html" title="class in io.micronaut.servlet.annotation.processor">JakartaOnMessageMapper</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
+<div class="block">Maps <code>jakarta.websocket.OnMessage</code> to <code>io.micronaut.websocket.annotation.OnMessage</code>.</div>
+</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/annotation/processor/JakartaOnOpenMapper.html" title="class in io.micronaut.servlet.annotation.processor">JakartaOnOpenMapper</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
+<div class="block">Maps <code>jakarta.websocket.OnOpen</code> to <code>io.micronaut.websocket.annotation.OnOpen</code>.</div>
+</div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/annotation/processor/JakartaPathParamMapper.html" title="class in io.micronaut.servlet.annotation.processor">JakartaPathParamMapper</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
+<div class="block">Maps <code>jakarta.websocket.server.PathParam</code> to <code>io.micronaut.http.annotation.PathVariable</code>.</div>
+</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/annotation/processor/JakartaServerEndpointMapper.html" title="class in io.micronaut.servlet.annotation.processor">JakartaServerEndpointMapper</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
+<div class="block">Maps <code>jakarta.websocket.server.ServerEndpoint</code> to <code>io.micronaut.websocket.annotation.ServerWebSocket</code>.</div>
+</div>
 <div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/websocket/JakartaWebSocketUpgrader.html" title="class in io.micronaut.servlet.websocket">JakartaWebSocketUpgrader</a></div>
 <div class="col-last even-row-color all-classes-table all-classes-table-tab2">
 <div class="block">Switches a matched upgrade request over to the servlet container's Jakarta WebSocket
 implementation.</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/http/server/jdk/JdkHttpServerConfiguration.html" title="class in io.micronaut.servlet.http.server.jdk">JdkHttpServerConfiguration</a></div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/annotation/processor/JakartaWebSocketVisitor.html" title="class in io.micronaut.servlet.annotation.processor">JakartaWebSocketVisitor</a></div>
 <div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
+<div class="block">Validates a Jakarta WebSocket endpoint at compilation time and settles its scope.</div>
+</div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/http/server/jdk/JdkHttpServerConfiguration.html" title="class in io.micronaut.servlet.http.server.jdk">JdkHttpServerConfiguration</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
 <div class="block">Configuration for the built-in JDK HTTP server runtime.</div>
 </div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/http/server/jdk/JdkHttpServerConfiguration.AccessLogger.html" title="class in io.micronaut.servlet.http.server.jdk">JdkHttpServerConfiguration.AccessLogger</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/http/server/jdk/JdkHttpServerConfiguration.AccessLogger.html" title="class in io.micronaut.servlet.http.server.jdk">JdkHttpServerConfiguration.AccessLogger</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
 <div class="block">Access log configuration for the built-in server, named as the Netty server's
 <code>micronaut.server.netty.access-logger</code>.</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/jetty/JettyConfiguration.html" title="class in io.micronaut.servlet.jetty">JettyConfiguration</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/jetty/JettyConfiguration.html" title="class in io.micronaut.servlet.jetty">JettyConfiguration</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
 <div class="block">Configuration properties for Jetty.</div>
 </div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/jetty/JettyConfiguration.ConnectorConfiguration.html" title="class in io.micronaut.servlet.jetty">JettyConfiguration.ConnectorConfiguration</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/jetty/JettyConfiguration.ConnectorConfiguration.html" title="class in io.micronaut.servlet.jetty">JettyConfiguration.ConnectorConfiguration</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
 <div class="block">Configuration for additional connectors.</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/jetty/JettyConfiguration.JettyRequestLog.html" title="class in io.micronaut.servlet.jetty">JettyConfiguration.JettyRequestLog</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/jetty/JettyConfiguration.JettyRequestLog.html" title="class in io.micronaut.servlet.jetty">JettyConfiguration.JettyRequestLog</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
 <div class="block">Jetty access log configuration.</div>
 </div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/jetty/JettyConfiguration.JettySslConfiguration.html" title="class in io.micronaut.servlet.jetty">JettyConfiguration.JettySslConfiguration</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/jetty/JettyConfiguration.JettySslConfiguration.html" title="class in io.micronaut.servlet.jetty">JettyConfiguration.JettySslConfiguration</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
 <div class="block">The default connection pool configuration.</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/jetty/JettyFactory.html" title="class in io.micronaut.servlet.jetty">JettyFactory</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/jetty/JettyFactory.html" title="class in io.micronaut.servlet.jetty">JettyFactory</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
 <div class="block">Factory for the Jetty server.</div>
 </div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/jetty/JettyServer.html" title="class in io.micronaut.servlet.jetty">JettyServer</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/jetty/JettyServer.html" title="class in io.micronaut.servlet.jetty">JettyServer</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
 <div class="block">An implementation of the <code>EmbeddedServer</code> interface for Jetty.</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/jetty/JettySslContextReload.html" title="class in io.micronaut.servlet.jetty">JettySslContextReload</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/jetty/JettySslContextReload.html" title="class in io.micronaut.servlet.jetty">JettySslContextReload</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
 <div class="block">Listener implementation which reloads ssl context when ssl properties have been changed.</div>
 </div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/websocket/jetty/JettyWebSocketInitializer.html" title="class in io.micronaut.servlet.websocket.jetty">JettyWebSocketInitializer</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/websocket/jetty/JettyWebSocketInitializer.html" title="class in io.micronaut.servlet.websocket.jetty">JettyWebSocketInitializer</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
 <div class="block">Ensures that a Jakarta <code>ServerContainer</code> is available on the Jetty servlet context.</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/http/poja/util/LimitingInputStream.html" title="class in io.micronaut.http.poja.util">LimitingInputStream</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/http/poja/util/LimitingInputStream.html" title="class in io.micronaut.http.poja.util">LimitingInputStream</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
 <div class="block">A wrapper around input stream that limits the maximum size to be read.</div>
 </div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/info/MicronautHttpPojaApacheModuleInfo.html" title="class in io.micronaut.servlet.info">MicronautHttpPojaApacheModuleInfo</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/info/MicronautHttpPojaCommonModuleInfo.html" title="class in io.micronaut.servlet.info">MicronautHttpPojaCommonModuleInfo</a></div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/info/MicronautHttpPojaApacheModuleInfo.html" title="class in io.micronaut.servlet.info">MicronautHttpPojaApacheModuleInfo</a></div>
 <div class="col-last odd-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/info/MicronautHttpPojaTestModuleInfo.html" title="class in io.micronaut.servlet.info">MicronautHttpPojaTestModuleInfo</a></div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/info/MicronautHttpPojaCommonModuleInfo.html" title="class in io.micronaut.servlet.info">MicronautHttpPojaCommonModuleInfo</a></div>
 <div class="col-last even-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/info/MicronautHttpServerJdkModuleInfo.html" title="class in io.micronaut.servlet.info">MicronautHttpServerJdkModuleInfo</a></div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/info/MicronautHttpPojaTestModuleInfo.html" title="class in io.micronaut.servlet.info">MicronautHttpPojaTestModuleInfo</a></div>
 <div class="col-last odd-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/info/MicronautHttpServerJettyModuleInfo.html" title="class in io.micronaut.servlet.info">MicronautHttpServerJettyModuleInfo</a></div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/info/MicronautHttpServerJdkModuleInfo.html" title="class in io.micronaut.servlet.info">MicronautHttpServerJdkModuleInfo</a></div>
 <div class="col-last even-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/info/MicronautHttpServerTomcatModuleInfo.html" title="class in io.micronaut.servlet.info">MicronautHttpServerTomcatModuleInfo</a></div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/info/MicronautHttpServerJettyModuleInfo.html" title="class in io.micronaut.servlet.info">MicronautHttpServerJettyModuleInfo</a></div>
 <div class="col-last odd-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/info/MicronautHttpServerUndertowModuleInfo.html" title="class in io.micronaut.servlet.info">MicronautHttpServerUndertowModuleInfo</a></div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/info/MicronautHttpServerTomcatModuleInfo.html" title="class in io.micronaut.servlet.info">MicronautHttpServerTomcatModuleInfo</a></div>
 <div class="col-last even-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/websocket/MicronautServerEndpoint.html" title="class in io.micronaut.servlet.websocket">MicronautServerEndpoint</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/info/MicronautHttpServerUndertowModuleInfo.html" title="class in io.micronaut.servlet.info">MicronautHttpServerUndertowModuleInfo</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/websocket/MicronautServerEndpoint.html" title="class in io.micronaut.servlet.websocket">MicronautServerEndpoint</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
 <div class="block">The <code>Endpoint</code> that adapts a Jakarta WebSocket connection onto a Micronaut
-<code>@ServerWebSocket</code> bean.</div>
+<code>@ServerWebSocket</code> bean, or onto a Jakarta <code>@ServerEndpoint</code> the annotation
+processor mapped onto one.</div>
 </div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/info/MicronautServletApiModuleInfo.html" title="class in io.micronaut.servlet.info">MicronautServletApiModuleInfo</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/engine/MicronautServletConfiguration.html" title="class in io.micronaut.servlet.engine">MicronautServletConfiguration</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/info/MicronautServletApiModuleInfo.html" title="class in io.micronaut.servlet.info">MicronautServletApiModuleInfo</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/engine/MicronautServletConfiguration.html" title="class in io.micronaut.servlet.engine">MicronautServletConfiguration</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
 <div class="block">Configuration properties for the Micronaut servlet.</div>
 </div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/info/MicronautServletCoreModuleInfo.html" title="class in io.micronaut.servlet.info">MicronautServletCoreModuleInfo</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/info/MicronautServletEngineModuleInfo.html" title="class in io.micronaut.servlet.info">MicronautServletEngineModuleInfo</a></div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/info/MicronautServletCoreModuleInfo.html" title="class in io.micronaut.servlet.info">MicronautServletCoreModuleInfo</a></div>
 <div class="col-last odd-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/engine/initializer/MicronautServletInitializer.html" title="class in io.micronaut.servlet.engine.initializer">MicronautServletInitializer</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/info/MicronautServletEngineModuleInfo.html" title="class in io.micronaut.servlet.info">MicronautServletEngineModuleInfo</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/engine/initializer/MicronautServletInitializer.html" title="class in io.micronaut.servlet.engine.initializer">MicronautServletInitializer</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
 <div class="block">A servlet initializer for Micronaut for deployment as a WAR file.</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/info/MicronautServletProcessorModuleInfo.html" title="class in io.micronaut.servlet.info">MicronautServletProcessorModuleInfo</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/info/MicronautServletWebsocketModuleInfo.html" title="class in io.micronaut.servlet.info">MicronautServletWebsocketModuleInfo</a></div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/info/MicronautServletProcessorModuleInfo.html" title="class in io.micronaut.servlet.info">MicronautServletProcessorModuleInfo</a></div>
 <div class="col-last even-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/info/MicronautTestSuiteGroovyModuleInfo.html" title="class in io.micronaut.servlet.info">MicronautTestSuiteGroovyModuleInfo</a></div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/info/MicronautServletWebsocketModuleInfo.html" title="class in io.micronaut.servlet.info">MicronautServletWebsocketModuleInfo</a></div>
 <div class="col-last odd-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/info/MicronautTestSuiteJettyDefaultAccessLogModuleInfo.html" title="class in io.micronaut.servlet.info">MicronautTestSuiteJettyDefaultAccessLogModuleInfo</a></div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/info/MicronautTestSuiteGroovyModuleInfo.html" title="class in io.micronaut.servlet.info">MicronautTestSuiteGroovyModuleInfo</a></div>
 <div class="col-last even-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/info/MicronautTestSuiteJettyLogbackAccessLogModuleInfo.html" title="class in io.micronaut.servlet.info">MicronautTestSuiteJettyLogbackAccessLogModuleInfo</a></div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/info/MicronautTestSuiteJettyDefaultAccessLogModuleInfo.html" title="class in io.micronaut.servlet.info">MicronautTestSuiteJettyDefaultAccessLogModuleInfo</a></div>
 <div class="col-last odd-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/info/MicronautTestSuiteModuleInfo.html" title="class in io.micronaut.servlet.info">MicronautTestSuiteModuleInfo</a></div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/info/MicronautTestSuiteJettyLogbackAccessLogModuleInfo.html" title="class in io.micronaut.servlet.info">MicronautTestSuiteJettyLogbackAccessLogModuleInfo</a></div>
 <div class="col-last even-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab4"><a href="io/micronaut/http/poja/util/MultiValueHeaders.html" title="class in io.micronaut.http.poja.util">MultiValueHeaders</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab4">
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/info/MicronautTestSuiteModuleInfo.html" title="class in io.micronaut.servlet.info">MicronautTestSuiteModuleInfo</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab4"><a href="io/micronaut/http/poja/util/MultiValueHeaders.html" title="class in io.micronaut.http.poja.util">MultiValueHeaders</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab4">
 <div class="block">Headers implementation based on a multi-value map.</div>
 </div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab4"><a href="io/micronaut/http/poja/util/MultiValuesQueryParameters.html" title="class in io.micronaut.http.poja.util">MultiValuesQueryParameters</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab4">
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab4"><a href="io/micronaut/http/poja/util/MultiValuesQueryParameters.html" title="class in io.micronaut.http.poja.util">MultiValuesQueryParameters</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab4">
 <div class="block">Query parameters implementation.</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab1"><a href="io/micronaut/servlet/http/MutableServletHttpRequest.html" title="interface in io.micronaut.servlet.http">MutableServletHttpRequest&lt;N,<wbr>B&gt;</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab1">
+<div class="col-first even-row-color all-classes-table all-classes-table-tab1"><a href="io/micronaut/servlet/http/MutableServletHttpRequest.html" title="interface in io.micronaut.servlet.http">MutableServletHttpRequest&lt;N,<wbr>B&gt;</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab1">
 <div class="block">Mutable version of the <a href="io/micronaut/servlet/http/ServletHttpRequest.html" title="interface in io.micronaut.servlet.http"><code>ServletHttpRequest</code></a> interface.</div>
 </div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab5"><a href="io/micronaut/http/poja/exception/NoPojaRequestException.html" title="class in io.micronaut.http.poja.exception">NoPojaRequestException</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab5">
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab5"><a href="io/micronaut/http/poja/exception/NoPojaRequestException.html" title="class in io.micronaut.http.poja.exception">NoPojaRequestException</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab5">
 <div class="block">An exception to be thrown when no additional requests can be parsed.</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab1"><a href="io/micronaut/servlet/http/ParsedBodyHolder.html" title="interface in io.micronaut.servlet.http">ParsedBodyHolder&lt;B&gt;</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab1">
+<div class="col-first even-row-color all-classes-table all-classes-table-tab1"><a href="io/micronaut/servlet/http/ParsedBodyHolder.html" title="interface in io.micronaut.servlet.http">ParsedBodyHolder&lt;B&gt;</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab1">
 <div class="block">Interface to allow setting of parsed body on a request.</div>
 </div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/http/poja/PojaHttpRequest.html" title="class in io.micronaut.http.poja">PojaHttpRequest&lt;B,<wbr>REQ,<wbr>RES&gt;</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/http/poja/PojaHttpRequest.html" title="class in io.micronaut.http.poja">PojaHttpRequest&lt;B,<wbr>REQ,<wbr>RES&gt;</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
 <div class="block">A base class for serverless POJA requests that provides a number of common methods
 to be reused for body and binding.</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/http/poja/PojaHttpResponse.html" title="class in io.micronaut.http.poja">PojaHttpResponse&lt;T,<wbr>RES&gt;</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/http/poja/PojaHttpResponse.html" title="class in io.micronaut.http.poja">PojaHttpResponse&lt;T,<wbr>RES&gt;</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
 <div class="block">A base class for serverless POJA responses.</div>
 </div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/http/poja/PojaHttpServerlessApplication.html" title="class in io.micronaut.http.poja">PojaHttpServerlessApplication&lt;REQ,<wbr>RES&gt;</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/http/poja/PojaHttpServerlessApplication.html" title="class in io.micronaut.http.poja">PojaHttpServerlessApplication&lt;REQ,<wbr>RES&gt;</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
 <div class="block">A base class for POJA serverless applications.</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/http/poja/PojaHttpServlerlessApplicationContextConfigurer.html" title="class in io.micronaut.http.poja">PojaHttpServlerlessApplicationContextConfigurer</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/http/poja/PojaHttpServlerlessApplicationContextConfigurer.html" title="class in io.micronaut.http.poja">PojaHttpServlerlessApplicationContextConfigurer</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
 <div class="block">A class to configure application with POJA serverless specifics.</div>
 </div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/http/poja/util/QueryStringDecoder.html" title="class in io.micronaut.http.poja.util">QueryStringDecoder</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">Deprecated, for removal: This API element is subject to removal in a future version.
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/http/poja/util/QueryStringDecoder.html" title="class in io.micronaut.http.poja.util">QueryStringDecoder</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">Deprecated, for removal: This API element is subject to removal in a future version.
 <div class="deprecation-comment">Use <code>QueryStringDecoder</code> instead.</div>
+</div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab1"><a href="io/micronaut/servlet/websocket/ReflectiveBeanDefinitions.html" title="interface in io.micronaut.servlet.websocket">ReflectiveBeanDefinitions</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab1">
+<div class="block">Registers a class the annotation processors never saw as a bean, reflectively.</div>
 </div>
 <div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/servlet/websocket/ServerContainerCustomizer.html" title="class in io.micronaut.servlet.websocket">ServerContainerCustomizer</a></div>
 <div class="col-last odd-row-color all-classes-table all-classes-table-tab2">

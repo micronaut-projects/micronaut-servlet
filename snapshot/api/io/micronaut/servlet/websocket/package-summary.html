@@ -100,7 +100,7 @@ implement Jakarta WebSocket 2.1.</div>
 </li>
 <li>
 <div id="class-summary">
-<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="class-summary-tab0" role="tab" aria-selected="true" aria-controls="class-summary.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary', 2)" class="active-table-tab">All Classes and Interfaces</button><button id="class-summary-tab2" role="tab" aria-selected="false" aria-controls="class-summary.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary-tab2', 2)" class="table-tab">Classes</button><button id="class-summary-tab4" role="tab" aria-selected="false" aria-controls="class-summary.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary-tab4', 2)" class="table-tab">Record Classes</button></div>
+<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="class-summary-tab0" role="tab" aria-selected="true" aria-controls="class-summary.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary', 2)" class="active-table-tab">All Classes and Interfaces</button><button id="class-summary-tab1" role="tab" aria-selected="false" aria-controls="class-summary.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary-tab1', 2)" class="table-tab">Interfaces</button><button id="class-summary-tab2" role="tab" aria-selected="false" aria-controls="class-summary.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary-tab2', 2)" class="table-tab">Classes</button><button id="class-summary-tab4" role="tab" aria-selected="false" aria-controls="class-summary.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary-tab4', 2)" class="table-tab">Record Classes</button></div>
 <div id="class-summary.tabpanel" role="tabpanel" aria-labelledby="class-summary-tab0">
 <div class="summary-table two-column-summary">
 <div class="table-header col-first">Class</div>
@@ -110,6 +110,15 @@ implement Jakarta WebSocket 2.1.</div>
 <div class="block">A message that has been encoded ready to be written to a Jakarta WebSocket remote
 endpoint, as either a text or a binary frame.</div>
 </div>
+<div class="col-first odd-row-color class-summary class-summary-tab4"><a href="JakartaEndpoint.html" title="class in io.micronaut.servlet.websocket">JakartaEndpoint</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab4">
+<div class="block">What a <code>@ServerEndpoint</code> declares, read once from its bean definition.</div>
+</div>
+<div class="col-first even-row-color class-summary class-summary-tab2"><a href="JakartaEndpointComponents.html" title="class in io.micronaut.servlet.websocket">JakartaEndpointComponents</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab2">
+<div class="block">Instantiates the classes a <code>@ServerEndpoint</code> names in <code>decoders</code>, <code>encoders</code>
+and <code>configurator</code>.</div>
+</div>
 <div class="col-first odd-row-color class-summary class-summary-tab2"><a href="JakartaWebSocketUpgrader.html" title="class in io.micronaut.servlet.websocket">JakartaWebSocketUpgrader</a></div>
 <div class="col-last odd-row-color class-summary class-summary-tab2">
 <div class="block">Switches a matched upgrade request over to the servlet container's Jakarta WebSocket
@@ -118,46 +127,51 @@ implementation.</div>
 <div class="col-first even-row-color class-summary class-summary-tab2"><a href="MicronautServerEndpoint.html" title="class in io.micronaut.servlet.websocket">MicronautServerEndpoint</a></div>
 <div class="col-last even-row-color class-summary class-summary-tab2">
 <div class="block">The <code>Endpoint</code> that adapts a Jakarta WebSocket connection onto a Micronaut
-<code>@ServerWebSocket</code> bean.</div>
+<code>@ServerWebSocket</code> bean, or onto a Jakarta <code>@ServerEndpoint</code> the annotation
+processor mapped onto one.</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="ServerContainerCustomizer.html" title="class in io.micronaut.servlet.websocket">ServerContainerCustomizer</a></div>
-<div class="col-last odd-row-color class-summary class-summary-tab2">
+<div class="col-first odd-row-color class-summary class-summary-tab1"><a href="ReflectiveBeanDefinitions.html" title="interface in io.micronaut.servlet.websocket">ReflectiveBeanDefinitions</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab1">
+<div class="block">Registers a class the annotation processors never saw as a bean, reflectively.</div>
+</div>
+<div class="col-first even-row-color class-summary class-summary-tab2"><a href="ServerContainerCustomizer.html" title="class in io.micronaut.servlet.websocket">ServerContainerCustomizer</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab2">
 <div class="block">Applies the Micronaut defaults to a container's <code>WebSocketContainer</code>.</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab2"><a href="ServletWebSocketBroadcaster.html" title="class in io.micronaut.servlet.websocket">ServletWebSocketBroadcaster</a></div>
-<div class="col-last even-row-color class-summary class-summary-tab2">
+<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="ServletWebSocketBroadcaster.html" title="class in io.micronaut.servlet.websocket">ServletWebSocketBroadcaster</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab2">
 <div class="block">A <code>WebSocketBroadcaster</code> that writes to every open session of this server.</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="ServletWebSocketConfiguration.html" title="class in io.micronaut.servlet.websocket">ServletWebSocketConfiguration</a></div>
-<div class="col-last odd-row-color class-summary class-summary-tab2">
+<div class="col-first even-row-color class-summary class-summary-tab2"><a href="ServletWebSocketConfiguration.html" title="class in io.micronaut.servlet.websocket">ServletWebSocketConfiguration</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab2">
 <div class="block">Configuration for WebSocket support on servlet containers.</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab2"><a href="ServletWebSocketConfiguration.CompressionConfiguration.html" title="class in io.micronaut.servlet.websocket">ServletWebSocketConfiguration.CompressionConfiguration</a></div>
-<div class="col-last even-row-color class-summary class-summary-tab2">
+<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="ServletWebSocketConfiguration.CompressionConfiguration.html" title="class in io.micronaut.servlet.websocket">ServletWebSocketConfiguration.CompressionConfiguration</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab2">
 <div class="block">Configuration for the <code>permessage-deflate</code> extension.</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="ServletWebSocketMessageEncoder.html" title="class in io.micronaut.servlet.websocket">ServletWebSocketMessageEncoder</a></div>
-<div class="col-last odd-row-color class-summary class-summary-tab2">
+<div class="col-first even-row-color class-summary class-summary-tab2"><a href="ServletWebSocketMessageEncoder.html" title="class in io.micronaut.servlet.websocket">ServletWebSocketMessageEncoder</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab2">
 <div class="block">Encodes an outbound WebSocket message the way the Netty server does: byte-like payloads
 become binary frames, <code>CharSequence</code> and <code>java.lang</code> types become text frames,
 and anything else is written through the <code>MessageBodyHandlerRegistry</code> as a text frame
 using the configured media type, JSON by default.</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab2"><a href="ServletWebSocketSession.html" title="class in io.micronaut.servlet.websocket">ServletWebSocketSession</a></div>
-<div class="col-last even-row-color class-summary class-summary-tab2">
+<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="ServletWebSocketSession.html" title="class in io.micronaut.servlet.websocket">ServletWebSocketSession</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab2">
 <div class="block">A <code>WebSocketSession</code> backed by a <code>jakarta.websocket.Session</code>.</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="ServletWebSocketSessionRegistry.html" title="class in io.micronaut.servlet.websocket">ServletWebSocketSessionRegistry</a></div>
-<div class="col-last odd-row-color class-summary class-summary-tab2">
+<div class="col-first even-row-color class-summary class-summary-tab2"><a href="ServletWebSocketSessionRegistry.html" title="class in io.micronaut.servlet.websocket">ServletWebSocketSessionRegistry</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab2">
 <div class="block">Keeps track of the open WebSocket sessions of this server.</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab2"><a href="ServletWebSocketSupport.html" title="class in io.micronaut.servlet.websocket">ServletWebSocketSupport</a></div>
-<div class="col-last even-row-color class-summary class-summary-tab2">
+<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="ServletWebSocketSupport.html" title="class in io.micronaut.servlet.websocket">ServletWebSocketSupport</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab2">
 <div class="block">The services a <a href="MicronautServerEndpoint.html" title="class in io.micronaut.servlet.websocket"><code>MicronautServerEndpoint</code></a> needs, resolved once and shared by every
 WebSocket connection.</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab4"><a href="WebSocketUpgradeContext.html" title="class in io.micronaut.servlet.websocket">WebSocketUpgradeContext</a></div>
-<div class="col-last odd-row-color class-summary class-summary-tab4">
+<div class="col-first even-row-color class-summary class-summary-tab4"><a href="WebSocketUpgradeContext.html" title="class in io.micronaut.servlet.websocket">WebSocketUpgradeContext</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab4">
 <div class="block">The per-upgrade state a <a href="MicronautServerEndpoint.html" title="class in io.micronaut.servlet.websocket"><code>MicronautServerEndpoint</code></a> needs, passed to the endpoint
 through the user properties of the <code>ServerEndpointConfig</code> created for the upgrade.</div>
 </div>

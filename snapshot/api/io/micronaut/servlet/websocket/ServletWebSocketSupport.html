@@ -58,11 +58,12 @@ loadScripts(document, 'script');</script>
 <li><a href="#method-summary" tabindex="0">Method Summary</a></li>
 <li><a href="#constructor-detail" tabindex="0">Constructor Details</a>
 <ol class="toc-list">
-<li><a href="#%3Cinit%3E(io.micronaut.context.ApplicationContext,io.micronaut.http.bind.RequestBinderRegistry,io.micronaut.core.convert.ConversionService,io.micronaut.http.body.MessageBodyHandlerRegistry,io.micronaut.servlet.websocket.ServletWebSocketMessageEncoder,io.micronaut.servlet.websocket.ServletWebSocketSessionRegistry,io.micronaut.servlet.websocket.ServletWebSocketConfiguration,io.micronaut.http.server.RouteExecutor,io.micronaut.http.server.HttpServerConfiguration)" tabindex="0">ServletWebSocketSupport(ApplicationContext, RequestBinderRegistry, ConversionService, MessageBodyHandlerRegistry, ServletWebSocketMessageEncoder, ServletWebSocketSessionRegistry, ServletWebSocketConfiguration, RouteExecutor, HttpServerConfiguration)</a></li>
+<li><a href="#%3Cinit%3E(io.micronaut.context.ApplicationContext,io.micronaut.http.bind.RequestBinderRegistry,io.micronaut.core.convert.ConversionService,io.micronaut.http.body.MessageBodyHandlerRegistry,io.micronaut.servlet.websocket.ServletWebSocketMessageEncoder,io.micronaut.servlet.websocket.ServletWebSocketSessionRegistry,io.micronaut.servlet.websocket.ServletWebSocketConfiguration,io.micronaut.http.server.RouteExecutor,io.micronaut.http.server.HttpServerConfiguration,io.micronaut.servlet.websocket.JakartaEndpointComponents)" tabindex="0">ServletWebSocketSupport(ApplicationContext, RequestBinderRegistry, ConversionService, MessageBodyHandlerRegistry, ServletWebSocketMessageEncoder, ServletWebSocketSessionRegistry, ServletWebSocketConfiguration, RouteExecutor, HttpServerConfiguration, JakartaEndpointComponents)</a></li>
 </ol>
 </li>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
 <ol class="toc-list">
+<li><a href="#components()" tabindex="0">components()</a></li>
 <li><a href="#applicationContext()" tabindex="0">applicationContext()</a></li>
 <li><a href="#binderRegistry()" tabindex="0">binderRegistry()</a></li>
 <li><a href="#conversionService()" tabindex="0">conversionService()</a></li>
@@ -113,7 +114,7 @@ WebSocket connection.</div>
 <div class="summary-table two-column-summary">
 <div class="table-header col-first">Constructor</div>
 <div class="table-header col-last">Description</div>
-<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(io.micronaut.context.ApplicationContext,io.micronaut.http.bind.RequestBinderRegistry,io.micronaut.core.convert.ConversionService,io.micronaut.http.body.MessageBodyHandlerRegistry,io.micronaut.servlet.websocket.ServletWebSocketMessageEncoder,io.micronaut.servlet.websocket.ServletWebSocketSessionRegistry,io.micronaut.servlet.websocket.ServletWebSocketConfiguration,io.micronaut.http.server.RouteExecutor,io.micronaut.http.server.HttpServerConfiguration)" class="member-name-link">ServletWebSocketSupport</a><wbr>(io.micronaut.context.ApplicationContext&nbsp;applicationContext,
+<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(io.micronaut.context.ApplicationContext,io.micronaut.http.bind.RequestBinderRegistry,io.micronaut.core.convert.ConversionService,io.micronaut.http.body.MessageBodyHandlerRegistry,io.micronaut.servlet.websocket.ServletWebSocketMessageEncoder,io.micronaut.servlet.websocket.ServletWebSocketSessionRegistry,io.micronaut.servlet.websocket.ServletWebSocketConfiguration,io.micronaut.http.server.RouteExecutor,io.micronaut.http.server.HttpServerConfiguration,io.micronaut.servlet.websocket.JakartaEndpointComponents)" class="member-name-link">ServletWebSocketSupport</a><wbr>(io.micronaut.context.ApplicationContext&nbsp;applicationContext,
  io.micronaut.http.bind.RequestBinderRegistry&nbsp;requestBinderRegistry,
  io.micronaut.core.convert.ConversionService&nbsp;conversionService,
  io.micronaut.http.body.MessageBodyHandlerRegistry&nbsp;messageBodyHandlerRegistry,
@@ -121,7 +122,8 @@ WebSocket connection.</div>
  <a href="ServletWebSocketSessionRegistry.html" title="class in io.micronaut.servlet.websocket">ServletWebSocketSessionRegistry</a>&nbsp;sessionRegistry,
  <a href="ServletWebSocketConfiguration.html" title="class in io.micronaut.servlet.websocket">ServletWebSocketConfiguration</a>&nbsp;configuration,
  io.micronaut.http.server.RouteExecutor&nbsp;routeExecutor,
- io.micronaut.http.server.HttpServerConfiguration&nbsp;serverConfiguration)</code></div>
+ io.micronaut.http.server.HttpServerConfiguration&nbsp;serverConfiguration,
+ <a href="JakartaEndpointComponents.html" title="class in io.micronaut.servlet.websocket">JakartaEndpointComponents</a>&nbsp;components)</code></div>
 <div class="col-last even-row-color">
 <div class="block">Default constructor.</div>
 </div>
@@ -145,33 +147,36 @@ WebSocket connection.</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>io.micronaut.websocket.bind.WebSocketStateBinderRegistry</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#binderRegistry()" class="member-name-link">binderRegistry</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="ServletWebSocketConfiguration.html" title="class in io.micronaut.servlet.websocket">ServletWebSocketConfiguration</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#configuration()" class="member-name-link">configuration</a>()</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="JakartaEndpointComponents.html" title="class in io.micronaut.servlet.websocket">JakartaEndpointComponents</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#components()" class="member-name-link">components</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>io.micronaut.core.convert.ConversionService</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#conversionService()" class="member-name-link">conversionService</a>()</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="ServletWebSocketConfiguration.html" title="class in io.micronaut.servlet.websocket">ServletWebSocketConfiguration</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#configuration()" class="member-name-link">configuration</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable io.micronaut.http.server.CoroutineHelper</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#coroutineHelper()" class="member-name-link">coroutineHelper</a>()</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>io.micronaut.core.convert.ConversionService</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#conversionService()" class="member-name-link">conversionService</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="ServletWebSocketMessageEncoder.html" title="class in io.micronaut.servlet.websocket">ServletWebSocketMessageEncoder</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#encoder()" class="member-name-link">encoder</a>()</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable io.micronaut.http.server.CoroutineHelper</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#coroutineHelper()" class="member-name-link">coroutineHelper</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>io.micronaut.scheduling.executor.ExecutorSelector</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#executorSelector()" class="member-name-link">executorSelector</a>()</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="ServletWebSocketMessageEncoder.html" title="class in io.micronaut.servlet.websocket">ServletWebSocketMessageEncoder</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#encoder()" class="member-name-link">encoder</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link">Duration</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#idleTimeout()" class="member-name-link">idleTimeout</a>()</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>io.micronaut.scheduling.executor.ExecutorSelector</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#executorSelector()" class="member-name-link">executorSelector</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>io.micronaut.http.body.MessageBodyHandlerRegistry</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#messageBodyHandlerRegistry()" class="member-name-link">messageBodyHandlerRegistry</a>()</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link">Duration</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#idleTimeout()" class="member-name-link">idleTimeout</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="ServletWebSocketSessionRegistry.html" title="class in io.micronaut.servlet.websocket">ServletWebSocketSessionRegistry</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#sessionRegistry()" class="member-name-link">sessionRegistry</a>()</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>io.micronaut.http.body.MessageBodyHandlerRegistry</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#messageBodyHandlerRegistry()" class="member-name-link">messageBodyHandlerRegistry</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>io.micronaut.scheduling.executor.ThreadSelectionConfiguration</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#threadSelectionConfiguration()" class="member-name-link">threadSelectionConfiguration</a>()</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="ServletWebSocketSessionRegistry.html" title="class in io.micronaut.servlet.websocket">ServletWebSocketSessionRegistry</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#sessionRegistry()" class="member-name-link">sessionRegistry</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>io.micronaut.scheduling.executor.ThreadSelectionConfiguration</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#threadSelectionConfiguration()" class="member-name-link">threadSelectionConfiguration</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 </div>
 </div>
 </div>
@@ -190,7 +195,7 @@ WebSocket connection.</div>
 <h2>Constructor Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="&lt;init&gt;(io.micronaut.context.ApplicationContext,io.micronaut.http.bind.RequestBinderRegistry,io.micronaut.core.convert.ConversionService,io.micronaut.http.body.MessageBodyHandlerRegistry,io.micronaut.servlet.websocket.ServletWebSocketMessageEncoder,io.micronaut.servlet.websocket.ServletWebSocketSessionRegistry,io.micronaut.servlet.websocket.ServletWebSocketConfiguration,io.micronaut.http.server.RouteExecutor,io.micronaut.http.server.HttpServerConfiguration)">
+<section class="detail" id="&lt;init&gt;(io.micronaut.context.ApplicationContext,io.micronaut.http.bind.RequestBinderRegistry,io.micronaut.core.convert.ConversionService,io.micronaut.http.body.MessageBodyHandlerRegistry,io.micronaut.servlet.websocket.ServletWebSocketMessageEncoder,io.micronaut.servlet.websocket.ServletWebSocketSessionRegistry,io.micronaut.servlet.websocket.ServletWebSocketConfiguration,io.micronaut.http.server.RouteExecutor,io.micronaut.http.server.HttpServerConfiguration,io.micronaut.servlet.websocket.JakartaEndpointComponents)">
 <h3>ServletWebSocketSupport</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">ServletWebSocketSupport</span><wbr><span class="parameters">(io.micronaut.context.ApplicationContext&nbsp;applicationContext,
@@ -201,7 +206,8 @@ WebSocket connection.</div>
  <a href="ServletWebSocketSessionRegistry.html" title="class in io.micronaut.servlet.websocket">ServletWebSocketSessionRegistry</a>&nbsp;sessionRegistry,
  <a href="ServletWebSocketConfiguration.html" title="class in io.micronaut.servlet.websocket">ServletWebSocketConfiguration</a>&nbsp;configuration,
  io.micronaut.http.server.RouteExecutor&nbsp;routeExecutor,
- io.micronaut.http.server.HttpServerConfiguration&nbsp;serverConfiguration)</span></div>
+ io.micronaut.http.server.HttpServerConfiguration&nbsp;serverConfiguration,
+ <a href="JakartaEndpointComponents.html" title="class in io.micronaut.servlet.websocket">JakartaEndpointComponents</a>&nbsp;components)</span></div>
 <div class="block">Default constructor.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -214,6 +220,7 @@ WebSocket connection.</div>
 <dd><code>configuration</code> - The WebSocket configuration</dd>
 <dd><code>routeExecutor</code> - The route executor, used for <code>@ExecuteOn</code> support</dd>
 <dd><code>serverConfiguration</code> - The server configuration</dd>
+<dd><code>components</code> - Instantiates the components a Jakarta endpoint declares</dd>
 </dl>
 </div>
 </section>
@@ -226,6 +233,18 @@ WebSocket connection.</div>
 <section class="method-details" id="method-detail">
 <h2>Method Details</h2>
 <ul class="member-list">
+<li>
+<section class="detail" id="components()">
+<h3>components</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="JakartaEndpointComponents.html" title="class in io.micronaut.servlet.websocket">JakartaEndpointComponents</a></span>&nbsp;<span class="element-name">components</span>()</div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd>The resolver for the decoders, encoders and configurator a Jakarta endpoint declares</dd>
+</dl>
+</div>
+</section>
+</li>
 <li>
 <section class="detail" id="applicationContext()">
 <h3>applicationContext</h3>

@@ -59,6 +59,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#constructor-detail" tabindex="0">Constructor Details</a>
 <ol class="toc-list">
 <li><a href="#%3Cinit%3E(io.micronaut.websocket.context.WebSocketBean,io.micronaut.http.HttpRequest,io.micronaut.web.router.UriRouteMatch,io.micronaut.servlet.websocket.ServletWebSocketSupport)" tabindex="0">WebSocketUpgradeContext(WebSocketBean, HttpRequest, UriRouteMatch, ServletWebSocketSupport)</a></li>
+<li><a href="#%3Cinit%3E(io.micronaut.websocket.context.WebSocketBean,io.micronaut.http.HttpRequest,io.micronaut.web.router.UriRouteMatch,io.micronaut.servlet.websocket.ServletWebSocketSupport,io.micronaut.servlet.websocket.JakartaEndpoint)" tabindex="0">WebSocketUpgradeContext(WebSocketBean, HttpRequest, UriRouteMatch, ServletWebSocketSupport, JakartaEndpoint)</a></li>
 </ol>
 </li>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
@@ -70,6 +71,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#originatingRequest()" tabindex="0">originatingRequest()</a></li>
 <li><a href="#routeMatch()" tabindex="0">routeMatch()</a></li>
 <li><a href="#support()" tabindex="0">support()</a></li>
+<li><a href="#jakartaEndpoint()" tabindex="0">jakartaEndpoint()</a></li>
 </ol>
 </li>
 </ol>
@@ -91,11 +93,12 @@ loadScripts(document, 'script');</script>
 <dd><code><span id="param-originatingRequest">originatingRequest</span></code> - The HTTP request that produced the handshake</dd>
 <dd><code><span id="param-routeMatch">routeMatch</span></code> - The matched route</dd>
 <dd><code><span id="param-support">support</span></code> - The shared services</dd>
+<dd><code><span id="param-jakartaEndpoint">jakartaEndpoint</span></code> - What a <code>@ServerEndpoint</code> declared, or <code>null</code> for a Micronaut endpoint</dd>
 </dl>
 <hr>
 <div class="horizontal-scroll">
 <div class="type-signature"><span class="annotations">@Internal
-</span><span class="modifiers">public record </span><span class="element-name type-name-label">WebSocketUpgradeContext</span>(io.micronaut.websocket.context.WebSocketBean&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;webSocketBean, io.micronaut.http.HttpRequest&lt;?&gt;&nbsp;originatingRequest, io.micronaut.web.router.UriRouteMatch&lt;?,<wbr>?&gt;&nbsp;routeMatch, <a href="ServletWebSocketSupport.html" title="class in io.micronaut.servlet.websocket">ServletWebSocketSupport</a>&nbsp;support)
+</span><span class="modifiers">public record </span><span class="element-name type-name-label">WebSocketUpgradeContext</span>(io.micronaut.websocket.context.WebSocketBean&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;webSocketBean, io.micronaut.http.HttpRequest&lt;?&gt;&nbsp;originatingRequest, io.micronaut.web.router.UriRouteMatch&lt;?,<wbr>?&gt;&nbsp;routeMatch, <a href="ServletWebSocketSupport.html" title="class in io.micronaut.servlet.websocket">ServletWebSocketSupport</a>&nbsp;support, @Nullable <a href="JakartaEndpoint.html" title="class in io.micronaut.servlet.websocket">JakartaEndpoint</a>&nbsp;jakartaEndpoint)
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Record.html" title="class or interface in java.lang" class="external-link">Record</a></span></div>
 <div class="block">The per-upgrade state a <a href="MicronautServerEndpoint.html" title="class in io.micronaut.servlet.websocket"><code>MicronautServerEndpoint</code></a> needs, passed to the endpoint
 through the user properties of the <code>ServerEndpointConfig</code> created for the upgrade.</div>
@@ -122,6 +125,14 @@ through the user properties of the <code>ServerEndpointConfig</code> created for
  io.micronaut.web.router.UriRouteMatch&lt;?,<wbr>?&gt;&nbsp;routeMatch,
  <a href="ServletWebSocketSupport.html" title="class in io.micronaut.servlet.websocket">ServletWebSocketSupport</a>&nbsp;support)</code></div>
 <div class="col-last even-row-color">
+<div class="block">Constructor for a Micronaut <code>@ServerWebSocket</code>.</div>
+</div>
+<div class="col-constructor-name odd-row-color"><code><a href="#%3Cinit%3E(io.micronaut.websocket.context.WebSocketBean,io.micronaut.http.HttpRequest,io.micronaut.web.router.UriRouteMatch,io.micronaut.servlet.websocket.ServletWebSocketSupport,io.micronaut.servlet.websocket.JakartaEndpoint)" class="member-name-link">WebSocketUpgradeContext</a><wbr>(io.micronaut.websocket.context.WebSocketBean&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;webSocketBean,
+ io.micronaut.http.HttpRequest&lt;?&gt;&nbsp;originatingRequest,
+ io.micronaut.web.router.UriRouteMatch&lt;?,<wbr>?&gt;&nbsp;routeMatch,
+ <a href="ServletWebSocketSupport.html" title="class in io.micronaut.servlet.websocket">ServletWebSocketSupport</a>&nbsp;support,
+ @Nullable <a href="JakartaEndpoint.html" title="class in io.micronaut.servlet.websocket">JakartaEndpoint</a>&nbsp;jakartaEndpoint)</code></div>
+<div class="col-last odd-row-color">
 <div class="block">Creates an instance of a <code>WebSocketUpgradeContext</code> record class.</div>
 </div>
 </div>
@@ -148,29 +159,34 @@ through the user properties of the <code>ServerEndpointConfig</code> created for
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns a hash code value for this object.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>io.micronaut.http.HttpRequest<wbr>&lt;?&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#originatingRequest()" class="member-name-link">originatingRequest</a>()</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="JakartaEndpoint.html" title="class in io.micronaut.servlet.websocket">JakartaEndpoint</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#jakartaEndpoint()" class="member-name-link">jakartaEndpoint</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Returns the value of the <a href="#param-jakartaEndpoint"><code>jakartaEndpoint</code></a> record component.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>io.micronaut.http.HttpRequest<wbr>&lt;?&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#originatingRequest()" class="member-name-link">originatingRequest</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns the value of the <a href="#param-originatingRequest"><code>originatingRequest</code></a> record component.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>io.micronaut.web.router.UriRouteMatch<wbr>&lt;?,<wbr>?&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#routeMatch()" class="member-name-link">routeMatch</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>io.micronaut.web.router.UriRouteMatch<wbr>&lt;?,<wbr>?&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#routeMatch()" class="member-name-link">routeMatch</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns the value of the <a href="#param-routeMatch"><code>routeMatch</code></a> record component.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="ServletWebSocketSupport.html" title="class in io.micronaut.servlet.websocket">ServletWebSocketSupport</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#support()" class="member-name-link">support</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="ServletWebSocketSupport.html" title="class in io.micronaut.servlet.websocket">ServletWebSocketSupport</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#support()" class="member-name-link">support</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns the value of the <a href="#param-support"><code>support</code></a> record component.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#toString()" class="member-name-link">toString</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#toString()" class="member-name-link">toString</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns a string representation of this record class.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>io.micronaut.websocket.context.WebSocketBean<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#webSocketBean()" class="member-name-link">webSocketBean</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>io.micronaut.websocket.context.WebSocketBean<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#webSocketBean()" class="member-name-link">webSocketBean</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns the value of the <a href="#param-webSocketBean"><code>webSocketBean</code></a> record component.</div>
 </div>
 </div>
@@ -198,6 +214,26 @@ through the user properties of the <code>ServerEndpointConfig</code> created for
  io.micronaut.http.HttpRequest&lt;?&gt;&nbsp;originatingRequest,
  io.micronaut.web.router.UriRouteMatch&lt;?,<wbr>?&gt;&nbsp;routeMatch,
  <a href="ServletWebSocketSupport.html" title="class in io.micronaut.servlet.websocket">ServletWebSocketSupport</a>&nbsp;support)</span></div>
+<div class="block">Constructor for a Micronaut <code>@ServerWebSocket</code>.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>webSocketBean</code> - The WebSocket bean</dd>
+<dd><code>originatingRequest</code> - The handshake request</dd>
+<dd><code>routeMatch</code> - The matched route</dd>
+<dd><code>support</code> - The shared services</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="&lt;init&gt;(io.micronaut.websocket.context.WebSocketBean,io.micronaut.http.HttpRequest,io.micronaut.web.router.UriRouteMatch,io.micronaut.servlet.websocket.ServletWebSocketSupport,io.micronaut.servlet.websocket.JakartaEndpoint)">
+<h3>WebSocketUpgradeContext</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">WebSocketUpgradeContext</span><wbr><span class="parameters">(io.micronaut.websocket.context.WebSocketBean&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;webSocketBean,
+ io.micronaut.http.HttpRequest&lt;?&gt;&nbsp;originatingRequest,
+ io.micronaut.web.router.UriRouteMatch&lt;?,<wbr>?&gt;&nbsp;routeMatch,
+ <a href="ServletWebSocketSupport.html" title="class in io.micronaut.servlet.websocket">ServletWebSocketSupport</a>&nbsp;support,
+ @Nullable <a href="JakartaEndpoint.html" title="class in io.micronaut.servlet.websocket">JakartaEndpoint</a>&nbsp;jakartaEndpoint)</span></div>
 <div class="block">Creates an instance of a <code>WebSocketUpgradeContext</code> record class.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -205,6 +241,7 @@ through the user properties of the <code>ServerEndpointConfig</code> created for
 <dd><code>originatingRequest</code> - the value for the <a href="#param-originatingRequest"><code>originatingRequest</code></a> record component</dd>
 <dd><code>routeMatch</code> - the value for the <a href="#param-routeMatch"><code>routeMatch</code></a> record component</dd>
 <dd><code>support</code> - the value for the <a href="#param-support"><code>support</code></a> record component</dd>
+<dd><code>jakartaEndpoint</code> - the value for the <a href="#param-jakartaEndpoint"><code>jakartaEndpoint</code></a> record component</dd>
 </dl>
 </div>
 </section>
@@ -312,6 +349,19 @@ through the user properties of the <code>ServerEndpointConfig</code> created for
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>the value of the <a href="#param-support"><code>support</code></a> record component</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="jakartaEndpoint()">
+<h3>jakartaEndpoint</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">@Nullable <a href="JakartaEndpoint.html" title="class in io.micronaut.servlet.websocket">JakartaEndpoint</a></span>&nbsp;<span class="element-name">jakartaEndpoint</span>()</div>
+<div class="block">Returns the value of the <a href="#param-jakartaEndpoint"><code>jakartaEndpoint</code></a> record component.</div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd>the value of the <a href="#param-jakartaEndpoint"><code>jakartaEndpoint</code></a> record component</dd>
 </dl>
 </div>
 </section>

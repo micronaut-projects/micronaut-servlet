@@ -492,6 +492,11 @@ Servlet Filters are not to be confused with <a href="https://docs.micronaut.io/l
 </tr>
 </table>
 </div>
+<div class="paragraph">
+<p>The same processor maps the Jakarta WebSocket annotations - <code>@ServerEndpoint</code>, <code>@OnOpen</code>,
+<code>@OnMessage</code>, <code>@OnClose</code>, <code>@OnError</code> and <code>@PathParam</code> - onto Micronaut&#8217;s WebSocket support.
+See the <a href="#websocket">WebSocket section</a>.</p>
+</div>
 
 <h1 id="websocket"><a class="anchor" href="#websocket"></a>5 WebSocket Support</h1>
 
@@ -815,6 +820,291 @@ a message over the session.</td>
 </table>
 </div>
 <div class="sect2">
+<h3 id="_jakarta_websocket_annotations">Jakarta WebSocket annotations</h3>
+<div class="paragraph">
+<p>An endpoint can also be written with the
+<a href="https://jakarta.ee/specifications/websocket/2.1/apidocs/">Jakarta WebSocket</a> annotations,
+<code>@ServerEndpoint</code>, <code>@OnOpen</code>, <code>@OnMessage</code>, <code>@OnClose</code>, <code>@OnError</code> and <code>@PathParam</code>, in the
+same way that <code>@WebServlet</code> and <code>@WebFilter</code> can be used to register servlets and filters.
+This needs the annotation processor:</p>
+</div>
+<div class="paragraph">
+<p>        <div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">annotationProcessor(<span class="hljs-string">"io.micronaut.servlet:micronaut-servlet-processor")</span></code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;annotationProcessorPaths&gt;
+    &lt;path&gt;
+        &lt;groupId&gt;io.micronaut.servlet&lt;/groupId&gt;
+        &lt;artifactId&gt;micronaut-servlet-processor&lt;/artifactId&gt;
+    &lt;/path&gt;
+&lt;/annotationProcessorPaths&gt;</code></pre>
+</div>
+</div>
+</p>
+</div>
+<div class="paragraph">
+<p>The processor maps the Jakarta annotations onto their Micronaut equivalents at compilation
+time, so the endpoint is a <code>@ServerWebSocket</code> bean and takes the same path as one: the
+handshake goes through the Micronaut router and filter chain, and the handlers are invoked
+through the compiled bean metadata. The container never scans the class and nothing is
+reflected on, so a Jakarta endpoint works in a native image as any Micronaut bean does.</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">import jakarta.websocket.CloseReason;
+import jakarta.websocket.OnClose;
+import jakarta.websocket.OnMessage;
+import jakarta.websocket.OnOpen;
+import jakarta.websocket.Session;
+import jakarta.websocket.server.PathParam;
+import jakarta.websocket.server.ServerEndpoint;
+
+import java.io.IOException;
+
+@ServerEndpoint("/ws/echo/{room}") // <b class="conum">(1)</b>
+public class EchoEndpoint {
+
+    private String room;
+
+    @OnOpen
+    public void onOpen(Session session, @PathParam("room") String room) throws IOException { // <b class="conum">(2)</b>
+        this.room = room;
+        session.getBasicRemote().sendText("Welcome to " + room); // <b class="conum">(3)</b>
+    }
+
+    @OnMessage
+    public String onMessage(String message) { // <b class="conum">(4)</b>
+        return "[" + room + "] " + message;
+    }
+
+    @OnClose
+    public void onClose(CloseReason reason) { // <b class="conum">(5)</b>
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">import jakarta.websocket.CloseReason
+import jakarta.websocket.OnClose
+import jakarta.websocket.OnMessage
+import jakarta.websocket.OnOpen
+import jakarta.websocket.Session
+import jakarta.websocket.server.PathParam
+import jakarta.websocket.server.ServerEndpoint
+
+@ServerEndpoint("/ws/echo/{room}") // <b class="conum">(1)</b>
+class EchoEndpoint {
+
+    private lateinit var room: String
+
+    @OnOpen
+    fun onOpen(session: Session, @PathParam("room") room: String) { // <b class="conum">(2)</b>
+        this.room = room
+        session.basicRemote.sendText("Welcome to $room") // <b class="conum">(3)</b>
+    }
+
+    @OnMessage
+    fun onMessage(message: String): String { // <b class="conum">(4)</b>
+        return "[$room] $message"
+    }
+
+    @OnClose
+    fun onClose(reason: CloseReason) { // <b class="conum">(5)</b>
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">import jakarta.websocket.CloseReason
+import jakarta.websocket.OnClose
+import jakarta.websocket.OnMessage
+import jakarta.websocket.OnOpen
+import jakarta.websocket.Session
+import jakarta.websocket.server.PathParam
+import jakarta.websocket.server.ServerEndpoint
+
+@ServerEndpoint("/ws/echo/{room}") // <b class="conum">(1)</b>
+class EchoEndpoint {
+
+    private String room
+
+    @OnOpen
+    void onOpen(Session session, @PathParam("room") String room) { // <b class="conum">(2)</b>
+        this.room = room
+        session.basicRemote.sendText("Welcome to " + room) // <b class="conum">(3)</b>
+    }
+
+    @OnMessage
+    String onMessage(String message) { // <b class="conum">(4)</b>
+        "[" + room + "] " + message
+    }
+
+    @OnClose
+    void onClose(CloseReason reason) { // <b class="conum">(5)</b>
+    }
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td><code>@ServerEndpoint</code> maps the endpoint. The URI template syntax is the same as
+<code>@ServerWebSocket&#8217;s, and `subprotocols</code> is honoured.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>A handler can take the container&#8217;s <code>jakarta.websocket.Session</code> and <code>EndpointConfig</code> by
+type, <code>@PathParam</code> binds a path variable under the name it declares, and everything a
+Micronaut handler can take - the <code>WebSocketSession</code>, <code>@Header</code>, <code>@QueryValue</code>, the
+<code>HttpRequest</code> - can be taken too.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>The <code>Session</code> is the container&#8217;s own, so <code>getBasicRemote()</code>, <code>getAsyncRemote()</code>,
+<code>getOpenSessions()</code> and <code>getUserProperties()</code> all work as they do under the container.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="4"></i><b>4</b></td>
+<td>A value returned by <code>@OnMessage</code> is sent to the peer, as the specification asks. An
+endpoint may declare one text, one binary and one pong <code>@OnMessage</code> method, chosen by the
+type of the message parameter.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="5"></i><b>5</b></td>
+<td><code>@OnClose</code> may take the Jakarta <code>CloseReason</code>, <code>@OnError</code> the <code>Throwable</code>.</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Unless the class declares a scope of its own, one endpoint instance is created per
+connection, which is the Jakarta contract and lets the endpoint keep the session and its
+state in fields. An explicit <code>@Singleton</code> shares one instance between all connections.</p>
+</div>
+<div class="paragraph">
+<p>The processor reports at compilation time what could not work at runtime: an endpoint
+without an <code>@OnMessage</code> method, more than one handler for a message category, a partial
+message handler (the <code>boolean</code> last-part parameter, since messages are always delivered
+whole), a <code>maxMessageSize</code> beyond <code>Integer.MAX_VALUE</code>, and <code>@ClientEndpoint</code>, for which
+<code>@ClientWebSocket</code> is the equivalent.</p>
+</div>
+<div class="sect3">
+<h4 id="_decoders_encoders_and_the_configurator">Decoders, encoders and the configurator</h4>
+<div class="paragraph">
+<p><code>decoders</code>, <code>encoders</code> and <code>configurator</code> name classes the container would instantiate with
+<code>Class.newInstance()</code>. Here the annotation processor generates an introspection for every
+class the endpoint names, so a class with a public no-argument constructor - the Jakarta
+contract - is instantiated through that, without reflection, and needs nothing else. A class
+is resolved through the first of these that can produce it:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>As a bean, when the class carries a scope such as <code>@Singleton</code> or <code>@Prototype</code>. The bean
+can inject an <code>ObjectMapper</code> or anything else, and its scope decides whether it is shared.</p>
+</li>
+<li>
+<p>Through its generated introspection, when it has a no-argument constructor.</p>
+</li>
+<li>
+<p>Reflectively, when <code>io.micronaut:micronaut-reflection</code> is on the classpath <em>and</em> the type
+matches a <code>micronaut.introspection.allow-reflection</code> pattern. That is the same switch that
+lets the shared introspector describe a type reflectively, so there is one place to opt a
+package into reflection. This is only needed for a class whose constructor takes arguments
+without being a bean; they are then injected.</p>
+<div class="openblock">
+<div class="content">
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-properties hljs" data-lang="properties">micronaut.introspection.allow-reflection[0]=com.example.legacy.codecs.*</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">micronaut:
+  introspection:
+    allow-reflection:
+      - com.example.legacy.codecs.*</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">micronaut = {introspection = {allow-reflection = ["com.example.legacy.codecs.*"]}}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy-config hljs" data-lang="groovy-config">micronaut {
+  introspection {
+    allowReflection = ["com.example.legacy.codecs.*"]
+  }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-hocon hljs" data-lang="hocon">{
+  micronaut {
+    introspection {
+      allow-reflection = ["com.example.legacy.codecs.*"]
+    }
+  }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json-config hljs" data-lang="json-config">{
+  "micronaut": {
+    "introspection": {
+      "allow-reflection": ["com.example.legacy.codecs.*"]
+    }
+  }
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>A class none of these can produce - one whose constructor takes arguments, when
+<code>micronaut-reflection</code> is not on the compile classpath - is reported at compilation time.</p>
+</div>
+<div class="paragraph">
+<p>Decoders run before Micronaut&#8217;s own conversion and message body readers, and encoders apply
+to the value an <code>@OnMessage</code> method returns, before Micronaut&#8217;s message body writers. Either
+can be left out: a message type no decoder produces is read by the <code>MessageBodyReader</code> for the
+media type the handler <code>@Consumes</code> (JSON by default), and a return value no encoder accepts is
+written by the <code>MessageBodyWriter</code> for the media type it <code>@Produces</code> (JSON by default), exactly
+as for a Micronaut endpoint. The type an encoder handles is read from its bean definition, or
+from its generic signature when <code>micronaut-reflection</code> is present; an encoder whose type is
+unknown is offered every value and stands aside for one it cannot encode.</p>
+</div>
+<div class="paragraph">
+<p><code>RemoteEndpoint#sendObject</code> on the raw session is served by the container, which instantiates
+the encoders itself, reflectively; the encoders are therefore only passed to the container for
+classes the reflection policy allows. Without that, return a value from the handler or send
+through the Micronaut <code>WebSocketSession</code> instead.</p>
+</div>
+<div class="paragraph">
+<p>A declared configurator has its <code>modifyHandshake</code>, <code>checkOrigin</code>, <code>getNegotiatedSubprotocol</code>
+and <code>getNegotiatedExtensions</code> honoured; an origin must pass both its check and the
+<a href="#websocket-origin">Micronaut policy</a>. Its <code>getEndpointInstance</code> is not called: the endpoint
+is always the bean.</p>
+</div>
+</div>
+</div>
+<div class="sect2">
 <h3 id="_filters_and_security_run_on_the_handshake">Filters and security run on the handshake</h3>
 <div class="paragraph">
 <p>The upgrade request reaches the Micronaut servlet like any other request, so the Micronaut
@@ -830,7 +1120,7 @@ for HTTP requests.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_origin_checking">Origin checking</h3>
+<h3 id="websocket-origin">Origin checking</h3>
 <div class="paragraph">
 <p>When the endpoint declares <a href="../api/io/micronaut/http/server/cors/CrossOrigin.html">@CrossOrigin</a>, or when
 <code>micronaut.server.cors.enabled</code> is set, the handshake is refused unless the <code>Origin</code> header
