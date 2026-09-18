@@ -4,38 +4,17 @@ When running as a WAR file, this can be problematic if you wish to run multiple 
 To allow an external location per application, it is necessary to write our own replacement for api:servlet.engine.initializer.MicronautServletInitializer[].
 The following example will look for configuration in the `/tmp` directory and on the classpath in the `/some/path` directory.
 
-[source,java]
-.src/main/java/example/CustomMicronautServletInitializer.java
-----
-package example;
+snippet::io.micronaut.servlet.docs.war.CustomInitializer[tags="class", indent=0, languages="java,kotlin,groovy"]
 
-import io.micronaut.context.ApplicationContext;
-import io.micronaut.context.ApplicationContextBuilder;
-import io.micronaut.servlet.engine.initializer.MicronautServletInitializer;
-import jakarta.servlet.ServletContext;
-
-public class CustomInitializer extends MicronautServletInitializer {
-
-    @Override
-    protected ApplicationContextBuilder buildApplicationContext(ServletContext ctx) {
-        return ApplicationContext
-                .builder()
-                .overrideConfigLocations(
-                    "file:/tmp",
-                    "classpath:/some/path"
-                )
-                .classLoader(ctx.getClassLoader())
-                .singletons(ctx);
-    }
-}
-----
+[.lang-python]
+NOTE: The servlet container instantiates the initializer itself, before any application context and therefore before the Python runtime exists, and a Python class cannot extend the Java class `MicronautServletInitializer`. Write the initializer in Java, Kotlin or Groovy as shown above; the application it starts can be written in Python.
 
 We can then use Java's Service Provider Interface to register this class as the initializer by pointing to it in the `META-INF/services/jakarta.servlet.ServletContainerInitializer` file.
 
 [source,text]
 .src/main/resources/META-INF/services/jakarta.servlet.ServletContainerInitializer
 ----
-example.CustomInitializer
+io.micronaut.servlet.docs.war.CustomInitializer
 ----
 
 NOTE: Some servlet containers may limit the locations that are accessible from applications for security reasons.
