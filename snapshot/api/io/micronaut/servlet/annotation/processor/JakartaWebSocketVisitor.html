@@ -94,10 +94,16 @@ implements io.micronaut.inject.visitor.TypeElementVisitor&lt;<a href="https://do
 
 <p>The mappers turn the Jakarta annotations into Micronaut ones; this visitor checks what the
 runtime cannot recover from and reports it against the source instead of the first handshake:
-the endpoint has a message handler, has at most one handler per category, does not use partial
-messages, and every class it names in <code>decoders</code>, <code>encoders</code> or <code>configurator</code>
-can be instantiated. The ones that are not beans get an introspection generated, so no
-reflection is needed to create them.</p>
+a server endpoint has a message handler, an endpoint has at most one handler per category,
+does not use partial messages, and every class it names in <code>decoders</code>, <code>encoders</code>
+or <code>configurator</code> can be instantiated. The ones that are not beans get an introspection
+generated, so no reflection is needed to create them.</p>
+
+<p>A <code>@ServerEndpoint</code> is mapped onto <code>@ServerWebSocket</code>. A <code>@ClientEndpoint</code>
+maps onto no Micronaut annotation: it is a plain bean whose handlers the lifecycle mappers made
+executable, opened through the <code>WebSocketContainer</code> bean with the URI given to
+<code>connectToServer</code>. A client has no URI template, so <code>@PathParam</code> is rejected, and
+no reason to receive, so <code>@OnMessage</code> is optional.</p>
 
 <p>An endpoint that declares no scope of its own is made a <code>@Prototype</code>, which is the
 Jakarta contract of one endpoint instance per connection. A declared scope wins.</p></div>

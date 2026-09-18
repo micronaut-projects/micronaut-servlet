@@ -70,8 +70,10 @@ loadScripts(document, 'script');</script>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
 <ol class="toc-list">
 <li><a href="#onOpen(jakarta.websocket.Session,jakarta.websocket.EndpointConfig)" tabindex="0">onOpen(Session, EndpointConfig)</a></li>
-<li><a href="#onClose(jakarta.websocket.Session,jakarta.websocket.CloseReason)" tabindex="0">onClose(Session, CloseReason)</a></li>
-<li><a href="#onError(jakarta.websocket.Session,java.lang.Throwable)" tabindex="0">onError(Session, Throwable)</a></li>
+<li><a href="#propagatedContext()" tabindex="0">propagatedContext()</a></li>
+<li><a href="#sessionOpened(io.micronaut.servlet.websocket.ServletWebSocketSession)" tabindex="0">sessionOpened(ServletWebSocketSession)</a></li>
+<li><a href="#sessionClosed(io.micronaut.servlet.websocket.ServletWebSocketSession,boolean)" tabindex="0">sessionClosed(ServletWebSocketSession, boolean)</a></li>
+<li><a href="#applyLimits(jakarta.websocket.Session,java.lang.Integer,java.lang.Integer)" tabindex="0">applyLimits(Session, Integer, Integer)</a></li>
 </ol>
 </li>
 </ol>
@@ -83,7 +85,9 @@ loadScripts(document, 'script');</script>
 </div>
 <div class="inheritance" title="Inheritance Tree"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">java.lang.Object</a>
 <div class="inheritance">jakarta.websocket.Endpoint
+<div class="inheritance"><a href="AbstractMicronautEndpoint.html" title="class in io.micronaut.servlet.websocket">io.micronaut.servlet.websocket.AbstractMicronautEndpoint</a>
 <div class="inheritance">io.micronaut.servlet.websocket.MicronautServerEndpoint</div>
+</div>
 </div>
 </div>
 <section class="class-description" id="class-description">
@@ -91,20 +95,17 @@ loadScripts(document, 'script');</script>
 <div class="horizontal-scroll">
 <div class="type-signature"><span class="annotations">@Internal
 </span><span class="modifiers">public class </span><span class="element-name type-name-label">MicronautServerEndpoint</span>
-<span class="extends-implements">extends jakarta.websocket.Endpoint</span></div>
-<div class="block">The <code>Endpoint</code> that adapts a Jakarta WebSocket connection onto a Micronaut
-<code>@ServerWebSocket</code> bean, or onto a Jakarta <code>@ServerEndpoint</code> the annotation
-processor mapped onto one.
-
-<p>The two models differ in what a handler receives and returns. A Jakarta endpoint has one
-handler per message category, may take the container's <code>Session</code>, the
-<code>EndpointConfig</code> and the Jakarta <code>CloseReason</code>, decodes with the
-decoders it declares, and the value its <code>@OnMessage</code> returns is sent back to the peer.
-Each of those is bridged here; a Micronaut endpoint is handled as before.</p>
+<span class="extends-implements">extends <a href="AbstractMicronautEndpoint.html" title="class in io.micronaut.servlet.websocket">AbstractMicronautEndpoint</a></span></div>
+<div class="block">The <code>Endpoint</code> that adapts a connection the server accepted onto a
+Micronaut <code>@ServerWebSocket</code> bean, or onto a Jakarta <code>@ServerEndpoint</code> the
+annotation processor mapped onto one.
 
 <p>One instance exists per connection. All per-connection state arrives through the
 <code>EndpointConfig</code> user properties, so the class also works on containers that
-instantiate endpoints reflectively rather than through the configurator.</p></div>
+instantiate endpoints reflectively rather than through the configurator. The dispatch itself
+is <a href="AbstractMicronautEndpoint.html" title="class in io.micronaut.servlet.websocket"><code>AbstractMicronautEndpoint</code></a>'s; this class adds what only a server connection has: the
+upgrade request the handlers are bound against, the route's path variables, the session
+registry and the open and close events.</p></div>
 <dl class="notes">
 <dt>Since:</dt>
 <dd>6.2.0</dd>
@@ -159,21 +160,41 @@ instances reflectively rather than through the configurator.</div>
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onClose(jakarta.websocket.Session,jakarta.websocket.CloseReason)" class="member-name-link">onClose</a><wbr>(jakarta.websocket.Session&nbsp;session,
- jakarta.websocket.CloseReason&nbsp;closeReason)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#applyLimits(jakarta.websocket.Session,java.lang.Integer,java.lang.Integer)" class="member-name-link">applyLimits</a><wbr>(jakarta.websocket.Session&nbsp;session,
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;declaredTextMax,
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;declaredBinaryMax)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Applies the payload limits.</div>
+</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onError(jakarta.websocket.Session,java.lang.Throwable)" class="member-name-link">onError</a><wbr>(jakarta.websocket.Session&nbsp;session,
- <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Throwable.html" title="class or interface in java.lang" class="external-link">Throwable</a>&nbsp;throwable)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onOpen(jakarta.websocket.Session,jakarta.websocket.EndpointConfig)" class="member-name-link">onOpen</a><wbr>(jakarta.websocket.Session&nbsp;session,
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onOpen(jakarta.websocket.Session,jakarta.websocket.EndpointConfig)" class="member-name-link">onOpen</a><wbr>(jakarta.websocket.Session&nbsp;session,
  jakarta.websocket.EndpointConfig&nbsp;config)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected io.micronaut.core.propagation.PropagatedContext</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#propagatedContext()" class="member-name-link">propagatedContext</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Handlers run with the upgrade request propagated, so that
+<code>ServerRequestContext.currentRequest()</code> resolves inside them.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#sessionClosed(io.micronaut.servlet.websocket.ServletWebSocketSession,boolean)" class="member-name-link">sessionClosed</a><wbr>(<a href="ServletWebSocketSession.html" title="class in io.micronaut.servlet.websocket">ServletWebSocketSession</a>&nbsp;session,
+ boolean&nbsp;opened)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Called once the session is closed and its close handler has run.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#sessionOpened(io.micronaut.servlet.websocket.ServletWebSocketSession)" class="member-name-link">sessionOpened</a><wbr>(<a href="ServletWebSocketSession.html" title="class in io.micronaut.servlet.websocket">ServletWebSocketSession</a>&nbsp;session)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Called once the connection is set up, before the message handlers are registered and the
+open handler runs.</div>
 </div>
 </div>
 </div>
+</div>
+<div class="inherited-list">
+<h3 id="methods-inherited-from-class-io.micronaut.servlet.websocket.AbstractMicronautEndpoint">Methods inherited from class&nbsp;<a href="AbstractMicronautEndpoint.html#method-summary" title="class in io.micronaut.servlet.websocket">AbstractMicronautEndpoint</a></h3>
+<code><a href="AbstractMicronautEndpoint.html#closeQuietly(jakarta.websocket.Session,io.micronaut.websocket.CloseReason)" title="closeQuietly(Session, CloseReason)">closeQuietly</a>, <a href="AbstractMicronautEndpoint.html#micronautSession()" title="micronautSession()">micronautSession</a>, <a href="AbstractMicronautEndpoint.html#onClose(jakarta.websocket.Session,jakarta.websocket.CloseReason)" title="onClose(Session, CloseReason)">onClose</a>, <a href="AbstractMicronautEndpoint.html#onError(jakarta.websocket.Session,java.lang.Throwable)" title="onError(Session, Throwable)">onError</a>, <a href="AbstractMicronautEndpoint.html#open(jakarta.websocket.Session,jakarta.websocket.EndpointConfig,io.micronaut.servlet.websocket.ServletWebSocketSupport,io.micronaut.websocket.context.WebSocketBean,io.micronaut.servlet.websocket.JakartaEndpoint,io.micronaut.http.HttpRequest,io.micronaut.servlet.websocket.ServletWebSocketSession)" title="open(Session, EndpointConfig, ServletWebSocketSupport, WebSocketBean, JakartaEndpoint, HttpRequest, ServletWebSocketSession)">open</a>, <a href="AbstractMicronautEndpoint.html#openCompleted()" title="openCompleted()">openCompleted</a>, <a href="AbstractMicronautEndpoint.html#openFailed(java.lang.Throwable)" title="openFailed(Throwable)">openFailed</a>, <a href="AbstractMicronautEndpoint.html#support()" title="support()">support</a>, <a href="AbstractMicronautEndpoint.html#webSocketBean()" title="webSocketBean()">webSocketBean</a></code></div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-java.lang.Object">Methods inherited from class&nbsp;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#method-summary" title="class or interface in java.lang" class="external-link">Object</a></h3>
 <code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#clone()" title="class or interface in java.lang" class="external-link">clone</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#equals(java.lang.Object)" title="class or interface in java.lang" class="external-link">equals</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#finalize()" title="class or interface in java.lang" class="external-link">finalize</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#getClass()" title="class or interface in java.lang" class="external-link">getClass</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#hashCode()" title="class or interface in java.lang" class="external-link">hashCode</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#notify()" title="class or interface in java.lang" class="external-link">notify</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#notifyAll()" title="class or interface in java.lang" class="external-link">notifyAll</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#toString()" title="class or interface in java.lang" class="external-link">toString</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#wait()" title="class or interface in java.lang" class="external-link">wait</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#wait(long)" title="class or interface in java.lang" class="external-link">wait</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#wait(long,int)" title="class or interface in java.lang" class="external-link">wait</a></code></div>
@@ -246,27 +267,73 @@ read from the <code>EndpointConfig</code> user properties instead.</div>
 </section>
 </li>
 <li>
-<section class="detail" id="onClose(jakarta.websocket.Session,jakarta.websocket.CloseReason)">
-<h3>onClose</h3>
+<section class="detail" id="propagatedContext()">
+<h3>propagatedContext</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">onClose</span><wbr><span class="parameters">(jakarta.websocket.Session&nbsp;session,
- jakarta.websocket.CloseReason&nbsp;closeReason)</span></div>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">io.micronaut.core.propagation.PropagatedContext</span>&nbsp;<span class="element-name">propagatedContext</span>()</div>
+<div class="block">Handlers run with the upgrade request propagated, so that
+<code>ServerRequestContext.currentRequest()</code> resolves inside them.</div>
 <dl class="notes">
-<dt>Overrides:</dt>
-<dd><code>onClose</code>&nbsp;in class&nbsp;<code>jakarta.websocket.Endpoint</code></dd>
+<dt>Specified by:</dt>
+<dd><code><a href="AbstractMicronautEndpoint.html#propagatedContext()">propagatedContext</a></code>&nbsp;in class&nbsp;<code><a href="AbstractMicronautEndpoint.html" title="class in io.micronaut.servlet.websocket">AbstractMicronautEndpoint</a></code></dd>
+<dt>Returns:</dt>
+<dd>The propagated context</dd>
 </dl>
 </div>
 </section>
 </li>
 <li>
-<section class="detail" id="onError(jakarta.websocket.Session,java.lang.Throwable)">
-<h3>onError</h3>
+<section class="detail" id="sessionOpened(io.micronaut.servlet.websocket.ServletWebSocketSession)">
+<h3>sessionOpened</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">onError</span><wbr><span class="parameters">(jakarta.websocket.Session&nbsp;session,
- <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Throwable.html" title="class or interface in java.lang" class="external-link">Throwable</a>&nbsp;throwable)</span></div>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">sessionOpened</span><wbr><span class="parameters">(<a href="ServletWebSocketSession.html" title="class in io.micronaut.servlet.websocket">ServletWebSocketSession</a>&nbsp;session)</span></div>
+<div class="block"><span class="description-from-type-label">Description copied from class:&nbsp;<code><a href="AbstractMicronautEndpoint.html#sessionOpened(io.micronaut.servlet.websocket.ServletWebSocketSession)">AbstractMicronautEndpoint</a></code></span></div>
+<div class="block">Called once the connection is set up, before the message handlers are registered and the
+open handler runs. Nothing by default.</div>
 <dl class="notes">
 <dt>Overrides:</dt>
-<dd><code>onError</code>&nbsp;in class&nbsp;<code>jakarta.websocket.Endpoint</code></dd>
+<dd><code><a href="AbstractMicronautEndpoint.html#sessionOpened(io.micronaut.servlet.websocket.ServletWebSocketSession)">sessionOpened</a></code>&nbsp;in class&nbsp;<code><a href="AbstractMicronautEndpoint.html" title="class in io.micronaut.servlet.websocket">AbstractMicronautEndpoint</a></code></dd>
+<dt>Parameters:</dt>
+<dd><code>session</code> - The Micronaut session</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="sessionClosed(io.micronaut.servlet.websocket.ServletWebSocketSession,boolean)">
+<h3>sessionClosed</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">sessionClosed</span><wbr><span class="parameters">(<a href="ServletWebSocketSession.html" title="class in io.micronaut.servlet.websocket">ServletWebSocketSession</a>&nbsp;session,
+ boolean&nbsp;opened)</span></div>
+<div class="block"><span class="description-from-type-label">Description copied from class:&nbsp;<code><a href="AbstractMicronautEndpoint.html#sessionClosed(io.micronaut.servlet.websocket.ServletWebSocketSession,boolean)">AbstractMicronautEndpoint</a></code></span></div>
+<div class="block">Called once the session is closed and its close handler has run.</div>
+<dl class="notes">
+<dt>Overrides:</dt>
+<dd><code><a href="AbstractMicronautEndpoint.html#sessionClosed(io.micronaut.servlet.websocket.ServletWebSocketSession,boolean)">sessionClosed</a></code>&nbsp;in class&nbsp;<code><a href="AbstractMicronautEndpoint.html" title="class in io.micronaut.servlet.websocket">AbstractMicronautEndpoint</a></code></dd>
+<dt>Parameters:</dt>
+<dd><code>session</code> - The Micronaut session</dd>
+<dd><code>opened</code> - Whether the session had reached the open event</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="applyLimits(jakarta.websocket.Session,java.lang.Integer,java.lang.Integer)">
+<h3>applyLimits</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">applyLimits</span><wbr><span class="parameters">(jakarta.websocket.Session&nbsp;session,
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;declaredTextMax,
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;declaredBinaryMax)</span></div>
+<div class="block">Applies the payload limits. A Micronaut endpoint's one handler limits text and binary
+alike; a Jakarta endpoint declares <code>maxMessageSize</code> per handler. A limit no handler
+declares is the configured one.</div>
+<dl class="notes">
+<dt>Overrides:</dt>
+<dd><code><a href="AbstractMicronautEndpoint.html#applyLimits(jakarta.websocket.Session,java.lang.Integer,java.lang.Integer)">applyLimits</a></code>&nbsp;in class&nbsp;<code><a href="AbstractMicronautEndpoint.html" title="class in io.micronaut.servlet.websocket">AbstractMicronautEndpoint</a></code></dd>
+<dt>Parameters:</dt>
+<dd><code>session</code> - The container's session</dd>
+<dd><code>declaredTextMax</code> - The text limit the text handler declares, or <code>null</code></dd>
+<dd><code>declaredBinaryMax</code> - The binary limit the binary handler declares, or <code>null</code></dd>
 </dl>
 </div>
 </section>

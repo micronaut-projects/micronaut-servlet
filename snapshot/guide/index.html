@@ -493,7 +493,7 @@ Servlet Filters are not to be confused with <a href="https://docs.micronaut.io/l
 </table>
 </div>
 <div class="paragraph">
-<p>The same processor maps the Jakarta WebSocket annotations - <code>@ServerEndpoint</code>, <code>@OnOpen</code>,
+<p>The same processor maps the Jakarta WebSocket annotations - <code>@ServerEndpoint</code>, <code>@ClientEndpoint</code>, <code>@OnOpen</code>,
 <code>@OnMessage</code>, <code>@OnClose</code>, <code>@OnError</code> and <code>@PathParam</code> - onto Micronaut&#8217;s WebSocket support.
 See the <a href="#websocket">WebSocket section</a>.</p>
 </div>
@@ -990,11 +990,10 @@ connection, which is the Jakarta contract and lets the endpoint keep the session
 state in fields. An explicit <code>@Singleton</code> shares one instance between all connections.</p>
 </div>
 <div class="paragraph">
-<p>The processor reports at compilation time what could not work at runtime: an endpoint
+<p>The processor reports at compilation time what could not work at runtime: a server endpoint
 without an <code>@OnMessage</code> method, more than one handler for a message category, a partial
 message handler (the <code>boolean</code> last-part parameter, since messages are always delivered
-whole), a <code>maxMessageSize</code> beyond <code>Integer.MAX_VALUE</code>, and <code>@ClientEndpoint</code>, for which
-<code>@ClientWebSocket</code> is the equivalent.</p>
+whole), and a <code>maxMessageSize</code> beyond <code>Integer.MAX_VALUE</code>.</p>
 </div>
 <div class="sect3">
 <h4 id="_decoders_encoders_and_the_configurator">Decoders, encoders and the configurator</h4>
@@ -1103,6 +1102,194 @@ and <code>getNegotiatedExtensions</code> honoured; an origin must pass both its 
 is always the bean.</p>
 </div>
 </div>
+<div class="sect3">
+<h4 id="_client_endpoints">Client endpoints</h4>
+<div class="paragraph">
+<p>A <code>@ClientEndpoint</code> is supported the same way. The class is a plain bean whose handlers the
+processor makes executable, so unlike under a Jakarta container - which needs a public
+no-argument constructor - it can inject its dependencies through its constructor. It is opened
+through the <code>jakarta.websocket.WebSocketContainer</code> bean rather than
+<code>ContainerProvider.getWebSocketContainer()</code>, whose result depends on which implementation
+<code>ServiceLoader</code> happens to find first.</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">import jakarta.websocket.ClientEndpoint;
+import jakarta.websocket.CloseReason;
+import jakarta.websocket.OnClose;
+import jakarta.websocket.OnMessage;
+import jakarta.websocket.OnOpen;
+import jakarta.websocket.Session;
+
+import java.io.IOException;
+import java.util.Collection;
+import java.util.concurrent.ConcurrentLinkedQueue;
+
+@ClientEndpoint // <b class="conum">(1)</b>
+public class EchoClientEndpoint {
+
+    private final Collection&lt;String&gt; replies = new ConcurrentLinkedQueue&lt;&gt;();
+    private Session session;
+
+    @OnOpen
+    public void onOpen(Session session) { // <b class="conum">(2)</b>
+        this.session = session;
+    }
+
+    @OnMessage
+    public void onMessage(String message) { // <b class="conum">(3)</b>
+        replies.add(message);
+    }
+
+    @OnClose
+    public void onClose(CloseReason reason) {
+        // the session is gone; nothing to release
+    }
+
+    public void send(String message) throws IOException {
+        session.getBasicRemote().sendText(message); // <b class="conum">(4)</b>
+    }
+
+    public Collection&lt;String&gt; getReplies() {
+        return replies;
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">import jakarta.websocket.ClientEndpoint
+import jakarta.websocket.CloseReason
+import jakarta.websocket.OnClose
+import jakarta.websocket.OnMessage
+import jakarta.websocket.OnOpen
+import jakarta.websocket.Session
+import java.util.concurrent.ConcurrentLinkedQueue
+
+@ClientEndpoint // <b class="conum">(1)</b>
+class EchoClientEndpoint {
+
+    val replies: MutableCollection&lt;String&gt; = ConcurrentLinkedQueue()
+    private lateinit var session: Session
+
+    @OnOpen
+    fun onOpen(session: Session) { // <b class="conum">(2)</b>
+        this.session = session
+    }
+
+    @OnMessage
+    fun onMessage(message: String) { // <b class="conum">(3)</b>
+        replies.add(message)
+    }
+
+    @OnClose
+    fun onClose(reason: CloseReason) {
+        // the session is gone; nothing to release
+    }
+
+    fun send(message: String) {
+        session.basicRemote.sendText(message) // <b class="conum">(4)</b>
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">import jakarta.websocket.ClientEndpoint
+import jakarta.websocket.CloseReason
+import jakarta.websocket.OnClose
+import jakarta.websocket.OnMessage
+import jakarta.websocket.OnOpen
+import jakarta.websocket.Session
+
+import java.util.concurrent.ConcurrentLinkedQueue
+
+@ClientEndpoint // <b class="conum">(1)</b>
+class EchoClientEndpoint {
+
+    final Collection&lt;String&gt; replies = new ConcurrentLinkedQueue&lt;&gt;()
+    private Session session
+
+    @OnOpen
+    void onOpen(Session session) { // <b class="conum">(2)</b>
+        this.session = session
+    }
+
+    @OnMessage
+    void onMessage(String message) { // <b class="conum">(3)</b>
+        replies.add(message)
+    }
+
+    @OnClose
+    void onClose(CloseReason reason) {
+        // the session is gone; nothing to release
+    }
+
+    void send(String message) {
+        session.basicRemote.sendText(message) // <b class="conum">(4)</b>
+    }
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td><code>@ClientEndpoint</code> takes <code>subprotocols</code>, <code>decoders</code>, <code>encoders</code> and <code>configurator</code>, which are
+honoured as for a <code>@ServerEndpoint</code>; the URI comes from <code>connectToServer</code>.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>The handlers take what a server endpoint&#8217;s do: the container&#8217;s <code>Session</code>, the
+<code>EndpointConfig</code>, the Jakarta <code>CloseReason</code>, the <code>Throwable</code>, and anything a Micronaut handler
+binds, such as a <code>@Header</code> of the handshake request.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>One text, one binary and one pong <code>@OnMessage</code> may be declared, and a value one returns is
+sent to the server. Unlike a server endpoint a client need not declare any: a client that only
+sends is valid.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="4"></i><b>4</b></td>
+<td>Sending goes through the container&#8217;s session. The class&#8217;s own methods are its own, whatever
+their names.</td>
+</tr>
+</table>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">WebSocketContainer container = embeddedServer.applicationContext.getBean(WebSocketContainer) // <b class="conum">(1)</b>
+EchoClientEndpoint client = new EchoClientEndpoint()
+Session session = container.connectToServer(client, URI.create("ws://localhost:${embeddedServer.port}/ws/echo/lobby")) // <b class="conum">(2)</b></code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>The container is a bean; inject it where the connection is opened.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td><code>connectToServer</code> takes the endpoint class, which creates one instance per connection, or an
+instance. It returns once <code>@OnOpen</code> has completed, and throws a <code>DeploymentException</code> carrying
+the cause when it failed or did not complete within <code>micronaut.servlet.websocket.connect-timeout</code>
+(30 seconds by default), in which case the session is closed.</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>The connection itself is opened by the servlet container&#8217;s Jakarta client - the same
+<code>ServerContainer</code> the server side upgrades through is also a client container on Jetty, Tomcat
+and Undertow - so the <code>Session</code> a handler receives is the container&#8217;s own, and the handlers are
+invoked through the compiled metadata: the container never scans or instantiates the class.
+A <code>@ClientEndpoint</code> class compiled without the processor is handed to the container as it is,
+which then does both reflectively. <code>@PathParam</code> is rejected on a client endpoint, which has no
+URI template to bind it from, and Micronaut&#8217;s <code>WebSocketClient</code> does not open a
+<code>@ClientEndpoint</code>; a client for it is a <code>@ClientWebSocket</code>.</p>
+</div>
+</div>
 </div>
 <div class="sect2">
 <h3 id="_filters_and_security_run_on_the_handshake">Filters and security run on the handshake</h3>
@@ -1200,6 +1387,13 @@ matching apply. The Netty server behaves the same way.
 <td class="tableblock halign-left valign-top"><p class="tableblock">java.time.Duration</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">How long an asynchronous send may take before it fails, or {@code null} to
  use the container default</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.servlet.websocket.connect-timeout</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.time.Duration</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">How long {@code WebSocketContainer#connectToServer} waits for a client endpoint&#8217;s
+ {@code @OnOpen} to complete before failing the connection. Default value 30 seconds.</p></td>
 <td class="tableblock halign-left valign-top"></td>
 </tr>
 <tr>

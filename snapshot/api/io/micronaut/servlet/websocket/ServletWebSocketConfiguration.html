@@ -64,6 +64,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#ENABLED_PROPERTY" tabindex="0">ENABLED_PROPERTY</a></li>
 <li><a href="#DEFAULT_MAX_MESSAGE_SIZE" tabindex="0">DEFAULT_MAX_MESSAGE_SIZE</a></li>
 <li><a href="#DEFAULT_MAX_PENDING_SENDS" tabindex="0">DEFAULT_MAX_PENDING_SENDS</a></li>
+<li><a href="#DEFAULT_CONNECT_TIMEOUT" tabindex="0">DEFAULT_CONNECT_TIMEOUT</a></li>
 </ol>
 </li>
 <li><a href="#constructor-detail" tabindex="0">Constructor Details</a>
@@ -83,6 +84,8 @@ loadScripts(document, 'script');</script>
 <li><a href="#setIdleTimeout(java.time.Duration)" tabindex="0">setIdleTimeout(Duration)</a></li>
 <li><a href="#getAsyncSendTimeout()" tabindex="0">getAsyncSendTimeout()</a></li>
 <li><a href="#setAsyncSendTimeout(java.time.Duration)" tabindex="0">setAsyncSendTimeout(Duration)</a></li>
+<li><a href="#getConnectTimeout()" tabindex="0">getConnectTimeout()</a></li>
+<li><a href="#setConnectTimeout(java.time.Duration)" tabindex="0">setConnectTimeout(Duration)</a></li>
 <li><a href="#getMaxPendingSends()" tabindex="0">getMaxPendingSends()</a></li>
 <li><a href="#setMaxPendingSends(int)" tabindex="0">setMaxPendingSends(int)</a></li>
 <li><a href="#getCompression()" tabindex="0">getCompression()</a></li>
@@ -146,25 +149,30 @@ server so that behaviour is the same on every runtime.</p></div>
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Field</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color"><code>static final int</code></div>
-<div class="col-second even-row-color"><code><a href="#DEFAULT_MAX_MESSAGE_SIZE" class="member-name-link">DEFAULT_MAX_MESSAGE_SIZE</a></code></div>
+<div class="col-first even-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link">Duration</a></code></div>
+<div class="col-second even-row-color"><code><a href="#DEFAULT_CONNECT_TIMEOUT" class="member-name-link">DEFAULT_CONNECT_TIMEOUT</a></code></div>
 <div class="col-last even-row-color">
-<div class="block">The default maximum message size in bytes.</div>
+<div class="block">The default time a client connection's <code>@OnOpen</code> may take.</div>
 </div>
 <div class="col-first odd-row-color"><code>static final int</code></div>
-<div class="col-second odd-row-color"><code><a href="#DEFAULT_MAX_PENDING_SENDS" class="member-name-link">DEFAULT_MAX_PENDING_SENDS</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#DEFAULT_MAX_MESSAGE_SIZE" class="member-name-link">DEFAULT_MAX_MESSAGE_SIZE</a></code></div>
 <div class="col-last odd-row-color">
+<div class="block">The default maximum message size in bytes.</div>
+</div>
+<div class="col-first even-row-color"><code>static final int</code></div>
+<div class="col-second even-row-color"><code><a href="#DEFAULT_MAX_PENDING_SENDS" class="member-name-link">DEFAULT_MAX_PENDING_SENDS</a></code></div>
+<div class="col-last even-row-color">
 <div class="block">The default number of sends that may be queued before a session reports that it is
 no longer writable.</div>
 </div>
-<div class="col-first even-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color"><code><a href="#ENABLED_PROPERTY" class="member-name-link">ENABLED_PROPERTY</a></code></div>
-<div class="col-last even-row-color">
+<div class="col-first odd-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#ENABLED_PROPERTY" class="member-name-link">ENABLED_PROPERTY</a></code></div>
+<div class="col-last odd-row-color">
 <div class="block">The property used to enable or disable WebSocket support.</div>
 </div>
-<div class="col-first odd-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color"><code><a href="#PREFIX" class="member-name-link">PREFIX</a></code></div>
-<div class="col-last odd-row-color">
+<div class="col-first even-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code><a href="#PREFIX" class="member-name-link">PREFIX</a></code></div>
+<div class="col-last even-row-color">
 <div class="block">The configuration prefix.</div>
 </div>
 </div>
@@ -200,26 +208,32 @@ no longer writable.</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="ServletWebSocketConfiguration.CompressionConfiguration.html" title="class in io.micronaut.servlet.websocket">ServletWebSocketConfiguration.CompressionConfiguration</a></code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getCompression()" class="member-name-link">getCompression</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link">Duration</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getIdleTimeout()" class="member-name-link">getIdleTimeout</a>()</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link">Duration</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getConnectTimeout()" class="member-name-link">getConnectTimeout</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>int</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getMaxBinaryMessageSize()" class="member-name-link">getMaxBinaryMessageSize</a>()</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link">Duration</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getIdleTimeout()" class="member-name-link">getIdleTimeout</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>int</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getMaxPendingSends()" class="member-name-link">getMaxPendingSends</a>()</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getMaxBinaryMessageSize()" class="member-name-link">getMaxBinaryMessageSize</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>int</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getMaxTextMessageSize()" class="member-name-link">getMaxTextMessageSize</a>()</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getMaxPendingSends()" class="member-name-link">getMaxPendingSends</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isEnabled()" class="member-name-link">isEnabled</a>()</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>int</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getMaxTextMessageSize()" class="member-name-link">getMaxTextMessageSize</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setAsyncSendTimeout(java.time.Duration)" class="member-name-link">setAsyncSendTimeout</a><wbr>(@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link">Duration</a>&nbsp;asyncSendTimeout)</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isEnabled()" class="member-name-link">isEnabled</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setCompression(io.micronaut.servlet.websocket.ServletWebSocketConfiguration.CompressionConfiguration)" class="member-name-link">setCompression</a><wbr>(<a href="ServletWebSocketConfiguration.CompressionConfiguration.html" title="class in io.micronaut.servlet.websocket">ServletWebSocketConfiguration.CompressionConfiguration</a>&nbsp;compression)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setAsyncSendTimeout(java.time.Duration)" class="member-name-link">setAsyncSendTimeout</a><wbr>(@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link">Duration</a>&nbsp;asyncSendTimeout)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setCompression(io.micronaut.servlet.websocket.ServletWebSocketConfiguration.CompressionConfiguration)" class="member-name-link">setCompression</a><wbr>(<a href="ServletWebSocketConfiguration.CompressionConfiguration.html" title="class in io.micronaut.servlet.websocket">ServletWebSocketConfiguration.CompressionConfiguration</a>&nbsp;compression)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setConnectTimeout(java.time.Duration)" class="member-name-link">setConnectTimeout</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link">Duration</a>&nbsp;connectTimeout)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setEnabled(boolean)" class="member-name-link">setEnabled</a><wbr>(boolean&nbsp;enabled)</code></div>
@@ -319,6 +333,15 @@ no longer writable.</div>
 </ul>
 </dd>
 </dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="DEFAULT_CONNECT_TIMEOUT">
+<h3>DEFAULT_CONNECT_TIMEOUT</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link">Duration</a></span>&nbsp;<span class="element-name">DEFAULT_CONNECT_TIMEOUT</span></div>
+<div class="block">The default time a client connection's <code>@OnOpen</code> may take.</div>
 </div>
 </section>
 </li>
@@ -464,6 +487,31 @@ use the container default</dd>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>asyncSendTimeout</code> - How long an asynchronous send may take before it fails</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="getConnectTimeout()">
+<h3>getConnectTimeout</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link">Duration</a></span>&nbsp;<span class="element-name">getConnectTimeout</span>()</div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd>How long <code>WebSocketContainer#connectToServer</code> waits for a client endpoint's
+<code>@OnOpen</code> to complete before failing the connection. Default value 30 seconds.</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="setConnectTimeout(java.time.Duration)">
+<h3>setConnectTimeout</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">setConnectTimeout</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link">Duration</a>&nbsp;connectTimeout)</span></div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>connectTimeout</code> - How long <code>connectToServer</code> waits for <code>@OnOpen</code> to complete</dd>
 </dl>
 </div>
 </section>

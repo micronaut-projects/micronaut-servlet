@@ -60,17 +60,20 @@ loadScripts(document, 'script');</script>
 <li><a href="#field-detail" tabindex="0">Field Details</a>
 <ol class="toc-list">
 <li><a href="#SERVER_ENDPOINT" tabindex="0">SERVER_ENDPOINT</a></li>
+<li><a href="#CLIENT_ENDPOINT" tabindex="0">CLIENT_ENDPOINT</a></li>
 <li><a href="#ON_MESSAGE" tabindex="0">ON_MESSAGE</a></li>
 </ol>
 </li>
 <li><a href="#constructor-detail" tabindex="0">Constructor Details</a>
 <ol class="toc-list">
-<li><a href="#%3Cinit%3E(io.micronaut.inject.ExecutableMethod,io.micronaut.inject.ExecutableMethod,io.micronaut.inject.ExecutableMethod,java.util.List,java.util.List,java.lang.Class)" tabindex="0">JakartaEndpoint(ExecutableMethod, ExecutableMethod, ExecutableMethod, List, List, Class)</a></li>
+<li><a href="#%3Cinit%3E(io.micronaut.inject.ExecutableMethod,io.micronaut.inject.ExecutableMethod,io.micronaut.inject.ExecutableMethod,java.util.List,java.util.List,java.lang.Class,java.util.List)" tabindex="0">JakartaEndpoint(ExecutableMethod, ExecutableMethod, ExecutableMethod, List, List, Class, List)</a></li>
 </ol>
 </li>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
 <ol class="toc-list">
 <li><a href="#of(io.micronaut.inject.BeanDefinition)" tabindex="0">of(BeanDefinition)</a></li>
+<li><a href="#isMapped(io.micronaut.inject.BeanDefinition)" tabindex="0">isMapped(BeanDefinition)</a></li>
+<li><a href="#containerEncoders(io.micronaut.servlet.websocket.JakartaEndpointComponents)" tabindex="0">containerEncoders(JakartaEndpointComponents)</a></li>
 <li><a href="#toString()" tabindex="0">toString()</a></li>
 <li><a href="#hashCode()" tabindex="0">hashCode()</a></li>
 <li><a href="#equals(java.lang.Object)" tabindex="0">equals(Object)</a></li>
@@ -80,6 +83,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#decoders()" tabindex="0">decoders()</a></li>
 <li><a href="#encoders()" tabindex="0">encoders()</a></li>
 <li><a href="#configurator()" tabindex="0">configurator()</a></li>
+<li><a href="#subprotocols()" tabindex="0">subprotocols()</a></li>
 </ol>
 </li>
 </ol>
@@ -103,13 +107,15 @@ loadScripts(document, 'script');</script>
 <dd><code><span id="param-decoders">decoders</span></code> - The declared decoder classes</dd>
 <dd><code><span id="param-encoders">encoders</span></code> - The declared encoder classes</dd>
 <dd><code><span id="param-configurator">configurator</span></code> - The declared configurator class, or <code>null</code> for the default</dd>
+<dd><code><span id="param-subprotocols">subprotocols</span></code> - The declared subprotocols, in order of preference</dd>
 </dl>
 <hr>
 <div class="horizontal-scroll">
 <div class="type-signature"><span class="annotations">@Internal
-</span><span class="modifiers">public record </span><span class="element-name type-name-label">JakartaEndpoint</span>(@Nullable io.micronaut.inject.ExecutableMethod&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>,<wbr>?&gt;&nbsp;textMethod, @Nullable io.micronaut.inject.ExecutableMethod&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>,<wbr>?&gt;&nbsp;binaryMethod, @Nullable io.micronaut.inject.ExecutableMethod&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>,<wbr>?&gt;&nbsp;pongMethod, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;&gt;&nbsp;decoders, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;&gt;&nbsp;encoders, @Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;&nbsp;configurator)
+</span><span class="modifiers">public record </span><span class="element-name type-name-label">JakartaEndpoint</span>(@Nullable io.micronaut.inject.ExecutableMethod&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>,<wbr>?&gt;&nbsp;textMethod, @Nullable io.micronaut.inject.ExecutableMethod&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>,<wbr>?&gt;&nbsp;binaryMethod, @Nullable io.micronaut.inject.ExecutableMethod&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>,<wbr>?&gt;&nbsp;pongMethod, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;&gt;&nbsp;decoders, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;&gt;&nbsp;encoders, @Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;&nbsp;configurator, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;subprotocols)
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Record.html" title="class or interface in java.lang" class="external-link">Record</a></span></div>
-<div class="block">What a <code>@ServerEndpoint</code> declares, read once from its bean definition.
+<div class="block">What a <code>@ServerEndpoint</code> or <code>@ClientEndpoint</code> declares, read once from its bean
+definition.
 
 <p>The Jakarta model allows one message handler per category - text, binary and pong - where
 Micronaut has one that converts, so the handlers are classified here by the type of the message
@@ -137,11 +143,14 @@ matching one. An object message counts as binary when a declared <code>Decoder.B
 <div class="table-header col-second">Field</div>
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color"><code><a href="#ON_MESSAGE" class="member-name-link">ON_MESSAGE</a></code></div>
+<div class="col-second even-row-color"><code><a href="#CLIENT_ENDPOINT" class="member-name-link">CLIENT_ENDPOINT</a></code></div>
 <div class="col-last even-row-color">&nbsp;</div>
 <div class="col-first odd-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color"><code><a href="#SERVER_ENDPOINT" class="member-name-link">SERVER_ENDPOINT</a></code></div>
-<div class="col-last odd-row-color">
+<div class="col-second odd-row-color"><code><a href="#ON_MESSAGE" class="member-name-link">ON_MESSAGE</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code><a href="#SERVER_ENDPOINT" class="member-name-link">SERVER_ENDPOINT</a></code></div>
+<div class="col-last even-row-color">
 <div class="block">The Jakarta annotations, by name so that the API is not needed to load this class.</div>
 </div>
 </div>
@@ -155,12 +164,13 @@ matching one. An object message counts as binary when a declared <code>Decoder.B
 <div class="summary-table two-column-summary">
 <div class="table-header col-first">Constructor</div>
 <div class="table-header col-last">Description</div>
-<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(io.micronaut.inject.ExecutableMethod,io.micronaut.inject.ExecutableMethod,io.micronaut.inject.ExecutableMethod,java.util.List,java.util.List,java.lang.Class)" class="member-name-link">JakartaEndpoint</a><wbr>(@Nullable io.micronaut.inject.ExecutableMethod&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>,<wbr>?&gt;&nbsp;textMethod,
+<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(io.micronaut.inject.ExecutableMethod,io.micronaut.inject.ExecutableMethod,io.micronaut.inject.ExecutableMethod,java.util.List,java.util.List,java.lang.Class,java.util.List)" class="member-name-link">JakartaEndpoint</a><wbr>(@Nullable io.micronaut.inject.ExecutableMethod&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>,<wbr>?&gt;&nbsp;textMethod,
  @Nullable io.micronaut.inject.ExecutableMethod&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>,<wbr>?&gt;&nbsp;binaryMethod,
  @Nullable io.micronaut.inject.ExecutableMethod&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>,<wbr>?&gt;&nbsp;pongMethod,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;&gt;&nbsp;decoders,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;&gt;&nbsp;encoders,
- @Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;&nbsp;configurator)</code></div>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;&nbsp;configurator,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;subprotocols)</code></div>
 <div class="col-last even-row-color">
 <div class="block">Creates an instance of a <code>JakartaEndpoint</code> record class.</div>
 </div>
@@ -188,25 +198,37 @@ matching one. An object message counts as binary when a declared <code>Decoder.B
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns the value of the <a href="#param-configurator"><code>configurator</code></a> record component.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#decoders()" class="member-name-link">decoders</a>()</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;? extends jakarta.websocket.Encoder&gt;&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#containerEncoders(io.micronaut.servlet.websocket.JakartaEndpointComponents)" class="member-name-link">containerEncoders</a><wbr>(<a href="JakartaEndpointComponents.html" title="class in io.micronaut.servlet.websocket">JakartaEndpointComponents</a>&nbsp;components)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Returns the value of the <a href="#param-decoders"><code>decoders</code></a> record component.</div>
+<div class="block">The declared encoders the container may instantiate itself, reflectively, for
+<code>RemoteEndpoint#sendObject</code>: those the application has opted into reflection.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#encoders()" class="member-name-link">encoders</a>()</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#decoders()" class="member-name-link">decoders</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Returns the value of the <a href="#param-decoders"><code>decoders</code></a> record component.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#encoders()" class="member-name-link">encoders</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns the value of the <a href="#param-encoders"><code>encoders</code></a> record component.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#equals(java.lang.Object)" class="member-name-link">equals</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;o)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#equals(java.lang.Object)" class="member-name-link">equals</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;o)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Indicates whether some other object is "equal to" this one.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final int</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#hashCode()" class="member-name-link">hashCode</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final int</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#hashCode()" class="member-name-link">hashCode</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns a hash code value for this object.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#isMapped(io.micronaut.inject.BeanDefinition)" class="member-name-link">isMapped</a><wbr>(io.micronaut.inject.BeanDefinition&lt;?&gt;&nbsp;definition)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="block">Whether the annotation processor mapped the endpoint's handlers, so they can be invoked
+through the bean definition.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static @Nullable <a href="JakartaEndpoint.html" title="class in io.micronaut.servlet.websocket">JakartaEndpoint</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#of(io.micronaut.inject.BeanDefinition)" class="member-name-link">of</a><wbr>(io.micronaut.inject.BeanDefinition&lt;?&gt;&nbsp;definition)</code></div>
@@ -218,14 +240,19 @@ matching one. An object message counts as binary when a declared <code>Decoder.B
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns the value of the <a href="#param-pongMethod"><code>pongMethod</code></a> record component.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable io.micronaut.inject.ExecutableMethod<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>,<wbr>?&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#textMethod()" class="member-name-link">textMethod</a>()</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#subprotocols()" class="member-name-link">subprotocols</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Returns the value of the <a href="#param-subprotocols"><code>subprotocols</code></a> record component.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable io.micronaut.inject.ExecutableMethod<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>,<wbr>?&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#textMethod()" class="member-name-link">textMethod</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns the value of the <a href="#param-textMethod"><code>textMethod</code></a> record component.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#toString()" class="member-name-link">toString</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#toString()" class="member-name-link">toString</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns a string representation of this record class.</div>
 </div>
 </div>
@@ -263,6 +290,22 @@ matching one. An object message counts as binary when a declared <code>Decoder.B
 </section>
 </li>
 <li>
+<section class="detail" id="CLIENT_ENDPOINT">
+<h3>CLIENT_ENDPOINT</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">CLIENT_ENDPOINT</span></div>
+<dl class="notes">
+<dt>See Also:</dt>
+<dd>
+<ul class="tag-list">
+<li><a href="../../../../constant-values.html#io.micronaut.servlet.websocket.JakartaEndpoint.CLIENT_ENDPOINT">Constant Field Values</a></li>
+</ul>
+</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
 <section class="detail" id="ON_MESSAGE">
 <h3>ON_MESSAGE</h3>
 <div class="horizontal-scroll">
@@ -287,7 +330,7 @@ matching one. An object message counts as binary when a declared <code>Decoder.B
 <h2>Constructor Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="&lt;init&gt;(io.micronaut.inject.ExecutableMethod,io.micronaut.inject.ExecutableMethod,io.micronaut.inject.ExecutableMethod,java.util.List,java.util.List,java.lang.Class)">
+<section class="detail" id="&lt;init&gt;(io.micronaut.inject.ExecutableMethod,io.micronaut.inject.ExecutableMethod,io.micronaut.inject.ExecutableMethod,java.util.List,java.util.List,java.lang.Class,java.util.List)">
 <h3>JakartaEndpoint</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">JakartaEndpoint</span><wbr><span class="parameters">(@Nullable io.micronaut.inject.ExecutableMethod&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>,<wbr>?&gt;&nbsp;textMethod,
@@ -295,7 +338,8 @@ matching one. An object message counts as binary when a declared <code>Decoder.B
  @Nullable io.micronaut.inject.ExecutableMethod&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>,<wbr>?&gt;&nbsp;pongMethod,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;&gt;&nbsp;decoders,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;&gt;&nbsp;encoders,
- @Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;&nbsp;configurator)</span></div>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;&nbsp;configurator,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;subprotocols)</span></div>
 <div class="block">Creates an instance of a <code>JakartaEndpoint</code> record class.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -305,6 +349,7 @@ matching one. An object message counts as binary when a declared <code>Decoder.B
 <dd><code>decoders</code> - the value for the <a href="#param-decoders"><code>decoders</code></a> record component</dd>
 <dd><code>encoders</code> - the value for the <a href="#param-encoders"><code>encoders</code></a> record component</dd>
 <dd><code>configurator</code> - the value for the <a href="#param-configurator"><code>configurator</code></a> record component</dd>
+<dd><code>subprotocols</code> - the value for the <a href="#param-subprotocols"><code>subprotocols</code></a> record component</dd>
 </dl>
 </div>
 </section>
@@ -327,7 +372,45 @@ matching one. An object message counts as binary when a declared <code>Decoder.B
 <dt>Parameters:</dt>
 <dd><code>definition</code> - The bean definition</dd>
 <dt>Returns:</dt>
-<dd>The endpoint, or <code>null</code> when the bean is a Micronaut <code>@ServerWebSocket</code></dd>
+<dd>The endpoint, or <code>null</code> when the bean declares neither Jakarta annotation</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="isMapped(io.micronaut.inject.BeanDefinition)">
+<h3>isMapped</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">isMapped</span><wbr><span class="parameters">(io.micronaut.inject.BeanDefinition&lt;?&gt;&nbsp;definition)</span></div>
+<div class="block">Whether the annotation processor mapped the endpoint's handlers, so they can be invoked
+through the bean definition.
+
+<p>A Jakarta endpoint that is a bean for another reason - a <code>@Singleton</code> compiled
+without the servlet processor - keeps its class annotation in the metadata but none of its
+handlers are executable; dispatching to it would silently invoke nothing. A mapped handler
+carries its Jakarta annotation next to the Micronaut one. An endpoint with no handler at
+all is not mapped either, and nothing is lost by leaving it to the container.</p></div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>definition</code> - The bean definition</dd>
+<dt>Returns:</dt>
+<dd><code>true</code> if at least one handler was mapped</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="containerEncoders(io.micronaut.servlet.websocket.JakartaEndpointComponents)">
+<h3>containerEncoders</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;? extends jakarta.websocket.Encoder&gt;&gt;</span>&nbsp;<span class="element-name">containerEncoders</span><wbr><span class="parameters">(<a href="JakartaEndpointComponents.html" title="class in io.micronaut.servlet.websocket">JakartaEndpointComponents</a>&nbsp;components)</span></div>
+<div class="block">The declared encoders the container may instantiate itself, reflectively, for
+<code>RemoteEndpoint#sendObject</code>: those the application has opted into reflection.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>components</code> - The component resolver, which knows the reflection policy</dd>
+<dt>Returns:</dt>
+<dd>The encoder classes to pass to the container's endpoint configuration</dd>
 </dl>
 </div>
 </section>
@@ -453,6 +536,19 @@ matching one. An object message counts as binary when a declared <code>Decoder.B
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>the value of the <a href="#param-configurator"><code>configurator</code></a> record component</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="subprotocols()">
+<h3>subprotocols</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name">subprotocols</span>()</div>
+<div class="block">Returns the value of the <a href="#param-subprotocols"><code>subprotocols</code></a> record component.</div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd>the value of the <a href="#param-subprotocols"><code>subprotocols</code></a> record component</dd>
 </dl>
 </div>
 </section>

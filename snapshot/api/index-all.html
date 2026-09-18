@@ -63,6 +63,15 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="deprecation-block"><span class="deprecated-label">Deprecated.</span></div>
 &nbsp;</dd>
+<dt><a href="io/micronaut/servlet/websocket/AbstractMicronautEndpoint.html" class="type-name-link" title="class in io.micronaut.servlet.websocket">AbstractMicronautEndpoint</a> - Class in <a href="io/micronaut/servlet/websocket/package-summary.html">io.micronaut.servlet.websocket</a></dt>
+<dd>
+<div class="block">The dispatch a Jakarta <code>Endpoint</code> performs onto a Micronaut WebSocket bean, shared by the
+server and the client side.</div>
+</dd>
+<dt><a href="io/micronaut/servlet/websocket/AbstractMicronautEndpoint.html#%3Cinit%3E()" class="member-name-link">AbstractMicronautEndpoint()</a> - Constructor for class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/AbstractMicronautEndpoint.html" title="class in io.micronaut.servlet.websocket">AbstractMicronautEndpoint</a></dt>
+<dd>
+<div class="block">Default constructor.</div>
+</dd>
 <dt><a href="io/micronaut/servlet/engine/server/AbstractServletServer.html" class="type-name-link" title="class in io.micronaut.servlet.engine.server">AbstractServletServer&lt;T&gt;</a> - Class in <a href="io/micronaut/servlet/engine/server/package-summary.html">io.micronaut.servlet.engine.server</a></dt>
 <dd>
 <div class="deprecation-block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span>
@@ -153,6 +162,15 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/servlet/websocket/ServerContainerCustomizer.html#apply(jakarta.websocket.WebSocketContainer,io.micronaut.servlet.websocket.ServletWebSocketConfiguration,java.time.Duration)" class="member-name-link">apply(WebSocketContainer, ServletWebSocketConfiguration, Duration)</a> - Static method in class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/ServerContainerCustomizer.html" title="class in io.micronaut.servlet.websocket">ServerContainerCustomizer</a></dt>
 <dd>
 <div class="block">Applies the configured defaults.</div>
+</dd>
+<dt><a href="io/micronaut/servlet/websocket/AbstractMicronautEndpoint.html#applyLimits(jakarta.websocket.Session,java.lang.Integer,java.lang.Integer)" class="member-name-link">applyLimits(Session, Integer, Integer)</a> - Method in class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/AbstractMicronautEndpoint.html" title="class in io.micronaut.servlet.websocket">AbstractMicronautEndpoint</a></dt>
+<dd>
+<div class="block">Applies the payload limits a handler declares as <code>maxMessageSize</code>; a limit no handler
+declares is left to the container.</div>
+</dd>
+<dt><a href="io/micronaut/servlet/websocket/MicronautServerEndpoint.html#applyLimits(jakarta.websocket.Session,java.lang.Integer,java.lang.Integer)" class="member-name-link">applyLimits(Session, Integer, Integer)</a> - Method in class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/MicronautServerEndpoint.html" title="class in io.micronaut.servlet.websocket">MicronautServerEndpoint</a></dt>
+<dd>
+<div class="block">Applies the payload limits.</div>
 </dd>
 <dt><a href="io/micronaut/servlet/engine/bind/ServletRequestBinder.html#argumentType()" class="member-name-link">argumentType()</a> - Method in class io.micronaut.servlet.engine.bind.<a href="io/micronaut/servlet/engine/bind/ServletRequestBinder.html" title="class in io.micronaut.servlet.engine.bind">ServletRequestBinder</a></dt>
 <dd>&nbsp;</dd>
@@ -277,6 +295,8 @@ for runtimes to apply while a request body is read.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/websocket/ServletWebSocketSession.html#clear()" class="member-name-link">clear()</a> - Method in class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/ServletWebSocketSession.html" title="class in io.micronaut.servlet.websocket">ServletWebSocketSession</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/websocket/JakartaEndpoint.html#CLIENT_ENDPOINT" class="member-name-link">CLIENT_ENDPOINT</a> - Static variable in record class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/JakartaEndpoint.html" title="class in io.micronaut.servlet.websocket">JakartaEndpoint</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/http/poja/util/LimitingInputStream.html#close()" class="member-name-link">close()</a> - Method in class io.micronaut.http.poja.util.<a href="io/micronaut/http/poja/util/LimitingInputStream.html" title="class in io.micronaut.http.poja.util">LimitingInputStream</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html#close()" class="member-name-link">close()</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html" title="class in io.micronaut.servlet.engine">DefaultServletHttpRequest</a></dt>
@@ -289,6 +309,11 @@ for runtimes to apply while a request body is read.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/websocket/ServletWebSocketSession.html#close(io.micronaut.websocket.CloseReason)" class="member-name-link">close(CloseReason)</a> - Method in class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/ServletWebSocketSession.html" title="class in io.micronaut.servlet.websocket">ServletWebSocketSession</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/websocket/AbstractMicronautEndpoint.html#closeQuietly(jakarta.websocket.Session,io.micronaut.websocket.CloseReason)" class="member-name-link">closeQuietly(Session, CloseReason)</a> - Static method in class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/AbstractMicronautEndpoint.html" title="class in io.micronaut.servlet.websocket">AbstractMicronautEndpoint</a></dt>
+<dd>
+<div class="block">Closes the container's session, ignoring a failure to do so: the connection is going away
+anyway.</div>
+</dd>
 <dt><a href="io/micronaut/servlet/engine/DefaultServletHttpResponse.html#code()" class="member-name-link">code()</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/DefaultServletHttpResponse.html" title="class in io.micronaut.servlet.engine">DefaultServletHttpResponse</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/engine/ServletCookieAdapter.html#compareTo(io.micronaut.http.cookie.Cookie)" class="member-name-link">compareTo(Cookie)</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/ServletCookieAdapter.html" title="class in io.micronaut.servlet.engine">ServletCookieAdapter</a></dt>
@@ -335,9 +360,21 @@ for runtimes to apply while a request body is read.</div>
 </dd>
 <dt><a href="io/micronaut/servlet/jetty/JettyConfiguration.ConnectorConfiguration.html#%3Cinit%3E(java.lang.String,org.eclipse.jetty.server.Server)" class="member-name-link">ConnectorConfiguration(String, Server)</a> - Constructor for class io.micronaut.servlet.jetty.<a href="io/micronaut/servlet/jetty/JettyConfiguration.ConnectorConfiguration.html" title="class in io.micronaut.servlet.jetty">JettyConfiguration.ConnectorConfiguration</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/websocket/MicronautWebSocketContainer.html#connectToServer(jakarta.websocket.Endpoint,jakarta.websocket.ClientEndpointConfig,java.net.URI)" class="member-name-link">connectToServer(Endpoint, ClientEndpointConfig, URI)</a> - Method in class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/MicronautWebSocketContainer.html" title="class in io.micronaut.servlet.websocket">MicronautWebSocketContainer</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/websocket/MicronautWebSocketContainer.html#connectToServer(java.lang.Class,java.net.URI)" class="member-name-link">connectToServer(Class, URI)</a> - Method in class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/MicronautWebSocketContainer.html" title="class in io.micronaut.servlet.websocket">MicronautWebSocketContainer</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/websocket/MicronautWebSocketContainer.html#connectToServer(java.lang.Class,jakarta.websocket.ClientEndpointConfig,java.net.URI)" class="member-name-link">connectToServer(Class, ClientEndpointConfig, URI)</a> - Method in class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/MicronautWebSocketContainer.html" title="class in io.micronaut.servlet.websocket">MicronautWebSocketContainer</a></dt>
+<dt><a href="io/micronaut/servlet/websocket/MicronautWebSocketContainer.html#connectToServer(java.lang.Object,java.net.URI)" class="member-name-link">connectToServer(Object, URI)</a> - Method in class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/MicronautWebSocketContainer.html" title="class in io.micronaut.servlet.websocket">MicronautWebSocketContainer</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/http/poja/PojaHttpRequest.html#consumeBody(java.util.function.Function)" class="member-name-link">consumeBody(Function)</a> - Method in class io.micronaut.http.poja.<a href="io/micronaut/http/poja/PojaHttpRequest.html" title="class in io.micronaut.http.poja">PojaHttpRequest</a></dt>
 <dd>
 <div class="block">A utility method that allows consuming body.</div>
+</dd>
+<dt><a href="io/micronaut/servlet/websocket/JakartaEndpoint.html#containerEncoders(io.micronaut.servlet.websocket.JakartaEndpointComponents)" class="member-name-link">containerEncoders(JakartaEndpointComponents)</a> - Method in record class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/JakartaEndpoint.html" title="class in io.micronaut.servlet.websocket">JakartaEndpoint</a></dt>
+<dd>
+<div class="block">The declared encoders the container may instantiate itself, reflectively, for
+<code>RemoteEndpoint#sendObject</code>: those the application has opted into reflection.</div>
 </dd>
 <dt><a href="io/micronaut/servlet/engine/DefaultServletHttpResponse.html#contentLength(long)" class="member-name-link">contentLength(long)</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/DefaultServletHttpResponse.html" title="class in io.micronaut.servlet.engine">DefaultServletHttpResponse</a></dt>
 <dd>&nbsp;</dd>
@@ -408,6 +445,10 @@ for runtimes to apply while a request body is read.</div>
 &nbsp;</dd>
 <dt><a href="io/micronaut/servlet/http/server/ServletStaticResourceConfiguration.html#DEFAULT_CACHE_CONTROL_HEADER" class="member-name-link">DEFAULT_CACHE_CONTROL_HEADER</a> - Static variable in interface io.micronaut.servlet.http.server.<a href="io/micronaut/servlet/http/server/ServletStaticResourceConfiguration.html" title="interface in io.micronaut.servlet.http.server">ServletStaticResourceConfiguration</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/websocket/ServletWebSocketConfiguration.html#DEFAULT_CONNECT_TIMEOUT" class="member-name-link">DEFAULT_CONNECT_TIMEOUT</a> - Static variable in class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/ServletWebSocketConfiguration.html" title="class in io.micronaut.servlet.websocket">ServletWebSocketConfiguration</a></dt>
+<dd>
+<div class="block">The default time a client connection's <code>@OnOpen</code> may take.</div>
+</dd>
 <dt><a href="io/micronaut/servlet/engine/ServletCompressionConfiguration.html#DEFAULT_ENABLED" class="member-name-link">DEFAULT_ENABLED</a> - Static variable in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/ServletCompressionConfiguration.html" title="class in io.micronaut.servlet.engine">ServletCompressionConfiguration</a></dt>
 <dd>
 <div class="block">Whether compression is enabled by default.</div>
@@ -667,6 +708,10 @@ thread pool, to run the specified <a href="io/micronaut/servlet/http/ServletHttp
 </dl>
 <h2 class="title" id="I:G">G</h2>
 <dl class="index">
+<dt><a href="io/micronaut/servlet/websocket/WebSocketContainerHolder.html#get()" class="member-name-link">get()</a> - Method in class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/WebSocketContainerHolder.html" title="class in io.micronaut.servlet.websocket">WebSocketContainerHolder</a></dt>
+<dd>
+<div class="block">The container client connections are opened through.</div>
+</dd>
 <dt><a href="io/micronaut/http/poja/util/MultiValueHeaders.html#get(java.lang.CharSequence)" class="member-name-link">get(CharSequence)</a> - Method in record class io.micronaut.http.poja.util.<a href="io/micronaut/http/poja/util/MultiValueHeaders.html" title="class in io.micronaut.http.poja.util">MultiValueHeaders</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/http/poja/util/MultiValuesQueryParameters.html#get(java.lang.CharSequence)" class="member-name-link">get(CharSequence)</a> - Method in record class io.micronaut.http.poja.util.<a href="io/micronaut/http/poja/util/MultiValuesQueryParameters.html" title="class in io.micronaut.http.poja.util">MultiValuesQueryParameters</a></dt>
@@ -782,6 +827,8 @@ thread pool, to run the specified <a href="io/micronaut/servlet/http/ServletHttp
 &nbsp;</dd>
 <dt><a href="io/micronaut/servlet/http/server/ServletServerFactory.html#getConfiguredPort()" class="member-name-link">getConfiguredPort()</a> - Method in class io.micronaut.servlet.http.server.<a href="io/micronaut/servlet/http/server/ServletServerFactory.html" title="class in io.micronaut.servlet.http.server">ServletServerFactory</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/websocket/ServletWebSocketConfiguration.html#getConnectTimeout()" class="member-name-link">getConnectTimeout()</a> - Method in class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/ServletWebSocketConfiguration.html" title="class in io.micronaut.servlet.websocket">ServletWebSocketConfiguration</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html#getContentLength()" class="member-name-link">getContentLength()</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html" title="class in io.micronaut.servlet.engine">DefaultServletHttpRequest</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html#getContentType()" class="member-name-link">getContentType()</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html" title="class in io.micronaut.servlet.engine">DefaultServletHttpRequest</a></dt>
@@ -807,6 +854,14 @@ thread pool, to run the specified <a href="io/micronaut/servlet/http/ServletHttp
 <dt><a href="io/micronaut/http/poja/apache/ApacheServletHttpRequest.html#getCookies()" class="member-name-link">getCookies()</a> - Method in class io.micronaut.http.poja.apache.<a href="io/micronaut/http/poja/apache/ApacheServletHttpRequest.html" title="class in io.micronaut.http.poja.apache">ApacheServletHttpRequest</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html#getCookies()" class="member-name-link">getCookies()</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html" title="class in io.micronaut.servlet.engine">DefaultServletHttpRequest</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/websocket/MicronautWebSocketContainer.html#getDefaultAsyncSendTimeout()" class="member-name-link">getDefaultAsyncSendTimeout()</a> - Method in class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/MicronautWebSocketContainer.html" title="class in io.micronaut.servlet.websocket">MicronautWebSocketContainer</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/websocket/MicronautWebSocketContainer.html#getDefaultMaxBinaryMessageBufferSize()" class="member-name-link">getDefaultMaxBinaryMessageBufferSize()</a> - Method in class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/MicronautWebSocketContainer.html" title="class in io.micronaut.servlet.websocket">MicronautWebSocketContainer</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/websocket/MicronautWebSocketContainer.html#getDefaultMaxSessionIdleTimeout()" class="member-name-link">getDefaultMaxSessionIdleTimeout()</a> - Method in class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/MicronautWebSocketContainer.html" title="class in io.micronaut.servlet.websocket">MicronautWebSocketContainer</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/websocket/MicronautWebSocketContainer.html#getDefaultMaxTextMessageBufferSize()" class="member-name-link">getDefaultMaxTextMessageBufferSize()</a> - Method in class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/MicronautWebSocketContainer.html" title="class in io.micronaut.servlet.websocket">MicronautWebSocketContainer</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/engine/ServletCookieAdapter.html#getDomain()" class="member-name-link">getDomain()</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/ServletCookieAdapter.html" title="class in io.micronaut.servlet.engine">ServletCookieAdapter</a></dt>
 <dd>&nbsp;</dd>
@@ -860,6 +915,8 @@ thread pool, to run the specified <a href="io/micronaut/servlet/http/ServletHttp
 <dd>
 <div class="block">Returns an <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/InputStream.html" title="class or interface in java.io" class="external-link"><code>InputStream</code></a> that can be used to read the body of this HTTP request.</div>
 </dd>
+<dt><a href="io/micronaut/servlet/websocket/MicronautWebSocketContainer.html#getInstalledExtensions()" class="member-name-link">getInstalledExtensions()</a> - Method in class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/MicronautWebSocketContainer.html" title="class in io.micronaut.servlet.websocket">MicronautWebSocketContainer</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html#getLocale()" class="member-name-link">getLocale()</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html" title="class in io.micronaut.servlet.engine">DefaultServletHttpRequest</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/http/server/jdk/JdkHttpServerConfiguration.AccessLogger.html#getLoggerName()" class="member-name-link">getLoggerName()</a> - Method in class io.micronaut.servlet.http.server.jdk.<a href="io/micronaut/servlet/http/server/jdk/JdkHttpServerConfiguration.AccessLogger.html" title="class in io.micronaut.servlet.http.server.jdk">JdkHttpServerConfiguration.AccessLogger</a></dt>
@@ -1392,6 +1449,11 @@ implement Jakarta WebSocket 2.1.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/engine/ServletCookieAdapter.html#isHttpOnly()" class="member-name-link">isHttpOnly()</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/ServletCookieAdapter.html" title="class in io.micronaut.servlet.engine">ServletCookieAdapter</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/websocket/JakartaEndpoint.html#isMapped(io.micronaut.inject.BeanDefinition)" class="member-name-link">isMapped(BeanDefinition)</a> - Static method in record class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/JakartaEndpoint.html" title="class in io.micronaut.servlet.websocket">JakartaEndpoint</a></dt>
+<dd>
+<div class="block">Whether the annotation processor mapped the endpoint's handlers, so they can be invoked
+through the bean definition.</div>
+</dd>
 <dt><a href="io/micronaut/servlet/jetty/JettyConfiguration.html#isNativeStaticResources()" class="member-name-link">isNativeStaticResources()</a> - Method in class io.micronaut.servlet.jetty.<a href="io/micronaut/servlet/jetty/JettyConfiguration.html" title="class in io.micronaut.servlet.jetty">JettyConfiguration</a></dt>
 <dd>
 <div class="block">Whether static resources are served by Jetty's own <code>ResourceHandler</code> rather than by the Micronaut static
@@ -1449,9 +1511,10 @@ with the encoders of a <code>ServerEndpointConfig</code>.</div>
 </dd>
 <dt><a href="io/micronaut/servlet/websocket/JakartaEndpoint.html" class="type-name-link" title="class in io.micronaut.servlet.websocket">JakartaEndpoint</a> - Record Class in <a href="io/micronaut/servlet/websocket/package-summary.html">io.micronaut.servlet.websocket</a></dt>
 <dd>
-<div class="block">What a <code>@ServerEndpoint</code> declares, read once from its bean definition.</div>
+<div class="block">What a <code>@ServerEndpoint</code> or <code>@ClientEndpoint</code> declares, read once from its bean
+definition.</div>
 </dd>
-<dt><a href="io/micronaut/servlet/websocket/JakartaEndpoint.html#%3Cinit%3E(io.micronaut.inject.ExecutableMethod,io.micronaut.inject.ExecutableMethod,io.micronaut.inject.ExecutableMethod,java.util.List,java.util.List,java.lang.Class)" class="member-name-link">JakartaEndpoint(ExecutableMethod, ExecutableMethod, ExecutableMethod, List, List, Class)</a> - Constructor for record class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/JakartaEndpoint.html" title="class in io.micronaut.servlet.websocket">JakartaEndpoint</a></dt>
+<dt><a href="io/micronaut/servlet/websocket/JakartaEndpoint.html#%3Cinit%3E(io.micronaut.inject.ExecutableMethod,io.micronaut.inject.ExecutableMethod,io.micronaut.inject.ExecutableMethod,java.util.List,java.util.List,java.lang.Class,java.util.List)" class="member-name-link">JakartaEndpoint(ExecutableMethod, ExecutableMethod, ExecutableMethod, List, List, Class, List)</a> - Constructor for record class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/JakartaEndpoint.html" title="class in io.micronaut.servlet.websocket">JakartaEndpoint</a></dt>
 <dd>
 <div class="block">Creates an instance of a <code>JakartaEndpoint</code> record class.</div>
 </dd>
@@ -1618,7 +1681,7 @@ implementation.</div>
 <dd>
 <div class="block">Ensures that a Jakarta <code>ServerContainer</code> is available on the Jetty servlet context.</div>
 </dd>
-<dt><a href="io/micronaut/servlet/websocket/jetty/JettyWebSocketInitializer.html#%3Cinit%3E(io.micronaut.servlet.websocket.ServletWebSocketConfiguration,io.micronaut.http.server.HttpServerConfiguration)" class="member-name-link">JettyWebSocketInitializer(ServletWebSocketConfiguration, HttpServerConfiguration)</a> - Constructor for class io.micronaut.servlet.websocket.jetty.<a href="io/micronaut/servlet/websocket/jetty/JettyWebSocketInitializer.html" title="class in io.micronaut.servlet.websocket.jetty">JettyWebSocketInitializer</a></dt>
+<dt><a href="io/micronaut/servlet/websocket/jetty/JettyWebSocketInitializer.html#%3Cinit%3E(io.micronaut.servlet.websocket.ServletWebSocketConfiguration,io.micronaut.http.server.HttpServerConfiguration,io.micronaut.servlet.websocket.WebSocketContainerHolder)" class="member-name-link">JettyWebSocketInitializer(ServletWebSocketConfiguration, HttpServerConfiguration, WebSocketContainerHolder)</a> - Constructor for class io.micronaut.servlet.websocket.jetty.<a href="io/micronaut/servlet/websocket/jetty/JettyWebSocketInitializer.html" title="class in io.micronaut.servlet.websocket.jetty">JettyWebSocketInitializer</a></dt>
 <dd>
 <div class="block">Default constructor.</div>
 </dd>
@@ -1704,9 +1767,9 @@ implementation.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/websocket/MicronautServerEndpoint.html" class="type-name-link" title="class in io.micronaut.servlet.websocket">MicronautServerEndpoint</a> - Class in <a href="io/micronaut/servlet/websocket/package-summary.html">io.micronaut.servlet.websocket</a></dt>
 <dd>
-<div class="block">The <code>Endpoint</code> that adapts a Jakarta WebSocket connection onto a Micronaut
-<code>@ServerWebSocket</code> bean, or onto a Jakarta <code>@ServerEndpoint</code> the annotation
-processor mapped onto one.</div>
+<div class="block">The <code>Endpoint</code> that adapts a connection the server accepted onto a
+Micronaut <code>@ServerWebSocket</code> bean, or onto a Jakarta <code>@ServerEndpoint</code> the
+annotation processor mapped onto one.</div>
 </dd>
 <dt><a href="io/micronaut/servlet/websocket/MicronautServerEndpoint.html#%3Cinit%3E()" class="member-name-link">MicronautServerEndpoint()</a> - Constructor for class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/MicronautServerEndpoint.html" title="class in io.micronaut.servlet.websocket">MicronautServerEndpoint</a></dt>
 <dd>
@@ -1749,6 +1812,10 @@ instances reflectively rather than through the configurator.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/info/MicronautServletWebsocketModuleInfo.html#%3Cinit%3E()" class="member-name-link">MicronautServletWebsocketModuleInfo()</a> - Constructor for class io.micronaut.servlet.info.<a href="io/micronaut/servlet/info/MicronautServletWebsocketModuleInfo.html" title="class in io.micronaut.servlet.info">MicronautServletWebsocketModuleInfo</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/websocket/AbstractMicronautEndpoint.html#micronautSession()" class="member-name-link">micronautSession()</a> - Method in class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/AbstractMicronautEndpoint.html" title="class in io.micronaut.servlet.websocket">AbstractMicronautEndpoint</a></dt>
+<dd>
+<div class="block">The Micronaut view of the session.</div>
+</dd>
 <dt><a href="io/micronaut/servlet/info/MicronautTestSuiteGroovyModuleInfo.html" class="type-name-link" title="class in io.micronaut.servlet.info">MicronautTestSuiteGroovyModuleInfo</a> - Class in <a href="io/micronaut/servlet/info/package-summary.html">io.micronaut.servlet.info</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/info/MicronautTestSuiteGroovyModuleInfo.html#%3Cinit%3E()" class="member-name-link">MicronautTestSuiteGroovyModuleInfo()</a> - Constructor for class io.micronaut.servlet.info.<a href="io/micronaut/servlet/info/MicronautTestSuiteGroovyModuleInfo.html" title="class in io.micronaut.servlet.info">MicronautTestSuiteGroovyModuleInfo</a></dt>
@@ -1765,6 +1832,15 @@ instances reflectively rather than through the configurator.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/info/MicronautTestSuiteModuleInfo.html#%3Cinit%3E()" class="member-name-link">MicronautTestSuiteModuleInfo()</a> - Constructor for class io.micronaut.servlet.info.<a href="io/micronaut/servlet/info/MicronautTestSuiteModuleInfo.html" title="class in io.micronaut.servlet.info">MicronautTestSuiteModuleInfo</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/websocket/MicronautWebSocketContainer.html" class="type-name-link" title="class in io.micronaut.servlet.websocket">MicronautWebSocketContainer</a> - Class in <a href="io/micronaut/servlet/websocket/package-summary.html">io.micronaut.servlet.websocket</a></dt>
+<dd>
+<div class="block">The Jakarta <code>WebSocketContainer</code> of a Micronaut servlet application, for opening client
+connections.</div>
+</dd>
+<dt><a href="io/micronaut/servlet/websocket/MicronautWebSocketContainer.html#%3Cinit%3E(io.micronaut.context.BeanContext,io.micronaut.servlet.websocket.ServletWebSocketSupport,io.micronaut.servlet.websocket.WebSocketContainerHolder)" class="member-name-link">MicronautWebSocketContainer(BeanContext, ServletWebSocketSupport, WebSocketContainerHolder)</a> - Constructor for class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/MicronautWebSocketContainer.html" title="class in io.micronaut.servlet.websocket">MicronautWebSocketContainer</a></dt>
+<dd>
+<div class="block">Default constructor.</div>
+</dd>
 <dt><a href="io/micronaut/http/poja/util/MultiValueHeaders.html" class="type-name-link" title="class in io.micronaut.http.poja.util">MultiValueHeaders</a> - Record Class in <a href="io/micronaut/http/poja/util/package-summary.html">io.micronaut.http.poja.util</a></dt>
 <dd>
 <div class="block">Headers implementation based on a multi-value map.</div>
@@ -1871,7 +1947,7 @@ instances reflectively rather than through the configurator.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/http/server/DiscoveryServerStartedEventPublisher.html#onApplicationEvent(io.micronaut.runtime.server.event.ServerStartupEvent)" class="member-name-link">onApplicationEvent(ServerStartupEvent)</a> - Method in class io.micronaut.servlet.http.server.<a href="io/micronaut/servlet/http/server/DiscoveryServerStartedEventPublisher.html" title="class in io.micronaut.servlet.http.server">DiscoveryServerStartedEventPublisher</a></dt>
 <dd>&nbsp;</dd>
-<dt><a href="io/micronaut/servlet/websocket/MicronautServerEndpoint.html#onClose(jakarta.websocket.Session,jakarta.websocket.CloseReason)" class="member-name-link">onClose(Session, CloseReason)</a> - Method in class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/MicronautServerEndpoint.html" title="class in io.micronaut.servlet.websocket">MicronautServerEndpoint</a></dt>
+<dt><a href="io/micronaut/servlet/websocket/AbstractMicronautEndpoint.html#onClose(jakarta.websocket.Session,jakarta.websocket.CloseReason)" class="member-name-link">onClose(Session, CloseReason)</a> - Method in class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/AbstractMicronautEndpoint.html" title="class in io.micronaut.servlet.websocket">AbstractMicronautEndpoint</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/websocket/undertow/UndertowWebSocketDeploymentCustomizer.html#onCreated(io.micronaut.context.event.BeanCreatedEvent)" class="member-name-link">onCreated(BeanCreatedEvent)</a> - Method in class io.micronaut.servlet.websocket.undertow.<a href="io/micronaut/servlet/websocket/undertow/UndertowWebSocketDeploymentCustomizer.html" title="class in io.micronaut.servlet.websocket.undertow">UndertowWebSocketDeploymentCustomizer</a></dt>
 <dd>&nbsp;</dd>
@@ -1880,7 +1956,7 @@ instances reflectively rather than through the configurator.</div>
 <div class="block">Registers what to run if the container ends the asynchronous execution itself, on a timeout or an I/O
 error, before <a href="io/micronaut/servlet/http/ServletHttpRequest.AsyncExecution.html#complete()"><code>ServletHttpRequest.AsyncExecution.complete()</code></a> has been called.</div>
 </dd>
-<dt><a href="io/micronaut/servlet/websocket/MicronautServerEndpoint.html#onError(jakarta.websocket.Session,java.lang.Throwable)" class="member-name-link">onError(Session, Throwable)</a> - Method in class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/MicronautServerEndpoint.html" title="class in io.micronaut.servlet.websocket">MicronautServerEndpoint</a></dt>
+<dt><a href="io/micronaut/servlet/websocket/AbstractMicronautEndpoint.html#onError(jakarta.websocket.Session,java.lang.Throwable)" class="member-name-link">onError(Session, Throwable)</a> - Method in class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/AbstractMicronautEndpoint.html" title="class in io.micronaut.servlet.websocket">AbstractMicronautEndpoint</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/websocket/MicronautServerEndpoint.html#onOpen(jakarta.websocket.Session,jakarta.websocket.EndpointConfig)" class="member-name-link">onOpen(Session, EndpointConfig)</a> - Method in class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/MicronautServerEndpoint.html" title="class in io.micronaut.servlet.websocket">MicronautServerEndpoint</a></dt>
 <dd>&nbsp;</dd>
@@ -1890,6 +1966,19 @@ error, before <a href="io/micronaut/servlet/http/ServletHttpRequest.AsyncExecuti
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/websocket/tomcat/TomcatWebSocketInitializer.html#onStartup(java.util.Set,jakarta.servlet.ServletContext)" class="member-name-link">onStartup(Set, ServletContext)</a> - Method in class io.micronaut.servlet.websocket.tomcat.<a href="io/micronaut/servlet/websocket/tomcat/TomcatWebSocketInitializer.html" title="class in io.micronaut.servlet.websocket.tomcat">TomcatWebSocketInitializer</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/websocket/AbstractMicronautEndpoint.html#open(jakarta.websocket.Session,jakarta.websocket.EndpointConfig,io.micronaut.servlet.websocket.ServletWebSocketSupport,io.micronaut.websocket.context.WebSocketBean,io.micronaut.servlet.websocket.JakartaEndpoint,io.micronaut.http.HttpRequest,io.micronaut.servlet.websocket.ServletWebSocketSession)" class="member-name-link">open(Session, EndpointConfig, ServletWebSocketSupport, WebSocketBean, JakartaEndpoint, HttpRequest, ServletWebSocketSession)</a> - Method in class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/AbstractMicronautEndpoint.html" title="class in io.micronaut.servlet.websocket">AbstractMicronautEndpoint</a></dt>
+<dd>
+<div class="block">Sets the connection up and invokes <code>@OnOpen</code>.</div>
+</dd>
+<dt><a href="io/micronaut/servlet/websocket/AbstractMicronautEndpoint.html#openCompleted()" class="member-name-link">openCompleted()</a> - Method in class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/AbstractMicronautEndpoint.html" title="class in io.micronaut.servlet.websocket">AbstractMicronautEndpoint</a></dt>
+<dd>
+<div class="block">Called once <code>@OnOpen</code> has completed, or straight away when there is none.</div>
+</dd>
+<dt><a href="io/micronaut/servlet/websocket/AbstractMicronautEndpoint.html#openFailed(java.lang.Throwable)" class="member-name-link">openFailed(Throwable)</a> - Method in class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/AbstractMicronautEndpoint.html" title="class in io.micronaut.servlet.websocket">AbstractMicronautEndpoint</a></dt>
+<dd>
+<div class="block">Called when <code>@OnOpen</code> failed, after <code>@OnError</code> was offered the failure and
+before the session is closed.</div>
+</dd>
 <dt><a href="io/micronaut/servlet/websocket/WebSocketUpgradeContext.html#originatingRequest()" class="member-name-link">originatingRequest()</a> - Method in record class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/WebSocketUpgradeContext.html" title="class in io.micronaut.servlet.websocket">WebSocketUpgradeContext</a></dt>
 <dd>
 <div class="block">Returns the value of the <a href="./io/micronaut/servlet/websocket/WebSocketUpgradeContext.html#param-originatingRequest"><code>originatingRequest</code></a> record component.</div>
@@ -1973,6 +2062,16 @@ to be reused for body and binding.</div>
 <dt><a href="io/micronaut/servlet/websocket/ServletWebSocketConfiguration.html#PREFIX" class="member-name-link">PREFIX</a> - Static variable in class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/ServletWebSocketConfiguration.html" title="class in io.micronaut.servlet.websocket">ServletWebSocketConfiguration</a></dt>
 <dd>
 <div class="block">The configuration prefix.</div>
+</dd>
+<dt><a href="io/micronaut/servlet/websocket/AbstractMicronautEndpoint.html#propagatedContext()" class="member-name-link">propagatedContext()</a> - Method in class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/AbstractMicronautEndpoint.html" title="class in io.micronaut.servlet.websocket">AbstractMicronautEndpoint</a></dt>
+<dd>
+<div class="block">The context handlers run under, on top of which the request is propagated for a
+<code>suspend</code> handler.</div>
+</dd>
+<dt><a href="io/micronaut/servlet/websocket/MicronautServerEndpoint.html#propagatedContext()" class="member-name-link">propagatedContext()</a> - Method in class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/MicronautServerEndpoint.html" title="class in io.micronaut.servlet.websocket">MicronautServerEndpoint</a></dt>
+<dd>
+<div class="block">Handlers run with the upgrade request propagated, so that
+<code>ServerRequestContext.currentRequest()</code> resolves inside them.</div>
 </dd>
 <dt><a href="io/micronaut/servlet/websocket/ServletWebSocketSession.html#put(java.lang.CharSequence,java.lang.Object)" class="member-name-link">put(CharSequence, Object)</a> - Method in class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/ServletWebSocketSession.html" title="class in io.micronaut.servlet.websocket">ServletWebSocketSession</a></dt>
 <dd>&nbsp;</dd>
@@ -2086,6 +2185,10 @@ specified charset.</div>
 <dd>
 <div class="block">Registers a class the annotation processors never saw as a bean, reflectively.</div>
 </dd>
+<dt><a href="io/micronaut/servlet/websocket/WebSocketContainerHolder.html#register(jakarta.websocket.WebSocketContainer)" class="member-name-link">register(WebSocketContainer)</a> - Method in class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/WebSocketContainerHolder.html" title="class in io.micronaut.servlet.websocket">WebSocketContainerHolder</a></dt>
+<dd>
+<div class="block">Registers the container the server created.</div>
+</dd>
 <dt><a href="io/micronaut/servlet/websocket/ReflectiveBeanDefinitions.html#register(java.lang.Class)" class="member-name-link">register(Class)</a> - Method in interface io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/ReflectiveBeanDefinitions.html" title="interface in io.micronaut.servlet.websocket">ReflectiveBeanDefinitions</a></dt>
 <dd>
 <div class="block">Registers a definition for the type, if it is allowed and not registered already.</div>
@@ -2126,6 +2229,10 @@ class's generic signature.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/websocket/ServletWebSocketSession.html#sendPingAsync(byte%5B%5D)" class="member-name-link">sendPingAsync(byte[])</a> - Method in class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/ServletWebSocketSession.html" title="class in io.micronaut.servlet.websocket">ServletWebSocketSession</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/websocket/WebSocketContainerHolder.html#SERVER_CONTAINER_ATTRIBUTE" class="member-name-link">SERVER_CONTAINER_ATTRIBUTE</a> - Static variable in class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/WebSocketContainerHolder.html" title="class in io.micronaut.servlet.websocket">WebSocketContainerHolder</a></dt>
+<dd>
+<div class="block">The servlet context attribute under which a container publishes its <code>ServerContainer</code>.</div>
+</dd>
 <dt><a href="io/micronaut/servlet/websocket/JakartaEndpoint.html#SERVER_ENDPOINT" class="member-name-link">SERVER_ENDPOINT</a> - Static variable in record class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/JakartaEndpoint.html" title="class in io.micronaut.servlet.websocket">JakartaEndpoint</a></dt>
 <dd>
 <div class="block">The Jakarta annotations, by name so that the API is not needed to load this class.</div>
@@ -2346,6 +2453,19 @@ WebSocket connection.</div>
 <div class="block">Strategy for switching a matched WebSocket upgrade request over to a WebSocket
 implementation once the Micronaut filter chain has approved the handshake.</div>
 </dd>
+<dt><a href="io/micronaut/servlet/websocket/AbstractMicronautEndpoint.html#sessionClosed(io.micronaut.servlet.websocket.ServletWebSocketSession,boolean)" class="member-name-link">sessionClosed(ServletWebSocketSession, boolean)</a> - Method in class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/AbstractMicronautEndpoint.html" title="class in io.micronaut.servlet.websocket">AbstractMicronautEndpoint</a></dt>
+<dd>
+<div class="block">Called once the session is closed and its close handler has run.</div>
+</dd>
+<dt><a href="io/micronaut/servlet/websocket/MicronautServerEndpoint.html#sessionClosed(io.micronaut.servlet.websocket.ServletWebSocketSession,boolean)" class="member-name-link">sessionClosed(ServletWebSocketSession, boolean)</a> - Method in class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/MicronautServerEndpoint.html" title="class in io.micronaut.servlet.websocket">MicronautServerEndpoint</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/websocket/AbstractMicronautEndpoint.html#sessionOpened(io.micronaut.servlet.websocket.ServletWebSocketSession)" class="member-name-link">sessionOpened(ServletWebSocketSession)</a> - Method in class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/AbstractMicronautEndpoint.html" title="class in io.micronaut.servlet.websocket">AbstractMicronautEndpoint</a></dt>
+<dd>
+<div class="block">Called once the connection is set up, before the message handlers are registered and the
+open handler runs.</div>
+</dd>
+<dt><a href="io/micronaut/servlet/websocket/MicronautServerEndpoint.html#sessionOpened(io.micronaut.servlet.websocket.ServletWebSocketSession)" class="member-name-link">sessionOpened(ServletWebSocketSession)</a> - Method in class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/MicronautServerEndpoint.html" title="class in io.micronaut.servlet.websocket">MicronautServerEndpoint</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/websocket/ServletWebSocketSupport.html#sessionRegistry()" class="member-name-link">sessionRegistry()</a> - Method in class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/ServletWebSocketSupport.html" title="class in io.micronaut.servlet.websocket">ServletWebSocketSupport</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/tomcat/TomcatConfiguration.html#setAccessLogConfiguration(io.micronaut.servlet.tomcat.TomcatConfiguration.AccessLogConfiguration)" class="member-name-link">setAccessLogConfiguration(TomcatConfiguration.AccessLogConfiguration)</a> - Method in class io.micronaut.servlet.tomcat.<a href="io/micronaut/servlet/tomcat/TomcatConfiguration.html" title="class in io.micronaut.servlet.tomcat">TomcatConfiguration</a></dt>
@@ -2364,6 +2484,8 @@ implementation once the Micronaut filter chain has approved the handshake.</div>
 <dd>
 <div class="block">Is async file serving enabled.</div>
 </dd>
+<dt><a href="io/micronaut/servlet/websocket/MicronautWebSocketContainer.html#setAsyncSendTimeout(long)" class="member-name-link">setAsyncSendTimeout(long)</a> - Method in class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/MicronautWebSocketContainer.html" title="class in io.micronaut.servlet.websocket">MicronautWebSocketContainer</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/websocket/ServletWebSocketConfiguration.html#setAsyncSendTimeout(java.time.Duration)" class="member-name-link">setAsyncSendTimeout(Duration)</a> - Method in class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/ServletWebSocketConfiguration.html" title="class in io.micronaut.servlet.websocket">ServletWebSocketConfiguration</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/engine/MicronautServletConfiguration.html#setAsyncSupported(boolean)" class="member-name-link">setAsyncSupported(boolean)</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/MicronautServletConfiguration.html" title="class in io.micronaut.servlet.engine">MicronautServletConfiguration</a></dt>
@@ -2371,6 +2493,8 @@ implementation once the Micronaut filter chain has approved the handshake.</div>
 <div class="block">Set whether async is supported or not.</div>
 </dd>
 <dt><a href="io/micronaut/servlet/websocket/ServletWebSocketConfiguration.html#setCompression(io.micronaut.servlet.websocket.ServletWebSocketConfiguration.CompressionConfiguration)" class="member-name-link">setCompression(ServletWebSocketConfiguration.CompressionConfiguration)</a> - Method in class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/ServletWebSocketConfiguration.html" title="class in io.micronaut.servlet.websocket">ServletWebSocketConfiguration</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/websocket/ServletWebSocketConfiguration.html#setConnectTimeout(java.time.Duration)" class="member-name-link">setConnectTimeout(Duration)</a> - Method in class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/ServletWebSocketConfiguration.html" title="class in io.micronaut.servlet.websocket">ServletWebSocketConfiguration</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/engine/ServletCompressionConfiguration.html#setContentTypes(java.util.Set)" class="member-name-link">setContentTypes(Set)</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/ServletCompressionConfiguration.html" title="class in io.micronaut.servlet.engine">ServletCompressionConfiguration</a></dt>
 <dd>&nbsp;</dd>
@@ -2388,6 +2512,12 @@ implementation once the Micronaut filter chain has approved the handshake.</div>
 <dd>
 <div class="deprecation-block"><span class="deprecated-label">Deprecated.</span></div>
 &nbsp;</dd>
+<dt><a href="io/micronaut/servlet/websocket/MicronautWebSocketContainer.html#setDefaultMaxBinaryMessageBufferSize(int)" class="member-name-link">setDefaultMaxBinaryMessageBufferSize(int)</a> - Method in class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/MicronautWebSocketContainer.html" title="class in io.micronaut.servlet.websocket">MicronautWebSocketContainer</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/websocket/MicronautWebSocketContainer.html#setDefaultMaxSessionIdleTimeout(long)" class="member-name-link">setDefaultMaxSessionIdleTimeout(long)</a> - Method in class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/MicronautWebSocketContainer.html" title="class in io.micronaut.servlet.websocket">MicronautWebSocketContainer</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/websocket/MicronautWebSocketContainer.html#setDefaultMaxTextMessageBufferSize(int)" class="member-name-link">setDefaultMaxTextMessageBufferSize(int)</a> - Method in class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/MicronautWebSocketContainer.html" title="class in io.micronaut.servlet.websocket">MicronautWebSocketContainer</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/http/poja/apache/ApacheRuntimeConfiguration.html#setEnabled(boolean)" class="member-name-link">setEnabled(boolean)</a> - Method in class io.micronaut.http.poja.apache.<a href="io/micronaut/http/poja/apache/ApacheRuntimeConfiguration.html" title="class in io.micronaut.http.poja.apache">ApacheRuntimeConfiguration</a></dt>
 <dd>
 <div class="block">Sets whether the Apache POJA runtime is enabled.</div>
@@ -2650,10 +2780,18 @@ complete.</div>
 <dd>
 <div class="deprecation-block"><span class="deprecated-label">Deprecated.</span></div>
 &nbsp;</dd>
+<dt><a href="io/micronaut/servlet/websocket/JakartaEndpoint.html#subprotocols()" class="member-name-link">subprotocols()</a> - Method in record class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/JakartaEndpoint.html" title="class in io.micronaut.servlet.websocket">JakartaEndpoint</a></dt>
+<dd>
+<div class="block">Returns the value of the <a href="./io/micronaut/servlet/websocket/JakartaEndpoint.html#param-subprotocols"><code>subprotocols</code></a> record component.</div>
+</dd>
 <dt><a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html#subscribe(org.reactivestreams.Subscriber)" class="member-name-link">subscribe(Subscriber)</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html" title="class in io.micronaut.servlet.engine">DefaultServletHttpRequest</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/api/ServletAttributes.html#subSequence(int,int)" class="member-name-link">subSequence(int, int)</a> - Method in enum class io.micronaut.servlet.api.<a href="io/micronaut/servlet/api/ServletAttributes.html" title="enum class in io.micronaut.servlet.api">ServletAttributes</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/servlet/websocket/AbstractMicronautEndpoint.html#support()" class="member-name-link">support()</a> - Method in class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/AbstractMicronautEndpoint.html" title="class in io.micronaut.servlet.websocket">AbstractMicronautEndpoint</a></dt>
+<dd>
+<div class="block">The shared infrastructure.</div>
+</dd>
 <dt><a href="io/micronaut/servlet/websocket/WebSocketUpgradeContext.html#support()" class="member-name-link">support()</a> - Method in record class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/WebSocketUpgradeContext.html" title="class in io.micronaut.servlet.websocket">WebSocketUpgradeContext</a></dt>
 <dd>
 <div class="block">Returns the value of the <a href="./io/micronaut/servlet/websocket/WebSocketUpgradeContext.html#param-support"><code>support</code></a> record component.</div>
@@ -2747,7 +2885,7 @@ complete.</div>
 <dd>
 <div class="block">Ensures that a Jakarta <code>ServerContainer</code> is available on the Tomcat servlet context.</div>
 </dd>
-<dt><a href="io/micronaut/servlet/websocket/tomcat/TomcatWebSocketInitializer.html#%3Cinit%3E(io.micronaut.servlet.websocket.ServletWebSocketConfiguration,io.micronaut.http.server.HttpServerConfiguration)" class="member-name-link">TomcatWebSocketInitializer(ServletWebSocketConfiguration, HttpServerConfiguration)</a> - Constructor for class io.micronaut.servlet.websocket.tomcat.<a href="io/micronaut/servlet/websocket/tomcat/TomcatWebSocketInitializer.html" title="class in io.micronaut.servlet.websocket.tomcat">TomcatWebSocketInitializer</a></dt>
+<dt><a href="io/micronaut/servlet/websocket/tomcat/TomcatWebSocketInitializer.html#%3Cinit%3E(io.micronaut.servlet.websocket.ServletWebSocketConfiguration,io.micronaut.http.server.HttpServerConfiguration,io.micronaut.servlet.websocket.WebSocketContainerHolder)" class="member-name-link">TomcatWebSocketInitializer(ServletWebSocketConfiguration, HttpServerConfiguration, WebSocketContainerHolder)</a> - Constructor for class io.micronaut.servlet.websocket.tomcat.<a href="io/micronaut/servlet/websocket/tomcat/TomcatWebSocketInitializer.html" title="class in io.micronaut.servlet.websocket.tomcat">TomcatWebSocketInitializer</a></dt>
 <dd>
 <div class="block">Default constructor.</div>
 </dd>
@@ -2842,7 +2980,7 @@ complete.</div>
 <dd>
 <div class="block">Ensures that a Jakarta <code>ServerContainer</code> is available on the Undertow servlet context.</div>
 </dd>
-<dt><a href="io/micronaut/servlet/websocket/undertow/UndertowWebSocketDeploymentCustomizer.html#%3Cinit%3E(io.micronaut.servlet.websocket.ServletWebSocketConfiguration,io.micronaut.http.server.HttpServerConfiguration)" class="member-name-link">UndertowWebSocketDeploymentCustomizer(ServletWebSocketConfiguration, HttpServerConfiguration)</a> - Constructor for class io.micronaut.servlet.websocket.undertow.<a href="io/micronaut/servlet/websocket/undertow/UndertowWebSocketDeploymentCustomizer.html" title="class in io.micronaut.servlet.websocket.undertow">UndertowWebSocketDeploymentCustomizer</a></dt>
+<dt><a href="io/micronaut/servlet/websocket/undertow/UndertowWebSocketDeploymentCustomizer.html#%3Cinit%3E(io.micronaut.servlet.websocket.ServletWebSocketConfiguration,io.micronaut.http.server.HttpServerConfiguration,io.micronaut.servlet.websocket.WebSocketContainerHolder)" class="member-name-link">UndertowWebSocketDeploymentCustomizer(ServletWebSocketConfiguration, HttpServerConfiguration, WebSocketContainerHolder)</a> - Constructor for class io.micronaut.servlet.websocket.undertow.<a href="io/micronaut/servlet/websocket/undertow/UndertowWebSocketDeploymentCustomizer.html" title="class in io.micronaut.servlet.websocket.undertow">UndertowWebSocketDeploymentCustomizer</a></dt>
 <dd>
 <div class="block">Default constructor.</div>
 </dd>
@@ -2938,9 +3076,21 @@ the order they are declared.</div>
 <dd>
 <div class="block">The <code>websocket</code> token used by the <code>Upgrade</code> header.</div>
 </dd>
+<dt><a href="io/micronaut/servlet/websocket/AbstractMicronautEndpoint.html#webSocketBean()" class="member-name-link">webSocketBean()</a> - Method in class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/AbstractMicronautEndpoint.html" title="class in io.micronaut.servlet.websocket">AbstractMicronautEndpoint</a></dt>
+<dd>
+<div class="block">The bean the connection is dispatched to.</div>
+</dd>
 <dt><a href="io/micronaut/servlet/websocket/WebSocketUpgradeContext.html#webSocketBean()" class="member-name-link">webSocketBean()</a> - Method in record class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/WebSocketUpgradeContext.html" title="class in io.micronaut.servlet.websocket">WebSocketUpgradeContext</a></dt>
 <dd>
 <div class="block">Returns the value of the <a href="./io/micronaut/servlet/websocket/WebSocketUpgradeContext.html#param-webSocketBean"><code>webSocketBean</code></a> record component.</div>
+</dd>
+<dt><a href="io/micronaut/servlet/websocket/WebSocketContainerHolder.html" class="type-name-link" title="class in io.micronaut.servlet.websocket">WebSocketContainerHolder</a> - Class in <a href="io/micronaut/servlet/websocket/package-summary.html">io.micronaut.servlet.websocket</a></dt>
+<dd>
+<div class="block">The servlet container's Jakarta WebSocket container, for opening client connections.</div>
+</dd>
+<dt><a href="io/micronaut/servlet/websocket/WebSocketContainerHolder.html#%3Cinit%3E(jakarta.servlet.ServletContext)" class="member-name-link">WebSocketContainerHolder(ServletContext)</a> - Constructor for class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/WebSocketContainerHolder.html" title="class in io.micronaut.servlet.websocket">WebSocketContainerHolder</a></dt>
+<dd>
+<div class="block">Default constructor.</div>
 </dd>
 <dt><a href="io/micronaut/servlet/websocket/WebSocketUpgradeContext.html" class="type-name-link" title="class in io.micronaut.servlet.websocket">WebSocketUpgradeContext</a> - Record Class in <a href="io/micronaut/servlet/websocket/package-summary.html">io.micronaut.servlet.websocket</a></dt>
 <dd>

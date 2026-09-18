@@ -58,7 +58,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#method-summary" tabindex="0">Method Summary</a></li>
 <li><a href="#constructor-detail" tabindex="0">Constructor Details</a>
 <ol class="toc-list">
-<li><a href="#%3Cinit%3E(io.micronaut.servlet.websocket.ServletWebSocketConfiguration,io.micronaut.http.server.HttpServerConfiguration)" tabindex="0">UndertowWebSocketDeploymentCustomizer(ServletWebSocketConfiguration, HttpServerConfiguration)</a></li>
+<li><a href="#%3Cinit%3E(io.micronaut.servlet.websocket.ServletWebSocketConfiguration,io.micronaut.http.server.HttpServerConfiguration,io.micronaut.servlet.websocket.WebSocketContainerHolder)" tabindex="0">UndertowWebSocketDeploymentCustomizer(ServletWebSocketConfiguration, HttpServerConfiguration, WebSocketContainerHolder)</a></li>
 </ol>
 </li>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
@@ -116,8 +116,9 @@ that blocking application code cannot stall the event loop.</p></div>
 <div class="summary-table two-column-summary">
 <div class="table-header col-first">Constructor</div>
 <div class="table-header col-last">Description</div>
-<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(io.micronaut.servlet.websocket.ServletWebSocketConfiguration,io.micronaut.http.server.HttpServerConfiguration)" class="member-name-link">UndertowWebSocketDeploymentCustomizer</a><wbr>(<a href="../ServletWebSocketConfiguration.html" title="class in io.micronaut.servlet.websocket">ServletWebSocketConfiguration</a>&nbsp;configuration,
- io.micronaut.http.server.HttpServerConfiguration&nbsp;serverConfiguration)</code></div>
+<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(io.micronaut.servlet.websocket.ServletWebSocketConfiguration,io.micronaut.http.server.HttpServerConfiguration,io.micronaut.servlet.websocket.WebSocketContainerHolder)" class="member-name-link">UndertowWebSocketDeploymentCustomizer</a><wbr>(<a href="../ServletWebSocketConfiguration.html" title="class in io.micronaut.servlet.websocket">ServletWebSocketConfiguration</a>&nbsp;configuration,
+ io.micronaut.http.server.HttpServerConfiguration&nbsp;serverConfiguration,
+ <a href="../WebSocketContainerHolder.html" title="class in io.micronaut.servlet.websocket">WebSocketContainerHolder</a>&nbsp;holder)</code></div>
 <div class="col-last even-row-color">
 <div class="block">Default constructor.</div>
 </div>
@@ -156,16 +157,18 @@ that blocking application code cannot stall the event loop.</p></div>
 <h2>Constructor Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="&lt;init&gt;(io.micronaut.servlet.websocket.ServletWebSocketConfiguration,io.micronaut.http.server.HttpServerConfiguration)">
+<section class="detail" id="&lt;init&gt;(io.micronaut.servlet.websocket.ServletWebSocketConfiguration,io.micronaut.http.server.HttpServerConfiguration,io.micronaut.servlet.websocket.WebSocketContainerHolder)">
 <h3>UndertowWebSocketDeploymentCustomizer</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">UndertowWebSocketDeploymentCustomizer</span><wbr><span class="parameters">(<a href="../ServletWebSocketConfiguration.html" title="class in io.micronaut.servlet.websocket">ServletWebSocketConfiguration</a>&nbsp;configuration,
- io.micronaut.http.server.HttpServerConfiguration&nbsp;serverConfiguration)</span></div>
+ io.micronaut.http.server.HttpServerConfiguration&nbsp;serverConfiguration,
+ <a href="../WebSocketContainerHolder.html" title="class in io.micronaut.servlet.websocket">WebSocketContainerHolder</a>&nbsp;holder)</span></div>
 <div class="block">Default constructor.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>configuration</code> - The WebSocket configuration</dd>
 <dd><code>serverConfiguration</code> - The server configuration, used for the default idle timeout</dd>
+<dd><code>holder</code> - Where the container is registered for client connections</dd>
 </dl>
 </div>
 </section>
