@@ -35,9 +35,15 @@ final class TestSession implements Session {
     final Deque<SendHandler> pending = new ArrayDeque<>();
     final AtomicInteger inFlight = new AtomicInteger();
     final Map<String, Object> userProperties = new HashMap<>();
+    final Map<Class<?>, MessageHandler.Whole<?>> messageHandlers = new HashMap<>();
 
     CloseReason closeReason;
     boolean open = true;
+    /**
+     * Whether a send completes on the spot, as a container's does, rather than waiting for
+     * {@link #completeOldest()}; a handler that sends synchronously needs that.
+     */
+    boolean autoCompleteSends;
     int maxTextMessageBufferSize;
     int maxBinaryMessageBufferSize;
     long maxIdleTimeout;
@@ -165,7 +171,23 @@ final class TestSession implements Session {
 
     @Override
     public <T> void addMessageHandler(Class<T> clazz, MessageHandler.Whole<T> handler) {
-        throw new UnsupportedOperationException();
+        messageHandlers.put(clazz, handler);
+    }
+
+    /**
+     * Delivers a message to the handler registered for its type, as the container would.
+     *
+     * @param type    The message type the handler was registered for
+     * @param message The message
+     * @param <T>     The message type
+     */
+    @SuppressWarnings("unchecked")
+    <T> void receive(Class<T> type, T message) {
+        MessageHandler.Whole<T> handler = (MessageHandler.Whole<T>) messageHandlers.get(type);
+        if (handler == null) {
+            throw new IllegalStateException("No message handler registered for " + type.getName());
+        }
+        handler.onMessage(message);
     }
 
     @Override
@@ -223,13 +245,20 @@ final class TestSession implements Session {
         @Override
         public void sendText(String text, SendHandler handler) {
             sentText.add(text);
-            inFlight.incrementAndGet();
-            pending.add(handler);
+            track(handler);
         }
 
         @Override
         public void sendBinary(ByteBuffer data, SendHandler handler) {
             sentBinary.add(data);
+            track(handler);
+        }
+
+        private void track(SendHandler handler) {
+            if (autoCompleteSends) {
+                handler.onResult(new SendResult());
+                return;
+            }
             inFlight.incrementAndGet();
             pending.add(handler);
         }

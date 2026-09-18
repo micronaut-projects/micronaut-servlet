@@ -54,12 +54,18 @@ public class ServletWebSocketConfiguration {
      */
     public static final int DEFAULT_MAX_PENDING_SENDS = 64;
 
+    /**
+     * The default time a client connection's {@code @OnOpen} may take.
+     */
+    public static final Duration DEFAULT_CONNECT_TIMEOUT = Duration.ofSeconds(30);
+
     private boolean enabled = true;
     private int maxTextMessageSize = DEFAULT_MAX_MESSAGE_SIZE;
     private int maxBinaryMessageSize = DEFAULT_MAX_MESSAGE_SIZE;
     private @Nullable Duration idleTimeout;
     private @Nullable Duration asyncSendTimeout;
     private int maxPendingSends = DEFAULT_MAX_PENDING_SENDS;
+    private Duration connectTimeout = DEFAULT_CONNECT_TIMEOUT;
     private CompressionConfiguration compression = new CompressionConfiguration();
 
     /**
@@ -132,6 +138,21 @@ public class ServletWebSocketConfiguration {
      */
     public void setAsyncSendTimeout(@Nullable Duration asyncSendTimeout) {
         this.asyncSendTimeout = asyncSendTimeout;
+    }
+
+    /**
+     * @return How long {@code WebSocketContainer#connectToServer} waits for a client endpoint's
+     * {@code @OnOpen} to complete before failing the connection. Default value 30 seconds.
+     */
+    public Duration getConnectTimeout() {
+        return connectTimeout;
+    }
+
+    /**
+     * @param connectTimeout How long {@code connectToServer} waits for {@code @OnOpen} to complete
+     */
+    public void setConnectTimeout(Duration connectTimeout) {
+        this.connectTimeout = connectTimeout;
     }
 
     /**

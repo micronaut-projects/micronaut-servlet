@@ -21,6 +21,7 @@ import io.micronaut.core.util.StringUtils;
 import io.micronaut.http.server.HttpServerConfiguration;
 import io.micronaut.servlet.websocket.ServerContainerCustomizer;
 import io.micronaut.servlet.websocket.ServletWebSocketConfiguration;
+import io.micronaut.servlet.websocket.WebSocketContainerHolder;
 import jakarta.inject.Singleton;
 import jakarta.servlet.ServletContainerInitializer;
 import jakarta.servlet.ServletContext;
@@ -49,10 +50,9 @@ import java.util.Set;
 @Requires(property = ServletWebSocketConfiguration.ENABLED_PROPERTY, notEquals = StringUtils.FALSE, defaultValue = StringUtils.TRUE)
 public final class TomcatWebSocketInitializer implements ServletContainerInitializer {
 
-    private static final String SERVER_CONTAINER_ATTRIBUTE = "jakarta.websocket.server.ServerContainer";
-
     private final ServletWebSocketConfiguration configuration;
     private final Duration idleTimeout;
+    private final WebSocketContainerHolder holder;
     private final WsSci delegate = new WsSci();
 
     /**
@@ -60,10 +60,13 @@ public final class TomcatWebSocketInitializer implements ServletContainerInitial
      *
      * @param configuration       The WebSocket configuration
      * @param serverConfiguration The server configuration, used for the default idle timeout
+     * @param holder              Where the container is registered for client connections
      */
     public TomcatWebSocketInitializer(ServletWebSocketConfiguration configuration,
-                                      HttpServerConfiguration serverConfiguration) {
+                                      HttpServerConfiguration serverConfiguration,
+                                      WebSocketContainerHolder holder) {
         this.configuration = configuration;
+        this.holder = holder;
         this.idleTimeout = configuration.getIdleTimeout() != null
             ? configuration.getIdleTimeout()
             : serverConfiguration.getIdleTimeout();
@@ -72,8 +75,9 @@ public final class TomcatWebSocketInitializer implements ServletContainerInitial
     @Override
     public void onStartup(Set<Class<?>> classes, ServletContext ctx) throws ServletException {
         delegate.onStartup(classes != null ? classes : Set.of(), ctx);
-        if (ctx.getAttribute(SERVER_CONTAINER_ATTRIBUTE) instanceof ServerContainer container) {
+        if (ctx.getAttribute(WebSocketContainerHolder.SERVER_CONTAINER_ATTRIBUTE) instanceof ServerContainer container) {
             ServerContainerCustomizer.apply(container, configuration, idleTimeout);
+            holder.register(container);
         }
     }
 }

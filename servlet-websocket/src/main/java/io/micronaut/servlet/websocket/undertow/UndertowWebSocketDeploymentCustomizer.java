@@ -23,6 +23,7 @@ import io.micronaut.core.util.StringUtils;
 import io.micronaut.http.server.HttpServerConfiguration;
 import io.micronaut.servlet.websocket.ServerContainerCustomizer;
 import io.micronaut.servlet.websocket.ServletWebSocketConfiguration;
+import io.micronaut.servlet.websocket.WebSocketContainerHolder;
 import io.undertow.servlet.api.DeploymentInfo;
 import io.undertow.websockets.extensions.PerMessageDeflateHandshake;
 import io.undertow.websockets.jsr.WebSocketDeploymentInfo;
@@ -52,16 +53,20 @@ public final class UndertowWebSocketDeploymentCustomizer implements BeanCreatedE
 
     private final ServletWebSocketConfiguration configuration;
     private final Duration idleTimeout;
+    private final WebSocketContainerHolder holder;
 
     /**
      * Default constructor.
      *
      * @param configuration       The WebSocket configuration
      * @param serverConfiguration The server configuration, used for the default idle timeout
+     * @param holder              Where the container is registered for client connections
      */
     public UndertowWebSocketDeploymentCustomizer(ServletWebSocketConfiguration configuration,
-                                                 HttpServerConfiguration serverConfiguration) {
+                                                 HttpServerConfiguration serverConfiguration,
+                                                 WebSocketContainerHolder holder) {
         this.configuration = configuration;
+        this.holder = holder;
         this.idleTimeout = configuration.getIdleTimeout() != null
             ? configuration.getIdleTimeout()
             : serverConfiguration.getIdleTimeout();
@@ -75,7 +80,10 @@ public final class UndertowWebSocketDeploymentCustomizer implements BeanCreatedE
         }
         WebSocketDeploymentInfo webSocketDeploymentInfo = new WebSocketDeploymentInfo()
             .setDispatchToWorkerThread(true)
-            .addListener(container -> ServerContainerCustomizer.apply(container, configuration, idleTimeout));
+            .addListener(container -> {
+                ServerContainerCustomizer.apply(container, configuration, idleTimeout);
+                holder.register(container);
+            });
         if (configuration.getCompression().isEnabled()) {
             webSocketDeploymentInfo.addExtension(new PerMessageDeflateHandshake());
         }

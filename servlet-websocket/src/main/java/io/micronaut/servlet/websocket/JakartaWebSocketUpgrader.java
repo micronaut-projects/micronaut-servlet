@@ -71,7 +71,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public final class JakartaWebSocketUpgrader implements ServletWebSocketUpgrader {
 
     private static final Logger LOG = LoggerFactory.getLogger(JakartaWebSocketUpgrader.class);
-    private static final String SERVER_CONTAINER_ATTRIBUTE = "jakarta.websocket.server.ServerContainer";
     private static final AtomicBoolean NOT_IMPLEMENTED_WARNED = new AtomicBoolean();
 
     private final ServletWebSocketSupport support;
@@ -149,7 +148,7 @@ public final class JakartaWebSocketUpgrader implements ServletWebSocketUpgrader 
             builder = builder.subprotocols(subprotocols);
         }
         if (jakartaEndpoint != null) {
-            List<Class<? extends Encoder>> containerEncoders = containerEncoders(jakartaEndpoint);
+            List<Class<? extends Encoder>> containerEncoders = jakartaEndpoint.containerEncoders(support.components());
             if (!containerEncoders.isEmpty()) {
                 builder = builder.encoders(containerEncoders);
             }
@@ -192,19 +191,8 @@ public final class JakartaWebSocketUpgrader implements ServletWebSocketUpgrader 
      * only the ones the application has opted into reflection are handed over. The others still
      * encode return values, on the Micronaut side.</p>
      */
-    @SuppressWarnings("unchecked")
-    private List<Class<? extends Encoder>> containerEncoders(JakartaEndpoint jakartaEndpoint) {
-        List<Class<? extends Encoder>> allowed = new ArrayList<>(jakartaEndpoint.encoders().size());
-        for (Class<?> encoder : jakartaEndpoint.encoders()) {
-            if (support.components().isReflectionAllowed(encoder)) {
-                allowed.add((Class<? extends Encoder>) encoder);
-            }
-        }
-        return allowed;
-    }
-
     static ServerContainer resolveServerContainer(HttpServletRequest servletRequest) {
-        Object attribute = servletRequest.getServletContext().getAttribute(SERVER_CONTAINER_ATTRIBUTE);
+        Object attribute = servletRequest.getServletContext().getAttribute(WebSocketContainerHolder.SERVER_CONTAINER_ATTRIBUTE);
         if (attribute instanceof ServerContainer serverContainer) {
             return serverContainer;
         }

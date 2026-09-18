@@ -13,6 +13,7 @@ import io.micronaut.websocket.annotation.OnClose
 import io.micronaut.websocket.annotation.OnError
 import io.micronaut.websocket.annotation.OnMessage
 import io.micronaut.websocket.annotation.OnOpen
+import io.micronaut.websocket.annotation.ClientWebSocket
 import io.micronaut.websocket.annotation.ServerWebSocket
 import jakarta.inject.Singleton
 
@@ -21,6 +22,7 @@ class JakartaWebSocketAnnotationSpec extends AbstractTypeElementSpec {
     private static final String IMPORTS = '''
 package test;
 
+import jakarta.websocket.ClientEndpoint;
 import jakarta.websocket.CloseReason;
 import jakarta.websocket.EndpointConfig;
 import jakarta.websocket.OnClose;
@@ -269,6 +271,103 @@ class BoundEndpoint {
         method(definition, 'text').hasAnnotation(OnMessage)
     }
 
+    void "a Jakarta client endpoint becomes a prototype bean with mapped handlers and no Micronaut stereotype"() {
+        given:
+        BeanDefinition definition = buildBeanDefinition('test.EchoClient', IMPORTS + '''
+@ClientEndpoint(subprotocols = {"chat"})
+class EchoClient {
+
+    private Session session;
+
+    @OnOpen
+    public void open(Session session, EndpointConfig config) {
+        this.session = session;
+    }
+
+    @OnMessage(maxMessageSize = 1024)
+    public void text(String message) {
+    }
+
+    @OnMessage
+    public void binary(ByteBuffer data) {
+    }
+
+    @OnClose
+    public void close(CloseReason reason) {
+    }
+
+    @OnError
+    public void error(Throwable error) {
+    }
+
+    public void sendGreeting(String name) {
+        session.getAsyncRemote().sendText("hello " + name);
+    }
+}
+''')
+
+        expect: 'the Jakarta annotation is kept for the runtime to read, and no Micronaut client stereotype is added'
+        definition.hasAnnotation('jakarta.websocket.ClientEndpoint')
+        definition.stringValues('jakarta.websocket.ClientEndpoint', 'subprotocols') == ['chat'] as String[]
+        !definition.hasStereotype(ClientWebSocket)
+        !definition.hasStereotype(ServerWebSocket)
+        definition.scopeName.get() == Prototype.name
+
+        and: 'the handlers are executable through the mapped annotations'
+        method(definition, 'open').hasAnnotation(OnOpen)
+        method(definition, 'text').hasAnnotation(OnMessage)
+        method(definition, 'text').intValue(OnMessage, 'maxPayloadLength').get() == 1024
+        method(definition, 'binary').hasAnnotation(OnMessage)
+        method(definition, 'close').hasAnnotation(OnClose)
+        method(definition, 'error').hasAnnotation(OnError)
+
+        and: 'the endpoint\'s own methods are not made executable'
+        method(definition, 'sendGreeting') == null
+    }
+
+    void "a client endpoint need not receive: @OnMessage is optional"() {
+        given:
+        BeanDefinition definition = buildBeanDefinition('test.SendOnlyClient', IMPORTS + '''
+@ClientEndpoint
+class SendOnlyClient {
+    @OnOpen
+    public void open(Session session) {
+        session.getAsyncRemote().sendText("hello");
+    }
+}
+''')
+
+        expect:
+        definition.hasAnnotation('jakarta.websocket.ClientEndpoint')
+        definition.scopeName.get() == Prototype.name
+        method(definition, 'open').hasAnnotation(OnOpen)
+    }
+
+    void "the components a client endpoint names are introspected and the default client configurator is skipped"() {
+        given:
+        String source = IMPORTS + '''
+import jakarta.websocket.ClientEndpointConfig;
+import jakarta.websocket.Decoder;
+
+@ClientEndpoint(decoders = CodecClient.PlainDecoder.class, configurator = ClientEndpointConfig.Configurator.class)
+class CodecClient {
+
+    public static class PlainDecoder implements Decoder.Text<String> {
+        @Override public String decode(String s) { return s; }
+        @Override public boolean willDecode(String s) { return true; }
+    }
+
+    @OnMessage
+    public void text(String message) {
+    }
+}
+'''
+        BeanDefinition definition = buildBeanDefinition('test.CodecClient', source)
+
+        expect:
+        definition.stringValues(Introspected, 'classNames') as Set == ['test.CodecClient$PlainDecoder'] as Set
+    }
+
     void "an endpoint that cannot be mapped is rejected at compilation time: #reason"() {
         when:
         buildBeanDefinition('test.BadEndpoint', IMPORTS + source)
@@ -339,14 +438,37 @@ class BadEndpoint {
     }
 }
 '''                                                                                                       | 'more than one @OnOpen'
-        'client endpoint'           | '''
-@jakarta.websocket.ClientEndpoint
+        'server and client'         | '''
+@ServerEndpoint("/bad")
+@ClientEndpoint
 class BadEndpoint {
     @OnMessage
     public void text(String message) {
     }
 }
-'''                                                                                                       | '@ClientEndpoint is not supported'
+'''                                                                                                       | 'cannot be both a @ServerEndpoint and a @ClientEndpoint'
+        'client with two text handlers' | '''
+@ClientEndpoint
+class BadEndpoint {
+    @OnMessage
+    public void text(String message) {
+    }
+    @OnMessage
+    public void more(java.io.Reader reader) {
+    }
+}
+'''                                                                                                       | '@ClientEndpoint declares more than one text @OnMessage'
+        'client with a path parameter' | '''
+@ClientEndpoint
+class BadEndpoint {
+    @OnOpen
+    public void open(@PathParam("room") String room) {
+    }
+    @OnMessage
+    public void text(String message) {
+    }
+}
+'''                                                                                                       | '@PathParam is only supported on a @ServerEndpoint'
         'decoder needing injection' | '''
 import jakarta.websocket.Decoder;
 

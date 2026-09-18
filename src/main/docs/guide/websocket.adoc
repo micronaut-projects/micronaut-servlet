@@ -91,11 +91,10 @@ Unless the class declares a scope of its own, one endpoint instance is created p
 connection, which is the Jakarta contract and lets the endpoint keep the session and its
 state in fields. An explicit `@Singleton` shares one instance between all connections.
 
-The processor reports at compilation time what could not work at runtime: an endpoint
+The processor reports at compilation time what could not work at runtime: a server endpoint
 without an `@OnMessage` method, more than one handler for a message category, a partial
 message handler (the `boolean` last-part parameter, since messages are always delivered
-whole), a `maxMessageSize` beyond `Integer.MAX_VALUE`, and `@ClientEndpoint`, for which
-`@ClientWebSocket` is the equivalent.
+whole), and a `maxMessageSize` beyond `Integer.MAX_VALUE`.
 
 ==== Decoders, encoders and the configurator
 
@@ -143,6 +142,45 @@ A declared configurator has its `modifyHandshake`, `checkOrigin`, `getNegotiated
 and `getNegotiatedExtensions` honoured; an origin must pass both its check and the
 <<websocket-origin, Micronaut policy>>. Its `getEndpointInstance` is not called: the endpoint
 is always the bean.
+
+==== Client endpoints
+
+A `@ClientEndpoint` is supported the same way. The class is a plain bean whose handlers the
+processor makes executable, so unlike under a Jakarta container - which needs a public
+no-argument constructor - it can inject its dependencies through its constructor. It is opened
+through the `jakarta.websocket.WebSocketContainer` bean rather than
+`ContainerProvider.getWebSocketContainer()`, whose result depends on which implementation
+`ServiceLoader` happens to find first.
+
+snippet::io.micronaut.servlet.docs.websocket.jakarta.EchoClientEndpoint[tags="imports,class", indent=0]
+
+<1> `@ClientEndpoint` takes `subprotocols`, `decoders`, `encoders` and `configurator`, which are
+honoured as for a `@ServerEndpoint`; the URI comes from `connectToServer`.
+<2> The handlers take what a server endpoint's do: the container's `Session`, the
+`EndpointConfig`, the Jakarta `CloseReason`, the `Throwable`, and anything a Micronaut handler
+binds, such as a `@Header` of the handshake request.
+<3> One text, one binary and one pong `@OnMessage` may be declared, and a value one returns is
+sent to the server. Unlike a server endpoint a client need not declare any: a client that only
+sends is valid.
+<4> Sending goes through the container's session. The class's own methods are its own, whatever
+their names.
+
+snippet::io.micronaut.servlet.docs.websocket.jakarta.EchoClientEndpointSpec[tags="connect", indent=0]
+
+<1> The container is a bean; inject it where the connection is opened.
+<2> `connectToServer` takes the endpoint class, which creates one instance per connection, or an
+instance. It returns once `@OnOpen` has completed, and throws a `DeploymentException` carrying
+the cause when it failed or did not complete within `micronaut.servlet.websocket.connect-timeout`
+(30 seconds by default), in which case the session is closed.
+
+The connection itself is opened by the servlet container's Jakarta client - the same
+`ServerContainer` the server side upgrades through is also a client container on Jetty, Tomcat
+and Undertow - so the `Session` a handler receives is the container's own, and the handlers are
+invoked through the compiled metadata: the container never scans or instantiates the class.
+A `@ClientEndpoint` class compiled without the processor is handed to the container as it is,
+which then does both reflectively. `@PathParam` is rejected on a client endpoint, which has no
+URI template to bind it from, and Micronaut's `WebSocketClient` does not open a
+`@ClientEndpoint`; a client for it is a `@ClientWebSocket`.
 
 === Filters and security run on the handshake
 

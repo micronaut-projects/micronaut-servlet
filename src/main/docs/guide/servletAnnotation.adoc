@@ -29,6 +29,6 @@ snippet::io.micronaut.servlet.jetty.MyFilterFactory[tags="class", indent=0, proj
 
 NOTE: Servlet Filters are not to be confused with https://docs.micronaut.io/latest/guide/#filters[Micronaut filters]. Servlet Filters always run before the Micronaut Servlet which in turn runs the Micronaut Filters hence it is not possible to place a Servlet Filter after Micronaut Filters.
 
-The same processor maps the Jakarta WebSocket annotations - `@ServerEndpoint`, `@OnOpen`,
+The same processor maps the Jakarta WebSocket annotations - `@ServerEndpoint`, `@ClientEndpoint`, `@OnOpen`,
 `@OnMessage`, `@OnClose`, `@OnError` and `@PathParam` - onto Micronaut's WebSocket support.
 See the <<websocket, WebSocket section>>.
