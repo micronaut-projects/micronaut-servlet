@@ -7,27 +7,10 @@ from jakarta.servlet.http import HttpServletRequest, HttpServletResponse
 from jakarta.servlet.http import Part as ServletPart
 from java.io import BufferedReader, Writer
 from micronaut.context.annotation import Requires
-from micronaut.core.annotation import Introspected
 from micronaut.http import HttpHeaders, HttpStatus, MediaType
 from micronaut.http.annotation import Body, Controller, Get, Part, Post
 from micronaut.http.multipart import CompletedPart
 from micronaut.servlet.docs.servletapi.Person import Person
-
-
-# tag::writable[]
-@Introspected
-class HelloWritable(Writable):
-
-    def __init__(self, readable: Readable):
-        self.readable = readable
-
-    def writeTo(self, out: Writer) -> None:
-        reader = BufferedReader(self.readable.asReader())
-        try:
-            out.append("Hello ").append(reader.readLine())
-        finally:
-            reader.close()
-# end::writable[]
 
 
 @Requires(property="spec.name", value="DocsControllerTest")
@@ -55,7 +38,13 @@ class DocsController:
 
     @Post(value="/writable", processes="text/plain")
     def read_and_write(self, readable: Annotated[Readable, Body]) -> Writable:
-        return HelloWritable(readable)
+        def write_to(out: Writer) -> None:
+            reader = BufferedReader(readable.asReader())
+            try:
+                out.append("Hello ").append(reader.readLine())
+            finally:
+                reader.close()
+        return write_to
     # end::writable[]
 
     # tag::multipart[]

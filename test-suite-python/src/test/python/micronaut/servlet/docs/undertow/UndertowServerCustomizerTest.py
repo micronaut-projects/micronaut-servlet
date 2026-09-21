@@ -1,14 +1,10 @@
 from typing import Annotated
 
+from io.undertow import Undertow
 from jakarta.inject import Inject
 from micronaut.context.annotation import Property
 from micronaut.test.extensions.junit5.annotation import MicronautTest
 from org.junit.jupiter.api import Test
-
-try:
-    from io.undertow import Undertow
-except ImportError:  # TODO(python): packages under `io.` other than `io.micronaut` cannot be imported at runtime
-    from undertow import Undertow
 
 
 # Exercises the listener shown in the Undertow section of the guide, so the documented Python

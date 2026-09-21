@@ -25,13 +25,8 @@ for the final migration wave.
   Reactor (`from reactor.core.publisher import Flux`). Imported classes work as base classes (`AutoCloseable`),
   generic type arguments, type hints and as runtime class literals (`WebSocketClient.connect(ChatClientWebSocket,
   ...)`, `retrieve(..., String)`, `getUriVariables().get("topic", String, None)`).
-- Undertow lives in an `io.` package: the compiler resolves `from io.undertow import Undertow`, but at runtime `io`
-  is the Python standard library module, so the import is written as `try: from io.undertow import Undertow` /
-  `except ImportError: from undertow import Undertow` (`TODO(python)`, compiler fix for `io.*` packages pending).
-  The nested builder is referenced by attribute access, `BeanCreatedEventListener[Undertow.Builder]`; a module-level
-  alias (`UndertowBuilder = Undertow.Builder`) of a conditionally imported class is not resolved by the compiler and
-  the generic base degrades to `BeanCreatedEventListener[Object]`, which then receives every bean (including the ones
-  created before the Python runtime exists).
+- Undertow lives in an `io.` package and is imported like any other Java class (`from io.undertow import Undertow`);
+  the nested builder is referenced by attribute access, `BeanCreatedEventListener[Undertow.Builder]`.
 - The classes the type hints name must be on the compile classpath, otherwise the stub silently degrades to `Object`
   (the server classes are `implementation` dependencies of the runtimes: the test suites add `tomcat-embed-core`
   and `undertow-servlet` explicitly).
@@ -41,11 +36,11 @@ for the final migration wave.
   one is picked, then fails); the multipart test builds a Java `byte[]` with `java.util.Base64`.
 - `java.lang.String.valueOf(None)` picks the `char[]` overload and throws; the helper controller that reports the
   servlet request attribute set by the documented filter checks for `None` itself.
-- A Python class cannot extend a Java class: the documented servlet filter implements `jakarta.servlet.Filter`
-  instead of extending `GenericFilter`, and the `Writable` returned by the Readable/Writable example is a small
-  class implementing `Writable` instead of a lambda.
-- The test-suite `Test` tasks run with `enableAssertions = false`: a Truffle host-interop assertion trips on varargs
-  overloads called from Python.
+- The documented servlet filter implements `jakarta.servlet.Filter` instead of extending `GenericFilter`: a Python
+  class extending a Java base whose overridden method declares checked exceptions (`doFilter throws ServletException,
+  IOException`) does not compile (`unreported exception ... must be caught or declared to be thrown` in the generated
+  dispatcher, `TODO(python)`). The `Writable` of the Readable/Writable example is a nested function returned from
+  the controller method, like the Java lambda.
 
 ## Active `@Disabled` Tests
 

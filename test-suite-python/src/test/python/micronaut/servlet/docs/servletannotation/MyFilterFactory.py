@@ -8,6 +8,8 @@ from micronaut.servlet.api.annotation import ServletFilterBean
 from micronaut.context.annotation import Requires
 
 
+# TODO(python): extending `GenericFilter` like the Java example does not compile: `doFilter` declares checked exceptions
+# (`throws ServletException, IOException`) that the generated dispatcher of the Python subclass does not declare.
 # tag::class[]
 
 

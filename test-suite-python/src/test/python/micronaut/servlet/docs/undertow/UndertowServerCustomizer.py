@@ -1,11 +1,7 @@
 # tag::imports[]
+from io.undertow import Undertow
 from jakarta.inject import Singleton
 from micronaut.context.event import BeanCreatedEvent, BeanCreatedEventListener
-
-try:
-    from io.undertow import Undertow
-except ImportError:  # TODO(python): packages under `io.` other than `io.micronaut` cannot be imported at runtime
-    from undertow import Undertow
 # end::imports[]
 from micronaut.context.annotation import Requires
 
