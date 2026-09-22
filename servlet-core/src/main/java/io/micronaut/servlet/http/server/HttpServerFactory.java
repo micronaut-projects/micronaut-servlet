@@ -32,7 +32,6 @@ import io.micronaut.http.server.HttpServerConfiguration;
 import io.micronaut.http.server.exceptions.HttpServerException;
 import io.micronaut.http.ssl.ServerSslConfiguration;
 import io.micronaut.http.ssl.SslConfiguration;
-import io.micronaut.scheduling.LoomSupport;
 import io.micronaut.servlet.http.ServletConfiguration;
 import jakarta.inject.Singleton;
 
@@ -171,9 +170,9 @@ public class HttpServerFactory {
      * @return The executor to run handlers on
      */
     private ExecutorService createExecutor(ServletConfiguration servletConfiguration) {
-        if (servletConfiguration.isEnableVirtualThreads() && LoomSupport.isSupported()) {
+        if (servletConfiguration.isEnableVirtualThreads()) {
             return Executors.newThreadPerTaskExecutor(
-                LoomSupport.newVirtualThreadFactory("micronaut-jdk-server-", builder -> { })
+                Thread.ofVirtual().name("micronaut-jdk-server-", 1L).factory()
             );
         }
         Integer configuredMaxThreads = servletConfiguration.getMaxThreads();

@@ -27,7 +27,6 @@ import io.micronaut.http.server.exceptions.ServerStartupException;
 import io.micronaut.http.ssl.SslConfiguration;
 import io.micronaut.servlet.engine.MicronautServletConfiguration;
 import io.micronaut.servlet.engine.initializer.MicronautServletInitializer;
-import io.micronaut.scheduling.LoomSupport;
 import io.micronaut.servlet.engine.ServletCompressionConfiguration;
 import io.micronaut.servlet.http.server.ServletServerFactory;
 import io.micronaut.servlet.http.server.ServletStaticResourceConfiguration;
@@ -397,11 +396,11 @@ public class UndertowFactory extends ServletServerFactory {
             .setDeploymentName(servletConfiguration.getName())
             .setClassLoader(getEnvironment().getClassLoader())
             .setContextPath(cp);
-        if (servletConfiguration.isEnableVirtualThreads() && LoomSupport.isSupported()) {
+        if (servletConfiguration.isEnableVirtualThreads()) {
             // without this every servlet invocation runs on the XNIO worker pool, eight threads per core by default,
             // and enable-virtual-threads was silently ignored: a blocking controller capped out at that pool's size
             ExecutorService executor = Executors.newThreadPerTaskExecutor(
-                LoomSupport.newVirtualThreadFactory("undertow-handler-", builder -> { })
+                Thread.ofVirtual().name("undertow-handler-", 1L).factory()
             );
             handlerExecutor.set(executor);
             deploymentInfo.setExecutor(executor);

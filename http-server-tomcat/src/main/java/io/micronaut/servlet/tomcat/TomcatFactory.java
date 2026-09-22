@@ -37,7 +37,6 @@ import io.micronaut.context.env.Environment;
 import io.micronaut.core.io.ResourceResolver;
 import io.micronaut.http.ssl.ClientAuthentication;
 import io.micronaut.http.ssl.SslConfiguration;
-import io.micronaut.scheduling.LoomSupport;
 import io.micronaut.servlet.engine.DefaultMicronautServlet;
 import io.micronaut.servlet.engine.MicronautServletConfiguration;
 import io.micronaut.servlet.engine.ServletCompressionConfiguration;
@@ -190,7 +189,7 @@ public class TomcatFactory extends ServletServerFactory {
         if (configuration.getMaxThreads() == null) {
             return;
         }
-        if (configuration.isEnableVirtualThreads() && LoomSupport.isSupported()) {
+        if (configuration.isEnableVirtualThreads()) {
             LOG.warn("micronaut.servlet.max-threads ({}) does not apply while virtual threads are enabled: "
                 + "virtual threads are not pooled, so request concurrency is not bounded by it. "
                 + "Set micronaut.servlet.enable-virtual-threads to false to size a platform thread pool instead.",
