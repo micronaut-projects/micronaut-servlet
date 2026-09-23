@@ -42,7 +42,7 @@ public class DocsController {
 
     // tag::writable[]
     @Post(value = "/writable", processes = "text/plain")
-    Writable readAndWrite(@Body Readable readable) throws IOException {
+    Writable readAndWrite(@Body Readable readable) {
         return out -> {
             try (BufferedReader reader = new BufferedReader(readable.asReader())) {
                 out.append("Hello ").append(reader.readLine());
