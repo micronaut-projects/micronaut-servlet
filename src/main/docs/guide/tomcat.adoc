@@ -21,13 +21,7 @@ This is useful when multiple servlet runtimes are available and you want Microna
 
 Or you can register a `BeanCreatedEventListener`:
 
-.Tomcat Server Customization
-[source,java]
-----
-include::http-server-tomcat/src/test/java/io/micronaut/servlet/tomcat/docs/TomcatServerCustomizer.java[tags=imports, indent=0]
-
-include::http-server-tomcat/src/test/java/io/micronaut/servlet/tomcat/docs/TomcatServerCustomizer.java[tags=class, indent=0]
-----
+snippet::io.micronaut.servlet.docs.tomcat.TomcatServerCustomizer[tags="imports,class", indent=0, title="Tomcat Server Customization"]
 
 === Access Log Configuration
 
