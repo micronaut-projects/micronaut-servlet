@@ -34,6 +34,7 @@ import io.micronaut.http.ssl.ServerSslConfiguration;
 import io.micronaut.http.ssl.SslConfiguration;
 import io.micronaut.servlet.http.ServletConfiguration;
 import jakarta.inject.Singleton;
+import org.jspecify.annotations.Nullable;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
@@ -75,7 +76,8 @@ public class HttpServerFactory {
      *
      * @param applicationContext Application Context
      * @param httpServerConfiguration HTTP Server Configuration
-     * @param servletConfiguration Servlet Configuration
+     * @param servletConfiguration Servlet Configuration, or {@code null} when servlet engine configuration is not
+     *                             available
      * @param executorOwnership Records the executor created here, so only that one is shut down with the server
      * @param httpHandlers Handlers
      * @param filters {@link Filter} beans applied to every context, in bean order, such as the access log
@@ -87,7 +89,7 @@ public class HttpServerFactory {
     @SuppressWarnings("java:S107") // one parameter per collaborator the server is assembled from; package-private
     HttpServer createHttpServer(ApplicationContext applicationContext,
                                 HttpServerConfiguration httpServerConfiguration,
-                                ServletConfiguration servletConfiguration,
+                                @Nullable ServletConfiguration servletConfiguration,
                                 ServerSslConfiguration sslConfiguration,
                                 ResourceResolver resourceResolver,
                                 JdkServerExecutorOwnership executorOwnership,
@@ -166,16 +168,19 @@ public class HttpServerFactory {
      *
      * <p>The pool is closed by {@link HttpServerEmbeddedServer} when the server stops.</p>
      *
-     * @param servletConfiguration The servlet configuration
+     * @param servletConfiguration The servlet configuration, or {@code null} to use the default configuration
      * @return The executor to run handlers on
      */
-    private ExecutorService createExecutor(ServletConfiguration servletConfiguration) {
-        if (servletConfiguration.isEnableVirtualThreads()) {
+    private ExecutorService createExecutor(@Nullable ServletConfiguration servletConfiguration) {
+        ServletConfiguration configuration = servletConfiguration != null
+            ? servletConfiguration
+            : ServletConfiguration.DEFAULT;
+        if (configuration.isEnableVirtualThreads()) {
             return Executors.newThreadPerTaskExecutor(
                 Thread.ofVirtual().name("micronaut-jdk-server-", 1L).factory()
             );
         }
-        Integer configuredMaxThreads = servletConfiguration.getMaxThreads();
+        Integer configuredMaxThreads = configuration.getMaxThreads();
         int maxThreads = configuredMaxThreads != null && configuredMaxThreads > 0 ? configuredMaxThreads : DEFAULT_MAX_THREADS;
         // a fixed pool queues without limit, so handlers that block let exchanges pile up until the heap is gone.
         // Bound the queue and let the dispatcher thread run the overflow, which stops it accepting for as long as
