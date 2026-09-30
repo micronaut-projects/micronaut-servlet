@@ -155,7 +155,7 @@
         <h1>Micronaut Servlet</h1>
         <p></p>
         <p>Provides integration between Micronaut and the Servlet API</p>
-        <p><strong>Version:</strong> 6.2.1 </p>
+        <p><strong>Version:</strong> 6.2.2 </p>
     </div>
     
 <h1 id="introduction"><a class="anchor" href="#introduction"></a>1 Introduction</h1>
@@ -245,19 +245,71 @@
 <div class="paragraph">
 <p>You can receive the <code>HttpServletRequest</code> and <code>HttpServletResponse</code> objects directly as parameters:</p>
 </div>
-<div class="listingblock">
+<div class="listingblock multi-language-sample">
 <div class="title">Using the Request and Response</div>
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@Get("/hello")
 void process(
-        HttpServletRequest request, <i class="conum" data-value="1"></i><b>(1)</b>
-        HttpServletResponse response) <i class="conum" data-value="2"></i><b>(2)</b>
+        HttpServletRequest request, // <b class="conum">(1)</b>
+        HttpServletResponse response) // <b class="conum">(2)</b>
         throws IOException {
     response.addHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_PLAIN);
     response.setStatus(HttpStatus.ACCEPTED.getCode());
     try (final PrintWriter writer = response.getWriter()) {
         writer.append("Hello ").append(request.getParameter("name"));
         writer.flush();
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title">Using the Request and Response</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">@Get("/hello")
+def process(
+    self,
+    request: HttpServletRequest,  # <b class="conum">(1)</b>
+    response: HttpServletResponse,  # <b class="conum">(2)</b>
+) -&gt; None:
+    response.addHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_PLAIN)
+    response.setStatus(HttpStatus.ACCEPTED.getCode())
+    writer = response.getWriter()
+    try:
+        writer.append("Hello ").append(request.getParameter("name"))
+        writer.flush()
+    finally:
+        writer.close()</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title">Using the Request and Response</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">@Get("/hello")
+fun process(
+    request: HttpServletRequest, // <b class="conum">(1)</b>
+    response: HttpServletResponse // <b class="conum">(2)</b>
+) {
+    response.addHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_PLAIN)
+    response.status = HttpStatus.ACCEPTED.code
+    response.writer.use { writer -&gt;
+        writer.append("Hello ").append(request.getParameter("name"))
+        writer.flush()
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title">Using the Request and Response</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">@Get("/hello")
+void process(
+        HttpServletRequest request, // <b class="conum">(1)</b>
+        HttpServletResponse response) { // <b class="conum">(2)</b>
+    response.addHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_PLAIN)
+    response.setStatus(HttpStatus.ACCEPTED.code)
+    response.writer.withCloseable { writer -&gt;
+        writer.append("Hello ").append(request.getParameter("name"))
+        writer.flush()
     }
 }</code></pre>
 </div>
@@ -280,19 +332,66 @@ void process(
 <div class="paragraph">
 <p>Writing to the response and reading from the request can be simplified with Micronaut&#8217;s <code>Readable</code> and <code>Writable</code> interfaces:</p>
 </div>
-<div class="listingblock">
+<div class="listingblock multi-language-sample">
 <div class="title">Using Readable and Writable</div>
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">import io.micronaut.core.io.Readable;
 import io.micronaut.core.io.Writable;
 
 @Post(value = "/writable", processes = "text/plain")
-Writable readAndWrite(@Body Readable readable) throws IOException {
+Writable readAndWrite(@Body Readable readable) {
     return out -&gt; {
         try (BufferedReader reader = new BufferedReader(readable.asReader())) {
             out.append("Hello ").append(reader.readLine());
         }
     };
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title">Using Readable and Writable</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from micronaut.core.io import Readable, Writable
+
+
+@Post(value="/writable", processes="text/plain")
+def read_and_write(self, readable: Annotated[Readable, Body]) -&gt; Writable:
+    def write_to(out: Writer) -&gt; None:
+        reader = BufferedReader(readable.asReader())
+        try:
+            out.append("Hello ").append(reader.readLine())
+        finally:
+            reader.close()
+    return write_to</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title">Using Readable and Writable</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">import io.micronaut.core.io.Readable
+import io.micronaut.core.io.Writable
+
+@Post(value = "/writable", processes = ["text/plain"])
+fun readAndWrite(@Body readable: Readable) = Writable { out -&gt;
+    BufferedReader(readable.asReader()).use { reader -&gt;
+        out.append("Hello ").append(reader.readLine())
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title">Using Readable and Writable</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">import io.micronaut.core.io.Readable
+import io.micronaut.core.io.Writable
+
+@Post(value = "/writable", processes = "text/plain")
+Writable readAndWrite(@Body Readable readable) {
+    return { out -&gt;
+        new BufferedReader(readable.asReader()).withCloseable { reader -&gt;
+            out.append("Hello ").append(reader.readLine())
+        }
+    } as Writable
 }</code></pre>
 </div>
 </div>
@@ -302,18 +401,63 @@ Writable readAndWrite(@Body Readable readable) throws IOException {
 <div class="paragraph">
 <p>Multipart support is improved with the ability to inject parts using the annotation <code>io.micronaut.http.annotation.Part</code>. For example:</p>
 </div>
-<div class="listingblock">
-<div class="title">Using <code>@Part</code></div>
+<div class="listingblock multi-language-sample">
+<div class="title">Using @Part</div>
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@Post(value = "/multipart", consumes = MediaType.MULTIPART_FORM_DATA, produces = "text/plain")
 String multipart(
-        String attribute, <i class="conum" data-value="1"></i><b>(1)</b>
-        @Part("one") Person person, <i class="conum" data-value="2"></i><b>(2)</b>
-        @Part("two") String text, <i class="conum" data-value="3"></i><b>(3)</b>
-        @Part("three") byte[] bytes, <i class="conum" data-value="4"></i><b>(4)</b>
-        @Part("four") jakarta.servlet.http.Part raw, <i class="conum" data-value="5"></i><b>(5)</b>
-        @Part("five") CompletedPart part) { <i class="conum" data-value="6"></i><b>(6)</b>
+        String attribute, // <b class="conum">(1)</b>
+        @Part("one") Person person, // <b class="conum">(2)</b>
+        @Part("two") String text, // <b class="conum">(3)</b>
+        @Part("three") byte[] bytes, // <b class="conum">(4)</b>
+        @Part("four") jakarta.servlet.http.Part raw, // <b class="conum">(5)</b>
+        @Part("five") CompletedPart part) { // <b class="conum">(6)</b>
     return "Ok";
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title">Using @Part</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">@Post(value="/multipart", consumes=MediaType.MULTIPART_FORM_DATA, produces="text/plain")
+def multipart(
+    self,
+    attribute: str,  # <b class="conum">(1)</b>
+    person: Annotated[Person, Part("one")],  # <b class="conum">(2)</b>
+    text: Annotated[str, Part("two")],  # <b class="conum">(3)</b>
+    data: Annotated[bytes, Part("three")],  # <b class="conum">(4)</b>
+    raw: Annotated[ServletPart, Part("four")],  # <b class="conum">(5)</b>
+    part: Annotated[CompletedPart, Part("five")],  # <b class="conum">(6)</b>
+) -&gt; str:
+    return "Ok"</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title">Using @Part</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">@Post(value = "/multipart", consumes = [MediaType.MULTIPART_FORM_DATA], produces = ["text/plain"])
+fun multipart(
+    attribute: String, // <b class="conum">(1)</b>
+    @Part("one") person: Person, // <b class="conum">(2)</b>
+    @Part("two") text: String, // <b class="conum">(3)</b>
+    @Part("three") bytes: ByteArray, // <b class="conum">(4)</b>
+    @Part("four") raw: jakarta.servlet.http.Part, // <b class="conum">(5)</b>
+    @Part("five") part: CompletedPart // <b class="conum">(6)</b>
+): String = "Ok"</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title">Using @Part</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">@Post(value = "/multipart", consumes = MediaType.MULTIPART_FORM_DATA, produces = "text/plain")
+String multipart(
+        String attribute, // <b class="conum">(1)</b>
+        @Part("one") Person person, // <b class="conum">(2)</b>
+        @Part("two") String text, // <b class="conum">(3)</b>
+        @Part("three") byte[] bytes, // <b class="conum">(4)</b>
+        @Part("four") jakarta.servlet.http.Part raw, // <b class="conum">(5)</b>
+        @Part("five") CompletedPart part) { // <b class="conum">(6)</b>
+    return "Ok"
 }</code></pre>
 </div>
 </div>
@@ -375,6 +519,15 @@ String multipart(
         &lt;artifactId&gt;micronaut-servlet-processor&lt;/artifactId&gt;
     &lt;/path&gt;
 &lt;/annotationProcessorPaths&gt;</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="pyronaut">[tool.pyronaut.dependencies]
+build = [
+    <span class="hljs-string">"io.micronaut.servlet:micronaut-servlet-processor"</span>,
+]</code></pre>
 </div>
 </div>
 </p>
@@ -460,6 +613,95 @@ public class MyFilterFactory {
 }</code></pre>
 </div>
 </div>
+<div class="listingblock multi-language-sample">
+<div class="title">Adding a Filter with a Factory</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from jakarta.servlet import Filter, FilterChain, GenericFilter, ServletRequest, ServletResponse
+from micronaut.context.annotation import Factory
+from micronaut.core.annotation import Order
+from micronaut.core.order import Ordered
+from micronaut.servlet.api.annotation import ServletFilterBean
+
+
+class RunFirstFilter(GenericFilter):
+
+    def doFilter(self, request: ServletRequest, response: ServletResponse, chain: FilterChain) -&gt; None:
+        request.setAttribute("runFirst", True)
+        chain.doFilter(request, response)
+
+
+@Factory  # <b class="conum">(1)</b>
+class MyFilterFactory:
+
+    @ServletFilterBean(
+        filterName="another",  # <b class="conum">(2)</b>
+        value=["/extra-filter/*", "${my.filter.mapping}"])  # <b class="conum">(3)</b>
+    @Order(Ordered.HIGHEST_PRECEDENCE)  # <b class="conum">(4)</b>
+    def my_other_filter(self) -&gt; Filter:
+        return RunFirstFilter()</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title">Adding a Filter with a Factory</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">import io.micronaut.context.annotation.Factory
+import io.micronaut.core.annotation.Order
+import io.micronaut.core.order.Ordered
+import io.micronaut.servlet.api.annotation.ServletFilterBean
+import jakarta.servlet.Filter
+import jakarta.servlet.FilterChain
+import jakarta.servlet.GenericFilter
+import jakarta.servlet.ServletRequest
+import jakarta.servlet.ServletResponse
+
+@Factory // <b class="conum">(1)</b>
+class MyFilterFactory {
+
+    @ServletFilterBean(
+        filterName = "another", // <b class="conum">(2)</b>
+        value = ["/extra-filter/*", "\${my.filter.mapping}"]) // <b class="conum">(3)</b>
+    @Order(Ordered.HIGHEST_PRECEDENCE) // <b class="conum">(4)</b>
+    fun myOtherFilter(): Filter = object : GenericFilter() {
+        override fun doFilter(request: ServletRequest, response: ServletResponse, chain: FilterChain) {
+            request.setAttribute("runFirst", true)
+            chain.doFilter(request, response)
+        }
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title">Adding a Filter with a Factory</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">import io.micronaut.context.annotation.Factory
+import io.micronaut.core.annotation.Order
+import io.micronaut.core.order.Ordered
+import io.micronaut.servlet.api.annotation.ServletFilterBean
+import jakarta.servlet.Filter
+import jakarta.servlet.FilterChain
+import jakarta.servlet.GenericFilter
+import jakarta.servlet.ServletRequest
+import jakarta.servlet.ServletResponse
+
+@Factory // <b class="conum">(1)</b>
+class MyFilterFactory {
+
+    @ServletFilterBean(
+        filterName = "another", // <b class="conum">(2)</b>
+        value = ["/extra-filter/*", '${my.filter.mapping}']) // <b class="conum">(3)</b>
+    @Order(Ordered.HIGHEST_PRECEDENCE) // <b class="conum">(4)</b>
+    Filter myOtherFilter() {
+        return new GenericFilter() {
+            @Override
+            void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) {
+                request.setAttribute("runFirst", true)
+                chain.doFilter(request, response)
+            }
+        }
+    }
+}</code></pre>
+</div>
+</div>
 <div class="colist arabic">
 <table>
 <tr>
@@ -531,6 +773,15 @@ they do on the Netty server.</p>
 &lt;/dependency&gt;</code></pre>
 </div>
 </div>
+<div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="pyronaut">[tool.pyronaut.dependencies]
+runtime = [
+    <span class="hljs-string">"io.micronaut.servlet:micronaut-servlet-websocket"</span>,
+]</code></pre>
+</div>
+</div>
 </p>
 </div>
 <div class="paragraph">
@@ -554,6 +805,15 @@ separate artifact in all three cases:</p>
 &lt;/dependency&gt;</code></pre>
 </div>
 </div>
+<div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="pyronaut">[tool.pyronaut.dependencies]
+runtime = [
+    <span class="hljs-string">"org.eclipse.jetty.ee10.websocket:jetty-ee10-websocket-jakarta-server"</span>,
+]</code></pre>
+</div>
+</div>
 </p>
 </div>
 <div class="paragraph">
@@ -573,6 +833,15 @@ separate artifact in all three cases:</p>
 &lt;/dependency&gt;</code></pre>
 </div>
 </div>
+<div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="pyronaut">[tool.pyronaut.dependencies]
+runtime = [
+    <span class="hljs-string">"org.apache.tomcat.embed:tomcat-embed-websocket"</span>,
+]</code></pre>
+</div>
+</div>
 </p>
 </div>
 <div class="paragraph">
@@ -590,6 +859,15 @@ separate artifact in all three cases:</p>
     &lt;artifactId&gt;undertow-websockets-jsr&lt;/artifactId&gt;
     &lt;scope&gt;runtime&lt;/scope&gt;
 &lt;/dependency&gt;</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="pyronaut">[tool.pyronaut.dependencies]
+runtime = [
+    <span class="hljs-string">"io.undertow:undertow-websockets-jsr"</span>,
+]</code></pre>
 </div>
 </div>
 </p>
@@ -649,6 +927,30 @@ public class ChatServerWebSocket {
         return s -&gt; s != session &amp;&amp; topic.equalsIgnoreCase(s.getUriVariables().get("topic", String.class, null));
     }
 }</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">@ServerWebSocket("/ws/chat/{topic}/{username}")  # <b class="conum">(1)</b>
+class ChatServerWebSocket:
+
+    def __init__(self, broadcaster: WebSocketBroadcaster):
+        self.broadcaster = broadcaster
+
+    @OnOpen  # <b class="conum">(2)</b>
+    def on_open(self, topic: str, username: str, session: WebSocketSession) -&gt; None:
+        self.broadcaster.broadcastSync("[" + username + "] Joined!", self.is_valid(topic, session))
+
+    @OnMessage  # <b class="conum">(3)</b>
+    def on_message(self, topic: str, username: str, message: str, session: WebSocketSession) -&gt; None:
+        self.broadcaster.broadcastSync("[" + username + "] " + message, self.is_valid(topic, session))  # <b class="conum">(4)</b>
+
+    @OnClose  # <b class="conum">(5)</b>
+    def on_close(self, topic: str, username: str, session: WebSocketSession) -&gt; None:
+        self.broadcaster.broadcastSync("[" + username + "] Disconnected!", self.is_valid(topic, session))
+
+    def is_valid(self, topic: str, session: WebSocketSession):
+        return lambda s: s != session and topic.lower() == str(s.getUriVariables().get("topic", String, None)).lower()</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -764,6 +1066,26 @@ public abstract class ChatClientWebSocket implements AutoCloseable { // <b class
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">@ClientWebSocket("/ws/chat/{topic}/{username}")  # <b class="conum">(1)</b>
+class ChatClientWebSocket(ABC, AutoCloseable):  # <b class="conum">(2)</b>
+
+    def __init__(self):
+        self.replies = ConcurrentLinkedQueue()
+
+    @OnMessage
+    def on_message(self, message: str) -&gt; None:
+        self.replies.add(message)  # <b class="conum">(3)</b>
+
+    @abstractmethod
+    def send(self, message: str) -&gt; None:  # <b class="conum">(4)</b>
+        ...
+
+    def get_replies(self) -&gt; Collection[str]:
+        return self.replies</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">@ClientWebSocket("/ws/chat/{topic}/{username}") // <b class="conum">(1)</b>
 abstract class ChatClientWebSocket : AutoCloseable { // <b class="conum">(2)</b>
 
@@ -844,6 +1166,15 @@ This needs the annotation processor:</p>
         &lt;artifactId&gt;micronaut-servlet-processor&lt;/artifactId&gt;
     &lt;/path&gt;
 &lt;/annotationProcessorPaths&gt;</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="pyronaut">[tool.pyronaut.dependencies]
+build = [
+    <span class="hljs-string">"io.micronaut.servlet:micronaut-servlet-processor"</span>,
+]</code></pre>
 </div>
 </div>
 </p>
@@ -1502,6 +1833,15 @@ upgrade is attempted.</p>
 &lt;/dependency&gt;</code></pre>
 </div>
 </div>
+<div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="pyronaut">[tool.pyronaut.dependencies]
+build = [
+    <span class="hljs-string">"io.micronaut.servlet:micronaut-http-server-jetty"</span>,
+]</code></pre>
+</div>
+</div>
 </p>
 </div>
 <div class="paragraph">
@@ -1520,6 +1860,15 @@ upgrade is attempted.</p>
     &lt;groupId&gt;io.micronaut.servlet&lt;/groupId&gt;
     &lt;artifactId&gt;micronaut-servlet-engine&lt;/artifactId&gt;
 &lt;/dependency&gt;</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="pyronaut">[tool.pyronaut.dependencies]
+runtime = [
+    <span class="hljs-string">"io.micronaut.servlet:micronaut-servlet-engine"</span>,
+]</code></pre>
 </div>
 </div>
 </p>
@@ -1628,12 +1977,9 @@ When running as a WAR file, this can be problematic if you wish to run multiple 
 <p>To allow an external location per application, it is necessary to write our own replacement for <a href="../api/io/micronaut/servlet/engine/initializer/MicronautServletInitializer.html">MicronautServletInitializer</a>.
 The following example will look for configuration in the <code>/tmp</code> directory and on the classpath in the <code>/some/path</code> directory.</p>
 </div>
-<div class="listingblock">
-<div class="title">src/main/java/example/CustomMicronautServletInitializer.java</div>
+<div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">package example;
-
-import io.micronaut.context.ApplicationContext;
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.ApplicationContextBuilder;
 import io.micronaut.servlet.engine.initializer.MicronautServletInitializer;
 import jakarta.servlet.ServletContext;
@@ -1654,13 +2000,69 @@ public class CustomInitializer extends MicronautServletInitializer {
 }</code></pre>
 </div>
 </div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">import io.micronaut.context.ApplicationContext
+import io.micronaut.context.ApplicationContextBuilder
+import io.micronaut.servlet.engine.initializer.MicronautServletInitializer
+import jakarta.servlet.ServletContext
+
+class CustomInitializer : MicronautServletInitializer() {
+
+    override fun buildApplicationContext(ctx: ServletContext): ApplicationContextBuilder =
+        ApplicationContext
+            .builder()
+            .overrideConfigLocations(
+                "file:/tmp",
+                "classpath:/some/path"
+            )
+            .classLoader(ctx.classLoader)
+            .singletons(ctx)
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">import io.micronaut.context.ApplicationContext
+import io.micronaut.context.ApplicationContextBuilder
+import io.micronaut.servlet.engine.initializer.MicronautServletInitializer
+import jakarta.servlet.ServletContext
+
+class CustomInitializer extends MicronautServletInitializer {
+
+    @Override
+    protected ApplicationContextBuilder buildApplicationContext(ServletContext ctx) {
+        return ApplicationContext
+                .builder()
+                .overrideConfigLocations(
+                    "file:/tmp",
+                    "classpath:/some/path"
+                )
+                .classLoader(ctx.classLoader)
+                .singletons(ctx)
+    }
+}</code></pre>
+</div>
+</div>
+<div class="admonitionblock note lang-python">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+The servlet container instantiates the initializer itself, from the <code>META-INF/services</code> entry below, before any application context and therefore before the Python runtime exists. Write the initializer in Java, Kotlin or Groovy as shown above; the application it starts can be written in Python.
+</td>
+</tr>
+</table>
+</div>
 <div class="paragraph">
-<p>We can then use Java&#8217;s Service Provider Interface to register this class as the initializer by pointing to it in the <code>META-INF/services/jakarta.servlet.ServletContainerInitializer</code> file.</p>
+<p>We can then use Java&#8217;s Service Provider Interface to register this class as the initializer by pointing to it in the <code>META-INF/services/jakarta.servlet.ServletContainerInitializer</code> file, with the package the class is in (the example above is compiled as part of this documentation, hence its package):</p>
 </div>
 <div class="listingblock">
 <div class="title">src/main/resources/META-INF/services/jakarta.servlet.ServletContainerInitializer</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-text hljs" data-lang="text">example.CustomInitializer</code></pre>
+<pre class="highlightjs highlight"><code class="language-text hljs" data-lang="text">io.micronaut.servlet.docs.war.CustomInitializer</code></pre>
 </div>
 </div>
 <div class="admonitionblock note">
@@ -1717,6 +2119,15 @@ Some servlet containers may limit the locations that are accessible from applica
     &lt;groupId&gt;io.micronaut.servlet&lt;/groupId&gt;
     &lt;artifactId&gt;micronaut-http-server-jetty&lt;/artifactId&gt;
 &lt;/dependency&gt;</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="pyronaut">[tool.pyronaut.dependencies]
+runtime = [
+    <span class="hljs-string">"io.micronaut.servlet:micronaut-http-server-jetty"</span>,
+]</code></pre>
 </div>
 </div>
 </p>
@@ -1993,7 +2404,7 @@ If you plan to produce a WAR file then the dependency should be <code>developmen
 <div class="paragraph">
 <p>Or you can register a <code>BeanCreatedEventListener</code>:</p>
 </div>
-<div class="listingblock">
+<div class="listingblock multi-language-sample">
 <div class="title">Jetty Server Customization</div>
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">import io.micronaut.context.event.BeanCreatedEvent;
@@ -2006,8 +2417,65 @@ public class JettyServerCustomizer implements BeanCreatedEventListener&lt;Server
     @Override
     public Server onCreated(BeanCreatedEvent&lt;Server&gt; event) {
         Server jettyServer = event.getBean();
-        // perform customizations...
+        // perform customizations, for example:
+        jettyServer.setStopTimeout(5000);
         return jettyServer;
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title">Jetty Server Customization</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from jakarta.inject import Singleton
+from micronaut.context.event import BeanCreatedEvent, BeanCreatedEventListener
+from org.eclipse.jetty.server import Server
+
+@Singleton
+class JettyServerCustomizer(BeanCreatedEventListener[Server]):
+
+    def onCreated(self, event: BeanCreatedEvent[Server]) -&gt; Server:
+        jetty_server = event.getBean()
+        # perform customizations, for example:
+        jetty_server.setStopTimeout(5000)
+        return jetty_server</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title">Jetty Server Customization</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">import io.micronaut.context.event.BeanCreatedEvent
+import io.micronaut.context.event.BeanCreatedEventListener
+import org.eclipse.jetty.server.Server
+import jakarta.inject.Singleton
+
+@Singleton
+class JettyServerCustomizer : BeanCreatedEventListener&lt;Server&gt; {
+    override fun onCreated(event: BeanCreatedEvent&lt;Server&gt;): Server {
+        val jettyServer = event.bean
+        // perform customizations, for example:
+        jettyServer.stopTimeout = 5000
+        return jettyServer
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title">Jetty Server Customization</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">import io.micronaut.context.event.BeanCreatedEvent
+import io.micronaut.context.event.BeanCreatedEventListener
+import org.eclipse.jetty.server.Server
+import jakarta.inject.Singleton
+
+@Singleton
+class JettyServerCustomizer implements BeanCreatedEventListener&lt;Server&gt; {
+    @Override
+    Server onCreated(BeanCreatedEvent&lt;Server&gt; event) {
+        Server jettyServer = event.bean
+        // perform customizations, for example:
+        jettyServer.stopTimeout = 5000
+        return jettyServer
     }
 }</code></pre>
 </div>
@@ -2141,6 +2609,15 @@ micronaut.server.jetty.accessLog.pattern = "%{client}a - %u %t \"%r\" %s %O"</co
 &lt;/dependency&gt;</code></pre>
 </div>
 </div>
+<div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="pyronaut">[tool.pyronaut.dependencies]
+runtime = [
+    <span class="hljs-string">"ch.qos.logback.access:logback-access-common"</span>,
+]</code></pre>
+</div>
+</div>
 </p>
 </div>
 <div class="paragraph">
@@ -2174,6 +2651,15 @@ micronaut.server.jetty.accessLog.pattern = "%{client}a - %u %t \"%r\" %s %O"</co
     &lt;groupId&gt;io.micronaut.servlet&lt;/groupId&gt;
     &lt;artifactId&gt;micronaut-http-server-tomcat&lt;/artifactId&gt;
 &lt;/dependency&gt;</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="pyronaut">[tool.pyronaut.dependencies]
+runtime = [
+    <span class="hljs-string">"io.micronaut.servlet:micronaut-http-server-tomcat"</span>,
+]</code></pre>
 </div>
 </div>
 </p>
@@ -2440,7 +2926,7 @@ If you plan to produce a WAR file then the dependency should be <code>developmen
 <div class="paragraph">
 <p>Or you can register a <code>BeanCreatedEventListener</code>:</p>
 </div>
-<div class="listingblock">
+<div class="listingblock multi-language-sample">
 <div class="title">Tomcat Server Customization</div>
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">import io.micronaut.context.event.BeanCreatedEvent;
@@ -2453,8 +2939,65 @@ public class TomcatServerCustomizer implements BeanCreatedEventListener&lt;Tomca
     @Override
     public Tomcat onCreated(BeanCreatedEvent&lt;Tomcat&gt; event) {
         Tomcat tomcat = event.getBean();
-        // perform customizations...
+        // perform customizations, for example:
+        tomcat.getServer().setUtilityThreads(2);
         return tomcat;
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title">Tomcat Server Customization</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from jakarta.inject import Singleton
+from micronaut.context.event import BeanCreatedEvent, BeanCreatedEventListener
+from org.apache.catalina.startup import Tomcat
+
+@Singleton
+class TomcatServerCustomizer(BeanCreatedEventListener[Tomcat]):
+
+    def onCreated(self, event: BeanCreatedEvent[Tomcat]) -&gt; Tomcat:
+        tomcat = event.getBean()
+        # perform customizations, for example:
+        tomcat.getServer().setUtilityThreads(2)
+        return tomcat</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title">Tomcat Server Customization</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">import io.micronaut.context.event.BeanCreatedEvent
+import io.micronaut.context.event.BeanCreatedEventListener
+import org.apache.catalina.startup.Tomcat
+import jakarta.inject.Singleton
+
+@Singleton
+class TomcatServerCustomizer : BeanCreatedEventListener&lt;Tomcat&gt; {
+    override fun onCreated(event: BeanCreatedEvent&lt;Tomcat&gt;): Tomcat {
+        val tomcat = event.bean
+        // perform customizations, for example:
+        tomcat.server.utilityThreads = 2
+        return tomcat
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title">Tomcat Server Customization</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">import io.micronaut.context.event.BeanCreatedEvent
+import io.micronaut.context.event.BeanCreatedEventListener
+import org.apache.catalina.startup.Tomcat
+import jakarta.inject.Singleton
+
+@Singleton
+class TomcatServerCustomizer implements BeanCreatedEventListener&lt;Tomcat&gt; {
+    @Override
+    Tomcat onCreated(BeanCreatedEvent&lt;Tomcat&gt; event) {
+        Tomcat tomcat = event.bean
+        // perform customizations, for example:
+        tomcat.server.utilityThreads = 2
+        return tomcat
     }
 }</code></pre>
 </div>
@@ -2542,6 +3085,15 @@ micronaut.server.tomcat.accessLog.directory = "/var/logs"</code></pre>
     &lt;groupId&gt;io.micronaut.servlet&lt;/groupId&gt;
     &lt;artifactId&gt;micronaut-http-server-undertow&lt;/artifactId&gt;
 &lt;/dependency&gt;</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="pyronaut">[tool.pyronaut.dependencies]
+runtime = [
+    <span class="hljs-string">"io.micronaut.servlet:micronaut-http-server-undertow"</span>,
+]</code></pre>
 </div>
 </div>
 </p>
@@ -2820,7 +3372,7 @@ If you plan to produce a WAR file then the dependency should be <code>developmen
 <div class="paragraph">
 <p>Or you can register a <code>BeanCreatedEventListener</code>:</p>
 </div>
-<div class="listingblock">
+<div class="listingblock multi-language-sample">
 <div class="title">Undertow Server Customization</div>
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">import io.micronaut.context.event.BeanCreatedEvent;
@@ -2833,8 +3385,65 @@ public class UndertowServerCustomizer implements BeanCreatedEventListener&lt;Und
     @Override
     public Undertow.Builder onCreated(BeanCreatedEvent&lt;Undertow.Builder&gt; event) {
         Undertow.Builder undertowBuilder = event.getBean();
-        // perform customizations...
+        // perform customizations, for example:
+        undertowBuilder.setIoThreads(2);
         return undertowBuilder;
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title">Undertow Server Customization</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from io.undertow import Undertow
+from jakarta.inject import Singleton
+from micronaut.context.event import BeanCreatedEvent, BeanCreatedEventListener
+
+@Singleton
+class UndertowServerCustomizer(BeanCreatedEventListener[Undertow.Builder]):
+
+    def onCreated(self, event: BeanCreatedEvent[Undertow.Builder]) -&gt; Undertow.Builder:
+        undertow_builder = event.getBean()
+        # perform customizations, for example:
+        undertow_builder.setIoThreads(2)
+        return undertow_builder</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title">Undertow Server Customization</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">import io.micronaut.context.event.BeanCreatedEvent
+import io.micronaut.context.event.BeanCreatedEventListener
+import io.undertow.Undertow
+import jakarta.inject.Singleton
+
+@Singleton
+class UndertowServerCustomizer : BeanCreatedEventListener&lt;Undertow.Builder&gt; {
+    override fun onCreated(event: BeanCreatedEvent&lt;Undertow.Builder&gt;): Undertow.Builder {
+        val undertowBuilder = event.bean
+        // perform customizations, for example:
+        undertowBuilder.setIoThreads(2)
+        return undertowBuilder
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title">Undertow Server Customization</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">import io.micronaut.context.event.BeanCreatedEvent
+import io.micronaut.context.event.BeanCreatedEventListener
+import io.undertow.Undertow
+import jakarta.inject.Singleton
+
+@Singleton
+class UndertowServerCustomizer implements BeanCreatedEventListener&lt;Undertow.Builder&gt; {
+    @Override
+    Undertow.Builder onCreated(BeanCreatedEvent&lt;Undertow.Builder&gt; event) {
+        Undertow.Builder undertowBuilder = event.bean
+        // perform customizations, for example:
+        undertowBuilder.setIoThreads(2)
+        return undertowBuilder
     }
 }</code></pre>
 </div>
@@ -2922,6 +3531,15 @@ micronaut.server.undertow.accessLog.outputDirectory = "/var/logs"</code></pre>
     &lt;groupId&gt;io.micronaut.servlet&lt;/groupId&gt;
     &lt;artifactId&gt;micronaut-http-server-jdk&lt;/artifactId&gt;
 &lt;/dependency&gt;</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="pyronaut">[tool.pyronaut.dependencies]
+runtime = [
+    <span class="hljs-string">"io.micronaut.servlet:micronaut-http-server-jdk"</span>,
+]</code></pre>
 </div>
 </div>
 </p>
@@ -3280,6 +3898,15 @@ Currently HTTP POJA is based on <a href="https://hc.apache.org/httpcomponents-co
 &lt;/dependency&gt;</code></pre>
 </div>
 </div>
+<div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="pyronaut">[tool.pyronaut.dependencies]
+runtime = [
+    <span class="hljs-string">"io.micronaut.servlet:micronaut-http-poja-apache"</span>,
+]</code></pre>
+</div>
+</div>
 </p>
 </div>
 <div class="paragraph">
@@ -3296,6 +3923,15 @@ Currently HTTP POJA is based on <a href="https://hc.apache.org/httpcomponents-co
     &lt;artifactId&gt;micronaut-http-poja-test&lt;/artifactId&gt;
     &lt;scope&gt;test&lt;/scope&gt;
 &lt;/dependency&gt;</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="pyronaut">[tool.pyronaut.dependencies]
+test = [
+    <span class="hljs-string">"io.micronaut.servlet:micronaut-http-poja-test"</span>,
+]</code></pre>
 </div>
 </div>
 </p>
