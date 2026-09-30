@@ -85,7 +85,7 @@ loadScripts(document, 'script');</script>
 <div class="horizontal-scroll">
 <div class="type-signature"><span class="annotations">@Internal
 @Singleton
-@Requires(classes={io.undertow.websockets.jsr.WebSocketDeploymentInfo.class,io.undertow.servlet.api.DeploymentInfo.class}) @Requires(property="micronaut.servlet.websocket.enabled",notEquals="false",defaultValue="true")
+@Requires(classes={io.undertow.websockets.jsr.WebSocketDeploymentInfo.class,io.undertow.servlet.api.DeploymentInfo.class}) @Requires(property="micronaut.server.undertow.enabled",notEquals="false",defaultValue="true") @Requires(property="micronaut.servlet.websocket.enabled",notEquals="false",defaultValue="true")
 </span><span class="modifiers">public final class </span><span class="element-name type-name-label">UndertowWebSocketDeploymentCustomizer</span>
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>
 implements io.micronaut.context.event.BeanCreatedEventListener&lt;io.undertow.servlet.api.DeploymentInfo&gt;</span></div>
