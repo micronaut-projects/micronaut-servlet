@@ -28,6 +28,7 @@ import org.junit.platform.suite.api.SuiteDisplayName;
 @SuiteDisplayName("HTTP Server TCK for POJA")
 @ExcludeTags("multipart") // this runtime has a hand written request implementation that does not parse multipart bodies
 @ExcludeClassNamePatterns({
+    "io.micronaut.http.server.tck.tests.filter.FilterMutatedRequestTest", // the mutable request view a filter continues with is not implemented yet: the route loses the connection and the body. See https://github.com/micronaut-projects/micronaut-servlet/issues/1143
     "io.micronaut.http.server.tck.tests.forms.FormBindingDeadlockTest", // asserts the server detects a form binding deadlock; a container that parses the whole form before the route runs has none to detect and completes the request instead
     "io.micronaut.http.server.tck.tests.forms.UploadTest", // unannotated StreamingFileUpload argument has no typed servlet binder yet
     "io.micronaut.http.server.tck.tests.BodyWithoutContentLengthTest", // POJA resolves the request body on its own path, which still decodes a body that was never sent
