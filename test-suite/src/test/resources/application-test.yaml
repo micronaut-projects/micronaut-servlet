@@ -3,3 +3,10 @@
 micronaut:
   security:
     enabled: false
+  server:
+    # Jetty runs the tests. Tomcat and Undertow are on the classpath for the documented server
+    # customizers, whose tests enable the runtime they need.
+    tomcat:
+      enabled: false
+    undertow:
+      enabled: false

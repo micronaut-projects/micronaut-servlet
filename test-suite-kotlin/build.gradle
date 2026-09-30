@@ -11,6 +11,7 @@ repositories {
 // names so that the `snippet::` macro can render a Kotlin tab.
 dependencies {
     kaptTest mn.micronaut.inject.java
+    kaptTest projects.micronautServletProcessor
 
     testRuntimeOnly mnTest.junit.jupiter.engine
 
@@ -18,6 +19,7 @@ dependencies {
     testImplementation libs.kotlin.reflect
     testImplementation mn.kotlinx.coroutines.core
     testImplementation libs.kotest.runner
+    testImplementation mnTest.micronaut.test.junit5
     testImplementation mn.micronaut.http.client
     testImplementation mn.micronaut.jackson.databind
     testImplementation(mnReactor.micronaut.reactor)
@@ -26,10 +28,19 @@ dependencies {
     // Maps the Jakarta WebSocket annotations of the documented endpoint.
     kaptTest projects.micronautServletProcessor
     testImplementation(projects.micronautHttpServerJetty)
+    // Jetty runs the tests; Tomcat and Undertow are disabled in application-test.yaml and enabled
+    // by the tests of their documented server customizers only.
+    testImplementation(projects.micronautHttpServerTomcat)
+    testImplementation(projects.micronautHttpServerUndertow)
+    // The server classes the customizers reference are implementation dependencies of the runtimes.
+    testImplementation(libs.tomcat.embed.core)
+    testImplementation(libs.undertow.servlet)
     testImplementation(libs.jetty.websocket.jakarta.server) {
         exclude(group: "org.eclipse.jetty.ee10", module: "jetty-ee10-annotations")
     }
     testRuntimeOnly(mnLogging.logback.classic)
+    // the YAML configuration of the test suite
+    testRuntimeOnly(mn.snakeyaml)
 }
 
 tasks.named('test') {

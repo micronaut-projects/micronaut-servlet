@@ -21,13 +21,7 @@ This is useful when multiple servlet runtimes are available and you want Microna
 
 Or you can register a `BeanCreatedEventListener`:
 
-.Undertow Server Customization
-[source,java]
-----
-include::http-server-undertow/src/test/java/io/micronaut/servlet/undertow/docs/UndertowServerCustomizer.java[tags=imports, indent=0]
-
-include::http-server-undertow/src/test/java/io/micronaut/servlet/undertow/docs/UndertowServerCustomizer.java[tags=class, indent=0]
-----
+snippet::io.micronaut.servlet.docs.undertow.UndertowServerCustomizer[tags="imports,class", indent=0, title="Undertow Server Customization"]
 
 === Access Log Configuration
 

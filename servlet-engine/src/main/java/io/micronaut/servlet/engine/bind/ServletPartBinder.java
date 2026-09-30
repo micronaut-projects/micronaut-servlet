@@ -151,6 +151,31 @@ public class ServletPartBinder<T> implements AnnotatedRequestArgumentBinder<Part
             //noinspection unchecked
             return () -> (Optional<T>) Optional.of(part);
         }
+        // CompletedPart and CompletedFileUpload wrap the part itself, whatever its content type, so they are
+        // resolved before a message body reader for that content type (a text/plain part would otherwise be
+        // read as a String that cannot be converted to the argument type)
+        if (CompletedPart.class.isAssignableFrom(type)) {
+            try {
+                @SuppressWarnings("java:S2095")
+                CompletedFileUpload completedFileUpload = ServletCompletedFileUploadFactory.create(configuration, part);
+                if (exchange.getRequest() instanceof LifecycleHttpRequest<?> lifecycleRequest) {
+                    lifecycleRequest.addDisposalResource(() -> {
+                        try {
+                            completedFileUpload.close();
+                        } catch (IOException ignored) {
+                            // best effort cleanup
+                        }
+                    });
+                }
+                //noinspection unchecked
+                return () -> (Optional<T>) Optional.of(completedFileUpload);
+            } catch (IOException e) {
+                throw new HttpStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Unable to read part [" + partName + "]: " + e.getMessage()
+                );
+            }
+        }
 
         Optional<T> messageBodyValue = readUsingMessageBodyReader(context, part, partName);
         if (messageBodyValue.isPresent()) {
@@ -198,27 +223,6 @@ public class ServletPartBinder<T> implements AnnotatedRequestArgumentBinder<Part
             try (InputStream is = part.getInputStream()) {
                 final byte[] content = is.readAllBytes();
                 return () -> (Optional<T>) Optional.of(content);
-            } catch (IOException e) {
-                throw new HttpStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Unable to read part [" + partName + "]: " + e.getMessage()
-                );
-            }
-        } else if (CompletedFileUpload.class.isAssignableFrom(type)) {
-            try {
-                @SuppressWarnings("java:S2095")
-                CompletedFileUpload completedFileUpload = ServletCompletedFileUploadFactory.create(configuration, part);
-                if (exchange.getRequest() instanceof LifecycleHttpRequest<?> lifecycleRequest) {
-                    lifecycleRequest.addDisposalResource(() -> {
-                        try {
-                            completedFileUpload.close();
-                        } catch (IOException ignored) {
-                            // best effort cleanup
-                        }
-                    });
-                }
-                //noinspection unchecked
-                return () -> (Optional<T>) Optional.of(completedFileUpload);
             } catch (IOException e) {
                 throw new HttpStatusException(
                     HttpStatus.BAD_REQUEST,

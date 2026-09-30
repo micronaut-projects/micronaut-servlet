@@ -1,0 +1,11 @@
+# Read by io.micronaut.servlet.docs.war.CustomInitializer through its overridden configuration locations,
+# which replace the default ones (so the runtime selection of application-test.yaml is repeated here).
+custom:
+  initializer:
+    location: classpath:/some/path
+micronaut:
+  server:
+    tomcat:
+      enabled: false
+    undertow:
+      enabled: false
