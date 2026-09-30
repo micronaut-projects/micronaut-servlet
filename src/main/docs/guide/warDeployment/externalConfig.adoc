@@ -7,9 +7,9 @@ The following example will look for configuration in the `/tmp` directory and on
 snippet::io.micronaut.servlet.docs.war.CustomInitializer[tags="class", indent=0, languages="java,kotlin,groovy"]
 
 [.lang-python]
-NOTE: The servlet container instantiates the initializer itself, before any application context and therefore before the Python runtime exists, and a Python class cannot extend the Java class `MicronautServletInitializer`. Write the initializer in Java, Kotlin or Groovy as shown above; the application it starts can be written in Python.
+NOTE: The servlet container instantiates the initializer itself, from the `META-INF/services` entry below, before any application context and therefore before the Python runtime exists. Write the initializer in Java, Kotlin or Groovy as shown above; the application it starts can be written in Python.
 
-We can then use Java's Service Provider Interface to register this class as the initializer by pointing to it in the `META-INF/services/jakarta.servlet.ServletContainerInitializer` file.
+We can then use Java's Service Provider Interface to register this class as the initializer by pointing to it in the `META-INF/services/jakarta.servlet.ServletContainerInitializer` file, with the package the class is in (the example above is compiled as part of this documentation, hence its package):
 
 [source,text]
 .src/main/resources/META-INF/services/jakarta.servlet.ServletContainerInitializer

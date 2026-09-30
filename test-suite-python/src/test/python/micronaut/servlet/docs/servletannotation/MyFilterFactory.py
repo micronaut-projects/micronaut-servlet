@@ -1,5 +1,5 @@
 # tag::class[]
-from jakarta.servlet import Filter, FilterChain, ServletRequest, ServletResponse
+from jakarta.servlet import Filter, FilterChain, GenericFilter, ServletRequest, ServletResponse
 from micronaut.context.annotation import Factory
 from micronaut.core.annotation import Order
 from micronaut.core.order import Ordered
@@ -8,12 +8,10 @@ from micronaut.servlet.api.annotation import ServletFilterBean
 from micronaut.context.annotation import Requires
 
 
-# TODO(python): extending `GenericFilter` like the Java example does not compile: `doFilter` declares checked exceptions
-# (`throws ServletException, IOException`) that the generated dispatcher of the Python subclass does not declare.
 # tag::class[]
 
 
-class RunFirstFilter(Filter):
+class RunFirstFilter(GenericFilter):
 
     def doFilter(self, request: ServletRequest, response: ServletResponse, chain: FilterChain) -> None:
         request.setAttribute("runFirst", True)
