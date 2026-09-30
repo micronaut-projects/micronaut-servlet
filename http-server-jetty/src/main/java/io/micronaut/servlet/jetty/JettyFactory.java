@@ -32,7 +32,6 @@ import io.micronaut.http.server.HttpServerConfiguration;
 import io.micronaut.http.ssl.ClientAuthentication;
 import io.micronaut.http.ssl.SslConfiguration;
 import io.micronaut.inject.qualifiers.Qualifiers;
-import io.micronaut.scheduling.LoomSupport;
 import io.micronaut.servlet.engine.ServletCompressionConfiguration;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.servlet.engine.MicronautServletConfiguration;
@@ -456,7 +455,7 @@ public class JettyFactory extends ServletServerFactory {
             threadPool = new QueuedThreadPool();
         }
 
-        if (configuration.isEnableVirtualThreads() && LoomSupport.isSupported()) {
+        if (configuration.isEnableVirtualThreads()) {
             threadPool.setVirtualThreadsExecutor(
                 applicationContext.getBean(ExecutorService.class, Qualifiers.byName(TaskExecutors.BLOCKING))
             );
