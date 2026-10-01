@@ -40,6 +40,3 @@ src/main/docs/resources/img/micronaut-logo-white.svg
 
 # OpenCode files
 .sisyphus/
-
-# Tomcat work directory created by the http-server-tomcat tests
-tomcat.*/
