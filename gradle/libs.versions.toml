@@ -1,19 +1,19 @@
 [versions]
-micronaut = "5.2.9"
+micronaut = "5.2.13"
 managed-servlet-api = '6.1.0'
-managed-jakarta-websocket-api = '2.1.1'
-kotest-runner = '6.1.11'
+managed-jakarta-websocket-api = '2.2.0'
+kotest-runner = '6.2.5'
 undertow = '2.3.26.Final'
-tomcat = '11.0.25'
+tomcat = '11.0.26'
 bcpkix = "1.70"
 
-managed-apache-http-core5 = "5.4.3"
-managed-jetty = '12.1.10'
-micronaut-reactor = "4.2.0"
-micronaut-security = "5.3.2"
-micronaut-serde = "3.1.1"
-micronaut-session = "5.1.0"
-micronaut-validation = "5.1.0"
+managed-apache-http-core5 = "5.4.4"
+managed-jetty = '12.1.13'
+micronaut-reactor = "4.3.0"
+micronaut-security = "5.4.0"
+micronaut-serde = "3.2.4"
+micronaut-session = "5.2.0"
+micronaut-validation = "5.2.1"
 micronaut-logging = "2.1.0"
 # Micronaut
 micronaut-gradle-plugin = "5.0.2"
@@ -26,15 +26,15 @@ micronaut-core = { module = 'io.micronaut:micronaut-core-bom', version.ref = 'mi
 boms-jetty = { module = 'org.eclipse.jetty:jetty-bom', version.ref = 'managed-jetty' }
 
 managed-servlet-api = { module = 'jakarta.servlet:jakarta.servlet-api', version.ref = 'managed-servlet-api' }
-managed-jakarta-websocket-api = { module = 'jakarta.websocket:jakarta.websocket-api', version.ref = 'managed-jakarta-websocket-api' }
+managed-jakarta-websocket-api = '2.2.0'
 managed-jakarta-websocket-client-api = { module = 'jakarta.websocket:jakarta.websocket-client-api', version.ref = 'managed-jakarta-websocket-api' }
 
 micronaut-logging = { module = "io.micronaut.logging:micronaut-logging-bom", version.ref = "micronaut-logging" }
-micronaut-reactor = { module = "io.micronaut.reactor:micronaut-reactor-bom", version.ref = "micronaut-reactor" }
-micronaut-security = { module = "io.micronaut.security:micronaut-security-bom", version.ref = "micronaut-security" }
-micronaut-serde = { module = "io.micronaut.serde:micronaut-serde-bom", version.ref = "micronaut-serde" }
-micronaut-session = { module = "io.micronaut.session:micronaut-session-bom", version.ref = "micronaut-session" }
-micronaut-validation = { module = "io.micronaut.validation:micronaut-validation-bom", version.ref = "micronaut-validation" }
+micronaut-reactor = "4.3.0"
+micronaut-security = "5.4.0"
+micronaut-serde = "3.2.4"
+micronaut-session = "5.2.0"
+micronaut-validation = "5.2.1"
 
 junit-jupiter-engine = { module = 'org.junit.jupiter:junit-jupiter-engine' }
 junit-platform-engine = { module = "org.junit.platform:junit-platform-suite-engine" }
@@ -52,7 +52,7 @@ jetty-http2-server = { module = 'org.eclipse.jetty.http2:jetty-http2-server', ve
 jetty-alpn-server = { module = 'org.eclipse.jetty:jetty-alpn-server', version.ref = 'managed-jetty' }
 jetty-alpn-java-server = { module = 'org.eclipse.jetty:jetty-alpn-java-server', version.ref = 'managed-jetty' }
 jetty-alpn-conscrypt-server = { module = 'org.eclipse.jetty:jetty-alpn-conscrypt-server', version.ref = 'managed-jetty' }
-kotest-runner = { module = 'io.kotest:kotest-runner-junit5', version.ref = 'kotest-runner' }
+kotest-runner = '6.2.5'
 bcpkix = { module = "org.bouncycastle:bcpkix-jdk15on", version.ref = "bcpkix" }
 logback-access-jetty12 = { module = "ch.qos.logback.access:logback-access-jetty12", version.ref = "logback-access" }
 
