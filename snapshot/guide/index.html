@@ -1367,7 +1367,8 @@ without being a bean; they are then injected.</p>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">micronaut = {introspection = {allow-reflection = ["com.example.legacy.codecs.*"]}}</code></pre>
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">[micronaut.introspection]
+allow-reflection = ["com.example.legacy.codecs.*"]</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -3804,7 +3805,10 @@ micronaut.server.jdk.access-logger.exclusions[0]=/health.*</code></pre>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">micronaut = {server = {jdk = {access-logger = {enabled = true, logger-name = "HTTP_ACCESS_LOGGER", exclusions = ["/health.*"]}}}}</code></pre>
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">[micronaut.server.jdk.access-logger]
+enabled = true
+logger-name = "HTTP_ACCESS_LOGGER"
+exclusions = ["/health.*"]</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
