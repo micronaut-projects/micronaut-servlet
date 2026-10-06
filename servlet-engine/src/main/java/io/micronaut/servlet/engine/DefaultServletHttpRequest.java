@@ -45,13 +45,16 @@ import io.micronaut.http.body.MessageBodyHandlerRegistry;
 import io.micronaut.http.body.stream.AvailableByteArrayBody;
 import io.micronaut.http.body.stream.BodySizeLimits;
 import io.micronaut.http.body.stream.InputStreamByteBody;
+import io.micronaut.http.cookie.Cookie;
 import io.micronaut.http.cookie.Cookies;
+import io.micronaut.http.cookie.ServerCookieDecoder;
 import io.micronaut.http.exceptions.ContentLengthExceededException;
 import io.micronaut.http.form.FormCapableHttpRequest;
 import io.micronaut.http.multipart.FormFieldMetadata;
 import io.micronaut.http.multipart.RawFormField;
 import io.micronaut.http.server.exceptions.InternalServerException;
 import io.micronaut.http.simple.SimpleHttpHeaders;
+import io.micronaut.http.simple.cookies.SimpleCookies;
 import io.micronaut.servlet.http.BodyBuilder;
 import io.micronaut.servlet.http.ParsedBodyHolder;
 import io.micronaut.servlet.http.SSLSessionProvider;
@@ -611,6 +614,16 @@ public final class DefaultServletHttpRequest<B> implements
     @NonNull
     @Override
     public synchronized Cookies getCookies() {
+        if (headers.changed != null) {
+            // e.g. a filter added a cookie to the headers: the container only has the cookies the client sent
+            SimpleCookies changed = new SimpleCookies(conversionService);
+            for (String header : headers.getAll(HttpHeaders.COOKIE)) {
+                for (Cookie cookie : ServerCookieDecoder.INSTANCE.decode(header)) {
+                    changed.put(cookie.getName(), cookie);
+                }
+            }
+            return changed;
+        }
         DefaultServletCookies cookies = this.cookies;
         if (cookies == null) {
             cookies = new DefaultServletCookies(delegate.getCookies());

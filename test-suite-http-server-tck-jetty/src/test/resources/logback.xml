@@ -4,8 +4,6 @@
             <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
         </encoder>
     </appender>
-    <logger name="io.micronaut.http.server" level="debug"/>
-    <logger name="io.micronaut.web.router" level="debug"/>
     <root level="info">
         <appender-ref ref="STDOUT" />
     </root>

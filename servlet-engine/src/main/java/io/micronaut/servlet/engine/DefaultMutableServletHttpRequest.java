@@ -20,11 +20,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.net.InetSocketAddress;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.security.Principal;
+import java.security.cert.Certificate;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import jakarta.servlet.http.HttpServletRequest;
@@ -34,6 +38,7 @@ import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.convert.value.ConvertibleMultiValues;
 import io.micronaut.core.convert.value.MutableConvertibleValues;
 import io.micronaut.http.HttpMethod;
+import io.micronaut.http.HttpVersion;
 import io.micronaut.http.MutableHttpHeaders;
 import io.micronaut.http.MutableHttpParameters;
 import io.micronaut.http.MutableHttpRequest;
@@ -47,10 +52,13 @@ import io.micronaut.http.form.FormCapableHttpRequest;
 import io.micronaut.http.multipart.RawFormField;
 import io.micronaut.http.simple.SimpleHttpHeaders;
 import io.micronaut.http.simple.SimpleHttpParameters;
+import io.micronaut.http.simple.cookies.SimpleCookies;
 import io.micronaut.http.uri.QueryStringDecoder;
 import io.micronaut.servlet.http.MutableServletHttpRequest;
 import org.jspecify.annotations.Nullable;
 import org.reactivestreams.Publisher;
+
+import javax.net.ssl.SSLSession;
 
 /**
  * Mutable implementation for servlets.
@@ -69,6 +77,10 @@ final class DefaultMutableServletHttpRequest<B> implements MutableServletHttpReq
      */
     private boolean bodySet;
     private MutableHttpParameters parameters;
+    /**
+     * The cookies once one was added: those of the request are read-only, so they are copied on the first change.
+     */
+    private @Nullable SimpleCookies cookies;
     private final MutableHttpHeaders headers;
 
     DefaultMutableServletHttpRequest(DefaultServletHttpRequest<B> servletHttpRequest) {
@@ -86,6 +98,10 @@ final class DefaultMutableServletHttpRequest<B> implements MutableServletHttpReq
         this.uri = view.uri;
         this.body = view.body;
         this.bodySet = view.bodySet;
+        if (view.cookies != null) {
+            this.cookies = new SimpleCookies(view.conversionService);
+            view.cookies.getAll().forEach(cookie -> this.cookies.put(cookie.getName(), cookie));
+        }
     }
 
     private DefaultMutableServletHttpRequest(DefaultServletHttpRequest<B> servletHttpRequest,
@@ -123,6 +139,15 @@ final class DefaultMutableServletHttpRequest<B> implements MutableServletHttpReq
 
     @Override
     public MutableHttpRequest<B> cookie(Cookie cookie) {
+        SimpleCookies changed = cookies;
+        if (changed == null) {
+            changed = new SimpleCookies(conversionService);
+            for (Cookie existing : servletHttpRequest.getCookies().getAll()) {
+                changed.put(existing.getName(), existing);
+            }
+            cookies = changed;
+        }
+        changed.put(cookie.getName(), cookie);
         return this;
     }
 
@@ -175,7 +200,7 @@ final class DefaultMutableServletHttpRequest<B> implements MutableServletHttpReq
 
     @Override
     public Cookies getCookies() {
-        return this.servletHttpRequest.getCookies();
+        return cookies != null ? cookies : this.servletHttpRequest.getCookies();
     }
 
     @Override
@@ -194,6 +219,56 @@ final class DefaultMutableServletHttpRequest<B> implements MutableServletHttpReq
             return uri;
         }
         return servletHttpRequest.getUri();
+    }
+
+    @Override
+    public InetSocketAddress getRemoteAddress() {
+        return servletHttpRequest.getRemoteAddress();
+    }
+
+    @Override
+    public InetSocketAddress getServerAddress() {
+        return servletHttpRequest.getServerAddress();
+    }
+
+    @Override
+    public @Nullable String getServerName() {
+        return servletHttpRequest.getServerName();
+    }
+
+    @Override
+    public boolean isSecure() {
+        return servletHttpRequest.isSecure();
+    }
+
+    @Override
+    public HttpVersion getHttpVersion() {
+        return servletHttpRequest.getHttpVersion();
+    }
+
+    @Override
+    public Optional<SSLSession> getSslSession() {
+        return servletHttpRequest.getSslSession();
+    }
+
+    @Override
+    public Optional<Certificate> getCertificate() {
+        return servletHttpRequest.getCertificate();
+    }
+
+    @Override
+    public Optional<Principal> getUserPrincipal() {
+        return servletHttpRequest.getUserPrincipal();
+    }
+
+    @Override
+    public Optional<Locale> getLocale() {
+        return servletHttpRequest.getLocale();
+    }
+
+    @Override
+    public String getContextPath() {
+        return servletHttpRequest.getContextPath();
     }
 
     @Override
