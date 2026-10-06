@@ -448,12 +448,20 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
         AtomicBoolean finished = new AtomicBoolean();
         return () -> {
             if (finished.compareAndSet(false, true)) {
-                try {
-                    ctx.complete();
-                } catch (IllegalStateException alreadyCompleted) {
-                    LOG.debug("Async context already completed for request [{} - {}]", req.getMethodName(), req.getUri(), alreadyCompleted);
-                } finally {
-                    requestTerminated.run();
+                Runnable complete = () -> {
+                    try {
+                        ctx.complete();
+                    } catch (IllegalStateException alreadyCompleted) {
+                        LOG.debug("Async context already completed for request [{} - {}]", req.getMethodName(), req.getUri(), alreadyCompleted);
+                    } finally {
+                        requestTerminated.run();
+                    }
+                };
+                if (req instanceof ServletHttpRequest<?, ?> servletRequest) {
+                    // the body nobody read is dropped first, so the connection stays open
+                    servletRequest.discardUnreadBody(complete);
+                } else {
+                    complete.run();
                 }
             }
         };

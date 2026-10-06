@@ -92,6 +92,18 @@ public interface ServletHttpRequest<N, B> extends HttpRequest<B> {
     }
 
     /**
+     * Reads what is left of the body, e.g. the body a route did not read, and drops it, then runs the
+     * callback: the response then completes without the container dropping the connection while the client is
+     * still sending, like the Netty server.
+     *
+     * @param then Runs once the body is read, at once if there is nothing to read
+     * @since 6.3.0
+     */
+    default void discardUnreadBody(Runnable then) {
+        then.run();
+    }
+
+    /**
      * Async execution callback.
      *
      * @author Denis Stepanov

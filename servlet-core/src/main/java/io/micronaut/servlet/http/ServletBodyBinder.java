@@ -19,6 +19,7 @@ import io.micronaut.core.async.publisher.Publishers;
 import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.convert.ConversionError;
 import io.micronaut.core.convert.ConversionService;
+import io.micronaut.core.convert.exceptions.ConversionErrorException;
 import io.micronaut.core.execution.CompletableFutureExecutionFlow;
 import io.micronaut.core.io.IOUtils;
 import io.micronaut.core.io.Readable;
@@ -43,6 +44,7 @@ import io.micronaut.http.exceptions.HttpException;
 import io.micronaut.http.form.FormCapableHttpRequest;
 import io.micronaut.http.multipart.RawFormField;
 import io.micronaut.json.JsonMapper;
+import io.micronaut.json.JsonSyntaxException;
 import io.micronaut.json.tree.JsonNode;
 import io.micronaut.web.router.RouteAttributes;
 import io.micronaut.web.router.RouteInfo;
@@ -179,6 +181,12 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
                     };
                 }
             }
+            if (servletHttpRequest instanceof ServerHttpRequest<?> serverRequest
+                && serverRequest.byteBody().expectedLength().orElse(-1) == 0) {
+                // a request without content has no body, not an empty document to decode: a required body is
+                // then missing, like on the other runtimes
+                return BindingResult.unsatisfied();
+            }
             final MediaType mediaType = source.getContentType().orElse(MediaType.APPLICATION_JSON_TYPE);
             if (isFormSubmission(mediaType)) {
                 if (name != null) {
@@ -270,7 +278,7 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
                     @SuppressWarnings("unchecked")
                     Argument<Object> bodyArgument = (Argument<Object>) (Argument<?>) context.getArgument();
                     Object content = bodyReader.read(bodyArgument, mediaType, source.getHeaders(), is);
-                    if (content != null && servletHttpRequest instanceof ParsedBodyHolder parsedBody) {
+                    if (content != null && source == servletHttpRequest && servletHttpRequest instanceof ParsedBodyHolder parsedBody) {
                         parsedBody.setParsedBody(content);
                     }
                     return () -> (Optional<T>) Optional.ofNullable(content);
@@ -317,7 +325,7 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
                 if (reader != null) {
                     try (InputStream inputStream = servletHttpRequest.getInputStream()) {
                         T content = reader.read(argument, mediaType, source.getHeaders(), inputStream);
-                        if (content != null && servletHttpRequest instanceof ParsedBodyHolder parsedBody) {
+                        if (content != null && source == servletHttpRequest && servletHttpRequest instanceof ParsedBodyHolder parsedBody) {
                             parsedBody.setParsedBody(content);
                         }
                         return () -> (Optional<T>) Optional.ofNullable(content);
@@ -499,6 +507,18 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
      * Turns a buffered body into the publisher a reactive body argument expects.
      */
     @SuppressWarnings("java:S107") // every value the read needs, passed once from the caller
+    /**
+     * Whether a JSON body is one object rather than an array of elements.
+     */
+    private static boolean startsWithObject(byte[] bytes) {
+        for (byte b : bytes) {
+            if (!Character.isWhitespace(b)) {
+                return b == '{';
+            }
+        }
+        return false;
+    }
+
     private Publisher<?> publishBuffered(AvailableByteBody bb,
                                          HttpRequest<?> source,
                                          ServletHttpRequest<?, ?> servletHttpRequest,
@@ -514,17 +534,22 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
         if (BYTE_ARRAY.getType().isAssignableFrom(typeArgumentClass)) {
             return Mono.just(bb.toByteArray());
         }
+        // the bytes can be taken once
+        byte[] bytes = bb.toByteArray();
         Object body;
-        if (!single) {
+        if (!single && !startsWithObject(bytes)) {
             Argument<Object> listArgument = listOf(typeArgument);
-            body = messageBodyReader.read(listArgument, mediaType, source.getHeaders(), bb.toByteBuffer());
+            body = messageBodyReader.read(listArgument, mediaType, source.getHeaders(), new ByteArrayInputStream(bytes));
+        } else if (!single && name == null) {
+            // a single document, not an array of them: the publisher emits that one element, like on Netty
+            body = List.of(messageBodyReader.read(typeArgument, mediaType, source.getHeaders(), new ByteArrayInputStream(bytes)));
         } else if (name != null) {
             Argument<Map<String, Object>> mapArgument = Argument.mapOf(String.class, Object.class);
             MessageBodyReader<Map<String, Object>> reader = messageBodyHandlerRegistry.findReader(mapArgument, mediaType).orElse(null);
-            Map<String, Object> map = reader == null ? null : reader.read(mapArgument, mediaType, source.getHeaders(), bb.toByteBuffer());
+            Map<String, Object> map = reader == null ? null : reader.read(mapArgument, mediaType, source.getHeaders(), new ByteArrayInputStream(bytes));
             body = map == null ? null : map.get(name);
         } else {
-            body = messageBodyReader.read(typeArgument, mediaType, source.getHeaders(), bb.toByteBuffer());
+            body = messageBodyReader.read(typeArgument, mediaType, source.getHeaders(), new ByteArrayInputStream(bytes));
         }
         return publishParsed(body, single, servletHttpRequest);
     }
@@ -577,6 +602,17 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
         HttpException httpException = BodyReadFailures.httpFailure(e);
         if (httpException != null) {
             return httpException;
+        }
+        if (e instanceof CodecException codecException) {
+            Throwable cause = codecException.getCause();
+            if (cause instanceof JsonSyntaxException || cause instanceof IOException && cause.getClass().getName().startsWith("com.fasterxml.jackson.core.")) {
+                // a document that does not parse is a JSON syntax error, which the error routes of the application
+                // and the JSON exception handler answer, like on the other runtimes
+                return new ConversionErrorException(Argument.OBJECT_ARGUMENT,
+                    cause instanceof JsonSyntaxException syntax ? syntax : new JsonSyntaxException(cause));
+            }
+            // as the reader failed
+            return codecException;
         }
         return new CodecException(message + e.getMessage(), e);
     }

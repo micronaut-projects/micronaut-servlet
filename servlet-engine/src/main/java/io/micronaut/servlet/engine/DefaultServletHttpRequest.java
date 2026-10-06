@@ -174,6 +174,11 @@ public final class DefaultServletHttpRequest<B> implements
      * method has returned; such a request must leave the service thread before its body can be consumed.
      */
     private boolean bodyReadsAsynchronously;
+    /**
+     * The publisher of a body read through a ReadListener, which drops what nobody read before the response
+     * completes, or {@code null} if the body is not read that way.
+     */
+    private @Nullable ServletStreamPublisher streamPublisher;
     private @Nullable B parsedBody;
     private @Nullable AsyncContext asyncContext;
 
@@ -444,8 +449,10 @@ public final class DefaultServletHttpRequest<B> implements
             // the shared streaming body applies the size limits itself
             ReadBufferFactory readBufferFactory = byteBodyFactory.readBufferFactory();
             this.bodyReadsAsynchronously = true;
+            ServletStreamPublisher publisher = new ServletStreamPublisher(this::openBodyStream, bodySizeLimits.maxBodySize());
+            this.streamPublisher = publisher;
             return byteBodyFactory.adapt(
-                Flux.from(new ServletStreamPublisher(this::openBodyStream)).map(readBufferFactory::adapt),
+                Flux.from(publisher).map(readBufferFactory::adapt),
                 bodySizeLimits,
                 headers,
                 null
@@ -876,6 +883,17 @@ public final class DefaultServletHttpRequest<B> implements
                     .map(field -> new RawFormField(field.metadata(), AvailableByteArrayBody.create(byteBodyFactory.readBufferFactory().adapt(field.content()))));
             })
             .doOnDiscard(RawFormField.class, RawFormField::close);
+    }
+
+    @Override
+    public void discardUnreadBody(Runnable then) {
+        ServletStreamPublisher publisher = streamPublisher;
+        if (publisher == null) {
+            // read inline or not at all: the container drops what is left of a small body itself
+            then.run();
+        } else {
+            publisher.discard(maxBodySize, then);
+        }
     }
 
     @Override

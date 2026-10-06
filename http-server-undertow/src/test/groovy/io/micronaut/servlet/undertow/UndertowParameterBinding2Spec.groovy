@@ -155,7 +155,7 @@ class UndertowParameterBinding2Spec extends Specification {
         def e = thrown(HttpClientResponseException)
         def response = e.response
         response.status() == HttpStatus.BAD_REQUEST
-        response.body().toString().contains("Unable to decode request body")
+        response.body().toString().contains("Invalid JSON")
 
     }
 
