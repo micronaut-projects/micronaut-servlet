@@ -19,6 +19,7 @@ import io.micronaut.context.BeanProvider;
 import io.micronaut.core.async.publisher.Publishers;
 import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.convert.ConversionContext;
+import io.micronaut.core.convert.ConversionError;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.execution.CompletableFutureExecutionFlow;
 import io.micronaut.core.io.IOUtils;
@@ -50,6 +51,7 @@ import io.micronaut.http.server.exceptions.InternalServerException;
 import io.micronaut.http.server.multipart.FormFactory;
 import io.micronaut.http.server.multipart.FormRouteCompleter;
 import io.micronaut.http.simple.SimpleHttpHeaders;
+import io.micronaut.servlet.engine.DefaultServletHttpRequest;
 import io.micronaut.servlet.engine.ServletParts;
 import io.micronaut.servlet.http.ServletExchange;
 import jakarta.servlet.ServletException;
@@ -70,6 +72,7 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -134,6 +137,11 @@ public class ServletPartBinder<T> implements AnnotatedRequestArgumentBinder<Part
             if (StreamingFileUpload.class == context.getArgument().getType()) {
                 return bindStreamingFileUpload(context, form, formFactory, boundName);
             }
+            if (bodyStreamOpened(source)) {
+                // e.g. a filter read a copy of the body: the container cannot parse the parts any more, so the
+                // field is read from the form decoded from the byte body
+                return bindFromCompleter(context, form, formFactory, boundName);
+            }
         }
         if (source instanceof ServletExchange<?, ?> exchange) {
             final HttpServletRequest nativeRequest = (HttpServletRequest) exchange.getRequest().getNativeRequest();
@@ -155,6 +163,53 @@ public class ServletPartBinder<T> implements AnnotatedRequestArgumentBinder<Part
             }
         }
         return BindingResult.UNSATISFIED;
+    }
+
+    private static boolean bodyStreamOpened(HttpRequest<?> source) {
+        return source instanceof ServletExchange<?, ?> exchange
+            && exchange.getRequest() instanceof DefaultServletHttpRequest<?> servletRequest
+            && servletRequest.isBodyStreamOpened();
+    }
+
+    private BindingResult<T> bindFromCompleter(ArgumentConversionContext<T> context,
+                                               FormCapableHttpRequest<?> form,
+                                               FormFactory formFactory,
+                                               String name) {
+        FormRouteCompleter completer = formFactory.getOrCreateCompleter(form);
+        CompletableFuture<Optional<T>> value = Mono.from(completer.subscribeField(name, new FormRouteCompleter.SubscriptionMetadata(FormRouteCompleter.SubscriptionMode.WAITS_FOR_FULL, context.getArgument())))
+            .flatMap(field -> Mono.from(ReactiveExecutionFlow.toPublisher(formFactory.completePart(form, field))))
+            .map(completed -> {
+                boolean keep = false;
+                try {
+                    Optional<T> converted = conversionService.convert(completed, context);
+                    keep = converted.isPresent() && converted.get() == completed;
+                    return converted;
+                } finally {
+                    if (!keep) {
+                        completed.closeAsync(formFactory.getDiskWriteExecutor());
+                    }
+                }
+            })
+            .toFuture();
+        BasicHttpAttributes.addRouteWaitsFor(form, CompletableFutureExecutionFlow.just(value));
+        return new PendingRequestBindingResult<>() {
+            @Override
+            public boolean isPending() {
+                return !value.isDone();
+            }
+
+            @Override
+            public List<ConversionError> getConversionErrors() {
+                return context.getLastError().map(List::of).orElseGet(List::of);
+            }
+
+            @Override
+            public Optional<T> getValue() {
+                Optional<T> result = value.getNow(Optional.empty());
+                // a field that is missing completes the future with null
+                return result != null ? result : Optional.empty();
+            }
+        };
     }
 
     private BindingResult<T> bindFromMultipart(ArgumentConversionContext<T> context,

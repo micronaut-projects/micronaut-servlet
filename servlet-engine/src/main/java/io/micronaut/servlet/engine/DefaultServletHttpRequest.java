@@ -63,6 +63,7 @@ import jakarta.servlet.AsyncContext;
 import jakarta.servlet.AsyncEvent;
 import jakarta.servlet.AsyncListener;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletInputStream;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.http.HttpServletMapping;
 import jakarta.servlet.http.HttpServletRequest;
@@ -157,6 +158,11 @@ public final class DefaultServletHttpRequest<B> implements
     private final ConcurrentLinkedQueue<Runnable> disposalResources = new ConcurrentLinkedQueue<>();
 
     private boolean bodyIsReadAsync;
+    /**
+     * Whether the byte body opened the container's input stream: the container cannot parse the form any more
+     * then, so the form is decoded from the byte body instead.
+     */
+    private volatile boolean bodyStreamOpened;
     /**
      * Whether the body is fed by a {@code ReadListener}, which the container only drives once the service
      * method has returned; such a request must leave the service thread before its body can be consumed.
@@ -433,13 +439,13 @@ public final class DefaultServletHttpRequest<B> implements
             ReadBufferFactory readBufferFactory = byteBodyFactory.readBufferFactory();
             this.bodyReadsAsynchronously = true;
             return byteBodyFactory.adapt(
-                Flux.from(new ServletStreamPublisher(delegate::getInputStream)).map(readBufferFactory::adapt),
+                Flux.from(new ServletStreamPublisher(this::openBodyStream)).map(readBufferFactory::adapt),
                 bodySizeLimits,
                 headers,
                 null
             );
         }
-        InputStream stream = new LazyDelegateInputStream(delegate);
+        InputStream stream = new LazyDelegateInputStream(this::openBodyStream);
         if (bodySizeLimits.maxBodySize() < Long.MAX_VALUE) {
             stream = new LimitedInputStream(stream, bodySizeLimits.maxBodySize());
         }
@@ -463,8 +469,21 @@ public final class DefaultServletHttpRequest<B> implements
         return contentType == null || !isFormContentType(MediaType.of(contentType));
     }
 
-    private static CloseableByteBody readInline(HttpServletRequest request, ByteBodyFactory byteBodyFactory) {
-        try (InputStream inputStream = request.getInputStream()) {
+    /**
+     * @return Whether the byte body opened the input stream of the container, which cannot parse the form then
+     */
+    @Internal
+    public boolean isBodyStreamOpened() {
+        return bodyStreamOpened;
+    }
+
+    private ServletInputStream openBodyStream() throws IOException {
+        bodyStreamOpened = true;
+        return delegate.getInputStream();
+    }
+
+    private static CloseableByteBody readInline(LazyDelegateInputStream.StreamOpener opener, ByteBodyFactory byteBodyFactory) {
+        try (InputStream inputStream = opener.open()) {
             return byteBodyFactory.copyOf(inputStream);
         } catch (IOException e) {
             throw new InternalServerException("Error reading request body: " + e.getMessage(), e);
@@ -744,7 +763,7 @@ public final class DefaultServletHttpRequest<B> implements
             synchronized (this) {
                 current = byteBody.get();
                 if (current == null) {
-                    current = readInline(delegate, byteBodyFactory);
+                    current = readInline(this::openBodyStream, byteBodyFactory);
                     byteBody.set(current);
                 }
             }
@@ -791,6 +810,10 @@ public final class DefaultServletHttpRequest<B> implements
         MediaType mediaType = getContentType().orElse(null);
         if (mediaType == null || !isFormContentType(mediaType)) {
             throw new IllegalStateException("Not a form Content-Type. Please check hasFormBody() before calling this method.");
+        }
+        if (bodyStreamOpened) {
+            // e.g. a filter read a copy of the body: the bytes went to the byte body, not to the container
+            return getRawFormFields(byteBody().split(ByteBody.SplitBackpressureMode.FASTEST));
         }
         if (mediaType.matches(MediaType.MULTIPART_FORM_DATA_TYPE)) {
             return Flux.defer(() -> {
