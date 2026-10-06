@@ -120,8 +120,8 @@ public class ServletPartBinder<T> implements AnnotatedRequestArgumentBinder<Part
             return replaced;
         }
         FormCapableHttpRequest<?> form = FormBinding.formRequest(source);
-        FormFactory formFactory = formFactoryProvider.get();
-        if (form != null && form.hasFormBody() && formFactory != null) {
+        FormFactory formFactory = form != null && form.hasFormBody() ? formFactoryProvider.get() : null;
+        if (form != null && formFactory != null) {
             if (FormBinding.isBound(context.getArgument())) {
                 // FileUpload, List<FileUpload>, FormPart and their Optional
                 return FormBinding.bind(context, source, form, formFactory, conversionService);
