@@ -33,11 +33,14 @@ import io.micronaut.http.HttpParameters;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpVersion;
 import io.micronaut.http.MediaType;
+import io.micronaut.http.MutableHttpHeaders;
+import io.micronaut.http.MutableHttpParameters;
 import io.micronaut.http.MutableHttpRequest;
 import io.micronaut.http.ServerHttpRequest;
 import io.micronaut.http.body.ByteBody;
 import io.micronaut.http.body.ByteBodyFactory;
 import io.micronaut.http.body.CloseableByteBody;
+import io.micronaut.http.body.DirectByteBodyAccess;
 import io.micronaut.http.body.MessageBodyHandlerRegistry;
 import io.micronaut.http.body.stream.AvailableByteArrayBody;
 import io.micronaut.http.body.stream.BodySizeLimits;
@@ -48,6 +51,7 @@ import io.micronaut.http.form.FormCapableHttpRequest;
 import io.micronaut.http.multipart.FormFieldMetadata;
 import io.micronaut.http.multipart.RawFormField;
 import io.micronaut.http.server.exceptions.InternalServerException;
+import io.micronaut.http.simple.SimpleHttpHeaders;
 import io.micronaut.servlet.http.BodyBuilder;
 import io.micronaut.servlet.http.ParsedBodyHolder;
 import io.micronaut.servlet.http.SSLSessionProvider;
@@ -114,7 +118,8 @@ public final class DefaultServletHttpRequest<B> implements
     StreamedServletMessage<B, byte[]>,
     ServerHttpRequest<B>,
     ParsedBodyHolder<B>,
-    FormCapableHttpRequest<B> {
+    FormCapableHttpRequest<B>,
+    DirectByteBodyAccess {
 
     private static final String NULL_KEY = "Attribute key cannot be null";
     private static final String NULL_PARAMETER_NAME = "Parameter name cannot be null";
@@ -596,7 +601,7 @@ public final class DefaultServletHttpRequest<B> implements
 
     @NonNull
     @Override
-    public HttpParameters getParameters() {
+    public MutableHttpParameters getParameters() {
         if (isFormSubmission()) {
             // form fields come from the container's parsing of the body, not from the byte body, so the size limit
             // has to be enforced here or an oversized form would be accepted whenever the container's own limit
@@ -678,7 +683,7 @@ public final class DefaultServletHttpRequest<B> implements
 
     @NonNull
     @Override
-    public HttpHeaders getHeaders() {
+    public MutableHttpHeaders getHeaders() {
         return headers;
     }
 
@@ -744,6 +749,11 @@ public final class DefaultServletHttpRequest<B> implements
             }
         }
         return current;
+    }
+
+    @Override
+    public ByteBody byteBodyDirect() {
+        return byteBody();
     }
 
     @Override
@@ -852,10 +862,35 @@ public final class DefaultServletHttpRequest<B> implements
     /**
      * The servlet request headers.
      */
-    private final class ServletRequestHeaders implements HttpHeaders {
+    private final class ServletRequestHeaders implements MutableHttpHeaders {
+
+        /**
+         * The headers once they were changed, e.g. through a mutable view of a request a filter wrapped:
+         * the container's are read-only, so they are copied on the first change.
+         */
+        private @Nullable MutableHttpHeaders changed;
+
+        private MutableHttpHeaders changed() {
+            MutableHttpHeaders copy = changed;
+            if (copy == null) {
+                SimpleHttpHeaders headers = new SimpleHttpHeaders(new LinkedHashMap<>(), conversionService);
+                for (String name : names()) {
+                    for (String value : getAll(name)) {
+                        headers.add(name, value);
+                    }
+                }
+                copy = headers;
+                changed = copy;
+            }
+            return copy;
+        }
 
         @Override
         public List<String> getAll(CharSequence name) {
+            MutableHttpHeaders copy = changed;
+            if (copy != null) {
+                return copy.getAll(name);
+            }
             final Enumeration<String> e =
                 delegate.getHeaders(Objects.requireNonNull(name, "Header name should not be null").toString());
 
@@ -865,11 +900,19 @@ public final class DefaultServletHttpRequest<B> implements
         @Nullable
         @Override
         public String get(CharSequence name) {
+            MutableHttpHeaders copy = changed;
+            if (copy != null) {
+                return copy.get(name);
+            }
             return delegate.getHeader(Objects.requireNonNull(name, "Header name should not be null").toString());
         }
 
         @Override
         public Set<String> names() {
+            MutableHttpHeaders copy = changed;
+            if (copy != null) {
+                return copy.names();
+            }
             return CollectionUtils.enumerationToSet(delegate.getHeaderNames());
         }
 
@@ -888,6 +931,23 @@ public final class DefaultServletHttpRequest<B> implements
                 return conversionService.convert(v, conversionContext);
             }
             return Optional.empty();
+        }
+
+        @Override
+        public MutableHttpHeaders add(CharSequence header, CharSequence value) {
+            changed().add(header, value);
+            return this;
+        }
+
+        @Override
+        public MutableHttpHeaders remove(CharSequence header) {
+            changed().remove(header);
+            return this;
+        }
+
+        @Override
+        public void setConversionService(ConversionService conversionService) {
+            // the conversions of the request
         }
     }
 
@@ -955,9 +1015,42 @@ public final class DefaultServletHttpRequest<B> implements
     /**
      * The servlet request parameters.
      */
-    private final class ServletParameters implements HttpParameters {
+    private final class ServletParameters implements MutableHttpParameters {
+
+        /**
+         * The parameters once they were changed, e.g. through a mutable view of a request a filter
+         * wrapped: the container's are read-only, so they are copied on the first change.
+         */
+        private @Nullable Map<String, List<String>> changed;
+
+        @Override
+        public MutableHttpParameters add(CharSequence name, List<CharSequence> values) {
+            Map<String, List<String>> copy = changed;
+            if (copy == null) {
+                copy = new LinkedHashMap<>();
+                for (String n : names()) {
+                    copy.put(n, new ArrayList<>(getAll(n)));
+                }
+                changed = copy;
+            }
+            List<String> list = copy.computeIfAbsent(Objects.requireNonNull(name, NULL_PARAMETER_NAME).toString(), k -> new ArrayList<>(values.size()));
+            for (CharSequence value : values) {
+                list.add(value.toString());
+            }
+            return this;
+        }
+
+        @Override
+        public void setConversionService(ConversionService conversionService) {
+            // the conversions of the request
+        }
 
         private @Nullable String[] values(String name) {
+            Map<String, List<String>> copy = changed;
+            if (copy != null) {
+                List<String> values = copy.get(name);
+                return values == null ? null : values.toArray(String[]::new);
+            }
             Map<String, List<String>> form = unboundedForm;
             if (form != null) {
                 List<String> values = form.get(name);
@@ -984,6 +1077,10 @@ public final class DefaultServletHttpRequest<B> implements
 
         @Override
         public Set<String> names() {
+            Map<String, List<String>> copy = changed;
+            if (copy != null) {
+                return copy.keySet();
+            }
             Map<String, List<String>> form = unboundedForm;
             if (form != null) {
                 return form.keySet();

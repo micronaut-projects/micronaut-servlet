@@ -45,6 +45,7 @@ import io.micronaut.http.multipart.PartData;
 import io.micronaut.http.multipart.StreamingFileUpload;
 import io.micronaut.http.reactive.execution.ReactiveExecutionFlow;
 import io.micronaut.http.server.HttpServerConfiguration;
+import io.micronaut.http.server.binding.FormBinding;
 import io.micronaut.http.server.exceptions.InternalServerException;
 import io.micronaut.http.server.multipart.FormFactory;
 import io.micronaut.http.server.multipart.FormRouteCompleter;
@@ -110,10 +111,30 @@ public class ServletPartBinder<T> implements AnnotatedRequestArgumentBinder<Part
 
     @Override
     public BindingResult<T> bind(ArgumentConversionContext<T> context, HttpRequest<?> source) {
+        final String boundName = context.getAnnotationMetadata().stringValue(Part.class).orElse(context.getArgument().getName());
+        // the request itself, or e.g. the mutable view of the request a filter continued with
+        BindingResult<T> replaced = FormBinding.bindReplaced(context, source, conversionService, boundName);
+        if (replaced != null) {
+            // a filter set the body: the form it set, never the bytes of the request
+            return replaced;
+        }
+        FormCapableHttpRequest<?> form = FormBinding.formRequest(source);
+        FormFactory formFactory = formFactoryProvider.get();
+        if (form != null && form.hasFormBody() && formFactory != null) {
+            if (FormBinding.isBound(context.getArgument())) {
+                // FileUpload, List<FileUpload>, FormPart and their Optional
+                return FormBinding.bind(context, source, form, formFactory, conversionService);
+            }
+            BindingResult<T> fromForm = FormBinding.bindField(conversionService, context, source, form, formFactory, boundName);
+            if (fromForm != null) {
+                // the form is read whole by a FormData or FormParts argument of the route
+                return fromForm;
+            }
+        }
         if (source instanceof ServletExchange<?, ?> exchange) {
             final HttpServletRequest nativeRequest = (HttpServletRequest) exchange.getRequest().getNativeRequest();
             final Argument<T> argument = context.getArgument();
-            final String partName = context.getAnnotationMetadata().stringValue(Part.class).orElse(argument.getName());
+            final String partName = boundName;
             final MediaType requestContentType = source.getContentType().orElse(null);
             final boolean isMultipart = requestContentType != null && requestContentType.matches(MediaType.MULTIPART_FORM_DATA_TYPE);
 

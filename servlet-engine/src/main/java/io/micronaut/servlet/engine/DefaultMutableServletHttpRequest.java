@@ -36,23 +36,36 @@ import io.micronaut.http.HttpMethod;
 import io.micronaut.http.MutableHttpHeaders;
 import io.micronaut.http.MutableHttpParameters;
 import io.micronaut.http.MutableHttpRequest;
+import io.micronaut.http.ServerHttpRequest;
+import io.micronaut.http.body.ByteBody;
+import io.micronaut.http.body.ByteBodyFactory;
+import io.micronaut.http.body.DirectByteBodyAccess;
 import io.micronaut.http.cookie.Cookie;
 import io.micronaut.http.cookie.Cookies;
+import io.micronaut.http.form.FormCapableHttpRequest;
+import io.micronaut.http.multipart.RawFormField;
 import io.micronaut.http.simple.SimpleHttpHeaders;
 import io.micronaut.http.simple.SimpleHttpParameters;
 import io.micronaut.servlet.http.MutableServletHttpRequest;
 import org.jspecify.annotations.Nullable;
+import org.reactivestreams.Publisher;
 
 /**
  * Mutable implementation for servlets.
  * @param <B> The body type
  */
 @Internal
-final class DefaultMutableServletHttpRequest<B> implements MutableServletHttpRequest<HttpServletRequest, B> {
+final class DefaultMutableServletHttpRequest<B> implements MutableServletHttpRequest<HttpServletRequest, B>,
+    ServerHttpRequest<B>, FormCapableHttpRequest<B>, DirectByteBodyAccess {
     private final DefaultServletHttpRequest<B> servletHttpRequest;
     private @Nullable URI uri;
     private ConversionService conversionService;
     private @Nullable B body;
+    /**
+     * Whether the body was set, even to {@code null}: then the body is that object, and not the
+     * bytes of the request, which the routes no longer read.
+     */
+    private boolean bodySet;
     private final MutableHttpParameters parameters;
     private final MutableHttpHeaders headers;
 
@@ -101,6 +114,7 @@ final class DefaultMutableServletHttpRequest<B> implements MutableServletHttpReq
     @Override
     public <T> MutableHttpRequest<T> body(@Nullable T body) {
         this.body = (B) body;
+        this.bodySet = true;
         return (MutableHttpRequest<T>) this;
     }
 
@@ -116,11 +130,11 @@ final class DefaultMutableServletHttpRequest<B> implements MutableServletHttpReq
 
     @Override
     public Optional<B> getBody() {
-        if (body != null) {
+        if (bodySet) {
+            // the body the filter set, none if it cleared it
             return Optional.ofNullable(this.body);
-        } else {
-            return servletHttpRequest.getBody();
         }
+        return servletHttpRequest.getBody();
     }
 
     @Override
@@ -174,5 +188,48 @@ final class DefaultMutableServletHttpRequest<B> implements MutableServletHttpReq
     @Override
     public HttpServletRequest getNativeRequest() {
         return servletHttpRequest.getNativeRequest();
+    }
+
+    @Override
+    public ByteBody byteBody() {
+        // the bytes of the request, which the route reads unless the body was set
+        return servletHttpRequest.byteBody();
+    }
+
+    @Override
+    public ByteBodyFactory byteBodyFactory() {
+        return servletHttpRequest.byteBodyFactory();
+    }
+
+    @Override
+    public @Nullable ByteBody byteBodyDirect() {
+        // once the body was set, the bytes of the request are not its body
+        return bodySet ? null : servletHttpRequest.byteBody();
+    }
+
+    @Override
+    public boolean hasFormBody() {
+        return !bodySet && servletHttpRequest.hasFormBody();
+    }
+
+    @Override
+    public Publisher<RawFormField> getRawFormFields() {
+        if (bodySet) {
+            throw new IllegalStateException("The body of the request was set: it has no form fields to read");
+        }
+        return servletHttpRequest.getRawFormFields();
+    }
+
+    @Override
+    public Publisher<RawFormField> getRawFormFields(ByteBody byteBody) {
+        if (bodySet) {
+            throw new IllegalStateException("The body of the request was set: it has no form fields to read");
+        }
+        return servletHttpRequest.getRawFormFields(byteBody);
+    }
+
+    @Override
+    public void addDisposalResource(Runnable dispose) {
+        servletHttpRequest.addDisposalResource(dispose);
     }
 }
