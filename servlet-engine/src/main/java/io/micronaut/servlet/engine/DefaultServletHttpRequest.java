@@ -74,6 +74,7 @@ import org.jspecify.annotations.Nullable;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import javax.net.ssl.SSLSession;
 import java.io.BufferedReader;
@@ -808,6 +809,31 @@ public final class DefaultServletHttpRequest<B> implements
                     .map(value -> new RawFormField(new FormFieldMetadata(name, null, null), byteBodyFactory().adapt(value.getBytes(StandardCharsets.UTF_8)))))
                 .toList());
         }
+    }
+
+    @Override
+    public Publisher<RawFormField> getRawFormFields(ByteBody byteBody) {
+        MediaType mediaType = getContentType().orElse(null);
+        if (mediaType == null || !isFormContentType(mediaType)) {
+            if (byteBody instanceof CloseableByteBody closeable) {
+                // the publisher owns the bytes
+                closeable.close();
+            }
+            throw new IllegalStateException("Not a form Content-Type. Please check hasFormBody() before calling this method.");
+        }
+        // e.g. a copy of the body that a filter reads: the container parses only the bytes it received, so
+        // the copy is buffered, within the limits of the copy, and decoded here
+        Charset charset = getCharacterEncoding();
+        return Mono.fromCompletionStage(() -> byteBody.buffer())
+            .flatMapMany(buffered -> {
+                byte[] bytes;
+                try (buffered) {
+                    bytes = buffered.toByteArray();
+                }
+                return Flux.fromIterable(BufferedFormDecoder.decode(mediaType, bytes, charset))
+                    .map(field -> new RawFormField(field.metadata(), AvailableByteArrayBody.create(byteBodyFactory.readBufferFactory().adapt(field.content()))));
+            })
+            .doOnDiscard(RawFormField.class, RawFormField::close);
     }
 
     @Override

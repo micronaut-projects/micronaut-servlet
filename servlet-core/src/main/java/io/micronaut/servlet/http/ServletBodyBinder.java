@@ -140,7 +140,8 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
             if (CharSequence.class.isAssignableFrom(type) && name == null) {
                 try (BufferedReader bufferedReader = servletHttpRequest.getReader()) {
                     String text = IOUtils.readText(bufferedReader);
-                    return () -> (Optional<T>) Optional.of(text);
+                    // a request without content has no body, like on the other runtimes
+                    return () -> text.isEmpty() ? Optional.empty() : (Optional<T>) Optional.of(text);
                 } catch (IOException e) {
                     HttpException httpException = BodyReadFailures.httpFailure(e);
                     if (httpException != null) {

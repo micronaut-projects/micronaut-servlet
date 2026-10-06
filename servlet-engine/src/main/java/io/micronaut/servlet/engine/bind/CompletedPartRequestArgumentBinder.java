@@ -23,6 +23,7 @@ import io.micronaut.http.annotation.Part;
 import io.micronaut.http.bind.binders.TypedRequestArgumentBinder;
 import io.micronaut.http.multipart.CompletedPart;
 import io.micronaut.http.server.HttpServerConfiguration;
+import io.micronaut.http.server.binding.ServerRequestBody;
 import io.micronaut.http.server.exceptions.InternalServerException;
 import io.micronaut.servlet.engine.ServletParts;
 import io.micronaut.servlet.http.ServletExchange;
@@ -48,7 +49,10 @@ class CompletedPartRequestArgumentBinder implements TypedRequestArgumentBinder<C
     public BindingResult<CompletedPart> bind(
             ArgumentConversionContext<CompletedPart> context,
             HttpRequest<?> source) {
-        ServletExchange<?, ?> exchange = (ServletExchange<?, ?>) source;
+        // the request itself, or the servlet request under the wrappers of filters
+        if (!(ServerRequestBody.serverRequest(source) instanceof ServletExchange<?, ?> exchange)) {
+            return BindingResult.UNSATISFIED;
+        }
         final HttpServletRequest nativeRequest = (HttpServletRequest) exchange.getRequest().getNativeRequest();
         final Argument<?> argument = context.getArgument();
         final String partName = context.getAnnotationMetadata().stringValue(Part.class).orElse(argument.getName());
