@@ -661,20 +661,19 @@ public final class DefaultServletHttpRequest<B> implements
     }
 
     /**
-     * Reads a URL-encoded form that declared no length through the size limit, before the container parses it.
+     * Reads a URL-encoded form through the size limit, before the container parses it.
      *
      * <p>A declared length is checked against the limit up front, and a multipart body is bounded by the
      * {@code MultipartConfigElement} the container is given, but a chunked URL-encoded form would otherwise be
      * parsed by the container straight from the stream, subject only to its own limit. The fields are decoded
      * here instead, from bytes that passed through the limit, and the container contributes the query
-     * parameters only, which is what it parses once the stream has been consumed. The same goes for the form
-     * of a method other than POST, which a container does not parse.</p>
+     * parameters only, which is what it parses once the stream has been consumed. A form with a length is decoded
+     * here too, in the order of its fields, and whatever its method: a container parses the form of a POST only.</p>
      */
     private synchronized void readUnboundedForm() {
-        // a container parses the form of a POST only, see the servlet specification 3.1.1: the form of any other
-        // method is decoded here too
-        boolean parsedByContainer = delegate.getContentLengthLong() >= 0 && HttpMethod.POST.name().equals(delegate.getMethod());
-        if (unboundedForm != null || parsedByContainer || !mayHaveBody() || !isUrlEncodedForm()) {
+        // the form is always decoded here: a container parses the form of a POST only, see the servlet
+        // specification 3.1.1, and may not keep the order of the fields, which a form read part after part needs
+        if (unboundedForm != null || !mayHaveBody() || !isUrlEncodedForm()) {
             return;
         }
         byte[] bytes;
