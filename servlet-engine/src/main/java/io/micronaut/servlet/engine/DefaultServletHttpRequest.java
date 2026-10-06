@@ -794,7 +794,7 @@ public final class DefaultServletHttpRequest<B> implements
         if (mediaType.matches(MediaType.MULTIPART_FORM_DATA_TYPE)) {
             return Flux.defer(() -> {
                 try {
-                    Collection<Part> parts = ((HttpServletRequest) delegate()).getParts();
+                    Collection<Part> parts = ServletParts.parts((HttpServletRequest) delegate());
                     return Flux.fromIterable(parts)
                         .map(this::toRawFormFieldFromPart);
                 } catch (IOException | ServletException e) {

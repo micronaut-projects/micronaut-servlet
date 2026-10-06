@@ -22,6 +22,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -46,6 +47,7 @@ import io.micronaut.http.form.FormCapableHttpRequest;
 import io.micronaut.http.multipart.RawFormField;
 import io.micronaut.http.simple.SimpleHttpHeaders;
 import io.micronaut.http.simple.SimpleHttpParameters;
+import io.micronaut.http.uri.QueryStringDecoder;
 import io.micronaut.servlet.http.MutableServletHttpRequest;
 import org.jspecify.annotations.Nullable;
 import org.reactivestreams.Publisher;
@@ -66,23 +68,37 @@ final class DefaultMutableServletHttpRequest<B> implements MutableServletHttpReq
      * bytes of the request, which the routes no longer read.
      */
     private boolean bodySet;
-    private final MutableHttpParameters parameters;
+    private MutableHttpParameters parameters;
     private final MutableHttpHeaders headers;
 
     DefaultMutableServletHttpRequest(DefaultServletHttpRequest<B> servletHttpRequest) {
+        this(servletHttpRequest, servletHttpRequest.getConversionService(), servletHttpRequest.getParameters(),
+            servletHttpRequest.getHeaders());
+    }
+
+    /**
+     * A view of a view, which keeps what the view changed.
+     *
+     * @param view The view
+     */
+    private DefaultMutableServletHttpRequest(DefaultMutableServletHttpRequest<B> view) {
+        this(view.servletHttpRequest, view.conversionService, view.parameters, view.headers);
+        this.uri = view.uri;
+        this.body = view.body;
+        this.bodySet = view.bodySet;
+    }
+
+    private DefaultMutableServletHttpRequest(DefaultServletHttpRequest<B> servletHttpRequest,
+                                             ConversionService conversionService,
+                                             ConvertibleMultiValues<String> parameters,
+                                             ConvertibleMultiValues<String> headers) {
         this.servletHttpRequest = servletHttpRequest;
-        this.conversionService = servletHttpRequest.getConversionService();
-        this.parameters = new SimpleHttpParameters(
-            copyValues(servletHttpRequest.getParameters()),
-            servletHttpRequest.getConversionService()
-        );
+        this.conversionService = conversionService;
+        this.parameters = new SimpleHttpParameters(copyValues(parameters), conversionService);
         this.parameters.setConversionService(conversionService);
-        SimpleHttpHeaders newHeaders = new SimpleHttpHeaders(
-            new LinkedHashMap<>(),
-            servletHttpRequest.getConversionService()
-        );
+        SimpleHttpHeaders newHeaders = new SimpleHttpHeaders(new LinkedHashMap<>(), conversionService);
         newHeaders.setConversionService(conversionService);
-        servletHttpRequest.getHeaders().forEach((name, values) -> {
+        headers.forEach((name, values) -> {
             for (String value : values) {
                 newHeaders.add(name, value);
             }
@@ -92,12 +108,17 @@ final class DefaultMutableServletHttpRequest<B> implements MutableServletHttpReq
 
     private static Map<CharSequence, List<String>> copyValues(ConvertibleMultiValues<String> params) {
         LinkedHashMap<CharSequence, List<String>> values = new LinkedHashMap<>(params.names().size());
-        params.forEach(entry -> values.put(entry.getKey(), entry.getValue()));
+        params.forEach(entry -> values.put(entry.getKey(), new ArrayList<>(entry.getValue())));
         return values;
     }
 
     ConversionService getConversionService() {
         return conversionService;
+    }
+
+    @Override
+    public MutableHttpRequest<B> mutate() {
+        return new DefaultMutableServletHttpRequest<>(this);
     }
 
     @Override
@@ -107,6 +128,21 @@ final class DefaultMutableServletHttpRequest<B> implements MutableServletHttpReq
 
     @Override
     public MutableHttpRequest<B> uri(URI uri) {
+        // the query parameters follow the URI: those of the previous URI are replaced, the fields of a form kept
+        Map<String, List<String>> previousQuery = new QueryStringDecoder(getUri()).parameters();
+        Map<CharSequence, List<String>> values = new LinkedHashMap<>();
+        new QueryStringDecoder(uri).parameters().forEach((name, list) -> values.put(name, new ArrayList<>(list)));
+        parameters.forEach(entry -> {
+            List<String> query = previousQuery.getOrDefault(entry.getKey(), List.of());
+            List<String> rest = new ArrayList<>(entry.getValue());
+            query.forEach(rest::remove);
+            if (!rest.isEmpty()) {
+                values.computeIfAbsent(entry.getKey(), k -> new ArrayList<>()).addAll(rest);
+            }
+        });
+        MutableHttpParameters changed = new SimpleHttpParameters(values, conversionService);
+        changed.setConversionService(conversionService);
+        this.parameters = changed;
         this.uri = uri;
         return this;
     }

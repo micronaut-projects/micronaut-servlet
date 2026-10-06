@@ -27,6 +27,7 @@ import io.micronaut.http.BasicHttpAttributes;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.ServerHttpRequest;
+import io.micronaut.http.server.binding.ServerRequestBody;
 import io.micronaut.http.annotation.Body;
 import io.micronaut.http.bind.binders.AnnotatedRequestArgumentBinder;
 import io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder;
@@ -104,12 +105,34 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
         return Body.class;
     }
 
+    /**
+     * The body a filter set on the request it continued with, converted to the argument: unsatisfied
+     * when it cleared it, which a required body answers with a bad request.
+     */
+    private BindingResult<T> replacedBody(ArgumentConversionContext<T> context, HttpRequest<?> source, @Nullable String name) {
+        Object value = source.getBody().orElse(null);
+        if (value != null && name != null) {
+            value = value instanceof Map<?, ?> map ? map.get(name) : null;
+        }
+        if (value == null) {
+            return BindingResult.unsatisfied();
+        }
+        Optional<T> converted = conversionService.convert(value, context);
+        return () -> converted;
+    }
+
     @Override
     public BindingResult<T> bind(ArgumentConversionContext<T> context, HttpRequest<?> source) {
         final Argument<T> argument = context.getArgument();
         final Class<T> type = argument.getType();
         String name = argument.getAnnotationMetadata().stringValue(Body.class).orElse(null);
-        if (source instanceof ServletHttpRequest<?, ?> servletHttpRequest) {
+        // the server request whose bytes are the body, under the wrappers and mutable views of filters
+        ServerHttpRequest<?> server = ServerRequestBody.of(source);
+        if (server == null && ServerRequestBody.serverRequest(source) != null) {
+            // a filter set the body, even to null: the body is that object, never the bytes of the request
+            return replacedBody(context, source, name);
+        }
+        if ((server instanceof ServletHttpRequest<?, ?> ? server : source) instanceof ServletHttpRequest<?, ?> servletHttpRequest) {
             if (Readable.class.isAssignableFrom(type)) {
                 Readable readable = new ServletReadable(servletHttpRequest);
                 return () -> (Optional<T>) Optional.of(readable);

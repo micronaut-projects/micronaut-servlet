@@ -24,6 +24,7 @@ import io.micronaut.http.bind.binders.TypedRequestArgumentBinder;
 import io.micronaut.http.multipart.CompletedPart;
 import io.micronaut.http.server.HttpServerConfiguration;
 import io.micronaut.http.server.exceptions.InternalServerException;
+import io.micronaut.servlet.engine.ServletParts;
 import io.micronaut.servlet.http.ServletExchange;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -52,7 +53,7 @@ class CompletedPartRequestArgumentBinder implements TypedRequestArgumentBinder<C
         final Argument<?> argument = context.getArgument();
         final String partName = context.getAnnotationMetadata().stringValue(Part.class).orElse(argument.getName());
         try {
-            jakarta.servlet.http.Part part = nativeRequest.getPart(partName);
+            jakarta.servlet.http.Part part = ServletParts.part(nativeRequest, partName);
             if (part == null) {
                 return BindingResult.UNSATISFIED;
             }

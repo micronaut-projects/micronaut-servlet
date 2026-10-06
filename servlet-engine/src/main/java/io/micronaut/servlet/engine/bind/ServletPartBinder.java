@@ -50,6 +50,7 @@ import io.micronaut.http.server.exceptions.InternalServerException;
 import io.micronaut.http.server.multipart.FormFactory;
 import io.micronaut.http.server.multipart.FormRouteCompleter;
 import io.micronaut.http.simple.SimpleHttpHeaders;
+import io.micronaut.servlet.engine.ServletParts;
 import io.micronaut.servlet.http.ServletExchange;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -160,7 +161,7 @@ public class ServletPartBinder<T> implements AnnotatedRequestArgumentBinder<Part
         final Argument<T> argument = context.getArgument();
         final jakarta.servlet.http.Part part;
         try {
-            part = nativeRequest.getPart(partName);
+            part = ServletParts.part(nativeRequest, partName);
         } catch (IOException | ServletException e) {
             throw new InternalServerException("Error reading part [" + partName + "]: " + e.getMessage(), e);
         }
