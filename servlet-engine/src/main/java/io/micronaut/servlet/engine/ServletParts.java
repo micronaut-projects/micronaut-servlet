@@ -53,6 +53,10 @@ public final class ServletParts {
             return request.getParts();
         } catch (IllegalStateException e) {
             throw tooLarge(e);
+        } catch (IOException e) {
+            throw tooLargeOr(e);
+        } catch (ServletException e) {
+            throw tooLargeOr(e);
         }
     }
 
@@ -68,10 +72,27 @@ public final class ServletParts {
             return request.getPart(name);
         } catch (IllegalStateException e) {
             throw tooLarge(e);
+        } catch (IOException e) {
+            throw tooLargeOr(e);
+        } catch (ServletException e) {
+            throw tooLargeOr(e);
         }
     }
 
-    private static ContentLengthExceededException tooLarge(IllegalStateException e) {
+    private static ContentLengthExceededException tooLarge(Throwable e) {
         return new ContentLengthExceededException("The multipart request exceeds the size the server allows: " + e.getMessage(), e);
+    }
+
+    /**
+     * Jetty reports a part over its limit as a bad multipart message, with the
+     * {@link IllegalStateException} of the limit as its cause.
+     */
+    private static <E extends Exception> E tooLargeOr(E e) {
+        for (Throwable cause = e.getCause(); cause != null && cause != cause.getCause(); cause = cause.getCause()) {
+            if (cause instanceof IllegalStateException) {
+                throw tooLarge(cause);
+            }
+        }
+        return e;
     }
 }
