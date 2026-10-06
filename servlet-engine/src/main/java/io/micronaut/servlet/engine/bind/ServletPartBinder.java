@@ -131,6 +131,9 @@ public class ServletPartBinder<T> implements AnnotatedRequestArgumentBinder<Part
                 // the form is read whole by a FormData or FormParts argument of the route
                 return fromForm;
             }
+            if (StreamingFileUpload.class == context.getArgument().getType()) {
+                return bindStreamingFileUpload(context, form, formFactory, boundName);
+            }
         }
         if (source instanceof ServletExchange<?, ?> exchange) {
             final HttpServletRequest nativeRequest = (HttpServletRequest) exchange.getRequest().getNativeRequest();
@@ -176,6 +179,10 @@ public class ServletPartBinder<T> implements AnnotatedRequestArgumentBinder<Part
         // CompletedPart and CompletedFileUpload wrap the part itself, whatever its content type, so they are
         // resolved before a message body reader for that content type (a text/plain part would otherwise be
         // read as a String that cannot be converted to the argument type)
+        if (part.getSubmittedFileName() == null && CompletedFileUpload.class.isAssignableFrom(type)) {
+            // a text field is not a file: a required file is then missing
+            return BindingResult.UNSATISFIED;
+        }
         if (CompletedPart.class.isAssignableFrom(type)) {
             try {
                 @SuppressWarnings("java:S2095")
@@ -258,6 +265,33 @@ public class ServletPartBinder<T> implements AnnotatedRequestArgumentBinder<Part
             }
         }
         return BindingResult.UNSATISFIED;
+    }
+
+    /**
+     * A file streamed from the part of its name, which the route gets once the part starts.
+     */
+    @SuppressWarnings("unchecked")
+    private BindingResult<T> bindStreamingFileUpload(ArgumentConversionContext<T> context,
+                                                     FormCapableHttpRequest<?> form,
+                                                     FormFactory formFactory,
+                                                     String partName) {
+        CompletableFuture<? extends StreamingFileUpload> completableFuture =
+            Mono.from(formFactory.getOrCreateCompleter(form).subscribeField(partName,
+                    new FormRouteCompleter.SubscriptionMetadata(FormRouteCompleter.SubscriptionMode.WAITS_FOR_START, context.getArgument())))
+                .map(formFactory::streamFileUpload)
+                .toFuture();
+        BasicHttpAttributes.addRouteWaitsFor(form, CompletableFutureExecutionFlow.just(completableFuture));
+        return new PendingRequestBindingResult<>() {
+            @Override
+            public boolean isPending() {
+                return !completableFuture.isDone();
+            }
+
+            @Override
+            public Optional<T> getValue() {
+                return Optional.ofNullable((T) completableFuture.getNow(null));
+            }
+        };
     }
 
     private BindingResult<T> bindFromForm(FormCapableHttpRequest<?> formRequest,

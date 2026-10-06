@@ -83,7 +83,10 @@ class DefaultServletBinderRegistry<T> extends ServletBinderRegistry<T> {
         byType.put(CompletedPart.class, new CompletedPartRequestArgumentBinder(configuration));
         // looked up by the exact type of the argument
         byType.put(CompletedFileUpload.class, new CompletedPartRequestArgumentBinder(configuration));
-        byAnnotation.put(Part.class, new ServletPartBinder<>(conversionService, formFactoryProvider, messageBodyHandlerRegistry, configuration));
+        ServletPartBinder<Object> partBinder = new ServletPartBinder<>(conversionService, formFactoryProvider, messageBodyHandlerRegistry, configuration);
+        byAnnotation.put(Part.class, partBinder);
+        // an argument without annotation that no other binder takes, e.g. a file of a multipart request by its name
+        addUnmatchedRequestArgumentBinder(partBinder);
     }
 
     @Override

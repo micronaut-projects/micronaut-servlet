@@ -85,6 +85,16 @@ public abstract class ServletBinderRegistry<T> implements RequestBinderRegistry 
         return new ServletBodyBinder<>(conversionService, messageBodyHandlerRegistry, defaultBodyAnnotationBinder, jsonMapper);
     }
 
+    /**
+     * Adds a binder for the arguments without annotation that no other binder takes.
+     *
+     * @param binder The binder
+     */
+    @Override
+    public void addUnmatchedRequestArgumentBinder(RequestArgumentBinder<Object> binder) {
+        defaultRegistry.addUnmatchedRequestArgumentBinder(binder);
+    }
+
     @Override
     public <T> Optional<ArgumentBinder<T, HttpRequest<?>>> findArgumentBinder(Argument<T> argument) {
         final Class<? extends Annotation> annotation = argument.getAnnotationMetadata().getAnnotationTypeByStereotype(BINDABLE_ANN).orElse(null);

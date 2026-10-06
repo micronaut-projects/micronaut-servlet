@@ -21,6 +21,7 @@ import io.micronaut.http.HttpRequest;
 import io.micronaut.http.LifecycleHttpRequest;
 import io.micronaut.http.annotation.Part;
 import io.micronaut.http.bind.binders.TypedRequestArgumentBinder;
+import io.micronaut.http.multipart.CompletedFileUpload;
 import io.micronaut.http.multipart.CompletedPart;
 import io.micronaut.http.server.HttpServerConfiguration;
 import io.micronaut.http.server.binding.ServerRequestBody;
@@ -59,6 +60,10 @@ class CompletedPartRequestArgumentBinder implements TypedRequestArgumentBinder<C
         try {
             jakarta.servlet.http.Part part = ServletParts.part(nativeRequest, partName);
             if (part == null) {
+                return BindingResult.UNSATISFIED;
+            }
+            if (part.getSubmittedFileName() == null && CompletedFileUpload.class.isAssignableFrom(argument.getType())) {
+                // a text field is not a file: a required file is then missing
                 return BindingResult.UNSATISFIED;
             }
             @SuppressWarnings("java:S2095")
