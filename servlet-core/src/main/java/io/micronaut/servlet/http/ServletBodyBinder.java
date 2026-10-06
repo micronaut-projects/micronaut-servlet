@@ -145,6 +145,15 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
                 Readable readable = new ServletReadable(servletHttpRequest);
                 return () -> (Optional<T>) Optional.of(readable);
             }
+            if (type == InputStream.class && name == null) {
+                // the bytes of the body as they arrive, like on the Netty server
+                try {
+                    InputStream inputStream = servletHttpRequest.getInputStream();
+                    return () -> (Optional<T>) Optional.of(inputStream);
+                } catch (IOException e) {
+                    throw decodingFailure("Unable to read request body: ", e);
+                }
+            }
             if (CharSequence.class.isAssignableFrom(type) && name == null) {
                 try (BufferedReader bufferedReader = servletHttpRequest.getReader()) {
                     String text = IOUtils.readText(bufferedReader);
@@ -450,7 +459,7 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
         boolean single = Publishers.isSingle(context.getArgument().getType());
         Publisher<?> publisher;
         if (servletHttpRequest instanceof ServerHttpRequest<?> serverHttpRequest) {
-            if (mediaType.equals(MediaType.APPLICATION_JSON_STREAM_TYPE) || !single && mediaType.equals(MediaType.APPLICATION_JSON_TYPE)) {
+            if (mediaType.equals(MediaType.APPLICATION_JSON_STREAM_TYPE)) {
                 Flux<Object> jsonStream = streamJson(serverHttpRequest, typeArgument);
                 publisher = single ? jsonStream.single() : jsonStream;
             } else {
