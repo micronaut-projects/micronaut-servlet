@@ -18,6 +18,8 @@ package io.micronaut.servlet.engine.bind;
 import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
+import io.micronaut.http.HttpStatus;
+import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.http.HttpRequestWrapper;
 import io.micronaut.http.LifecycleHttpRequest;
 import io.micronaut.http.annotation.Part;
@@ -64,9 +66,9 @@ class CompletedPartRequestArgumentBinder implements TypedRequestArgumentBinder<C
             if (part == null) {
                 return BindingResult.UNSATISFIED;
             }
-            if (part.getSubmittedFileName() == null && CompletedFileUpload.class.isAssignableFrom(argument.getType())) {
-                // a text field is not a file: a required file is then missing
-                return BindingResult.UNSATISFIED;
+            if ((part.getSubmittedFileName() == null || part.getSubmittedFileName().isEmpty()) && CompletedFileUpload.class.isAssignableFrom(argument.getType())) {
+                // a text field is not a file, answered like the form factory of the other runtimes
+                throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Field [" + part.getName() + "] was expected to be a file upload, but is missing a file name");
             }
             @SuppressWarnings("java:S2095")
             CompletedPart completedPart = ServletCompletedFileUploadFactory.create(configuration, part);
@@ -80,6 +82,8 @@ class CompletedPartRequestArgumentBinder implements TypedRequestArgumentBinder<C
                 });
             }
             return () -> Optional.of(completedPart);
+        } catch (HttpStatusException e) {
+            throw e;
         } catch (Exception e) {
             context.reject(new InternalServerException("Error reading part [" + partName + "]: " + e.getMessage(), e));
             return BindingResult.EMPTY;

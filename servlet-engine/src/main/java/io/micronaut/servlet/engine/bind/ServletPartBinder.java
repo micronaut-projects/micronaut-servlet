@@ -197,9 +197,9 @@ public class ServletPartBinder<T> implements AnnotatedRequestArgumentBinder<Part
         // CompletedPart and CompletedFileUpload wrap the part itself, whatever its content type, so they are
         // resolved before a message body reader for that content type (a text/plain part would otherwise be
         // read as a String that cannot be converted to the argument type)
-        if (part.getSubmittedFileName() == null && CompletedFileUpload.class.isAssignableFrom(type)) {
-            // a text field is not a file: a required file is then missing
-            return BindingResult.UNSATISFIED;
+        if ((part.getSubmittedFileName() == null || part.getSubmittedFileName().isEmpty()) && CompletedFileUpload.class.isAssignableFrom(type)) {
+            // a text field is not a file, answered like the form factory of the other runtimes
+            throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Field [" + part.getName() + "] was expected to be a file upload, but is missing a file name");
         }
         if (CompletedPart.class.isAssignableFrom(type)) {
             try {
