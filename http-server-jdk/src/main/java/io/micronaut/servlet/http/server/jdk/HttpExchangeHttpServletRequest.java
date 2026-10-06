@@ -57,6 +57,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -521,7 +522,7 @@ final class HttpExchangeHttpServletRequest implements HttpServletRequest {
     }
 
     private static Map<String, String[]> mergeParams(Map<String, Object> map1, Map<String, List<String>> map2) {
-        Map<String, String[]> mergedMap = new HashMap<>();
+        Map<String, String[]> mergedMap = new LinkedHashMap<>();
 
         for (Map.Entry<String, Object> entry : map1.entrySet()) {
             String key = entry.getKey();

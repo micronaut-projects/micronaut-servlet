@@ -96,6 +96,7 @@ import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
@@ -666,10 +667,14 @@ public final class DefaultServletHttpRequest<B> implements
      * {@code MultipartConfigElement} the container is given, but a chunked URL-encoded form would otherwise be
      * parsed by the container straight from the stream, subject only to its own limit. The fields are decoded
      * here instead, from bytes that passed through the limit, and the container contributes the query
-     * parameters only, which is what it parses once the stream has been consumed.</p>
+     * parameters only, which is what it parses once the stream has been consumed. The same goes for the form
+     * of a method other than POST, which a container does not parse.</p>
      */
     private synchronized void readUnboundedForm() {
-        if (unboundedForm != null || delegate.getContentLengthLong() >= 0 || !mayHaveBody() || !isUrlEncodedForm()) {
+        // a container parses the form of a POST only, see the servlet specification 3.1.1: the form of any other
+        // method is decoded here too
+        boolean parsedByContainer = delegate.getContentLengthLong() >= 0 && HttpMethod.POST.name().equals(delegate.getMethod());
+        if (unboundedForm != null || parsedByContainer || !mayHaveBody() || !isUrlEncodedForm()) {
             return;
         }
         byte[] bytes;
@@ -1149,7 +1154,13 @@ public final class DefaultServletHttpRequest<B> implements
             if (form != null) {
                 return form.keySet();
             }
-            return CollectionUtils.enumerationToSet(delegate.getParameterNames());
+            // in the order of the request: a form is read part after part
+            Set<String> names = new LinkedHashSet<>();
+            Enumeration<String> parameterNames = delegate.getParameterNames();
+            while (parameterNames.hasMoreElements()) {
+                names.add(parameterNames.nextElement());
+            }
+            return names;
         }
 
         @Override

@@ -33,6 +33,7 @@ import io.micronaut.http.server.exceptions.HttpServerException;
 import io.micronaut.http.ssl.ServerSslConfiguration;
 import io.micronaut.http.ssl.SslConfiguration;
 import io.micronaut.servlet.http.ServletConfiguration;
+import io.micronaut.web.router.Router;
 import jakarta.inject.Singleton;
 import org.jspecify.annotations.Nullable;
 
@@ -42,6 +43,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -94,7 +96,9 @@ public class HttpServerFactory {
                                 ResourceResolver resourceResolver,
                                 JdkServerExecutorOwnership executorOwnership,
                                 List<HttpHandlerPath> httpHandlers,
-                                List<Filter> filters) throws IOException {
+                                List<Filter> filters,
+                                @Nullable Router router,
+                                JdkExposedPortServers exposedPortServers) throws IOException {
         HttpServer server = sslConfiguration.isEnabled()
             ? createHttpsServer(applicationContext, httpServerConfiguration, sslConfiguration, resourceResolver)
             : HttpServer.create(serverAddress(httpServerConfiguration, ServerPort.of(httpServerConfiguration,
@@ -107,11 +111,34 @@ public class HttpServerFactory {
         List<Filter> ordered = new ArrayList<>(filters.size());
         filters.stream().filter(JdkServerShutdownGate.class::isInstance).forEach(ordered::add);
         filters.stream().filter(filter -> !(filter instanceof JdkServerShutdownGate)).forEach(ordered::add);
-        for (HttpHandlerPath handler : httpHandlers) {
-            HttpContext context = server.createContext(handler.getPath(), handler.getHttpHandler());
-            context.getFilters().addAll(ordered);
+        addContexts(server, httpHandlers, ordered);
+        // a server listens on one address: a port of a route or a controller gets a server of its own, which
+        // shares the executor and the handlers of the main server
+        Set<Integer> exposedPorts = router != null ? router.getExposedPorts() : Set.of();
+        for (Integer exposedPort : exposedPorts) {
+            if (exposedPort != server.getAddress().getPort()) {
+                HttpServer portServer = server instanceof HttpsServer httpsServer
+                    ? httpsServer(httpServerConfiguration, exposedPort, httpsServer.getHttpsConfigurator())
+                    : HttpServer.create(serverAddress(httpServerConfiguration, exposedPort), 0);
+                portServer.setExecutor(executorService);
+                addContexts(portServer, httpHandlers, ordered);
+                exposedPortServers.add(portServer);
+            }
         }
         return server;
+    }
+
+    private static HttpsServer httpsServer(HttpServerConfiguration httpServerConfiguration, int port, HttpsConfigurator configurator) throws IOException {
+        HttpsServer server = HttpsServer.create(serverAddress(httpServerConfiguration, port), 0);
+        server.setHttpsConfigurator(configurator);
+        return server;
+    }
+
+    private static void addContexts(HttpServer server, List<HttpHandlerPath> httpHandlers, List<Filter> filters) {
+        for (HttpHandlerPath handler : httpHandlers) {
+            HttpContext context = server.createContext(handler.getPath(), handler.getHttpHandler());
+            context.getFilters().addAll(filters);
+        }
     }
 
     /**

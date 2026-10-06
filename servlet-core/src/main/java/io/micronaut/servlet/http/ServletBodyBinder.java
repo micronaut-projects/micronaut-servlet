@@ -176,7 +176,11 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
                     return () -> servletHttpRequest.getParameters().get(name, context);
                 } else {
                     if (servletHttpRequest instanceof FormCapableHttpRequest<?> formCapableHttpRequest) {
-                        CompletableFuture<Optional<T>> future = Flux.from(formCapableHttpRequest.getRawFormFields())
+                        // e.g. a CompletableFuture<Map>: the future of the form converted to its type
+                        boolean stage = CompletionStage.class.isAssignableFrom(type);
+                        @SuppressWarnings("unchecked")
+                        Argument<Object> target = (Argument<Object>) (stage ? argument.getFirstTypeVariable().orElse(Argument.OBJECT_ARGUMENT) : argument);
+                        CompletableFuture<Optional<Object>> future = Flux.from(formCapableHttpRequest.getRawFormFields())
                             .concatMap(rff -> Mono.fromCompletionStage(rff.byteBody().buffer()).map(buffered -> new RawFormField(rff.metadata(), buffered)))
                             .doOnDiscard(RawFormField.class, RawFormField::close)
                             .collectList()
@@ -186,9 +190,13 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
                                     bodies.computeIfAbsent(rff.metadata().name(), k -> new ArrayList<>(1)).add(rff.byteBody());
                                 }
                                 Object intermediate = io.micronaut.http.server.multipart.FormRouteCompleter.mapForGetBody(bodies, source.getCharacterEncoding());
-                                return conversionService.convert(intermediate, context);
+                                return stage ? conversionService.convert(intermediate, target) : (Optional<Object>) conversionService.convert(intermediate, context);
                             })
                             .toFuture();
+                        if (stage) {
+                            CompletableFuture<Object> value = future.thenApply(converted -> converted.orElse(null));
+                            return () -> (Optional<T>) Optional.of(value);
+                        }
                         BasicHttpAttributes.addRouteWaitsFor(servletHttpRequest, CompletableFutureExecutionFlow.just(future));
                         return new PendingRequestBindingResult<>() {
                             @Override
@@ -198,7 +206,7 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
 
                             @Override
                             public Optional<T> getValue() {
-                                return future.getNow(Optional.empty());
+                                return (Optional<T>) (Optional<?>) future.getNow(Optional.empty());
                             }
                         };
                     }
