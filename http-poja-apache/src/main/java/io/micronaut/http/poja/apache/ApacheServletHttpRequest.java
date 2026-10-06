@@ -32,7 +32,12 @@ import io.micronaut.http.body.stream.InputStreamByteBody;
 import io.micronaut.http.body.MessageBodyHandlerRegistry;
 import io.micronaut.http.cookie.Cookie;
 import io.micronaut.http.cookie.Cookies;
+import io.micronaut.http.poja.PojaConnection;
 import io.micronaut.http.poja.PojaHttpRequest;
+import io.micronaut.http.body.stream.BodySizeLimits;
+import io.micronaut.http.exceptions.ContentLengthExceededException;
+import io.micronaut.servlet.http.LimitedInputStream;
+import reactor.core.publisher.Flux;
 import io.micronaut.http.poja.apache.exception.ApacheServletBadRequestException;
 import io.micronaut.http.poja.exception.NoPojaRequestException;
 import io.micronaut.http.poja.util.MultiValueHeaders;
@@ -91,6 +96,12 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
     private final SimpleCookies cookies;
 
     private final ByteBody byteBody;
+    /**
+     * The body as the framing delimits it, which has to be consumed before the next request on the connection.
+     */
+    private final InputStream framedBody;
+    private final ByteBodyFactory byteBodyFactory;
+    private @Nullable ContentLengthExceededException bodyTooLarge;
     private final Supplier<MultiValuesQueryParameters> formParameters;
 
     private ApacheServletHttpResponse<?> primaryResponse;
@@ -115,7 +126,38 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
         ExecutorService ioExecutor,
         ByteBufferFactory<?, ?> byteBufferFactory
     ) {
-        super(conversionService, messageBodyHandlerRegistry);
+        this(inputStream, responseContext, sessionInputBuffer, conversionService, messageBodyHandlerRegistry, ioExecutor,
+            byteBufferFactory, PojaConnection.UNKNOWN, BodySizeLimits.UNLIMITED);
+    }
+
+    /**
+     * Create an Apache-based request, on a connection whose addresses are known, applying the server's body size limits.
+     *
+     * @param inputStream The input stream
+     * @param responseContext The response context
+     * @param sessionInputBuffer Input buffer for parsing
+     * @param conversionService The conversion service
+     * @param messageBodyHandlerRegistry The message body handler registry
+     * @param ioExecutor The executor service
+     * @param byteBufferFactory The byte buffer factory
+     * @param connection The addresses of the connection
+     * @param bodySizeLimits The limits from {@code micronaut.server.max-request-size} and
+     *                       {@code micronaut.server.max-request-buffer-size}
+     * @since 6.2.0
+     */
+    @SuppressWarnings("java:S107")
+    public ApacheServletHttpRequest(
+        InputStream inputStream,
+        ApacheResponseContext responseContext,
+        SessionInputBuffer sessionInputBuffer,
+        ConversionService conversionService,
+        MessageBodyHandlerRegistry messageBodyHandlerRegistry,
+        ExecutorService ioExecutor,
+        ByteBufferFactory<?, ?> byteBufferFactory,
+        PojaConnection connection,
+        BodySizeLimits bodySizeLimits
+    ) {
+        super(conversionService, messageBodyHandlerRegistry, connection);
         this.responseContext = responseContext;
         DefaultHttpRequestParser parser = new DefaultHttpRequestParser();
 
@@ -139,8 +181,8 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
         cookies = parseCookies(request, conversionService);
         formParameters = SupplierUtil.memoized(this::resolveFormParameters);
 
-        Header connection = request.getFirstHeader(HttpHeaders.CONNECTION);
-        if (connection != null && connection.getValue().equalsIgnoreCase(CONNECTION_CLOSE)) {
+        Header connectionHeader = request.getFirstHeader(HttpHeaders.CONNECTION);
+        if (connectionHeader != null && connectionHeader.getValue().equalsIgnoreCase(CONNECTION_CLOSE)) {
             responseContext.connectionClose = true;
         }
 
@@ -150,8 +192,22 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
         }
         OptionalLong optionalContentLength = contentLength >= 0 ? OptionalLong.of(contentLength) : OptionalLong.empty();
         InputStream bodyStream = createBodyStream(inputStream, contentLength, sessionInputBuffer);
-        byteBody = InputStreamByteBody.create(
-            bodyStream, optionalContentLength, ioExecutor, ByteBodyFactory.createDefault(byteBufferFactory));
+        this.framedBody = bodyStream;
+        byteBodyFactory = ByteBodyFactory.createDefault(byteBufferFactory);
+        long maxBodySize = bodySizeLimits.maxBodySize();
+        if (contentLength > maxBodySize) {
+            // refused without reading a byte: every read of the body fails, so a route that binds it answers 413
+            // as on the Netty server, and the unread bytes close the connection
+            bodyTooLarge = new ContentLengthExceededException(maxBodySize, contentLength);
+            responseContext.connectionClose = true;
+            byteBody = byteBodyFactory.adapt(Flux.error(bodyTooLarge), optionalContentLength);
+        } else {
+            if (contentLength < 0 && maxBodySize < Long.MAX_VALUE) {
+                // a chunked body cannot grow past the limit either
+                bodyStream = new LimitedInputStream(bodyStream, maxBodySize);
+            }
+            byteBody = InputStreamByteBody.create(bodyStream, optionalContentLength, ioExecutor, byteBodyFactory);
+        }
         primaryResponse = new ApacheServletHttpResponse<>(responseContext, conversionService);
     }
 
@@ -203,7 +259,11 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
     @Override
     public @NonNull MutableHttpParameters getParameters() {
         MediaType contentType = getContentType().orElse(null);
-        if (contentType != null && contentType.matches(MediaType.APPLICATION_FORM_URLENCODED_TYPE)) {
+        if (contentType != null && contentType.matches(MediaType.APPLICATION_FORM_URLENCODED_TYPE) && !isBodySet()) {
+            if (bodyTooLarge != null) {
+                // the fields are read from the body, which is over the limit
+                throw bodyTooLarge;
+            }
             return formParameters.get();
         }
         return queryParameters;
@@ -212,6 +272,33 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
     @Override
     public @NonNull HttpMethod getMethod() {
         return method;
+    }
+
+    @Override
+    protected String getNativeMethodName() {
+        return request.getMethod();
+    }
+
+    @Override
+    public void close() {
+        runDisposalResources();
+    }
+
+    /**
+     * Consumes what the route left of the body, so that the next request on the connection starts at its own
+     * request line; a body over the size limit is not read, and the connection is closed instead.
+     */
+    void discardUnreadBody() {
+        if (bodyTooLarge != null || responseContext.connectionClose) {
+            responseContext.connectionClose = true;
+            return;
+        }
+        try {
+            // closing the framed stream reads it to its end: the declared length, or the last chunk
+            framedBody.close();
+        } catch (IOException | RuntimeException e) {
+            responseContext.connectionClose = true;
+        }
     }
 
     @Override
@@ -232,11 +319,6 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
     }
 
     @Override
-    public <T> MutableHttpRequest<T> body(@Nullable T body) {
-        throw new UnsupportedOperationException("Could not change request body");
-    }
-
-    @Override
     public @NonNull MutableHttpHeaders getHeaders() {
         return headers;
     }
@@ -250,6 +332,11 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
     @Override
     public @NonNull ByteBody byteBody() {
         return byteBody;
+    }
+
+    @Override
+    public @NonNull ByteBodyFactory byteBodyFactory() {
+        return byteBodyFactory;
     }
 
     @Override

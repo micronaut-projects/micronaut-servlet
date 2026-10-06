@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.servlet.engine;
+package io.micronaut.servlet.http;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.http.MediaType;
@@ -40,7 +40,7 @@ import java.util.Locale;
  * @since 6.3.0
  */
 @Internal
-final class BufferedFormDecoder {
+public final class BufferedFormDecoder {
 
     private BufferedFormDecoder() {
     }
@@ -51,7 +51,7 @@ final class BufferedFormDecoder {
      * @param metadata The name, file name and content type of the field
      * @param content  Its bytes
      */
-    record Field(FormFieldMetadata metadata, byte[] content) {
+    public record Field(FormFieldMetadata metadata, byte[] content) {
     }
 
     /**
@@ -60,7 +60,7 @@ final class BufferedFormDecoder {
      * @param charset     The charset of a URL-encoded form
      * @return Its fields, in order
      */
-    static List<Field> decode(MediaType contentType, byte[] bytes, Charset charset) {
+    public static List<Field> decode(MediaType contentType, byte[] bytes, Charset charset) {
         if (contentType.matches(MediaType.MULTIPART_FORM_DATA_TYPE)) {
             String boundary = contentType.getParameters().get("boundary").orElse(null);
             if (boundary == null || boundary.isEmpty()) {

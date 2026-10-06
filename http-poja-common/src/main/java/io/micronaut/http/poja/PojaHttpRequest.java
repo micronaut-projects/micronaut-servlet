@@ -36,6 +36,15 @@ import io.micronaut.http.body.ByteBody.SplitBackpressureMode;
 import io.micronaut.http.body.CloseableByteBody;
 import io.micronaut.http.body.MessageBodyHandlerRegistry;
 import io.micronaut.http.body.MessageBodyReader;
+import io.micronaut.http.body.ByteBodyFactory;
+import io.micronaut.http.body.DirectByteBodyAccess;
+import io.micronaut.http.body.stream.AvailableByteArrayBody;
+import io.micronaut.http.form.FormCapableHttpRequest;
+import io.micronaut.http.multipart.RawFormField;
+import io.micronaut.servlet.http.BufferedFormDecoder;
+import org.reactivestreams.Publisher;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import io.micronaut.http.uri.QueryStringDecoder;
 import io.micronaut.servlet.http.ServletExchange;
 import io.micronaut.servlet.http.ServletHttpRequest;
@@ -45,7 +54,11 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.InetSocketAddress;
+import java.nio.charset.Charset;
 import java.util.Iterator;
+import java.util.Objects;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -64,7 +77,8 @@ import java.util.function.Function;
  */
 @Internal
 public abstract class PojaHttpRequest<B, REQ, RES>
-        implements ServletHttpRequest<REQ, B>, ServerHttpRequest<B>, ServletExchange<REQ, RES>, MutableHttpRequest<B> {
+        implements ServletHttpRequest<REQ, B>, ServerHttpRequest<B>, ServletExchange<REQ, RES>, MutableHttpRequest<B>,
+        FormCapableHttpRequest<B>, DirectByteBodyAccess {
 
     public static final Argument<ConvertibleValues> CONVERTIBLE_VALUES_ARGUMENT = Argument.of(ConvertibleValues.class);
 
@@ -72,12 +86,51 @@ public abstract class PojaHttpRequest<B, REQ, RES>
     protected final MessageBodyHandlerRegistry messageBodyHandlerRegistry;
     protected final MutableConvertibleValues<Object> attributes = new MutableConvertibleValuesMap<>();
 
+    /**
+     * The body a filter set, which replaces the bytes of the request.
+     */
+    private @Nullable Object replacedBody;
+    /**
+     * Whether a filter set the body, even to {@code null}: the routes then no longer read the bytes of the request.
+     */
+    private boolean bodySet;
+    private final ConcurrentLinkedQueue<Runnable> disposalResources = new ConcurrentLinkedQueue<>();
+
+    private final PojaConnection connection;
+
     public PojaHttpRequest(
             ConversionService conversionService,
             MessageBodyHandlerRegistry messageBodyHandlerRegistry
     ) {
+        this(conversionService, messageBodyHandlerRegistry, PojaConnection.UNKNOWN);
+    }
+
+    /**
+     * @param conversionService The conversion service
+     * @param messageBodyHandlerRegistry The message body handler registry
+     * @param connection The addresses of the connection the request arrived on
+     * @since 6.2.0
+     */
+    public PojaHttpRequest(
+            ConversionService conversionService,
+            MessageBodyHandlerRegistry messageBodyHandlerRegistry,
+            PojaConnection connection
+    ) {
         this.conversionService = conversionService;
         this.messageBodyHandlerRegistry = messageBodyHandlerRegistry;
+        this.connection = connection;
+    }
+
+    @Override
+    public @NonNull InetSocketAddress getRemoteAddress() {
+        InetSocketAddress remote = connection.remoteAddress();
+        return remote != null ? remote : ServletHttpRequest.super.getRemoteAddress();
+    }
+
+    @Override
+    public @NonNull InetSocketAddress getServerAddress() {
+        InetSocketAddress local = connection.localAddress();
+        return local != null ? local : ServletHttpRequest.super.getServerAddress();
     }
 
     @Override
@@ -108,6 +161,9 @@ public abstract class PojaHttpRequest<B, REQ, RES>
         Argument<T> arg = conversionContext.getArgument();
         if (arg == null) {
             return Optional.empty();
+        }
+        if (bodySet) {
+            return replacedBody == null ? Optional.empty() : conversionService.convert(replacedBody, conversionContext);
         }
         final Class<T> type = arg.getType();
         final MediaType contentType = getContentType().orElse(MediaType.APPLICATION_JSON_TYPE);
@@ -209,8 +265,113 @@ public abstract class PojaHttpRequest<B, REQ, RES>
     public boolean isFormSubmission() {
         MediaType contentType = getContentType().orElse(null);
         return contentType != null
-            && (contentType.equals(MediaType.APPLICATION_FORM_URLENCODED_TYPE)
-            || contentType.equals(MediaType.MULTIPART_FORM_DATA_TYPE));
+            && (contentType.matches(MediaType.APPLICATION_FORM_URLENCODED_TYPE)
+            || contentType.matches(MediaType.MULTIPART_FORM_DATA_TYPE));
+    }
+
+    @Override
+    public @NonNull String getMethodName() {
+        // a method Micronaut does not know is CUSTOM, and routes of such a method are matched by its name
+        String name = getNativeMethodName();
+        return name != null ? name : getMethod().name();
+    }
+
+    /**
+     * @return The method as the request line spelled it, or {@code null} if unknown
+     * @since 6.2.0
+     */
+    protected @Nullable String getNativeMethodName() {
+        return null;
+    }
+
+    @Override
+    public MutableHttpRequest<B> mutate() {
+        // already mutable, and the changes stay in this request
+        return this;
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public <T> MutableHttpRequest<T> body(@Nullable T body) {
+        this.replacedBody = body;
+        this.bodySet = true;
+        return (MutableHttpRequest<T>) this;
+    }
+
+    /**
+     * @return Whether a filter set the body, which replaces the bytes of the request
+     * @since 6.2.0
+     */
+    protected boolean isBodySet() {
+        return bodySet;
+    }
+
+    /**
+     * @return The body a filter set
+     * @since 6.2.0
+     */
+    protected @Nullable Object getReplacedBody() {
+        return replacedBody;
+    }
+
+    @Override
+    public @Nullable ByteBody byteBodyDirect() {
+        // once the body was set, the bytes of the request are not its body
+        return bodySet ? null : byteBody();
+    }
+
+    @Override
+    public boolean hasFormBody() {
+        return !bodySet && isFormSubmission();
+    }
+
+    @Override
+    public Publisher<RawFormField> getRawFormFields() {
+        if (!hasFormBody()) {
+            throw new IllegalStateException("Not a form Content-Type. Please check hasFormBody() before calling this method.");
+        }
+        return getRawFormFields(byteBody().split(SplitBackpressureMode.FASTEST));
+    }
+
+    @Override
+    public Publisher<RawFormField> getRawFormFields(ByteBody byteBody) {
+        MediaType mediaType = getContentType().orElse(null);
+        if (bodySet || mediaType == null || !isFormSubmission()) {
+            if (byteBody instanceof CloseableByteBody closeable) {
+                // the publisher owns the bytes
+                closeable.close();
+            }
+            throw new IllegalStateException("Not a form Content-Type. Please check hasFormBody() before calling this method.");
+        }
+        Charset charset = getCharacterEncoding();
+        ByteBodyFactory factory = byteBodyFactory();
+        return Mono.fromCompletionStage(byteBody::buffer)
+            .flatMapMany(buffered -> {
+                byte[] bytes;
+                try (buffered) {
+                    bytes = buffered.toByteArray();
+                }
+                return Flux.fromIterable(BufferedFormDecoder.decode(mediaType, bytes, charset))
+                    .map(field -> new RawFormField(field.metadata(), AvailableByteArrayBody.create(factory.readBufferFactory().adapt(field.content()))));
+            })
+            .doOnDiscard(RawFormField.class, RawFormField::close);
+    }
+
+    @Override
+    public void addDisposalResource(Runnable dispose) {
+        disposalResources.add(Objects.requireNonNull(dispose, "Disposable resource cannot be null"));
+    }
+
+    /**
+     * Runs the resources added for disposal, once the request was handled.
+     *
+     * @since 6.2.0
+     */
+    protected void runDisposalResources() {
+        Runnable runnable;
+        while ((runnable = disposalResources.poll()) != null) {
+            runnable.run();
+        }
     }
 
     @Override

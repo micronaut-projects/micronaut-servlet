@@ -15,7 +15,9 @@
  */
 package io.micronaut.http.poja.test;
 
+import io.micronaut.http.poja.PojaConnection;
 import io.micronaut.http.poja.PojaHttpServerlessApplication;
+import io.micronaut.web.router.Router;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Replaces;
 import io.micronaut.context.annotation.Requires;
@@ -34,7 +36,9 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URI;
 import java.net.URL;
+import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -60,6 +64,10 @@ public class TestingServerlessEmbeddedApplication implements EmbeddedServer {
     private final AtomicBoolean isRunning = new AtomicBoolean(false);
     private final Set<Socket> activeConnections = ConcurrentHashMap.newKeySet();
     private @Nullable ServerSocket serverSocket;
+    /**
+     * The sockets of the ports routes declare besides the port of the server.
+     */
+    private final List<ServerSocket> routePortSockets = new CopyOnWriteArrayList<>();
     private @Nullable ExecutorService connectionExecutor;
     private int port;
 
@@ -75,8 +83,12 @@ public class TestingServerlessEmbeddedApplication implements EmbeddedServer {
     }
 
     private ServerSocket createServerSocket() {
+        return createServerSocket(0);
+    }
+
+    private ServerSocket createServerSocket(int port) {
         try {
-            return new ServerSocket(0);
+            return new ServerSocket(port);
         } catch (IOException e) {
             throw new UncheckedIOException("Could not bind", e);
         }
@@ -97,6 +109,23 @@ public class TestingServerlessEmbeddedApplication implements EmbeddedServer {
         });
         this.connectionExecutor = createdConnectionExecutor;
 
+        accept(createdServerSocket, createdConnectionExecutor);
+        // the routes of a port answer on that port only, so the server listens on it too
+        Set<Integer> exposedPorts = getApplicationContext().findBean(Router.class)
+            .map(Router::getExposedPorts)
+            .orElse(Set.of());
+        for (Integer exposedPort : exposedPorts) {
+            if (exposedPort != null && exposedPort > 0 && exposedPort != port) {
+                ServerSocket routePortSocket = createServerSocket(exposedPort);
+                routePortSockets.add(routePortSocket);
+                accept(routePortSocket, createdConnectionExecutor);
+            }
+        }
+
+        return this;
+    }
+
+    private void accept(ServerSocket createdServerSocket, ExecutorService createdConnectionExecutor) {
         // Run the thread that sends requests to the server
         Thread acceptThread = new Thread(() -> {
             while (!createdServerSocket.isClosed()) {
@@ -113,13 +142,11 @@ public class TestingServerlessEmbeddedApplication implements EmbeddedServer {
         });
         acceptThread.setDaemon(true);
         acceptThread.start();
-
-        return this;
     }
 
     private void handleConnection(Socket socket) {
         try (socket) {
-            application.start(socket.getInputStream(), socket.getOutputStream());
+            application.start(socket.getInputStream(), socket.getOutputStream(), PojaConnection.of(socket));
         } catch (java.net.SocketException ignored) {
             // Socket closed
         } catch (IOException e) {
@@ -155,6 +182,14 @@ public class TestingServerlessEmbeddedApplication implements EmbeddedServer {
             }
         }
         this.serverSocket = null;
+        for (ServerSocket routePortSocket : routePortSockets) {
+            try {
+                routePortSocket.close();
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        }
+        routePortSockets.clear();
         return this;
     }
 

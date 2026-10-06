@@ -21,7 +21,10 @@ import io.micronaut.core.io.buffer.ByteArrayBufferFactory;
 import io.micronaut.core.io.buffer.ByteBufferFactory;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.body.MessageBodyHandlerRegistry;
+import io.micronaut.http.poja.PojaConnection;
 import io.micronaut.http.poja.PojaHttpServerlessApplication;
+import io.micronaut.http.body.stream.BodySizeLimits;
+import io.micronaut.http.server.HttpServerConfiguration;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.runtime.ApplicationConfiguration;
 import io.micronaut.scheduling.TaskExecutors;
@@ -54,6 +57,7 @@ public class ApacheServerlessApplication
     private final ExecutorService ioExecutor;
     private final ByteBufferFactory<?, ?> byteBufferFactory;
     private final ApacheServletConfiguration configuration;
+    private final BodySizeLimits bodySizeLimits;
     private @Nullable SessionInputBuffer sessionInputBuffer;
 
     /**
@@ -70,13 +74,17 @@ public class ApacheServerlessApplication
         ioExecutor = applicationContext.getBean(ExecutorService.class, Qualifiers.byName(TaskExecutors.BLOCKING));
         configuration = applicationContext.getBean(ApacheServletConfiguration.class);
         byteBufferFactory = ByteArrayBufferFactory.INSTANCE;
+        bodySizeLimits = applicationContext.findBean(HttpServerConfiguration.class)
+            .map(serverConfiguration -> new BodySizeLimits(serverConfiguration.getMaxRequestSize(), serverConfiguration.getMaxRequestBufferSize()))
+            .orElse(BodySizeLimits.UNLIMITED);
     }
 
     @Override
     protected boolean handleSingleRequest(
             ServletHttpHandler<ApacheServletHttpRequest<?>, ApacheServletHttpResponse<?>> servletHttpHandler,
             InputStream in,
-            OutputStream out
+            OutputStream out,
+            PojaConnection connection
     ) throws IOException {
         try (ApacheResponseContext responseContext = new ApacheResponseContext(configuration, out)) {
             try {
@@ -85,12 +93,14 @@ public class ApacheServerlessApplication
                     sessionInputBuffer = new SessionInputBufferImpl(configuration.inputBufferSize());
                 }
                 ApacheServletHttpRequest exchange = new ApacheServletHttpRequest<>(
-                    in, responseContext, sessionInputBuffer, conversionService, messageBodyHandlerRegistry, ioExecutor, byteBufferFactory
+                    in, responseContext, sessionInputBuffer, conversionService, messageBodyHandlerRegistry, ioExecutor, byteBufferFactory,
+                    connection, bodySizeLimits
                 );
                 servletHttpHandler.service(exchange);
                 if (!responseContext.isCommitted()) {
                     Objects.requireNonNull(responseContext.primaryResponse, "primaryResponse").getOutputStream(); // this causes the commit
                 }
+                exchange.discardUnreadBody();
             } catch (Exception e) {
                 if (!responseContext.isCommitted()) {
                     try (OutputStream os = responseContext.commit(new BasicClassicHttpResponse(HttpStatus.BAD_REQUEST.getCode()))) {
