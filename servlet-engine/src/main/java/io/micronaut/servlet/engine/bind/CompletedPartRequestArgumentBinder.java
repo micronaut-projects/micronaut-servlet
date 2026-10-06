@@ -18,18 +18,19 @@ package io.micronaut.servlet.engine.bind;
 import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
+import io.micronaut.http.HttpRequestWrapper;
 import io.micronaut.http.LifecycleHttpRequest;
 import io.micronaut.http.annotation.Part;
 import io.micronaut.http.bind.binders.TypedRequestArgumentBinder;
 import io.micronaut.http.multipart.CompletedFileUpload;
 import io.micronaut.http.multipart.CompletedPart;
 import io.micronaut.http.server.HttpServerConfiguration;
-import io.micronaut.http.server.binding.ServerRequestBody;
 import io.micronaut.http.server.exceptions.InternalServerException;
 import io.micronaut.servlet.engine.ServletParts;
-import io.micronaut.servlet.http.ServletExchange;
+import io.micronaut.servlet.http.ServletHttpRequest;
 
 import jakarta.servlet.http.HttpServletRequest;
+import org.jspecify.annotations.Nullable;
 import java.io.IOException;
 import java.util.Optional;
 
@@ -51,10 +52,11 @@ class CompletedPartRequestArgumentBinder implements TypedRequestArgumentBinder<C
             ArgumentConversionContext<CompletedPart> context,
             HttpRequest<?> source) {
         // the request itself, or the servlet request under the wrappers of filters
-        if (!(ServerRequestBody.serverRequest(source) instanceof ServletExchange<?, ?> exchange)) {
+        ServletHttpRequest<?, ?> servletRequest = servletRequest(source);
+        if (servletRequest == null) {
             return BindingResult.UNSATISFIED;
         }
-        final HttpServletRequest nativeRequest = (HttpServletRequest) exchange.getRequest().getNativeRequest();
+        final HttpServletRequest nativeRequest = (HttpServletRequest) servletRequest.getNativeRequest();
         final Argument<?> argument = context.getArgument();
         final String partName = context.getAnnotationMetadata().stringValue(Part.class).orElse(argument.getName());
         try {
@@ -81,6 +83,23 @@ class CompletedPartRequestArgumentBinder implements TypedRequestArgumentBinder<C
         } catch (Exception e) {
             context.reject(new InternalServerException("Error reading part [" + partName + "]: " + e.getMessage(), e));
             return BindingResult.EMPTY;
+        }
+    }
+
+    /**
+     * The servlet request under the wrappers of filters, e.g. its mutable view.
+     */
+    private static @Nullable ServletHttpRequest<?, ?> servletRequest(HttpRequest<?> source) {
+        HttpRequest<?> current = source;
+        while (true) {
+            if (current instanceof ServletHttpRequest<?, ?> servletRequest) {
+                return servletRequest;
+            }
+            if (current instanceof HttpRequestWrapper<?> wrapper) {
+                current = wrapper.getDelegate();
+            } else {
+                return null;
+            }
         }
     }
 

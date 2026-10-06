@@ -137,10 +137,14 @@ public class ServletPartBinder<T> implements AnnotatedRequestArgumentBinder<Part
             if (StreamingFileUpload.class == context.getArgument().getType()) {
                 return bindStreamingFileUpload(context, form, formFactory, boundName);
             }
+            if (Publisher.class.isAssignableFrom(context.getArgument().getType())) {
+                // the parts as they arrive, which the container only has once it parsed them all
+                return bindPublisher(formFactory, form, context, boundName);
+            }
             if (bodyStreamOpened(source)) {
                 // e.g. a filter read a copy of the body: the container cannot parse the parts any more, so the
                 // field is read from the form decoded from the byte body
-                return bindFromCompleter(context, form, formFactory, boundName);
+                return bindSingleValue(formFactory, form, context, boundName);
             }
         }
         if (source instanceof ServletExchange<?, ?> exchange) {
@@ -169,47 +173,6 @@ public class ServletPartBinder<T> implements AnnotatedRequestArgumentBinder<Part
         return source instanceof ServletExchange<?, ?> exchange
             && exchange.getRequest() instanceof DefaultServletHttpRequest<?> servletRequest
             && servletRequest.isBodyStreamOpened();
-    }
-
-    private BindingResult<T> bindFromCompleter(ArgumentConversionContext<T> context,
-                                               FormCapableHttpRequest<?> form,
-                                               FormFactory formFactory,
-                                               String name) {
-        FormRouteCompleter completer = formFactory.getOrCreateCompleter(form);
-        CompletableFuture<Optional<T>> value = Mono.from(completer.subscribeField(name, new FormRouteCompleter.SubscriptionMetadata(FormRouteCompleter.SubscriptionMode.WAITS_FOR_FULL, context.getArgument())))
-            .flatMap(field -> Mono.from(ReactiveExecutionFlow.toPublisher(formFactory.completePart(form, field))))
-            .map(completed -> {
-                boolean keep = false;
-                try {
-                    Optional<T> converted = conversionService.convert(completed, context);
-                    keep = converted.isPresent() && converted.get() == completed;
-                    return converted;
-                } finally {
-                    if (!keep) {
-                        completed.closeAsync(formFactory.getDiskWriteExecutor());
-                    }
-                }
-            })
-            .toFuture();
-        BasicHttpAttributes.addRouteWaitsFor(form, CompletableFutureExecutionFlow.just(value));
-        return new PendingRequestBindingResult<>() {
-            @Override
-            public boolean isPending() {
-                return !value.isDone();
-            }
-
-            @Override
-            public List<ConversionError> getConversionErrors() {
-                return context.getLastError().map(List::of).orElseGet(List::of);
-            }
-
-            @Override
-            public Optional<T> getValue() {
-                Optional<T> result = value.getNow(Optional.empty());
-                // a field that is missing completes the future with null
-                return result != null ? result : Optional.empty();
-            }
-        };
     }
 
     private BindingResult<T> bindFromMultipart(ArgumentConversionContext<T> context,
