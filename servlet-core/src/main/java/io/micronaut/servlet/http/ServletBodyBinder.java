@@ -25,6 +25,8 @@ import io.micronaut.core.io.Readable;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.BasicHttpAttributes;
 import io.micronaut.http.HttpRequest;
+import io.micronaut.http.body.DirectByteBodyAccess;
+import io.micronaut.http.HttpRequestWrapper;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.ServerHttpRequest;
 import io.micronaut.http.server.binding.ServerRequestBody;
@@ -52,6 +54,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
@@ -132,7 +135,12 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
             // a filter set the body, even to null: the body is that object, never the bytes of the request
             return replacedBody(context, source, name);
         }
-        if ((server instanceof ServletHttpRequest<?, ?> ? server : source) instanceof ServletHttpRequest<?, ?> servletHttpRequest) {
+        ServletHttpRequest<?, ?> servletRequest = server == null ? null : servletRequestOf(server);
+        if (server != null && servletRequest == null) {
+            // e.g. a request a filter continued with that has bytes of its own: the body is read from them
+            return bytesOf(context, source, server, name);
+        }
+        if ((servletRequest != null ? servletRequest : source) instanceof ServletHttpRequest<?, ?> servletHttpRequest) {
             if (Readable.class.isAssignableFrom(type)) {
                 Readable readable = new ServletReadable(servletHttpRequest);
                 return () -> (Optional<T>) Optional.of(readable);
@@ -305,6 +313,85 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
             }
         }
         return defaultBodyAnnotationBinder.bind(context, source);
+    }
+
+    /**
+     * The servlet request whose bytes are the body of the given server request: the request itself, or the one under
+     * views of it that pass its bytes through, e.g. the mutable view of a filter.
+     */
+    private static @Nullable ServletHttpRequest<?, ?> servletRequestOf(ServerHttpRequest<?> server) {
+        HttpRequest<?> current = server;
+        while (true) {
+            if (current instanceof ServletHttpRequest<?, ?> servletRequest) {
+                return servletRequest;
+            }
+            if (current instanceof ServerHttpRequest<?> && !(current instanceof DirectByteBodyAccess)) {
+                // bytes of its own
+                return null;
+            }
+            if (current instanceof HttpRequestWrapper<?> wrapper) {
+                current = wrapper.getDelegate();
+            } else {
+                return null;
+            }
+        }
+    }
+
+    /**
+     * Read the body from the bytes of a server request that is not the servlet request, e.g. one a filter continued
+     * with that carries another body.
+     */
+    @SuppressWarnings("unchecked")
+    private BindingResult<T> bytesOf(ArgumentConversionContext<T> context, HttpRequest<?> source, ServerHttpRequest<?> server, @Nullable String name) {
+        Argument<T> argument = context.getArgument();
+        Class<T> type = argument.getType();
+        MediaType mediaType = source.getContentType().orElse(MediaType.APPLICATION_JSON_TYPE);
+        CompletableFuture<Optional<T>> future = server.byteBody().buffer().<Optional<T>>thenApply(buffered -> {
+            byte[] bytes;
+            try (buffered) {
+                bytes = buffered.toByteArray();
+            }
+            if (name == null && CharSequence.class.isAssignableFrom(type)) {
+                String text = new String(bytes, source.getCharacterEncoding());
+                return text.isEmpty() ? Optional.empty() : conversionService.convert(text, context);
+            }
+            if (name == null && byte[].class == type) {
+                return Optional.of((T) bytes);
+            }
+            if (bytes.length == 0) {
+                return Optional.empty();
+            }
+            try {
+                if (name != null) {
+                    Argument<Map<String, Object>> mapArgument = Argument.mapOf(String.class, Object.class);
+                    MessageBodyReader<Map<String, Object>> reader = messageBodyHandlerRegistry.findReader(mapArgument, mediaType).orElse(null);
+                    if (reader == null) {
+                        return Optional.empty();
+                    }
+                    Map<String, Object> map = reader.read(mapArgument, mediaType, source.getHeaders(), new ByteArrayInputStream(bytes));
+                    return conversionService.convert(map == null ? null : map.get(name), context);
+                }
+                MessageBodyReader<T> reader = messageBodyHandlerRegistry.findReader(argument, mediaType).orElse(null);
+                if (reader == null) {
+                    return Optional.empty();
+                }
+                return Optional.ofNullable(reader.read(argument, mediaType, source.getHeaders(), new ByteArrayInputStream(bytes)));
+            } catch (CodecException e) {
+                throw decodingFailure(UNABLE_TO_DECODE, e);
+            }
+        }).toCompletableFuture();
+        BasicHttpAttributes.addRouteWaitsFor(source, CompletableFutureExecutionFlow.just(future));
+        return new PendingRequestBindingResult<>() {
+            @Override
+            public boolean isPending() {
+                return !future.isDone();
+            }
+
+            @Override
+            public Optional<T> getValue() {
+                return future.getNow(Optional.empty());
+            }
+        };
     }
 
     private @NonNull CompletableFuture<?> asFuture(ArgumentConversionContext<T> context,
