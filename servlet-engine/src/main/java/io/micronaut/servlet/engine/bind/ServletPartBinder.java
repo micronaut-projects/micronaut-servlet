@@ -416,7 +416,9 @@ public class ServletPartBinder<T> implements AnnotatedRequestArgumentBinder<Part
 
             @Override
             public Optional<T> getValue() {
-                return completableFuture.getNow(Optional.empty());
+                // a field the form does not have completes the future with null
+                Optional<T> value = completableFuture.getNow(Optional.empty());
+                return value == null ? Optional.empty() : value;
             }
         };
     }
