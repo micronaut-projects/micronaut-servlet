@@ -34,7 +34,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.CompletionStage;
 import org.eclipse.jetty.http.HttpVersion;
 import org.eclipse.jetty.server.AbstractConnector;
 import org.eclipse.jetty.server.ConnectionFactory;
@@ -52,11 +51,7 @@ import org.eclipse.jetty.server.ServerConnector;
 @Singleton
 public class JettyServer extends AbstractServletServer<Server> {
 
-    private final @Nullable DevelopmentJettyReloader reloader;
-    /**
-     * In development mode, the generation the kept server serves while this server runs.
-     */
-    private volatile DevelopmentJettyServer.@Nullable Generation generation;
+    private final Router router;
 
     /**
      * Default constructor.
@@ -78,23 +73,9 @@ public class JettyServer extends AbstractServletServer<Server> {
         JettyConfiguration jettyConfiguration,
         List<JettyConfiguration.ConnectorConfiguration> connectors,
         @Nullable ApplicationEventPublisher<ServerShutdownEvent> serverShutdownEventPublisher) {
-        // the reloader exists in development mode only, where the server may be the one kept across restarts
-        this(applicationContext, applicationConfiguration, server, router, jettyConfiguration, connectors, serverShutdownEventPublisher,
-            applicationContext.findBean(DevelopmentJettyReloader.class).orElse(null));
-    }
-
-    private JettyServer(
-        ApplicationContext applicationContext,
-        ApplicationConfiguration applicationConfiguration,
-        Server server,
-        Router router,
-        JettyConfiguration jettyConfiguration,
-        List<JettyConfiguration.ConnectorConfiguration> connectors,
-        @Nullable ApplicationEventPublisher<ServerShutdownEvent> serverShutdownEventPublisher,
-        @Nullable DevelopmentJettyReloader reloader) {
-        super(applicationContext, applicationConfiguration, serverShutdownEventPublisher,
-            serve(configure(router, jettyConfiguration, server, connectors), reloader));
-        this.reloader = reloader;
+        super(applicationContext, applicationConfiguration, serverShutdownEventPublisher, server);
+        this.router = router;
+        applyConnectorConfiguration(jettyConfiguration, server, connectors);
     }
 
     /**
@@ -141,35 +122,12 @@ public class JettyServer extends AbstractServletServer<Server> {
     @Override
     protected void startServer() throws Exception {
         Server server = getServer();
-        if (reloader != null) {
-            generation = reloader.start(server);
-            if (generation != null) {
-                return;
-            }
-        }
         server.start();
     }
 
     @Override
     protected void stopServer() throws Exception {
-        DevelopmentJettyServer.Generation serving = generation;
-        if (reloader != null && serving != null) {
-            // the kept server stays for the next generation
-            generation = null;
-            reloader.stop(serving);
-            return;
-        }
         getServer().stop();
-    }
-
-    @Override
-    public CompletionStage<?> shutdownGracefully() {
-        DevelopmentJettyServer.Generation serving = generation;
-        if (reloader != null && serving != null) {
-            // the kept server keeps accepting: the requests that arrive wait for the next generation
-            return reloader.retire(serving);
-        }
-        return super.shutdownGracefully();
     }
 
     /**
@@ -217,27 +175,15 @@ public class JettyServer extends AbstractServletServer<Server> {
 
     @Override
     public boolean isRunning() {
-        if (reloader != null && reloader.holds(getServer())) {
-            return generation != null;
-        }
         return getServer().isRunning();
     }
 
-    private static Server configure(Router router, JettyConfiguration jettyConfiguration, Server server, List<JettyConfiguration.ConnectorConfiguration> connectors) {
-        applyConnectorConfiguration(router, jettyConfiguration, server, connectors);
-        return server;
-    }
-
-    private static Server serve(Server server, @Nullable DevelopmentJettyReloader reloader) {
-        return reloader == null ? server : reloader.serve(server);
-    }
-
-    private static void applyConnectorConfiguration(Router router, JettyConfiguration jettyConfiguration, Server server, List<JettyConfiguration.ConnectorConfiguration> configuredConnectors) {
+    private void applyConnectorConfiguration(JettyConfiguration jettyConfiguration, Server server, List<JettyConfiguration.ConnectorConfiguration> configuredConnectors) {
         // first connector
         Connector[] serverConnectors = server.getConnectors();
         ServerConnector serverConnector = (ServerConnector) serverConnectors[0];
         List<JettyConfiguration.ConnectorConfiguration> connectorConfigurations = new ArrayList<>(configuredConnectors);
-        applyAdditionalPorts(router, jettyConfiguration, server, serverConnector, connectorConfigurations);
+        applyAdditionalPorts(jettyConfiguration, server, serverConnector, connectorConfigurations);
 
         for (Connector connector : serverConnectors) {
             if (connector instanceof ServerConnector sc) {
@@ -270,7 +216,7 @@ public class JettyServer extends AbstractServletServer<Server> {
         sc.setDefaultProtocol(connectorConfiguration.getDefaultProtocol());
     }
 
-    private static void applyAdditionalPorts(Router router, JettyConfiguration jettyConfiguration, Server server, ServerConnector serverConnector, List<JettyConfiguration.ConnectorConfiguration> connectors) {
+    private void applyAdditionalPorts(JettyConfiguration jettyConfiguration, Server server, ServerConnector serverConnector, List<JettyConfiguration.ConnectorConfiguration> connectors) {
         Set<Integer> exposedPorts = router.getExposedPorts();
         if (CollectionUtils.isNotEmpty(exposedPorts)) {
             for (Integer exposedPort : exposedPorts) {

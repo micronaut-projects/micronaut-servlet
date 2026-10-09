@@ -18,6 +18,7 @@ package io.micronaut.servlet.jetty.dev;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.dev.tck.ReloadHarness;
 import io.micronaut.dev.tck.ReloadTck;
+import io.micronaut.runtime.server.EmbeddedServer;
 import io.micronaut.servlet.jetty.JettyServer;
 import org.eclipse.jetty.server.Server;
 import org.junit.jupiter.api.Test;
@@ -49,7 +50,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class JettyReloadTest {
 
-    private static final String KEPT_SERVER = "io.micronaut.servlet.jetty.DevelopmentJettyServer";
+    private static final String KEPT_SERVER = "io.micronaut.servlet.jetty.RetainedJettyServer";
 
     /**
      * A bean of the next generation that takes its time to start, so that requests wait for it.
@@ -63,6 +64,24 @@ class JettyReloadTest {
         public class SlowStart {
             public SlowStart() throws InterruptedException {
                 Thread.sleep(%d);
+            }
+        }
+        """;
+
+    private static final String OTHER_PORT_CONTROLLER = """
+        package example;
+
+        import io.micronaut.http.annotation.Controller;
+        import io.micronaut.http.annotation.Get;
+        import io.micronaut.http.annotation.Produces;
+        import io.micronaut.http.MediaType;
+
+        @Controller(value = "/other", port = "${other.port}")
+        public class OtherController {
+            @Get
+            @Produces(MediaType.TEXT_PLAIN)
+            public String other() {
+                return "other";
             }
         }
         """;
@@ -81,6 +100,7 @@ class JettyReloadTest {
             assertEquals("plain first", JettyApp.get(port, "/plain/x"));
 
             ApplicationContext first = harness.context();
+            assertOneServer(first);
             Server server = first.getBean(JettyServer.class).getServer();
             Object kept = bean(first, KEPT_SERVER);
             first = null;
@@ -92,6 +112,7 @@ class JettyReloadTest {
 
             ReloadTck.assertRetained(harness, kept);
             ApplicationContext second = harness.context();
+            assertOneServer(second);
             JettyServer secondServer = second.getBean(JettyServer.class);
             assertSame(server, secondServer.getServer(), "the Jetty server is the first generation's");
             assertEquals(port, secondServer.getPort());
@@ -115,7 +136,8 @@ class JettyReloadTest {
             int port = JettyApp.properties(harness, Map.of());
             harness.source("example.HelloController", JettyApp.CONTROLLER.formatted("first"));
             harness.start();
-            assertTrue(JettyApp.get(port, "/plain/x").startsWith("404"));
+            String absent = JettyApp.get(port, "/plain/x");
+            assertTrue(absent.startsWith("404"), absent);
 
             // the next generation mounts a servlet: its mapping is registered in the next generation's servlet context
             harness.source("example.PlainServlet", JettyApp.PLAIN_SERVLET.formatted("added"));
@@ -126,7 +148,8 @@ class JettyReloadTest {
             harness.source("example.HelloController", JettyApp.CONTROLLER.formatted("third"));
             harness.reload();
             assertEquals("third", JettyApp.get(port, "/hello"));
-            assertTrue(JettyApp.get(port, "/plain/x").startsWith("404"));
+            String removed = JettyApp.get(port, "/plain/x");
+            assertTrue(removed.startsWith("404"), removed);
 
             ReloadTck.assertRetiredGenerationsCollected(harness);
         }
@@ -195,6 +218,45 @@ class JettyReloadTest {
     }
 
     @Test
+    void aGenerationWhoseRoutesExposeAnotherPortRunsAServerOfItsOwn() throws Exception {
+        try (ReloadHarness harness = ReloadHarness.inDirectory(project)) {
+            int other = io.micronaut.core.io.socket.SocketUtils.findAvailableTcpPort();
+            int port = JettyApp.properties(harness, Map.of("other.port", String.valueOf(other)));
+            harness.source("example.HelloController", JettyApp.CONTROLLER.formatted("first"));
+            harness.start();
+            Server[] first = {harness.context().getBean(JettyServer.class).getServer()};
+
+            // the production server adds a connector for the exposed port once built: it is not kept
+            harness.source("example.OtherController", OTHER_PORT_CONTROLLER);
+            harness.source("example.HelloController", JettyApp.CONTROLLER.formatted("second"));
+            harness.reload();
+            Server second = harness.context().getBean(JettyServer.class).getServer();
+            assertNotSame(first[0], second);
+            assertFalse(first[0].isRunning(), "the kept server is stopped");
+            assertEquals("second", JettyApp.get(port, "/hello"));
+            assertEquals("other", JettyApp.get(other, "/other"));
+            assertOneServer(harness.context());
+            first[0] = null;
+
+            // without it, the next generation keeps a server again
+            harness.deleteSource("example.OtherController");
+            harness.source("example.HelloController", JettyApp.CONTROLLER.formatted("third"));
+            harness.reload();
+            assertFalse(second.isRunning(), "the generation's own server is stopped");
+            second = null;
+            assertEquals("third", JettyApp.get(port, "/hello"));
+            Object kept = bean(harness.context(), KEPT_SERVER);
+            harness.source("example.HelloController", JettyApp.CONTROLLER.formatted("fourth"));
+            harness.reload();
+            ReloadTck.assertRetained(harness, kept);
+            kept = null;
+            assertEquals("fourth", JettyApp.get(port, "/hello"));
+
+            ReloadTck.assertRetiredGenerationsCollected(harness);
+        }
+    }
+
+    @Test
     void aWebSocketOfTheStoppingGenerationIsClosedGoingAwayAndTheNextServesANewOne() throws Exception {
         try (ReloadHarness harness = ReloadHarness.inDirectory(project)) {
             int port = JettyApp.properties(harness, Map.of());
@@ -256,6 +318,16 @@ class JettyReloadTest {
                 events.add("error " + error);
             }
         }).get(10, TimeUnit.SECONDS);
+    }
+
+    /**
+     * In development mode the development server and the server built by the development factory replace the
+     * production beans: there is one of each.
+     */
+    private static void assertOneServer(ApplicationContext context) {
+        assertEquals(1, context.getBeansOfType(EmbeddedServer.class).size(), "one embedded server");
+        assertEquals(1, context.getBeansOfType(Server.class).size(), "one Jetty server");
+        assertEquals("io.micronaut.servlet.jetty.DevelopmentJettyServer", context.getBean(EmbeddedServer.class).getClass().getName());
     }
 
     private static Object bean(ApplicationContext context, String className) {
