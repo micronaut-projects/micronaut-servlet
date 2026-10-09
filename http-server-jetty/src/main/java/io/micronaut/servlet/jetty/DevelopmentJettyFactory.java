@@ -27,6 +27,7 @@ import jakarta.inject.Singleton;
 import jakarta.servlet.ServletContainerInitializer;
 import org.eclipse.jetty.server.RequestLog;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.handler.ContextHandler;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Collection;
@@ -37,7 +38,8 @@ import java.util.Collection;
  * the server is built by the {@link JettyFactory}, with the loader of Jetty's integration as the context class loader.
  * What the server creates keeps the context class loader of the creating thread, as its scheduler, which starts its
  * thread with it, and the server may be kept across restarts by {@link RetainedJettyServer}, where a generation's
- * loader would keep that generation.
+ * loader would keep that generation. A context handler of the generation that took the context class loader as it
+ * was created gets the one it would have had otherwise.
  *
  * <p>Not a subclass of {@link JettyFactory}: a subclass of a factory produces every bean of the factory again, its
  * request logs included.</p>
@@ -74,11 +76,21 @@ final class DevelopmentJettyFactory {
                                   @Nullable RequestLog requestLog) throws Exception {
         Thread thread = Thread.currentThread();
         ClassLoader loader = thread.getContextClassLoader();
-        thread.setContextClassLoader(DevelopmentJettyFactory.class.getClassLoader());
+        ClassLoader library = DevelopmentJettyFactory.class.getClassLoader();
+        Server server;
+        thread.setContextClassLoader(library);
         try {
-            return factory.jettyServer(applicationContext, configuration, jettySslConfiguration, servletContainerInitializers, requestLog);
+            server = factory.jettyServer(applicationContext, configuration, jettySslConfiguration, servletContainerInitializers, requestLog);
         } finally {
             thread.setContextClassLoader(loader);
         }
+        // the handlers are the generation's: a context handler that took the context class loader as it was created,
+        // which makes it the context class loader of its requests, gets the one it would have had without the switch
+        for (ContextHandler context : server.getDescendants(ContextHandler.class)) {
+            if (context.getClassLoader() == library && library != loader) {
+                context.setClassLoader(loader);
+            }
+        }
+        return server;
     }
 }
