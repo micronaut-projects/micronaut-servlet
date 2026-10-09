@@ -145,7 +145,8 @@ class JettyReloadTest {
             harness.reload();
             assertEquals("plain added", JettyApp.get(port, "/plain/x"));
 
-            harness.deleteSource("example.PlainServlet");
+            // the class stops being a servlet rather than goes: a deleted source can outlive its deletion by a batch
+            harness.source("example.PlainServlet", "package example; public class PlainServlet { }");
             harness.source("example.HelloController", JettyApp.CONTROLLER.formatted("third"));
             harness.reload();
             assertEquals("third", JettyApp.get(port, "/hello"));
