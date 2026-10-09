@@ -19,6 +19,7 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Replaces;
 import io.micronaut.context.env.DevelopmentActive;
 import io.micronaut.context.event.ApplicationEventPublisher;
+import io.micronaut.context.reload.RequestAdmission;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.runtime.ApplicationConfiguration;
 import io.micronaut.runtime.server.event.ServerShutdownEvent;
@@ -36,7 +37,8 @@ import java.util.concurrent.CompletionStage;
  * It runs the Undertow server kept across restarts by {@link RetainedUndertowServer}, with the deployment of this
  * generation: starting it serves the deployment through the kept server, and stopping it, or shutting it down
  * gracefully, retires this generation and undeploys it while the kept server, its ports and its worker stay for the
- * next one.
+ * next one. It hands the kept server the development launcher's {@link RequestAdmission}, which holds requests while a
+ * batch of changes is in progress and sets the hold and drain timeouts.
  *
  * @author graemerocher
  * @since 6.3.0
@@ -68,6 +70,8 @@ final class DevelopmentUndertowServer extends UndertowServer {
                               RetainedUndertowServer retained) {
         super(applicationContext, applicationConfiguration, serverShutdownEventPublisher, undertow);
         this.retained = retained;
+        // the launcher's, looked up once per generation: none without a launcher
+        retained.admission(RequestAdmission.current());
     }
 
     @Override
