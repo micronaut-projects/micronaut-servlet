@@ -192,9 +192,22 @@ final class RetainedTomcatServer {
                 return contexts(kept.getHost());
             }
             Host host = kept.getHost();
-            for (Context context : contexts) {
-                // starts it, and maps it once started
-                host.addChild(context);
+            try {
+                for (Context context : contexts) {
+                    // starts it, and maps it once started
+                    host.addChild(context);
+                    if (!context.getState().isAvailable()) {
+                        throw new LifecycleException("The context " + context.getName() + " of the generation did not start");
+                    }
+                }
+            } catch (LifecycleException | RuntimeException e) {
+                // a context that failed to start stays in the host, where the next generation's would clash with it
+                for (Context context : contexts) {
+                    if (context.getParent() == host) {
+                        host.removeChild(context);
+                    }
+                }
+                throw e;
             }
             return contexts;
         });

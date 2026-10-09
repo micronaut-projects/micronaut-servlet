@@ -69,6 +69,22 @@ class TomcatReloadTest {
         }
         """;
 
+    private static final String FAILING_LISTENER = """
+        package example;
+
+        import jakarta.servlet.ServletContextEvent;
+        import jakarta.servlet.ServletContextListener;
+        import jakarta.servlet.annotation.WebListener;
+
+        @WebListener
+        public class FailingListener implements ServletContextListener {
+            @Override
+            public void contextInitialized(ServletContextEvent event) {
+                %s
+            }
+        }
+        """;
+
     private static final String OTHER_PORT_CONTROLLER = """
         package example;
 
@@ -228,6 +244,32 @@ class TomcatReloadTest {
             assertEquals("plain second", TomcatApp.get(port, "/plain/x"));
         } finally {
             System.clearProperty(CompileGate.GATE);
+        }
+    }
+
+    @Test
+    void aGenerationWhoseContextFailsToStartLeavesTheKeptHostToTheNextOne() throws Exception {
+        try (ReloadHarness harness = ReloadHarness.inDirectory(project)) {
+            harness.timeout(Duration.ofSeconds(20));
+            int port = TomcatApp.properties(harness, Map.of());
+            harness.source("example.HelloController", TomcatApp.CONTROLLER.formatted("first"));
+            harness.start();
+            assertEquals("first", TomcatApp.get(port, "/hello"));
+
+            // the next generation's context fails to start: its listener throws
+            harness.source("example.FailingListener", FAILING_LISTENER.formatted("throw new IllegalStateException(\"broken\");"));
+            harness.source("example.HelloController", TomcatApp.CONTROLLER.formatted("second"));
+            try {
+                harness.reload();
+            } catch (Throwable expected) {
+                System.out.println("Tomcat reload with a failing context: " + expected);
+            }
+
+            // corrected, the following generation deploys its context in the kept host
+            harness.source("example.FailingListener", FAILING_LISTENER.formatted(""));
+            harness.source("example.HelloController", TomcatApp.CONTROLLER.formatted("third"));
+            harness.reload();
+            assertEquals("third", TomcatApp.get(port, "/hello"));
         }
     }
 
