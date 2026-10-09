@@ -176,7 +176,12 @@ public class JettyFactory extends ServletServerFactory {
         final Integer port = getConfiguredPort();
         String contextPath = getContextPath();
 
-        Server server = newServer(applicationContext, configuration);
+        // the reloader exists in development mode only, where the server may be kept across restarts: the scheduler
+        // it creates keeps the context class loader of the creating thread, which must not be a generation's
+        DevelopmentJettyReloader reloader = applicationContext.findBean(DevelopmentJettyReloader.class).orElse(null);
+        Server server = reloader == null
+            ? newServer(applicationContext, configuration)
+            : reloader.create(() -> newServer(applicationContext, configuration));
 
         if (requestLog != null) {
             server.setRequestLog(requestLog);
