@@ -79,6 +79,7 @@ include 'test-suite-python'
 include 'test-suite-jetty-default-access-log'
 include 'test-suite-jetty-logback-access-log'
 include 'test-suite-kotlin-jetty'
+include 'test-suite-dev-reload-jetty'
 include 'test-sample-poja'
 
 // Develop against a local checkout of micronaut-core (for example while adding HTTP server TCK tests) with

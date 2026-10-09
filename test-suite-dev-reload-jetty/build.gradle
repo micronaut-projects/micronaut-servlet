@@ -1,0 +1,32 @@
+plugins {
+    id 'io.micronaut.build.internal.servlet.base'
+    id 'io.micronaut.build.internal.java-base'
+}
+
+tasks.withType(Test).configureEach {
+    useJUnitPlatform()
+    // the reload harness runs each generation in this JVM, and a test waits for a retired one to be collected
+    maxHeapSize = "1g"
+}
+
+dependencies {
+    testImplementation(platform(mn.micronaut.core.bom))
+    testImplementation(projects.micronautHttpServerJetty)
+    testImplementation(projects.micronautServletWebsocket)
+    testImplementation(libs.jetty.websocket.jakarta.server) {
+        // Only used by Jetty's WebAppContext configuration, which embedded mode never loads.
+        exclude(group: "org.eclipse.jetty.ee10", module: "jetty-ee10-annotations")
+    }
+    testImplementation(mn.micronaut.dev.tck)
+    // the reload harness compiles the application under test with the processors on the test classpath
+    testImplementation(mn.micronaut.inject.java)
+    testImplementation(mnSerde.micronaut.serde.jackson)
+    // @WebServlet and @WebFilter beans of the application under test
+    testImplementation(projects.micronautServletProcessor)
+    testImplementation(mnTest.junit.jupiter.api)
+    testRuntimeOnly(mnTest.junit.jupiter.engine)
+    testRuntimeOnly(mnTest.junit.platform.launcher)
+    testRuntimeOnly(mnLogging.logback.classic)
+}
+
+
