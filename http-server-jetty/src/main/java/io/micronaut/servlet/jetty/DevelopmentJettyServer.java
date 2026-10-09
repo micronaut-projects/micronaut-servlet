@@ -23,6 +23,7 @@ import io.micronaut.context.reload.RequestAdmission;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.runtime.ApplicationConfiguration;
 import io.micronaut.runtime.server.event.ServerShutdownEvent;
+import io.micronaut.servlet.http.server.DevelopmentRequestGate;
 import io.micronaut.web.router.Router;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -53,7 +54,7 @@ final class DevelopmentJettyServer extends JettyServer {
     /**
      * The generation the kept server serves while this server runs, or null when it runs a server of its own.
      */
-    private volatile RetainedJettyServer.@Nullable Generation generation;
+    private volatile DevelopmentRequestGate.@Nullable Generation<RetainedJettyServer.Served> generation;
 
     /**
      * @param applicationContext The application context
@@ -95,7 +96,7 @@ final class DevelopmentJettyServer extends JettyServer {
 
     @Override
     protected void stopServer() throws Exception {
-        RetainedJettyServer.Generation serving = generation;
+        DevelopmentRequestGate.Generation<RetainedJettyServer.Served> serving = generation;
         if (serving != null) {
             // the kept server stays for the next generation
             generation = null;
@@ -107,7 +108,7 @@ final class DevelopmentJettyServer extends JettyServer {
 
     @Override
     public CompletionStage<?> shutdownGracefully() {
-        RetainedJettyServer.Generation serving = generation;
+        DevelopmentRequestGate.Generation<RetainedJettyServer.Served> serving = generation;
         if (serving != null) {
             // the kept server keeps accepting: the requests that arrive wait for the next generation
             return retained.retire(serving);
