@@ -29,6 +29,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.WebSocket;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Map;
@@ -174,7 +175,9 @@ class JettyReloadTest {
     @Test
     void requestsWaitForASlowNextGenerationAndAreAnsweredWithA503PastTheHold() throws Exception {
         try (ReloadHarness harness = ReloadHarness.inDirectory(project)) {
-            int port = JettyApp.properties(harness, Map.of("micronaut.dev.requests.hold-timeout", "500ms"));
+            // the launcher's setting, which its request admission carries
+            harness.manifest("requests.hold-timeout", "500ms");
+            int port = JettyApp.properties(harness, Map.of());
             harness.source("example.HelloController", JettyApp.CONTROLLER.formatted("first"));
             harness.source("example.PlainServlet", JettyApp.PLAIN_SERVLET.formatted("first"));
             harness.start();
@@ -189,6 +192,41 @@ class JettyReloadTest {
             assertEquals("1", unavailable.headers().firstValue("Retry-After").orElse(null));
             reload.get(60, TimeUnit.SECONDS);
             assertEquals("second", JettyApp.get(port, "/hello"));
+        }
+    }
+
+    @Test
+    void aPlainServletRequestMadeWhileABatchCompilesIsHeldUntilTheBatchIsAdmitted() throws Exception {
+        Path gate = project.resolve("compile-gate");
+        Path entered = project.resolve("compile-gate.entered");
+        System.setProperty(CompileGate.GATE, gate.toString());
+        try (ReloadHarness harness = ReloadHarness.inDirectory(project)) {
+            int port = JettyApp.properties(harness, Map.of());
+            harness.source("example.PlainServlet", JettyApp.PLAIN_SERVLET.formatted("first"));
+            harness.start();
+            assertEquals("plain first", JettyApp.get(port, "/plain/x"));
+
+            // the next compilation holds until the gate file is deleted: the batch is in its compile phase, and the
+            // first generation still runs
+            Files.writeString(gate, "");
+            harness.source("example.PlainServlet", JettyApp.PLAIN_SERVLET.formatted("second"));
+            CompletableFuture<Void> reload = CompletableFuture.runAsync(harness::reload);
+            long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(60);
+            while (!Files.exists(entered)) {
+                assertTrue(System.nanoTime() < deadline, "the compilation did not start");
+                Thread.sleep(10);
+            }
+            CompletableFuture<String> held = CompletableFuture.supplyAsync(() -> JettyApp.get(port, "/plain/x"));
+            Thread.sleep(500);
+            assertFalse(held.isDone(), "answered while the batch compiles: " + (held.isDone() ? held.join() : ""));
+
+            Files.delete(gate);
+            reload.get(60, TimeUnit.SECONDS);
+            // admitted as the restart is about to stop the first generation, which serves it before it stops
+            assertEquals("plain first", held.get(30, TimeUnit.SECONDS));
+            assertEquals("plain second", JettyApp.get(port, "/plain/x"));
+        } finally {
+            System.clearProperty(CompileGate.GATE);
         }
     }
 

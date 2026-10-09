@@ -16,6 +16,7 @@
 package io.micronaut.servlet.jetty;
 
 import io.micronaut.context.annotation.Retain;
+import io.micronaut.context.reload.RequestAdmission;
 import io.micronaut.context.env.DevelopmentActive;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.http.server.HttpServerConfiguration;
@@ -63,9 +64,14 @@ import java.util.concurrent.atomic.AtomicInteger;
  * which each generation builds anew with its own mappings, and its request log is the running generation's.
  *
  * <p>While one generation stops and the next starts, a request to any mapping, Micronaut's or not, waits for the next
- * generation, for {@value DevelopmentJettyServer#HOLD_TIMEOUT} at most, after which it is answered with a 503 and a
+ * generation, for {@link RequestAdmission#holdTimeout()} at most, after which it is answered with a 503 and a
  * {@code Retry-After}. The requests in flight on the stopping generation may finish on it, for
- * {@value DevelopmentJettyServer#DRAIN_TIMEOUT} at most, before its handlers stop.</p>
+ * {@link RequestAdmission#drainTimeout()} at most, before its handlers stop.</p>
+ *
+ * <p>While the development launcher compiles and applies a batch of changes, its {@link RequestAdmission} holds every
+ * request as well, so that a servlet that is not Micronaut's is not answered by a generation about to be replaced.
+ * Once admitted, a request is served by the generation that runs then: the one it arrived on, which a restart drains
+ * before it stops, or the next one.</p>
  *
  * <p>Retained across restarts until a change under {@value HttpServerConfiguration#PREFIX}, which configures the
  * server, its connectors, Jetty and the access log, {@value MicronautServletConfiguration#PREFIX}, which configures the
@@ -85,6 +91,14 @@ final class RetainedJettyServer {
 
     private static final Logger LOG = LoggerFactory.getLogger(RetainedJettyServer.class);
     private static final String RETRY_AFTER_SECONDS = "1";
+    /**
+     * How long a request waits for the next generation without a development launcher, which otherwise sets it.
+     */
+    private static final Duration DEFAULT_HOLD_TIMEOUT = Duration.ofSeconds(30);
+    /**
+     * How long a restart waits for the requests in flight without a development launcher, which otherwise sets it.
+     */
+    private static final Duration DEFAULT_DRAIN_TIMEOUT = Duration.ofSeconds(10);
     private static final String GENERATION_ATTRIBUTE = RetainedJettyServer.class.getName() + ".generation";
 
     private final Object lock = new Object();
@@ -108,8 +122,10 @@ final class RetainedJettyServer {
      */
     private final GenerationExecutor virtualThreads = new GenerationExecutor();
     private boolean closed;
-    private volatile Duration holdTimeout = DevelopmentJettyServer.DEFAULT_HOLD_TIMEOUT;
-    private volatile Duration drainTimeout = DevelopmentJettyServer.DEFAULT_DRAIN_TIMEOUT;
+    /**
+     * The development launcher's admission: requests wait while a batch of changes compiles and applies.
+     */
+    private volatile @Nullable RequestAdmission admission;
 
     /**
      * Created once, as the first generation starts, and kept from then on.
@@ -118,14 +134,23 @@ final class RetainedJettyServer {
     }
 
     /**
-     * Sets how long a request waits for the next generation, and how long a stopping generation waits for its requests.
+     * Sets the admission of the development launcher, which holds requests while a batch of changes is in progress and
+     * carries the hold and drain timeouts; none without a launcher, when the defaults apply.
      *
-     * @param hold The hold timeout
-     * @param drain The drain timeout
+     * @param admission The admission, if any
      */
-    void timeouts(Duration hold, Duration drain) {
-        holdTimeout = hold;
-        drainTimeout = drain;
+    void admission(@Nullable RequestAdmission admission) {
+        this.admission = admission;
+    }
+
+    private Duration holdTimeout() {
+        RequestAdmission current = admission;
+        return current != null ? current.holdTimeout() : DEFAULT_HOLD_TIMEOUT;
+    }
+
+    private Duration drainTimeout() {
+        RequestAdmission current = admission;
+        return current != null ? current.drainTimeout() : DEFAULT_DRAIN_TIMEOUT;
     }
 
     /**
@@ -253,12 +278,12 @@ final class RetainedJettyServer {
      */
     void stop(Generation generation) {
         CompletableFuture<Void> idle = retire(generation);
-        Duration timeout = drainTimeout;
+        Duration timeout = drainTimeout();
         try {
             idle.get(timeout.toMillis(), TimeUnit.MILLISECONDS);
         } catch (TimeoutException e) {
-            LOG.warn("Requests were still in flight on the stopping generation after {} ms; its handlers stop anyway ({})",
-                timeout.toMillis(), DevelopmentJettyServer.DRAIN_TIMEOUT);
+            LOG.warn("Requests were still in flight on the stopping generation after {} ms; its handlers stop anyway (micronaut.dev.requests.drain-timeout)",
+                timeout.toMillis());
         } catch (ExecutionException e) {
             LOG.debug("Draining the stopping generation failed", e);
         } catch (InterruptedException e) {
@@ -359,7 +384,7 @@ final class RetainedJettyServer {
             waiting.unavailable("The application is not running");
             return null;
         }
-        Duration timeout = holdTimeout;
+        Duration timeout = holdTimeout();
         waiting.timeout = kept.getScheduler().schedule(() -> {
             synchronized (lock) {
                 held.remove(waiting);
@@ -367,6 +392,61 @@ final class RetainedJettyServer {
             waiting.unavailable("The application is restarting and did not finish within " + timeout.toMillis() + " ms; retry shortly.");
         }, timeout.toMillis(), TimeUnit.MILLISECONDS);
         return null;
+    }
+
+    /**
+     * Holds a request while a batch of changes is in progress, until it is admitted, or answers it with a 503 after the
+     * hold timeout.
+     */
+    private void holdForAdmission(RequestAdmission batch, Request request, Response response, Callback callback) {
+        HeldRequest waiting = new HeldRequest(request, response, callback);
+        Server kept;
+        synchronized (lock) {
+            kept = closed ? null : server;
+        }
+        if (kept == null) {
+            waiting.unavailable("The application is not running");
+            return;
+        }
+        Duration timeout = holdTimeout();
+        waiting.timeout = kept.getScheduler().schedule(
+            () -> waiting.unavailable("The application is reloading and did not finish within " + timeout.toMillis() + " ms; retry shortly."),
+            timeout.toMillis(), TimeUnit.MILLISECONDS);
+        batch.whenAdmitted().thenRun(() -> admitted(kept, waiting));
+    }
+
+    /**
+     * A request held while a batch was in progress is admitted: once the batch is done, or as a restart is about to stop
+     * the running generation. It is counted on the running generation right away, on the thread that admits it, so that
+     * a restart drains it as a request in flight on the generation it arrived on; while none runs, it waits for the
+     * next one.
+     */
+    private void admitted(Server kept, HeldRequest waiting) {
+        if (!waiting.claim()) {
+            // answered with a 503 meanwhile
+            return;
+        }
+        Generation running = current;
+        Generation entered = running != null && running.enter() ? running : null;
+        try {
+            kept.getThreadPool().execute(() -> {
+                try {
+                    boolean handled = entered != null
+                        ? gate.handleEntered(entered, waiting.request, waiting.response, waiting.callback)
+                        : gate.handleOn(null, waiting.request, waiting.response, waiting.callback);
+                    if (!handled) {
+                        Response.writeError(waiting.request, waiting.response, waiting.callback, HttpStatus.NOT_FOUND_404);
+                    }
+                } catch (Throwable e) {
+                    Response.writeError(waiting.request, waiting.response, waiting.callback, e);
+                }
+            });
+        } catch (RejectedExecutionException e) {
+            if (entered != null) {
+                entered.exit();
+            }
+            waiting.reject("The server is stopping");
+        }
     }
 
     private void dispatch(Server kept, HeldRequest request) {
@@ -395,6 +475,12 @@ final class RetainedJettyServer {
 
         @Override
         public boolean handle(Request request, Response response, Callback callback) throws Exception {
+            RequestAdmission batch = admission;
+            if (batch != null && !batch.isAdmitted()) {
+                // a batch of changes compiles or applies: the running generation may be about to be replaced
+                holdForAdmission(batch, request, response, callback);
+                return true;
+            }
             Generation running = current;
             if (running == null) {
                 running = hold(request, response, callback);
@@ -411,6 +497,10 @@ final class RetainedJettyServer {
                 Generation next = hold(request, response, callback);
                 return next == null || handleOn(next, request, response, callback);
             }
+            return handleEntered(running, request, response, callback);
+        }
+
+        boolean handleEntered(Generation running, Request request, Response response, Callback callback) throws Exception {
             // the request is logged by the request log of the generation that served it, even once that one retired
             request.setAttribute(GENERATION_ATTRIBUTE, running);
             TrackedCallback tracked = new TrackedCallback(callback, running);
@@ -593,9 +683,15 @@ final class RetainedJettyServer {
         }
 
         void unavailable(String message) {
-            if (!claim()) {
-                return;
+            if (claim()) {
+                reject(message);
             }
+        }
+
+        /**
+         * Answers the claimed request with a 503.
+         */
+        void reject(String message) {
             try {
                 response.setStatus(HttpStatus.SERVICE_UNAVAILABLE_503);
                 response.getHeaders().put(HttpHeader.RETRY_AFTER, RETRY_AFTER_SECONDS);
