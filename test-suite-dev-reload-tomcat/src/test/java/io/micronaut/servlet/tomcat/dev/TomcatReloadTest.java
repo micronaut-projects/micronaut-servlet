@@ -29,6 +29,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.WebSocket;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Map;
@@ -51,6 +52,22 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class TomcatReloadTest {
 
     private static final String KEPT_SERVER = "io.micronaut.servlet.tomcat.RetainedTomcatServer";
+
+    /**
+     * A bean of the next generation that takes its time to start, so that requests wait for it.
+     */
+    private static final String SLOW_START = """
+        package example;
+
+        import io.micronaut.context.annotation.Context;
+
+        @Context
+        public class SlowStart {
+            public SlowStart() throws InterruptedException {
+                Thread.sleep(%d);
+            }
+        }
+        """;
 
     private static final String OTHER_PORT_CONTROLLER = """
         package example;
@@ -153,6 +170,64 @@ class TomcatReloadTest {
             harness.reload();
             assertEquals("slow first", inFlight.get(30, TimeUnit.SECONDS), "drained on the generation it arrived on");
             assertEquals("slow second", TomcatApp.get(port, "/slow"));
+        }
+    }
+
+    @Test
+    void requestsWaitForASlowNextGenerationAndAreAnsweredWithA503PastTheHold() throws Exception {
+        try (ReloadHarness harness = ReloadHarness.inDirectory(project)) {
+            // the launcher's setting, which its request admission carries
+            harness.manifest("requests.hold-timeout", "500ms");
+            int port = TomcatApp.properties(harness, Map.of());
+            harness.source("example.HelloController", TomcatApp.CONTROLLER.formatted("first"));
+            harness.source("example.PlainServlet", TomcatApp.PLAIN_SERVLET.formatted("first"));
+            harness.start();
+            assertEquals("first", TomcatApp.get(port, "/hello"));
+
+            harness.source("example.HelloController", TomcatApp.CONTROLLER.formatted("second"));
+            harness.source("example.SlowStart", SLOW_START.formatted(2500));
+            CompletableFuture<Void> reload = CompletableFuture.runAsync(harness::reload);
+            // the next generation takes 2.5 s to start: past the hold, a request to any mapping is told to retry
+            HttpResponse<String> unavailable = awaitUnavailable(port, "/plain/x");
+            assertEquals(503, unavailable.statusCode());
+            assertEquals("1", unavailable.headers().firstValue("Retry-After").orElse(null));
+            reload.get(60, TimeUnit.SECONDS);
+            assertEquals("second", TomcatApp.get(port, "/hello"));
+        }
+    }
+
+    @Test
+    void aPlainServletRequestMadeWhileABatchCompilesIsHeldUntilTheBatchIsAdmitted() throws Exception {
+        Path gate = project.resolve("compile-gate");
+        Path entered = project.resolve("compile-gate.entered");
+        System.setProperty(CompileGate.GATE, gate.toString());
+        try (ReloadHarness harness = ReloadHarness.inDirectory(project)) {
+            int port = TomcatApp.properties(harness, Map.of());
+            harness.source("example.PlainServlet", TomcatApp.PLAIN_SERVLET.formatted("first"));
+            harness.start();
+            assertEquals("plain first", TomcatApp.get(port, "/plain/x"));
+
+            // the next compilation holds until the gate file is deleted: the batch is in its compile phase, and the
+            // first generation still runs
+            Files.writeString(gate, "");
+            harness.source("example.PlainServlet", TomcatApp.PLAIN_SERVLET.formatted("second"));
+            CompletableFuture<Void> reload = CompletableFuture.runAsync(harness::reload);
+            long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(60);
+            while (!Files.exists(entered)) {
+                assertTrue(System.nanoTime() < deadline, "the compilation did not start");
+                Thread.sleep(10);
+            }
+            CompletableFuture<String> held = CompletableFuture.supplyAsync(() -> TomcatApp.get(port, "/plain/x"));
+            Thread.sleep(500);
+            assertFalse(held.isDone(), "answered while the batch compiles: " + (held.isDone() ? held.join() : ""));
+
+            Files.delete(gate);
+            reload.get(60, TimeUnit.SECONDS);
+            // admitted as the restart is about to stop the first generation, which serves it before it stops
+            assertEquals("plain first", held.get(30, TimeUnit.SECONDS));
+            assertEquals("plain second", TomcatApp.get(port, "/plain/x"));
+        } finally {
+            System.clearProperty(CompileGate.GATE);
         }
     }
 
@@ -280,6 +355,20 @@ class TomcatReloadTest {
 
             ReloadTck.assertRetiredGenerationsCollected(harness);
         }
+    }
+
+    private static HttpResponse<String> awaitUnavailable(int port, String path) throws Exception {
+        HttpClient client = HttpClient.newHttpClient();
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(30);
+        while (System.nanoTime() < deadline) {
+            HttpResponse<String> response = client.send(HttpRequest.newBuilder(URI.create("http://localhost:" + port + path))
+                .timeout(Duration.ofSeconds(30)).GET().build(), HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() == 503) {
+                return response;
+            }
+            Thread.sleep(20);
+        }
+        throw new AssertionError("No request was answered with a 503");
     }
 
     private static WebSocket connect(int port, LinkedBlockingQueue<String> events) throws Exception {

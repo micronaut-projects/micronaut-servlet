@@ -19,6 +19,7 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Replaces;
 import io.micronaut.context.env.DevelopmentActive;
 import io.micronaut.context.event.ApplicationEventPublisher;
+import io.micronaut.context.reload.RequestAdmission;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.runtime.ApplicationConfiguration;
 import io.micronaut.runtime.server.event.ServerShutdownEvent;
@@ -36,7 +37,9 @@ import java.util.concurrent.CompletionStage;
  * The {@link TomcatServer} of a generation of the application in development mode, in place of the production one. It
  * runs the Tomcat server kept across restarts by {@link RetainedTomcatServer}, with the contexts of this generation:
  * starting it deploys them in the kept server, and stopping it, or shutting it down gracefully, retires this generation
- * while the kept server, its ports and its executors stay for the next one.
+ * while the kept server, its ports and its executors stay for the next one. It hands the kept server the development
+ * launcher's {@link RequestAdmission}, which holds requests while a batch of changes is in progress and sets the hold
+ * and drain timeouts.
  *
  * @author graemerocher
  * @since 6.3.0
@@ -68,6 +71,8 @@ final class DevelopmentTomcatServer extends TomcatServer {
                             RetainedTomcatServer retained) {
         super(applicationContext, applicationConfiguration, serverShutdownEventPublisher, retained.serve(tomcat));
         this.retained = retained;
+        // the launcher's, looked up once per generation: none without a launcher
+        retained.admission(RequestAdmission.current());
     }
 
     @Override
