@@ -79,6 +79,7 @@ public class UndertowFactory extends ServletServerFactory {
     private final @Nullable Router router;
     private final AtomicReference<@Nullable GracefulShutdownHandler> gracefulShutdownHandler = new AtomicReference<>();
     private final AtomicReference<@Nullable ExecutorService> handlerExecutor = new AtomicReference<>();
+    private final AtomicReference<@Nullable HttpHandler> rootHandler = new AtomicReference<>();
 
     /**
      * Default constructor.
@@ -114,6 +115,18 @@ public class UndertowFactory extends ServletServerFactory {
     @Nullable
     GracefulShutdownHandler getGracefulShutdownHandler() {
         return gracefulShutdownHandler.get();
+    }
+
+    /**
+     * The handler installed on the builder as the root handler of the server: the deployment, with its compression,
+     * graceful shutdown and access log.
+     *
+     * @return The handler, or {@code null} if the builder has not been built
+     * @since 6.3.0
+     */
+    @Nullable
+    HttpHandler getRootHandler() {
+        return rootHandler.get();
     }
 
     /**
@@ -170,6 +183,7 @@ public class UndertowFactory extends ServletServerFactory {
                 getApplicationContext().getClassLoader()
             );
         }
+        this.rootHandler.set(httpHandler);
         builder.setHandler(httpHandler);
 
         final SslConfiguration sslConfiguration = getSslConfiguration();
