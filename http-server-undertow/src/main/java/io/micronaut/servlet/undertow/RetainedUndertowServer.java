@@ -120,32 +120,38 @@ final class RetainedUndertowServer {
      * @return The server to run
      */
     Undertow serve(Undertow.Builder builder, Served served, String signature) {
-        Undertow released;
-        Undertow built;
+        Undertow released = null;
+        Undertow serving;
+        Served unstarted;
         synchronized (lock) {
             Undertow kept = server;
-            if (kept != null && kept.getWorker() != null && signature.equals(listeners)) {
-                staged = served;
-                LOG.debug("Undertow server on {} retained across the restart", signature);
-                return kept;
-            }
-            if (kept != null) {
-                LOG.debug("The Undertow server listens on {} rather than {}: the one kept is stopped", signature, listeners);
-            }
-            released = kept;
+            // a deployment staged by a generation that never started is replaced
+            unstarted = staged;
             staged = served;
-            // the generation's handler is served through the gate
-            builder.setHandler(handler);
-            built = builder.build();
-            server = built;
-            listeners = signature;
+            if (kept != null && kept.getWorker() != null && signature.equals(listeners)) {
+                LOG.debug("Undertow server on {} retained across the restart", signature);
+                serving = kept;
+            } else {
+                if (kept != null) {
+                    LOG.debug("The Undertow server listens on {} rather than {}: the one kept is stopped", signature, listeners);
+                }
+                released = kept;
+                // the generation's handler is served through the gate
+                builder.setHandler(handler);
+                serving = builder.build();
+                server = serving;
+                listeners = signature;
+            }
+        }
+        if (unstarted != null) {
+            undeploy(unstarted);
         }
         if (released != null) {
             closeGate();
             stop(released);
         }
         gate.open();
-        return built;
+        return serving;
     }
 
     /**
@@ -198,10 +204,16 @@ final class RetainedUndertowServer {
             throw new IllegalStateException("No generation staged its deployment in the retained Undertow server");
         }
         if (kept.getWorker() == null) {
-            DevelopmentRequestGate.withLoaderOf(RetainedUndertowServer.class, () -> {
-                kept.start();
-                return null;
-            });
+            try {
+                DevelopmentRequestGate.withLoaderOf(RetainedUndertowServer.class, () -> {
+                    kept.start();
+                    return null;
+                });
+            } catch (RuntimeException e) {
+                // the generation fails to start: its deployment leaves the static container now, as nothing else will
+                undeploy(served);
+                throw e;
+            }
         }
         return gate.start(served);
     }
