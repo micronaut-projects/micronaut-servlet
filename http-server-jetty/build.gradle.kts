@@ -9,6 +9,8 @@ dependencies {
     implementation(libs.jetty.alpn.java.server)
     implementation(mnLogging.logback.core)//force version to avoid CVE-2025-11226
     compileOnly(libs.logback.access.jetty12)
+    // the LiveReload script in the pages Jetty serves itself, only when the development launcher runs the application
+    compileOnly(mn.micronaut.dev)
     testImplementation(libs.bcpkix)
     testImplementation(libs.jetty.alpn.conscrypt.server)
     testCompileOnly(mnValidation.micronaut.validation.processor)

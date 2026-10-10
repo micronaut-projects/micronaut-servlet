@@ -19,6 +19,7 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.runtime.server.EmbeddedServer;
 import io.micronaut.servlet.tomcat.TomcatServer;
 import org.apache.catalina.startup.Tomcat;
+import io.micronaut.servlet.engine.dev.DevelopmentLiveReloadFilter;
 import io.micronaut.servlet.http.server.DevelopmentSessionStore;
 import org.junit.jupiter.api.Test;
 
@@ -41,6 +42,7 @@ class TomcatProductionBeansTest {
             assertEquals(1, context.getBeansOfType(Tomcat.class).size());
             assertFalse(context.containsBean(Class.forName("io.micronaut.servlet.tomcat.RetainedTomcatServer")));
             assertFalse(context.containsBean(DevelopmentSessionStore.class));
+            assertFalse(context.containsBean(DevelopmentLiveReloadFilter.class));
         }
     }
 }
