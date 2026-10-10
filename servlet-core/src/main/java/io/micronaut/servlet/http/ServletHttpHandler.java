@@ -250,11 +250,20 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
             servletResponse.stream(body.move()).whenComplete((ignored, t) -> {
                 if (t != null) {
                     logWriteFailure(t);
+                    abortCommitted(exchange, servletResponse, t);
                 }
                 onComplete.run();
             });
         } else {
-            writeBlocking(body, servletResponse);
+            try {
+                writeBlocking(body, servletResponse);
+            } catch (RuntimeException t) {
+                if (!servletResponse.isCommitted()) {
+                    throw t;
+                }
+                logWriteFailure(t);
+                abortCommitted(exchange, servletResponse, t);
+            }
             onComplete.run();
         }
     }
@@ -317,6 +326,17 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
             }
         } catch (IOException e) {
             throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, Optional.ofNullable(e.getMessage()).orElse(e.toString()));
+        }
+    }
+
+    /**
+     * A body that fails once the response was committed cannot be answered with an error any more: the
+     * connection is dropped, so that the client sees a truncated response rather than one that looks complete.
+     */
+    private static void abortCommitted(ServletExchange<?, ?> exchange, ServletHttpResponse<?, ?> servletResponse, Throwable t) {
+        if (servletResponse.isCommitted() && !exchange.getRequest().abortResponse(t) && LOG.isDebugEnabled()) {
+            LOG.debug("The connection of request [{} - {}] cannot be dropped: the failed response ends like a complete one",
+                exchange.getRequest().getMethodName(), exchange.getRequest().getUri());
         }
     }
 
@@ -433,7 +453,7 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
             // on it may write blocking, one that completes elsewhere is a different matter
             Thread containerThread = Thread.currentThread();
             lc.handleNormal(req)
-                .flatMap(response -> process(response, req, exchange.getResponse()))
+                .flatMap(response -> process(response, req, exchange.getResponse(), lc))
                 .onComplete((bbhr, t) -> completeAsync(exchange, bbhr, t, Thread.currentThread() == containerThread, finish));
             return null;
         }));
@@ -508,7 +528,7 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
                                  Runnable requestTerminated) {
         ExecutionResult executionResult;
         CompletableFuture<ExecutionResult> cfExecutionResult = PropagatedContext.getOrEmpty().plus(new ServerHttpRequestContext(req)).propagate(() -> lc.handleNormal(req)
-            .flatMap(response -> process(response, req, exchange.getResponse())).toCompletableFuture());
+            .flatMap(response -> process(response, req, exchange.getResponse(), lc)).toCompletableFuture());
         try {
             executionResult = cfExecutionResult.get();
         } catch (InterruptedException ie) {
@@ -574,7 +594,7 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
 
         ExecutionResult executionResult;
         try {
-            executionResult = process(filteredResponse, req, exchange.getResponse()).toCompletableFuture().get();
+            executionResult = process(filteredResponse, req, exchange.getResponse(), null).toCompletableFuture().get();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             exchange.getResponse().status(HttpStatus.SERVICE_UNAVAILABLE);
@@ -635,11 +655,20 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
 
     private ExecutionFlow<ExecutionResult> process(HttpResponse<?> response,
                                                    HttpRequest<Object> req,
-                                                   ServletHttpResponse<?, ?> shr) {
+                                                   ServletHttpResponse<?, ?> shr,
+                                                   @Nullable ServletRequestLifecycle lc) {
         if (shr.isCommitted()) {
             return ExecutionFlow.just(new ExecutionResult(null));
         }
-        return new ServletResponseLifecycle(req).encodeHttpResponseSafe(req, response).map(ExecutionResult::new);
+        // a body that fails before anything was sent, e.g. the first element of a stream, is answered by the
+        // exception handlers and the error routes, like on the other runtimes
+        if (lc == null) {
+            return new ServletResponseLifecycle(req).encodeHttpResponseSafe(req, response).map(ExecutionResult::new);
+        }
+        PropagatedContext context = PropagatedContext.getOrEmpty();
+        return new ServletResponseLifecycle(req)
+            .encodeHttpResponseSafe(req, response, failure -> context.propagate(() -> lc.writeError(req, failure)))
+            .map(ExecutionResult::new);
     }
 
     private static void handleFallback(ServletHttpResponse<?, ?> shr, Throwable t) {
@@ -718,6 +747,10 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
 
         ExecutionFlow<HttpResponse<?>> handleNormal(HttpRequest<?> request) {
             return normalFlow(request);
+        }
+
+        ExecutionFlow<HttpResponse<?>> writeError(HttpRequest<?> request, Throwable failure) {
+            return onWriteError(request, failure);
         }
 
         @Override

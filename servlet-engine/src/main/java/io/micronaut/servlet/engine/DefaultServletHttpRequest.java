@@ -80,6 +80,8 @@ import org.jspecify.annotations.Nullable;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import reactor.core.publisher.Flux;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 
 import javax.net.ssl.SSLSession;
@@ -104,6 +106,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.ServiceLoader;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Set;
@@ -131,6 +134,13 @@ public final class DefaultServletHttpRequest<B> implements
 
     private static final String NULL_KEY = "Attribute key cannot be null";
     private static final String NULL_PARAMETER_NAME = "Parameter name cannot be null";
+    private static final Logger LOG = LoggerFactory.getLogger(DefaultServletHttpRequest.class);
+    /**
+     * The ways the embedded servers drop the connection of a response whose body failed, see
+     * {@link ServletConnectionAborter}.
+     */
+    private static final List<ServletConnectionAborter> ABORTERS = ServiceLoader.load(ServletConnectionAborter.class, DefaultServletHttpRequest.class.getClassLoader())
+        .stream().map(ServiceLoader.Provider::get).toList();
 
     private final ConversionService conversionService;
     private final HttpServletRequest delegate;
@@ -883,6 +893,20 @@ public final class DefaultServletHttpRequest<B> implements
                     .map(field -> new RawFormField(field.metadata(), AvailableByteArrayBody.create(byteBodyFactory.readBufferFactory().adapt(field.content()))));
             })
             .doOnDiscard(RawFormField.class, RawFormField::close);
+    }
+
+    @Override
+    public boolean abortResponse(Throwable failure) {
+        for (ServletConnectionAborter aborter : ABORTERS) {
+            try {
+                if (aborter.abort(delegate, primaryResponse.getNativeResponse(), failure)) {
+                    return true;
+                }
+            } catch (RuntimeException e) {
+                LOG.debug("Failed to drop the connection of request [{} - {}]", getMethodName(), getUri(), e);
+            }
+        }
+        return false;
     }
 
     @Override

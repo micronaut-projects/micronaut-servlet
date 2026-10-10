@@ -104,6 +104,18 @@ public interface ServletHttpRequest<N, B> extends HttpRequest<B> {
     }
 
     /**
+     * Drops the connection of a response whose body failed after it was committed, so that the client sees a
+     * truncated response, not one that looks complete.
+     *
+     * @param failure The failure of the body
+     * @return Whether the connection was dropped
+     * @since 6.3.0
+     */
+    default boolean abortResponse(Throwable failure) {
+        return false;
+    }
+
+    /**
      * Async execution callback.
      *
      * @author Denis Stepanov
