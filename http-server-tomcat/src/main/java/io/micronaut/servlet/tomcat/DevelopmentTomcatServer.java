@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.servlet.jetty;
+package io.micronaut.servlet.tomcat;
 
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Replaces;
@@ -24,62 +24,52 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.runtime.ApplicationConfiguration;
 import io.micronaut.runtime.server.event.ServerShutdownEvent;
 import io.micronaut.servlet.http.server.DevelopmentRequestGate;
-import io.micronaut.web.router.Router;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import org.eclipse.jetty.server.Server;
+import org.apache.catalina.Context;
+import org.apache.catalina.startup.Tomcat;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
 /**
- * The {@link JettyServer} of a generation of the application in development mode, in place of the production one. It
- * runs the Jetty server kept across restarts by {@link RetainedJettyServer}, with the handlers of this generation:
- * starting it starts serving this generation through the kept server, and stopping it, or shutting it down gracefully,
- * retires this generation while the kept server, its port and its thread pool stay for the next one. It hands the kept
- * server the development launcher's {@link RequestAdmission}, which holds requests while a batch of changes is in
- * progress and sets the hold and drain timeouts.
+ * The {@link TomcatServer} of a generation of the application in development mode, in place of the production one. It
+ * runs the Tomcat server kept across restarts by {@link RetainedTomcatServer}, with the contexts of this generation:
+ * starting it deploys them in the kept server, and stopping it, or shutting it down gracefully, retires this generation
+ * while the kept server, its ports and its executors stay for the next one. It hands the kept server the development
+ * launcher's {@link RequestAdmission}, which holds requests while a batch of changes is in progress and sets the hold
+ * and drain timeouts.
  *
  * @author graemerocher
  * @since 6.3.0
  */
 @Internal
 @Singleton
-@Replaces(JettyServer.class)
+@Replaces(TomcatServer.class)
 @DevelopmentActive
-final class DevelopmentJettyServer extends JettyServer {
+final class DevelopmentTomcatServer extends TomcatServer {
 
-    private final RetainedJettyServer retained;
+    private final RetainedTomcatServer retained;
     /**
      * The generation the kept server serves while this server runs, or null when it runs a server of its own.
      */
-    private volatile DevelopmentRequestGate.@Nullable Generation<RetainedJettyServer.Served> generation;
+    private volatile DevelopmentRequestGate.@Nullable Generation<List<Context>> generation;
 
     /**
      * @param applicationContext The application context
      * @param applicationConfiguration The application configuration
-     * @param server The server this generation built
-     * @param router The router
-     * @param jettyConfiguration The Jetty configuration
-     * @param connectors The connector configurations
      * @param serverShutdownEventPublisher The publisher of the server shutdown event
+     * @param tomcat The server this generation built
      * @param retained The server kept across restarts
      */
     @Inject
-    DevelopmentJettyServer(ApplicationContext applicationContext,
-                           ApplicationConfiguration applicationConfiguration,
-                           Server server,
-                           Router router,
-                           JettyConfiguration jettyConfiguration,
-                           List<JettyConfiguration.ConnectorConfiguration> connectors,
-                           @Nullable ApplicationEventPublisher<ServerShutdownEvent> serverShutdownEventPublisher,
-                           RetainedJettyServer retained) {
-        // the production server adds connectors for the ports the routes expose and for connector configurations
-        // once built, which a kept, running server must not get again: a server with any is not kept
-        super(applicationContext, applicationConfiguration,
-            retained.serve(server, router.getExposedPorts().isEmpty() && connectors.isEmpty()),
-            router, jettyConfiguration, connectors, serverShutdownEventPublisher);
+    DevelopmentTomcatServer(ApplicationContext applicationContext,
+                            ApplicationConfiguration applicationConfiguration,
+                            @Nullable ApplicationEventPublisher<ServerShutdownEvent> serverShutdownEventPublisher,
+                            Tomcat tomcat,
+                            RetainedTomcatServer retained) {
+        super(applicationContext, applicationConfiguration, serverShutdownEventPublisher, retained.serve(tomcat));
         this.retained = retained;
         // the launcher's, looked up once per generation: none without a launcher
         retained.admission(RequestAdmission.current());
@@ -96,7 +86,7 @@ final class DevelopmentJettyServer extends JettyServer {
 
     @Override
     protected void stopServer() throws Exception {
-        DevelopmentRequestGate.Generation<RetainedJettyServer.Served> serving = generation;
+        DevelopmentRequestGate.Generation<List<Context>> serving = generation;
         if (serving != null) {
             // the kept server stays for the next generation
             generation = null;
@@ -108,7 +98,7 @@ final class DevelopmentJettyServer extends JettyServer {
 
     @Override
     public CompletionStage<?> shutdownGracefully() {
-        DevelopmentRequestGate.Generation<RetainedJettyServer.Served> serving = generation;
+        DevelopmentRequestGate.Generation<List<Context>> serving = generation;
         if (serving != null) {
             // the kept server keeps accepting: the requests that arrive wait for the next generation
             return retained.retire(serving);
