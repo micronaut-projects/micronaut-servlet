@@ -273,6 +273,13 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
                     .map(reader -> (MessageBodyReader<Object>) reader)
                     .orElse(null);
             }
+            if (bodyReader == null && CompletionStage.class.isAssignableFrom(type)) {
+                // e.g. a CompletableFuture<byte[]> of application/octet-stream: the reader is the one of the value
+                Argument<?> valueArgument = argument.getFirstTypeVariable().orElse(Argument.OBJECT_ARGUMENT);
+                bodyReader = messageBodyHandlerRegistry.findReader(valueArgument, mediaType)
+                    .map(reader -> (MessageBodyReader<Object>) reader)
+                    .orElse(null);
+            }
             if (bodyReader != null) {
                 if (CompletionStage.class.isAssignableFrom(type)) {
                     CompletableFuture<?> completableFuture = asFuture(context, source, servletHttpRequest, mediaType, bodyReader);

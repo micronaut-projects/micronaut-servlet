@@ -400,7 +400,10 @@ public class UndertowFactory extends ServletServerFactory {
         DeploymentInfo deploymentInfo = Servlets.deployment()
             .setDeploymentName(servletConfiguration.getName())
             .setClassLoader(getEnvironment().getClassLoader())
-            .setContextPath(cp);
+            .setContextPath(cp)
+            // a multipart filename or field without a charset of its own is UTF-8, like on the other servers,
+            // not ISO-8859-1, Undertow's default
+            .setDefaultRequestEncoding(getServerConfiguration().getDefaultCharset().name());
         if (servletConfiguration.isEnableVirtualThreads()) {
             // without this every servlet invocation runs on the XNIO worker pool, eight threads per core by default,
             // and enable-virtual-threads was silently ignored: a blocking controller capped out at that pool's size

@@ -16,7 +16,9 @@
 package io.micronaut.servlet.engine;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.http.HttpStatus;
 import io.micronaut.http.exceptions.ContentLengthExceededException;
+import io.micronaut.http.exceptions.HttpStatusException;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.Part;
@@ -24,6 +26,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Locale;
 
 /**
  * Reads the parts of a multipart request from the container, which enforces the limits of its
@@ -49,6 +52,7 @@ public final class ServletParts {
      * @throws ServletException If the request is not a multipart request
      */
     public static Collection<Part> parts(HttpServletRequest request) throws IOException, ServletException {
+        requireBoundary(request);
         try {
             return request.getParts();
         } catch (IllegalStateException e) {
@@ -68,6 +72,7 @@ public final class ServletParts {
      * @throws ServletException If the request is not a multipart request
      */
     public static @Nullable Part part(HttpServletRequest request, String name) throws IOException, ServletException {
+        requireBoundary(request);
         try {
             return request.getPart(name);
         } catch (IllegalStateException e) {
@@ -76,6 +81,19 @@ public final class ServletParts {
             throw tooLargeOr(e);
         } catch (ServletException e) {
             throw tooLargeOr(e);
+        }
+    }
+
+    /**
+     * A multipart request without a boundary cannot be parsed: it is a bad request, which the containers answer
+     * each in their own way, with 500, 413 or no parts at all.
+     */
+    private static void requireBoundary(HttpServletRequest request) {
+        String contentType = request.getContentType();
+        if (contentType != null
+            && contentType.regionMatches(true, 0, "multipart/", 0, "multipart/".length())
+            && !contentType.toLowerCase(Locale.ROOT).contains("boundary=")) {
+            throw new HttpStatusException(HttpStatus.BAD_REQUEST, "The multipart request has no boundary");
         }
     }
 

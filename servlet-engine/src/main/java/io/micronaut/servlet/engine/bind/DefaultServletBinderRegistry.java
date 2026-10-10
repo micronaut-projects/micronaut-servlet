@@ -134,7 +134,7 @@ class DefaultServletBinderRegistry<T> extends ServletBinderRegistry<T> {
                 // the parts as they complete, like the Netty server
                 FormFactory formFactory = formFactoryProvider.get();
                 Flux<? extends CompletedPart> parts = Flux.from(form.getRawFormFields())
-                    .flatMap(raw -> ReactiveExecutionFlow.toPublisher(formFactory.completePart(form, raw)))
+                    .flatMapSequential(raw -> ReactiveExecutionFlow.toPublisher(formFactory.completePart(form, raw)))
                     .doOnDiscard(CompletedPart.class, part -> part.closeAsync(formFactory.getDiskWriteExecutor()));
                 MultipartBody body = parts::subscribe;
                 return () -> Optional.of(body);

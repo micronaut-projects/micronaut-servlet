@@ -366,25 +366,25 @@ public class ServletPartBinder<T> implements AnnotatedRequestArgumentBinder<Part
         } else if (CompletedFileUpload.class.isAssignableFrom(elementType)) {
             flux = Flux.from(Publishers.bufferNow(Flux.from(completer.subscribeField(partName,
                     new FormRouteCompleter.SubscriptionMetadata(FormRouteCompleter.SubscriptionMode.ASYNC_NO_BACKPRESSURE, argument)))
-                .flatMap(raw -> ReactiveExecutionFlow.toPublisher(factory.completeFileUpload(formRequest, raw)))));
+                .flatMapSequential(raw -> ReactiveExecutionFlow.toPublisher(factory.completeFileUpload(formRequest, raw)))));
         } else if (CompletedAttribute.class.isAssignableFrom(elementType)) {
             flux = Flux.from(Publishers.bufferNow(Flux.from(completer.subscribeField(partName,
                         new FormRouteCompleter.SubscriptionMetadata(FormRouteCompleter.SubscriptionMode.ASYNC_NO_BACKPRESSURE, argument)))
-                    .flatMap(raw -> ReactiveExecutionFlow.toPublisher(factory.completeAttribute(formRequest, raw)))))
+                    .flatMapSequential(raw -> ReactiveExecutionFlow.toPublisher(factory.completeAttribute(formRequest, raw)))))
                 .doOnDiscard(CompletedAttribute.class, attr -> attr.closeAsync(factory.getDiskWriteExecutor()));
         } else if (CompletedPart.class.isAssignableFrom(elementType)) {
             flux = Flux.from(Publishers.bufferNow(Flux.from(completer.subscribeField(partName,
                         new FormRouteCompleter.SubscriptionMetadata(FormRouteCompleter.SubscriptionMode.ASYNC_NO_BACKPRESSURE, argument)))
-                    .flatMap(raw -> ReactiveExecutionFlow.toPublisher(factory.completePart(formRequest, raw)))))
+                    .flatMapSequential(raw -> ReactiveExecutionFlow.toPublisher(factory.completePart(formRequest, raw)))))
                 .doOnDiscard(CompletedPart.class, part -> part.closeAsync(factory.getDiskWriteExecutor()));
         } else {
             @SuppressWarnings("unchecked")
             ArgumentConversionContext<Object> conversionContext = (ArgumentConversionContext<Object>) ConversionContext.of(elementArgument);
             flux = Flux.from(Publishers.bufferNow(Flux.from(completer.subscribeField(partName,
                         new FormRouteCompleter.SubscriptionMetadata(FormRouteCompleter.SubscriptionMode.ASYNC_NO_BACKPRESSURE, argument)))
-                    .flatMap(raw -> ReactiveExecutionFlow.toPublisher(factory.completePart(formRequest, raw)))))
+                    .flatMapSequential(raw -> ReactiveExecutionFlow.toPublisher(factory.completePart(formRequest, raw)))))
                 .publishOn(Schedulers.fromExecutor(factory.getDiskWriteExecutor()))
-                .flatMap(part -> Mono.justOrEmpty(convertCompletedPart(factory, conversionContext, part)));
+                .concatMap(part -> Mono.justOrEmpty(convertCompletedPart(factory, conversionContext, part)));
         }
 
         Optional<T> converted = conversionService.convert(flux, context);
