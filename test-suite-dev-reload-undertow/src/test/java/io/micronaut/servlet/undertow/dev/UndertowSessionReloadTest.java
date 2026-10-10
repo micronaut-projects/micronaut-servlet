@@ -17,6 +17,7 @@ package io.micronaut.servlet.undertow.dev;
 
 import io.micronaut.dev.tck.ReloadHarness;
 import io.micronaut.dev.tck.ReloadTck;
+import io.micronaut.servlet.http.server.DevelopmentSessionStore;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -51,6 +52,7 @@ class UndertowSessionReloadTest {
             HttpClient idle = client();
             assertEquals("first new value=kept cart=kept/current opaque=set counter=1", session(client, port, "?set=kept"));
             assertEquals("first new value=idle cart=idle/current opaque=set counter=1", session(idle, port, "?set=idle"));
+            String id = session(client, port, "?id");
 
             sources(harness, "second", 1);
             harness.reload();
@@ -58,6 +60,9 @@ class UndertowSessionReloadTest {
             // deserialized with the new generation's class
             assertEquals("second new value=kept cart=kept/current opaque=null counter=1", session(client, port, ""));
             assertEquals("second existing value=kept cart=kept/current opaque=null counter=1", session(client, port, ""));
+
+            // the same session, under the same id
+            assertEquals(id, session(client, port, "?id"));
 
             sources(harness, "third", 1);
             harness.reload();
@@ -98,6 +103,47 @@ class UndertowSessionReloadTest {
             sources(harness, "second", 1);
             harness.reload();
             assertEquals("second new value=null cart=null opaque=null counter=null", session(client, port, ""));
+        }
+    }
+
+    @Test
+    void aSessionKeepsItsMaximumInactiveIntervalAndOneThatNeverExpiresIsKept() throws Exception {
+        try (ReloadHarness harness = ReloadHarness.inDirectory(project)) {
+            int port = UndertowApp.properties(harness, Map.of());
+            sources(harness, "first", 1);
+            harness.start();
+            HttpClient forever = client();
+            HttpClient hour = client();
+            assertEquals("first new value=forever cart=forever/current opaque=set counter=1", session(forever, port, "?set=forever&ttl=0"));
+            assertEquals("first new value=hour cart=hour/current opaque=set counter=1", session(hour, port, "?set=hour&ttl=3600"));
+
+            sources(harness, "second", 1);
+            harness.reload();
+            assertEquals("second new value=forever cart=forever/current opaque=null counter=1", session(forever, port, ""));
+            assertEquals("0", session(forever, port, "?interval"));
+            assertEquals("second new value=hour cart=hour/current opaque=null counter=1", session(hour, port, ""));
+            assertEquals("3600", session(hour, port, "?interval"));
+        }
+    }
+
+    @Test
+    void aChangeOfTheSwitchDiscardsTheSavedSessions() throws Exception {
+        try (ReloadHarness harness = ReloadHarness.inDirectory(project)) {
+            int port = UndertowApp.properties(harness, Map.of());
+            sources(harness, "first", 1);
+            harness.start();
+            HttpClient client = client();
+            assertEquals("first new value=kept cart=kept/current opaque=set counter=1", session(client, port, "?set=kept"));
+
+            harness.resource("application.properties", UndertowApp.propertiesText(port, Map.of(DevelopmentSessionStore.PERSIST_PROPERTY, "false")));
+            sources(harness, "second", 1);
+            harness.reload();
+
+            // turned on again: the session saved before it was turned off is gone
+            harness.resource("application.properties", UndertowApp.propertiesText(port, Map.of(DevelopmentSessionStore.PERSIST_PROPERTY, "true")));
+            sources(harness, "third", 1);
+            harness.reload();
+            assertEquals("third new value=null cart=null opaque=null counter=null", session(client, port, ""));
         }
     }
 

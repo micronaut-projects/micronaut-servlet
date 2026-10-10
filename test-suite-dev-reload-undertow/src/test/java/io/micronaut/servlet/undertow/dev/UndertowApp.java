@@ -111,6 +111,14 @@ final class UndertowApp {
                     res.getWriter().write(String.valueOf(session.getCreationTime()));
                     return;
                 }
+                if (req.getParameter("id") != null) {
+                    res.getWriter().write(session.getId());
+                    return;
+                }
+                if (req.getParameter("interval") != null) {
+                    res.getWriter().write(String.valueOf(session.getMaxInactiveInterval()));
+                    return;
+                }
                 String set = req.getParameter("set");
                 if (set != null) {
                     session.setAttribute("value", set);

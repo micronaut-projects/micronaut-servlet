@@ -19,6 +19,7 @@ import io.micronaut.context.annotation.Retain;
 import io.micronaut.context.env.DevelopmentActive;
 import io.micronaut.core.annotation.Internal;
 import jakarta.inject.Singleton;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,15 +51,15 @@ import java.util.concurrent.ConcurrentHashMap;
  * inactive interval, is not restored.</p>
  *
  * <p>On by default in development mode; {@value #PERSIST_PROPERTY} set to {@code false} turns it off, and each
- * generation then starts with no sessions, as in production. Only development code of the containers uses it: nothing
- * is saved or restored but as a generation stops or starts.</p>
+ * generation then starts with no sessions, as in production; a change of it discards the sessions saved so far. Only
+ * development code of the containers uses it: nothing is saved or restored but as a generation stops or starts.</p>
  *
  * @author graemerocher
  * @since 6.3.0
  */
 @Internal
 @Singleton
-@Retain
+@Retain(invalidatedBy = DevelopmentSessionStore.PERSIST_PROPERTY)
 @DevelopmentActive
 public final class DevelopmentSessionStore {
 
@@ -115,12 +116,11 @@ public final class DevelopmentSessionStore {
      *
      * @param deployment The deployment
      * @param id The session id
+     * @return The session removed, if any
      */
-    public void remove(String deployment, String id) {
+    public @Nullable SavedSession remove(String deployment, String id) {
         Map<String, SavedSession> saved = deployments.get(deployment);
-        if (saved != null) {
-            saved.remove(id);
-        }
+        return saved != null ? saved.remove(id) : null;
     }
 
     /**
@@ -178,7 +178,8 @@ public final class DevelopmentSessionStore {
      * @param creationTime When it was created, in milliseconds since the epoch, or -1 when the container does not say
      * @param lastAccessedTime When it was last accessed, in milliseconds since the epoch, or -1 when the container does
      *                         not say
-     * @param maxInactiveInterval Its maximum inactive interval, in seconds, not positive when it never expires
+     * @param maxInactiveInterval Its maximum inactive interval, in seconds, not positive when it never expires, or
+     *                            {@link #UNKNOWN_INTERVAL} when the container does not say
      * @param expiresAt When it expires, in milliseconds since the epoch, or {@link Long#MAX_VALUE} for never
      * @param attributes Its serialized attributes
      */
@@ -188,6 +189,11 @@ public final class DevelopmentSessionStore {
                                int maxInactiveInterval,
                                long expiresAt,
                                Map<String, byte[]> attributes) {
+
+        /**
+         * The maximum inactive interval of a session whose container does not say what it is.
+         */
+        public static final int UNKNOWN_INTERVAL = Integer.MIN_VALUE;
 
         /**
          * A session that expires after its maximum inactive interval past its last access.
