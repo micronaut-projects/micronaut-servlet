@@ -20,6 +20,7 @@ import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.convert.value.ConvertibleMultiValues;
 import io.micronaut.core.io.buffer.ByteBufferFactory;
 import io.micronaut.core.util.SupplierUtil;
+import io.micronaut.http.uri.QueryStringDecoder;
 import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpMethod;
 import io.micronaut.http.MediaType;
@@ -34,6 +35,7 @@ import io.micronaut.http.cookie.Cookie;
 import io.micronaut.http.cookie.Cookies;
 import io.micronaut.http.poja.PojaConnection;
 import io.micronaut.http.poja.PojaHttpRequest;
+import io.micronaut.http.server.exceptions.InternalServerException;
 import io.micronaut.http.body.stream.BodySizeLimits;
 import io.micronaut.http.exceptions.ContentLengthExceededException;
 import io.micronaut.servlet.http.LimitedInputStream;
@@ -65,7 +67,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
@@ -93,16 +94,32 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
     private URI uri;
     private final MultiValueHeaders headers;
     private final MultiValuesQueryParameters queryParameters;
-    private final SimpleCookies cookies;
+    /**
+     * The parameters, resolved when first asked for: those of a form are read from the body.
+     */
+    private @Nullable MultiValuesQueryParameters parameters;
+    private Supplier<MultiValuesQueryParameters> parametersSource;
+    /**
+     * The cookies of the {@code Cookie} headers they were parsed from, parsed again once the headers change, e.g.
+     * when a filter adds a cookie to a request wrapper.
+     */
+    private SimpleCookies cookies;
+    private List<String> cookieHeaders;
+    /**
+     * The cookies added with {@link #cookie(Cookie)}, which stay whatever the headers.
+     */
+    private final Map<String, Cookie> addedCookies = new LinkedHashMap<>();
 
-    private final ByteBody byteBody;
+    /**
+     * The body, created when first asked for: a small body is then read whole, like on the servlet engine.
+     */
+    private final Supplier<ByteBody> byteBody;
     /**
      * The body as the framing delimits it, which has to be consumed before the next request on the connection.
      */
     private final InputStream framedBody;
     private final ByteBodyFactory byteBodyFactory;
     private @Nullable ContentLengthExceededException bodyTooLarge;
-    private final Supplier<MultiValuesQueryParameters> formParameters;
 
     private ApacheServletHttpResponse<?> primaryResponse;
 
@@ -179,8 +196,9 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
         }
         headers = createHeaders(request.getHeaders(), conversionService);
         queryParameters = parseQueryParameters(uri, conversionService);
-        cookies = parseCookies(request, conversionService);
-        formParameters = SupplierUtil.memoized(this::resolveFormParameters);
+        cookieHeaders = new ArrayList<>(headers.getAll(HttpHeaders.COOKIE));
+        cookies = parseCookies(cookieHeaders, conversionService);
+        parametersSource = this::resolveParameters;
 
         Header connectionHeader = request.getFirstHeader(HttpHeaders.CONNECTION);
         if (connectionHeader != null && connectionHeader.getValue().equalsIgnoreCase(CONNECTION_CLOSE)) {
@@ -199,15 +217,32 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
         if (contentLength > maxBodySize) {
             // refused without reading a byte: every read of the body fails, so a route that binds it answers 413
             // as on the Netty server, and the unread bytes close the connection
-            bodyTooLarge = new ContentLengthExceededException(maxBodySize, contentLength);
+            ContentLengthExceededException tooLarge = new ContentLengthExceededException(maxBodySize, contentLength);
+            bodyTooLarge = tooLarge;
             responseContext.connectionClose = true;
-            byteBody = byteBodyFactory.adapt(Flux.error(bodyTooLarge), optionalContentLength);
+            byteBody = SupplierUtil.memoized(() -> byteBodyFactory.adapt(Flux.error(tooLarge), optionalContentLength));
         } else {
             if (contentLength < 0 && maxBodySize < Long.MAX_VALUE) {
                 // a chunked body cannot grow past the limit either
                 bodyStream = new LimitedInputStream(bodyStream, maxBodySize);
             }
-            byteBody = InputStreamByteBody.create(bodyStream, optionalContentLength, ioExecutor, byteBodyFactory);
+            InputStream limitedBody = bodyStream;
+            long length = contentLength;
+            byteBody = SupplierUtil.memoized(() -> {
+                if (length > 0 && length <= bodySizeLimits.maxBufferSize()) {
+                    // a body that fits the buffer is read whole on the request thread, like on the servlet engine
+                    try {
+                        return byteBodyFactory.copyOf(limitedBody);
+                    } catch (IOException e) {
+                        throw new InternalServerException("Error reading request body: " + e.getMessage(), e);
+                    }
+                }
+                // read through the size limits, like on the servlet engine: what is buffered to decode the body in
+                // memory is bounded by micronaut.server.max-request-buffer-size
+                return byteBodyFactory.adapt(
+                    InputStreamByteBody.create(limitedBody, optionalContentLength, ioExecutor, byteBodyFactory).toReadBufferPublisher(),
+                    bodySizeLimits, headers, null);
+            });
         }
         primaryResponse = new ApacheServletHttpResponse<>(responseContext, conversionService);
     }
@@ -254,20 +289,23 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
 
     @Override
     public @NonNull Cookies getCookies() {
+        List<String> current = headers.getAll(HttpHeaders.COOKIE);
+        if (!current.equals(cookieHeaders)) {
+            cookieHeaders = new ArrayList<>(current);
+            cookies = parseCookies(current, conversionService);
+            addedCookies.values().forEach(cookie -> cookies.put(cookie.getName(), cookie));
+        }
         return cookies;
     }
 
     @Override
     public @NonNull MutableHttpParameters getParameters() {
-        MediaType contentType = getContentType().orElse(null);
-        if (contentType != null && contentType.matches(MediaType.APPLICATION_FORM_URLENCODED_TYPE) && !isBodySet()) {
-            if (bodyTooLarge != null) {
-                // the fields are read from the body, which is over the limit
-                throw bodyTooLarge;
-            }
-            return formParameters.get();
+        MultiValuesQueryParameters current = parameters;
+        if (current == null) {
+            current = parametersSource.get();
+            parameters = current;
         }
-        return queryParameters;
+        return current;
     }
 
     @Override
@@ -315,12 +353,35 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
 
     @Override
     public MutableHttpRequest<B> cookie(Cookie cookie) {
+        addedCookies.put(cookie.getName(), cookie);
+        // brought up to date with the headers first
+        getCookies();
         cookies.put(cookie.getName(), cookie);
         return this;
     }
 
     @Override
     public MutableHttpRequest<B> uri(URI uri) {
+        // the query parameters follow the URI: those of the previous URI are replaced, the fields of a form kept.
+        // Applied when the parameters are first read, so that the form is not read for a change of the URI
+        Map<String, List<String>> previousQuery = new QueryStringDecoder(getUri()).parameters();
+        Map<String, List<String>> newQuery = new QueryStringDecoder(uri).parameters();
+        MultiValuesQueryParameters current = parameters;
+        Supplier<MultiValuesQueryParameters> base = current != null ? () -> current : parametersSource;
+        this.parametersSource = () -> {
+            Map<CharSequence, List<String>> values = new LinkedHashMap<>();
+            newQuery.forEach((name, list) -> values.put(name, new ArrayList<>(list)));
+            MultiValuesQueryParameters previous = base.get();
+            for (String name : previous.names()) {
+                List<String> rest = new ArrayList<>(previous.getAll(name));
+                previousQuery.getOrDefault(name, List.of()).forEach(rest::remove);
+                if (!rest.isEmpty()) {
+                    values.computeIfAbsent(name, k -> new ArrayList<>()).addAll(rest);
+                }
+            }
+            return new MultiValuesQueryParameters(values, conversionService);
+        };
+        this.parameters = null;
         this.uri = uri;
         return this;
     }
@@ -331,14 +392,8 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
     }
 
     @Override
-    @SuppressWarnings("unchecked")
-    public @NonNull Optional<B> getBody() {
-        return (Optional<B>) getBody(Object.class);
-    }
-
-    @Override
     public @NonNull ByteBody byteBody() {
-        return byteBody;
+        return byteBody.get();
     }
 
     @Override
@@ -351,12 +406,11 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
         // Not implemented
     }
 
-    private SimpleCookies parseCookies(ClassicHttpRequest request, ConversionService conversionService) {
+    private static SimpleCookies parseCookies(List<String> cookieHeaders, ConversionService conversionService) {
         SimpleCookies cookies = new SimpleCookies(conversionService);
 
         // Manually parse cookies from the response headers
-        for (Header header : request.getHeaders(HttpHeaders.COOKIE)) {
-            String cookie = header.getValue();
+        for (String cookie : cookieHeaders) {
 
             String name = null;
             int start = 0;
@@ -402,13 +456,24 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
         return new MultiValuesQueryParameters(map, conversionService);
     }
 
-    private MultiValuesQueryParameters resolveFormParameters() {
+    /**
+     * The parameters of the request: the query parameters, and the fields of a URL encoded form.
+     */
+    private MultiValuesQueryParameters resolveParameters() {
         Map<CharSequence, List<String>> merged = new LinkedHashMap<>();
         for (String name : queryParameters.names()) {
             List<String> values = queryParameters.getAll(name);
             if (!values.isEmpty()) {
                 merged.put(name, new ArrayList<>(values));
             }
+        }
+        MediaType contentType = getContentType().orElse(null);
+        if (contentType == null || !contentType.matches(MediaType.APPLICATION_FORM_URLENCODED_TYPE) || isBodySet()) {
+            return new MultiValuesQueryParameters(merged, conversionService);
+        }
+        if (bodyTooLarge != null) {
+            // the fields are read from the body, which is over the limit
+            throw bodyTooLarge;
         }
         ConvertibleMultiValues<CharSequence> formData = getFormData();
         for (String name : formData.names()) {

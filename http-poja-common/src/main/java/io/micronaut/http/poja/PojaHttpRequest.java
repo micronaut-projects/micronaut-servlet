@@ -35,13 +35,20 @@ import io.micronaut.http.body.ByteBody;
 import io.micronaut.http.body.ByteBody.SplitBackpressureMode;
 import io.micronaut.http.body.CloseableByteBody;
 import io.micronaut.http.body.MessageBodyHandlerRegistry;
-import io.micronaut.http.body.MessageBodyReader;
 import io.micronaut.http.body.ByteBodyFactory;
 import io.micronaut.http.body.DirectByteBodyAccess;
 import io.micronaut.http.body.stream.AvailableByteArrayBody;
 import io.micronaut.http.form.FormCapableHttpRequest;
 import io.micronaut.http.multipart.RawFormField;
+import io.micronaut.servlet.http.BodyBuilder;
 import io.micronaut.servlet.http.BufferedFormDecoder;
+import io.micronaut.servlet.http.DefaultBodyBuilder;
+import io.micronaut.servlet.http.ParsedBodyHolder;
+import io.micronaut.web.router.MethodBasedRouteInfo;
+import io.micronaut.web.router.RouteAttributes;
+import io.micronaut.http.body.AsyncRequestBody;
+import io.micronaut.core.util.SupplierUtil;
+import java.util.function.Supplier;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -78,7 +85,7 @@ import java.util.function.Function;
 @Internal
 public abstract class PojaHttpRequest<B, REQ, RES>
         implements ServletHttpRequest<REQ, B>, ServerHttpRequest<B>, ServletExchange<REQ, RES>, MutableHttpRequest<B>,
-        FormCapableHttpRequest<B>, DirectByteBodyAccess {
+        FormCapableHttpRequest<B>, DirectByteBodyAccess, ParsedBodyHolder<B> {
 
     public static final Argument<ConvertibleValues> CONVERTIBLE_VALUES_ARGUMENT = Argument.of(ConvertibleValues.class);
 
@@ -95,6 +102,12 @@ public abstract class PojaHttpRequest<B, REQ, RES>
      */
     private boolean bodySet;
     private final ConcurrentLinkedQueue<Runnable> disposalResources = new ConcurrentLinkedQueue<>();
+    private final BodyBuilder bodyBuilder;
+    /**
+     * The body the body binder decoded, which the bytes no longer hold.
+     */
+    private @Nullable B parsedBody;
+    private final Supplier<Optional<B>> decodedBody = SupplierUtil.memoizedNonEmpty(this::decodeBody);
 
     private final PojaConnection connection;
 
@@ -119,6 +132,7 @@ public abstract class PojaHttpRequest<B, REQ, RES>
         this.conversionService = conversionService;
         this.messageBodyHandlerRegistry = messageBodyHandlerRegistry;
         this.connection = connection;
+        this.bodyBuilder = new DefaultBodyBuilder(messageBodyHandlerRegistry);
     }
 
     @Override
@@ -157,56 +171,65 @@ public abstract class PojaHttpRequest<B, REQ, RES>
     }
 
     @Override
+    public @NonNull Optional<B> getBody() {
+        return currentBody();
+    }
+
+    @Override
     public <T> @NonNull Optional<T> getBody(@NonNull ArgumentConversionContext<T> conversionContext) {
-        Argument<T> arg = conversionContext.getArgument();
-        if (arg == null) {
-            return Optional.empty();
-        }
+        // not through getBody(), which an implementation may still define with this method
+        return currentBody().flatMap(body -> conversionService.convert(body, conversionContext));
+    }
+
+    @SuppressWarnings("unchecked")
+    private Optional<B> currentBody() {
         if (bodySet) {
-            return replacedBody == null ? Optional.empty() : conversionService.convert(replacedBody, conversionContext);
+            // the body the filter set, none if it cleared it
+            return Optional.ofNullable((B) replacedBody);
         }
-        final Class<T> type = arg.getType();
-        final MediaType contentType = getContentType().orElse(MediaType.APPLICATION_JSON_TYPE);
+        return decodedBody.get();
+    }
 
-        if (isFormSubmission()) {
-            ConvertibleMultiValues<?> form = getFormData();
-            if (ConvertibleValues.class == type || Object.class == type) {
-                return Optional.of((T) form);
-            } else {
-                return conversionService.convert(form.asMap(), arg);
-            }
-        }
+    @Override
+    public void setParsedBody(B body) {
+        this.parsedBody = body;
+    }
 
-        Argument<?> targetArgument;
-        boolean wrapConvertibleValues = false;
-        if (ConvertibleValues.class == type || Object.class == type) {
-            targetArgument = Argument.mapOf(String.class, Object.class);
-            wrapConvertibleValues = ConvertibleValues.class.isAssignableFrom(type) || ConvertibleValues.class == type;
-        } else {
-            targetArgument = arg;
-        }
-
-        if (!hasBody()) {
+    /**
+     * The body decoded into the type of the body argument of the route, as on the servlet engine: once, because
+     * decoding reads the bytes, and not at all for a route that reads the body itself through an
+     * {@link AsyncRequestBody}, whose bytes it would claim.
+     */
+    @SuppressWarnings("unchecked")
+    private Optional<B> decodeBody() {
+        if (parsedBody == null && readsBodyAsynchronously()) {
             return Optional.empty();
         }
+        if (parsedBody == null && isFormSubmission()) {
+            // the fields of the form, read from the body
+            return Optional.of((B) getFormData().asMap());
+        }
+        B built = parsedBody != null ? parsedBody : (B) bodyBuilder.buildBody(this::getInputStream, this);
+        return Optional.ofNullable(built);
+    }
 
-        MessageBodyReader<Object> reader = findReader(targetArgument, contentType);
-        if (reader == null) {
-            return Optional.empty();
-        }
-
-        Object decoded = consumeBody(inputStream -> reader.read((Argument<Object>) targetArgument, contentType, getHeaders(), inputStream));
-        if (decoded == null) {
-            return Optional.empty();
-        }
-        if (wrapConvertibleValues) {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> map = (Map<String, Object>) decoded;
-            ConvertibleValues<?> result = ConvertibleValues.of(map, conversionService);
-            return Optional.of((T) result);
-        }
-        return Optional.of((T) decoded);
-}
+    /**
+     * Whether the matched route takes the body as an {@link AsyncRequestBody}, as a handler route that declares
+     * a body does: it is an argument of the route method, not the body argument of the route.
+     */
+    private boolean readsBodyAsynchronously() {
+        return RouteAttributes.getRouteInfo(this)
+            .filter(MethodBasedRouteInfo.class::isInstance)
+            .map(route -> {
+                for (Argument<?> argument : ((MethodBasedRouteInfo<?, ?>) route).getTargetMethod().getArguments()) {
+                    if (AsyncRequestBody.class.isAssignableFrom(argument.getType())) {
+                        return true;
+                    }
+                }
+                return false;
+            })
+            .orElse(false);
+    }
 
     /**
      * Decides whether this request carries a body at all, without reading from it.
@@ -392,13 +415,6 @@ public abstract class PojaHttpRequest<B, REQ, RES>
         }
 
         return new ConvertibleMultiValuesMap<CharSequence>(parameterValues, conversionService);
-    }
-
-    @SuppressWarnings("unchecked")
-    private @Nullable MessageBodyReader<Object> findReader(Argument<?> argument, MediaType mediaType) {
-        return (MessageBodyReader<Object>) messageBodyHandlerRegistry
-            .findReader((Argument) argument, mediaType)
-            .orElse(null);
     }
 
 }
