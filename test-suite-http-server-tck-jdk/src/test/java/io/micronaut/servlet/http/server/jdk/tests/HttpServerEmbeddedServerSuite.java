@@ -19,6 +19,7 @@ import org.junit.platform.suite.api.SuiteDisplayName;
 @ExcludeClassNamePatterns({
     "io.micronaut.http.server.tck.tests.forms.FormBindingDeadlockTest", // asserts the server detects a form binding deadlock; a container that parses the whole form before the route runs has none to detect and completes the request instead
     "io.micronaut.http.server.tck.tests.RemoteAddressTest", // the JDK HTTP server reports the bridged client IP in containerized runs, not always 127.0.0.1
+    "io.micronaut.http.server.tck.tests.forms.UploadTest", // its only test posts a multipart body, which this runtime does not parse (see the multipart tag above)
 })
 public class HttpServerEmbeddedServerSuite {
 }

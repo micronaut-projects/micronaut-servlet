@@ -150,7 +150,9 @@ final class HttpExchangeHttpServletRequest implements HttpServletRequest {
 
     @Override
     public String getRequestURI() {
-        return exchange.getRequestURI().getPath();
+        // not decoded, as the Servlet specification has it: a decoded path is no longer a valid URI once it holds
+        // e.g. a space, and its path variables would be decoded twice
+        return exchange.getRequestURI().getRawPath();
     }
 
     @Override

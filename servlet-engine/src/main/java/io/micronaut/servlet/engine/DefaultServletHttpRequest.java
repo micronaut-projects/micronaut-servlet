@@ -603,8 +603,10 @@ public final class DefaultServletHttpRequest<B> implements
     @Override
     public InetSocketAddress getRemoteAddress() {
         ServletRequest servletRequest = delegate();
+        // the IP of the client, not its host name: a container that resolves the name, like the JDK server, has
+        // it looked up again here, which costs a DNS query and need not give the address the client connected from
         return new InetSocketAddress(
-            servletRequest.getRemoteHost(),
+            servletRequest.getRemoteAddr(),
             servletRequest.getRemotePort()
         );
     }
