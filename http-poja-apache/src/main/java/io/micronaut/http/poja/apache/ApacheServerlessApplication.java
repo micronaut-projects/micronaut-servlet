@@ -33,7 +33,6 @@ import jakarta.inject.Singleton;
 import org.apache.hc.core5.http.impl.io.SessionInputBufferImpl;
 import org.apache.hc.core5.http.io.SessionInputBuffer;
 import org.apache.hc.core5.http.message.BasicClassicHttpResponse;
-import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -58,7 +57,6 @@ public class ApacheServerlessApplication
     private final ByteBufferFactory<?, ?> byteBufferFactory;
     private final ApacheServletConfiguration configuration;
     private final BodySizeLimits bodySizeLimits;
-    private @Nullable SessionInputBuffer sessionInputBuffer;
 
     /**
      * Default constructor.
@@ -80,18 +78,42 @@ public class ApacheServerlessApplication
     }
 
     @Override
+    @SuppressWarnings({"java:S2189"})
+    protected void runIndefinitely(
+            ServletHttpHandler<ApacheServletHttpRequest<?>, ApacheServletHttpResponse<?>> servletHttpHandler,
+            InputStream in,
+            OutputStream out,
+            PojaConnection connection
+    ) throws IOException {
+        // the buffer holds what was read past the current request, e.g. the next pipelined one, so it belongs to
+        // the connection: connections served at the same time must not share it
+        SessionInputBuffer sessionInputBuffer = new SessionInputBufferImpl(configuration.inputBufferSize());
+        while (true) {
+            if (!handleSingleRequest(servletHttpHandler, in, out, connection, sessionInputBuffer)) {
+                break;
+            }
+        }
+    }
+
+    @Override
     protected boolean handleSingleRequest(
             ServletHttpHandler<ApacheServletHttpRequest<?>, ApacheServletHttpResponse<?>> servletHttpHandler,
             InputStream in,
             OutputStream out,
             PojaConnection connection
     ) throws IOException {
+        return handleSingleRequest(servletHttpHandler, in, out, connection, new SessionInputBufferImpl(configuration.inputBufferSize()));
+    }
+
+    private boolean handleSingleRequest(
+            ServletHttpHandler<ApacheServletHttpRequest<?>, ApacheServletHttpResponse<?>> servletHttpHandler,
+            InputStream in,
+            OutputStream out,
+            PojaConnection connection,
+            SessionInputBuffer sessionInputBuffer
+    ) throws IOException {
         try (ApacheResponseContext responseContext = new ApacheResponseContext(configuration, out)) {
             try {
-                // The buffer is initialized only once
-                if (sessionInputBuffer == null) {
-                    sessionInputBuffer = new SessionInputBufferImpl(configuration.inputBufferSize());
-                }
                 ApacheServletHttpRequest exchange = new ApacheServletHttpRequest<>(
                     in, responseContext, sessionInputBuffer, conversionService, messageBodyHandlerRegistry, ioExecutor, byteBufferFactory,
                     connection, bodySizeLimits
