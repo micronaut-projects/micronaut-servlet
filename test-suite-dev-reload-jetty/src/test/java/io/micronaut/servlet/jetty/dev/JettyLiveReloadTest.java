@@ -88,12 +88,11 @@ class JettyLiveReloadTest {
 
     @Test
     void htmlPagesJettyServesItselfGetTheScript() throws Exception {
-        try (ReloadHarness harness = ReloadHarness.inDirectory(project)) {
+        // Jetty serves no file through a symbolic link, such as /var on macOS, where the temporary directory is
+        try (ReloadHarness harness = ReloadHarness.inDirectory(project.toRealPath())) {
             int port = JettyApp.properties(harness, Map.of(
                 "micronaut.server.jetty.native-static-resources", "true",
-                // Jetty resolves a classpath: path with the library's loader, which does not see the application's files,
-                // and serves no file through a symbolic link, such as /var on macOS
-                "micronaut.router.static-resources.site.paths", "file:" + project.toRealPath().resolve("src/main/resources/site"),
+                "micronaut.router.static-resources.site.paths", "classpath:site",
                 "micronaut.router.static-resources.site.mapping", "/site/**"
             ));
             harness.manifest("micronaut.dev.livereload.port", "0");
