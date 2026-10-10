@@ -158,6 +158,30 @@ class JettyReloadTest {
     }
 
     @Test
+    void jettysOwnStaticResourcesResolveAClasspathPathWithTheGenerationsResources() throws Exception {
+        try (ReloadHarness harness = ReloadHarness.inDirectory(project)) {
+            int port = JettyApp.properties(harness, Map.of(
+                "micronaut.server.jetty.native-static-resources", "true",
+                "micronaut.router.static-resources.site.paths", "classpath:site",
+                "micronaut.router.static-resources.site.mapping", "/site/**"
+            ));
+            harness.source("example.HelloController", JettyApp.CONTROLLER.formatted("first"));
+            harness.resource("site/notes.txt", "notes first");
+            harness.start();
+            assertEquals("notes first", JettyApp.get(port, "/site/notes.txt"));
+
+            // the next generation's resources, on the kept server
+            harness.resource("site/notes.txt", "notes second");
+            harness.source("example.HelloController", JettyApp.CONTROLLER.formatted("second"));
+            harness.reload();
+            assertEquals("second", JettyApp.get(port, "/hello"));
+            assertEquals("notes second", JettyApp.get(port, "/site/notes.txt"));
+
+            ReloadTck.assertRetiredGenerationsCollected(harness);
+        }
+    }
+
+    @Test
     void aRequestInFlightFinishesOnTheStoppingGeneration() throws Exception {
         try (ReloadHarness harness = ReloadHarness.inDirectory(project)) {
             int port = JettyApp.properties(harness, Map.of());
