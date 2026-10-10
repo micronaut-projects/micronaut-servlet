@@ -30,16 +30,24 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.ContextHandler;
 import org.jspecify.annotations.Nullable;
 
+import java.io.IOException;
+import java.net.URL;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
  * Builds the Jetty server of a generation of the application in development mode, in place of
  * {@link JettyFactory#jettyServer(ApplicationContext, MicronautServletConfiguration, JettyConfiguration.JettySslConfiguration, Collection, RequestLog)}:
- * the server is built by the {@link JettyFactory}, with the loader of Jetty's integration as the context class loader.
+ * the server is built by the {@link JettyFactory}, with a loader of Jetty's integration as the context class loader.
  * What the server creates keeps the context class loader of the creating thread, as its scheduler, which starts its
  * thread with it, and the server may be kept across restarts by {@link RetainedJettyServer}, where a generation's
- * loader would keep that generation. A context handler of the generation that took the context class loader as it
- * was created gets the one it would have had otherwise.
+ * loader would keep that generation. A resource looked up through that loader while the server is built, as a
+ * {@code classpath:} path of Jetty's own static resources or of a key store is, is found with the generation's loader
+ * as well, which the loader lets go of once the server is built. A context handler of the generation that took the
+ * context class loader as it was created gets the one it would have had otherwise.
  *
  * <p>Not a subclass of {@link JettyFactory}: a subclass of a factory produces every bean of the factory again, its
  * request logs included.</p>
@@ -77,20 +85,61 @@ final class DevelopmentJettyFactory {
         Thread thread = Thread.currentThread();
         ClassLoader loader = thread.getContextClassLoader();
         ClassLoader library = DevelopmentJettyFactory.class.getClassLoader();
+        BuildLoader build = new BuildLoader(library, loader);
         Server server;
-        thread.setContextClassLoader(library);
+        thread.setContextClassLoader(build);
         try {
             server = factory.jettyServer(applicationContext, configuration, jettySslConfiguration, servletContainerInitializers, requestLog);
         } finally {
             thread.setContextClassLoader(loader);
+            build.release();
         }
         // the handlers are the generation's: a context handler that took the context class loader as it was created,
         // which makes it the context class loader of its requests, gets the one it would have had without the switch
         for (ContextHandler context : server.getDescendants(ContextHandler.class)) {
-            if (context.getClassLoader() == library && library != loader) {
+            if (context.getClassLoader() == build) {
                 context.setClassLoader(loader);
             }
         }
         return server;
+    }
+
+    /**
+     * The context class loader while the server is built: classes come from Jetty's integration, and a resource is
+     * looked up with the generation's loader first, as the application's under a {@code classpath:} path are, until
+     * the server is built. What keeps this loader past the build, as the server's scheduler does, keeps no
+     * generation.
+     */
+    private static final class BuildLoader extends ClassLoader {
+
+        private volatile @Nullable ClassLoader generation;
+
+        BuildLoader(ClassLoader library, @Nullable ClassLoader generation) {
+            super(library);
+            this.generation = generation;
+        }
+
+        void release() {
+            generation = null;
+        }
+
+        @Override
+        public @Nullable URL getResource(String name) {
+            ClassLoader loader = generation;
+            URL url = loader != null ? loader.getResource(name) : null;
+            return url != null ? url : super.getResource(name);
+        }
+
+        @Override
+        public Enumeration<URL> getResources(String name) throws IOException {
+            ClassLoader loader = generation;
+            if (loader == null || loader == getParent()) {
+                return super.getResources(name);
+            }
+            // the generation's first, as a lookup through it alone would order them, then the library's it lacks
+            Set<URL> urls = new LinkedHashSet<>(Collections.list(loader.getResources(name)));
+            urls.addAll(Collections.list(super.getResources(name)));
+            return Collections.enumeration(urls);
+        }
     }
 }
