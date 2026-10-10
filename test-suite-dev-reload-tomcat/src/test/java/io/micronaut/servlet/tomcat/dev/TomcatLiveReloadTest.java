@@ -75,6 +75,13 @@ class TomcatLiveReloadTest {
             // a page flushed before its closing body tag is streamed: it goes out as written
             HttpResponse<byte[]> streamed = get(client, port, "/plain-streamed");
             assertEquals(TomcatApp.PAGE, new String(streamed.body(), StandardCharsets.UTF_8));
+
+            // a policy set after the page was written, a partial response and an asynchronous request the servlet
+            // dispatches: sent as written
+            for (String path : new String[] {"/plain-late-csp", "/plain-partial", "/plain-async-dispatch"}) {
+                HttpResponse<byte[]> response = get(client, port, path);
+                assertEquals(TomcatApp.PAGE, new String(response.body(), StandardCharsets.UTF_8), path);
+            }
         }
     }
 

@@ -163,6 +163,44 @@ final class JettyApp {
                 }
             }
 
+            @WebServlet("/plain-late-csp")
+            public static class LateCsp extends HttpServlet {
+                @Override
+                protected void doGet(HttpServletRequest req, HttpServletResponse res) throws IOException {
+                    res.setContentType("text/html;charset=UTF-8");
+                    res.getWriter().write(PAGE);
+                    res.setHeader("Content-Security-Policy", "script-src 'self'");
+                }
+            }
+
+            @WebServlet("/plain-partial")
+            public static class Partial extends HttpServlet {
+                @Override
+                protected void doGet(HttpServletRequest req, HttpServletResponse res) throws IOException {
+                    res.setStatus(206);
+                    res.setContentType("text/html;charset=UTF-8");
+                    res.getWriter().write(PAGE);
+                }
+            }
+
+            @WebServlet(value = "/plain-async-dispatch", asyncSupported = true)
+            public static class AsyncDispatch extends HttpServlet {
+                @Override
+                protected void doGet(HttpServletRequest req, HttpServletResponse res) throws IOException {
+                    res.setContentType("text/html;charset=UTF-8");
+                    res.getWriter().write(PAGE.substring(0, 10));
+                    req.startAsync().dispatch("/plain-async-rest");
+                }
+            }
+
+            @WebServlet(value = "/plain-async-rest", asyncSupported = true)
+            public static class AsyncRest extends HttpServlet {
+                @Override
+                protected void doGet(HttpServletRequest req, HttpServletResponse res) throws IOException {
+                    res.getWriter().write(PAGE.substring(10));
+                }
+            }
+
             @WebServlet("/plain-json")
             public static class Json extends HttpServlet {
                 @Override

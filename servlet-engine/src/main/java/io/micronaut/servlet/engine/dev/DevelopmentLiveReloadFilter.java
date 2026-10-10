@@ -20,6 +20,7 @@ import io.micronaut.context.env.DevelopmentActive;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.dev.DevRuntime;
 import jakarta.servlet.AsyncContext;
+import jakarta.servlet.AsyncEvent;
 import jakarta.servlet.AsyncListener;
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
@@ -40,8 +41,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.io.Writer;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 
@@ -51,13 +53,17 @@ import java.util.Locale;
  * servlet or a filter that is not Micronaut's writes to the response gets the same script tag before its closing body
  * tag, a {@code Cache-Control: no-store} and a {@code Content-Length} that counts the tag.
  *
- * <p>The response of every request is wrapped; it holds the body back only once the first bytes are written to an
- * uncompressed {@code text/html} response without a {@code Content-Security-Policy}, a {@code Transfer-Encoding} or a
- * write listener, and sends it as soon as the request completes, the page grows past
+ * <p>The response of every request is wrapped; it holds the body back only once the first bytes are written to a
+ * {@code 200} uncompressed {@code text/html} response without a {@code Content-Security-Policy}, a
+ * {@code Transfer-Encoding} or a write listener, and sends it as soon as the request completes, the page grows past
  * {@value LiveReloadScript#MAX_BUFFERED} bytes, or is flushed. A page flushed before its closing body tag is written
  * was streamed: it is sent as written, without the script. A page that carries the tag already, because Micronaut's
  * filter added it, is sent as it is. A response that is not HTML is passed through untouched, its writer and stream the
  * container's own.</p>
+ *
+ * <p>A response whose status or headers change so that it no longer qualifies is sent as written. So is the page of an
+ * asynchronous request the application dispatches, or the container completes on a timeout or an error, rather than
+ * completing it through its context.</p>
  *
  * <p>The filter exists only in development mode, when the development launcher runs the application, and does nothing
  * when it runs no LiveReload server or the manifest turns the injection off.</p>
@@ -139,6 +145,8 @@ public final class DevelopmentLiveReloadFilter implements Filter {
         public AsyncContext startAsync(ServletRequest servletRequest, ServletResponse servletResponse) {
             AsyncContext started = super.startAsync(servletRequest, servletResponse);
             async = true;
+            // a request that times out or fails is completed by the container, not through this context
+            started.addListener(new ReleasingListener(response));
             AsyncContext finishing = new FinishingAsyncContext(started, response);
             context = finishing;
             return finishing;
@@ -148,6 +156,36 @@ public final class DevelopmentLiveReloadFilter implements Filter {
         public AsyncContext getAsyncContext() {
             AsyncContext finishing = context;
             return finishing != null ? finishing : super.getAsyncContext();
+        }
+    }
+
+    /**
+     * Sends the page held back as it was written when the container completes an asynchronous request itself, on a
+     * timeout or an error, so that it does not go missing.
+     *
+     * @param response The response that holds the page back
+     */
+    private record ReleasingListener(InjectingResponse response) implements AsyncListener {
+
+        @Override
+        public void onComplete(AsyncEvent event) {
+            // completed through the context, which sent the page
+        }
+
+        @Override
+        public void onTimeout(AsyncEvent event) {
+            response.release();
+        }
+
+        @Override
+        public void onError(AsyncEvent event) {
+            response.release();
+        }
+
+        @Override
+        public void onStartAsync(AsyncEvent event) {
+            // a new asynchronous cycle drops the listeners of the previous one
+            event.getAsyncContext().addListener(this);
         }
     }
 
@@ -176,16 +214,20 @@ public final class DevelopmentLiveReloadFilter implements Filter {
 
         @Override
         public void dispatch() {
+            // the dispatch target finishes the response, and the container completes it without this context
+            response.release();
             delegate.dispatch();
         }
 
         @Override
         public void dispatch(String path) {
+            response.release();
             delegate.dispatch(path);
         }
 
         @Override
         public void dispatch(ServletContext context, String path) {
+            response.release();
             delegate.dispatch(context, path);
         }
 
@@ -227,6 +269,52 @@ public final class DevelopmentLiveReloadFilter implements Filter {
         @Override
         public long getTimeout() {
             return delegate.getTimeout();
+        }
+    }
+
+    /**
+     * Encodes what is written to it into the stream at once, so that no character waits in an encoder's buffer for a
+     * flush that a container completing the response would not make; a high surrogate waits for its low one.
+     */
+    private static final class EncodingWriter extends Writer {
+        private final ServletOutputStream stream;
+        private final Charset charset;
+        private char pendingHighSurrogate;
+
+        EncodingWriter(ServletOutputStream stream, Charset charset) {
+            this.stream = stream;
+            this.charset = charset;
+        }
+
+        @Override
+        public void write(char[] cbuf, int off, int len) throws IOException {
+            if (len == 0) {
+                return;
+            }
+            StringBuilder chars = new StringBuilder(len + 1);
+            if (pendingHighSurrogate != 0) {
+                chars.append(pendingHighSurrogate);
+                pendingHighSurrogate = 0;
+            }
+            chars.append(cbuf, off, len);
+            char last = chars.charAt(chars.length() - 1);
+            if (Character.isHighSurrogate(last)) {
+                pendingHighSurrogate = last;
+                chars.setLength(chars.length() - 1);
+            }
+            if (!chars.isEmpty()) {
+                stream.write(chars.toString().getBytes(charset));
+            }
+        }
+
+        @Override
+        public void flush() throws IOException {
+            stream.flush();
+        }
+
+        @Override
+        public void close() throws IOException {
+            stream.close();
         }
     }
 
@@ -352,7 +440,7 @@ public final class DevelopmentLiveReloadFilter implements Filter {
             super.setCharacterEncoding(charset);
             HoldingStream holding = new HoldingStream();
             stream = holding;
-            writer = new PrintWriter(new OutputStreamWriter(holding, charset));
+            writer = new PrintWriter(new EncodingWriter(holding, Charset.forName(charset)));
             return writer;
         }
 
@@ -435,12 +523,8 @@ public final class DevelopmentLiveReloadFilter implements Filter {
 
         private void headerSet(String name) {
             if (mode == Mode.BUFFERING && ("Content-Encoding".equalsIgnoreCase(name) || "Transfer-Encoding".equalsIgnoreCase(name))) {
-                // encoded or streamed after all
-                try {
-                    passthrough();
-                } catch (IOException e) {
-                    LOG.debug("Cannot send the page held back", e);
-                }
+                // encoded or streamed after all; a policy set late is checked as the page is sent
+                release();
             }
         }
 
@@ -453,17 +537,33 @@ public final class DevelopmentLiveReloadFilter implements Filter {
          * Decides, as the first bytes are written, whether the page is held back.
          */
         private void decide() throws IOException {
-            int status = getStatus();
-            String encoding = super.getHeader("Content-Encoding");
-            boolean holds = LiveReloadScript.isHtml(getContentType())
-                && LiveReloadScript.isIdentity(encoding)
-                && !super.containsHeader("Content-Security-Policy")
-                && !super.containsHeader("Transfer-Encoding")
-                && status >= 200 && status != HttpServletResponse.SC_NO_CONTENT && status != HttpServletResponse.SC_NOT_MODIFIED;
-                if (holds) {
+            if (eligible()) {
                 mode = Mode.BUFFERING;
             } else {
                 passthrough();
+            }
+        }
+
+        /**
+         * Whether the response is a complete, uncompressed HTML page the script may go into: asked as the first bytes
+         * are written and again before the page is sent, since its headers or status may change meanwhile.
+         */
+        private boolean eligible() {
+            return getStatus() == HttpServletResponse.SC_OK
+                && LiveReloadScript.isHtml(getContentType())
+                && LiveReloadScript.isIdentity(super.getHeader("Content-Encoding"))
+                && !super.containsHeader("Content-Security-Policy")
+                && !super.containsHeader("Transfer-Encoding");
+        }
+
+        /**
+         * Sends what is held back as it was written, from a path that cannot throw.
+         */
+        void release() {
+            try {
+                passthrough();
+            } catch (IOException | RuntimeException e) {
+                LOG.debug("Cannot send the page held back", e);
             }
         }
 
@@ -491,7 +591,7 @@ public final class DevelopmentLiveReloadFilter implements Filter {
          * @param complete Whether the page is complete, so that its length is known
          */
         private void send(boolean complete) throws IOException {
-            byte[] injected = LiveReloadScript.inject(buffer.toByteArray(), tag);
+            byte[] injected = eligible() ? LiveReloadScript.inject(buffer.toByteArray(), tag) : null;
             if (injected == null) {
                 passthrough();
                 return;

@@ -152,8 +152,9 @@ final class DevelopmentJettyLiveReload implements BeanCreatedEventListener<Serve
             holding = false;
             byte[] page = buffer.toByteArray();
             buffer.reset();
-            byte[] injected = LiveReloadScript.inject(page, tag);
-            if (injected != null && !isCommitted()) {
+            // asked again: the headers may have changed since the first write
+            byte[] injected = holds() ? LiveReloadScript.inject(page, tag) : null;
+            if (injected != null) {
                 page = injected;
                 getHeaders().put(HttpHeader.CONTENT_LENGTH, page.length);
                 getHeaders().put(HttpHeader.CACHE_CONTROL, "no-store");
