@@ -21,7 +21,10 @@ import io.micronaut.core.io.buffer.ByteArrayBufferFactory;
 import io.micronaut.core.io.buffer.ByteBufferFactory;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.body.MessageBodyHandlerRegistry;
+import io.micronaut.http.poja.PojaConnection;
 import io.micronaut.http.poja.PojaHttpServerlessApplication;
+import io.micronaut.http.body.stream.BodySizeLimits;
+import io.micronaut.http.server.HttpServerConfiguration;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.runtime.ApplicationConfiguration;
 import io.micronaut.scheduling.TaskExecutors;
@@ -30,7 +33,6 @@ import jakarta.inject.Singleton;
 import org.apache.hc.core5.http.impl.io.SessionInputBufferImpl;
 import org.apache.hc.core5.http.io.SessionInputBuffer;
 import org.apache.hc.core5.http.message.BasicClassicHttpResponse;
-import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -54,7 +56,7 @@ public class ApacheServerlessApplication
     private final ExecutorService ioExecutor;
     private final ByteBufferFactory<?, ?> byteBufferFactory;
     private final ApacheServletConfiguration configuration;
-    private @Nullable SessionInputBuffer sessionInputBuffer;
+    private final BodySizeLimits bodySizeLimits;
 
     /**
      * Default constructor.
@@ -70,27 +72,57 @@ public class ApacheServerlessApplication
         ioExecutor = applicationContext.getBean(ExecutorService.class, Qualifiers.byName(TaskExecutors.BLOCKING));
         configuration = applicationContext.getBean(ApacheServletConfiguration.class);
         byteBufferFactory = ByteArrayBufferFactory.INSTANCE;
+        bodySizeLimits = applicationContext.findBean(HttpServerConfiguration.class)
+            .map(serverConfiguration -> new BodySizeLimits(serverConfiguration.getMaxRequestSize(), serverConfiguration.getMaxRequestBufferSize()))
+            .orElse(BodySizeLimits.UNLIMITED);
+    }
+
+    @Override
+    @SuppressWarnings({"java:S2189"})
+    protected void runIndefinitely(
+            ServletHttpHandler<ApacheServletHttpRequest<?>, ApacheServletHttpResponse<?>> servletHttpHandler,
+            InputStream in,
+            OutputStream out,
+            PojaConnection connection
+    ) throws IOException {
+        // the buffer holds what was read past the current request, e.g. the next pipelined one, so it belongs to
+        // the connection: connections served at the same time must not share it
+        SessionInputBuffer sessionInputBuffer = new SessionInputBufferImpl(configuration.inputBufferSize());
+        while (true) {
+            if (!handleSingleRequest(servletHttpHandler, in, out, connection, sessionInputBuffer)) {
+                break;
+            }
+        }
     }
 
     @Override
     protected boolean handleSingleRequest(
             ServletHttpHandler<ApacheServletHttpRequest<?>, ApacheServletHttpResponse<?>> servletHttpHandler,
             InputStream in,
-            OutputStream out
+            OutputStream out,
+            PojaConnection connection
+    ) throws IOException {
+        return handleSingleRequest(servletHttpHandler, in, out, connection, new SessionInputBufferImpl(configuration.inputBufferSize()));
+    }
+
+    private boolean handleSingleRequest(
+            ServletHttpHandler<ApacheServletHttpRequest<?>, ApacheServletHttpResponse<?>> servletHttpHandler,
+            InputStream in,
+            OutputStream out,
+            PojaConnection connection,
+            SessionInputBuffer sessionInputBuffer
     ) throws IOException {
         try (ApacheResponseContext responseContext = new ApacheResponseContext(configuration, out)) {
             try {
-                // The buffer is initialized only once
-                if (sessionInputBuffer == null) {
-                    sessionInputBuffer = new SessionInputBufferImpl(configuration.inputBufferSize());
-                }
                 ApacheServletHttpRequest exchange = new ApacheServletHttpRequest<>(
-                    in, responseContext, sessionInputBuffer, conversionService, messageBodyHandlerRegistry, ioExecutor, byteBufferFactory
+                    in, responseContext, sessionInputBuffer, conversionService, messageBodyHandlerRegistry, ioExecutor, byteBufferFactory,
+                    connection, bodySizeLimits
                 );
                 servletHttpHandler.service(exchange);
                 if (!responseContext.isCommitted()) {
                     Objects.requireNonNull(responseContext.primaryResponse, "primaryResponse").getOutputStream(); // this causes the commit
                 }
+                exchange.discardUnreadBody();
             } catch (Exception e) {
                 if (!responseContext.isCommitted()) {
                     try (OutputStream os = responseContext.commit(new BasicClassicHttpResponse(HttpStatus.BAD_REQUEST.getCode()))) {

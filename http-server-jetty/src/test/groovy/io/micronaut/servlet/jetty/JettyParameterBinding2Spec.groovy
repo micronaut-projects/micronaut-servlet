@@ -161,7 +161,7 @@ class JettyParameterBinding2Spec extends Specification {
         def e = thrown(HttpClientResponseException)
         def response = e.response
         response.status() == HttpStatus.BAD_REQUEST
-        response.body().toString().contains("Error decoding JSON stream for type")
+        response.body().toString().contains("Invalid JSON")
     }
 
     void "test JSON POJO body with no @Body binds to arguments"() {

@@ -33,32 +33,45 @@ import io.micronaut.http.HttpParameters;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpVersion;
 import io.micronaut.http.MediaType;
+import io.micronaut.http.MutableHttpHeaders;
+import io.micronaut.http.MutableHttpParameters;
 import io.micronaut.http.MutableHttpRequest;
 import io.micronaut.http.ServerHttpRequest;
+import io.micronaut.http.body.AsyncRequestBody;
 import io.micronaut.http.body.ByteBody;
 import io.micronaut.http.body.ByteBodyFactory;
 import io.micronaut.http.body.CloseableByteBody;
+import io.micronaut.http.body.DirectByteBodyAccess;
 import io.micronaut.http.body.MessageBodyHandlerRegistry;
 import io.micronaut.http.body.stream.AvailableByteArrayBody;
 import io.micronaut.http.body.stream.BodySizeLimits;
 import io.micronaut.http.body.stream.InputStreamByteBody;
+import io.micronaut.http.cookie.Cookie;
 import io.micronaut.http.cookie.Cookies;
+import io.micronaut.http.cookie.ServerCookieDecoder;
 import io.micronaut.http.exceptions.ContentLengthExceededException;
 import io.micronaut.http.form.FormCapableHttpRequest;
 import io.micronaut.http.multipart.FormFieldMetadata;
 import io.micronaut.http.multipart.RawFormField;
 import io.micronaut.http.server.exceptions.InternalServerException;
+import io.micronaut.http.simple.SimpleHttpHeaders;
+import io.micronaut.http.simple.cookies.SimpleCookies;
 import io.micronaut.servlet.http.BodyBuilder;
+import io.micronaut.servlet.http.LimitedInputStream;
+import io.micronaut.servlet.http.BufferedFormDecoder;
 import io.micronaut.servlet.http.ParsedBodyHolder;
 import io.micronaut.servlet.http.SSLSessionProvider;
 import io.micronaut.servlet.http.ServletExchange;
 import io.micronaut.servlet.http.ServletHttpRequest;
 import io.micronaut.servlet.http.ServletHttpResponse;
 import io.micronaut.servlet.http.StreamedServletMessage;
+import io.micronaut.web.router.RouteAttributes;
+import io.micronaut.web.router.MethodBasedRouteInfo;
 import jakarta.servlet.AsyncContext;
 import jakarta.servlet.AsyncEvent;
 import jakarta.servlet.AsyncListener;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletInputStream;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.http.HttpServletMapping;
 import jakarta.servlet.http.HttpServletRequest;
@@ -70,6 +83,10 @@ import org.jspecify.annotations.Nullable;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import reactor.core.publisher.Flux;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import javax.net.ssl.SSLSession;
 import java.io.BufferedReader;
@@ -79,12 +96,14 @@ import java.io.InputStreamReader;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URLDecoder;
+import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
@@ -92,6 +111,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.ServiceLoader;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Set;
@@ -114,15 +134,28 @@ public final class DefaultServletHttpRequest<B> implements
     StreamedServletMessage<B, byte[]>,
     ServerHttpRequest<B>,
     ParsedBodyHolder<B>,
-    FormCapableHttpRequest<B> {
+    FormCapableHttpRequest<B>,
+    DirectByteBodyAccess {
 
     private static final String NULL_KEY = "Attribute key cannot be null";
     private static final String NULL_PARAMETER_NAME = "Parameter name cannot be null";
+    private static final Logger LOG = LoggerFactory.getLogger(DefaultServletHttpRequest.class);
+    /**
+     * The ways the embedded servers drop the connection of a response whose body failed, see
+     * {@link ServletConnectionAborter}.
+     */
+    private static final List<ServletConnectionAborter> ABORTERS = ServiceLoader.load(ServletConnectionAborter.class, DefaultServletHttpRequest.class.getClassLoader())
+        .stream().map(ServiceLoader.Provider::get).toList();
 
     private final ConversionService conversionService;
     private final HttpServletRequest delegate;
     private final URI uri;
     private final HttpMethod method;
+    /**
+     * The name of the method, read when the request is created: a container recycles its request once the
+     * response completed, while e.g. an emitter that outlives it still logs the request.
+     */
+    private final String methodName;
     private final ServletRequestHeaders headers;
     private final ServletParameters parameters;
     private DefaultServletHttpResponse<B> primaryResponse;
@@ -152,10 +185,20 @@ public final class DefaultServletHttpRequest<B> implements
 
     private boolean bodyIsReadAsync;
     /**
+     * Whether the byte body opened the container's input stream: the container cannot parse the form any more
+     * then, so the form is decoded from the byte body instead.
+     */
+    private volatile boolean bodyStreamOpened;
+    /**
      * Whether the body is fed by a {@code ReadListener}, which the container only drives once the service
      * method has returned; such a request must leave the service thread before its body can be consumed.
      */
     private boolean bodyReadsAsynchronously;
+    /**
+     * The publisher of a body read through a ReadListener, which drops what nobody read before the response
+     * completes, or {@code null} if the body is not read that way.
+     */
+    private @Nullable ServletStreamPublisher streamPublisher;
     private @Nullable B parsedBody;
     private @Nullable AsyncContext asyncContext;
 
@@ -248,9 +291,15 @@ public final class DefaultServletHttpRequest<B> implements
             method = HttpMethod.CUSTOM;
         }
         this.method = method;
+        this.methodName = Objects.requireNonNullElseGet(delegate.getMethod(), method::name);
         this.parameters = new ServletParameters();
         this.primaryResponse = new DefaultServletHttpResponse<>(conversionService, this, response);
         this.body = SupplierUtil.memoizedNonEmpty(() -> {
+            if (parsedBody == null && readsBodyAsynchronously()) {
+                // the route reads the body itself, through an AsyncRequestBody: like on the Netty server, the
+                // request has no decoded body, and decoding it here would claim the bytes the route reads
+                return Optional.empty();
+            }
             B built = parsedBody != null ? parsedBody : (B) bodyBuilder.buildBody(this::getInputStream, this);
             return Optional.ofNullable(built);
         });
@@ -426,18 +475,36 @@ public final class DefaultServletHttpRequest<B> implements
             // the shared streaming body applies the size limits itself
             ReadBufferFactory readBufferFactory = byteBodyFactory.readBufferFactory();
             this.bodyReadsAsynchronously = true;
+            ServletStreamPublisher publisher = new ServletStreamPublisher(this::openBodyStream, bodySizeLimits.maxBodySize());
+            this.streamPublisher = publisher;
             return byteBodyFactory.adapt(
-                Flux.from(new ServletStreamPublisher(delegate::getInputStream)).map(readBufferFactory::adapt),
+                Flux.from(publisher).map(readBufferFactory::adapt),
                 bodySizeLimits,
                 headers,
                 null
             );
         }
-        InputStream stream = new LazyDelegateInputStream(delegate);
-        if (bodySizeLimits.maxBodySize() < Long.MAX_VALUE) {
-            stream = new LimitedInputStream(stream, bodySizeLimits.maxBodySize());
-        }
-        return InputStreamByteBody.create(stream, length, ioExecutor, byteBodyFactory);
+        // a container without asynchronous reads, e.g. the JDK server: the stream is read with blocking reads on the
+        // IO executor, through the shared streaming body so that both size limits apply as on the other servers
+        ReadBufferFactory readBufferFactory = byteBodyFactory.readBufferFactory();
+        LazyDelegateInputStream stream = new LazyDelegateInputStream(this::openBodyStream);
+        Flux<ByteBuffer> chunks = Flux.<ByteBuffer>generate(sink -> {
+                try {
+                    byte[] chunk = new byte[8192];
+                    int n = stream.read(chunk);
+                    if (n == -1) {
+                        sink.complete();
+                    } else {
+                        sink.next(ByteBuffer.wrap(chunk, 0, n));
+                    }
+                } catch (IOException e) {
+                    sink.error(e);
+                }
+            })
+            // the stream is not closed when the body is cancelled: what is left of it is dropped once the response
+            // completed, see discardUnreadBody, and the container closes it with the exchange
+            .subscribeOn(Schedulers.fromExecutor(ioExecutor), false);
+        return byteBodyFactory.adapt(chunks.map(readBufferFactory::adapt), bodySizeLimits, headers, null);
     }
 
     /**
@@ -457,8 +524,21 @@ public final class DefaultServletHttpRequest<B> implements
         return contentType == null || !isFormContentType(MediaType.of(contentType));
     }
 
-    private static CloseableByteBody readInline(HttpServletRequest request, ByteBodyFactory byteBodyFactory) {
-        try (InputStream inputStream = request.getInputStream()) {
+    /**
+     * @return Whether the byte body opened the input stream of the container, which cannot parse the form then
+     */
+    @Internal
+    public boolean isBodyStreamOpened() {
+        return bodyStreamOpened;
+    }
+
+    private ServletInputStream openBodyStream() throws IOException {
+        bodyStreamOpened = true;
+        return delegate.getInputStream();
+    }
+
+    private static CloseableByteBody readInline(LazyDelegateInputStream.StreamOpener opener, ByteBodyFactory byteBodyFactory) {
+        try (InputStream inputStream = opener.open()) {
             return byteBodyFactory.copyOf(inputStream);
         } catch (IOException e) {
             throw new InternalServerException("Error reading request body: " + e.getMessage(), e);
@@ -523,8 +603,10 @@ public final class DefaultServletHttpRequest<B> implements
     @Override
     public InetSocketAddress getRemoteAddress() {
         ServletRequest servletRequest = delegate();
+        // the IP of the client, not its host name: a container that resolves the name, like the JDK server, has
+        // it looked up again here, which costs a DNS query and need not give the address the client connected from
         return new InetSocketAddress(
-            servletRequest.getRemoteHost(),
+            servletRequest.getRemoteAddr(),
             servletRequest.getRemotePort()
         );
     }
@@ -586,6 +668,16 @@ public final class DefaultServletHttpRequest<B> implements
     @NonNull
     @Override
     public synchronized Cookies getCookies() {
+        if (headers.changed != null) {
+            // e.g. a filter added a cookie to the headers: the container only has the cookies the client sent
+            SimpleCookies changed = new SimpleCookies(conversionService);
+            for (String header : headers.getAll(HttpHeaders.COOKIE)) {
+                for (Cookie cookie : ServerCookieDecoder.INSTANCE.decode(header)) {
+                    changed.put(cookie.getName(), cookie);
+                }
+            }
+            return changed;
+        }
         DefaultServletCookies cookies = this.cookies;
         if (cookies == null) {
             cookies = new DefaultServletCookies(delegate.getCookies());
@@ -596,7 +688,7 @@ public final class DefaultServletHttpRequest<B> implements
 
     @NonNull
     @Override
-    public HttpParameters getParameters() {
+    public MutableHttpParameters getParameters() {
         if (isFormSubmission()) {
             // form fields come from the container's parsing of the body, not from the byte body, so the size limit
             // has to be enforced here or an oversized form would be accepted whenever the container's own limit
@@ -620,16 +712,19 @@ public final class DefaultServletHttpRequest<B> implements
     }
 
     /**
-     * Reads a URL-encoded form that declared no length through the size limit, before the container parses it.
+     * Reads a URL-encoded form through the size limit, before the container parses it.
      *
      * <p>A declared length is checked against the limit up front, and a multipart body is bounded by the
      * {@code MultipartConfigElement} the container is given, but a chunked URL-encoded form would otherwise be
      * parsed by the container straight from the stream, subject only to its own limit. The fields are decoded
      * here instead, from bytes that passed through the limit, and the container contributes the query
-     * parameters only, which is what it parses once the stream has been consumed.</p>
+     * parameters only, which is what it parses once the stream has been consumed. A form with a length is decoded
+     * here too, in the order of its fields, and whatever its method: a container parses the form of a POST only.</p>
      */
     private synchronized void readUnboundedForm() {
-        if (unboundedForm != null || delegate.getContentLengthLong() >= 0 || !mayHaveBody() || !isUrlEncodedForm()) {
+        // the form is always decoded here: a container parses the form of a POST only, see the servlet
+        // specification 3.1.1, and may not keep the order of the fields, which a form read part after part needs
+        if (unboundedForm != null || !mayHaveBody() || !isUrlEncodedForm()) {
             return;
         }
         byte[] bytes;
@@ -667,7 +762,7 @@ public final class DefaultServletHttpRequest<B> implements
     @NonNull
     @Override
     public String getMethodName() {
-        return Objects.requireNonNullElseGet(delegate.getMethod(), getMethod()::name);
+        return methodName;
     }
 
     @NonNull
@@ -678,7 +773,7 @@ public final class DefaultServletHttpRequest<B> implements
 
     @NonNull
     @Override
-    public HttpHeaders getHeaders() {
+    public MutableHttpHeaders getHeaders() {
         return headers;
     }
 
@@ -694,6 +789,40 @@ public final class DefaultServletHttpRequest<B> implements
     }
 
     @NonNull
+    /**
+     * Whether the matched route takes the body as an {@link AsyncRequestBody}, as a handler route that declares
+     * a body does: it is an argument of the route method, not the body argument of the route.
+     */
+    private boolean readsBodyAsynchronously() {
+        return RouteAttributes.getRouteInfo(this)
+            .filter(MethodBasedRouteInfo.class::isInstance)
+            .map(route -> {
+                for (Argument<?> argument : ((MethodBasedRouteInfo<?, ?>) route).getTargetMethod().getArguments()) {
+                    if (AsyncRequestBody.class.isAssignableFrom(argument.getType())) {
+                        return true;
+                    }
+                }
+                return false;
+            })
+            .orElse(false);
+    }
+
+    /**
+     * @param request A request a route is bound from
+     * @return The exchange of the servlet request behind it, which is the request itself or, for the mutable view
+     * a filter continued with, the request it is a view of
+     */
+    @Internal
+    public static @Nullable ServletExchange<?, ?> exchangeOf(HttpRequest<?> request) {
+        if (request instanceof ServletExchange<?, ?> exchange) {
+            return exchange;
+        }
+        if (request instanceof DefaultMutableServletHttpRequest<?> view) {
+            return view.servletRequest();
+        }
+        return null;
+    }
+
     @Override
     public Optional<B> getBody() {
         return this.body.get();
@@ -738,12 +867,17 @@ public final class DefaultServletHttpRequest<B> implements
             synchronized (this) {
                 current = byteBody.get();
                 if (current == null) {
-                    current = readInline(delegate, byteBodyFactory);
+                    current = readInline(this::openBodyStream, byteBodyFactory);
                     byteBody.set(current);
                 }
             }
         }
         return current;
+    }
+
+    @Override
+    public ByteBody byteBodyDirect() {
+        return byteBody();
     }
 
     @Override
@@ -781,10 +915,14 @@ public final class DefaultServletHttpRequest<B> implements
         if (mediaType == null || !isFormContentType(mediaType)) {
             throw new IllegalStateException("Not a form Content-Type. Please check hasFormBody() before calling this method.");
         }
+        if (bodyStreamOpened) {
+            // e.g. a filter read a copy of the body: the bytes went to the byte body, not to the container
+            return getRawFormFields(byteBody().split(ByteBody.SplitBackpressureMode.FASTEST));
+        }
         if (mediaType.matches(MediaType.MULTIPART_FORM_DATA_TYPE)) {
             return Flux.defer(() -> {
                 try {
-                    Collection<Part> parts = ((HttpServletRequest) delegate()).getParts();
+                    Collection<Part> parts = ServletParts.parts((HttpServletRequest) delegate());
                     return Flux.fromIterable(parts)
                         .map(this::toRawFormFieldFromPart);
                 } catch (IOException | ServletException e) {
@@ -797,6 +935,80 @@ public final class DefaultServletHttpRequest<B> implements
                 .flatMap(name -> formParameters.getAll(name).stream()
                     .map(value -> new RawFormField(new FormFieldMetadata(name, null, null), byteBodyFactory().adapt(value.getBytes(StandardCharsets.UTF_8)))))
                 .toList());
+        }
+    }
+
+    @Override
+    public Publisher<RawFormField> getRawFormFields(ByteBody byteBody) {
+        MediaType mediaType = getContentType().orElse(null);
+        if (mediaType == null || !isFormContentType(mediaType)) {
+            if (byteBody instanceof CloseableByteBody closeable) {
+                // the publisher owns the bytes
+                closeable.close();
+            }
+            throw new IllegalStateException("Not a form Content-Type. Please check hasFormBody() before calling this method.");
+        }
+        // e.g. a copy of the body that a filter reads: the container parses only the bytes it received, so
+        // the copy is buffered, within the limits of the copy, and decoded here
+        Charset charset = getCharacterEncoding();
+        return Mono.fromCompletionStage(() -> byteBody.buffer())
+            .flatMapMany(buffered -> {
+                byte[] bytes;
+                try (buffered) {
+                    bytes = buffered.toByteArray();
+                }
+                return Flux.fromIterable(BufferedFormDecoder.decode(mediaType, bytes, charset))
+                    .map(field -> new RawFormField(field.metadata(), AvailableByteArrayBody.create(byteBodyFactory.readBufferFactory().adapt(field.content()))));
+            })
+            .doOnDiscard(RawFormField.class, RawFormField::close);
+    }
+
+    @Override
+    public boolean abortResponse(Throwable failure) {
+        for (ServletConnectionAborter aborter : ABORTERS) {
+            try {
+                if (aborter.abort(delegate, primaryResponse.getNativeResponse(), failure)) {
+                    return true;
+                }
+            } catch (RuntimeException e) {
+                LOG.debug("Failed to drop the connection of request [{} - {}]", getMethodName(), getUri(), e);
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public void discardUnreadBody(Runnable then) {
+        ServletStreamPublisher publisher = streamPublisher;
+        if (publisher == null && mayHaveBody() && (!bodyStreamOpened || !delegate.isAsyncSupported())) {
+            // the route never touched the body, or, on a container without asynchronous reads, read only part of it:
+            // the rest is read and dropped all the same, or the container may drop the connection while the client
+            // is still sending it. The body is read on this thread, as the container itself would before reusing
+            // the connection
+            try (InputStream in = delegate.getInputStream()) {
+                byte[] buffer = new byte[8192];
+                long dropped = 0;
+                int n;
+                while (dropped <= maxBodySize && (n = in.read(buffer)) != -1) {
+                    dropped += n;
+                }
+            } catch (IOException | RuntimeException e) {
+                LOG.debug("Failed to drop the unread body of request [{} - {}]", getMethodName(), getUri(), e);
+            }
+            then.run();
+            return;
+        }
+        if (publisher == null) {
+            // read inline or not at all: the container drops what is left of a small body itself
+            then.run();
+        } else {
+            try {
+                publisher.discard(maxBodySize, then);
+            } catch (RuntimeException e) {
+                // the drain never stops the response from completing
+                LOG.debug("Failed to drop the unread body of request [{} - {}]", getMethodName(), getUri(), e);
+                then.run();
+            }
         }
     }
 
@@ -852,10 +1064,35 @@ public final class DefaultServletHttpRequest<B> implements
     /**
      * The servlet request headers.
      */
-    private final class ServletRequestHeaders implements HttpHeaders {
+    private final class ServletRequestHeaders implements MutableHttpHeaders {
+
+        /**
+         * The headers once they were changed, e.g. through a mutable view of a request a filter wrapped:
+         * the container's are read-only, so they are copied on the first change.
+         */
+        private @Nullable MutableHttpHeaders changed;
+
+        private MutableHttpHeaders changed() {
+            MutableHttpHeaders copy = changed;
+            if (copy == null) {
+                SimpleHttpHeaders headers = new SimpleHttpHeaders(new LinkedHashMap<>(), conversionService);
+                for (String name : names()) {
+                    for (String value : getAll(name)) {
+                        headers.add(name, value);
+                    }
+                }
+                copy = headers;
+                changed = copy;
+            }
+            return copy;
+        }
 
         @Override
         public List<String> getAll(CharSequence name) {
+            MutableHttpHeaders copy = changed;
+            if (copy != null) {
+                return copy.getAll(name);
+            }
             final Enumeration<String> e =
                 delegate.getHeaders(Objects.requireNonNull(name, "Header name should not be null").toString());
 
@@ -865,11 +1102,19 @@ public final class DefaultServletHttpRequest<B> implements
         @Nullable
         @Override
         public String get(CharSequence name) {
+            MutableHttpHeaders copy = changed;
+            if (copy != null) {
+                return copy.get(name);
+            }
             return delegate.getHeader(Objects.requireNonNull(name, "Header name should not be null").toString());
         }
 
         @Override
         public Set<String> names() {
+            MutableHttpHeaders copy = changed;
+            if (copy != null) {
+                return copy.names();
+            }
             return CollectionUtils.enumerationToSet(delegate.getHeaderNames());
         }
 
@@ -889,6 +1134,23 @@ public final class DefaultServletHttpRequest<B> implements
             }
             return Optional.empty();
         }
+
+        @Override
+        public MutableHttpHeaders add(CharSequence header, CharSequence value) {
+            changed().add(header, value);
+            return this;
+        }
+
+        @Override
+        public MutableHttpHeaders remove(CharSequence header) {
+            changed().remove(header);
+            return this;
+        }
+
+        @Override
+        public void setConversionService(ConversionService conversionService) {
+            // the conversions of the request
+        }
     }
 
     /**
@@ -904,6 +1166,7 @@ public final class DefaultServletHttpRequest<B> implements
 
         private final AsyncContext asyncContext;
         private final AtomicReference<@Nullable Runnable> endedByContainer = new AtomicReference<>();
+        private volatile boolean ended;
 
         ContainerAsyncExecution(AsyncContext asyncContext) {
             this.asyncContext = asyncContext;
@@ -944,7 +1207,13 @@ public final class DefaultServletHttpRequest<B> implements
             // a re-dispatch is not something this engine does
         }
 
+        @Override
+        public boolean isEndedByContainer() {
+            return ended;
+        }
+
         private void ended() {
+            ended = true;
             Runnable hook = endedByContainer.getAndSet(null);
             if (hook != null) {
                 hook.run();
@@ -955,9 +1224,42 @@ public final class DefaultServletHttpRequest<B> implements
     /**
      * The servlet request parameters.
      */
-    private final class ServletParameters implements HttpParameters {
+    private final class ServletParameters implements MutableHttpParameters {
+
+        /**
+         * The parameters once they were changed, e.g. through a mutable view of a request a filter
+         * wrapped: the container's are read-only, so they are copied on the first change.
+         */
+        private @Nullable Map<String, List<String>> changed;
+
+        @Override
+        public MutableHttpParameters add(CharSequence name, List<CharSequence> values) {
+            Map<String, List<String>> copy = changed;
+            if (copy == null) {
+                copy = new LinkedHashMap<>();
+                for (String n : names()) {
+                    copy.put(n, new ArrayList<>(getAll(n)));
+                }
+                changed = copy;
+            }
+            List<String> list = copy.computeIfAbsent(Objects.requireNonNull(name, NULL_PARAMETER_NAME).toString(), k -> new ArrayList<>(values.size()));
+            for (CharSequence value : values) {
+                list.add(value.toString());
+            }
+            return this;
+        }
+
+        @Override
+        public void setConversionService(ConversionService conversionService) {
+            // the conversions of the request
+        }
 
         private @Nullable String[] values(String name) {
+            Map<String, List<String>> copy = changed;
+            if (copy != null) {
+                List<String> values = copy.get(name);
+                return values == null ? null : values.toArray(String[]::new);
+            }
             Map<String, List<String>> form = unboundedForm;
             if (form != null) {
                 List<String> values = form.get(name);
@@ -984,11 +1286,21 @@ public final class DefaultServletHttpRequest<B> implements
 
         @Override
         public Set<String> names() {
+            Map<String, List<String>> copy = changed;
+            if (copy != null) {
+                return copy.keySet();
+            }
             Map<String, List<String>> form = unboundedForm;
             if (form != null) {
                 return form.keySet();
             }
-            return CollectionUtils.enumerationToSet(delegate.getParameterNames());
+            // in the order of the request: a form is read part after part
+            Set<String> names = new LinkedHashSet<>();
+            Enumeration<String> parameterNames = delegate.getParameterNames();
+            while (parameterNames.hasMoreElements()) {
+                names.add(parameterNames.nextElement());
+            }
+            return names;
         }
 
         @Override

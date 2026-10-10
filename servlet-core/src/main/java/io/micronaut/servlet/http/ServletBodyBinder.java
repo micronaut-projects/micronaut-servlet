@@ -19,14 +19,19 @@ import io.micronaut.core.async.publisher.Publishers;
 import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.convert.ConversionError;
 import io.micronaut.core.convert.ConversionService;
+import io.micronaut.core.convert.exceptions.ConversionErrorException;
 import io.micronaut.core.execution.CompletableFutureExecutionFlow;
 import io.micronaut.core.io.IOUtils;
 import io.micronaut.core.io.Readable;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.BasicHttpAttributes;
 import io.micronaut.http.HttpRequest;
+import io.micronaut.http.exceptions.ContentLengthExceededException;
+import io.micronaut.http.body.DirectByteBodyAccess;
+import io.micronaut.http.HttpRequestWrapper;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.ServerHttpRequest;
+import io.micronaut.http.server.binding.ServerRequestBody;
 import io.micronaut.http.annotation.Body;
 import io.micronaut.http.bind.binders.AnnotatedRequestArgumentBinder;
 import io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder;
@@ -40,6 +45,7 @@ import io.micronaut.http.exceptions.HttpException;
 import io.micronaut.http.form.FormCapableHttpRequest;
 import io.micronaut.http.multipart.RawFormField;
 import io.micronaut.json.JsonMapper;
+import io.micronaut.json.JsonSyntaxException;
 import io.micronaut.json.tree.JsonNode;
 import io.micronaut.web.router.RouteAttributes;
 import io.micronaut.web.router.RouteInfo;
@@ -51,6 +57,8 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
@@ -104,20 +112,65 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
         return Body.class;
     }
 
+    /**
+     * The body a filter set on the request it continued with, converted to the argument: unsatisfied
+     * when it cleared it, which a required body answers with a bad request.
+     */
+    private BindingResult<T> replacedBody(ArgumentConversionContext<T> context, HttpRequest<?> source, @Nullable String name) {
+        Object value = source.getBody().orElse(null);
+        if (value != null && name != null) {
+            value = value instanceof Map<?, ?> map ? map.get(name) : null;
+        }
+        if (value == null) {
+            return BindingResult.unsatisfied();
+        }
+        Optional<T> converted = conversionService.convert(value, context);
+        return () -> converted;
+    }
+
     @Override
     public BindingResult<T> bind(ArgumentConversionContext<T> context, HttpRequest<?> source) {
         final Argument<T> argument = context.getArgument();
         final Class<T> type = argument.getType();
         String name = argument.getAnnotationMetadata().stringValue(Body.class).orElse(null);
-        if (source instanceof ServletHttpRequest<?, ?> servletHttpRequest) {
+        // the server request whose bytes are the body, under the wrappers and mutable views of filters
+        ServerHttpRequest<?> server = ServerRequestBody.of(source);
+        if (server == null && ServerRequestBody.serverRequest(source) != null) {
+            // a filter set the body, even to null: the body is that object, never the bytes of the request
+            return replacedBody(context, source, name);
+        }
+        ServletHttpRequest<?, ?> servletRequest = server == null ? null : servletRequestOf(server);
+        if (server != null && servletRequest == null) {
+            // e.g. a request a filter continued with that has bytes of its own: the body is read from them
+            return bytesOf(context, source, server, name);
+        }
+        if ((servletRequest != null ? servletRequest : source) instanceof ServletHttpRequest<?, ?> servletHttpRequest) {
             if (Readable.class.isAssignableFrom(type)) {
                 Readable readable = new ServletReadable(servletHttpRequest);
                 return () -> (Optional<T>) Optional.of(readable);
             }
+            if (type == InputStream.class && name == null) {
+                // the bytes of the body as they arrive, like on the Netty server: the body itself is taken rather than
+                // a split of it, which would keep every byte buffered for the body left behind, up to the buffer limit
+                if (server != null) {
+                    if (server.byteBody().expectedLength().orElse(-1) == 0) {
+                        return BindingResult.unsatisfied();
+                    }
+                    InputStream inputStream = new SizeLimitInputStream(server.byteBody().toInputStream());
+                    return () -> (Optional<T>) Optional.of(inputStream);
+                }
+                try {
+                    InputStream inputStream = servletHttpRequest.getInputStream();
+                    return () -> (Optional<T>) Optional.of(inputStream);
+                } catch (IOException e) {
+                    throw decodingFailure("Unable to read request body: ", e);
+                }
+            }
             if (CharSequence.class.isAssignableFrom(type) && name == null) {
                 try (BufferedReader bufferedReader = servletHttpRequest.getReader()) {
                     String text = IOUtils.readText(bufferedReader);
-                    return () -> (Optional<T>) Optional.of(text);
+                    // a request without content has no body, like on the other runtimes
+                    return () -> text.isEmpty() ? Optional.empty() : (Optional<T>) Optional.of(text);
                 } catch (IOException e) {
                     HttpException httpException = BodyReadFailures.httpFailure(e);
                     if (httpException != null) {
@@ -138,13 +191,23 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
                     };
                 }
             }
+            if (servletHttpRequest instanceof ServerHttpRequest<?> serverRequest
+                && serverRequest.byteBody().expectedLength().orElse(-1) == 0) {
+                // a request without content has no body, not an empty document to decode: a required body is
+                // then missing, like on the other runtimes
+                return BindingResult.unsatisfied();
+            }
             final MediaType mediaType = source.getContentType().orElse(MediaType.APPLICATION_JSON_TYPE);
             if (isFormSubmission(mediaType)) {
                 if (name != null) {
                     return () -> servletHttpRequest.getParameters().get(name, context);
                 } else {
                     if (servletHttpRequest instanceof FormCapableHttpRequest<?> formCapableHttpRequest) {
-                        CompletableFuture<Optional<T>> future = Flux.from(formCapableHttpRequest.getRawFormFields())
+                        // e.g. a CompletableFuture<Map>: the future of the form converted to its type
+                        boolean stage = CompletionStage.class.isAssignableFrom(type);
+                        @SuppressWarnings("unchecked")
+                        Argument<Object> target = (Argument<Object>) (stage ? argument.getFirstTypeVariable().orElse(Argument.OBJECT_ARGUMENT) : argument);
+                        CompletableFuture<Optional<Object>> future = Flux.from(formCapableHttpRequest.getRawFormFields())
                             .concatMap(rff -> Mono.fromCompletionStage(rff.byteBody().buffer()).map(buffered -> new RawFormField(rff.metadata(), buffered)))
                             .doOnDiscard(RawFormField.class, RawFormField::close)
                             .collectList()
@@ -154,9 +217,13 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
                                     bodies.computeIfAbsent(rff.metadata().name(), k -> new ArrayList<>(1)).add(rff.byteBody());
                                 }
                                 Object intermediate = io.micronaut.http.server.multipart.FormRouteCompleter.mapForGetBody(bodies, source.getCharacterEncoding());
-                                return conversionService.convert(intermediate, context);
+                                return stage ? conversionService.convert(intermediate, target) : (Optional<Object>) conversionService.convert(intermediate, context);
                             })
                             .toFuture();
+                        if (stage) {
+                            CompletableFuture<Object> value = future.thenApply(converted -> converted.orElse(null));
+                            return () -> (Optional<T>) Optional.of(value);
+                        }
                         BasicHttpAttributes.addRouteWaitsFor(servletHttpRequest, CompletableFutureExecutionFlow.just(future));
                         return new PendingRequestBindingResult<>() {
                             @Override
@@ -166,7 +233,7 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
 
                             @Override
                             public Optional<T> getValue() {
-                                return future.getNow(Optional.empty());
+                                return (Optional<T>) (Optional<?>) future.getNow(Optional.empty());
                             }
                         };
                     }
@@ -208,6 +275,13 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
                     .map(reader -> (MessageBodyReader<Object>) reader)
                     .orElse(null);
             }
+            if (bodyReader == null && CompletionStage.class.isAssignableFrom(type)) {
+                // e.g. a CompletableFuture<byte[]> of application/octet-stream: the reader is the one of the value
+                Argument<?> valueArgument = argument.getFirstTypeVariable().orElse(Argument.OBJECT_ARGUMENT);
+                bodyReader = messageBodyHandlerRegistry.findReader(valueArgument, mediaType)
+                    .map(reader -> (MessageBodyReader<Object>) reader)
+                    .orElse(null);
+            }
             if (bodyReader != null) {
                 if (CompletionStage.class.isAssignableFrom(type)) {
                     CompletableFuture<?> completableFuture = asFuture(context, source, servletHttpRequest, mediaType, bodyReader);
@@ -221,7 +295,7 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
                     @SuppressWarnings("unchecked")
                     Argument<Object> bodyArgument = (Argument<Object>) (Argument<?>) context.getArgument();
                     Object content = bodyReader.read(bodyArgument, mediaType, source.getHeaders(), is);
-                    if (content != null && servletHttpRequest instanceof ParsedBodyHolder parsedBody) {
+                    if (content != null && source == servletHttpRequest && servletHttpRequest instanceof ParsedBodyHolder parsedBody) {
                         parsedBody.setParsedBody(content);
                     }
                     return () -> (Optional<T>) Optional.ofNullable(content);
@@ -268,7 +342,7 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
                 if (reader != null) {
                     try (InputStream inputStream = servletHttpRequest.getInputStream()) {
                         T content = reader.read(argument, mediaType, source.getHeaders(), inputStream);
-                        if (content != null && servletHttpRequest instanceof ParsedBodyHolder parsedBody) {
+                        if (content != null && source == servletHttpRequest && servletHttpRequest instanceof ParsedBodyHolder parsedBody) {
                             parsedBody.setParsedBody(content);
                         }
                         return () -> (Optional<T>) Optional.ofNullable(content);
@@ -281,6 +355,85 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
             }
         }
         return defaultBodyAnnotationBinder.bind(context, source);
+    }
+
+    /**
+     * The servlet request whose bytes are the body of the given server request: the request itself, or the one under
+     * views of it that pass its bytes through, e.g. the mutable view of a filter.
+     */
+    private static @Nullable ServletHttpRequest<?, ?> servletRequestOf(ServerHttpRequest<?> server) {
+        HttpRequest<?> current = server;
+        while (true) {
+            if (current instanceof ServletHttpRequest<?, ?> servletRequest) {
+                return servletRequest;
+            }
+            if (current instanceof ServerHttpRequest<?> && !(current instanceof DirectByteBodyAccess)) {
+                // bytes of its own
+                return null;
+            }
+            if (current instanceof HttpRequestWrapper<?> wrapper) {
+                current = wrapper.getDelegate();
+            } else {
+                return null;
+            }
+        }
+    }
+
+    /**
+     * Read the body from the bytes of a server request that is not the servlet request, e.g. one a filter continued
+     * with that carries another body.
+     */
+    @SuppressWarnings("unchecked")
+    private BindingResult<T> bytesOf(ArgumentConversionContext<T> context, HttpRequest<?> source, ServerHttpRequest<?> server, @Nullable String name) {
+        Argument<T> argument = context.getArgument();
+        Class<T> type = argument.getType();
+        MediaType mediaType = source.getContentType().orElse(MediaType.APPLICATION_JSON_TYPE);
+        CompletableFuture<Optional<T>> future = server.byteBody().buffer().<Optional<T>>thenApply(buffered -> {
+            byte[] bytes;
+            try (buffered) {
+                bytes = buffered.toByteArray();
+            }
+            if (name == null && CharSequence.class.isAssignableFrom(type)) {
+                String text = new String(bytes, source.getCharacterEncoding());
+                return text.isEmpty() ? Optional.empty() : conversionService.convert(text, context);
+            }
+            if (name == null && byte[].class == type) {
+                return Optional.of((T) bytes);
+            }
+            if (bytes.length == 0) {
+                return Optional.empty();
+            }
+            try {
+                if (name != null) {
+                    Argument<Map<String, Object>> mapArgument = Argument.mapOf(String.class, Object.class);
+                    MessageBodyReader<Map<String, Object>> reader = messageBodyHandlerRegistry.findReader(mapArgument, mediaType).orElse(null);
+                    if (reader == null) {
+                        return Optional.empty();
+                    }
+                    Map<String, Object> map = reader.read(mapArgument, mediaType, source.getHeaders(), new ByteArrayInputStream(bytes));
+                    return conversionService.convert(map == null ? null : map.get(name), context);
+                }
+                MessageBodyReader<T> reader = messageBodyHandlerRegistry.findReader(argument, mediaType).orElse(null);
+                if (reader == null) {
+                    return Optional.empty();
+                }
+                return Optional.ofNullable(reader.read(argument, mediaType, source.getHeaders(), new ByteArrayInputStream(bytes)));
+            } catch (CodecException e) {
+                throw decodingFailure(UNABLE_TO_DECODE, e);
+            }
+        }).toCompletableFuture();
+        BasicHttpAttributes.addRouteWaitsFor(source, CompletableFutureExecutionFlow.just(future));
+        return new PendingRequestBindingResult<>() {
+            @Override
+            public boolean isPending() {
+                return !future.isDone();
+            }
+
+            @Override
+            public Optional<T> getValue() {
+                return future.getNow(Optional.empty());
+            }
+        };
     }
 
     private @NonNull CompletableFuture<?> asFuture(ArgumentConversionContext<T> context,
@@ -331,7 +484,7 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
         boolean single = Publishers.isSingle(context.getArgument().getType());
         Publisher<?> publisher;
         if (servletHttpRequest instanceof ServerHttpRequest<?> serverHttpRequest) {
-            if (mediaType.equals(MediaType.APPLICATION_JSON_STREAM_TYPE) || !single && mediaType.equals(MediaType.APPLICATION_JSON_TYPE)) {
+            if (mediaType.equals(MediaType.APPLICATION_JSON_STREAM_TYPE)) {
                 Flux<Object> jsonStream = streamJson(serverHttpRequest, typeArgument);
                 publisher = single ? jsonStream.single() : jsonStream;
             } else {
@@ -371,6 +524,18 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
      * Turns a buffered body into the publisher a reactive body argument expects.
      */
     @SuppressWarnings("java:S107") // every value the read needs, passed once from the caller
+    /**
+     * Whether a JSON body is one object rather than an array of elements.
+     */
+    private static boolean startsWithObject(byte[] bytes) {
+        for (byte b : bytes) {
+            if (!Character.isWhitespace(b)) {
+                return b == '{';
+            }
+        }
+        return false;
+    }
+
     private Publisher<?> publishBuffered(AvailableByteBody bb,
                                          HttpRequest<?> source,
                                          ServletHttpRequest<?, ?> servletHttpRequest,
@@ -386,17 +551,22 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
         if (BYTE_ARRAY.getType().isAssignableFrom(typeArgumentClass)) {
             return Mono.just(bb.toByteArray());
         }
+        // the bytes can be taken once
+        byte[] bytes = bb.toByteArray();
         Object body;
-        if (!single) {
+        if (!single && !startsWithObject(bytes)) {
             Argument<Object> listArgument = listOf(typeArgument);
-            body = messageBodyReader.read(listArgument, mediaType, source.getHeaders(), bb.toByteBuffer());
+            body = messageBodyReader.read(listArgument, mediaType, source.getHeaders(), new ByteArrayInputStream(bytes));
+        } else if (!single && name == null) {
+            // a single document, not an array of them: the publisher emits that one element, like on Netty
+            body = List.of(messageBodyReader.read(typeArgument, mediaType, source.getHeaders(), new ByteArrayInputStream(bytes)));
         } else if (name != null) {
             Argument<Map<String, Object>> mapArgument = Argument.mapOf(String.class, Object.class);
             MessageBodyReader<Map<String, Object>> reader = messageBodyHandlerRegistry.findReader(mapArgument, mediaType).orElse(null);
-            Map<String, Object> map = reader == null ? null : reader.read(mapArgument, mediaType, source.getHeaders(), bb.toByteBuffer());
+            Map<String, Object> map = reader == null ? null : reader.read(mapArgument, mediaType, source.getHeaders(), new ByteArrayInputStream(bytes));
             body = map == null ? null : map.get(name);
         } else {
-            body = messageBodyReader.read(typeArgument, mediaType, source.getHeaders(), bb.toByteBuffer());
+            body = messageBodyReader.read(typeArgument, mediaType, source.getHeaders(), new ByteArrayInputStream(bytes));
         }
         return publishParsed(body, single, servletHttpRequest);
     }
@@ -450,6 +620,17 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
         if (httpException != null) {
             return httpException;
         }
+        if (e instanceof CodecException codecException) {
+            Throwable cause = codecException.getCause();
+            if (cause instanceof JsonSyntaxException || cause instanceof IOException && cause.getClass().getName().startsWith("com.fasterxml.jackson.core.")) {
+                // a document that does not parse is a JSON syntax error, which the error routes of the application
+                // and the JSON exception handler answer, like on the other runtimes
+                return new ConversionErrorException(Argument.OBJECT_ARGUMENT,
+                    cause instanceof JsonSyntaxException syntax ? syntax : new JsonSyntaxException(cause));
+            }
+            // as the reader failed
+            return codecException;
+        }
         return new CodecException(message + e.getMessage(), e);
     }
 
@@ -476,6 +657,45 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
         @Override
         public String getName() {
             return servletHttpRequest.getPath();
+        }
+    }
+
+    /**
+     * Fails a read past {@code micronaut.server.max-request-size} with the {@link ContentLengthExceededException}
+     * itself rather than the {@link IOException} that wraps it, so that a route reading the body answers
+     * {@code 413 Request Entity Too Large} and not {@code 500}.
+     */
+    private static final class SizeLimitInputStream extends FilterInputStream {
+
+        SizeLimitInputStream(InputStream in) {
+            super(in);
+        }
+
+        @Override
+        public int read() throws IOException {
+            try {
+                return super.read();
+            } catch (IOException e) {
+                throw tooLargeOr(e);
+            }
+        }
+
+        @Override
+        public int read(byte[] b, int off, int len) throws IOException {
+            try {
+                return in.read(b, off, len);
+            } catch (IOException e) {
+                throw tooLargeOr(e);
+            }
+        }
+
+        private static IOException tooLargeOr(IOException e) {
+            for (Throwable cause = e.getCause(); cause != null && cause != cause.getCause(); cause = cause.getCause()) {
+                if (cause instanceof ContentLengthExceededException tooLarge) {
+                    throw tooLarge;
+                }
+            }
+            return e;
         }
     }
 }

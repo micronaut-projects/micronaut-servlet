@@ -15,14 +15,17 @@
  */
 package io.micronaut.http.poja;
 
+import io.micronaut.context.BeanProvider;
 import io.micronaut.context.annotation.Replaces;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.http.annotation.Body;
+import io.micronaut.http.annotation.Part;
 import io.micronaut.http.bind.DefaultRequestBinderRegistry;
 import io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder;
 import io.micronaut.http.bind.binders.RequestArgumentBinder;
 import io.micronaut.http.body.MessageBodyHandlerRegistry;
+import io.micronaut.http.server.multipart.FormFactory;
 import io.micronaut.json.JsonMapper;
 import io.micronaut.servlet.http.ServletBinderRegistry;
 import jakarta.inject.Singleton;
@@ -47,14 +50,20 @@ final class PojaBinderRegistry<T> extends ServletBinderRegistry<T> {
      * @param binders                     Any registered binders
      * @param defaultBodyAnnotationBinder The default binder
      * @param jsonMapper                  The JSON mapper
+     * @param formFactoryProvider         The form factory provider
      */
     public PojaBinderRegistry(MessageBodyHandlerRegistry messageBodyHandlerRegistry,
                               ConversionService conversionService,
                               List<RequestArgumentBinder> binders,
                               DefaultBodyAnnotationBinder<T> defaultBodyAnnotationBinder,
-                              JsonMapper jsonMapper) {
+                              JsonMapper jsonMapper,
+                              BeanProvider<FormFactory> formFactoryProvider) {
         super(messageBodyHandlerRegistry, conversionService, binders, defaultBodyAnnotationBinder, jsonMapper);
 
-        this.byAnnotation.put(Body.class, new PojaBodyBinder<>(conversionService, messageBodyHandlerRegistry, defaultBodyAnnotationBinder, jsonMapper));
+        this.byAnnotation.put(Body.class, new PojaBodyBinder<>(conversionService, messageBodyHandlerRegistry, defaultBodyAnnotationBinder, jsonMapper, formFactoryProvider));
+        PojaPartBinder<Object> partBinder = new PojaPartBinder<>(conversionService, formFactoryProvider);
+        this.byAnnotation.put(Part.class, partBinder);
+        // an argument without annotation that no other binder takes, e.g. a field of a form by its name
+        addUnmatchedRequestArgumentBinder(partBinder);
     }
 }

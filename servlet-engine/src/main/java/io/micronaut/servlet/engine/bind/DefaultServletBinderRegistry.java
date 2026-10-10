@@ -28,9 +28,13 @@ import io.micronaut.http.bind.DefaultRequestBinderRegistry;
 import io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder;
 import io.micronaut.http.bind.binders.RequestArgumentBinder;
 import io.micronaut.http.body.MessageBodyHandlerRegistry;
+import io.micronaut.http.multipart.CompletedFileUpload;
+import io.micronaut.http.form.FormCapableHttpRequest;
 import io.micronaut.http.multipart.CompletedPart;
+import io.micronaut.http.reactive.execution.ReactiveExecutionFlow;
 import io.micronaut.http.server.HttpServerConfiguration;
 import io.micronaut.http.server.multipart.FormFactory;
+import io.micronaut.http.server.multipart.MultipartBody;
 import io.micronaut.json.JsonMapper;
 import io.micronaut.servlet.http.ServletBinderRegistry;
 import io.micronaut.servlet.http.ServletBodyBinder;
@@ -39,8 +43,10 @@ import jakarta.servlet.ServletConfig;
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import reactor.core.publisher.Flux;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Replaces the {@link DefaultRequestBinderRegistry} with one capable of binding from servlet requests.
@@ -56,6 +62,7 @@ import java.util.List;
 class DefaultServletBinderRegistry<T> extends ServletBinderRegistry<T> {
 
     private final HttpServerConfiguration configuration;
+    private final BeanProvider<FormFactory> formFactoryProvider;
 
     /**
      * Default constructor.
@@ -75,12 +82,18 @@ class DefaultServletBinderRegistry<T> extends ServletBinderRegistry<T> {
                                         HttpServerConfiguration configuration) {
         super(messageBodyHandlerRegistry, conversionService, (List) binders, defaultBodyAnnotationBinder, jsonMapper);
         this.configuration = configuration;
+        this.formFactoryProvider = formFactoryProvider;
         byType.put(HttpServletRequest.class, new ServletRequestBinder());
         byType.put(HttpServletResponse.class, new ServletResponseBinder());
         byType.put(ServletConfig.class, new ServletConfigBinder());
         byType.put(ServletContext.class, new ServletContextBinder());
         byType.put(CompletedPart.class, new CompletedPartRequestArgumentBinder(configuration));
-        byAnnotation.put(Part.class, new ServletPartBinder<>(conversionService, formFactoryProvider, messageBodyHandlerRegistry, configuration));
+        // looked up by the exact type of the argument
+        byType.put(CompletedFileUpload.class, new CompletedPartRequestArgumentBinder(configuration));
+        ServletPartBinder<Object> partBinder = new ServletPartBinder<>(conversionService, formFactoryProvider, messageBodyHandlerRegistry, configuration);
+        byAnnotation.put(Part.class, partBinder);
+        // an argument without annotation that no other binder takes, e.g. a file of a multipart request by its name
+        addUnmatchedRequestArgumentBinder(partBinder);
     }
 
     @Override
@@ -116,6 +129,15 @@ class DefaultServletBinderRegistry<T> extends ServletBinderRegistry<T> {
             Class<?> type = argument.getType();
             if (CompletedPart.class.isAssignableFrom(type)) {
                 return new CompletedPartRequestArgumentBinder(configuration).bind(context, source);
+            }
+            if (type == MultipartBody.class && source instanceof FormCapableHttpRequest<?> form && form.hasFormBody()) {
+                // the parts as they complete, like the Netty server
+                FormFactory formFactory = formFactoryProvider.get();
+                Flux<? extends CompletedPart> parts = Flux.from(form.getRawFormFields())
+                    .flatMapSequential(raw -> ReactiveExecutionFlow.toPublisher(formFactory.completePart(form, raw)))
+                    .doOnDiscard(CompletedPart.class, part -> part.closeAsync(formFactory.getDiskWriteExecutor()));
+                MultipartBody body = parts::subscribe;
+                return () -> Optional.of(body);
             }
             return super.bind(context, source);
         }

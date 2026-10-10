@@ -348,6 +348,10 @@ public final class DefaultServletHttpResponse<B> implements ServletHttpResponse<
                 @Nullable Throwable failure;
                 @Nullable Subscription subscription;
                 java.nio.@Nullable ByteBuffer internalBuffer;
+                /**
+                 * Whether the flush of the last element waits for onWritePossible.
+                 */
+                boolean flushPending;
 
                 @Override
                 public void onSubscribe(Subscription s) {
@@ -355,21 +359,45 @@ public final class DefaultServletHttpResponse<B> implements ServletHttpResponse<
                     outputStream.setWriteListener(new WriteListener() {
                         @Override
                         public void onWritePossible() throws IOException {
-                            if (internalBuffer == null) {
+                            boolean request;
+                            synchronized (subscriberLock()) {
+                                if (flushPending) {
+                                    flushPending = false;
+                                    afterWrite();
+                                    return;
+                                }
+                                request = internalBuffer == null;
+                                if (!request) {
+                                    writeSome();
+                                }
+                            }
+                            if (request) {
                                 s.request(1);
-                            } else {
-                                writeSome();
                             }
                         }
 
                         @Override
                         public void onError(Throwable t) {
-                            completion.completeExceptionally(t);
+                            failWrite(t);
                         }
                     });
                 }
 
-                private void writeSome() throws IOException {
+                /**
+                 * A write failed, e.g. because the client closed the connection: the body is told it will not be
+                 * taken, which closes a stream or an emitter that produces it, like on the other runtimes.
+                 */
+                private void failWrite(Throwable t) {
+                    completion.completeExceptionally(t);
+                    Subscription s = subscription;
+                    if (s != null) {
+                        s.cancel();
+                    }
+                }
+
+                // the container calls onWritePossible on its threads while the body calls onNext on its own: the
+                // writes are serialized, or two of them would write the same buffer
+                private synchronized void writeSome() throws IOException {
                     java.nio.ByteBuffer currentBuffer = Objects.requireNonNull(internalBuffer, "Internal buffer not initialized");
 
                     // isReady at the start, ensured by caller. we can't assert this here because
@@ -377,19 +405,11 @@ public final class DefaultServletHttpResponse<B> implements ServletHttpResponse<
 
                     while (currentBuffer.hasRemaining()) { // hasRemaining is only legal when isReady!
 
-                        boolean writeBuffer = writeBufferAvailable;
-                        if (writeBuffer) {
-                            try {
-                                outputStream.write(currentBuffer);
-                            } catch (NoSuchMethodError e) {
-                                writeBuffer = false;
-                                writeBufferAvailable = false;
-                            }
-                        }
-                        if (!writeBuffer) {
-                            outputStream.write(currentBuffer.array(), currentBuffer.arrayOffset() + currentBuffer.position(), currentBuffer.remaining());
-                            currentBuffer.position(currentBuffer.limit());
-                        }
+                        // the buffer wraps an array: written whole, and moved past explicitly. Whether
+                        // write(ByteBuffer) moves the buffer is up to the container, and one that does not would
+                        // have the bytes written again
+                        outputStream.write(currentBuffer.array(), currentBuffer.arrayOffset() + currentBuffer.position(), currentBuffer.remaining());
+                        currentBuffer.position(currentBuffer.limit());
 
                         if (!outputStream.isReady()) {
                             // wait for onWritePossible
@@ -398,6 +418,20 @@ public final class DefaultServletHttpResponse<B> implements ServletHttpResponse<
                     }
 
                     internalBuffer = null;
+                    if (outputStream.isReady()) {
+                        // an element of a body still being produced reaches the client as it is written, not when
+                        // the container's buffer fills up or the body ends
+                        outputStream.flush();
+                        if (!outputStream.isReady()) {
+                            // the flush is still in progress: onWritePossible continues
+                            flushPending = true;
+                            return;
+                        }
+                    }
+                    afterWrite();
+                }
+
+                private void afterWrite() {
                     if (closeState.getAndSet(CloseState.IDLE) == CloseState.INPUT_CLOSED) {
                         if (failure == null) {
                             completion.complete(null);
@@ -409,26 +443,33 @@ public final class DefaultServletHttpResponse<B> implements ServletHttpResponse<
                     }
                 }
 
+                private Object subscriberLock() {
+                    return this;
+                }
+
                 @Override
-                public void onNext(byte[] bytes) {
+                public synchronized void onNext(byte[] bytes) {
                     if (internalBuffer != null) {
                         throw new IllegalStateException("Still have buffered data");
                     }
                     internalBuffer = java.nio.ByteBuffer.wrap(bytes);
                     closeState.set(CloseState.UNPROCESSED_DATA);
                     try {
-                        writeSome();
+                        if (outputStream.isReady()) {
+                            writeSome();
+                        }
+                        // otherwise onWritePossible writes it
                     } catch (IOException e) {
-                        completion.completeExceptionally(e);
+                        failWrite(e);
                     }
                 }
 
                 @Override
                 public void onError(Throwable t) {
                     failure = t;
-                    if (closeState.getAndSet(CloseState.INPUT_CLOSED) == CloseState.IDLE) {
-                        completion.completeExceptionally(t);
-                    }
+                    closeState.set(CloseState.INPUT_CLOSED);
+                    // what is still buffered is not written: the response failed, and its connection is dropped
+                    completion.completeExceptionally(t);
                 }
 
                 @Override

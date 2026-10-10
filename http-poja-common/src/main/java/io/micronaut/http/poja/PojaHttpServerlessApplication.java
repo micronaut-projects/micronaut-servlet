@@ -82,6 +82,39 @@ public abstract class PojaHttpServerlessApplication<REQ, RES> implements Embedde
      * @return The application
      */
     public @NonNull PojaHttpServerlessApplication<REQ, RES> start(InputStream input, OutputStream output) {
+        return start(input, output, PojaConnection.UNKNOWN);
+    }
+
+    /**
+     * Run the application using a particular channel, whose addresses are known.
+     *
+     * @param input The input stream
+     * @param output The output stream
+     * @param connection The addresses of the connection
+     * @return The application
+     * @since 6.2.0
+     */
+    public @NonNull PojaHttpServerlessApplication<REQ, RES> start(InputStream input, OutputStream output, PojaConnection connection) {
+        if (!serve(input, output, connection)) {
+            // the channel the application runs on ended, and the application with it
+            this.stop();
+            Thread.currentThread().interrupt();
+        }
+        return this;
+    }
+
+    /**
+     * Serve the requests of one connection until it ends, without stopping the application: e.g. one of several
+     * connections a server accepts.
+     *
+     * @param input The input stream
+     * @param output The output stream
+     * @param connection The addresses of the connection
+     * @return {@code true} if the connection is to be closed after a response, {@code false} if it ended without
+     * another request
+     * @since 6.3.0
+     */
+    public boolean serve(InputStream input, OutputStream output, PojaConnection connection) {
         final ServletHttpHandler<REQ, RES> servletHttpHandler =
             new ServletHttpHandler<>(applicationContext, applicationContext.getConversionService()) {
                 @Override
@@ -90,14 +123,13 @@ public abstract class PojaHttpServerlessApplication<REQ, RES> implements Embedde
                 }
             };
         try {
-            runIndefinitely(servletHttpHandler, input, output);
+            runIndefinitely(servletHttpHandler, input, output, connection);
+            return true;
         } catch (IOException e) {
             throw new RuntimeException(e);
         } catch (NoPojaRequestException e) {
-            this.stop();
-            Thread.currentThread().interrupt();
+            return false;
         }
-        return this;
     }
 
     @Override
@@ -112,7 +144,7 @@ public abstract class PojaHttpServerlessApplication<REQ, RES> implements Embedde
             if (channel != null) {
                 try (InputStream in = Channels.newInputStream((ReadableByteChannel) channel);
                      OutputStream out = Channels.newOutputStream((WritableByteChannel) channel)) {
-                    return start(in, out);
+                    return start(in, out, PojaConnection.of(channel));
                 }
             } else {
                 return start(System.in, System.out);
@@ -130,14 +162,33 @@ public abstract class PojaHttpServerlessApplication<REQ, RES> implements Embedde
      * @param out The output stream
      * @throws IOException IO exception
      */
-    @SuppressWarnings({"java:S2189"})
     protected void runIndefinitely(
             ServletHttpHandler<REQ, RES> servletHttpHandler,
             InputStream in,
             OutputStream out
     ) throws IOException {
+        runIndefinitely(servletHttpHandler, in, out, PojaConnection.UNKNOWN);
+    }
+
+    /**
+     * A method to start the application in a loop.
+     *
+     * @param servletHttpHandler The handler
+     * @param in The input stream
+     * @param out The output stream
+     * @param connection The addresses of the connection
+     * @throws IOException IO exception
+     * @since 6.2.0
+     */
+    @SuppressWarnings({"java:S2189"})
+    protected void runIndefinitely(
+            ServletHttpHandler<REQ, RES> servletHttpHandler,
+            InputStream in,
+            OutputStream out,
+            PojaConnection connection
+    ) throws IOException {
         while (true) {
-            if (!handleSingleRequest(servletHttpHandler, in, out)) {
+            if (!handleSingleRequest(servletHttpHandler, in, out, connection)) {
                 break;
             }
         }
@@ -149,6 +200,7 @@ public abstract class PojaHttpServerlessApplication<REQ, RES> implements Embedde
      * @param servletHttpHandler The handler
      * @param in The input stream
      * @param out The output stream
+     * @param connection The addresses of the connection
      * @return {@code true} iff more requests can come in, {@code false} when the connection should
      * be closed
      * @throws IOException IO exception
@@ -156,7 +208,8 @@ public abstract class PojaHttpServerlessApplication<REQ, RES> implements Embedde
     protected abstract boolean handleSingleRequest(
             ServletHttpHandler<REQ, RES> servletHttpHandler,
             InputStream in,
-            OutputStream out
+            OutputStream out,
+            PojaConnection connection
     ) throws IOException;
 
     /**

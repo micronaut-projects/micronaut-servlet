@@ -32,17 +32,17 @@ import java.util.Objects;
  */
 @Internal
 final class LazyDelegateInputStream extends InputStream {
-    private @Nullable HttpServletRequest request;
+    private @Nullable StreamOpener opener;
     private @Nullable InputStream delegate;
 
-    LazyDelegateInputStream(HttpServletRequest request) {
-        this.request = request;
+    LazyDelegateInputStream(StreamOpener opener) {
+        this.opener = opener;
     }
 
     private InputStream delegate() throws IOException {
         if (delegate == null) {
-            delegate = Objects.requireNonNull(request, "Request not initialized").getInputStream();
-            request = null;
+            delegate = Objects.requireNonNull(opener, "Request not initialized").open();
+            opener = null;
         }
         return delegate;
     }
@@ -70,5 +70,13 @@ final class LazyDelegateInputStream extends InputStream {
     @Override
     public void close() throws IOException {
         delegate().close();
+    }
+
+    /**
+     * Opens the input stream of the request.
+     */
+    @FunctionalInterface
+    interface StreamOpener {
+        InputStream open() throws IOException;
     }
 }
