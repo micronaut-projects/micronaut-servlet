@@ -70,8 +70,6 @@ public class ServletFuzzTest {
         KNOWN_FAILURES.put("jetty,tomcat,undertow:echo /fn/copy 3MB-chunked", copy);
         KNOWN_FAILURES.put("jetty,tomcat,undertow:limit 17MB chunked > max-request-size -> 413 \\(/f/is", "open: a chunked body over max-request-size read by the application from @Body InputStream fails its read with an IOException, answered with 500 rather than 413");
         KNOWN_FAILURES.put("jetty,tomcat,undertow,jdk:limit 17MB declared -> 413 \\(/fn/unread|jetty,tomcat,undertow,jdk:limit 17MB declared -> 413 \\(/f/ignore", "NEW: max-request-size is not enforced for a body nobody reads");
-        KNOWN_FAILURES.put("jetty:keepalive post-large-form|jetty:keepalive [a-z0-9-]+ -> post-large-form", "NEW: Jetty maxFormContentSize (200000) is hit by a form-urlencoded body over 200000 bytes: 500 instead of honouring max-request-size");
-        KNOWN_FAILURES.put("jetty:keepalive post-ignore-2MB -> |jetty:keepalive post-404-500KB -> ", "NEW: Jetty answers a request whose body the route does not read while the client is still sending and then resets the connection, although the response does not announce Connection: close");
         KNOWN_FAILURES.put("undertow:mp .* unicode-filename|undertow:mp unicode filename", "NEW: Undertow decodes a multipart filename as ISO-8859-1 (mojibake) instead of UTF-8");
         KNOWN_FAILURES.put("undertow:mp part order|undertow:mp random#(10|15|20|24) ", "NEW: Undertow delivers multipart parts grouped (fields first), not in arrival order");
         KNOWN_FAILURES.put("jetty,tomcat,undertow:mp same-name files arrive in order", "NEW: Publisher<CompletedFileUpload> of same-name files is not in arrival order (racy)");

@@ -918,6 +918,23 @@ public final class DefaultServletHttpRequest<B> implements
     @Override
     public void discardUnreadBody(Runnable then) {
         ServletStreamPublisher publisher = streamPublisher;
+        if (publisher == null && byteBody.get() == null && !bodyStreamOpened && mayHaveBody()) {
+            // the route never touched the body: it is read and dropped all the same, or the container may drop the
+            // connection while the client is still sending it. The route ran on the thread of the container, so
+            // the body is read there, as the container itself would before reusing the connection
+            try (InputStream in = delegate.getInputStream()) {
+                byte[] buffer = new byte[8192];
+                long dropped = 0;
+                int n;
+                while (dropped <= maxBodySize && (n = in.read(buffer)) != -1) {
+                    dropped += n;
+                }
+            } catch (IOException | RuntimeException e) {
+                LOG.debug("Failed to drop the unread body of request [{} - {}]", getMethodName(), getUri(), e);
+            }
+            then.run();
+            return;
+        }
         if (publisher == null) {
             // read inline or not at all: the container drops what is left of a small body itself
             then.run();
