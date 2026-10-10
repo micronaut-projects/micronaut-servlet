@@ -95,6 +95,26 @@ public abstract class PojaHttpServerlessApplication<REQ, RES> implements Embedde
      * @since 6.2.0
      */
     public @NonNull PojaHttpServerlessApplication<REQ, RES> start(InputStream input, OutputStream output, PojaConnection connection) {
+        if (!serve(input, output, connection)) {
+            // the channel the application runs on ended, and the application with it
+            this.stop();
+            Thread.currentThread().interrupt();
+        }
+        return this;
+    }
+
+    /**
+     * Serve the requests of one connection until it ends, without stopping the application: e.g. one of several
+     * connections a server accepts.
+     *
+     * @param input The input stream
+     * @param output The output stream
+     * @param connection The addresses of the connection
+     * @return {@code true} if the connection is to be closed after a response, {@code false} if it ended without
+     * another request
+     * @since 6.3.0
+     */
+    public boolean serve(InputStream input, OutputStream output, PojaConnection connection) {
         final ServletHttpHandler<REQ, RES> servletHttpHandler =
             new ServletHttpHandler<>(applicationContext, applicationContext.getConversionService()) {
                 @Override
@@ -104,13 +124,12 @@ public abstract class PojaHttpServerlessApplication<REQ, RES> implements Embedde
             };
         try {
             runIndefinitely(servletHttpHandler, input, output, connection);
+            return true;
         } catch (IOException e) {
             throw new RuntimeException(e);
         } catch (NoPojaRequestException e) {
-            this.stop();
-            Thread.currentThread().interrupt();
+            return false;
         }
-        return this;
     }
 
     @Override

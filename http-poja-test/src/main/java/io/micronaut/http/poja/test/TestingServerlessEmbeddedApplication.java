@@ -25,12 +25,14 @@ import io.micronaut.context.env.Environment;
 import io.micronaut.runtime.ApplicationConfiguration;
 import io.micronaut.runtime.EmbeddedApplication;
 import io.micronaut.runtime.server.EmbeddedServer;
+import io.micronaut.http.server.exceptions.ServerStartupException;
 import jakarta.inject.Singleton;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.net.BindException;
 import java.net.MalformedURLException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -89,6 +91,9 @@ public class TestingServerlessEmbeddedApplication implements EmbeddedServer {
     private ServerSocket createServerSocket(int port) {
         try {
             return new ServerSocket(port);
+        } catch (BindException e) {
+            // like the other servers, so that a caller can try another port
+            throw new ServerStartupException("Could not bind port " + port + ": " + e.getMessage(), e);
         } catch (IOException e) {
             throw new UncheckedIOException("Could not bind", e);
         }
@@ -111,15 +116,24 @@ public class TestingServerlessEmbeddedApplication implements EmbeddedServer {
 
         accept(createdServerSocket, createdConnectionExecutor);
         // the routes of a port answer on that port only, so the server listens on it too
-        Set<Integer> exposedPorts = getApplicationContext().findBean(Router.class)
-            .map(Router::getExposedPorts)
-            .orElse(Set.of());
-        for (Integer exposedPort : exposedPorts) {
-            if (exposedPort != null && exposedPort > 0 && exposedPort != port) {
-                ServerSocket routePortSocket = createServerSocket(exposedPort);
-                routePortSockets.add(routePortSocket);
-                accept(routePortSocket, createdConnectionExecutor);
+        Router router = getApplicationContext().findBean(Router.class).orElse(null);
+        Set<Integer> exposedPorts = router == null ? Set.of() : router.getExposedPorts();
+        if (router != null && !exposedPorts.isEmpty()) {
+            // and the routes without a port answer on the port of the server only, like for the Netty server
+            router.applyDefaultPorts(List.of(port));
+        }
+        try {
+            for (Integer exposedPort : exposedPorts) {
+                if (exposedPort != null && exposedPort > 0 && exposedPort != port) {
+                    ServerSocket routePortSocket = createServerSocket(exposedPort);
+                    routePortSockets.add(routePortSocket);
+                    accept(routePortSocket, createdConnectionExecutor);
+                }
             }
+        } catch (RuntimeException e) {
+            // the sockets already bound are released, e.g. to start again on another port
+            stop();
+            throw e;
         }
 
         return this;
@@ -146,7 +160,9 @@ public class TestingServerlessEmbeddedApplication implements EmbeddedServer {
 
     private void handleConnection(Socket socket) {
         try (socket) {
-            application.start(socket.getInputStream(), socket.getOutputStream(), PojaConnection.of(socket));
+            // one connection of many: its end does not stop the application, as the end of the channel of a
+            // serverless application does
+            application.serve(socket.getInputStream(), socket.getOutputStream(), PojaConnection.of(socket));
         } catch (java.net.SocketException ignored) {
             // Socket closed
         } catch (IOException e) {
