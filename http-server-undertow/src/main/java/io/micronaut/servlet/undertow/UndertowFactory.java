@@ -221,12 +221,11 @@ public class UndertowFactory extends ServletServerFactory {
                 builder.setServerOption(Options.WORKER_TASK_CORE_THREADS, servletConfiguration.getMinThreads());
             }
         }
-        // Undertow refuses an entity over 2MB by default, regardless of micronaut.server.max-request-size, which the
-        // server enforces itself: the request size is left to it, unless a server option below says otherwise
-        long maxRequestSize = getServerConfiguration().getMaxRequestSize();
-        long entityLimit = maxRequestSize > 0 ? maxRequestSize : -1L;
-        builder.setServerOption(UndertowOptions.MAX_ENTITY_SIZE, entityLimit);
-        builder.setServerOption(UndertowOptions.MULTIPART_MAX_ENTITY_SIZE, entityLimit);
+        // Undertow refuses an entity over 2MB by default, regardless of micronaut.server.max-request-size. The server
+        // enforces that limit itself and answers 413, where Undertow would drop the connection: Undertow's own limit
+        // is off, unless a server option below sets it
+        builder.setServerOption(UndertowOptions.MAX_ENTITY_SIZE, -1L);
+        builder.setServerOption(UndertowOptions.MULTIPART_MAX_ENTITY_SIZE, -1L);
         Map<String, String> serverOptions = configuration.getServerOptions();
         serverOptions.forEach((key, value) -> {
             Object opt = ReflectionUtils.findDeclaredField(UndertowOptions.class, key)
