@@ -547,6 +547,12 @@ class DefaultServletHttpResponseSpec extends Specification {
             ready = false
         }
 
+        @Override
+        void write(byte[] bytes, int offset, int length) {
+            super.write(bytes, offset, length)
+            ready = false
+        }
+
         void resume() {
             ready = true
             writeListener.onWritePossible()

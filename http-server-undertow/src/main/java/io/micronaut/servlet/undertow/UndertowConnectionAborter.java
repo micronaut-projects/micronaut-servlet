@@ -17,11 +17,13 @@ package io.micronaut.servlet.undertow;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.servlet.engine.ServletConnectionAborter;
+import io.undertow.server.AbstractServerConnection;
+import io.undertow.server.HttpServerExchange;
+import io.undertow.server.ServerConnection;
 import io.undertow.servlet.spec.HttpServletRequestImpl;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-
-import java.io.IOException;
+import org.xnio.IoUtils;
 
 /**
  * Drops the connection of an Undertow response whose body failed, by closing the connection of its exchange.
@@ -37,11 +39,12 @@ public final class UndertowConnectionAborter implements ServletConnectionAborter
         if (!(request instanceof HttpServletRequestImpl undertowRequest)) {
             return false;
         }
-        try {
-            undertowRequest.getExchange().getConnection().close();
-        } catch (IOException e) {
-            // the connection is gone either way
-        }
+        HttpServerExchange exchange = undertowRequest.getExchange();
+        exchange.setPersistent(false);
+        ServerConnection connection = exchange.getConnection();
+        // the socket itself: closing the server connection only ends it once the exchange ends, which writes
+        // the end of a chunked body first
+        IoUtils.safeClose(connection instanceof AbstractServerConnection server ? server.getChannel() : connection);
         return true;
     }
 }

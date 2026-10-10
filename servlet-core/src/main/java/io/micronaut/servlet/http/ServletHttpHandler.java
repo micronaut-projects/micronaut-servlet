@@ -36,6 +36,7 @@ import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MutableHttpHeaders;
 import io.micronaut.http.body.AvailableByteBody;
+import io.micronaut.http.body.CloseableByteBody;
 import io.micronaut.http.body.ByteBody;
 import io.micronaut.http.body.ByteBodyFactory;
 import io.micronaut.http.body.MessageBodyHandlerRegistry;
@@ -61,6 +62,7 @@ import io.micronaut.web.router.resource.StaticResourceResolver;
 import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import reactor.core.publisher.Flux;
 
 import java.io.EOFException;
 import java.io.File;
@@ -242,7 +244,20 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
         ByteBody body = byteBodyResponse.byteBody();
         if (body instanceof AvailableByteBody available && available.length() == 0) {
             // special case, don't call getOutputStream. the controller may have written manually.
+            if (body instanceof CloseableByteBody closeable) {
+                // the body is taken, e.g. the stream of an emitter, which then knows the response ended
+                closeable.close();
+            }
             onComplete.run();
+        } else if (body.expectedLength().orElse(-1) == 0) {
+            // declared empty, e.g. the stream of an emitter that ended when its handler returned: nothing is written,
+            // and a container need not ask for the bytes, but the body is read to its end so that its producer ends
+            servletResponse.getHeaders().set(HttpHeaders.CONTENT_LENGTH, "0");
+            Flux.from(body.move().toByteArrayPublisher()).subscribe(
+                ignored -> { },
+                t -> onComplete.run(),
+                onComplete
+            );
         } else if (async && !writesInline(body, onContainerThread)) {
             // a body that is still being produced is written as it arrives, through a WriteListener; a body that
             // is already complete is written below on this thread instead, because the listener costs a dispatch
@@ -250,7 +265,9 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
             servletResponse.stream(body.move()).whenComplete((ignored, t) -> {
                 if (t != null) {
                     logWriteFailure(t);
-                    abortCommitted(exchange, servletResponse, t);
+                    // the body was being streamed: some of it may be in the container's buffer only, which does
+                    // not report the response committed, but the response cannot be answered with an error any more
+                    abort(exchange, t);
                 }
                 onComplete.run();
             });
@@ -334,7 +351,13 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
      * connection is dropped, so that the client sees a truncated response rather than one that looks complete.
      */
     private static void abortCommitted(ServletExchange<?, ?> exchange, ServletHttpResponse<?, ?> servletResponse, Throwable t) {
-        if (servletResponse.isCommitted() && !exchange.getRequest().abortResponse(t) && LOG.isDebugEnabled()) {
+        if (servletResponse.isCommitted()) {
+            abort(exchange, t);
+        }
+    }
+
+    private static void abort(ServletExchange<?, ?> exchange, Throwable t) {
+        if (!exchange.getRequest().abortResponse(t) && LOG.isDebugEnabled()) {
             LOG.debug("The connection of request [{} - {}] cannot be dropped: the failed response ends like a complete one",
                 exchange.getRequest().getMethodName(), exchange.getRequest().getUri());
         }
