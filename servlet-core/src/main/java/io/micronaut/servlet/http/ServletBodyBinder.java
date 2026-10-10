@@ -148,7 +148,15 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
                 return () -> (Optional<T>) Optional.of(readable);
             }
             if (type == InputStream.class && name == null) {
-                // the bytes of the body as they arrive, like on the Netty server
+                // the bytes of the body as they arrive, like on the Netty server: the body itself is taken rather than
+                // a split of it, which would keep every byte buffered for the body left behind, up to the buffer limit
+                if (server != null) {
+                    if (server.byteBody().expectedLength().orElse(-1) == 0) {
+                        return BindingResult.unsatisfied();
+                    }
+                    InputStream inputStream = server.byteBody().toInputStream();
+                    return () -> (Optional<T>) Optional.of(inputStream);
+                }
                 try {
                     InputStream inputStream = servletHttpRequest.getInputStream();
                     return () -> (Optional<T>) Optional.of(inputStream);
