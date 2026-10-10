@@ -106,12 +106,63 @@ final class TomcatApp {
             @Override
             protected void doGet(HttpServletRequest req, HttpServletResponse res) throws IOException {
                 HttpSession session = req.getSession(true);
+                res.setContentType("text/plain");
+                if (req.getParameter("created") != null) {
+                    res.getWriter().write(String.valueOf(session.getCreationTime()));
+                    return;
+                }
                 String set = req.getParameter("set");
                 if (set != null) {
                     session.setAttribute("value", set);
+                    session.setAttribute("cart", new Cart(set));
+                    // not serializable
+                    session.setAttribute("opaque", new Object());
+                    session.setAttribute("counter", new Counter());
                 }
-                res.setContentType("text/plain");
-                res.getWriter().write("%s " + (session.isNew() ? "new" : "existing") + " " + session.getAttribute("value"));
+                String ttl = req.getParameter("ttl");
+                if (ttl != null) {
+                    session.setMaxInactiveInterval(Integer.parseInt(ttl));
+                }
+                Object cart = session.getAttribute("cart");
+                res.getWriter().write("%s " + (session.isNew() ? "new" : "existing")
+                    + " value=" + session.getAttribute("value")
+                    + " cart=" + (cart == null ? "null" : cart + (cart.getClass() == Cart.class ? "/current" : "/stale"))
+                    + " opaque=" + (session.getAttribute("opaque") == null ? "null" : "set")
+                    + " counter=" + session.getAttribute("counter"));
+            }
+        }
+        """;
+
+    static final String SESSION_CART = """
+        package example;
+
+        import java.io.Serializable;
+
+        public class Cart implements Serializable {
+            private final String item;
+
+            public Cart(String item) {
+                this.item = item;
+            }
+
+            @Override
+            public String toString() {
+                return item;
+            }
+        }
+        """;
+
+    static final String SESSION_COUNTER = """
+        package example;
+
+        import java.io.Serializable;
+
+        public class Counter implements Serializable {
+            private static final long serialVersionUID = %dL;
+
+            @Override
+            public String toString() {
+                return String.valueOf(serialVersionUID);
             }
         }
         """;
