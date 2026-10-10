@@ -171,6 +171,7 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
         }
 
         method = HttpMethod.parse(request.getMethod());
+        responseContext.headRequest = method == HttpMethod.HEAD;
         try {
             uri = request.getUri();
         } catch (URISyntaxException e) {
@@ -282,6 +283,12 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
     @Override
     public void close() {
         runDisposalResources();
+    }
+
+    @Override
+    public boolean abortResponse(Throwable failure) {
+        responseContext.abort();
+        return true;
     }
 
     /**

@@ -33,6 +33,10 @@ import java.io.OutputStream;
 
 final class ApacheResponseContext implements Closeable {
     boolean connectionClose = false;
+    /**
+     * Whether the request was a {@code HEAD} request, whose response has the headers of a {@code GET} but no body.
+     */
+    boolean headRequest = false;
     @Nullable
     ApacheServletHttpResponse<?> primaryResponse;
 
@@ -40,6 +44,11 @@ final class ApacheResponseContext implements Closeable {
     private final OutputStream out;
     @Nullable
     private OutputStream bodyStream;
+    /**
+     * Whether the body failed after the response was committed: the connection is then dropped without ending
+     * the body, so that the client sees a truncated response rather than one that looks complete.
+     */
+    private boolean aborted;
 
     ApacheResponseContext(ApacheServletConfiguration configuration, OutputStream out) {
         this.out = out;
@@ -56,9 +65,12 @@ final class ApacheResponseContext implements Closeable {
         }
 
         headers.removeHeaders(HttpHeaders.TRANSFER_ENCODING);
+        int code = headers.getCode();
+        // no body follows the headers of these: a chunked terminator would be read as the start of the next response
+        boolean bodiless = headRequest || code < 200 || code == 204 || code == 304;
         Header contentLengthStr = headers.getFirstHeader(HttpHeaders.CONTENT_LENGTH);
         long contentLength = contentLengthStr == null ? -1 : Long.parseLong(contentLengthStr.getValue());
-        if (contentLength < 0) {
+        if (contentLength < 0 && !bodiless) {
             headers.removeHeaders(HttpHeaders.CONTENT_LENGTH);
             headers.addHeader(HttpHeaders.TRANSFER_ENCODING, "chunked");
         }
@@ -75,15 +87,34 @@ final class ApacheResponseContext implements Closeable {
             throw new HttpServerException("Could not write response headers", e);
         }
 
+        if (bodiless) {
+            // what the route writes is dropped, the headers stay those of the body it would have had
+            OutputStream s = OutputStream.nullOutputStream();
+            bodyStream = s;
+            return s;
+        }
         OutputStream s = contentLength < 0 ? new ChunkedOutputStream(outputBuffer, out, 0) : new ContentLengthOutputStream(outputBuffer, out, contentLength);
         bodyStream = s;
         return s;
     }
 
+    /**
+     * Drops the connection once what was written of the body is sent, without the end of the body.
+     */
+    void abort() {
+        aborted = true;
+        connectionClose = true;
+    }
+
     @Override
     public void close() throws IOException {
         if (bodyStream != null) {
-            bodyStream.close();
+            if (aborted) {
+                // the chunks written so far, but not the last chunk that would end the body
+                bodyStream.flush();
+            } else {
+                bodyStream.close();
+            }
         }
         outputBuffer.flush(out);
 
