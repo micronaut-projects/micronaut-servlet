@@ -45,14 +45,6 @@ public final class BufferedFormDecoder {
     private BufferedFormDecoder() {
     }
 
-    /**
-     * A field of the form.
-     *
-     * @param metadata The name, file name and content type of the field
-     * @param content  Its bytes
-     */
-    public record Field(FormFieldMetadata metadata, byte[] content) {
-    }
 
     /**
      * @param contentType The content type of the form
@@ -194,5 +186,14 @@ public final class BufferedFormDecoder {
 
     private static HttpStatusException badRequest(@Nullable String message) {
         return new HttpStatusException(HttpStatus.BAD_REQUEST, message);
+    }
+
+    /**
+     * A field of the form.
+     *
+     * @param metadata The name, file name and content type of the field
+     * @param content  Its bytes
+     */
+    public record Field(FormFieldMetadata metadata, byte[] content) {
     }
 }
