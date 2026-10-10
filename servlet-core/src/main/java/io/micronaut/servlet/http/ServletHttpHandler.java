@@ -574,8 +574,10 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
         try {
             transfer(executionResult, exchange, false, true, requestTerminated);
         } finally {
+            // the body the route did not read is read and dropped, as on the asynchronous path: a server like the
+            // JDK one otherwise drops the connection while the client is still sending it.
             // transfer throws on a write failure, before it can run the callback itself
-            requestTerminated.run();
+            exchange.getRequest().discardUnreadBody(requestTerminated);
         }
     }
 

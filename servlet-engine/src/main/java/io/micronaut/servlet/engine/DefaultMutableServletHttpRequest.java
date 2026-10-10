@@ -317,6 +317,13 @@ final class DefaultMutableServletHttpRequest<B> implements MutableServletHttpReq
         return servletHttpRequest.getNativeRequest();
     }
 
+    /**
+     * @return The request this is a view of
+     */
+    DefaultServletHttpRequest<B> servletRequest() {
+        return servletHttpRequest;
+    }
+
     @Override
     public ByteBody byteBody() {
         // the bytes of the request, which the route reads unless the body was set

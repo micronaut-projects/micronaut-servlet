@@ -145,7 +145,8 @@ public class ServletPartBinder<T> implements AnnotatedRequestArgumentBinder<Part
                 return bindSingleValue(formFactory, form, context, boundName);
             }
         }
-        if (source instanceof ServletExchange<?, ?> exchange) {
+        ServletExchange<?, ?> exchange = DefaultServletHttpRequest.exchangeOf(source);
+        if (exchange != null) {
             final HttpServletRequest nativeRequest = (HttpServletRequest) exchange.getRequest().getNativeRequest();
             final Argument<T> argument = context.getArgument();
             final String partName = boundName;
@@ -168,8 +169,7 @@ public class ServletPartBinder<T> implements AnnotatedRequestArgumentBinder<Part
     }
 
     private static boolean bodyStreamOpened(HttpRequest<?> source) {
-        return source instanceof ServletExchange<?, ?> exchange
-            && exchange.getRequest() instanceof DefaultServletHttpRequest<?> servletRequest
+        return DefaultServletHttpRequest.exchangeOf(source) instanceof DefaultServletHttpRequest<?> servletRequest
             && servletRequest.isBodyStreamOpened();
     }
 

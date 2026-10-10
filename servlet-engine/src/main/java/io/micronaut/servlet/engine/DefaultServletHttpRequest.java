@@ -37,6 +37,7 @@ import io.micronaut.http.MutableHttpHeaders;
 import io.micronaut.http.MutableHttpParameters;
 import io.micronaut.http.MutableHttpRequest;
 import io.micronaut.http.ServerHttpRequest;
+import io.micronaut.http.body.AsyncRequestBody;
 import io.micronaut.http.body.ByteBody;
 import io.micronaut.http.body.ByteBodyFactory;
 import io.micronaut.http.body.CloseableByteBody;
@@ -64,6 +65,8 @@ import io.micronaut.servlet.http.ServletExchange;
 import io.micronaut.servlet.http.ServletHttpRequest;
 import io.micronaut.servlet.http.ServletHttpResponse;
 import io.micronaut.servlet.http.StreamedServletMessage;
+import io.micronaut.web.router.RouteAttributes;
+import io.micronaut.web.router.MethodBasedRouteInfo;
 import jakarta.servlet.AsyncContext;
 import jakarta.servlet.AsyncEvent;
 import jakarta.servlet.AsyncListener;
@@ -83,6 +86,7 @@ import reactor.core.publisher.Flux;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import javax.net.ssl.SSLSession;
 import java.io.BufferedReader;
@@ -92,6 +96,7 @@ import java.io.InputStreamReader;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URLDecoder;
+import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.Principal;
@@ -290,6 +295,11 @@ public final class DefaultServletHttpRequest<B> implements
         this.parameters = new ServletParameters();
         this.primaryResponse = new DefaultServletHttpResponse<>(conversionService, this, response);
         this.body = SupplierUtil.memoizedNonEmpty(() -> {
+            if (parsedBody == null && readsBodyAsynchronously()) {
+                // the route reads the body itself, through an AsyncRequestBody: like on the Netty server, the
+                // request has no decoded body, and decoding it here would claim the bytes the route reads
+                return Optional.empty();
+            }
             B built = parsedBody != null ? parsedBody : (B) bodyBuilder.buildBody(this::getInputStream, this);
             return Optional.ofNullable(built);
         });
@@ -474,11 +484,27 @@ public final class DefaultServletHttpRequest<B> implements
                 null
             );
         }
-        InputStream stream = new LazyDelegateInputStream(this::openBodyStream);
-        if (bodySizeLimits.maxBodySize() < Long.MAX_VALUE) {
-            stream = new LimitedInputStream(stream, bodySizeLimits.maxBodySize());
-        }
-        return InputStreamByteBody.create(stream, length, ioExecutor, byteBodyFactory);
+        // a container without asynchronous reads, e.g. the JDK server: the stream is read with blocking reads on the
+        // IO executor, through the shared streaming body so that both size limits apply as on the other servers
+        ReadBufferFactory readBufferFactory = byteBodyFactory.readBufferFactory();
+        LazyDelegateInputStream stream = new LazyDelegateInputStream(this::openBodyStream);
+        Flux<ByteBuffer> chunks = Flux.<ByteBuffer>generate(sink -> {
+                try {
+                    byte[] chunk = new byte[8192];
+                    int n = stream.read(chunk);
+                    if (n == -1) {
+                        sink.complete();
+                    } else {
+                        sink.next(ByteBuffer.wrap(chunk, 0, n));
+                    }
+                } catch (IOException e) {
+                    sink.error(e);
+                }
+            })
+            // the stream is not closed when the body is cancelled: what is left of it is dropped once the response
+            // completed, see discardUnreadBody, and the container closes it with the exchange
+            .subscribeOn(Schedulers.fromExecutor(ioExecutor), false);
+        return byteBodyFactory.adapt(chunks.map(readBufferFactory::adapt), bodySizeLimits, headers, null);
     }
 
     /**
@@ -761,6 +787,40 @@ public final class DefaultServletHttpRequest<B> implements
     }
 
     @NonNull
+    /**
+     * Whether the matched route takes the body as an {@link AsyncRequestBody}, as a handler route that declares
+     * a body does: it is an argument of the route method, not the body argument of the route.
+     */
+    private boolean readsBodyAsynchronously() {
+        return RouteAttributes.getRouteInfo(this)
+            .filter(MethodBasedRouteInfo.class::isInstance)
+            .map(route -> {
+                for (Argument<?> argument : ((MethodBasedRouteInfo<?, ?>) route).getTargetMethod().getArguments()) {
+                    if (AsyncRequestBody.class.isAssignableFrom(argument.getType())) {
+                        return true;
+                    }
+                }
+                return false;
+            })
+            .orElse(false);
+    }
+
+    /**
+     * @param request A request a route is bound from
+     * @return The exchange of the servlet request behind it, which is the request itself or, for the mutable view
+     * a filter continued with, the request it is a view of
+     */
+    @Internal
+    public static @Nullable ServletExchange<?, ?> exchangeOf(HttpRequest<?> request) {
+        if (request instanceof ServletExchange<?, ?> exchange) {
+            return exchange;
+        }
+        if (request instanceof DefaultMutableServletHttpRequest<?> view) {
+            return view.servletRequest();
+        }
+        return null;
+    }
+
     @Override
     public Optional<B> getBody() {
         return this.body.get();
@@ -918,10 +978,11 @@ public final class DefaultServletHttpRequest<B> implements
     @Override
     public void discardUnreadBody(Runnable then) {
         ServletStreamPublisher publisher = streamPublisher;
-        if (publisher == null && byteBody.get() == null && !bodyStreamOpened && mayHaveBody()) {
-            // the route never touched the body: it is read and dropped all the same, or the container may drop the
-            // connection while the client is still sending it. The route ran on the thread of the container, so
-            // the body is read there, as the container itself would before reusing the connection
+        if (publisher == null && mayHaveBody() && (!bodyStreamOpened || !delegate.isAsyncSupported())) {
+            // the route never touched the body, or, on a container without asynchronous reads, read only part of it:
+            // the rest is read and dropped all the same, or the container may drop the connection while the client
+            // is still sending it. The body is read on this thread, as the container itself would before reusing
+            // the connection
             try (InputStream in = delegate.getInputStream()) {
                 byte[] buffer = new byte[8192];
                 long dropped = 0;

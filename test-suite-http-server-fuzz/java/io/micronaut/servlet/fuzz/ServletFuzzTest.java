@@ -61,21 +61,18 @@ public class ServletFuzzTest {
 
     static {
         // key: "engine[,engine]:regex matched against the start of the case name"
-        String copy = "NEW: AsyncRequestBody.copy() read concurrently with the original loses/corrupts bytes of the original on chunked requests (ServletStreamPublisher / shared buffer)";
-        for (String e : List.of("jetty", "tomcat", "undertow")) {
+        String copy = "core: AsyncRequestBody.copy() read concurrently with the original corrupts the original of a chunked request; the body publisher emits the exact bytes sent and the copy is intact, and the JDK server, which does not use ServletStreamPublisher, fails the same way";
+        for (String e : List.of("jetty", "tomcat", "undertow", "jdk")) {
             KNOWN_FAILURES.put(e + ":asyncbody copy concurrent size=[0-9_]+ chunk=[1-9]", copy);
         }
         KNOWN_FAILURES.put("jetty,tomcat,undertow:echo /fn/copy large-chunked", copy);
         KNOWN_FAILURES.put("jetty,tomcat,undertow:echo /fn/copy small-chunked-random", copy);
         KNOWN_FAILURES.put("jetty,tomcat,undertow:echo /fn/copy 3MB-chunked", copy);
         KNOWN_FAILURES.put("jetty,tomcat,undertow:transport concurrent mixed requests", copy + ", hit by its /fn/copy requests");
-        KNOWN_FAILURES.put("jetty,tomcat,undertow:limit 17MB chunked > max-request-size -> 413 \\(/f/is", "core: the InputStream of a ByteBody fails a read past max-request-size with an IOException, answered with 500 rather than 413, the same on the Netty server (NettyInputStreamBodyBinder)");
+        KNOWN_FAILURES.put("jetty,tomcat,undertow,jdk:limit 17MB chunked > max-request-size -> 413 \\(/f/is", "core: the InputStream of a ByteBody fails a read past max-request-size with an IOException, answered with 500 rather than 413, the same on the Netty server (NettyInputStreamBodyBinder)");
         KNOWN_FAILURES.put("undertow:mp part order|undertow:mp random#(10|15|20|24) ", "container quirk: Undertow groups the parts by name, so getParts() is not in arrival order");
         KNOWN_FAILURES.put("jetty,tomcat,undertow:mp boundary-like bytes inside a file|jetty,tomcat,undertow:mp .* crlf-in-content", "container multipart parsers treat '--boundaryX' inside content as a delimiter (container quirk)");
         KNOWN_FAILURES.put("jdk:mp |jdk:transport client disconnect mid-upload /f/mp-streaming|jdk:transport client disconnect mid-upload /fn/parts|jdk:transport next request after an aborted chunked upload /f/mp|jdk:transport next request after an aborted chunked upload /fn/parts|jdk:mp ", "NEW: the JDK server does not implement multipart (HttpExchangeHttpServletRequest#getPart: UnsupportedOperationException -> 500)");
-        KNOWN_FAILURES.put("jdk:echo .* 4.8MB|jdk:limit |jdk:echo /f/string 3MB", "known: JDK server async-body size limits");
-        KNOWN_FAILURES.put("jdk:resp err-after(-stream)? n=1$", "NEW: JDK sends nothing at all when a stream fails after its first element");
-        KNOWN_FAILURES.put("jdk:keepalive (post-ignore-2MB|post-unread-1MB|post-404-500KB) -> ", "known: JDK server unread-body discarding");
     }
 
     ServerUnderTest server;
@@ -863,8 +860,9 @@ public class ServletFuzzTest {
                 add("resp " + p + " n=" + n, () -> {
                     Resp r = call(new Req("GET", "/r/" + p + "?n=" + n));
                     record("resp " + p + " n=" + n, r);
-                    // an error after the first element must not look like a successful complete response
-                    assertTrue(r.status() >= 500 || r.truncated(), "error after elements looked like a clean response: " + r);
+                    // an error after the first element must not look like a successful complete response: a connection
+                    // closed before any response (status -1), as on the JDK server, does not
+                    assertTrue(r.status() >= 500 || r.status() == -1 || r.truncated(), "error after elements looked like a clean response: " + r);
                 });
             }
         }
