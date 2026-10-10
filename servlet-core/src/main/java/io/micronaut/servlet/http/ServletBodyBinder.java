@@ -26,6 +26,7 @@ import io.micronaut.core.io.Readable;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.BasicHttpAttributes;
 import io.micronaut.http.HttpRequest;
+import io.micronaut.http.exceptions.ContentLengthExceededException;
 import io.micronaut.http.body.DirectByteBodyAccess;
 import io.micronaut.http.HttpRequestWrapper;
 import io.micronaut.http.MediaType;
@@ -57,6 +58,7 @@ import reactor.core.publisher.Mono;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
+import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
@@ -154,7 +156,7 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
                     if (server.byteBody().expectedLength().orElse(-1) == 0) {
                         return BindingResult.unsatisfied();
                     }
-                    InputStream inputStream = server.byteBody().toInputStream();
+                    InputStream inputStream = new SizeLimitInputStream(server.byteBody().toInputStream());
                     return () -> (Optional<T>) Optional.of(inputStream);
                 }
                 try {
@@ -655,6 +657,45 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
         @Override
         public String getName() {
             return servletHttpRequest.getPath();
+        }
+    }
+
+    /**
+     * Fails a read past {@code micronaut.server.max-request-size} with the {@link ContentLengthExceededException}
+     * itself rather than the {@link IOException} that wraps it, so that a route reading the body answers
+     * {@code 413 Request Entity Too Large} and not {@code 500}.
+     */
+    private static final class SizeLimitInputStream extends FilterInputStream {
+
+        SizeLimitInputStream(InputStream in) {
+            super(in);
+        }
+
+        @Override
+        public int read() throws IOException {
+            try {
+                return super.read();
+            } catch (IOException e) {
+                throw tooLargeOr(e);
+            }
+        }
+
+        @Override
+        public int read(byte[] b, int off, int len) throws IOException {
+            try {
+                return in.read(b, off, len);
+            } catch (IOException e) {
+                throw tooLargeOr(e);
+            }
+        }
+
+        private static IOException tooLargeOr(IOException e) {
+            for (Throwable cause = e.getCause(); cause != null && cause != cause.getCause(); cause = cause.getCause()) {
+                if (cause instanceof ContentLengthExceededException tooLarge) {
+                    throw tooLarge;
+                }
+            }
+            return e;
         }
     }
 }
