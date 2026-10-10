@@ -158,6 +158,43 @@ class JettyReloadTest {
     }
 
     @Test
+    void jettysOwnStaticResourcesResolveAClasspathPathWithTheGenerationsResources() throws Exception {
+        // Jetty serves no file through a symbolic link, such as /var on macOS, where the temporary directory is
+        try (ReloadHarness harness = ReloadHarness.inDirectory(project.toRealPath())) {
+            int port = JettyApp.properties(harness, Map.of(
+                "micronaut.server.jetty.native-static-resources", "true",
+                "micronaut.router.static-resources.site.paths", "classpath:site",
+                "micronaut.router.static-resources.site.mapping", "/site/**"
+            ));
+            harness.source("example.HelloController", JettyApp.CONTROLLER.formatted("first"));
+            harness.resource("site/notes.txt", "notes first");
+            harness.start();
+            assertServedByJetty(port, "/site/notes.txt", "notes first");
+
+            // the next generation's resources, on the kept server
+            harness.resource("site/notes.txt", "notes second");
+            harness.source("example.HelloController", JettyApp.CONTROLLER.formatted("second"));
+            harness.reload();
+            assertEquals("second", JettyApp.get(port, "/hello"));
+            assertServedByJetty(port, "/site/notes.txt", "notes second");
+
+            ReloadTck.assertRetiredGenerationsCollected(harness);
+        }
+    }
+
+    /**
+     * A static file served by Jetty's own resource handler, which sets Last-Modified, rather than by Micronaut's
+     * static resources behind the servlet, which would serve the same mapping were Jetty's to miss it.
+     */
+    private static void assertServedByJetty(int port, String path, String body) throws Exception {
+        HttpResponse<String> response = HttpClient.newHttpClient().send(HttpRequest.newBuilder(URI.create("http://localhost:" + port + path))
+            .timeout(Duration.ofSeconds(30)).GET().build(), HttpResponse.BodyHandlers.ofString());
+        assertEquals(200, response.statusCode());
+        assertEquals(body, response.body());
+        assertTrue(response.headers().firstValue("last-modified").isPresent(), response.headers().map().toString());
+    }
+
+    @Test
     void aRequestInFlightFinishesOnTheStoppingGeneration() throws Exception {
         try (ReloadHarness harness = ReloadHarness.inDirectory(project)) {
             int port = JettyApp.properties(harness, Map.of());
