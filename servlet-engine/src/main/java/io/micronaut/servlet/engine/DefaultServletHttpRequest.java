@@ -146,6 +146,11 @@ public final class DefaultServletHttpRequest<B> implements
     private final HttpServletRequest delegate;
     private final URI uri;
     private final HttpMethod method;
+    /**
+     * The name of the method, read when the request is created: a container recycles its request once the
+     * response completed, while e.g. an emitter that outlives it still logs the request.
+     */
+    private final String methodName;
     private final ServletRequestHeaders headers;
     private final ServletParameters parameters;
     private DefaultServletHttpResponse<B> primaryResponse;
@@ -281,6 +286,7 @@ public final class DefaultServletHttpRequest<B> implements
             method = HttpMethod.CUSTOM;
         }
         this.method = method;
+        this.methodName = Objects.requireNonNullElseGet(delegate.getMethod(), method::name);
         this.parameters = new ServletParameters();
         this.primaryResponse = new DefaultServletHttpResponse<>(conversionService, this, response);
         this.body = SupplierUtil.memoizedNonEmpty(() -> {
@@ -728,7 +734,7 @@ public final class DefaultServletHttpRequest<B> implements
     @NonNull
     @Override
     public String getMethodName() {
-        return Objects.requireNonNullElseGet(delegate.getMethod(), getMethod()::name);
+        return methodName;
     }
 
     @NonNull
