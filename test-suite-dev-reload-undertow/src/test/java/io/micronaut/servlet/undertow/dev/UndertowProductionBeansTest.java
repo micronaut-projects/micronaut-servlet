@@ -19,6 +19,7 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.runtime.server.EmbeddedServer;
 import io.micronaut.servlet.undertow.UndertowServer;
 import io.undertow.Undertow;
+import io.micronaut.servlet.engine.dev.DevelopmentLiveReloadFilter;
 import io.micronaut.servlet.http.server.DevelopmentSessionStore;
 import org.junit.jupiter.api.Test;
 
@@ -41,6 +42,7 @@ class UndertowProductionBeansTest {
             assertEquals(1, context.getBeansOfType(Undertow.class).size());
             assertFalse(context.containsBean(Class.forName("io.micronaut.servlet.undertow.RetainedUndertowServer")));
             assertFalse(context.containsBean(DevelopmentSessionStore.class));
+            assertFalse(context.containsBean(DevelopmentLiveReloadFilter.class));
         }
     }
 }
