@@ -159,6 +159,17 @@ public interface ServletHttpRequest<N, B> extends HttpRequest<B> {
             // the container never ends the execution itself
         }
 
+        /**
+         * Whether the container ended the asynchronous execution itself, e.g. because the client aborted the
+         * request: its request and response may then be recycled, and nothing is written to them any more.
+         *
+         * @return Whether the container ended the execution
+         * @since 6.3.0
+         */
+        default boolean isEndedByContainer() {
+            return false;
+        }
+
     }
 
 }

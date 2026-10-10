@@ -221,7 +221,8 @@ final class ServletStreamPublisher implements Publisher<ByteBuffer>, Subscriptio
                     discardedBytes += n;
                     upstreamReady = upstream().isReady();
                 }
-            } catch (IOException e) {
+            } catch (IOException | RuntimeException e) {
+                // e.g. the client aborted the request and the container recycled the stream: nothing more to drop
                 upstreamDone = true;
             }
         }
@@ -237,7 +238,13 @@ final class ServletStreamPublisher implements Publisher<ByteBuffer>, Subscriptio
     @Override
     public void onDataAvailable() {
         submit(() -> {
-            upstreamReady = upstream().isReady();
+            try {
+                upstreamReady = upstream().isReady();
+            } catch (RuntimeException e) {
+                // e.g. the client aborted the request and the container recycled the stream
+                error = e;
+                upstreamDone = true;
+            }
             if (discarded != null) {
                 drain();
             } else {

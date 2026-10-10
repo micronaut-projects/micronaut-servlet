@@ -922,7 +922,13 @@ public final class DefaultServletHttpRequest<B> implements
             // read inline or not at all: the container drops what is left of a small body itself
             then.run();
         } else {
-            publisher.discard(maxBodySize, then);
+            try {
+                publisher.discard(maxBodySize, then);
+            } catch (RuntimeException e) {
+                // the drain never stops the response from completing
+                LOG.debug("Failed to drop the unread body of request [{} - {}]", getMethodName(), getUri(), e);
+                then.run();
+            }
         }
     }
 
@@ -1080,6 +1086,7 @@ public final class DefaultServletHttpRequest<B> implements
 
         private final AsyncContext asyncContext;
         private final AtomicReference<@Nullable Runnable> endedByContainer = new AtomicReference<>();
+        private volatile boolean ended;
 
         ContainerAsyncExecution(AsyncContext asyncContext) {
             this.asyncContext = asyncContext;
@@ -1120,7 +1127,13 @@ public final class DefaultServletHttpRequest<B> implements
             // a re-dispatch is not something this engine does
         }
 
+        @Override
+        public boolean isEndedByContainer() {
+            return ended;
+        }
+
         private void ended() {
+            ended = true;
             Runnable hook = endedByContainer.getAndSet(null);
             if (hook != null) {
                 hook.run();

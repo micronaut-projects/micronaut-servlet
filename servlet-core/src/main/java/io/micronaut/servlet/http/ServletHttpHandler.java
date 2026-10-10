@@ -477,7 +477,15 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
             Thread containerThread = Thread.currentThread();
             lc.handleNormal(req)
                 .flatMap(response -> process(response, req, exchange.getResponse(), lc))
-                .onComplete((bbhr, t) -> completeAsync(exchange, bbhr, t, Thread.currentThread() == containerThread, finish));
+                .onComplete((bbhr, t) -> {
+                    if (ctx.isEndedByContainer()) {
+                        // the container ended the request, e.g. the client aborted it: its request and response may
+                        // be recycled and serving another request, so nothing is written to them
+                        finish.run();
+                        return;
+                    }
+                    completeAsync(exchange, bbhr, t, Thread.currentThread() == containerThread, finish);
+                });
             return null;
         }));
     }
