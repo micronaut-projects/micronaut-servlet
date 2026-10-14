@@ -200,7 +200,7 @@ class TomcatParameterBinding2Spec extends Specification {
         def e = thrown(HttpClientResponseException)
         def response = e.response
         response.status() == HttpStatus.BAD_REQUEST
-        response.body().toString().contains("Error decoding request body")
+        response.body().toString().contains("Invalid JSON")
     }
 
     void "test multipart binding"() {

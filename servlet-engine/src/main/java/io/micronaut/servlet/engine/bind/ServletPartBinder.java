@@ -31,7 +31,6 @@ import io.micronaut.http.body.MessageBodyHandlerRegistry;
 import io.micronaut.http.body.MessageBodyReader;
 import io.micronaut.http.codec.CodecException;
 import io.micronaut.http.exceptions.HttpStatusException;
-import io.micronaut.http.form.FormCapableHttpRequest;
 import io.micronaut.http.multipart.CompletedFileUpload;
 import io.micronaut.http.multipart.CompletedPart;
 import io.micronaut.http.server.HttpServerConfiguration;
@@ -40,12 +39,10 @@ import io.micronaut.http.server.multipart.FormFactory;
 import io.micronaut.http.simple.SimpleHttpHeaders;
 import io.micronaut.servlet.engine.DefaultServletHttpRequest;
 import io.micronaut.servlet.engine.ServletParts;
-import io.micronaut.servlet.http.FormPartBinder;
 import io.micronaut.servlet.http.ServletExchange;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.jspecify.annotations.NonNull;
-import org.reactivestreams.Publisher;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -57,19 +54,24 @@ import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 
 /**
- * A binder capable of binding servlet multipart requests.
+ * A binder capable of binding the parts of servlet multipart requests from the container parts.
+ *
+ * <p>The parts of a form are bound by the shared binders of the server. The servlet engine only uses this
+ * binder for a {@code @Part jakarta.servlet.http.Part} argument, the part of the container itself.</p>
  *
  * @param <T> The argument type
  * @author graemerocher
  * @since 1.0.0
+ * @deprecated The parts are bound by the shared binders of the server, see
+ * {@code io.micronaut.http.server.binding.DefaultServerRequestBinderRegistry}.
  */
+@Deprecated(since = "6.2.3", forRemoval = true)
 public class ServletPartBinder<T> implements AnnotatedRequestArgumentBinder<Part, T> {
 
     private final ConversionService conversionService;
     private final BeanProvider<FormFactory> formFactoryProvider;
     private final MessageBodyHandlerRegistry messageBodyHandlerRegistry;
     private final HttpServerConfiguration configuration;
-    private final FormPartBinder<T> formPartBinder;
 
     /**
      * Default constructor.
@@ -86,7 +88,6 @@ public class ServletPartBinder<T> implements AnnotatedRequestArgumentBinder<Part
         this.formFactoryProvider = formFactoryProvider;
         this.messageBodyHandlerRegistry = messageBodyHandlerRegistry;
         this.configuration = configuration;
-        this.formPartBinder = new FormPartBinder<>(conversionService, formFactoryProvider);
     }
 
     @Override
@@ -96,37 +97,16 @@ public class ServletPartBinder<T> implements AnnotatedRequestArgumentBinder<Part
 
     @Override
     public BindingResult<T> bind(ArgumentConversionContext<T> context, HttpRequest<?> source) {
-        final String boundName = context.getAnnotationMetadata().stringValue(Part.class).orElse(context.getArgument().getName());
-        BindingResult<T> fromForm = formPartBinder.bindForm(context, source, boundName, () -> bodyStreamOpened(source));
-        if (fromForm != null) {
-            return fromForm;
-        }
+        final String partName = context.getAnnotationMetadata().stringValue(Part.class).orElse(context.getArgument().getName());
         ServletExchange<?, ?> exchange = DefaultServletHttpRequest.exchangeOf(source);
         if (exchange != null) {
             final HttpServletRequest nativeRequest = (HttpServletRequest) exchange.getRequest().getNativeRequest();
-            final Argument<T> argument = context.getArgument();
-            final String partName = boundName;
             final MediaType requestContentType = source.getContentType().orElse(null);
-            final boolean isMultipart = requestContentType != null && requestContentType.matches(MediaType.MULTIPART_FORM_DATA_TYPE);
-
-            if (!isMultipart && source instanceof FormCapableHttpRequest<?> && ((FormCapableHttpRequest<?>) source).hasFormBody()) {
-                FormCapableHttpRequest<?> formRequest = (FormCapableHttpRequest<?>) source;
-                BindingResult<T> result = bindFromForm(formRequest, context, partName);
-                if (result != BindingResult.UNSATISFIED) {
-                    return result;
-                }
-            }
-
-            if (isMultipart) {
+            if (requestContentType != null && requestContentType.matches(MediaType.MULTIPART_FORM_DATA_TYPE)) {
                 return bindFromMultipart(context, exchange, nativeRequest, partName);
             }
         }
         return BindingResult.UNSATISFIED;
-    }
-
-    private static boolean bodyStreamOpened(HttpRequest<?> source) {
-        return DefaultServletHttpRequest.exchangeOf(source) instanceof DefaultServletHttpRequest<?> servletRequest
-            && servletRequest.isBodyStreamOpened();
     }
 
     private BindingResult<T> bindFromMultipart(ArgumentConversionContext<T> context,
@@ -237,23 +217,6 @@ public class ServletPartBinder<T> implements AnnotatedRequestArgumentBinder<Part
             }
         }
         return BindingResult.UNSATISFIED;
-    }
-
-    private BindingResult<T> bindFromForm(FormCapableHttpRequest<?> formRequest,
-                                          ArgumentConversionContext<T> context,
-                                          String partName) {
-        FormFactory factory = formFactoryProvider.get();
-        if (factory == null) {
-            return BindingResult.UNSATISFIED;
-        }
-        Argument<T> argument = context.getArgument();
-        Class<T> argumentType = argument.getType();
-
-        if (Publisher.class.isAssignableFrom(argumentType)) {
-            return formPartBinder.bindPublisher(factory, formRequest, context, partName);
-        }
-
-        return formPartBinder.bindSingleValue(factory, formRequest, context, partName);
     }
 
     private Optional<T> readUsingMessageBodyReader(ArgumentConversionContext<T> context,
