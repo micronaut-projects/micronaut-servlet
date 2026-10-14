@@ -61,14 +61,6 @@ public class ServletFuzzTest {
 
     static {
         // key: "engine[,engine]:regex matched against the start of the case name"
-        String copy = "core: AsyncRequestBody.copy() read concurrently with the original corrupts the original of a chunked request; the body publisher emits the exact bytes sent and the copy is intact, and the JDK server, which does not use ServletStreamPublisher, fails the same way";
-        for (String e : List.of("jetty", "tomcat", "undertow", "jdk")) {
-            KNOWN_FAILURES.put(e + ":asyncbody copy concurrent size=[0-9_]+ chunk=[1-9]", copy);
-        }
-        KNOWN_FAILURES.put("jetty,tomcat,undertow:echo /fn/copy large-chunked", copy);
-        KNOWN_FAILURES.put("jetty,tomcat,undertow:echo /fn/copy small-chunked-random", copy);
-        KNOWN_FAILURES.put("jetty,tomcat,undertow:echo /fn/copy 3MB-chunked", copy);
-        KNOWN_FAILURES.put("jetty,tomcat,undertow,jdk:transport concurrent mixed requests", copy + ", hit by its /fn/copy requests");
         KNOWN_FAILURES.put("undertow:mp part order|undertow:mp random#(10|15|20|24) ", "container quirk: Undertow groups the parts by name, so getParts() is not in arrival order");
         KNOWN_FAILURES.put("jetty,tomcat,undertow:mp boundary-like bytes inside a file|jetty,tomcat,undertow:mp .* crlf-in-content", "container multipart parsers treat '--boundaryX' inside content as a delimiter (container quirk)");
         KNOWN_FAILURES.put("jdk:mp |jdk:transport client disconnect mid-upload /f/mp-streaming|jdk:transport client disconnect mid-upload /fn/parts|jdk:transport next request after an aborted chunked upload /f/mp|jdk:transport next request after an aborted chunked upload /fn/parts|jdk:mp ", "NEW: the JDK server does not implement multipart (HttpExchangeHttpServletRequest#getPart: UnsupportedOperationException -> 500)");
