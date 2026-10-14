@@ -45,7 +45,6 @@ public final class BufferedFormDecoder {
     private BufferedFormDecoder() {
     }
 
-
     /**
      * @param contentType The content type of the form
      * @param bytes       Its bytes
