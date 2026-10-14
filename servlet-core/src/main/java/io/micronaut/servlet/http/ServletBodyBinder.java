@@ -79,7 +79,9 @@ import java.util.concurrent.CompletionStage;
  * @param <T> The body type
  * @author graemerocher
  * @since 2.0.0
+ * @deprecated The servlet runtimes use the shared body binder of the server, see {@link ServletServerBodyAnnotationBinder}.
  */
+@Deprecated(since = "6.2.3")
 public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body, T> {
     private static final Argument<byte[]> BYTE_ARRAY = Argument.of(byte[].class);
     private static final String UNABLE_TO_DECODE = "Unable to decode request body: ";

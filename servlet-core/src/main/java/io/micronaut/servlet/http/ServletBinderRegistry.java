@@ -40,7 +40,9 @@ import java.util.Optional;
  * @param <T> The type
  * @author graemerocher
  * @since 2.0.0
+ * @deprecated The servlet runtimes use the shared binders of the server, see {@link ServletServerRequestBinderRegistry}.
  */
+@Deprecated(since = "6.2.3")
 public abstract class ServletBinderRegistry<T> implements RequestBinderRegistry {
 
     private static final String BINDABLE_ANN = Bindable.class.getName();
