@@ -36,6 +36,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * The shared body binder of the server, which also keeps the body it decoded on a servlet request, so that
@@ -50,9 +51,9 @@ import java.util.Optional;
 @Replaces(ServerBodyAnnotationBinder.class)
 public class ServletServerBodyAnnotationBinder<T> extends ServerBodyAnnotationBinder<T> {
 
-    private final MessageBodyHandlerRegistry bodyHandlerRegistry;
+    private final MessageBodyHandlerRegistry servletBodyHandlerRegistry;
     private final BeanProvider<JsonMapper> jsonMapper;
-    private volatile @Nullable ServletBodyBinder<T> detachedBinder;
+    private final AtomicReference<ServletBodyBinder<T>> detachedBinder = new AtomicReference<>();
 
     /**
      * @param conversionService   The conversion service
@@ -65,7 +66,7 @@ public class ServletServerBodyAnnotationBinder<T> extends ServerBodyAnnotationBi
                                              BeanProvider<FormFactory> formFactory,
                                              BeanProvider<JsonMapper> jsonMapper) {
         super(conversionService, bodyHandlerRegistry, formFactory);
-        this.bodyHandlerRegistry = bodyHandlerRegistry;
+        this.servletBodyHandlerRegistry = bodyHandlerRegistry;
         this.jsonMapper = jsonMapper;
     }
 
@@ -120,10 +121,12 @@ public class ServletServerBodyAnnotationBinder<T> extends ServerBodyAnnotationBi
      */
     @SuppressWarnings("deprecation")
     ServletBodyBinder<T> servletBodyBinder() {
-        ServletBodyBinder<T> binder = detachedBinder;
+        ServletBodyBinder<T> binder = detachedBinder.get();
         if (binder == null) {
-            binder = new ServletBodyBinder<>(conversionService, bodyHandlerRegistry, new DefaultBodyAnnotationBinder<>(conversionService), jsonMapper.get());
-            detachedBinder = binder;
+            binder = new ServletBodyBinder<>(conversionService, servletBodyHandlerRegistry, new DefaultBodyAnnotationBinder<>(conversionService), jsonMapper.get());
+            if (!detachedBinder.compareAndSet(null, binder)) {
+                binder = detachedBinder.get();
+            }
         }
         return binder;
     }

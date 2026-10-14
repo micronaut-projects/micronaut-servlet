@@ -56,7 +56,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * The binders of the server for the requests of the servlet runtimes: the shared binders of the server, with a

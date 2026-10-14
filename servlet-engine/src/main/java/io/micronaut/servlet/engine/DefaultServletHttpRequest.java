@@ -450,6 +450,9 @@ public final class DefaultServletHttpRequest<B> implements
      * @return The body, or {@code null} for a small declared body that is read on first use, on the thread that
      * runs the route
      */
+    // the body stream of a container without asynchronous reads is not closed with the body: what is left of it is
+    // dropped once the response completed (see discardUnreadBody), and the container closes it with the exchange
+    @SuppressWarnings("java:S2095")
     private @Nullable CloseableByteBody createBody(long contentLength, BodySizeLimits bodySizeLimits) {
         OptionalLong length = contentLength < 0 ? OptionalLong.empty() : OptionalLong.of(contentLength);
         if (contentLength == 0 || (contentLength < 0 && !mayHaveBody())) {

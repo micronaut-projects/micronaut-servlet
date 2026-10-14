@@ -194,5 +194,20 @@ public final class BufferedFormDecoder {
      * @param content  Its bytes
      */
     public record Field(FormFieldMetadata metadata, byte[] content) {
+
+        @Override
+        public boolean equals(Object o) {
+            return o instanceof Field other && metadata.equals(other.metadata) && Arrays.equals(content, other.content);
+        }
+
+        @Override
+        public int hashCode() {
+            return 31 * metadata.hashCode() + Arrays.hashCode(content);
+        }
+
+        @Override
+        public String toString() {
+            return "Field[metadata=" + metadata + ", content=" + content.length + " bytes]";
+        }
     }
 }
