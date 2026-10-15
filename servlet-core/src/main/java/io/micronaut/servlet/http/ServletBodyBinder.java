@@ -633,7 +633,7 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
             // as the reader failed
             return codecException;
         }
-        return new CodecException(message + e.getMessage(), e);
+        return new RequestBodyDecodingException(message + e.getMessage(), e);
     }
 
     private record ServletReadable(
