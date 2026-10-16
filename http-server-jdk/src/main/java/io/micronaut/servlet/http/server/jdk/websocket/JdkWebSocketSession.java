@@ -55,6 +55,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static io.micronaut.servlet.http.server.jdk.websocket.WebSocketFrames.CLOSE_ABNORMAL;
 import static io.micronaut.servlet.http.server.jdk.websocket.WebSocketFrames.OPCODE_PONG;
@@ -102,7 +103,10 @@ final class JdkWebSocketSession implements Session, WebSocketFrameDecoder.Listen
     private volatile int maxTextMessageSize;
     private volatile int maxBinaryMessageSize;
     private volatile long maxIdleTimeout;
-    private volatile @Nullable CloseReason localCloseReason;
+    /**
+     * Why the session closed: the reason of the close the server sent first, or of the one the client did.
+     */
+    private final AtomicReference<@Nullable CloseReason> closeReason = new AtomicReference<>();
     private volatile boolean closeReceived;
     private @Nullable Future<?> idleCheck;
     private @Nullable List<Encoder> encoders;
@@ -147,7 +151,7 @@ final class JdkWebSocketSession implements Session, WebSocketFrameDecoder.Listen
             // the endpoint failed to open
             onError(e);
             closeQuietly(new CloseReason(CloseReason.CloseCodes.UNEXPECTED_CONDITION, "Endpoint failed to open"));
-            reason = localCloseReason;
+            reason = closeReason.get();
         }
         finish(reason != null ? reason : new CloseReason(CloseReason.CloseCodes.CLOSED_ABNORMALLY, ""));
     }
@@ -158,16 +162,17 @@ final class JdkWebSocketSession implements Session, WebSocketFrameDecoder.Listen
             while (decoder.readFrame(this)) {
                 connection.touch();
             }
-            return localCloseReason;
+            return closeReason.get();
         } catch (WebSocketProtocolException e) {
             LOG.debug("Closing WebSocket session [{}]: {}", id, e.getMessage());
             CloseReason reason = new CloseReason(CloseReason.CloseCodes.getCloseCode(e.getCloseCode()), e.getMessage());
             closeQuietly(reason);
             return reason;
         } catch (IOException e) {
-            if (localCloseReason != null && connection.isAborted()) {
+            CloseReason closed = closeReason.get();
+            if (closed != null && connection.isAborted()) {
                 // the server dropped the connection after its close, e.g. waiting for the close of the client
-                return localCloseReason;
+                return closed;
             }
             if (!(e instanceof EOFException)) {
                 onError(e);
@@ -254,8 +259,11 @@ final class JdkWebSocketSession implements Session, WebSocketFrameDecoder.Listen
             LOG.debug("Could not answer the close of WebSocket session [{}]: {}", id, e.getMessage());
             echoed = true;
         }
-        if (echoed || localCloseReason == null) {
-            localCloseReason = new CloseReason(CloseReason.CloseCodes.getCloseCode(code), reason);
+        CloseReason received = new CloseReason(CloseReason.CloseCodes.getCloseCode(code), reason);
+        if (echoed) {
+            closeReason.set(received);
+        } else {
+            closeReason.compareAndSet(null, received);
         }
     }
 
@@ -313,7 +321,7 @@ final class JdkWebSocketSession implements Session, WebSocketFrameDecoder.Listen
             switch (kind) {
                 case TEXT -> textHandler = checkFree(textHandler, kind, added);
                 case BINARY -> binaryHandler = checkFree(binaryHandler, kind, added);
-                case PONG -> pongHandler = checkFree(pongHandler, kind, added);
+                default -> pongHandler = checkFree(pongHandler, kind, added);
             }
         }
     }
@@ -456,7 +464,7 @@ final class JdkWebSocketSession implements Session, WebSocketFrameDecoder.Listen
         if (!closing.compareAndSet(false, true)) {
             return;
         }
-        localCloseReason = closeReason;
+        this.closeReason.set(closeReason);
         int code = closeReason.getCloseCode().getCode();
         if (code == CLOSE_ABNORMAL || code == CloseReason.CloseCodes.TLS_HANDSHAKE_FAILURE.getCode()) {
             // these never go on the wire: the connection is just dropped
@@ -663,6 +671,9 @@ final class JdkWebSocketSession implements Session, WebSocketFrameDecoder.Listen
 
     /**
      * A registered message handler and the type of message it takes.
+     *
+     * @param type    The type of message
+     * @param handler The handler
      */
     private record Handler(Class<?> type, MessageHandler handler) {
     }
