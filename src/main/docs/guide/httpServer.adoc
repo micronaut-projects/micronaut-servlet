@@ -34,3 +34,13 @@ micronaut:
 ----
 
 `logger-name` defaults to `HTTP_ACCESS_LOGGER`, as on the Netty server, and `exclusions` are regular expressions matched against the request path. Beans of type `com.sun.net.httpserver.Filter` are applied to every context of the server in bean order, which is how the access log is installed and can be used for other per-exchange concerns.
+
+==== WebSocket
+
+The `com.sun.net.httpserver` provider of the JDK cannot switch protocols, so out of the box a
+WebSocket handshake is answered with `501 Not Implemented`, and an application that declares
+`@ServerWebSocket` beans or WebSocket routes logs a warning at startup. Use the Jetty, Tomcat,
+Undertow or Netty runtime for WebSocket, or add `io.github.robaho:httpserver`, whose drop-in
+provider supports the upgrade: see <<websocket-jdk, WebSocket on the built-in JDK HTTP server>>.
+`micronaut.server.jdk.websocket` (`auto`, `enabled` or `disabled`) sets whether a handshake is
+upgraded.

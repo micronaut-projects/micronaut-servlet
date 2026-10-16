@@ -37,7 +37,7 @@ class JettyJsonBodyBindingSpec3 extends Specification {
         then:
         def e = thrown(HttpClientResponseException)
         e.response.status == HttpStatus.BAD_REQUEST
-        e.response.getBody().isEmpty()
+        e.response.getBody(String).get().contains("Invalid JSON")
     }
 
     @Requires(property = 'spec.name', value = 'JettyJsonBodyBindingSpec3')

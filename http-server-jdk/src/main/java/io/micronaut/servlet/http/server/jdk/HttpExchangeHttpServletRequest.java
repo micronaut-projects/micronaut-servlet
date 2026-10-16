@@ -27,6 +27,7 @@ import io.micronaut.http.cookie.ServerCookieDecoder;
 import io.micronaut.http.form.FormUrlEncodedDecoder;
 import io.micronaut.http.uri.QueryStringDecoder;
 import io.micronaut.http.util.HttpHeadersUtil;
+import io.micronaut.servlet.http.server.jdk.websocket.UpgradableExchange;
 
 import jakarta.servlet.AsyncContext;
 import jakarta.servlet.DispatcherType;
@@ -57,6 +58,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -69,19 +71,37 @@ import static io.micronaut.http.util.HttpHeadersUtil.parseCharacterEncoding;
  */
 @Experimental
 @Internal
-final class HttpExchangeHttpServletRequest implements HttpServletRequest {
+final class HttpExchangeHttpServletRequest implements HttpServletRequest, UpgradableExchange {
     private static final Logger LOG = LoggerFactory.getLogger(HttpExchangeHttpServletRequest.class);
     private final HttpExchange exchange;
     private final ServletInputStream inputStream;
     private final FormUrlEncodedDecoder formUrlEncodedDecoder;
     private final Map<String, @Nullable Object> attributes = new HashMap<>();
     private @Nullable Map<String, String[]>  parameters;
+    private @Nullable Runnable upgradedConnection;
 
     HttpExchangeHttpServletRequest(HttpExchange httpExchange,
                                    FormUrlEncodedDecoder formUrlEncodedDecoder) {
         this.exchange = httpExchange;
         this.formUrlEncodedDecoder = formUrlEncodedDecoder;
         this.inputStream = new HttpExchangeServletInputStream(exchange);
+    }
+
+    @Override
+    public HttpExchange getHttpExchange() {
+        return exchange;
+    }
+
+    @Override
+    public void upgraded(Runnable connection) {
+        this.upgradedConnection = connection;
+    }
+
+    /**
+     * @return The connection the exchange was switched to, to run once the dispatch is over, if any
+     */
+    @Nullable Runnable upgradedConnection() {
+        return upgradedConnection;
     }
 
     @Override
@@ -149,7 +169,9 @@ final class HttpExchangeHttpServletRequest implements HttpServletRequest {
 
     @Override
     public String getRequestURI() {
-        return exchange.getRequestURI().getPath();
+        // not decoded, as the Servlet specification has it: a decoded path is no longer a valid URI once it holds
+        // e.g. a space, and its path variables would be decoded twice
+        return exchange.getRequestURI().getRawPath();
     }
 
     @Override
@@ -450,7 +472,8 @@ final class HttpExchangeHttpServletRequest implements HttpServletRequest {
 
     @Override
     public <T extends HttpUpgradeHandler> T upgrade(Class<T> aClass) throws IOException, ServletException {
-        throw new UnsupportedOperationException("Not implemented");
+        // a WebSocket upgrade goes through the ServerContainer of this runtime, which takes the exchange over
+        throw new UnsupportedOperationException("The JDK HTTP server has no servlet protocol upgrade");
     }
 
     @Override
@@ -521,7 +544,7 @@ final class HttpExchangeHttpServletRequest implements HttpServletRequest {
     }
 
     private static Map<String, String[]> mergeParams(Map<String, Object> map1, Map<String, List<String>> map2) {
-        Map<String, String[]> mergedMap = new HashMap<>();
+        Map<String, String[]> mergedMap = new LinkedHashMap<>();
 
         for (Map.Entry<String, Object> entry : map1.entrySet()) {
             String key = entry.getKey();

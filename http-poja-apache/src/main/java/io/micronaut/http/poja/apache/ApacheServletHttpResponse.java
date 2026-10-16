@@ -80,6 +80,11 @@ final class ApacheServletHttpResponse<T> extends PojaHttpResponse<T, ClassicHttp
     }
 
     @Override
+    public boolean isCommitted() {
+        return responseContext.isCommitted();
+    }
+
+    @Override
     public BufferedWriter getWriter() throws IOException {
         return new BufferedWriter(new OutputStreamWriter(getOutputStream(), StandardCharsets.UTF_8));
     }

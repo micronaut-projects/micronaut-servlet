@@ -5,4 +5,6 @@ plugins {
 dependencies {
     testImplementation(projects.micronautHttpPojaApache)
     testImplementation(projects.micronautHttpPojaTest)
+    // the tests of a class the suite runs that this runtime cannot pass, see PojaExcludedTestsFilter
+    testImplementation("org.junit.platform:junit-platform-launcher")
 }

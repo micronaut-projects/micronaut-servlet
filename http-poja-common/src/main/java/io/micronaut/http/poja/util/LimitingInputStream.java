@@ -20,7 +20,9 @@ import java.io.InputStream;
 
 /**
  * A wrapper around input stream that limits the maximum size to be read.
+ * @deprecated Use {@link io.micronaut.servlet.http.LimitedInputStream}.
  */
+@Deprecated(since = "6.2.3")
 public class LimitingInputStream extends InputStream {
 
     private long size;

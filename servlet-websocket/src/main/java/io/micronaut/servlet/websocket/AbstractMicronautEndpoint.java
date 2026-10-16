@@ -21,7 +21,9 @@ import io.micronaut.core.bind.BoundExecutable;
 import io.micronaut.core.bind.DefaultExecutableBinder;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.execution.CompletableFutureExecutionFlow;
+import io.micronaut.core.execution.DelayedExecutionFlow;
 import io.micronaut.core.execution.ExecutionFlow;
+import io.micronaut.core.execution.ImmediateExecutor;
 import io.micronaut.core.io.buffer.ByteArrayBufferFactory;
 import io.micronaut.core.propagation.PropagatedContext;
 import io.micronaut.core.type.Argument;
@@ -37,6 +39,7 @@ import io.micronaut.http.server.CoroutineHelper;
 import io.micronaut.http.simple.SimpleHttpHeaders;
 import io.micronaut.inject.ExecutableMethod;
 import io.micronaut.inject.MethodExecutionHandle;
+import io.micronaut.web.router.websocket.WebSocketRouteEndpoint;
 import io.micronaut.websocket.CloseReason;
 import io.micronaut.websocket.WebSocketPongMessage;
 import io.micronaut.websocket.annotation.OnMessage;
@@ -68,6 +71,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -121,6 +125,18 @@ public abstract class AbstractMicronautEndpoint extends Endpoint {
     private @Nullable Argument<?> textBodyArgument;
     private @Nullable Argument<?> binaryBodyArgument;
     private @Nullable Argument<?> pongBodyArgument;
+    /**
+     * The endpoint of a WebSocket route of the route builder, or {@code null} for a bean.
+     */
+    private @Nullable WebSocketRouteEndpoint routeEndpoint;
+    /**
+     * The executor of a WebSocket route of the route builder, which runs its handlers.
+     */
+    private Executor routeExecutor = ImmediateExecutor.INSTANCE;
+    /**
+     * The messages of a WebSocket route of the route builder, handled in their turn.
+     */
+    private @Nullable RouteMessageQueue routeMessages;
 
     /**
      * Default constructor.
@@ -161,6 +177,9 @@ public abstract class AbstractMicronautEndpoint extends Endpoint {
         this.nativeSession = session;
         this.endpointConfig = config;
         this.micronautSession = micronautSession;
+        if (webSocketBean instanceof WebSocketRouteEndpoint endpoint) {
+            routeOpened(endpoint);
+        }
 
         if (!resolveHandlers(session, config)) {
             return false;
@@ -172,6 +191,9 @@ public abstract class AbstractMicronautEndpoint extends Endpoint {
 
         sessionOpened(micronautSession);
         registerMessageHandlers(session);
+        if (routeEndpoint != null) {
+            connectRoute(routeEndpoint, micronautSession);
+        }
 
         ExecutableMethod<Object, ?> openMethod = handler(webSocketBean.openMethod());
         opened = true;
@@ -193,6 +215,12 @@ public abstract class AbstractMicronautEndpoint extends Endpoint {
      * meantime is held back here.</p>
      */
     private void completeOpen() {
+        RouteMessageQueue messages = routeMessages;
+        if (messages != null) {
+            messages.opened();
+            openCompleted();
+            return;
+        }
         synchronized (gate) {
             // Replayed under the gate: a message the container delivers meanwhile waits its turn
             // behind the backlog rather than overtaking it.
@@ -203,6 +231,45 @@ public abstract class AbstractMicronautEndpoint extends Endpoint {
             }
         }
         openCompleted();
+    }
+
+    /**
+     * Sets a connection to a WebSocket route of the route builder up: its handlers run on the
+     * executor of the route, and its messages are handled in their turn.
+     *
+     * @param endpoint The endpoint of the route
+     */
+    private void routeOpened(WebSocketRouteEndpoint endpoint) {
+        this.routeEndpoint = endpoint;
+        Executor executor = routeExecutor();
+        if (executor != null) {
+            this.routeExecutor = executor;
+        }
+        this.routeMessages = new RouteMessageQueue(endpoint.maxConcurrentMessages(), endpoint.maxPendingMessages());
+        synchronized (gate) {
+            // the queue of the route holds the messages back until the open handler is done
+            deferred = null;
+        }
+    }
+
+    /**
+     * Connects the session to the endpoint of a WebSocket route, whose stream of messages, if any,
+     * signals its subscriber on the executor of the route with the upgrade request as the current
+     * request.
+     */
+    private void connectRoute(WebSocketRouteEndpoint endpoint, ServletWebSocketSession session) {
+        Executor executor = routeExecutor;
+        PropagatedContext context = propagatedContext();
+        endpoint.connected(session, command -> executor.execute(context.wrap(command)), this::forwardError);
+    }
+
+    /**
+     * The executor of a WebSocket route of the route builder, which runs its handlers.
+     *
+     * @return The executor, or {@code null} to run them on the thread that delivers what they handle
+     */
+    protected @Nullable Executor routeExecutor() {
+        return null;
     }
 
     private void dispatch(Runnable message) {
@@ -344,6 +411,14 @@ public abstract class AbstractMicronautEndpoint extends Endpoint {
      * @return {@code false} if a handler has none and the session was closed
      */
     private boolean resolveBodyArguments(Session session) {
+        if (routeEndpoint != null) {
+            // the handler functions declare the type of their message: it is never bound from the
+            // upgrade request, e.g. from a query parameter of the same name
+            this.textBodyArgument = routeEndpoint.messageArgument();
+            this.binaryBodyArgument = textBodyArgument;
+            this.pongBodyArgument = routeEndpoint.pongArgument();
+            return true;
+        }
         if (textMethod != null) {
             this.textBodyArgument = resolveBodyArgument(textMethod, false);
             if (textBodyArgument == null) {
@@ -370,10 +445,13 @@ public abstract class AbstractMicronautEndpoint extends Endpoint {
     }
 
     private void registerMessageHandlers(Session session) {
-        if (textMethod != null) {
+        // a WebSocket route without a message handler closes the connection on a message, like on
+        // Netty, rather than leave it to the container, which may ignore it
+        boolean route = routeEndpoint != null;
+        if (textMethod != null || route) {
             session.addMessageHandler(String.class, (MessageHandler.Whole<String>) this::onTextMessage);
         }
-        if (binaryMethod != null) {
+        if (binaryMethod != null || route) {
             session.addMessageHandler(ByteBuffer.class, (MessageHandler.Whole<ByteBuffer>) this::onBinaryMessage);
         }
         if (pongBodyArgument != null) {
@@ -420,6 +498,11 @@ public abstract class AbstractMicronautEndpoint extends Endpoint {
     }
 
     private void onTextMessage(String message) {
+        RouteMessageQueue messages = routeMessages;
+        if (messages != null) {
+            messages.offer(() -> handleMessage(textMethod, textBodyArgument, message, null));
+            return;
+        }
         dispatch(() -> handleMessage(textMethod, textBodyArgument, message, null));
     }
 
@@ -427,6 +510,11 @@ public abstract class AbstractMicronautEndpoint extends Endpoint {
         // Copied before anything is deferred: the container may reuse the buffer once this returns.
         byte[] bytes = new byte[message.remaining()];
         message.get(bytes);
+        RouteMessageQueue messages = routeMessages;
+        if (messages != null) {
+            messages.offer(() -> handleMessage(binaryMethod, binaryBodyArgument, null, bytes));
+            return;
+        }
         dispatch(() -> handleMessage(binaryMethod, binaryBodyArgument, null, bytes));
     }
 
@@ -435,6 +523,11 @@ public abstract class AbstractMicronautEndpoint extends Endpoint {
             return;
         }
         Object pong = pongOf(message);
+        if (routeEndpoint != null) {
+            // like a ping, a pong of a WebSocket route is handled at once, not in the turn of the messages
+            invoke(pongMethod, Map.of(pongBodyArgument, pong), null);
+            return;
+        }
         dispatch(() -> invoke(pongMethod, Map.of(pongBodyArgument, pong), null));
     }
 
@@ -489,29 +582,33 @@ public abstract class AbstractMicronautEndpoint extends Endpoint {
         });
     }
 
-    private void handleMessage(@Nullable ExecutableMethod<Object, ?> messageMethod,
-                               @Nullable Argument<?> bodyArgument,
-                               @Nullable String text,
-                               byte @Nullable [] bytes) {
+    /**
+     * Decodes a message and invokes its handler.
+     *
+     * @return A flow completing once the message is done with, its error handler included
+     */
+    private ExecutionFlow<?> handleMessage(@Nullable ExecutableMethod<Object, ?> messageMethod,
+                                           @Nullable Argument<?> bodyArgument,
+                                           @Nullable String text,
+                                           byte @Nullable [] bytes) {
         if (messageMethod == null || bodyArgument == null) {
             closeSession(CloseReason.UNSUPPORTED_DATA);
-            return;
+            return ExecutionFlow.just(null);
         }
         Object decoded;
         try {
             decoded = decode(messageMethod, bodyArgument, text, bytes);
         } catch (Exception e) {
-            forwardError(e);
-            return;
+            return forwardError(e);
         }
         if (decoded == null) {
             closeSession(new CloseReason(
                 CloseReason.UNSUPPORTED_DATA.getCode(),
                 "Received data cannot be data to target type: " + bodyArgument
             ));
-            return;
+            return ExecutionFlow.just(null);
         }
-        invoke(messageMethod, Map.of(bodyArgument, decoded), decoded);
+        return invoke(messageMethod, Map.of(bodyArgument, decoded), decoded);
     }
 
     /**
@@ -607,22 +704,40 @@ public abstract class AbstractMicronautEndpoint extends Endpoint {
      * @return The pre-bound arguments
      */
     private Map<Argument<?>, Object> frameworkArguments(ExecutableMethod<?, ?> method) {
+        if (routeEndpoint != null) {
+            // the handler functions of a route take the session and the upgrade request
+            return preBind(method, micronautSession, originatingRequest);
+        }
         return preBind(method, nativeSession, endpointConfig);
     }
 
-    private void invoke(ExecutableMethod<Object, ?> method,
-                        Map<Argument<?>, Object> preBound,
-                        @Nullable Object processedMessage) {
+    /**
+     * Invokes a handler, offering its failure to the error handler.
+     *
+     * @return A flow completing once the handler is done, its error handler included
+     */
+    private ExecutionFlow<?> invoke(ExecutableMethod<Object, ?> method,
+                                    Map<Argument<?>, Object> preBound,
+                                    @Nullable Object processedMessage) {
         // Jakarta sends what an @OnMessage method returns; Micronaut does not.
         boolean sendResult = jakartaEndpoint != null && method.hasAnnotation(JakartaEndpoint.ON_MESSAGE);
+        DelayedExecutionFlow<Object> done = DelayedExecutionFlow.create();
         invokeHandler(method, preBound, sendResult).onComplete((ignored, error) -> {
             if (error != null) {
-                forwardError(error);
-            } else if (processedMessage != null) {
-                support.applicationContext()
-                    .publishEvent(new WebSocketMessageProcessedEvent<>(micronautSession, processedMessage));
+                // the error handler first, then the next message
+                forwardError(error).onComplete((v, e) -> done.complete(null));
+                return;
+            }
+            try {
+                if (processedMessage != null) {
+                    support.applicationContext()
+                        .publishEvent(new WebSocketMessageProcessedEvent<>(micronautSession, processedMessage));
+                }
+            } finally {
+                done.complete(null);
             }
         });
+        return done;
     }
 
     /**
@@ -643,8 +758,9 @@ public abstract class AbstractMicronautEndpoint extends Endpoint {
     private ExecutionFlow<Object> invokeHandler(ExecutableMethod<Object, ?> method,
                                                 Map<Argument<?>, Object> preBound,
                                                 boolean sendResult) {
-        Executor executor = support.executorSelector()
-            .selectExecutor(method, support.threadSelectionConfiguration());
+        Executor executor = routeEndpoint != null
+            ? routeExecutor(method)
+            : support.executorSelector().selectExecutor(method, support.threadSelectionConfiguration());
         Map<Argument<?>, Object> bindings = bindings(method, preBound);
         PropagatedContext propagatedContext = propagatedContext();
         return ExecutionFlow.async(executor, () -> propagatedContext.propagate(() -> {
@@ -654,6 +770,18 @@ public abstract class AbstractMicronautEndpoint extends Endpoint {
                 return ExecutionFlow.error(e);
             }
         }));
+    }
+
+    /**
+     * The executor of a handler of a WebSocket route: the executor of the route, except for the
+     * stream of the messages, which receives them in the order they were read and signals its
+     * subscriber on the executor of the route.
+     */
+    private Executor routeExecutor(ExecutableMethod<Object, ?> method) {
+        if (method == textMethod && routeEndpoint != null && routeEndpoint.streamsMessages()) {
+            return ImmediateExecutor.INSTANCE;
+        }
+        return routeExecutor;
     }
 
     private Map<Argument<?>, Object> bindings(ExecutableMethod<Object, ?> method, Map<Argument<?>, Object> preBound) {
@@ -796,6 +924,7 @@ public abstract class AbstractMicronautEndpoint extends Endpoint {
             // Messages held for an open handler that is still running die with the session.
             deferred = null;
         }
+        closeRoute();
         ExecutableMethod<Object, ?> closeMethod = webSocketBean != null ? handler(webSocketBean.closeMethod()) : null;
         if (closeMethod == null) {
             finishClose();
@@ -807,6 +936,35 @@ public abstract class AbstractMicronautEndpoint extends Endpoint {
             }
             finishClose();
         });
+    }
+
+    /**
+     * The connection to a WebSocket route closed: nothing is sent after the close of the peer, the
+     * stream of a message stream handler receives the messages read before the close and then
+     * completes, before the close handler runs, which may wait for it; the other messages that
+     * wait for a handler are discarded.
+     */
+    private void closeRoute() {
+        RouteMessageQueue messages = routeMessages;
+        WebSocketRouteEndpoint endpoint = routeEndpoint;
+        if (messages == null || endpoint == null) {
+            return;
+        }
+        if (micronautSession != null) {
+            micronautSession.closeReceived();
+        }
+        List<Supplier<ExecutionFlow<?>>> waiting = messages.close();
+        if (!endpoint.streamsMessages() || micronautSession == null) {
+            return;
+        }
+        for (Supplier<ExecutionFlow<?>> message : waiting) {
+            message.get();
+        }
+        try {
+            endpoint.disconnected(micronautSession);
+        } catch (RuntimeException e) {
+            LOG.error("Error completing the WebSocket messages of [{}]: {}", endpoint, e.getMessage(), e);
+        }
     }
 
     private void finishClose() {
@@ -825,7 +983,11 @@ public abstract class AbstractMicronautEndpoint extends Endpoint {
      * @param cause The failure
      * @return A flow completing once the error handler has run
      */
-    private ExecutionFlow<Object> forwardError(Throwable cause) {
+    private ExecutionFlow<Object> forwardError(Throwable failure) {
+        // a handler of a route fails with the failure of its stage, e.g. of a thenCompose
+        Throwable cause = routeEndpoint != null && failure instanceof CompletionException && failure.getCause() != null
+            ? failure.getCause()
+            : failure;
         ExecutableMethod<Object, ?> errorMethod = webSocketBean != null ? handler(webSocketBean.errorMethod()) : null;
         if (errorMethod == null) {
             handleUnexpected(cause);

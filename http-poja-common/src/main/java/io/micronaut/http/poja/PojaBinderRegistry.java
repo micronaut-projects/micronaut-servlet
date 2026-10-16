@@ -15,46 +15,42 @@
  */
 package io.micronaut.http.poja;
 
+import io.micronaut.context.BeanProvider;
 import io.micronaut.context.annotation.Replaces;
+import io.micronaut.context.annotation.Secondary;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.convert.ConversionService;
-import io.micronaut.http.annotation.Body;
-import io.micronaut.http.bind.DefaultRequestBinderRegistry;
-import io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder;
 import io.micronaut.http.bind.binders.RequestArgumentBinder;
-import io.micronaut.http.body.MessageBodyHandlerRegistry;
-import io.micronaut.json.JsonMapper;
-import io.micronaut.servlet.http.ServletBinderRegistry;
+import io.micronaut.http.server.binding.DefaultServerRequestBinderRegistry;
+import io.micronaut.http.server.binding.ServerBodyAnnotationBinder;
+import io.micronaut.http.server.multipart.FormFactory;
+import io.micronaut.servlet.http.ServletServerRequestBinderRegistry;
 import jakarta.inject.Singleton;
 
 import java.util.List;
 
 /**
- * An argument binder registry implementation for serverless POJA applications.
+ * The binders of POJA: the shared binders of the server.
  *
- * @param <T> The type
+ * @since 4.10.0
  */
 @Internal
 @Singleton
-@Replaces(DefaultRequestBinderRegistry.class)
-final class PojaBinderRegistry<T> extends ServletBinderRegistry<T> {
+@Secondary
+@Replaces(DefaultServerRequestBinderRegistry.class)
+final class PojaBinderRegistry extends ServletServerRequestBinderRegistry {
 
     /**
-     * Default constructor.
-     *
-     * @param messageBodyHandlerRegistry  The message body handler registry
-     * @param conversionService           The conversion service
-     * @param binders                     Any registered binders
-     * @param defaultBodyAnnotationBinder The default binder
-     * @param jsonMapper                  The JSON mapper
+     * @param conversionService The conversion service
+     * @param binders           Any registered binders
+     * @param bodyBinder        The body binder
+     * @param formFactory       The form factory
      */
-    public PojaBinderRegistry(MessageBodyHandlerRegistry messageBodyHandlerRegistry,
-                              ConversionService conversionService,
-                              List<RequestArgumentBinder> binders,
-                              DefaultBodyAnnotationBinder<T> defaultBodyAnnotationBinder,
-                              JsonMapper jsonMapper) {
-        super(messageBodyHandlerRegistry, conversionService, binders, defaultBodyAnnotationBinder, jsonMapper);
-
-        this.byAnnotation.put(Body.class, new PojaBodyBinder<>(conversionService, messageBodyHandlerRegistry, defaultBodyAnnotationBinder, jsonMapper));
+    @SuppressWarnings({"rawtypes", "java:S3740"}) // the binders of the registry of core
+    PojaBinderRegistry(ConversionService conversionService,
+                       List<RequestArgumentBinder> binders,
+                       ServerBodyAnnotationBinder<Object> bodyBinder,
+                       BeanProvider<FormFactory> formFactory) {
+        super(conversionService, binders, bodyBinder, formFactory);
     }
 }

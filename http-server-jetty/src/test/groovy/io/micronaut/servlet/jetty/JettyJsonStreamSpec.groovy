@@ -225,7 +225,7 @@ class JettyJsonStreamSpec extends Specification {
         @Post(uri = "/count", processes = MediaType.APPLICATION_JSON_STREAM)
         @SingleResult
         Publisher<LibraryStats> count(@Body Publisher<Book> theBooks) {
-            theBooks.map {
+            Flux.from(theBooks).map {
                 Book b ->
                     JettyJsonStreamSpec.signal.release()
                     b.title

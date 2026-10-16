@@ -38,7 +38,7 @@ class JettyJsonBodyBindingSpec2 extends Specification {
 
         then:
         def e = thrown(HttpClientResponseException)
-        e.response.getBody(Map).get().message.contains """Unable to decode request body: Error decoding JSON stream for type [json]: Unrecognized token 'The'"""
+        e.response.getBody(Map).get()._embedded.errors[0].message.contains """Invalid JSON: Unrecognized token 'The'"""
         e.response.status == HttpStatus.BAD_REQUEST
 
         when:
@@ -51,7 +51,7 @@ class JettyJsonBodyBindingSpec2 extends Specification {
         response.headers.get(HttpHeaders.CONTENT_TYPE) == io.micronaut.http.MediaType.APPLICATION_JSON
         result['_links'].self.href == ['/json/map']
         result.message.startsWith "Invalid JSON"
-        result.message.contains "Unrecognized token 'The'"
+        result._embedded.errors[0].message.contains "Unrecognized token 'The'"
     }
 
     @Requires(property = 'spec.name', value = 'JettyJsonBodyBindingSpec2')
