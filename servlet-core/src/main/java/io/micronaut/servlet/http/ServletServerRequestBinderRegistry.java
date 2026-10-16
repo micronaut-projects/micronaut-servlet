@@ -98,9 +98,8 @@ public class ServletServerRequestBinderRegistry extends DefaultServerRequestBind
      * A body the shared binder does not read like the servlet runtimes did, read by the servlet body binder: a
      * future of a form body, which the servlet body binder reads from the fields the container parsed (the shared
      * binder decodes the bytes of the form instead, and completes the future on the thread that read them, which
-     * for a servlet container runs with the context of the request, so the stages of the route would see it), and
-     * a future or a publisher of one property of the body, {@code @Body("name")}, which the shared binder binds to
-     * the whole body.
+     * for a servlet container runs with the context of the request, so the stages of the route would see it). A
+     * future or a publisher of one property of the body, {@code @Body("name")}, is bound by the shared binder.
      *
      * @param delegate   The shared binder, for any other body
      * @param bodyBinder The body binder
@@ -125,7 +124,7 @@ public class ServletServerRequestBinderRegistry extends DefaultServerRequestBind
         @SuppressWarnings({"unchecked", "deprecation"})
         public BindingResult<B> bind(ArgumentConversionContext<B> context, HttpRequest<?> source) {
             boolean named = context.getAnnotationMetadata().stringValue(Body.class).isPresent();
-            if ((named || forms && isForm(source)) && ServerRequestBody.of(source) != null) {
+            if (!named && forms && isForm(source) && ServerRequestBody.of(source) != null) {
                 return (BindingResult<B>) bodyBinder.servletBodyBinder()
                     .bind((ArgumentConversionContext<Object>) (ArgumentConversionContext<?>) context, source);
             }
