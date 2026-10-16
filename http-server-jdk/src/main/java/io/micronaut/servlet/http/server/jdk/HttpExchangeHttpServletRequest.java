@@ -27,6 +27,7 @@ import io.micronaut.http.cookie.ServerCookieDecoder;
 import io.micronaut.http.form.FormUrlEncodedDecoder;
 import io.micronaut.http.uri.QueryStringDecoder;
 import io.micronaut.http.util.HttpHeadersUtil;
+import io.micronaut.servlet.http.server.jdk.websocket.UpgradableExchange;
 
 import jakarta.servlet.AsyncContext;
 import jakarta.servlet.DispatcherType;
@@ -70,19 +71,37 @@ import static io.micronaut.http.util.HttpHeadersUtil.parseCharacterEncoding;
  */
 @Experimental
 @Internal
-final class HttpExchangeHttpServletRequest implements HttpServletRequest {
+final class HttpExchangeHttpServletRequest implements HttpServletRequest, UpgradableExchange {
     private static final Logger LOG = LoggerFactory.getLogger(HttpExchangeHttpServletRequest.class);
     private final HttpExchange exchange;
     private final ServletInputStream inputStream;
     private final FormUrlEncodedDecoder formUrlEncodedDecoder;
     private final Map<String, @Nullable Object> attributes = new HashMap<>();
     private @Nullable Map<String, String[]>  parameters;
+    private @Nullable Runnable upgradedConnection;
 
     HttpExchangeHttpServletRequest(HttpExchange httpExchange,
                                    FormUrlEncodedDecoder formUrlEncodedDecoder) {
         this.exchange = httpExchange;
         this.formUrlEncodedDecoder = formUrlEncodedDecoder;
         this.inputStream = new HttpExchangeServletInputStream(exchange);
+    }
+
+    @Override
+    public HttpExchange getHttpExchange() {
+        return exchange;
+    }
+
+    @Override
+    public void upgraded(Runnable connection) {
+        this.upgradedConnection = connection;
+    }
+
+    /**
+     * @return The connection the exchange was switched to, to run once the dispatch is over, if any
+     */
+    @Nullable Runnable upgradedConnection() {
+        return upgradedConnection;
     }
 
     @Override
@@ -453,7 +472,8 @@ final class HttpExchangeHttpServletRequest implements HttpServletRequest {
 
     @Override
     public <T extends HttpUpgradeHandler> T upgrade(Class<T> aClass) throws IOException, ServletException {
-        throw new UnsupportedOperationException("Not implemented");
+        // a WebSocket upgrade goes through the ServerContainer of this runtime, which takes the exchange over
+        throw new UnsupportedOperationException("The JDK HTTP server has no servlet protocol upgrade");
     }
 
     @Override

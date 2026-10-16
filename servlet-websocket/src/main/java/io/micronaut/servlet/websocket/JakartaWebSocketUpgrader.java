@@ -16,6 +16,7 @@
 package io.micronaut.servlet.websocket;
 
 import io.micronaut.context.BeanContext;
+import io.micronaut.context.BeanProvider;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.util.StringUtils;
@@ -79,6 +80,7 @@ public final class JakartaWebSocketUpgrader implements ServletWebSocketUpgrader 
     private final HttpServerConfiguration serverConfiguration;
     private final HttpHostResolver httpHostResolver;
     private final WebSocketBeanRegistry webSocketBeanRegistry;
+    private final BeanProvider<ServerContainer> runtimeContainer;
     private final Map<Class<?>, Optional<JakartaEndpoint>> jakartaEndpoints = new ConcurrentHashMap<>();
     private final Map<Class<?>, ServerEndpointConfig.Configurator> configurators = new ConcurrentHashMap<>();
 
@@ -90,13 +92,17 @@ public final class JakartaWebSocketUpgrader implements ServletWebSocketUpgrader 
      * @param configuration       The WebSocket configuration
      * @param serverConfiguration The server configuration, used for the CORS policy
      * @param httpHostResolver    Resolves the host of the handshake, so a same-origin socket is recognised
+     * @param runtimeContainer    The container of a runtime without a servlet context, which publishes it as a
+     *                            bean instead: the one of the built-in JDK HTTP server
      */
     public JakartaWebSocketUpgrader(BeanContext beanContext,
                                     ServletWebSocketSupport support,
                                     ServletWebSocketConfiguration configuration,
                                     HttpServerConfiguration serverConfiguration,
-                                    HttpHostResolver httpHostResolver) {
+                                    HttpHostResolver httpHostResolver,
+                                    BeanProvider<ServerContainer> runtimeContainer) {
         this.support = support;
+        this.runtimeContainer = runtimeContainer;
         this.configuration = configuration;
         this.serverConfiguration = serverConfiguration;
         this.httpHostResolver = httpHostResolver;
@@ -116,7 +122,9 @@ public final class JakartaWebSocketUpgrader implements ServletWebSocketUpgrader 
             throw notImplemented("WebSocket upgrade requires a servlet request and response");
         }
 
-        ServerContainer container = resolveServerContainer(servletRequest);
+        ServerContainer container = runtimeContainer.isPresent()
+            ? runtimeContainer.get()
+            : resolveServerContainer(servletRequest);
         Class<?> declaringType = routeMatch.getRouteInfo().getDeclaringType();
         // a WebSocket route of the route builder carries its endpoint, a @ServerWebSocket route is to a bean
         WebSocketRouteEndpoint routeEndpoint = routeMatch.getRouteInfo()
