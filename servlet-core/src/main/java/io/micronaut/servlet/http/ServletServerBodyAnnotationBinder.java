@@ -154,17 +154,12 @@ public class ServletServerBodyAnnotationBinder<T> extends ServerBodyAnnotationBi
      */
     @Override
     protected @Nullable FormCapableHttpRequest<?> formRequest(ServerHttpRequest<?> server) {
-        HttpRequest<?> current = server;
-        while (true) {
+        for (HttpRequest<?> current = server; current != null; current = current instanceof HttpRequestWrapper<?> wrapper ? wrapper.getDelegate() : null) {
             if (current instanceof ServletHttpRequest<?, ?> && current instanceof FormCapableHttpRequest<?> form) {
                 return form;
             }
-            if (current instanceof HttpRequestWrapper<?> wrapper) {
-                current = wrapper.getDelegate();
-            } else {
-                return super.formRequest(server);
-            }
         }
+        return super.formRequest(server);
     }
 
     @Override

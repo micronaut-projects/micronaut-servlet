@@ -17,6 +17,7 @@ package io.micronaut.servlet.tomcat;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.servlet.engine.ServletConnectionAborter;
+import jakarta.inject.Singleton;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.apache.catalina.connector.Response;
@@ -34,7 +35,8 @@ import java.lang.reflect.Field;
  * @since 6.3.0
  */
 @Internal
-public final class TomcatConnectionAborter implements ServletConnectionAborter {
+@Singleton
+final class TomcatConnectionAborter implements ServletConnectionAborter {
 
     private static final @Nullable Field RESPONSE = responseField();
 

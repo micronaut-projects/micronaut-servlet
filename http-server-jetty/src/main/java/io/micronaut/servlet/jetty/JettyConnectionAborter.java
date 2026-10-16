@@ -17,6 +17,7 @@ package io.micronaut.servlet.jetty;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.servlet.engine.ServletConnectionAborter;
+import jakarta.inject.Singleton;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.eclipse.jetty.ee10.servlet.ServletContextRequest;
@@ -28,7 +29,8 @@ import org.eclipse.jetty.ee10.servlet.ServletContextRequest;
  * @since 6.3.0
  */
 @Internal
-public final class JettyConnectionAborter implements ServletConnectionAborter {
+@Singleton
+final class JettyConnectionAborter implements ServletConnectionAborter {
 
     @Override
     public boolean abort(HttpServletRequest request, HttpServletResponse response, Throwable failure) {

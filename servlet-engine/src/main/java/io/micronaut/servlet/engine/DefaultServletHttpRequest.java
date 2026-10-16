@@ -55,7 +55,6 @@ import io.micronaut.http.multipart.FormFieldMetadata;
 import io.micronaut.http.multipart.RawFormField;
 import io.micronaut.http.server.exceptions.InternalServerException;
 import io.micronaut.http.simple.SimpleHttpHeaders;
-import io.micronaut.http.simple.cookies.SimpleCookies;
 import io.micronaut.servlet.http.BodyBuilder;
 import io.micronaut.servlet.http.LimitedInputStream;
 import io.micronaut.servlet.http.BufferedFormDecoder;
@@ -111,13 +110,13 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-import java.util.ServiceLoader;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 /**
@@ -140,14 +139,16 @@ public final class DefaultServletHttpRequest<B> implements
     private static final String NULL_KEY = "Attribute key cannot be null";
     private static final String NULL_PARAMETER_NAME = "Parameter name cannot be null";
     private static final Logger LOG = LoggerFactory.getLogger(DefaultServletHttpRequest.class);
-    /**
-     * The ways the embedded servers drop the connection of a response whose body failed, see
-     * {@link ServletConnectionAborter}.
-     */
-    private static final List<ServletConnectionAborter> ABORTERS = ServiceLoader.load(ServletConnectionAborter.class, DefaultServletHttpRequest.class.getClassLoader())
-        .stream().map(ServiceLoader.Provider::get).toList();
-
     private final ConversionService conversionService;
+    /**
+     * The ways the embedded server drops the connection of a response whose body failed, see
+     * {@link ServletConnectionAborter}: none in a WAR deployment.
+     */
+    private final List<ServletConnectionAborter> aborters;
+    /**
+     * Whether a route reads the body itself, see {@link #readsBodyAsynchronously()}, answered once per route.
+     */
+    private final Predicate<MethodBasedRouteInfo<?, ?>> asyncBodyRoutes;
     private final HttpServletRequest delegate;
     private final URI uri;
     private final HttpMethod method;
@@ -265,7 +266,38 @@ public final class DefaultServletHttpRequest<B> implements
                               Executor ioExecutor,
                               @Nullable SSLSessionProvider sslSessionProvider,
                               BodySizeLimits bodySizeLimits) {
+        this(conversionService, delegate, response, messageBodyHandlerRegistry, bodyBuilder, ioExecutor, sslSessionProvider, bodySizeLimits,
+            List.of(), DefaultServletHttpRequest::takesAsyncBody);
+    }
+
+    /**
+     * Constructor of the requests of {@link DefaultServletHttpHandler}.
+     *
+     * @param conversionService  The servlet request
+     * @param delegate           The servlet request
+     * @param response           The servlet response
+     * @param messageBodyHandlerRegistry      The message body handler registry
+     * @param bodyBuilder        Body Builder
+     * @param ioExecutor         Executor for blocking operations
+     * @param sslSessionProvider The {@link SSLSession} provider from attribute
+     * @param bodySizeLimits     The limits of the body
+     * @param aborters           The {@link ServletConnectionAborter} beans
+     * @param asyncBodyRoutes    Whether a route takes the body as an {@link AsyncRequestBody}, cached per route
+     */
+    @SuppressWarnings("java:S107") // package-private
+    DefaultServletHttpRequest(ConversionService conversionService,
+                              HttpServletRequest delegate,
+                              HttpServletResponse response,
+                              MessageBodyHandlerRegistry messageBodyHandlerRegistry,
+                              BodyBuilder bodyBuilder,
+                              Executor ioExecutor,
+                              @Nullable SSLSessionProvider sslSessionProvider,
+                              BodySizeLimits bodySizeLimits,
+                              List<ServletConnectionAborter> aborters,
+                              Predicate<MethodBasedRouteInfo<?, ?>> asyncBodyRoutes) {
         super();
+        this.aborters = aborters;
+        this.asyncBodyRoutes = asyncBodyRoutes;
         this.conversionService = conversionService;
         this.delegate = delegate;
         this.messageBodyHandlerRegistry = messageBodyHandlerRegistry;
@@ -673,13 +705,19 @@ public final class DefaultServletHttpRequest<B> implements
     public synchronized Cookies getCookies() {
         if (headers.changed != null) {
             // e.g. a filter added a cookie to the headers: the container only has the cookies the client sent
-            SimpleCookies changed = new SimpleCookies(conversionService);
+            // decoded into servlet cookies, so that they behave like the ones of the container
+            List<jakarta.servlet.http.Cookie> changed = new ArrayList<>();
             for (String header : headers.getAll(HttpHeaders.COOKIE)) {
                 for (Cookie cookie : ServerCookieDecoder.INSTANCE.decode(header)) {
-                    changed.put(cookie.getName(), cookie);
+                    try {
+                        changed.add(new jakarta.servlet.http.Cookie(cookie.getName(), cookie.getValue())); // NOSONAR a cookie the client sent, which carries no attributes
+                    } catch (IllegalArgumentException e) {
+                        // a name the Servlet API refuses, which the container would not offer either
+                        LOG.debug("Ignoring the cookie [{}] of request [{} - {}]", cookie.getName(), getMethodName(), getUri(), e);
+                    }
                 }
             }
-            return changed;
+            return new DefaultServletCookies(changed.toArray(jakarta.servlet.http.Cookie[]::new));
         }
         DefaultServletCookies cookies = this.cookies;
         if (cookies == null) {
@@ -791,7 +829,6 @@ public final class DefaultServletHttpRequest<B> implements
         this.parsedBody = body;
     }
 
-    @NonNull
     /**
      * Whether the matched route takes the body as an {@link AsyncRequestBody}, as a handler route that declares
      * a body does: it is an argument of the route method, not the body argument of the route.
@@ -799,15 +836,21 @@ public final class DefaultServletHttpRequest<B> implements
     private boolean readsBodyAsynchronously() {
         return RouteAttributes.getRouteInfo(this)
             .filter(MethodBasedRouteInfo.class::isInstance)
-            .map(route -> {
-                for (Argument<?> argument : ((MethodBasedRouteInfo<?, ?>) route).getTargetMethod().getArguments()) {
-                    if (AsyncRequestBody.class.isAssignableFrom(argument.getType())) {
-                        return true;
-                    }
-                }
-                return false;
-            })
+            .map(route -> asyncBodyRoutes.test((MethodBasedRouteInfo<?, ?>) route))
             .orElse(false);
+    }
+
+    /**
+     * @param route A route
+     * @return Whether an argument of the route method is an {@link AsyncRequestBody}
+     */
+    static boolean takesAsyncBody(MethodBasedRouteInfo<?, ?> route) {
+        for (Argument<?> argument : route.getTargetMethod().getArguments()) {
+            if (AsyncRequestBody.class.isAssignableFrom(argument.getType())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -968,7 +1011,7 @@ public final class DefaultServletHttpRequest<B> implements
 
     @Override
     public boolean abortResponse(Throwable failure) {
-        for (ServletConnectionAborter aborter : ABORTERS) {
+        for (ServletConnectionAborter aborter : aborters) {
             try {
                 if (aborter.abort(delegate, primaryResponse.getNativeResponse(), failure)) {
                     return true;

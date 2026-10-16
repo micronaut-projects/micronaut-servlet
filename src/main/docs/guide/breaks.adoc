@@ -1,5 +1,19 @@
 This section documents breaking changes between Micronaut Servlet versions:
 
+== Micronaut Servlet 6.3.0
+
+Micronaut Servlet 6.3.0 requires Micronaut Core 5.3 and binds requests with the shared server binders of core, so several answers now match the Netty server.
+
+=== The Jetty server URI excludes the context path
+
+`EmbeddedServer.getURI()` and `getURL()` of the Jetty server included `micronaut.server.context-path`, while Tomcat, Undertow, the JDK server and the Netty server return the URI of the server without it. Jetty now does the same. Use `getContextURI()` for the URI with the context path.
+
+=== Status codes aligned with the Netty server
+
+- Reading a body past `micronaut.server.max-request-size`, including through `@Body InputStream` or a multipart part over the container's limit, is answered with `413 Request Entity Too Large` rather than `500`.
+- A multipart request without a boundary, and a text part bound as a file upload, are answered with `400 Bad Request`.
+- Only a request body the runtime could not decode is answered with `400`; a `CodecException` of a message body writer, e.g. for a file that does not exist, is answered with `500`.
+
 == Micronaut Servlet 6.2.0
 
 === The request size limit applies to every body

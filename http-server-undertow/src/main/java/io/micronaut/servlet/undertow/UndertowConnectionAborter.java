@@ -17,6 +17,7 @@ package io.micronaut.servlet.undertow;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.servlet.engine.ServletConnectionAborter;
+import jakarta.inject.Singleton;
 import io.undertow.server.AbstractServerConnection;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.ServerConnection;
@@ -32,7 +33,8 @@ import org.xnio.IoUtils;
  * @since 6.3.0
  */
 @Internal
-public final class UndertowConnectionAborter implements ServletConnectionAborter {
+@Singleton
+final class UndertowConnectionAborter implements ServletConnectionAborter {
 
     @Override
     public boolean abort(HttpServletRequest request, HttpServletResponse response, Throwable failure) {

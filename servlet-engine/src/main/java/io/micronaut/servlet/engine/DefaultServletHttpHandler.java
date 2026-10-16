@@ -21,6 +21,7 @@ import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.util.SupplierUtil;
 import io.micronaut.http.body.stream.BodySizeLimits;
 import io.micronaut.scheduling.TaskExecutors;
+import io.micronaut.web.router.MethodBasedRouteInfo;
 import io.micronaut.servlet.http.BodyBuilder;
 import io.micronaut.servlet.http.SSLSessionProvider;
 import io.micronaut.servlet.http.ServletExchange;
@@ -34,6 +35,9 @@ import jakarta.servlet.http.HttpServletResponse;
 import javax.net.ssl.SSLSession;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ForkJoinPool;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
 /**
@@ -48,6 +52,12 @@ public class DefaultServletHttpHandler extends ServletHttpHandler<HttpServletReq
     private final Executor ioExecutor;
     private final @Nullable SSLSessionProvider sslSessionProvider;
     private final Supplier<BodySizeLimits> bodySizeLimits = SupplierUtil.memoized(this::bodySizeLimits);
+    private final Supplier<List<ServletConnectionAborter>> aborters = SupplierUtil.memoized(
+        () -> List.copyOf(applicationContext.getBeansOfType(ServletConnectionAborter.class)));
+    /**
+     * Whether a route takes the body as an {@link io.micronaut.http.body.AsyncRequestBody}, computed once per route.
+     */
+    private final Map<MethodBasedRouteInfo<?, ?>, Boolean> asyncBodyRoutes = new ConcurrentHashMap<>();
     private final Supplier<BodyBuilder> bodyBuilder = SupplierUtil.memoized(() -> applicationContext.getBean(BodyBuilder.class));
 
     /**
@@ -104,7 +114,8 @@ public class DefaultServletHttpHandler extends ServletHttpHandler<HttpServletReq
     protected ServletExchange<HttpServletRequest, HttpServletResponse> createExchange(
             HttpServletRequest request,
             HttpServletResponse response) {
-        return new DefaultServletHttpRequest<>(applicationContext.getConversionService(), request, response, getMessageBodyHandlerRegistry(), bodyBuilder.get(), ioExecutor, sslSessionProvider, bodySizeLimits.get());
+        return new DefaultServletHttpRequest<>(applicationContext.getConversionService(), request, response, getMessageBodyHandlerRegistry(), bodyBuilder.get(), ioExecutor, sslSessionProvider, bodySizeLimits.get(),
+            aborters.get(), route -> asyncBodyRoutes.computeIfAbsent(route, DefaultServletHttpRequest::takesAsyncBody));
     }
 
     @Override

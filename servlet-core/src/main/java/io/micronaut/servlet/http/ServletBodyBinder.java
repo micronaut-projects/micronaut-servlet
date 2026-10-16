@@ -364,8 +364,7 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
      * views of it that pass its bytes through, e.g. the mutable view of a filter.
      */
     private static @Nullable ServletHttpRequest<?, ?> servletRequestOf(ServerHttpRequest<?> server) {
-        HttpRequest<?> current = server;
-        while (true) {
+        for (HttpRequest<?> current = server; current != null; current = current instanceof HttpRequestWrapper<?> wrapper ? wrapper.getDelegate() : null) {
             if (current instanceof ServletHttpRequest<?, ?> servletRequest) {
                 return servletRequest;
             }
@@ -373,12 +372,8 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
                 // bytes of its own
                 return null;
             }
-            if (current instanceof HttpRequestWrapper<?> wrapper) {
-                current = wrapper.getDelegate();
-            } else {
-                return null;
-            }
         }
+        return null;
     }
 
     /**

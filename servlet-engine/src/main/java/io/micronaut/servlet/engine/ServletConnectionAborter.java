@@ -23,7 +23,7 @@ import jakarta.servlet.http.HttpServletResponse;
  * Drops the connection of a response whose body failed after it was committed, so that the client sees a
  * truncated response rather than one that looks complete, like the Netty server does: the Servlet API has no
  * way to do so, completing the response writes the end of its body. Each embedded server registers one for its
- * container with the {@link java.util.ServiceLoader}.
+ * container as a bean; with none, e.g. in a WAR deployment, the response completes as usual.
  *
  * @author Denis Stepanov
  * @since 6.3.0
