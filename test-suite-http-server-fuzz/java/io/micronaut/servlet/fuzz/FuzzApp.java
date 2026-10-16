@@ -317,14 +317,14 @@ final class FuzzApp {
         @Produces(MediaType.APPLICATION_JSON_STREAM)
         Flux<Item> infinite() {
             STARTED.incrementAndGet();
-            return Flux.interval(Duration.ofMillis(5)).map(i -> new Item("x".repeat(100) + i)).doOnCancel(CANCELLED::incrementAndGet);
+            return Flux.interval(Duration.ofMillis(5)).onBackpressureDrop().map(i -> new Item("x".repeat(100) + i)).doOnCancel(CANCELLED::incrementAndGet);
         }
 
         @Get("/infinite-sse")
         @Produces(MediaType.TEXT_EVENT_STREAM)
         Flux<Event<String>> infiniteSse() {
             STARTED.incrementAndGet();
-            return Flux.interval(Duration.ofMillis(5)).map(i -> Event.of("x" + i)).doOnCancel(CANCELLED::incrementAndGet);
+            return Flux.interval(Duration.ofMillis(5)).onBackpressureDrop().map(i -> Event.of("x" + i)).doOnCancel(CANCELLED::incrementAndGet);
         }
 
         @Get("/counters")
