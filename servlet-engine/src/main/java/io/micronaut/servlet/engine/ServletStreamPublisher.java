@@ -40,6 +40,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 final class ServletStreamPublisher implements Publisher<ByteBuffer>, Subscription, ReadListener {
     private static final Logger LOG = LoggerFactory.getLogger(ServletStreamPublisher.class);
+    private static final int READ_BUFFER_SIZE = 8192;
 
     private final Queue<Runnable> tasks = new ConcurrentLinkedQueue<>();
     private final AtomicReference<WorkState> state = new AtomicReference<>(WorkState.IDLE);
@@ -61,16 +62,35 @@ final class ServletStreamPublisher implements Publisher<ByteBuffer>, Subscriptio
     private final long maxDiscarded;
     private long discardLimit = Long.MAX_VALUE;
     private long discardedBytes;
-    private final byte[] discardBuffer = new byte[4096];
+    private byte @Nullable [] discardBuffer;
+    /**
+     * The bytes of the body not read yet by its declared length, or {@code -1} if it declares none.
+     */
+    private long remaining;
 
     /**
      * @param upstreamSupplier The stream of the request
      * @param maxDiscarded     The most bytes of a body nobody reads that are dropped before the connection is
      *                         dropped instead, the size limit of the server
+     * @param contentLength    The declared length of the body, or {@code -1} if it declares none, which sizes the
+     *                         read buffers
      */
-    ServletStreamPublisher(ThrowingSupplier<ServletInputStream, IOException> upstreamSupplier, long maxDiscarded) {
+    ServletStreamPublisher(ThrowingSupplier<ServletInputStream, IOException> upstreamSupplier, long maxDiscarded, long contentLength) {
         this.upstreamSupplier = upstreamSupplier;
         this.maxDiscarded = maxDiscarded;
+        this.remaining = contentLength;
+    }
+
+    /**
+     * @return A buffer for the next read: no larger than what is left of a body with a declared length, and bounded
+     * for a body without one
+     */
+    private byte[] readBuffer() {
+        if (remaining < 0) {
+            return new byte[READ_BUFFER_SIZE];
+        }
+        // at least one byte, for the read that sees the end of the body
+        return new byte[(int) Math.max(1, Math.min(remaining, READ_BUFFER_SIZE))];
     }
 
     /**
@@ -134,13 +154,16 @@ final class ServletStreamPublisher implements Publisher<ByteBuffer>, Subscriptio
         while (!downstreamDone && demand > 0 && (upstreamReady || upstreamDone)) {
             if (!upstreamDone) {
                 try {
-                    byte[] arr = new byte[4096];
+                    byte[] arr = readBuffer();
                     ServletInputStream currentUpstream = upstream();
                     int n = currentUpstream.read(arr);
                     if (n == -1) {
                         upstreamDone = true;
                     } else {
                         demand--;
+                        if (remaining > 0) {
+                            remaining = Math.max(0, remaining - n);
+                        }
                         currentDownstream.onNext(ByteBuffer.wrap(arr, 0, n));
                         upstreamReady = currentUpstream.isReady();
                     }
@@ -214,7 +237,12 @@ final class ServletStreamPublisher implements Publisher<ByteBuffer>, Subscriptio
     private void drain() {
         while (!upstreamDone && upstreamReady && discardedBytes <= discardLimit) {
             try {
-                int n = upstream().read(discardBuffer);
+                byte[] buffer = discardBuffer;
+                if (buffer == null) {
+                    buffer = new byte[4096];
+                    discardBuffer = buffer;
+                }
+                int n = upstream().read(buffer);
                 if (n == -1) {
                     upstreamDone = true;
                 } else {

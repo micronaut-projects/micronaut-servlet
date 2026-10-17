@@ -38,8 +38,10 @@ import io.micronaut.http.MutableHttpParameters;
 import io.micronaut.http.MutableHttpRequest;
 import io.micronaut.http.ServerHttpRequest;
 import io.micronaut.http.body.AsyncRequestBody;
+import io.micronaut.http.body.AvailableByteBody;
 import io.micronaut.http.body.ByteBody;
 import io.micronaut.http.body.ByteBodyFactory;
+import io.micronaut.http.body.CloseableAvailableByteBody;
 import io.micronaut.http.body.CloseableByteBody;
 import io.micronaut.http.body.DirectByteBodyAccess;
 import io.micronaut.http.body.MessageBodyHandlerRegistry;
@@ -195,6 +197,11 @@ public final class DefaultServletHttpRequest<B> implements
      * method has returned; such a request must leave the service thread before its body can be consumed.
      */
     private boolean bodyReadsAsynchronously;
+    /**
+     * Whether the body is a URL-encoded form small enough to be read inline: its fields are then decoded from the
+     * byte body, so that the container's stream is read once, whether the form or the byte body is read first.
+     */
+    private boolean formReadsInline;
     /**
      * The publisher of a body read through a ReadListener, which drops what nobody read before the response
      * completes, or {@code null} if the body is not read that way.
@@ -499,6 +506,7 @@ public final class DefaultServletHttpRequest<B> implements
             return byteBodyFactory.adapt(Flux.error(bodyTooLarge), length);
         }
         if (readsInline(contentLength, bodySizeLimits, delegate)) {
+            this.formReadsInline = isUrlEncodedForm();
             // a small body with a known length is read with a blocking read on first use, on the thread that runs
             // the route: that is what a blocking servlet application does, and it keeps the request on the
             // container thread instead of paying a dispatch and a ReadListener round trip (or, on a container
@@ -510,7 +518,7 @@ public final class DefaultServletHttpRequest<B> implements
             // the shared streaming body applies the size limits itself
             ReadBufferFactory readBufferFactory = byteBodyFactory.readBufferFactory();
             this.bodyReadsAsynchronously = true;
-            ServletStreamPublisher publisher = new ServletStreamPublisher(this::openBodyStream, bodySizeLimits.maxBodySize());
+            ServletStreamPublisher publisher = new ServletStreamPublisher(this::openBodyStream, bodySizeLimits.maxBodySize(), contentLength);
             this.streamPublisher = publisher;
             return byteBodyFactory.adapt(
                 Flux.from(publisher).map(readBufferFactory::adapt),
@@ -545,7 +553,8 @@ public final class DefaultServletHttpRequest<B> implements
     /**
      * Whether a body with the given declared length is read on the container thread before the route runs
      * rather than streamed through a {@code ReadListener}: it has to be non-empty, declare its length, fit the
-     * buffer limit, and not be a form, whose bytes the container parses itself.
+     * buffer limit, and not be a multipart form, whose parts the container parses itself. A URL-encoded form is
+     * read inline as well: its fields are decoded from the byte body, see {@link #readUnboundedForm()}.
      */
     private static boolean readsInline(long contentLength, BodySizeLimits bodySizeLimits) {
         return contentLength > 0 && contentLength <= bodySizeLimits.maxBufferSize();
@@ -556,7 +565,7 @@ public final class DefaultServletHttpRequest<B> implements
             return false;
         }
         String contentType = request.getContentType();
-        return contentType == null || !isFormContentType(MediaType.of(contentType));
+        return contentType == null || !MediaType.of(contentType).matches(MediaType.MULTIPART_FORM_DATA_TYPE);
     }
 
     /**
@@ -769,10 +778,18 @@ public final class DefaultServletHttpRequest<B> implements
             return;
         }
         byte[] bytes;
-        try (InputStream stream = new LimitedInputStream(delegate.getInputStream(), maxBodySize)) {
-            bytes = stream.readAllBytes();
-        } catch (IOException e) {
-            throw new InternalServerException("Error reading request body: " + e.getMessage(), e);
+        if (formReadsInline) {
+            // a small form with a declared length is the byte body, read on the container thread: decoded from a copy
+            // of it, the fields are the same whether the route, a filter or the parameters read it first
+            try (CloseableAvailableByteBody copy = ((AvailableByteBody) byteBody()).split()) {
+                bytes = copy.toByteArray();
+            }
+        } else {
+            try (InputStream stream = new LimitedInputStream(delegate.getInputStream(), maxBodySize)) {
+                bytes = stream.readAllBytes();
+            } catch (IOException e) {
+                throw new InternalServerException("Error reading request body: " + e.getMessage(), e);
+            }
         }
         Map<String, List<String>> fields = new LinkedHashMap<>();
         delegate.getParameterMap().forEach((name, values) -> fields.put(name, new ArrayList<>(Arrays.asList(values))));
@@ -997,6 +1014,15 @@ public final class DefaultServletHttpRequest<B> implements
         // e.g. a copy of the body that a filter reads: the container parses only the bytes it received, so
         // the copy is buffered, within the limits of the copy, and decoded here
         Charset charset = getCharacterEncoding();
+        if (byteBody instanceof CloseableAvailableByteBody available) {
+            // e.g. a form read inline: decoded right away, on this thread
+            byte[] bytes;
+            try (available) {
+                bytes = available.toByteArray();
+            }
+            return Flux.fromIterable(BufferedFormDecoder.decode(mediaType, bytes, charset))
+                .map(field -> new RawFormField(field.metadata(), AvailableByteArrayBody.create(byteBodyFactory.readBufferFactory().adapt(field.content()))));
+        }
         return Mono.fromCompletionStage(() -> byteBody.buffer())
             .flatMapMany(buffered -> {
                 byte[] bytes;
