@@ -205,7 +205,7 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
             responseContext.connectionClose = true;
         }
 
-        long contentLength = getContentLength();
+        long contentLength = framedContentLength(request);
         if (!getMethod().permitsRequestBody()) {
             contentLength = 0;
         }
@@ -229,6 +229,11 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
             InputStream limitedBody = bodyStream;
             long length = contentLength;
             byteBody = SupplierUtil.memoized(() -> {
+                if (length == 0) {
+                    // no body by the framing rules: an empty body, as on the servlet engine, which a required body
+                    // argument refuses
+                    return byteBodyFactory.createEmpty();
+                }
                 if (length > 0 && length <= bodySizeLimits.maxBufferSize()) {
                     // a body that fits the buffer is read whole on the request thread, like on the servlet engine
                     try {
@@ -248,6 +253,45 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
     }
 
     /**
+     * The length of the body as its framing gives it (RFC 9112 6.3): a chunked transfer coding wins over a
+     * Content-Length, which then cannot be trusted for the connection either, a Content-Length that is not a single
+     * non-negative number is refused, and a request with neither has no body.
+     *
+     * @param request The request
+     * @return The length, or -1 for a chunked body
+     */
+    private long framedContentLength(ClassicHttpRequest request) {
+        Header[] contentLengths = request.getHeaders(HttpHeaders.CONTENT_LENGTH);
+        long contentLength = 0;
+        for (Header header : contentLengths) {
+            long value;
+            try {
+                value = Long.parseLong(header.getValue().trim());
+            } catch (NumberFormatException e) {
+                throw new ApacheServletBadRequestException("Invalid Content-Length header: " + header.getValue(), e);
+            }
+            if (value < 0 || (contentLength != value && header != contentLengths[0])) {
+                throw new ApacheServletBadRequestException("Invalid Content-Length header: " + header.getValue(), null);
+            }
+            contentLength = value;
+        }
+        Header[] transferEncodings = request.getHeaders(HttpHeaders.TRANSFER_ENCODING);
+        if (transferEncodings.length > 0) {
+            String last = transferEncodings[transferEncodings.length - 1].getValue();
+            int comma = last.lastIndexOf(',');
+            if (!TRANSFER_ENCODING_CHUNKED.equalsIgnoreCase(last.substring(comma + 1).trim())) {
+                throw new ApacheServletBadRequestException("The final transfer coding of the request is not chunked: " + last, null);
+            }
+            if (contentLengths.length > 0) {
+                // a request with both may be an attempt to smuggle another one: the connection is not reused
+                responseContext.connectionClose = true;
+            }
+            return -1;
+        }
+        return contentLength;
+    }
+
+    /**
      * Create body stream.
      * Based on org.apache.hc.core5.http.impl.io.BHttpConnectionBase#createContentOutputStream.
      *
@@ -262,10 +306,8 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
             bodyStream = new ContentLengthInputStream(sessionInputBuffer, inputStream, contentLength);
         } else if (contentLength == 0) {
             bodyStream = EmptyInputStream.INSTANCE;
-        } else if (TRANSFER_ENCODING_CHUNKED.equalsIgnoreCase(headers.get(HttpHeaders.TRANSFER_ENCODING))) {
-            bodyStream = new ChunkedInputStream(sessionInputBuffer, inputStream);
         } else {
-            bodyStream = EmptyInputStream.INSTANCE;
+            bodyStream = new ChunkedInputStream(sessionInputBuffer, inputStream);
         }
         return bodyStream;
     }

@@ -96,7 +96,7 @@ public final class BufferedFormDecoder {
             }
             String headers = new String(bytes, position, headersEnd - position, StandardCharsets.UTF_8);
             int contentStart = headersEnd + 4;
-            int next = indexOf(bytes, delimiter, contentStart);
+            int next = nextDelimiter(bytes, delimiter, contentStart);
             if (next < 0) {
                 throw badRequest("The multipart form has no close delimiter");
             }
@@ -144,6 +144,30 @@ public final class BufferedFormDecoder {
 
     private static String unquote(String value) {
         return value.length() >= 2 && value.startsWith("\"") && value.endsWith("\"") ? value.substring(1, value.length() - 1) : value;
+    }
+
+    /**
+     * The next delimiter in the content of a part: the boundary on a line of its own, followed by the dashes of the
+     * close delimiter or by a line end after any transport padding (RFC 2046 5.1.1). Bytes that only start like the
+     * delimiter, such as {@code --boundaryX}, are content.
+     */
+    private static int nextDelimiter(byte[] bytes, byte[] delimiter, int from) {
+        int next = indexOf(bytes, delimiter, from);
+        while (next >= 0 && !endsDelimiter(bytes, next + delimiter.length)) {
+            next = indexOf(bytes, delimiter, next + 1);
+        }
+        return next;
+    }
+
+    private static boolean endsDelimiter(byte[] bytes, int position) {
+        if (startsWith(bytes, position, "--")) {
+            return true;
+        }
+        int p = position;
+        while (p < bytes.length && (bytes[p] == ' ' || bytes[p] == '\t')) {
+            p++;
+        }
+        return p + 1 < bytes.length && bytes[p] == '\r' && bytes[p + 1] == '\n';
     }
 
     private static int skipLineEnd(byte[] bytes, int position) {
