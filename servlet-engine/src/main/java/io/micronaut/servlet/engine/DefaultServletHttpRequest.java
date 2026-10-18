@@ -118,7 +118,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 /**
@@ -147,10 +146,6 @@ public final class DefaultServletHttpRequest<B> implements
      * {@link ServletConnectionAborter}: none in a WAR deployment.
      */
     private final List<ServletConnectionAborter> aborters;
-    /**
-     * Whether a route reads the body itself, see {@link #readsBodyAsynchronously()}, answered once per route.
-     */
-    private final Predicate<MethodBasedRouteInfo<?, ?>> asyncBodyRoutes;
     private final HttpServletRequest delegate;
     private final URI uri;
     private final HttpMethod method;
@@ -274,7 +269,7 @@ public final class DefaultServletHttpRequest<B> implements
                               @Nullable SSLSessionProvider sslSessionProvider,
                               BodySizeLimits bodySizeLimits) {
         this(conversionService, delegate, response, messageBodyHandlerRegistry, bodyBuilder, ioExecutor, sslSessionProvider, bodySizeLimits,
-            List.of(), DefaultServletHttpRequest::takesAsyncBody);
+            List.of());
     }
 
     /**
@@ -289,7 +284,6 @@ public final class DefaultServletHttpRequest<B> implements
      * @param sslSessionProvider The {@link SSLSession} provider from attribute
      * @param bodySizeLimits     The limits of the body
      * @param aborters           The {@link ServletConnectionAborter} beans
-     * @param asyncBodyRoutes    Whether a route takes the body as an {@link AsyncRequestBody}, cached per route
      */
     @SuppressWarnings("java:S107") // package-private
     DefaultServletHttpRequest(ConversionService conversionService,
@@ -300,11 +294,9 @@ public final class DefaultServletHttpRequest<B> implements
                               Executor ioExecutor,
                               @Nullable SSLSessionProvider sslSessionProvider,
                               BodySizeLimits bodySizeLimits,
-                              List<ServletConnectionAborter> aborters,
-                              Predicate<MethodBasedRouteInfo<?, ?>> asyncBodyRoutes) {
+                              List<ServletConnectionAborter> aborters) {
         super();
         this.aborters = aborters;
-        this.asyncBodyRoutes = asyncBodyRoutes;
         this.conversionService = conversionService;
         this.delegate = delegate;
         this.messageBodyHandlerRegistry = messageBodyHandlerRegistry;
@@ -848,27 +840,15 @@ public final class DefaultServletHttpRequest<B> implements
 
     /**
      * Whether the matched route takes the body as an {@link AsyncRequestBody}, as a handler route that declares
-     * a body does: it is an argument of the route method, not the body argument of the route.
+     * a body does, which the route tells since it was built.
      */
     private boolean readsBodyAsynchronously() {
         return RouteAttributes.getRouteInfo(this)
             .filter(MethodBasedRouteInfo.class::isInstance)
-            .map(route -> asyncBodyRoutes.test((MethodBasedRouteInfo<?, ?>) route))
+            .map(route -> ((MethodBasedRouteInfo<?, ?>) route).isAsyncRequestBody())
             .orElse(false);
     }
 
-    /**
-     * @param route A route
-     * @return Whether an argument of the route method is an {@link AsyncRequestBody}
-     */
-    static boolean takesAsyncBody(MethodBasedRouteInfo<?, ?> route) {
-        for (Argument<?> argument : route.getTargetMethod().getArguments()) {
-            if (AsyncRequestBody.class.isAssignableFrom(argument.getType())) {
-                return true;
-            }
-        }
-        return false;
-    }
 
     /**
      * @param request A request a route is bound from
