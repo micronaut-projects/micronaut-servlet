@@ -1,5 +1,6 @@
 package io.micronaut.servlet.http.server.jdk.tests;
 
+import io.micronaut.http.server.tck.WebSocketTckTags;
 import org.junit.platform.suite.api.ExcludeClassNamePatterns;
 import org.junit.platform.suite.api.ExcludeTags;
 import org.junit.platform.suite.api.SelectPackages;
@@ -15,7 +16,9 @@ import org.junit.platform.suite.api.SuiteDisplayName;
 // others are what only the Netty server does: upstream cancellation and streaming back-pressure of a raw proxy,
 // and a non-blocking route on other threads than the blocking executor (here both are virtual threads); the raw
 // connection after a protocol upgrade and HTTP trailers, which a servlet container does not expose
-@ExcludeTags({"multipart", "upstream-cancellation", "streaming-relay", "non-blocking-threads", "streaming-multipart", "protocol-upgrade", "trailers"})
+// websocket: the HttpServer provider of the JDK cannot upgrade a connection; test-suite-http-server-jdk-websocket
+// runs those tests on the provider of io.github.robaho:httpserver
+@ExcludeTags({"multipart", "upstream-cancellation", "streaming-relay", "non-blocking-threads", "streaming-multipart", "protocol-upgrade", "trailers", WebSocketTckTags.WEBSOCKET})
 @ExcludeClassNamePatterns({
     "io.micronaut.http.server.tck.tests.forms.FormBindingDeadlockTest", // asserts the server detects a form binding deadlock; a container that parses the whole form before the route runs has none to detect and completes the request instead
     "io.micronaut.http.server.tck.tests.RemoteAddressTest", // the JDK HTTP server reports the bridged client IP in containerized runs, not always 127.0.0.1

@@ -3,6 +3,9 @@ plugins {
 }
 dependencies {
     testImplementation(projects.micronautHttpServerUndertow)
+    // the WebSocket tests of the TCK, on the Jakarta WebSocket implementation of the container
+    testImplementation(projects.micronautServletWebsocket)
+    testImplementation(libs.undertow.websockets.jsr)
 }
 
 tasks.withType<Test>().configureEach {

@@ -4,6 +4,9 @@ plugins {
 
 dependencies {
     testImplementation(projects.micronautHttpServerTomcat)
+    // the WebSocket tests of the TCK, on the Jakarta WebSocket implementation of the container
+    testImplementation(projects.micronautServletWebsocket)
+    testImplementation(libs.tomcat.embed.websocket)
 }
 
 tasks.withType<Test>().configureEach {
