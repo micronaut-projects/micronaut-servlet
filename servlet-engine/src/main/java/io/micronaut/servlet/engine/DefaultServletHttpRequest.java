@@ -573,9 +573,11 @@ public final class DefaultServletHttpRequest<B> implements
         return delegate.getInputStream();
     }
 
-    private static CloseableByteBody readInline(LazyDelegateInputStream.StreamOpener opener, ByteBodyFactory byteBodyFactory) {
+    private static CloseableByteBody readInline(LazyDelegateInputStream.StreamOpener opener, ByteBodyFactory byteBodyFactory, long contentLength) {
         try (InputStream inputStream = opener.open()) {
-            return byteBodyFactory.copyOf(inputStream);
+            // only a body with a declared length that fits the buffer limit is read inline: reading that many bytes
+            // fills an array of the exact size, where readAllBytes would fill a 16 KiB chunk and copy it
+            return byteBodyFactory.adapt(inputStream.readNBytes((int) Math.min(contentLength, Integer.MAX_VALUE)));
         } catch (IOException e) {
             throw new InternalServerException("Error reading request body: " + e.getMessage(), e);
         }
@@ -626,8 +628,8 @@ public final class DefaultServletHttpRequest<B> implements
     @Override
     public Optional<MediaType> getContentType() {
         String contentType = delegate().getContentType();
-        return Optional.ofNullable(contentType)
-            .map(MediaType::new);
+        // MediaType.of returns the constant of a common type instead of parsing it again on every call
+        return contentType == null ? Optional.empty() : Optional.of(MediaType.of(contentType));
     }
 
     @Override
@@ -910,7 +912,7 @@ public final class DefaultServletHttpRequest<B> implements
             synchronized (this) {
                 current = byteBody.get();
                 if (current == null) {
-                    current = readInline(this::openBodyStream, byteBodyFactory);
+                    current = readInline(this::openBodyStream, byteBodyFactory, delegate.getContentLengthLong());
                     byteBody.set(current);
                 }
             }
@@ -1038,11 +1040,14 @@ public final class DefaultServletHttpRequest<B> implements
             // is still sending it. The body is read on this thread, as the container itself would before reusing
             // the connection
             try (InputStream in = delegate.getInputStream()) {
-                byte[] buffer = new byte[8192];
-                long dropped = 0;
-                int n;
-                while (dropped <= maxBodySize && (n = in.read(buffer)) != -1) {
-                    dropped += n;
+                // a body read inline is already at its end: the buffer is only allocated when something is left
+                if (in.read() != -1) {
+                    byte[] buffer = new byte[8192];
+                    long dropped = 1;
+                    int n;
+                    while (dropped <= maxBodySize && (n = in.read(buffer)) != -1) {
+                        dropped += n;
+                    }
                 }
             } catch (IOException | RuntimeException e) {
                 LOG.debug("Failed to drop the unread body of request [{} - {}]", getMethodName(), getUri(), e);
