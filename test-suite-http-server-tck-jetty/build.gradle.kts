@@ -6,14 +6,7 @@ dependencies {
     testImplementation(projects.micronautHttpServerJetty)
 }
 
-// the engine-independent fuzz suite is shared by all the TCK modules
-sourceSets {
-    named("test") {
-        java.srcDir("../test-suite-http-server-fuzz/java")
-    }
-}
-
 tasks.withType<Test>().configureEach {
-    // forwards the fuzz switches: -Dfuzz.seed, -Dfuzz.only and -Dfuzz.runKnown
+    // forwards the switches of the TCK fuzz suite: -Dfuzz.seed, -Dfuzz.only, -Dfuzz.runKnown and -Dfuzz.knownFailures
     System.getProperties().stringPropertyNames().filter { it.startsWith("fuzz.") }.forEach { systemProperty(it, System.getProperty(it)) }
 }
