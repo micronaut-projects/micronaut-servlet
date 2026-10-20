@@ -195,7 +195,9 @@ public abstract class PojaHttpServerlessApplication<REQ, RES> implements Embedde
     }
 
     /**
-     * Handle a single request.
+     * Handle a single request. A runtime overrides this method; the default calls
+     * {@link #handleSingleRequest(ServletHttpHandler, InputStream, OutputStream)}, which a runtime written
+     * before the connection was passed overrides instead.
      *
      * @param servletHttpHandler The handler
      * @param in The input stream
@@ -204,13 +206,37 @@ public abstract class PojaHttpServerlessApplication<REQ, RES> implements Embedde
      * @return {@code true} iff more requests can come in, {@code false} when the connection should
      * be closed
      * @throws IOException IO exception
+     * @since 6.3.0
      */
-    protected abstract boolean handleSingleRequest(
+    protected boolean handleSingleRequest(
             ServletHttpHandler<REQ, RES> servletHttpHandler,
             InputStream in,
             OutputStream out,
             PojaConnection connection
-    ) throws IOException;
+    ) throws IOException {
+        return handleSingleRequest(servletHttpHandler, in, out);
+    }
+
+    /**
+     * Handle a single request.
+     *
+     * @param servletHttpHandler The handler
+     * @param in The input stream
+     * @param out The output stream
+     * @return {@code true} iff more requests can come in, {@code false} when the connection should
+     * be closed
+     * @throws IOException IO exception
+     * @deprecated Override {@link #handleSingleRequest(ServletHttpHandler, InputStream, OutputStream, PojaConnection)},
+     * which also receives the addresses of the connection
+     */
+    @Deprecated(since = "6.3.0", forRemoval = true)
+    protected boolean handleSingleRequest(
+            ServletHttpHandler<REQ, RES> servletHttpHandler,
+            InputStream in,
+            OutputStream out
+    ) throws IOException {
+        throw new UnsupportedOperationException(getClass().getName() + " must override handleSingleRequest(ServletHttpHandler, InputStream, OutputStream, PojaConnection)");
+    }
 
     /**
      * Whether to use the inherited channel by default.

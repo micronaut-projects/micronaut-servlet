@@ -96,6 +96,17 @@ public class ApacheServerlessApplication
     }
 
     @Override
+    @Deprecated(since = "6.3.0", forRemoval = true)
+    @SuppressWarnings("java:S1133")
+    protected boolean handleSingleRequest(
+            ServletHttpHandler<ApacheServletHttpRequest<?>, ApacheServletHttpResponse<?>> servletHttpHandler,
+            InputStream in,
+            OutputStream out
+    ) throws IOException {
+        return handleSingleRequest(servletHttpHandler, in, out, PojaConnection.UNKNOWN);
+    }
+
+    @Override
     protected boolean handleSingleRequest(
             ServletHttpHandler<ApacheServletHttpRequest<?>, ApacheServletHttpResponse<?>> servletHttpHandler,
             InputStream in,
