@@ -34,6 +34,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import javax.net.ssl.SSLSession;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ForkJoinPool;
+import java.util.List;
 import java.util.function.Supplier;
 
 /**
@@ -48,6 +49,11 @@ public class DefaultServletHttpHandler extends ServletHttpHandler<HttpServletReq
     private final Executor ioExecutor;
     private final @Nullable SSLSessionProvider sslSessionProvider;
     private final Supplier<BodySizeLimits> bodySizeLimits = SupplierUtil.memoized(this::bodySizeLimits);
+    private final Supplier<List<ServletConnectionAborter>> aborters = SupplierUtil.memoized(
+        () -> List.copyOf(applicationContext.getBeansOfType(ServletConnectionAborter.class)));
+    /**
+     * Whether a route takes the body as an {@link io.micronaut.http.body.AsyncRequestBody}, computed once per route.
+     */
     private final Supplier<BodyBuilder> bodyBuilder = SupplierUtil.memoized(() -> applicationContext.getBean(BodyBuilder.class));
 
     /**
@@ -104,7 +110,8 @@ public class DefaultServletHttpHandler extends ServletHttpHandler<HttpServletReq
     protected ServletExchange<HttpServletRequest, HttpServletResponse> createExchange(
             HttpServletRequest request,
             HttpServletResponse response) {
-        return new DefaultServletHttpRequest<>(applicationContext.getConversionService(), request, response, getMessageBodyHandlerRegistry(), bodyBuilder.get(), ioExecutor, sslSessionProvider, bodySizeLimits.get());
+        return new DefaultServletHttpRequest<>(applicationContext.getConversionService(), request, response, getMessageBodyHandlerRegistry(), bodyBuilder.get(), ioExecutor, sslSessionProvider, bodySizeLimits.get(),
+            aborters.get());
     }
 
     @Override

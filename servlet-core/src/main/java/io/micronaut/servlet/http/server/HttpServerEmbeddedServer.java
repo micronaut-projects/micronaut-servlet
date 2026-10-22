@@ -58,6 +58,7 @@ class HttpServerEmbeddedServer extends AbstractServletServer<HttpServer> {
     private static final String SCHEME_HTTPS = "https";
     private final HttpServerConfiguration httpServerConfiguration;
     private final JdkServerExecutorOwnership executorOwnership;
+    private final JdkExposedPortServers exposedPortServers;
     private final AtomicBoolean running = new AtomicBoolean(false);
 
     /**
@@ -72,10 +73,12 @@ class HttpServerEmbeddedServer extends AbstractServletServer<HttpServer> {
                                        HttpServerConfiguration httpServerConfiguration,
                                        @Nullable ApplicationEventPublisher<ServerShutdownEvent> serverShutdownEventPublisher,
                                        JdkServerExecutorOwnership executorOwnership,
+                                       JdkExposedPortServers exposedPortServers,
                                        HttpServer server) {
         super(applicationContextProvider != null ? applicationContextProvider.getApplicationContext() : applicationContext, applicationConfiguration, serverShutdownEventPublisher, server);
         this.httpServerConfiguration = httpServerConfiguration;
         this.executorOwnership = executorOwnership;
+        this.exposedPortServers = exposedPortServers;
     }
 
     @Override
@@ -83,6 +86,7 @@ class HttpServerEmbeddedServer extends AbstractServletServer<HttpServer> {
         if (running.compareAndSet(false, true)) {
             HttpServer server = getServer();
             server.start();
+            exposedPortServers.start();
         }
     }
 
@@ -99,6 +103,7 @@ class HttpServerEmbeddedServer extends AbstractServletServer<HttpServer> {
     protected void stopServer() throws Exception {
         if (running.compareAndSet(true, false)) {
             HttpServer server = getServer();
+            exposedPortServers.stop();
             server.stop(0);
             shutdownOwnedExecutor(server);
         }

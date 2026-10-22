@@ -1,0 +1,5 @@
+# Known failures of the server TCK fuzz suite (io.micronaut.http.server.tck.tests.fuzz.HttpServerFuzzTest) on Tomcat.
+# One entry per line: [engine[,engine]:]regex matched against the start of the case name => reason.
+# The engine is matched against the lower-case class name of the embedded server.
+# Run them anyway with -Dfuzz.runKnown=true.
+tomcat:mp boundary-like bytes inside a file|tomcat:mp .* crlf-in-content => container quirk: the multipart parser of the container treats '--boundaryX' inside the content as a delimiter

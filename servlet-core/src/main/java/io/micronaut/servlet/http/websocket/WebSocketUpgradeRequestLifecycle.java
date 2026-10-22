@@ -26,10 +26,17 @@ import io.micronaut.http.context.ServerRequestContext;
 import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.http.server.RequestLifecycle;
 import io.micronaut.http.server.RouteExecutor;
+import io.micronaut.web.router.DefaultRouter;
 import io.micronaut.web.router.RouteAttributes;
+import io.micronaut.web.router.RouteMatch;
 import io.micronaut.web.router.Router;
 import io.micronaut.web.router.UriRouteMatch;
+import io.micronaut.web.router.websocket.WebSocketRouteEndpoint;
 import org.jspecify.annotations.Nullable;
+
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
 
 /**
  * Runs the Micronaut server filter chain against a WebSocket upgrade request so that
@@ -71,10 +78,9 @@ public final class WebSocketUpgradeRequestLifecycle extends RequestLifecycle {
      * or the response a filter substituted for it
      */
     public ExecutionFlow<HttpResponse<?>> handle(HttpRequest<?> request) {
-        this.routeMatch = router.<Object, Object>find(HttpMethod.GET, request.getPath(), request)
-            .filter(match -> match.getRouteInfo().isWebSocketRoute())
-            .findFirst()
-            .orElse(null);
+        // the conditions of a route, e.g. a predicate that reads the current request, see the
+        // upgrade request: the caller runs this with it as the current request
+        this.routeMatch = findWebSocketRoute(router, request).orElse(null);
 
         MutableHttpResponse<?> proceed = HttpResponse.ok();
         if (routeMatch != null) {
@@ -86,7 +92,9 @@ public final class WebSocketUpgradeRequestLifecycle extends RequestLifecycle {
 
         ExecutionFlow<HttpResponse<?>> response;
         if (routeMatch != null) {
-            response = runWithFilters(request, (filteredRequest, propagatedContext) -> ExecutionFlow.just(proceed));
+            // the filters of the route and of its groups apply too, e.g. those of a WebSocket route
+            // of the route builder
+            response = runWithFilters(request, routeMatch, (filteredRequest, propagatedContext) -> ExecutionFlow.just(proceed));
         } else {
             response = onError(request, new HttpStatusException(HttpStatus.NOT_FOUND, "WebSocket Not Found"))
                 .putInContext(ServerRequestContext.KEY, request);
@@ -97,6 +105,49 @@ public final class WebSocketUpgradeRequestLifecycle extends RequestLifecycle {
             }
             return actual;
         });
+    }
+
+    /**
+     * Find the WebSocket route of an upgrade request, like the Netty server. A WebSocket route of
+     * the route builder is preferred: of the ones that accept the port and the conditions of the
+     * request, the closest route, then the first of the lowest order, like the route of any other
+     * request. Otherwise, the first route of a {@code @ServerWebSocket} bean whose template matches.
+     *
+     * @param router  The router
+     * @param request The upgrade request
+     * @return The WebSocket route, if any
+     */
+    private static Optional<UriRouteMatch<Object, Object>> findWebSocketRoute(Router router, HttpRequest<?> request) {
+        // the conditions of the routes of the path are only evaluated when a WebSocket route of
+        // the route builder has the path: a @ServerWebSocket upgrade only evaluates its own
+        boolean anyFunctionalRoute = router.<Object, Object>findAny(request.getPath(), null)
+            .anyMatch(match -> match.getHttpMethod() == HttpMethod.GET && isFunctionalWebSocketRoute(match));
+        List<UriRouteMatch<Object, Object>> functionalRoutes = anyFunctionalRoute
+            ? router.<Object, Object>findAny(request.getPath(), request)
+                .filter(match -> match.getHttpMethod() == HttpMethod.GET && isFunctionalWebSocketRoute(match))
+                .toList()
+            : List.of();
+        if (!functionalRoutes.isEmpty()) {
+            return DefaultRouter.resolveAmbiguity(request, functionalRoutes).stream()
+                .min(Comparator.comparingInt(match -> match.getRouteInfo().getOrder()));
+        }
+        return router.<Object, Object>find(HttpMethod.GET, request.getPath(), request)
+            .filter(match -> match.getRouteInfo().isWebSocketRoute())
+            .filter(match -> !isFunctionalWebSocketRoute(match))
+            .filter(match -> match.getRouteInfo().matching(request))
+            .findFirst();
+    }
+
+    /**
+     * Whether a route is a WebSocket route of the route builder, which carries its endpoint,
+     * rather than the route of a {@code @ServerWebSocket} bean. Only the name of the attribute is
+     * read, a constant, so that this works without micronaut-websocket on the classpath.
+     *
+     * @param routeMatch A route match
+     * @return Whether it is a WebSocket route of the route builder
+     */
+    private static boolean isFunctionalWebSocketRoute(RouteMatch<?> routeMatch) {
+        return routeMatch.getRouteInfo().getAttributes().containsKey(WebSocketRouteEndpoint.ROUTE_ATTRIBUTE);
     }
 
     /**
