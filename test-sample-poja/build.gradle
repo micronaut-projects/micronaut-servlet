@@ -19,6 +19,11 @@ plugins {
     id 'org.graalvm.buildtools.native'
 }
 
+java {
+    sourceCompatibility = JavaVersion.toVersion("17")
+    targetCompatibility = JavaVersion.toVersion("17")
+}
+
 dependencies {
     implementation(projects.micronautHttpPojaApache)
     implementation(mnLogging.slf4j.simple)

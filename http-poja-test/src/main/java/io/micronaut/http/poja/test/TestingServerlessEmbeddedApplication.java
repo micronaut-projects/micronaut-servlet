@@ -33,6 +33,11 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URI;
 import java.net.URL;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -53,7 +58,9 @@ public class TestingServerlessEmbeddedApplication implements EmbeddedServer {
     private PojaHttpServerlessApplication<?, ?> application;
 
     private final AtomicBoolean isRunning = new AtomicBoolean(false);
+    private final Set<Socket> activeConnections = ConcurrentHashMap.newKeySet();
     private ServerSocket serverSocket;
+    private ExecutorService connectionExecutor;
     private int port;
 
     /**
@@ -67,13 +74,12 @@ public class TestingServerlessEmbeddedApplication implements EmbeddedServer {
         this.application = application;
     }
 
-    private void createServerSocket() {
+    private ServerSocket createServerSocket() {
         try {
-            serverSocket = new ServerSocket(0);
+            return new ServerSocket(0);
         } catch (IOException e) {
             throw new UncheckedIOException("Could not bind", e);
         }
-        port = serverSocket.getLocalPort();
     }
 
     @Override
@@ -81,31 +87,85 @@ public class TestingServerlessEmbeddedApplication implements EmbeddedServer {
         if (isRunning.getAndSet(true)) {
             return this; // Already running
         }
-        createServerSocket();
+        ServerSocket createdServerSocket = createServerSocket();
+        this.serverSocket = createdServerSocket;
+        port = createdServerSocket.getLocalPort();
+        ExecutorService createdConnectionExecutor = Executors.newCachedThreadPool(runnable -> {
+            Thread thread = new Thread(runnable);
+            thread.setDaemon(true);
+            return thread;
+        });
+        this.connectionExecutor = createdConnectionExecutor;
 
         // Run the thread that sends requests to the server
-        new Thread(() -> {
-            while (!serverSocket.isClosed()) {
-                try (Socket socket = serverSocket.accept()) {
-                    application.start(socket.getInputStream(), socket.getOutputStream());
+        Thread acceptThread = new Thread(() -> {
+            while (!createdServerSocket.isClosed()) {
+                try {
+                    Socket socket = createdServerSocket.accept();
+                    activeConnections.add(socket);
+                    if (!isRunning.get()) {
+                        activeConnections.remove(socket);
+                        socket.close();
+                        continue;
+                    }
+                    try {
+                        createdConnectionExecutor.execute(() -> handleConnection(socket));
+                    } catch (RejectedExecutionException e) {
+                        activeConnections.remove(socket);
+                        socket.close();
+                        if (!createdServerSocket.isClosed()) {
+                            throw e;
+                        }
+                    }
                 } catch (java.net.SocketException ignored) {
                     // Socket closed
                 } catch (IOException e) {
                     throw new UncheckedIOException(e);
                 }
             }
-        }).start();
+        });
+        acceptThread.setDaemon(true);
+        acceptThread.start();
 
         return this;
     }
 
-    @Override
-    public @NonNull TestingServerlessEmbeddedApplication stop() {
-        application.stop();
-        try {
-            serverSocket.close();
+    private void handleConnection(Socket socket) {
+        try (socket) {
+            application.handleConnection(socket.getInputStream(), socket.getOutputStream());
+        } catch (java.net.SocketException ignored) {
+            // Socket closed
         } catch (IOException e) {
             throw new UncheckedIOException(e);
+        } finally {
+            activeConnections.remove(socket);
+        }
+    }
+
+    @Override
+    public @NonNull TestingServerlessEmbeddedApplication stop() {
+        if (!isRunning.getAndSet(false)) {
+            return this;
+        }
+        try {
+            ServerSocket currentServerSocket = this.serverSocket;
+            if (currentServerSocket != null) {
+                currentServerSocket.close();
+            }
+            this.serverSocket = null;
+            for (Socket connection : activeConnections) {
+                connection.close();
+            }
+            activeConnections.clear();
+            ExecutorService currentConnectionExecutor = this.connectionExecutor;
+            if (currentConnectionExecutor != null) {
+                currentConnectionExecutor.shutdownNow();
+            }
+            this.connectionExecutor = null;
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        } finally {
+            application.stop();
         }
         return this;
     }
@@ -120,6 +180,7 @@ public class TestingServerlessEmbeddedApplication implements EmbeddedServer {
      *
      * @return The port
      */
+    @Override
     public int getPort() {
         return port;
     }

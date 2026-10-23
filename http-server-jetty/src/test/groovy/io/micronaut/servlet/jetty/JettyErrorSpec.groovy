@@ -44,7 +44,9 @@ class JettyErrorSpec extends Specification {
         then:
         HttpClientResponseException ex = thrown()
         ex.status == HttpStatus.INTERNAL_SERVER_ERROR
-        ex.response.body.orElseThrow().contains("Internal Server Error: Immediate error")
+        // Since Micronaut Core 4.10.27, unhandled exception messages are hidden by default.
+        ex.response.body.orElseThrow().contains("Internal Server Error")
+        !ex.response.body.orElseThrow().contains("Immediate error")
     }
 
     void "error that occurs with streaming response after data sent results in client receiving incomplete data"() {

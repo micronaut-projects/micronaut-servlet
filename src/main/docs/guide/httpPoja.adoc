@@ -9,6 +9,8 @@ dependency:io.micronaut.servlet:micronaut-http-poja-apache[]
 
 dependency:io.micronaut.servlet:micronaut-http-poja-test[scope="test"]
 
+The embedded test server supports multiple connections, including clients using connection pools. Requests within each connection are processed sequentially, and disconnecting one client does not stop the other connections.
+
 To customize the HTTP POJA you can use the following configuration properties:
 
 include::{includedir}configurationProperties/io.micronaut.http.poja.apache.ApacheServletConfiguration.adoc[]
