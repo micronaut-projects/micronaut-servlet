@@ -82,15 +82,8 @@ public abstract class PojaHttpServerlessApplication<REQ, RES> implements Embedde
      * @return The application
      */
     public @NonNull PojaHttpServerlessApplication<REQ, RES> start(InputStream input, OutputStream output) {
-        final ServletHttpHandler<REQ, RES> servletHttpHandler =
-            new ServletHttpHandler<>(applicationContext, null) {
-                @Override
-                protected ServletExchange<REQ, RES> createExchange(Object request, Object response) {
-                    throw new UnsupportedOperationException("Not expected in serverless mode.");
-                }
-            };
         try {
-            runIndefinitely(servletHttpHandler, input, output);
+            processConnection(input, output);
         } catch (IOException e) {
             throw new RuntimeException(e);
         } catch (NoPojaRequestException e) {
@@ -98,6 +91,34 @@ public abstract class PojaHttpServerlessApplication<REQ, RES> implements Embedde
             Thread.currentThread().interrupt();
         }
         return this;
+    }
+
+    /**
+     * Handles one connection without stopping the application when the peer disconnects.
+     * This allows the embedded test server to share an application across connections.
+     *
+     * @param input The connection input stream
+     * @param output The connection output stream
+     * @throws IOException If an I/O error occurs
+     */
+    @Internal
+    public void handleConnection(InputStream input, OutputStream output) throws IOException {
+        try {
+            processConnection(input, output);
+        } catch (NoPojaRequestException ignored) {
+            // End of this connection does not end the application serving other connections.
+        }
+    }
+
+    private void processConnection(InputStream input, OutputStream output) throws IOException {
+        final ServletHttpHandler<REQ, RES> servletHttpHandler =
+            new ServletHttpHandler<>(applicationContext, null) {
+                @Override
+                protected ServletExchange<REQ, RES> createExchange(Object request, Object response) {
+                    throw new UnsupportedOperationException("Not expected in serverless mode.");
+                }
+            };
+        runIndefinitely(servletHttpHandler, input, output);
     }
 
     @Override
