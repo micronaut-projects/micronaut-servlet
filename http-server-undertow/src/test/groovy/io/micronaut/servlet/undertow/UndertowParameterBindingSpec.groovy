@@ -90,7 +90,7 @@ class UndertowParameterBindingSpec extends Specification {
 
         expect:
         response.status() == HttpStatus.BAD_REQUEST
-        response.body().contains('Required argument [Book book] not specified')
+        response.body().contains('Failed to convert argument [book] for value [Integer age] due to: Cannot convert an iterable with more than 1 value to a non collection object')
     }
 
     @Requires(property = 'spec.name', value = 'UndertowParameterBindingSpec')

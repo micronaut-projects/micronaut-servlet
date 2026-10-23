@@ -140,7 +140,8 @@ class FilterErrorSpec extends Specification {
 
         then:
         response.status() == HttpStatus.INTERNAL_SERVER_ERROR
-        response.body().contains("from exception handler")
+        response.body().contains("Internal Server Error")
+        !response.body().contains("from exception handler")
         filter.executedCount.get() == 1
         filterResponseStatus == HttpStatus.INTERNAL_SERVER_ERROR
 

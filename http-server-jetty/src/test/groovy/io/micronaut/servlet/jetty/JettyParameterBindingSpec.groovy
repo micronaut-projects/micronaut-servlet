@@ -94,7 +94,8 @@ class JettyParameterBindingSpec extends Specification {
 
         expect:
         response.status() == HttpStatus.BAD_REQUEST
-        response.body().contains('Required argument [Book book] not specified')
+        // With Core 4.10.33, repeated age values cause a conversion error rather than a missing book error.
+        response.body().contains('Failed to convert argument [book] for value [Integer age] due to: Cannot convert an iterable with more than 1 value to a non collection object')
     }
 
     @Requires(property = 'spec.name', value = 'JettyParameterBindingSpec')
