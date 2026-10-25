@@ -44,22 +44,24 @@ class KeepAliveConnectionTest {
     @Test
     void acceptsSecondConnectionWhileKeepAliveConnectionRemainsOpen() throws IOException {
         try (Socket keepAliveSocket = socket()) {
-            writeRequest(keepAliveSocket,
-                "GET / HTTP/1.1\r\n" +
-                    "Host: h\r\n" +
-                    "\r\n");
+            writeRequest(keepAliveSocket, """
+                GET / HTTP/1.1\r
+                Host: h\r
+                \r
+                """);
             String firstResponse = readUntilContains(keepAliveSocket.getInputStream(), "Hello, Micronaut Without Netty!\n");
             assertTrue(firstResponse.contains("Hello, Micronaut Without Netty!\n"));
             assertFalse(firstResponse.toLowerCase(Locale.ROOT).contains("connection: close"));
             assertConnectionStillOpen(keepAliveSocket);
 
             try (Socket secondSocket = socket()) {
-                writeRequest(secondSocket,
-                    "PUT /Andriy HTTP/1.1\r\n" +
-                        "Host: h\r\n" +
-                        "Content-Length: 0\r\n" +
-                        "Connection: close\r\n" +
-                        "\r\n");
+                writeRequest(secondSocket, """
+                    PUT /Andriy HTTP/1.1\r
+                    Host: h\r
+                    Content-Length: 0\r
+                    Connection: close\r
+                    \r
+                    """);
                 assertTrue(readUntilContains(secondSocket.getInputStream(), "Hello, Andriy!\n")
                     .contains("Hello, Andriy!\n"));
             }

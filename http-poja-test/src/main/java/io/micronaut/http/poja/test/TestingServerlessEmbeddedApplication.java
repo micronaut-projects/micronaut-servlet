@@ -55,7 +55,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Replaces(EmbeddedApplication.class)
 public class TestingServerlessEmbeddedApplication implements EmbeddedServer {
 
-    private PojaHttpServerlessApplication<?, ?> application;
+    private final PojaHttpServerlessApplication<?, ?> application;
 
     private final AtomicBoolean isRunning = new AtomicBoolean(false);
     private final Set<Socket> activeConnections = ConcurrentHashMap.newKeySet();
@@ -98,36 +98,48 @@ public class TestingServerlessEmbeddedApplication implements EmbeddedServer {
         this.connectionExecutor = createdConnectionExecutor;
 
         // Run the thread that sends requests to the server
-        Thread acceptThread = new Thread(() -> {
-            while (!createdServerSocket.isClosed()) {
-                try {
-                    Socket socket = createdServerSocket.accept();
-                    activeConnections.add(socket);
-                    if (!isRunning.get()) {
-                        activeConnections.remove(socket);
-                        socket.close();
-                        continue;
-                    }
-                    try {
-                        createdConnectionExecutor.execute(() -> handleConnection(socket));
-                    } catch (RejectedExecutionException e) {
-                        activeConnections.remove(socket);
-                        socket.close();
-                        if (!createdServerSocket.isClosed()) {
-                            throw e;
-                        }
-                    }
-                } catch (java.net.SocketException ignored) {
-                    // Socket closed
-                } catch (IOException e) {
-                    throw new UncheckedIOException(e);
-                }
-            }
-        });
+        Thread acceptThread = new Thread(() -> acceptConnections(createdServerSocket, createdConnectionExecutor));
         acceptThread.setDaemon(true);
         acceptThread.start();
 
         return this;
+    }
+
+    private void acceptConnections(ServerSocket createdServerSocket, ExecutorService createdConnectionExecutor) {
+        while (!createdServerSocket.isClosed()) {
+            try {
+                dispatchConnection(createdServerSocket.accept(), createdServerSocket, createdConnectionExecutor);
+            } catch (java.net.SocketException ignored) {
+                // Socket closed
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        }
+    }
+
+    private void dispatchConnection(
+        Socket socket,
+        ServerSocket createdServerSocket,
+        ExecutorService createdConnectionExecutor
+    ) throws IOException {
+        activeConnections.add(socket);
+        if (!isRunning.get()) {
+            discardConnection(socket);
+            return;
+        }
+        try {
+            createdConnectionExecutor.execute(() -> handleConnection(socket));
+        } catch (RejectedExecutionException e) {
+            discardConnection(socket);
+            if (!createdServerSocket.isClosed()) {
+                throw e;
+            }
+        }
+    }
+
+    private void discardConnection(Socket socket) throws IOException {
+        activeConnections.remove(socket);
+        socket.close();
     }
 
     private void handleConnection(Socket socket) {
