@@ -36,7 +36,9 @@ import static org.junit.jupiter.api.Assertions.fail;
 @Property(name = "spec.name", value = "KeepAliveConnectionTest")
 class KeepAliveConnectionTest {
 
-    private static final int SOCKET_TIMEOUT_MILLIS = 2_000;
+    // The first request on a cold server can take a few seconds.
+    private static final int SOCKET_TIMEOUT_MILLIS = 10_000;
+    private static final int KEEP_ALIVE_CHECK_MILLIS = 2_000;
 
     @Inject
     EmbeddedServer embeddedServer;
@@ -181,6 +183,8 @@ class KeepAliveConnectionTest {
     }
 
     private static void assertConnectionStillOpen(Socket socket) throws IOException {
+        int timeout = socket.getSoTimeout();
+        socket.setSoTimeout(KEEP_ALIVE_CHECK_MILLIS);
         try {
             int read = socket.getInputStream().read();
             if (read < 0) {
@@ -189,6 +193,8 @@ class KeepAliveConnectionTest {
             fail("Expected keep-alive connection to stay open without immediate extra data");
         } catch (SocketTimeoutException expected) {
             // No EOF and no extra data means the connection stayed open.
+        } finally {
+            socket.setSoTimeout(timeout);
         }
     }
 
