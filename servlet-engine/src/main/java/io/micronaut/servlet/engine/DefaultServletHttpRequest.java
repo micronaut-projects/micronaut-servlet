@@ -15,6 +15,8 @@
  */
 package io.micronaut.servlet.engine;
 
+import io.micronaut.servlet.http.AsyncRequestBodySourceHolder;
+import io.micronaut.http.body.AsyncRequestBodySource;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.convert.ConversionContext;
@@ -135,12 +137,14 @@ public final class DefaultServletHttpRequest<B> implements
     ServerHttpRequest<B>,
     ParsedBodyHolder<B>,
     FormCapableHttpRequest<B>,
-    DirectByteBodyAccess {
+    DirectByteBodyAccess,
+    AsyncRequestBodySourceHolder {
 
     private static final String NULL_KEY = "Attribute key cannot be null";
     private static final String NULL_PARAMETER_NAME = "Parameter name cannot be null";
     private static final Logger LOG = LoggerFactory.getLogger(DefaultServletHttpRequest.class);
     private final ConversionService conversionService;
+    private volatile @Nullable AsyncRequestBodySource asyncRequestBodySource;
     /**
      * The ways the embedded server drops the connection of a response whose body failed, see
      * {@link ServletConnectionAborter}: none in a WAR deployment.
@@ -1116,6 +1120,17 @@ public final class DefaultServletHttpRequest<B> implements
         } catch (Exception ignored) {
             // best-effort cleanup, never mask request processing failures
         }
+    }
+
+    @Override
+    public void setAsyncRequestBodySource(@Nullable AsyncRequestBodySource source) {
+        this.asyncRequestBodySource = source;
+    }
+
+    @Override
+    public @Nullable AsyncRequestBody asyncRequestBody(HttpRequest<?> request) {
+        AsyncRequestBodySource source = asyncRequestBodySource;
+        return source == null ? null : source.asyncRequestBody(request);
     }
 
     /**

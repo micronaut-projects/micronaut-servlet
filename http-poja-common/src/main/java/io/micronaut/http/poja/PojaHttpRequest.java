@@ -15,6 +15,8 @@
  */
 package io.micronaut.http.poja;
 
+import io.micronaut.servlet.http.AsyncRequestBodySourceHolder;
+import io.micronaut.http.body.AsyncRequestBodySource;
 import io.micronaut.core.annotation.Internal;
 import org.jspecify.annotations.NonNull;
 import io.micronaut.core.convert.ArgumentConversionContext;
@@ -46,6 +48,7 @@ import io.micronaut.servlet.http.DefaultBodyBuilder;
 import io.micronaut.servlet.http.ParsedBodyHolder;
 import io.micronaut.web.router.MethodBasedRouteInfo;
 import io.micronaut.web.router.RouteAttributes;
+import io.micronaut.http.HttpRequest;
 import io.micronaut.http.body.AsyncRequestBody;
 import io.micronaut.core.util.SupplierUtil;
 import java.util.function.Supplier;
@@ -85,7 +88,7 @@ import java.util.function.Function;
 @Internal
 public abstract class PojaHttpRequest<B, REQ, RES>
         implements ServletHttpRequest<REQ, B>, ServerHttpRequest<B>, ServletExchange<REQ, RES>, MutableHttpRequest<B>,
-        FormCapableHttpRequest<B>, DirectByteBodyAccess, ParsedBodyHolder<B> {
+        FormCapableHttpRequest<B>, DirectByteBodyAccess, ParsedBodyHolder<B>, AsyncRequestBodySourceHolder {
 
     public static final Argument<ConvertibleValues> CONVERTIBLE_VALUES_ARGUMENT = Argument.of(ConvertibleValues.class);
 
@@ -101,6 +104,7 @@ public abstract class PojaHttpRequest<B, REQ, RES>
      * Whether a filter set the body, even to {@code null}: the routes then no longer read the bytes of the request.
      */
     private boolean bodySet;
+    private volatile @Nullable AsyncRequestBodySource asyncRequestBodySource;
     private final ConcurrentLinkedQueue<Runnable> disposalResources = new ConcurrentLinkedQueue<>();
     private final BodyBuilder bodyBuilder;
     /**
@@ -415,6 +419,17 @@ public abstract class PojaHttpRequest<B, REQ, RES>
         }
 
         return new ConvertibleMultiValuesMap<CharSequence>(parameterValues, conversionService);
+    }
+
+    @Override
+    public void setAsyncRequestBodySource(@Nullable AsyncRequestBodySource source) {
+        this.asyncRequestBodySource = source;
+    }
+
+    @Override
+    public @Nullable AsyncRequestBody asyncRequestBody(HttpRequest<?> request) {
+        AsyncRequestBodySource source = asyncRequestBodySource;
+        return source == null ? null : source.asyncRequestBody(request);
     }
 
 }

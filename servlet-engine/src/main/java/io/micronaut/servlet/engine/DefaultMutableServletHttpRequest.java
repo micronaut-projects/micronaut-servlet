@@ -15,6 +15,9 @@
  */
 package io.micronaut.servlet.engine;
 
+import io.micronaut.http.body.AsyncRequestBodySource;
+import io.micronaut.http.HttpRequest;
+import io.micronaut.http.body.AsyncRequestBody;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -67,7 +70,7 @@ import javax.net.ssl.SSLSession;
  */
 @Internal
 final class DefaultMutableServletHttpRequest<B> implements MutableServletHttpRequest<HttpServletRequest, B>,
-    ServerHttpRequest<B>, FormCapableHttpRequest<B>, DirectByteBodyAccess {
+    ServerHttpRequest<B>, FormCapableHttpRequest<B>, DirectByteBodyAccess, AsyncRequestBodySource {
     private final DefaultServletHttpRequest<B> servletHttpRequest;
     private @Nullable URI uri;
     private ConversionService conversionService;
@@ -366,4 +369,10 @@ final class DefaultMutableServletHttpRequest<B> implements MutableServletHttpReq
     public void addDisposalResource(Runnable dispose) {
         servletHttpRequest.addDisposalResource(dispose);
     }
+
+    @Override
+    public @Nullable AsyncRequestBody asyncRequestBody(HttpRequest<?> request) {
+        return servletHttpRequest.asyncRequestBody(request);
+    }
+
 }

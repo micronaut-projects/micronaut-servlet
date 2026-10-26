@@ -45,6 +45,7 @@ import io.micronaut.http.context.ServerHttpRequestContext;
 import io.micronaut.http.context.event.HttpRequestReceivedEvent;
 import io.micronaut.http.context.event.HttpRequestTerminatedEvent;
 import io.micronaut.http.exceptions.HttpStatusException;
+import io.micronaut.http.server.binding.AsyncRequestBodyFactory;
 import io.micronaut.http.server.HttpServerConfiguration;
 import io.micronaut.http.server.RequestLifecycle;
 import io.micronaut.http.server.ResponseLifecycle;
@@ -112,6 +113,10 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
     private final Supplier<ServletWebSocketUpgrader> webSocketUpgrader;
     private final Supplier<Router> router;
     /**
+     * Gives the requests their {@link io.micronaut.http.body.AsyncRequestBody#of(HttpRequest)}.
+     */
+    private final Supplier<AsyncRequestBodyFactory> asyncRequestBodies;
+    /**
      * Typed publishers resolve their listeners once; publishing through the context would look them up, with the
      * bean resolution that entails, on every request.
      */
@@ -144,6 +149,7 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
         this.ioExecutor = SupplierUtil.memoized(() -> applicationContext.getBean(Executor.class, Qualifiers.byName(TaskExecutors.BLOCKING)));
         this.webSocketUpgrader = SupplierUtil.memoized(() -> applicationContext.findBean(ServletWebSocketUpgrader.class).orElse(null));
         this.router = SupplierUtil.memoized(() -> applicationContext.getBean(Router.class));
+        this.asyncRequestBodies = SupplierUtil.memoized(() -> applicationContext.getBean(AsyncRequestBodyFactory.class));
         this.requestReceivedPublisher = SupplierUtil.memoized(() -> applicationContext.getEventPublisher(HttpRequestReceivedEvent.class));
         this.requestTerminatedPublisher = SupplierUtil.memoized(() -> applicationContext.getEventPublisher(HttpRequestTerminatedEvent.class));
     }
@@ -438,6 +444,10 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
         };
 
         final HttpRequest<Object> req = exchange.getRequest();
+        if (req instanceof AsyncRequestBodySourceHolder holder) {
+            // every request that runs the filters, those of a WebSocket upgrade too
+            holder.setAsyncRequestBodySource(asyncRequestBodies.get());
+        }
         requestReceivedPublisher.get().publishEvent(new HttpRequestReceivedEvent(req));
 
         ServletWebSocketUpgrader upgrader = resolveWebSocketUpgrader(req);
