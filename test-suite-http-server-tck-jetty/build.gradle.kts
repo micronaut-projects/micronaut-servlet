@@ -3,6 +3,8 @@ plugins {
 }
 
 dependencies {
+    // the PostDiscoveryFilter that excludes single TCK tests
+    testImplementation("org.junit.platform:junit-platform-launcher")
     testImplementation(projects.micronautHttpServerJetty)
     // the WebSocket tests of the TCK, on the Jakarta WebSocket implementation of Jetty
     testImplementation(projects.micronautServletWebsocket)
