@@ -22,6 +22,7 @@ import io.micronaut.core.io.buffer.ByteBufferFactory;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.codec.MediaTypeCodecRegistry;
 import io.micronaut.http.poja.PojaHttpServerlessApplication;
+import io.micronaut.http.poja.exception.NoPojaRequestException;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.runtime.ApplicationConfiguration;
 import io.micronaut.scheduling.TaskExecutors;
@@ -52,7 +53,7 @@ public class ApacheServerlessApplication
     private final ExecutorService ioExecutor;
     private final ByteBufferFactory<?, ?> byteBufferFactory;
     private final ApacheServletConfiguration configuration;
-    private SessionInputBuffer sessionInputBuffer;
+    private final ThreadLocal<SessionInputBuffer> sessionInputBuffer;
 
     /**
      * Default constructor.
@@ -67,7 +68,22 @@ public class ApacheServerlessApplication
         codecRegistry = applicationContext.getBean(MediaTypeCodecRegistry.class);
         ioExecutor = applicationContext.getBean(ExecutorService.class, Qualifiers.byName(TaskExecutors.BLOCKING));
         configuration = applicationContext.getBean(ApacheServletConfiguration.class);
+        sessionInputBuffer = ThreadLocal.withInitial(() -> new SessionInputBufferImpl(configuration.inputBufferSize()));
         byteBufferFactory = ByteArrayBufferFactory.INSTANCE;
+    }
+
+    @Override
+    protected void runIndefinitely(
+            ServletHttpHandler<ApacheServletHttpRequest<?>, ApacheServletHttpResponse<?>> servletHttpHandler,
+            InputStream in,
+            OutputStream out
+    ) throws IOException {
+        try {
+            super.runIndefinitely(servletHttpHandler, in, out);
+        } finally {
+            // Each connection owns its parser buffer, including when worker threads are reused.
+            sessionInputBuffer.remove();
+        }
     }
 
     @Override
@@ -78,17 +94,16 @@ public class ApacheServerlessApplication
     ) throws IOException {
         try (ApacheResponseContext responseContext = new ApacheResponseContext(configuration, out)) {
             try {
-                // The buffer is initialized only once
-                if (sessionInputBuffer == null) {
-                    sessionInputBuffer = new SessionInputBufferImpl(configuration.inputBufferSize());
-                }
                 ApacheServletHttpRequest exchange = new ApacheServletHttpRequest<>(
-                    in, responseContext, sessionInputBuffer, conversionService, codecRegistry, ioExecutor, byteBufferFactory
+                    in, responseContext, sessionInputBuffer.get(), conversionService, codecRegistry, ioExecutor, byteBufferFactory
                 );
                 servletHttpHandler.service(exchange);
                 if (!responseContext.isCommitted()) {
                     responseContext.primaryResponse.getOutputStream(); // this causes the commit
                 }
+            } catch (NoPojaRequestException e) {
+                // A clean end of input is not a malformed request and must not emit a 400 response.
+                throw e;
             } catch (Exception e) {
                 if (!responseContext.isCommitted()) {
                     try (OutputStream os = responseContext.commit(new BasicClassicHttpResponse(HttpStatus.BAD_REQUEST.getCode()))) {
