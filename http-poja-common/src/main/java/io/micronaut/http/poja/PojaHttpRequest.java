@@ -104,7 +104,11 @@ public abstract class PojaHttpRequest<B, REQ, RES>
      * Whether a filter set the body, even to {@code null}: the routes then no longer read the bytes of the request.
      */
     private boolean bodySet;
-    private volatile @Nullable AsyncRequestBodySource asyncRequestBodySource;
+    /**
+     * Set by the handler when it receives the request, before the filters run: the hand-off of the request to
+     * the threads of the filters publishes it.
+     */
+    private @Nullable AsyncRequestBodySource asyncRequestBodySource;
     private final ConcurrentLinkedQueue<Runnable> disposalResources = new ConcurrentLinkedQueue<>();
     private final BodyBuilder bodyBuilder;
     /**

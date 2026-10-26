@@ -144,7 +144,11 @@ public final class DefaultServletHttpRequest<B> implements
     private static final String NULL_PARAMETER_NAME = "Parameter name cannot be null";
     private static final Logger LOG = LoggerFactory.getLogger(DefaultServletHttpRequest.class);
     private final ConversionService conversionService;
-    private volatile @Nullable AsyncRequestBodySource asyncRequestBodySource;
+    /**
+     * Set by the handler when it receives the request, before the filters run: the hand-off of the request to
+     * the threads of the filters publishes it.
+     */
+    private @Nullable AsyncRequestBodySource asyncRequestBodySource;
     /**
      * The ways the embedded server drops the connection of a response whose body failed, see
      * {@link ServletConnectionAborter}: none in a WAR deployment.
