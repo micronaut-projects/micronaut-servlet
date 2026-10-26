@@ -15,9 +15,11 @@
  */
 package io.micronaut.servlet.http;
 
+import io.micronaut.context.BeanLocator;
 import io.micronaut.context.BeanProvider;
 import io.micronaut.context.annotation.Replaces;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.http.BasicHttpAttributes;
@@ -51,23 +53,29 @@ import java.util.concurrent.atomic.AtomicReference;
 @Replaces(ServerBodyAnnotationBinder.class)
 public class ServletServerBodyAnnotationBinder<T> extends ServerBodyAnnotationBinder<T> {
 
+    private static final String JSON_MAPPER = "io.micronaut.json.JsonMapper";
+
     private final MessageBodyHandlerRegistry servletBodyHandlerRegistry;
-    private final BeanProvider<JsonMapper> jsonMapper;
+    /**
+     * Not a {@code BeanProvider<JsonMapper>}: the JSON mapper is optional ({@code micronaut-json-core} is not a
+     * runtime dependency), and a type of an injection point must be present to load the bean definition.
+     */
+    private final BeanLocator beanLocator;
     private final AtomicReference<ServletBodyBinder<T>> detachedBinder = new AtomicReference<>();
 
     /**
      * @param conversionService   The conversion service
      * @param bodyHandlerRegistry The message body handler registry
      * @param formFactory         The form factory
-     * @param jsonMapper          The JSON mapper, for a JSON stream read by the servlet body binder
+     * @param beanLocator         The bean locator, for the optional JSON mapper of a JSON stream read by the servlet body binder
      */
     public ServletServerBodyAnnotationBinder(ConversionService conversionService,
                                              MessageBodyHandlerRegistry bodyHandlerRegistry,
                                              BeanProvider<FormFactory> formFactory,
-                                             BeanProvider<JsonMapper> jsonMapper) {
+                                             BeanLocator beanLocator) {
         super(conversionService, bodyHandlerRegistry, formFactory);
         this.servletBodyHandlerRegistry = bodyHandlerRegistry;
-        this.jsonMapper = jsonMapper;
+        this.beanLocator = beanLocator;
     }
 
     /**
@@ -117,13 +125,23 @@ public class ServletServerBodyAnnotationBinder<T> extends ServerBodyAnnotationBi
     }
 
     /**
+     * @return The JSON mapper, or {@code null} without {@code micronaut-json-core}
+     */
+    private @Nullable JsonMapper jsonMapper() {
+        if (!ClassUtils.isPresent(JSON_MAPPER, getClass().getClassLoader())) {
+            return null;
+        }
+        return beanLocator.findBean(JsonMapper.class).orElse(null);
+    }
+
+    /**
      * @return The servlet body binder, for the bodies the shared binder does not read for a servlet request
      */
     @SuppressWarnings("deprecation")
     ServletBodyBinder<T> servletBodyBinder() {
         ServletBodyBinder<T> binder = detachedBinder.get();
         if (binder == null) {
-            binder = new ServletBodyBinder<>(conversionService, servletBodyHandlerRegistry, new DefaultBodyAnnotationBinder<>(conversionService), jsonMapper.get());
+            binder = new ServletBodyBinder<>(conversionService, servletBodyHandlerRegistry, new DefaultBodyAnnotationBinder<>(conversionService), jsonMapper());
             if (!detachedBinder.compareAndSet(null, binder)) {
                 binder = detachedBinder.get();
             }

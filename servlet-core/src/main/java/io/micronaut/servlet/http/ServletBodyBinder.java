@@ -89,7 +89,7 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
     protected final ConversionService conversionService;
     private final MessageBodyHandlerRegistry messageBodyHandlerRegistry;
     private final DefaultBodyAnnotationBinder<T> defaultBodyAnnotationBinder;
-    private final JsonMapper jsonMapper;
+    private final @Nullable JsonMapper jsonMapper;
 
     /**
      * Default constructor.
@@ -97,12 +97,12 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
      * @param conversionService           The conversion service
      * @param messageBodyHandlerRegistry  The message body handler registry
      * @param defaultBodyAnnotationBinder The delegate default body binder
-     * @param jsonMapper                  The JSON mapper
+     * @param jsonMapper                  The JSON mapper, or {@code null} without {@code micronaut-json-core}
      */
     protected ServletBodyBinder(ConversionService conversionService,
                                 MessageBodyHandlerRegistry messageBodyHandlerRegistry,
                                 DefaultBodyAnnotationBinder<T> defaultBodyAnnotationBinder,
-                                JsonMapper jsonMapper) {
+                                @Nullable JsonMapper jsonMapper) {
         this.conversionService = conversionService;
         this.messageBodyHandlerRegistry = messageBodyHandlerRegistry;
         this.defaultBodyAnnotationBinder = defaultBodyAnnotationBinder;
@@ -587,6 +587,10 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
     }
 
     private Flux<Object> streamJson(ServerHttpRequest<?> serverRequest, Argument<Object> typeArgument) {
+        JsonMapper jsonMapper = this.jsonMapper;
+        if (jsonMapper == null) {
+            return Flux.error(new UnsupportedOperationException("Reading a JSON stream requires micronaut-json-core and a JsonMapper bean"));
+        }
         Processor<byte[], JsonNode> reactiveParser = jsonMapper.createReactiveParser(p -> serverRequest.byteBody().toByteArrayPublisher().subscribe(p), true);
         return Flux.from(reactiveParser)
             .map(node -> {
