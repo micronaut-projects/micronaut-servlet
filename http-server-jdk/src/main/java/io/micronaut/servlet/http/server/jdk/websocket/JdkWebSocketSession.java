@@ -85,6 +85,7 @@ final class JdkWebSocketSession implements Session, WebSocketFrameDecoder.Listen
     private final JdkServerContainer container;
     private final Endpoint endpoint;
     private final ServerEndpointConfig config;
+    private final Object endpointKey;
     private final WebSocketConnection connection;
     private final InputStream in;
     private final JdkHandshakeRequest request;
@@ -116,6 +117,7 @@ final class JdkWebSocketSession implements Session, WebSocketFrameDecoder.Listen
                         JdkServerContainer container,
                         Endpoint endpoint,
                         ServerEndpointConfig config,
+                        Object endpointKey,
                         WebSocketConnection connection,
                         InputStream in,
                         JdkHandshakeRequest request,
@@ -124,6 +126,7 @@ final class JdkWebSocketSession implements Session, WebSocketFrameDecoder.Listen
         this.container = container;
         this.endpoint = endpoint;
         this.config = config;
+        this.endpointKey = endpointKey;
         this.connection = connection;
         this.in = in;
         this.request = request;
@@ -471,19 +474,21 @@ final class JdkWebSocketSession implements Session, WebSocketFrameDecoder.Listen
             connection.abort();
             return;
         }
+        // the deadline runs whether or not the close frame can be written: a write blocked on a peer
+        // that reads nothing holds the connection, and only dropping it ends that write
+        Future<?> deadline = closeReceived ? null : container.schedule(() -> {
+            if (!finished.get()) {
+                connection.abort();
+            }
+        }, CLOSE_TIMEOUT_MILLIS);
         try {
             connection.sendClose(WebSocketFrames.closePayload(code, closeReason.getReasonPhrase()));
         } catch (IOException e) {
+            if (deadline != null) {
+                deadline.cancel(false);
+            }
             connection.abort();
             throw e;
-        }
-        if (!closeReceived) {
-            // the client answers with its close, which ends the read; one that does not is dropped
-            container.schedule(() -> {
-                if (!finished.get()) {
-                    connection.abort();
-                }
-            }, CLOSE_TIMEOUT_MILLIS);
         }
     }
 
@@ -500,6 +505,20 @@ final class JdkWebSocketSession implements Session, WebSocketFrameDecoder.Listen
      */
     void goingAway() {
         closeQuietly(new CloseReason(CloseReason.CloseCodes.GOING_AWAY, "Server stopping"));
+    }
+
+    /**
+     * @return Whether the close frame of the server went out
+     */
+    boolean isCloseSent() {
+        return connection.isCloseSent();
+    }
+
+    /**
+     * Drops the connection.
+     */
+    void abort() {
+        connection.abort();
     }
 
     private void scheduleIdleCheck() {
@@ -572,14 +591,25 @@ final class JdkWebSocketSession implements Session, WebSocketFrameDecoder.Listen
 
     @Override
     public Set<Session> getOpenSessions() {
-        return container.openSessions(config);
+        return container.openSessions(endpointKey);
     }
 
     /**
-     * @return The configuration the session was opened with
+     * @return What identifies the endpoint the session was opened on, for {@link #getOpenSessions()}
      */
-    ServerEndpointConfig getConfig() {
-        return config;
+    Object getEndpointKey() {
+        return endpointKey;
+    }
+
+    /**
+     * Runs a task later, off the timer thread.
+     *
+     * @param task        The task
+     * @param delayMillis In how long
+     * @return Its future, to cancel it
+     */
+    Future<?> schedule(Runnable task, long delayMillis) {
+        return container.schedule(task, delayMillis);
     }
 
     /**
