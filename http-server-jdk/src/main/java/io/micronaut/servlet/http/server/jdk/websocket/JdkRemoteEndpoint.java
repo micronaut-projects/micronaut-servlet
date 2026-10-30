@@ -20,15 +20,19 @@ import jakarta.websocket.EncodeException;
 import jakarta.websocket.RemoteEndpoint;
 import jakarta.websocket.SendHandler;
 import jakarta.websocket.SendResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static io.micronaut.servlet.http.server.jdk.websocket.WebSocketFrames.OPCODE_BINARY;
 import static io.micronaut.servlet.http.server.jdk.websocket.WebSocketFrames.OPCODE_PING;
@@ -43,6 +47,8 @@ import static io.micronaut.servlet.http.server.jdk.websocket.WebSocketFrames.OPC
  */
 @Internal
 abstract sealed class JdkRemoteEndpoint implements RemoteEndpoint {
+
+    private static final Logger LOG = LoggerFactory.getLogger(JdkRemoteEndpoint.class);
 
     final JdkWebSocketSession session;
     final WebSocketConnection connection;
@@ -91,6 +97,14 @@ abstract sealed class JdkRemoteEndpoint implements RemoteEndpoint {
 
     final void writeBinary(ByteBuffer data) throws IOException {
         connection.send(OPCODE_BINARY, data);
+        consumed(data);
+    }
+
+    /**
+     * Marks a buffer sent as consumed, as the Jakarta API specifies for {@code sendBinary}.
+     */
+    static void consumed(ByteBuffer data) {
+        data.position(data.limit());
     }
 
     final void writeObject(Object data) throws IOException, EncodeException {
@@ -126,6 +140,7 @@ abstract sealed class JdkRemoteEndpoint implements RemoteEndpoint {
         @Override
         public void sendBinary(ByteBuffer data, boolean isLast) throws IOException {
             connection.sendPart(OPCODE_BINARY, data, isLast);
+            consumed(data);
         }
 
         @Override
@@ -175,8 +190,10 @@ abstract sealed class JdkRemoteEndpoint implements RemoteEndpoint {
     }
 
     /**
-     * {@link RemoteEndpoint.Async}: the send runs on the executor of the server, after the
-     * asynchronous sends made before it.
+     * {@link RemoteEndpoint.Async}: the send runs on the executor of the sends, after the
+     * asynchronous sends made before it. A send that is not written within the send timeout, when
+     * one is set, fails with a {@link SocketTimeoutException} and drops the connection, whose
+     * blocked write cannot otherwise be ended.
      */
     static final class Async extends JdkRemoteEndpoint implements RemoteEndpoint.Async {
 
@@ -243,6 +260,15 @@ abstract sealed class JdkRemoteEndpoint implements RemoteEndpoint {
             if (handler == null) {
                 throw new IllegalArgumentException("No send handler");
             }
+            AtomicBoolean completed = new AtomicBoolean();
+            long timeout = sendTimeout;
+            Future<?> deadline = timeout > 0 ? session.schedule(() -> {
+                if (completed.compareAndSet(false, true)) {
+                    connection.abort();
+                    complete(handler, new SendResult(session, new SocketTimeoutException(
+                        "The WebSocket send did not complete within " + timeout + "ms")));
+                }
+            }, timeout) : null;
             connection.sendAsync(() -> {
                 SendResult result;
                 try {
@@ -251,8 +277,21 @@ abstract sealed class JdkRemoteEndpoint implements RemoteEndpoint {
                 } catch (Exception e) {
                     result = new SendResult(session, e);
                 }
-                handler.onResult(result);
+                if (deadline != null) {
+                    deadline.cancel(false);
+                }
+                if (completed.compareAndSet(false, true)) {
+                    complete(handler, result);
+                }
             });
+        }
+
+        private void complete(SendHandler handler, SendResult result) {
+            try {
+                handler.onResult(result);
+            } catch (RuntimeException e) {
+                LOG.warn("Error in the send handler of WebSocket session [{}]: {}", session.getId(), e.getMessage(), e);
+            }
         }
     }
 

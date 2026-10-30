@@ -31,7 +31,8 @@ import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * The writing side of an upgraded connection: one frame at a time, whichever thread sends it, and
- * the asynchronous sends in the order they were made, on the executor of the server.
+ * the asynchronous sends in the order they were made, on an executor of their own: never the bounded pool of
+ * the server, whose workers the readers of the connections occupy.
  *
  * @author Denis Stepanov
  * @since 6.2.0
@@ -52,7 +53,7 @@ final class WebSocketConnection {
     /**
      * The close frame went out: nothing but a close frame may follow it (RFC 6455, 5.5.1).
      */
-    private boolean closeSent;
+    private volatile boolean closeSent;
     /**
      * The opcode of a message sent in parts that is not complete yet, or {@code -1}.
      */
@@ -60,7 +61,7 @@ final class WebSocketConnection {
 
     /**
      * @param out      The stream of the connection
-     * @param executor Runs the asynchronous sends
+     * @param executor Runs the asynchronous sends, apart from the threads that read the connections
      * @param abort    Drops the connection
      */
     WebSocketConnection(OutputStream out, Executor executor, Runnable abort) {
@@ -149,7 +150,7 @@ final class WebSocketConnection {
     }
 
     /**
-     * Runs a send after the asynchronous sends made before it, on the executor of the server.
+     * Runs a send after the asynchronous sends made before it, on the executor of the sends.
      *
      * @param send The send
      */
@@ -176,13 +177,22 @@ final class WebSocketConnection {
         while (true) {
             Runnable send = asyncSends.poll();
             while (send != null) {
-                send.run();
+                run(send);
                 send = asyncSends.poll();
             }
             draining.set(false);
             if (asyncSends.isEmpty() || !draining.compareAndSet(false, true)) {
                 return;
             }
+        }
+    }
+
+    private static void run(Runnable send) {
+        try {
+            send.run();
+        } catch (RuntimeException e) {
+            // a failing completion callback of the application must not stop the sends queued after it
+            LOG.warn("Error completing an asynchronous WebSocket send: {}", e.getMessage(), e);
         }
     }
 
@@ -204,12 +214,8 @@ final class WebSocketConnection {
      * @return Whether the close frame went out
      */
     boolean isCloseSent() {
-        writeLock.lock();
-        try {
-            return closeSent;
-        } finally {
-            writeLock.unlock();
-        }
+        // without the write lock, which a write blocked on the peer holds
+        return closeSent;
     }
 
     /**

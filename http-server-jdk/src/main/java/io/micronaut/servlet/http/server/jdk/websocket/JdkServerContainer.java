@@ -17,12 +17,14 @@ package io.micronaut.servlet.http.server.jdk.websocket;
 
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpServer;
+import io.micronaut.context.annotation.Property;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.http.server.HttpServerConfiguration;
+import io.micronaut.servlet.websocket.WebSocketUpgradeContext;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Singleton;
 import jakarta.servlet.http.HttpServletResponse;
@@ -43,20 +45,24 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
@@ -85,7 +91,18 @@ import java.util.stream.Collectors;
 public final class JdkServerContainer implements ServerContainer {
 
     private static final Logger LOG = LoggerFactory.getLogger(JdkServerContainer.class);
+    /**
+     * The send timeout of micronaut-servlet-websocket, which the servlet containers are given by
+     * their initializers.
+     */
+    private static final String ASYNC_SEND_TIMEOUT = "micronaut.servlet.websocket.async-send-timeout";
     private static final int DEFAULT_MAX_MESSAGE_SIZE = 65536;
+    /**
+     * How long the sessions are given to send their close as the server stops.
+     */
+    private static final long SHUTDOWN_CLOSE_MILLIS = 1000;
+    private static final boolean UPGRADE_CONTEXT_PRESENT = ClassUtils.isPresent(
+        "io.micronaut.servlet.websocket.WebSocketUpgradeContext", JdkServerContainer.class.getClassLoader());
     /**
      * The headers of the handshake response that are the server's, which the configurator
      * cannot set.
@@ -100,7 +117,7 @@ public final class JdkServerContainer implements ServerContainer {
     private final AtomicLong ids = new AtomicLong();
     private final Object schedulerLock = new Object();
     private @Nullable ScheduledExecutorService scheduler;
-    private @Nullable ExecutorService fallbackExecutor;
+    private @Nullable ExecutorService workers;
     private volatile long asyncSendTimeout;
     private volatile long maxSessionIdleTimeout;
     private volatile int maxBinaryMessageBufferSize = DEFAULT_MAX_MESSAGE_SIZE;
@@ -108,11 +125,15 @@ public final class JdkServerContainer implements ServerContainer {
 
     /**
      * @param capability    Whether a handshake can be upgraded
-     * @param configuration The server configuration, for the default idle timeout
+     * @param configuration    The server configuration, for the default idle timeout
+     * @param asyncSendTimeout The default send timeout of {@code RemoteEndpoint.Async}, if any
      */
-    JdkServerContainer(JdkWebSocketCapability capability, HttpServerConfiguration configuration) {
+    JdkServerContainer(JdkWebSocketCapability capability,
+                       HttpServerConfiguration configuration,
+                       @Property(name = ASYNC_SEND_TIMEOUT) @Nullable Duration asyncSendTimeout) {
         this.capability = capability;
         this.maxSessionIdleTimeout = configuration.getIdleTimeout().toMillis();
+        this.asyncSendTimeout = asyncSendTimeout != null ? asyncSendTimeout.toMillis() : 0;
     }
 
     @Override
@@ -155,9 +176,9 @@ public final class JdkServerContainer implements ServerContainer {
         out.flush();
         // taken after the 101: the provider only then gives the stream of the connection
         InputStream in = exchange.getRequestBody();
-        WebSocketConnection connection = new WebSocketConnection(out, executor(exchange), exchange::close);
+        WebSocketConnection connection = new WebSocketConnection(out, workers(), exchange::close);
         JdkWebSocketSession session = new JdkWebSocketSession(
-            Long.toHexString(ids.incrementAndGet()), this, endpoint, sec, connection, in, request, subprotocol
+            Long.toHexString(ids.incrementAndGet()), this, endpoint, sec, endpointKey(sec), connection, in, request, subprotocol
         );
         sessions.add(session);
         upgradable.upgraded(session::run);
@@ -206,22 +227,25 @@ public final class JdkServerContainer implements ServerContainer {
         }
     }
 
-    private Executor executor(HttpExchange exchange) {
-        HttpServer server = exchange.getHttpContext().getServer();
-        Executor executor = server != null ? server.getExecutor() : null;
-        if (executor != null) {
-            return executor;
-        }
+    /**
+     * The threads of the asynchronous sends and of the timeouts. They are virtual threads, one per
+     * task, never the bounded pool of the server: its workers are taken by the readers of the
+     * connections, which would leave no thread for a send, and a write blocked on a peer that reads
+     * nothing must not hold up the timeouts of the other sessions.
+     */
+    private ExecutorService workers() {
         synchronized (schedulerLock) {
-            if (fallbackExecutor == null) {
-                fallbackExecutor = Executors.newThreadPerTaskExecutor(Thread.ofVirtual().name("micronaut-jdk-websocket-", 1L).factory());
+            if (workers == null) {
+                workers = Executors.newThreadPerTaskExecutor(Thread.ofVirtual().name("micronaut-jdk-websocket-", 1L).factory());
             }
-            return fallbackExecutor;
+            return workers;
         }
     }
 
     /**
-     * Runs a task later, for the timeouts of the sessions.
+     * Runs a task later, for the timeouts of the sessions. The timer thread only hands the task
+     * over to {@link #workers()}, so that a task that blocks, e.g. on the write of a close frame,
+     * delays no other.
      *
      * @param task        The task
      * @param delayMillis In how long
@@ -240,7 +264,16 @@ public final class JdkServerContainer implements ServerContainer {
             }
             executor = scheduler;
         }
-        return executor.schedule(task, delayMillis, TimeUnit.MILLISECONDS);
+        return executor.schedule(() -> dispatch(task), delayMillis, TimeUnit.MILLISECONDS);
+    }
+
+    private void dispatch(Runnable task) {
+        try {
+            workers().execute(task);
+        } catch (RejectedExecutionException e) {
+            // the container is stopping
+            LOG.debug("WebSocket timeout task rejected: {}", e.getMessage());
+        }
     }
 
     /**
@@ -251,15 +284,33 @@ public final class JdkServerContainer implements ServerContainer {
     }
 
     /**
-     * @param config The configuration of a session
+     * @param endpointKey What identifies the endpoint of a session, see {@link #endpointKey(ServerEndpointConfig)}
      * @return The open sessions of the same endpoint
      */
-    Set<Session> openSessions(ServerEndpointConfig config) {
+    Set<Session> openSessions(Object endpointKey) {
         return sessions.stream()
             .filter(JdkWebSocketSession::isOpen)
-            .filter(session -> session.getConfig().getEndpointClass() == config.getEndpointClass()
-                && session.getConfig().getPath().equals(config.getPath()))
+            .filter(session -> session.getEndpointKey().equals(endpointKey))
             .collect(Collectors.toUnmodifiableSet());
+    }
+
+    /**
+     * What identifies the endpoint of a connection: the route the upgrade matched, so that the
+     * connections to {@code /chat/a} and {@code /chat/b} of a route {@code /chat/{room}} are of one
+     * endpoint, and two routes of one path on different ports are not. Without the context of
+     * micronaut-servlet-websocket, the endpoint class and the path.
+     *
+     * @param sec The configuration of the connection
+     * @return The key
+     */
+    static Object endpointKey(ServerEndpointConfig sec) {
+        if (UPGRADE_CONTEXT_PRESENT) {
+            Object route = RouteKey.of(sec);
+            if (route != null) {
+                return route;
+            }
+        }
+        return List.of(sec.getEndpointClass(), sec.getPath());
     }
 
     /**
@@ -267,17 +318,36 @@ public final class JdkServerContainer implements ServerContainer {
      */
     @PreDestroy
     void close() {
+        // off the thread that stops the server: a session whose write is blocked on a peer that reads
+        // nothing cannot send its close, and is dropped once the others had the time to
+        List<CompletableFuture<Void>> closes = new ArrayList<>();
         for (JdkWebSocketSession session : sessions) {
-            session.goingAway();
+            try {
+                closes.add(CompletableFuture.runAsync(session::goingAway, workers()));
+            } catch (RejectedExecutionException e) {
+                session.goingAway();
+            }
+        }
+        try {
+            CompletableFuture.allOf(closes.toArray(CompletableFuture[]::new)).get(SHUTDOWN_CLOSE_MILLIS, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } catch (ExecutionException | TimeoutException e) {
+            LOG.debug("WebSocket sessions not closed in time, dropping them: {}", e.getMessage());
+        }
+        for (JdkWebSocketSession session : sessions) {
+            if (!session.isCloseSent()) {
+                session.abort();
+            }
         }
         synchronized (schedulerLock) {
             if (scheduler != null) {
                 scheduler.shutdownNow();
                 scheduler = null;
             }
-            if (fallbackExecutor != null) {
-                fallbackExecutor.shutdownNow();
-                fallbackExecutor = null;
+            if (workers != null) {
+                workers.shutdownNow();
+                workers = null;
             }
         }
     }
@@ -366,5 +436,23 @@ public final class JdkServerContainer implements ServerContainer {
     public Set<Extension> getInstalledExtensions() {
         // no permessage-deflate: no extension is negotiated
         return Set.of();
+    }
+
+    /**
+     * Reads the route of a connection from the context micronaut-servlet-websocket gives it, only
+     * loaded when that module is present.
+     */
+    private static final class RouteKey {
+        private RouteKey() {
+        }
+
+        static @Nullable Object of(ServerEndpointConfig sec) {
+            for (Object value : sec.getUserProperties().values()) {
+                if (value instanceof WebSocketUpgradeContext context) {
+                    return context.routeMatch().getRouteInfo();
+                }
+            }
+            return null;
+        }
     }
 }

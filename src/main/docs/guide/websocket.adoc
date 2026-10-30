@@ -274,10 +274,11 @@ dependency:jakarta.websocket:jakarta.websocket-client-api[scope="runtimeOnly"]
 `@ServerWebSocket` beans, the WebSocket routes of the route builder and Jakarta
 `@ServerEndpoint` beans then work as they do on the servlet containers. The runtime speaks
 RFC 6455 itself: each connection is read by the thread of its exchange, its writes are
-serialized, and asynchronous sends run on the executor of the server. No extension is
-negotiated, so `micronaut.servlet.websocket.compression` has no effect, and a write waits for
-the peer as long as it takes, so `micronaut.servlet.websocket.async-send-timeout` does not apply
-either. The runtime has no
+serialized, and asynchronous sends run on virtual threads of their own, apart from the threads
+of the server that read the connections. No extension is negotiated, so
+`micronaut.servlet.websocket.compression` has no effect. `micronaut.servlet.websocket.async-send-timeout`
+bounds an asynchronous send: one that is not written in time fails with a `SocketTimeoutException`
+and the connection is dropped. The runtime has no
 Jakarta WebSocket client: `@ClientWebSocket` beans connect through the Micronaut WebSocket client.
 
 Whether a handshake is upgraded is set by `micronaut.server.jdk.websocket`:

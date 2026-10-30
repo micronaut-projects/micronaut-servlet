@@ -87,13 +87,6 @@ public final class JdkWebSocketCapability {
     }
 
     /**
-     * @return The class name of the {@code com.sun.net.httpserver} provider
-     */
-    public String getProvider() {
-        return provider;
-    }
-
-    /**
      * @return Why a handshake is not upgraded, and what to do about it
      */
     public String unsupportedMessage() {
