@@ -610,7 +610,7 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
      * Turns a failure to read or decode the body into the exception to throw: an HTTP failure that the body
      * itself raised, such as {@link io.micronaut.http.exceptions.ContentLengthExceededException} when
      * {@code micronaut.server.max-request-size} is exceeded, is rethrown as is so that it maps to its own status,
-     * and anything else becomes a {@link CodecException}.
+     * and anything else becomes a {@link RequestBodyDecodingException}, which answers 400.
      *
      * @param message The message prefix for a codec failure
      * @param e The failure
@@ -629,8 +629,11 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
                 return new ConversionErrorException(Argument.OBJECT_ARGUMENT,
                     cause instanceof JsonSyntaxException syntax ? syntax : new JsonSyntaxException(cause));
             }
-            // as the reader failed
-            return codecException;
+            if (codecException instanceof RequestBodyDecodingException) {
+                return codecException;
+            }
+            // a reader that failed to decode the body, e.g. of a custom format: a 400, as the request is at fault
+            return new RequestBodyDecodingException(message + e.getMessage(), codecException);
         }
         return new RequestBodyDecodingException(message + e.getMessage(), e);
     }
