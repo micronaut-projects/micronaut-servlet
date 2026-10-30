@@ -22,7 +22,9 @@ import io.micronaut.http.uri.QueryStringDecoder;
 import jakarta.websocket.server.HandshakeRequest;
 import org.jspecify.annotations.Nullable;
 
+import java.net.InetSocketAddress;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.security.Principal;
 import java.util.Collections;
 import java.util.List;
@@ -55,12 +57,52 @@ final class JdkHandshakeRequest implements HandshakeRequest {
         Map<String, List<String>> copy = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
         exchange.getRequestHeaders().forEach((name, values) -> copy.put(name, List.copyOf(values)));
         this.headers = Collections.unmodifiableMap(copy);
-        this.requestUri = exchange.getRequestURI();
-        this.queryString = requestUri.getRawQuery();
-        this.parameters = Collections.unmodifiableMap(new QueryStringDecoder(requestUri).parameters());
+        URI exchangeUri = exchange.getRequestURI();
+        this.queryString = exchangeUri.getRawQuery();
+        this.parameters = Collections.unmodifiableMap(new QueryStringDecoder(exchangeUri).parameters());
         this.pathParameters = Map.copyOf(pathParameters);
         this.principal = exchange.getPrincipal();
         this.secure = exchange instanceof HttpsExchange;
+        this.requestUri = absolute(exchangeUri, secure, header("Host"), exchange.getLocalAddress());
+    }
+
+    /**
+     * The complete {@code ws} or {@code wss} URI of the handshake, as a Jakarta session gives it:
+     * the JDK server hands over the request target, usually the path and query alone.
+     *
+     * @param target The request target
+     * @param secure Whether the handshake came over TLS
+     * @param host   The {@code Host} header, if any
+     * @param local  The address the connection was accepted on
+     * @return The URI
+     */
+    static URI absolute(URI target, boolean secure, @Nullable String host, @Nullable InetSocketAddress local) {
+        String scheme = secure ? "wss" : "ws";
+        String path = target.getRawPath() == null || target.getRawPath().isEmpty() ? "/" : target.getRawPath();
+        String query = target.getRawQuery() == null ? "" : "?" + target.getRawQuery();
+        String authority = target.getRawAuthority();
+        if (authority == null && host != null && !host.isBlank()) {
+            authority = host.trim();
+        }
+        if (authority != null) {
+            try {
+                return new URI(scheme + "://" + authority + path + query);
+            } catch (URISyntaxException e) {
+                // an invalid Host header: the local address instead
+            }
+        }
+        if (local == null) {
+            return target;
+        }
+        String address = local.getAddress() != null ? local.getAddress().getHostAddress() : local.getHostString();
+        if (address.indexOf(':') >= 0) {
+            address = "[" + address + "]";
+        }
+        try {
+            return new URI(scheme + "://" + address + ":" + local.getPort() + path + query);
+        } catch (URISyntaxException e) {
+            return target;
+        }
     }
 
     @Override
