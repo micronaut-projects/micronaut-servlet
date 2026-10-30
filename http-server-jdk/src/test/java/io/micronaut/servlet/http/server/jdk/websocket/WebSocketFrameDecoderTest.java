@@ -201,6 +201,27 @@ class WebSocketFrameDecoderTest {
     }
 
     @Test
+    void refusesExtendedLengthsThatAreNotMinimal() {
+        // one byte in the 16-bit form
+        assertProtocolError(1002, new byte[] {(byte) 0x82, (byte) 0xFE, 0, 1, 0x11, 0x22, 0x33, 0x44, 0});
+        // 125 bytes in the 16-bit form
+        assertProtocolError(1002, new byte[] {(byte) 0x82, (byte) 0xFE, 0, 125});
+        // 65535 bytes in the 64-bit form
+        assertProtocolError(1002, new byte[] {(byte) 0x82, (byte) 0xFF, 0, 0, 0, 0, 0, 0, (byte) 0xFF, (byte) 0xFF});
+        // 1 byte in the 64-bit form
+        assertProtocolError(1002, new byte[] {(byte) 0x82, (byte) 0xFF, 0, 0, 0, 0, 0, 0, 0, 1});
+    }
+
+    @Test
+    void acceptsTheSmallestExtendedLengths() throws IOException {
+        for (int length : new int[] {126, 65536}) {
+            Recorder recorder = new Recorder();
+            decoder(frame(true, 0x2, new byte[length])).readFrame(recorder);
+            assertEquals(length, recorder.binary.length);
+        }
+    }
+
+    @Test
     void anEndedConnectionIsAnEndOfFile() {
         assertThrows(EOFException.class, () -> decoder(new byte[0]).readFrame(new Recorder()));
         byte[] truncated = Arrays.copyOf(frame(true, 0x1, "hello".getBytes(StandardCharsets.UTF_8)), 8);

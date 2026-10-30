@@ -60,6 +60,8 @@ public final class WebSocketFrameDecoder {
     private static final int LENGTH = 0x7F;
     private static final int LENGTH_16 = 126;
     private static final int LENGTH_64 = 127;
+    private static final int MAX_LENGTH_7 = 125;
+    private static final int MAX_LENGTH_16 = 0xFFFF;
     private static final int MASK_KEY_LENGTH = 4;
 
     private final InputStream in;
@@ -117,7 +119,12 @@ public final class WebSocketFrameDecoder {
 
     private long payloadLength(int length7) throws IOException {
         if (length7 == LENGTH_16) {
-            return ((long) readByte() << 8) | readByte();
+            long length = ((long) readByte() << 8) | readByte();
+            if (length <= MAX_LENGTH_7) {
+                // RFC 6455, 5.2: the minimal number of bytes encodes the length
+                throw new WebSocketProtocolException(CLOSE_PROTOCOL_ERROR, "Frame length " + length + " not minimally encoded");
+            }
+            return length;
         }
         if (length7 == LENGTH_64) {
             long length = 0;
@@ -126,6 +133,9 @@ public final class WebSocketFrameDecoder {
             }
             if (length < 0) {
                 throw new WebSocketProtocolException(CLOSE_PROTOCOL_ERROR, "Frame length has its most significant bit set");
+            }
+            if (length <= MAX_LENGTH_16) {
+                throw new WebSocketProtocolException(CLOSE_PROTOCOL_ERROR, "Frame length " + length + " not minimally encoded");
             }
             return length;
         }
