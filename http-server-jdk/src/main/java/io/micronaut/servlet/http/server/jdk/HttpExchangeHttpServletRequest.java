@@ -74,7 +74,7 @@ import static io.micronaut.http.util.HttpHeadersUtil.parseCharacterEncoding;
 final class HttpExchangeHttpServletRequest implements HttpServletRequest, UpgradableExchange {
     private static final Logger LOG = LoggerFactory.getLogger(HttpExchangeHttpServletRequest.class);
     private final HttpExchange exchange;
-    private final ServletInputStream inputStream;
+    private final HttpExchangeServletInputStream inputStream;
     private final FormUrlEncodedDecoder formUrlEncodedDecoder;
     private final Map<String, @Nullable Object> attributes = new HashMap<>();
     private @Nullable Map<String, String[]>  parameters;
@@ -254,7 +254,8 @@ final class HttpExchangeHttpServletRequest implements HttpServletRequest, Upgrad
     public Map<String, String[]> getParameterMap() {
         if (parameters == null) {
             Map<String, Object> formParameters = Collections.emptyMap();
-            if (isFormSubmission()) {
+            // a body that was opened is the application's: read inline, and closed, it is not read again
+            if (isFormSubmission() && !inputStream.isOpened()) {
                 try {
                     String formBody = new String(getInputStream().readAllBytes(), StandardCharsets.UTF_8);
                     formParameters = formUrlEncodedDecoder.decode(formBody, StandardCharsets.UTF_8);

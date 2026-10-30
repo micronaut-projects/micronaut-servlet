@@ -88,6 +88,13 @@ final class HttpExchangeServletInputStream extends ServletInputStream {
         }
     }
 
+    /**
+     * @return Whether the body was opened, so that it may be read or closed already
+     */
+    boolean isOpened() {
+        return inputStream != null;
+    }
+
     private InputStream getInputStream() {
         if (inputStream == null) {
             inputStream = httpExchange.getRequestBody();

@@ -134,6 +134,26 @@ class HttpExchangeHttpServletRequestTest {
     }
 
     @Test
+    void aFormBodyReadAndClosedIsNotReadAgainForTheParameters() throws IOException {
+        Headers headers = new Headers();
+        headers.add("Content-Type", "application/x-www-form-urlencoded");
+        FakeExchange exchange = new FakeExchange("POST", "/submit?from=query", headers, "name=value".getBytes(StandardCharsets.UTF_8));
+        HttpExchangeHttpServletRequest request = new HttpExchangeHttpServletRequest(exchange, new TestFormUrlEncodedDecoder());
+        try (InputStream body = request.getInputStream()) {
+            assertEquals("name=value", new String(body.readAllBytes(), StandardCharsets.UTF_8));
+        }
+
+        assertEquals(Map.of("from", List.of("query")), toLists(request.getParameterMap()));
+        assertFalse(exchange.readAfterClose, "the closed body is not read again");
+    }
+
+    private static Map<String, List<String>> toLists(Map<String, String[]> map) {
+        Map<String, List<String>> lists = new java.util.HashMap<>();
+        map.forEach((name, values) -> lists.put(name, List.of(values)));
+        return lists;
+    }
+
+    @Test
     void aMultipartBodyIsNotDecodedAsAForm() throws IOException {
         Headers headers = new Headers();
         headers.add("Content-Type", "multipart/form-data; boundary=xyz");
@@ -239,12 +259,38 @@ class HttpExchangeHttpServletRequestTest {
         private final Headers requestHeaders;
         private final InputStream requestBody;
         private final Headers responseHeaders = new Headers();
+        private boolean readAfterClose;
 
         private FakeExchange(String method, String uri, Headers requestHeaders, byte[] body) {
             this.method = method;
             this.uri = URI.create(uri);
             this.requestHeaders = requestHeaders;
-            this.requestBody = new ByteArrayInputStream(body);
+            this.requestBody = new ByteArrayInputStream(body) {
+                private boolean closed;
+
+                @Override
+                public void close() {
+                    closed = true;
+                }
+
+                @Override
+                public synchronized int read(byte[] b, int off, int len) {
+                    readAfterClose |= closed;
+                    return super.read(b, off, len);
+                }
+
+                @Override
+                public synchronized int read() {
+                    readAfterClose |= closed;
+                    return super.read();
+                }
+
+                @Override
+                public byte[] readAllBytes() {
+                    readAfterClose |= closed;
+                    return super.readAllBytes();
+                }
+            };
         }
 
         @Override
