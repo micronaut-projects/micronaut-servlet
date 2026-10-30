@@ -23,6 +23,7 @@ import io.micronaut.http.HttpStatus;
 import io.micronaut.http.body.MessageBodyHandlerRegistry;
 import io.micronaut.http.poja.PojaConnection;
 import io.micronaut.http.poja.PojaHttpServerlessApplication;
+import io.micronaut.http.poja.exception.NoPojaRequestException;
 import io.micronaut.http.body.stream.BodySizeLimits;
 import io.micronaut.http.server.HttpServerConfiguration;
 import io.micronaut.inject.qualifiers.Qualifiers;
@@ -38,7 +39,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
+import java.util.Map;
 import java.util.Objects;
+import java.util.WeakHashMap;
 import java.util.concurrent.ExecutorService;
 
 /**
@@ -57,6 +61,11 @@ public class ApacheServerlessApplication
     private final ByteBufferFactory<?, ?> byteBufferFactory;
     private final ApacheServletConfiguration configuration;
     private final BodySizeLimits bodySizeLimits;
+    /**
+     * The input buffers of the connections served through {@link #handleSingleRequest(ServletHttpHandler, InputStream, OutputStream, PojaConnection)},
+     * by their input stream.
+     */
+    private final Map<InputStream, SessionInputBuffer> sessionInputBuffers = Collections.synchronizedMap(new WeakHashMap<>());
 
     /**
      * Default constructor.
@@ -113,7 +122,18 @@ public class ApacheServerlessApplication
             OutputStream out,
             PojaConnection connection
     ) throws IOException {
-        return handleSingleRequest(servletHttpHandler, in, out, connection, new SessionInputBufferImpl(configuration.inputBufferSize()));
+        // the buffer holds what was read past this request, e.g. the next pipelined one: kept for the next call
+        // with the same stream, until the connection ends
+        SessionInputBuffer sessionInputBuffer = sessionInputBuffers.computeIfAbsent(in, stream -> new SessionInputBufferImpl(configuration.inputBufferSize()));
+        boolean more = false;
+        try {
+            more = handleSingleRequest(servletHttpHandler, in, out, connection, sessionInputBuffer);
+            return more;
+        } finally {
+            if (!more) {
+                sessionInputBuffers.remove(in);
+            }
+        }
     }
 
     private boolean handleSingleRequest(
@@ -134,6 +154,9 @@ public class ApacheServerlessApplication
                     Objects.requireNonNull(responseContext.primaryResponse, "primaryResponse").getOutputStream(); // this causes the commit
                 }
                 exchange.discardUnreadBody();
+            } catch (NoPojaRequestException e) {
+                // the connection ended without another request: no response is due
+                throw e;
             } catch (Exception e) {
                 if (!responseContext.isCommitted()) {
                     try (OutputStream os = responseContext.commit(new BasicClassicHttpResponse(HttpStatus.BAD_REQUEST.getCode()))) {

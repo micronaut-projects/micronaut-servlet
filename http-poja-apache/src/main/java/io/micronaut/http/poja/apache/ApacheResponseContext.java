@@ -68,6 +68,10 @@ final class ApacheResponseContext implements Closeable {
         int code = headers.getCode();
         // no body follows the headers of these: a chunked terminator would be read as the start of the next response
         boolean bodiless = headRequest || code < 200 || code == 204 || code == 304;
+        if (code < 200 || code == 204) {
+            // not even a length of zero is allowed for these (RFC 9110 8.6), unlike for HEAD and 304
+            headers.removeHeaders(HttpHeaders.CONTENT_LENGTH);
+        }
         Header contentLengthStr = headers.getFirstHeader(HttpHeaders.CONTENT_LENGTH);
         long contentLength = contentLengthStr == null ? -1 : Long.parseLong(contentLengthStr.getValue());
         if (contentLength < 0 && !bodiless) {
