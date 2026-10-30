@@ -18,6 +18,8 @@ package io.micronaut.servlet.tomcat;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.servlet.engine.ServletConnectionAborter;
 import jakarta.inject.Singleton;
+import jakarta.servlet.ServletResponse;
+import jakarta.servlet.ServletResponseWrapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.apache.catalina.connector.Response;
@@ -43,7 +45,12 @@ final class TomcatConnectionAborter implements ServletConnectionAborter {
     @Override
     public boolean abort(HttpServletRequest request, HttpServletResponse response, Throwable failure) {
         Field field = RESPONSE;
-        if (field == null || !(response instanceof ResponseFacade facade)) {
+        // a servlet filter may have wrapped the response of the container
+        ServletResponse unwrapped = response;
+        while (unwrapped instanceof ServletResponseWrapper wrapper) {
+            unwrapped = wrapper.getResponse();
+        }
+        if (field == null || !(unwrapped instanceof ResponseFacade facade)) {
             return false;
         }
         try {

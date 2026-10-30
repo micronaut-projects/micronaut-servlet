@@ -22,6 +22,8 @@ import io.undertow.server.AbstractServerConnection;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.ServerConnection;
 import io.undertow.servlet.spec.HttpServletRequestImpl;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletRequestWrapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.xnio.IoUtils;
@@ -38,7 +40,12 @@ final class UndertowConnectionAborter implements ServletConnectionAborter {
 
     @Override
     public boolean abort(HttpServletRequest request, HttpServletResponse response, Throwable failure) {
-        if (!(request instanceof HttpServletRequestImpl undertowRequest)) {
+        // a servlet filter may have wrapped the request of the container
+        ServletRequest unwrapped = request;
+        while (unwrapped instanceof ServletRequestWrapper wrapper) {
+            unwrapped = wrapper.getRequest();
+        }
+        if (!(unwrapped instanceof HttpServletRequestImpl undertowRequest)) {
             return false;
         }
         HttpServerExchange exchange = undertowRequest.getExchange();
