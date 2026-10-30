@@ -81,8 +81,6 @@ import java.util.stream.Collectors;
  */
 @Internal
 public final class DefaultServletHttpResponse<B> implements ServletHttpResponse<HttpServletResponse, B> {
-    private static volatile boolean writeBufferAvailable = true;
-
     private static final Logger LOG = LoggerFactory.getLogger(DefaultServletHttpResponse.class);
 
     private static final byte[] EMPTY_ARRAY = "[]".getBytes(StandardCharsets.UTF_8);
