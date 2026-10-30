@@ -945,13 +945,15 @@ public abstract class AbstractMicronautEndpoint extends Endpoint {
      * wait for a handler are discarded.
      */
     private void closeRoute() {
+        // every endpoint, an annotated one too: what is still being sent, e.g. by sendAllAsync, completes or is
+        // cancelled once the peer closed
+        if (micronautSession != null) {
+            micronautSession.closeReceived();
+        }
         RouteMessageQueue messages = routeMessages;
         WebSocketRouteEndpoint endpoint = routeEndpoint;
         if (messages == null || endpoint == null) {
             return;
-        }
-        if (micronautSession != null) {
-            micronautSession.closeReceived();
         }
         List<Supplier<ExecutionFlow<?>>> waiting = messages.close();
         if (!endpoint.streamsMessages() || micronautSession == null) {
