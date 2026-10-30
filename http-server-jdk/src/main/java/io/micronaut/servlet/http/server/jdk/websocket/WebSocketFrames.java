@@ -62,21 +62,9 @@ public final class WebSocketFrames {
     public static final int OPCODE_PONG = 0xA;
 
     /**
-     * The close code of a normal closure.
-     */
-    public static final int CLOSE_NORMAL = 1000;
-    /**
-     * The close code of an endpoint that goes away, e.g. on an idle timeout.
-     */
-    public static final int CLOSE_GOING_AWAY = 1001;
-    /**
      * The close code of a protocol error.
      */
     public static final int CLOSE_PROTOCOL_ERROR = 1002;
-    /**
-     * The close code of a message of a type the endpoint cannot accept.
-     */
-    public static final int CLOSE_CANNOT_ACCEPT = 1003;
     /**
      * The close code a close frame without a payload stands for. It is never sent.
      */
@@ -93,11 +81,6 @@ public final class WebSocketFrames {
      * The close code of a message over the size the endpoint accepts.
      */
     public static final int CLOSE_TOO_BIG = 1009;
-    /**
-     * The close code of an unexpected condition of the server.
-     */
-    public static final int CLOSE_INTERNAL_ERROR = 1011;
-
     /**
      * The largest payload of a control frame.
      */
