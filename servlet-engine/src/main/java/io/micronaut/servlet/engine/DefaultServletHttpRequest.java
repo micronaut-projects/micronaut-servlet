@@ -88,6 +88,7 @@ import org.reactivestreams.Subscriber;
 import reactor.core.publisher.Flux;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import reactor.core.Disposable;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
@@ -98,11 +99,11 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.InetSocketAddress;
 import java.net.URI;
-import java.net.URLDecoder;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.Principal;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -117,8 +118,12 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Set;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
@@ -139,6 +144,12 @@ public final class DefaultServletHttpRequest<B> implements
     FormCapableHttpRequest<B>,
     DirectByteBodyAccess,
     AsyncRequestBodySourceHolder {
+
+    /**
+     * How long the body the route did not read may take to arrive once the response is sent, before the connection
+     * is closed instead, {@code micronaut.servlet.unread-body-drain-timeout} in milliseconds as a system property.
+     */
+    static volatile long drainTimeoutMillis = Long.getLong("micronaut.servlet.unread-body-drain-timeout", 10_000);
 
     private static final String NULL_KEY = "Attribute key cannot be null";
     private static final String NULL_PARAMETER_NAME = "Parameter name cannot be null";
@@ -177,11 +188,30 @@ public final class DefaultServletHttpRequest<B> implements
      */
     private @Nullable ContentLengthExceededException bodyTooLarge;
     private final long maxBodySize;
+    private final long maxBufferSize;
+    /**
+     * The most fields a form may have, {@code micronaut.http.forms.max-decoded-key-value-parameters}.
+     */
+    private int maxFormFields = Integer.MAX_VALUE;
+    /**
+     * The most bytes of a file of a multipart form decoded from the byte body, {@code micronaut.server.multipart.max-file-size}.
+     */
+    private long maxFileSize = Long.MAX_VALUE;
+    /**
+     * Set when what is left of the body is known to exceed what is drained once the response is sent, e.g. a form
+     * refused for its size: the connection is closed instead, see {@link #discardUnreadBody}.
+     */
+    private volatile boolean bodyBeyondDrainLimit;
     /**
      * The fields of a URL-encoded form that declared no length, read through the size limit before the container
      * could parse the same bytes unbounded; {@code null} until such a form is asked for, and for every other request.
      */
     private @Nullable Map<String, List<String>> unboundedForm;
+    /**
+     * A copy of the body of a URL-encoded form streamed through a {@code ReadListener}, which its fields are decoded
+     * from, or {@code null}.
+     */
+    private @Nullable CloseableByteBody formCopy;
     private final ByteBodyFactory byteBodyFactory;
     private final Executor ioExecutor;
     private final @Nullable SSLSessionProvider sslSessionProvider;
@@ -313,6 +343,7 @@ public final class DefaultServletHttpRequest<B> implements
         this.byteBodyFactory = ByteBodyFactory.createDefault(ByteArrayBufferFactory.INSTANCE);
         this.headers = new ServletRequestHeaders();
         this.maxBodySize = bodySizeLimits.maxBodySize();
+        this.maxBufferSize = bodySizeLimits.maxBufferSize();
         this.byteBody.set(createBody(delegate.getContentLengthLong(), bodySizeLimits));
 
         String requestURI = resolveRequestUri(delegate);
@@ -520,12 +551,20 @@ public final class DefaultServletHttpRequest<B> implements
             this.bodyReadsAsynchronously = true;
             ServletStreamPublisher publisher = new ServletStreamPublisher(this::openBodyStream, bodySizeLimits.maxBodySize(), contentLength);
             this.streamPublisher = publisher;
-            return byteBodyFactory.adapt(
+            CloseableByteBody streamed = byteBodyFactory.adapt(
                 Flux.from(publisher).map(readBufferFactory::adapt),
                 bodySizeLimits,
                 headers,
                 null
             );
+            if (isUrlEncodedForm()) {
+                // the fields of the form are decoded from this copy, taken before anyone reads the body: a filter may
+                // read a copy of the body first, and the container's stream is then consumed. Being the first copy,
+                // it has the whole body by the time the copy of the filter does, so the parameters never wait on
+                // the thread that delivers the body
+                this.formCopy = streamed.split(ByteBody.SplitBackpressureMode.FASTEST);
+            }
+            return streamed;
         }
         // a container without asynchronous reads, e.g. the JDK server: the stream is read with blocking reads on the
         // IO executor, through the shared streaming body so that both size limits apply as on the other servers
@@ -635,7 +674,7 @@ public final class DefaultServletHttpRequest<B> implements
     @NonNull
     @Override
     public Optional<MediaType> getContentType() {
-        String contentType = delegate().getContentType();
+        String contentType = contentTypeHeader();
         // MediaType.of returns the constant of a common type instead of parsing it again on every call
         return contentType == null ? Optional.empty() : Optional.of(MediaType.of(contentType));
     }
@@ -655,6 +694,25 @@ public final class DefaultServletHttpRequest<B> implements
             servletRequest.getRemoteAddr(),
             servletRequest.getRemotePort()
         );
+    }
+
+    /**
+     * @return The Content-Type of the request: the container's, unless a filter changed the headers
+     */
+    private @Nullable String contentTypeHeader() {
+        MutableHttpHeaders changed = headers.changed;
+        return changed == null ? delegate.getContentType() : changed.get(HttpHeaders.CONTENT_TYPE);
+    }
+
+    /**
+     * Sets the limits of the forms decoded by the engine itself rather than by the container.
+     *
+     * @param maxFormFields The most fields of a form
+     * @param maxFileSize   The most bytes of a file of a multipart form
+     */
+    void setFormLimits(int maxFormFields, long maxFileSize) {
+        this.maxFormFields = maxFormFields;
+        this.maxFileSize = maxFileSize;
     }
 
     private ServletRequest delegate() {
@@ -754,12 +812,12 @@ public final class DefaultServletHttpRequest<B> implements
     }
 
     private boolean isFormSubmission() {
-        String contentType = delegate.getContentType();
+        String contentType = contentTypeHeader();
         return contentType != null && isFormContentType(MediaType.of(contentType));
     }
 
     private boolean isUrlEncodedForm() {
-        String contentType = delegate.getContentType();
+        String contentType = contentTypeHeader();
         return contentType != null && MediaType.of(contentType).matches(MediaType.APPLICATION_FORM_URLENCODED_TYPE);
     }
 
@@ -786,9 +844,25 @@ public final class DefaultServletHttpRequest<B> implements
             try (CloseableAvailableByteBody copy = ((AvailableByteBody) byteBody()).split()) {
                 bytes = copy.toByteArray();
             }
+        } else if (formCopy != null) {
+            // streamed through a ReadListener: decoded from the copy of the body taken for it, within the buffer
+            // limit, whether or not a filter read the body first
+            CloseableByteBody copy = formCopy;
+            formCopy = null;
+            bytes = buffer(copy);
+        } else if (bodyStreamOpened) {
+            // e.g. a filter read a copy of the body: the bytes went to the byte body, the container's stream is
+            // consumed, so the form is decoded from a copy of the byte body, which the buffer limit bounds
+            bytes = buffer(byteBody().split(ByteBody.SplitBackpressureMode.FASTEST));
         } else {
-            try (InputStream stream = new LimitedInputStream(delegate.getInputStream(), maxBodySize)) {
-                bytes = stream.readAllBytes();
+            // the whole form is held in memory, so it is bounded by the buffer limit. The container's stream is not
+            // closed: a container like Undertow would read the rest of the body to its end to close it
+            try {
+                bytes = readLimited(delegate.getInputStream(), Math.min(maxBodySize, maxBufferSize));
+            } catch (ContentLengthExceededException e) {
+                // the rest of the body is not drained, the connection is closed instead
+                bodyBeyondDrainLimit = true;
+                throw e;
             } catch (IOException e) {
                 throw new InternalServerException("Error reading request body: " + e.getMessage(), e);
             }
@@ -796,16 +870,41 @@ public final class DefaultServletHttpRequest<B> implements
         Map<String, List<String>> fields = new LinkedHashMap<>();
         delegate.getParameterMap().forEach((name, values) -> fields.put(name, new ArrayList<>(Arrays.asList(values))));
         Charset charset = getCharacterEncoding();
+        int count = 0;
         for (String pair : new String(bytes, charset).split("&")) {
             if (pair.isEmpty()) {
                 continue;
             }
+            if (++count > maxFormFields) {
+                throw BufferedFormDecoder.tooManyFields(maxFormFields);
+            }
             int equals = pair.indexOf('=');
-            String name = URLDecoder.decode(equals == -1 ? pair : pair.substring(0, equals), charset);
-            String value = equals == -1 ? "" : URLDecoder.decode(pair.substring(equals + 1), charset);
+            String name = BufferedFormDecoder.decodeComponent(equals == -1 ? pair : pair.substring(0, equals), charset);
+            String value = equals == -1 ? "" : BufferedFormDecoder.decodeComponent(pair.substring(equals + 1), charset);
             fields.computeIfAbsent(name, k -> new ArrayList<>(1)).add(value);
         }
         this.unboundedForm = fields;
+    }
+
+    // the stream of the container is not closed, see readUnboundedForm
+    @SuppressWarnings("java:S2095")
+    private static byte[] readLimited(InputStream stream, long limit) throws IOException {
+        return new LimitedInputStream(stream, limit).readAllBytes();
+    }
+
+    /**
+     * @param copy A copy of the byte body, which this closes
+     * @return Its bytes, within the buffer limit
+     */
+    private static byte[] buffer(CloseableByteBody copy) {
+        try (copy; CloseableAvailableByteBody buffered = copy.buffer().toCompletableFuture().join()) {
+            return buffered.toByteArray();
+        } catch (CompletionException e) {
+            if (e.getCause() instanceof RuntimeException cause) {
+                throw cause;
+            }
+            throw new InternalServerException("Error reading request body: " + e.getCause().getMessage(), e.getCause());
+        }
     }
 
     @Override
@@ -940,6 +1039,11 @@ public final class DefaultServletHttpRequest<B> implements
 
     @Override
     public void close() {
+        CloseableByteBody copy = formCopy;
+        if (copy != null) {
+            formCopy = null;
+            copy.close();
+        }
         CloseableByteBody current = byteBody.get();
         if (current != null) {
             current.close();
@@ -1010,7 +1114,7 @@ public final class DefaultServletHttpRequest<B> implements
             try (available) {
                 bytes = available.toByteArray();
             }
-            return Flux.fromIterable(BufferedFormDecoder.decode(mediaType, bytes, charset))
+            return Flux.fromIterable(BufferedFormDecoder.decode(mediaType, bytes, charset, maxFormFields, maxFileSize))
                 .map(field -> new RawFormField(field.metadata(), AvailableByteArrayBody.create(byteBodyFactory.readBufferFactory().adapt(field.content()))));
         }
         return Mono.fromCompletionStage(() -> byteBody.buffer())
@@ -1019,7 +1123,7 @@ public final class DefaultServletHttpRequest<B> implements
                 try (buffered) {
                     bytes = buffered.toByteArray();
                 }
-                return Flux.fromIterable(BufferedFormDecoder.decode(mediaType, bytes, charset))
+                return Flux.fromIterable(BufferedFormDecoder.decode(mediaType, bytes, charset, maxFormFields, maxFileSize))
                     .map(field -> new RawFormField(field.metadata(), AvailableByteArrayBody.create(byteBodyFactory.readBufferFactory().adapt(field.content()))));
             })
             .doOnDiscard(RawFormField.class, RawFormField::close);
@@ -1042,39 +1146,213 @@ public final class DefaultServletHttpRequest<B> implements
     @Override
     public void discardUnreadBody(Runnable then) {
         ServletStreamPublisher publisher = streamPublisher;
-        if (publisher == null && mayHaveBody() && (!bodyStreamOpened || !delegate.isAsyncSupported())) {
-            // the route never touched the body, or, on a container without asynchronous reads, read only part of it:
-            // the rest is read and dropped all the same, or the container may drop the connection while the client
-            // is still sending it. The body is read on this thread, as the container itself would before reusing
-            // the connection
-            try (InputStream in = delegate.getInputStream()) {
-                // a body read inline is already at its end: the buffer is only allocated when something is left
-                if (in.read() != -1) {
-                    byte[] buffer = new byte[8192];
-                    long dropped = 1;
-                    int n;
-                    while (dropped <= maxBodySize && (n = in.read(buffer)) != -1) {
-                        dropped += n;
-                    }
-                }
-            } catch (IOException | RuntimeException e) {
-                LOG.debug("Failed to drop the unread body of request [{} - {}]", getMethodName(), getUri(), e);
-            }
+        if (publisher == null && (!mayHaveBody() || (bodyStreamOpened && delegate.isAsyncSupported()))) {
+            // no body, or one read inline: the container drops what is left of a small body itself
             then.run();
             return;
         }
-        if (publisher == null) {
-            // read inline or not at all: the container drops what is left of a small body itself
+        if (bodyTooLarge != null || bodyBeyondDrainLimit) {
+            // what is left is known to exceed the drain limit: the client is told the connection closes, and it is
+            // closed once the response went out, rather than read to its end
+            closeConnection(bodyTooLarge != null ? bodyTooLarge : new ContentLengthExceededException(maxBodySize, maxBodySize + 1));
             then.run();
+            return;
+        }
+        if (publisher != null) {
+            discardAsync(publisher, then);
+        } else if (delegate.isAsyncSupported()) {
+            discardInlineBody(then);
         } else {
-            try {
-                publisher.discard(maxBodySize, then);
-            } catch (RuntimeException e) {
-                // the drain never stops the response from completing
-                LOG.debug("Failed to drop the unread body of request [{} - {}]", getMethodName(), getUri(), e);
+            discardBlocking(then);
+        }
+    }
+
+    /**
+     * Drops a body with a declared length within the buffer limit that was to be read inline and that nobody read:
+     * what has arrived is dropped on this thread, and the rest, if any, once the response is sent, on the IO
+     * executor rather than on this thread, which may be the one completing the response, within the drain timeout.
+     * Its stream is never closed: a container like Undertow would read the rest of the body to its end to close it.
+     */
+    private void discardInlineBody(Runnable then) {
+        ServletInputStream in;
+        long remaining = delegate.getContentLengthLong();
+        try {
+            in = delegate.getInputStream();
+            while (remaining > 0 && in.available() > 0) {
+                long skipped = in.skip(Math.min(remaining, in.available()));
+                if (skipped <= 0) {
+                    break;
+                }
+                remaining -= skipped;
+            }
+            if (remaining <= 0 || in.isFinished()) {
+                then.run();
+                return;
+            }
+        } catch (IOException | RuntimeException e) {
+            LOG.debug("Failed to drop the unread body of request [{} - {}]", getMethodName(), getUri(), e);
+            then.run();
+            return;
+        }
+        // something is left: the response goes out first, so that draining the body does not delay it
+        commitResponse();
+        AtomicBoolean done = new AtomicBoolean();
+        Disposable timeout = Mono.delay(Duration.ofMillis(drainTimeoutMillis)).subscribe(ignored -> {
+            if (done.compareAndSet(false, true)) {
+                // closing the connection also ends the read blocked on the IO executor
+                closeConnection(new TimeoutException("The unread body of the request was not received within " + drainTimeoutMillis + "ms"));
                 then.run();
             }
+        });
+        long left = remaining;
+        ioExecutor.execute(() -> {
+            boolean complete = drop(in, left);
+            if (done.compareAndSet(false, true)) {
+                timeout.dispose();
+                if (!complete) {
+                    closeConnection(new ContentLengthExceededException(maxBodySize, maxBodySize + 1));
+                }
+                then.run();
+            }
+        });
+    }
+
+    /**
+     * @return Whether the body was read to its end, or failed; {@code false} if it has more than it declared
+     */
+    private boolean drop(InputStream in, long remaining) {
+        try {
+            byte[] buffer = new byte[(int) Math.min(8192, Math.max(1, remaining))];
+            long left = remaining;
+            int n;
+            while ((n = in.read(buffer)) != -1) {
+                left -= n;
+                if (left < 0) {
+                    return false;
+                }
+            }
+        } catch (IOException | RuntimeException e) {
+            LOG.debug("Failed to drop the unread body of request [{} - {}]", getMethodName(), getUri(), e);
         }
+        return true;
+    }
+
+    /**
+     * Drops the rest of the body through the publisher's {@code ReadListener}, within the size limit and the drain
+     * timeout: past either, the connection is closed instead.
+     */
+    private void discardAsync(ServletStreamPublisher publisher, Runnable then) {
+        // done once the body was dropped, the drain failed or timed out; the lock keeps the response from being
+        // committed below while it completes
+        AtomicBoolean done = new AtomicBoolean();
+        Object lock = new Object();
+        AtomicReference<@Nullable Disposable> timeout = new AtomicReference<>();
+        try {
+            publisher.discard(maxBodySize, () -> {
+                synchronized (lock) {
+                    if (!done.compareAndSet(false, true)) {
+                        return;
+                    }
+                }
+                Disposable timer = timeout.get();
+                if (timer != null) {
+                    timer.dispose();
+                }
+                if (publisher.isDiscardIncomplete()) {
+                    closeConnection(new ContentLengthExceededException(maxBodySize, maxBodySize + 1));
+                }
+                then.run();
+            });
+        } catch (RuntimeException e) {
+            // the drain never stops the response from completing
+            LOG.debug("Failed to drop the unread body of request [{} - {}]", getMethodName(), getUri(), e);
+            if (done.compareAndSet(false, true)) {
+                then.run();
+            }
+            return;
+        }
+        synchronized (lock) {
+            if (done.get()) {
+                // e.g. the route read the whole body: the response completes as usual
+                return;
+            }
+            // something is left: the response goes out first, so that draining the body does not delay it
+            commitResponse();
+        }
+        timeout.set(Mono.delay(Duration.ofMillis(drainTimeoutMillis)).subscribe(ignored -> {
+            synchronized (lock) {
+                if (!done.compareAndSet(false, true)) {
+                    return;
+                }
+            }
+            closeConnection(new TimeoutException("The unread body of the request was not received within " + drainTimeoutMillis + "ms"));
+            then.run();
+        }));
+        if (done.get()) {
+            // dropped meanwhile, before the timer was set
+            Disposable timer = timeout.get();
+            if (timer != null) {
+                timer.dispose();
+            }
+        }
+    }
+
+    /**
+     * Drops the rest of the body with blocking reads, on a container without asynchronous reads, e.g. the JDK
+     * server, within the size limit and the drain timeout: past either, the container closes the stream itself.
+     */
+    private void discardBlocking(Runnable then) {
+        // the body is read on this thread, the container's, as the container itself would before reusing the
+        // connection: a server like the JDK one otherwise drops the connection while the client is still sending it
+        long deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(drainTimeoutMillis);
+        try (InputStream in = delegate.getInputStream()) {
+            // a body read inline is already at its end: the buffer is only allocated when something is left
+            if (in.read() != -1) {
+                // something is left: the response goes out first, so that draining the body does not delay it
+                commitResponse();
+                byte[] buffer = new byte[8192];
+                long dropped = 1;
+                int n;
+                while (dropped <= maxBodySize && System.nanoTime() < deadline && (n = in.read(buffer)) != -1) {
+                    dropped += n;
+                }
+            }
+        } catch (IOException | RuntimeException e) {
+            LOG.debug("Failed to drop the unread body of request [{} - {}]", getMethodName(), getUri(), e);
+        }
+        then.run();
+    }
+
+    /**
+     * Sends what the response has buffered, which commits it, before the unread body is drained.
+     */
+    private void commitResponse() {
+        try {
+            HttpServletResponse response = primaryResponse.getNativeResponse();
+            if (!response.isCommitted()) {
+                response.flushBuffer();
+            }
+        } catch (IOException | RuntimeException e) {
+            LOG.debug("Failed to send the response of request [{} - {}]", getMethodName(), getUri(), e);
+        }
+    }
+
+    /**
+     * Closes the connection once the response is sent, rather than draining the rest of the body: an HTTP/1
+     * response that is not committed yet tells the client so with {@code Connection: close}, so that it stops
+     * sending, and the embedded server drops the connection, see {@link ServletConnectionAborter}.
+     */
+    private void closeConnection(Throwable reason) {
+        try {
+            HttpServletResponse response = primaryResponse.getNativeResponse();
+            if (!response.isCommitted() && (getHttpVersion() == HttpVersion.HTTP_1_0 || getHttpVersion() == HttpVersion.HTTP_1_1)) {
+                response.setHeader(HttpHeaders.CONNECTION, "close");
+            }
+        } catch (RuntimeException e) {
+            LOG.debug("Failed to mark the response of request [{} - {}] to close the connection", getMethodName(), getUri(), e);
+        }
+        commitResponse();
+        abortResponse(reason);
     }
 
     @Override
@@ -1101,13 +1379,6 @@ public final class DefaultServletHttpRequest<B> implements
         } catch (IOException e) {
             throw new InternalServerException("Error reading part [" + part.getName() + "]: " + e.getMessage(), e);
         }
-    }
-
-    private RawFormField toRawFormFieldFromValue(String name, String value, Charset charset) {
-        byte[] bytes = value != null ? value.getBytes(charset) : ArrayUtils.EMPTY_BYTE_ARRAY;
-        CloseableByteBody body = AvailableByteArrayBody.create(byteBodyFactory.readBufferFactory().adapt(bytes));
-        FormFieldMetadata metadata = new FormFieldMetadata(name, null, MediaType.APPLICATION_FORM_URLENCODED_TYPE);
-        return new RawFormField(metadata, body);
     }
 
     private synchronized void runDisposalResources() {

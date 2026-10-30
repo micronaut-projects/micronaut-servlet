@@ -22,8 +22,6 @@ import org.jspecify.annotations.Nullable;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -39,7 +37,6 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author Jonas Konrad
  */
 final class ServletStreamPublisher implements Publisher<ByteBuffer>, Subscription, ReadListener {
-    private static final Logger LOG = LoggerFactory.getLogger(ServletStreamPublisher.class);
     private static final int READ_BUFFER_SIZE = 8192;
 
     private final Queue<Runnable> tasks = new ConcurrentLinkedQueue<>();
@@ -150,6 +147,10 @@ final class ServletStreamPublisher implements Publisher<ByteBuffer>, Subscriptio
     }
 
     private void forwardSome() {
+        if (downstreamDone) {
+            // e.g. a publisher that only drops the body, see discard, which has no downstream
+            return;
+        }
         Subscriber<? super ByteBuffer> currentDownstream = downstream();
         while (!downstreamDone && demand > 0 && (upstreamReady || upstreamDone)) {
             if (!upstreamDone) {
@@ -232,6 +233,14 @@ final class ServletStreamPublisher implements Publisher<ByteBuffer>, Subscriptio
             }
             drain();
         });
+    }
+
+    /**
+     * @return Whether the body was not read to its end by {@link #discard}, which stopped at its limit: to be
+     * called from its callback
+     */
+    boolean isDiscardIncomplete() {
+        return !upstreamDone;
     }
 
     private void drain() {
