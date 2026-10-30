@@ -38,7 +38,6 @@ import io.micronaut.http.poja.PojaHttpRequest;
 import io.micronaut.http.server.exceptions.InternalServerException;
 import io.micronaut.http.body.stream.BodySizeLimits;
 import io.micronaut.http.exceptions.ContentLengthExceededException;
-import io.micronaut.servlet.http.LimitedInputStream;
 import reactor.core.publisher.Flux;
 import io.micronaut.http.poja.apache.exception.ApacheServletBadRequestException;
 import io.micronaut.http.poja.exception.NoPojaRequestException;
@@ -63,6 +62,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -117,7 +117,7 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
     /**
      * The body as the framing delimits it, which has to be consumed before the next request on the connection.
      */
-    private final InputStream framedBody;
+    private final FramedBodyStream framedBody;
     private final ByteBodyFactory byteBodyFactory;
     private @Nullable ContentLengthExceededException bodyTooLarge;
 
@@ -205,15 +205,20 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
             responseContext.connectionClose = true;
         }
 
+        // the framing delimits the body whatever the method (RFC 9112 6): a body of a GET is consumed as well, so
+        // that it cannot be read as another request
         long contentLength = framedContentLength(request);
-        if (!getMethod().permitsRequestBody()) {
-            contentLength = 0;
-        }
         OptionalLong optionalContentLength = contentLength >= 0 ? OptionalLong.of(contentLength) : OptionalLong.empty();
-        InputStream bodyStream = createBodyStream(inputStream, contentLength, sessionInputBuffer);
+        long maxBodySize = bodySizeLimits.maxBodySize();
+        FramedBodyStream bodyStream = new FramedBodyStream(createBodyStream(inputStream, contentLength, sessionInputBuffer), maxBodySize);
         this.framedBody = bodyStream;
         byteBodyFactory = ByteBodyFactory.createDefault(byteBufferFactory);
-        long maxBodySize = bodySizeLimits.maxBodySize();
+        // a chunked transfer coding wins over a Content-Length, which the body must not be checked against either
+        MultiValueHeaders bodyHeaders = contentLength < 0 && headers.contains(HttpHeaders.CONTENT_LENGTH)
+            ? createHeaders(Arrays.stream(request.getHeaders())
+                .filter(header -> !HttpHeaders.CONTENT_LENGTH.equalsIgnoreCase(header.getName()))
+                .toArray(Header[]::new), conversionService)
+            : headers;
         if (contentLength > maxBodySize) {
             // refused without reading a byte: every read of the body fails, so a route that binds it answers 413
             // as on the Netty server, and the unread bytes close the connection
@@ -221,11 +226,11 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
             bodyTooLarge = tooLarge;
             responseContext.connectionClose = true;
             byteBody = SupplierUtil.memoized(() -> byteBodyFactory.adapt(Flux.error(tooLarge), optionalContentLength));
+        } else if (!method.permitsRequestBody()) {
+            // the body has no meaning for the method: the route sees none, and it is consumed after the response
+            byteBody = SupplierUtil.memoized(byteBodyFactory::createEmpty);
         } else {
-            if (contentLength < 0 && maxBodySize < Long.MAX_VALUE) {
-                // a chunked body cannot grow past the limit either
-                bodyStream = new LimitedInputStream(bodyStream, maxBodySize);
-            }
+            // the framed stream keeps a chunked body within the limit too
             InputStream limitedBody = bodyStream;
             long length = contentLength;
             byteBody = SupplierUtil.memoized(() -> {
@@ -246,7 +251,7 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
                 // memory is bounded by micronaut.server.max-request-buffer-size
                 return byteBodyFactory.adapt(
                     InputStreamByteBody.create(limitedBody, optionalContentLength, ioExecutor, byteBodyFactory).toReadBufferPublisher(),
-                    bodySizeLimits, headers, null);
+                    bodySizeLimits, bodyHeaders, null);
             });
         }
         primaryResponse = new ApacheServletHttpResponse<>(responseContext, conversionService);
@@ -264,13 +269,18 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
         Header[] contentLengths = request.getHeaders(HttpHeaders.CONTENT_LENGTH);
         long contentLength = 0;
         for (Header header : contentLengths) {
+            String text = header.getValue().trim();
+            // digits only (RFC 9110 8.6): no sign, which Long.parseLong would accept
+            if (text.isEmpty() || !text.chars().allMatch(c -> c >= '0' && c <= '9')) {
+                throw new ApacheServletBadRequestException("Invalid Content-Length header: " + header.getValue(), null);
+            }
             long value;
             try {
-                value = Long.parseLong(header.getValue().trim());
+                value = Long.parseLong(text);
             } catch (NumberFormatException e) {
                 throw new ApacheServletBadRequestException("Invalid Content-Length header: " + header.getValue(), e);
             }
-            if (value < 0 || (contentLength != value && header != contentLengths[0])) {
+            if (contentLength != value && header != contentLengths[0]) {
                 throw new ApacheServletBadRequestException("Invalid Content-Length header: " + header.getValue(), null);
             }
             contentLength = value;
@@ -380,10 +390,9 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
             responseContext.connectionClose = true;
             return;
         }
-        try {
-            // closing the framed stream reads it to its end: the declared length, or the last chunk
-            framedBody.close();
-        } catch (IOException | RuntimeException e) {
+        // read to its end, the declared length or the last chunk, but not past the size limit: a body that does not
+        // end within it closes the connection
+        if (!framedBody.drain()) {
             responseContext.connectionClose = true;
         }
     }
@@ -533,56 +542,109 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
     }
 
     /**
-     * An input stream that would initially delegate to the first input stream
-     * and then to the second one. Created specifically to be used with {@link ByteBody}.
+     * The body as its framing delimits it. Closing it does not read the rest of the body, e.g. when a route or a
+     * publisher cancels: what is left is consumed by {@link #drain()} once the response is sent, bounded by
+     * {@code micronaut.server.max-request-size}.
      */
-    private static final class CombinedInputStream extends InputStream {
+    private static final class FramedBodyStream extends InputStream {
 
-        private final InputStream first;
-        private final InputStream second;
-        private boolean finishedFirst;
+        private static final int DRAIN_BUFFER_SIZE = 8192;
+        private static final long LINGER_SIZE = 64 * 1024L;
 
-        /**
-         * Create the input stream from first stream and second stream.
-         *
-         * @param first The first stream
-         * @param second The second stream
-         */
-        CombinedInputStream(InputStream first, InputStream second) {
-            this.first = first;
-            this.second = second;
+        private final InputStream framed;
+        private final long maxBodySize;
+        private long consumed;
+        private boolean limitExceeded;
+
+        FramedBodyStream(InputStream framed, long maxBodySize) {
+            this.framed = framed;
+            this.maxBodySize = maxBodySize;
         }
 
         @Override
         public int read() throws IOException {
-            if (finishedFirst) {
-                return second.read();
+            int b = framed.read();
+            if (b >= 0) {
+                consumed(1);
             }
-            int result = first.read();
-            if (result == -1) {
-                finishedFirst = true;
-                return second.read();
-            }
-            return result;
+            return b;
         }
 
         @Override
         public int read(byte[] b, int off, int len) throws IOException {
-            if (finishedFirst) {
-                return second.read(b, off, len);
+            int n = framed.read(b, off, len);
+            if (n > 0) {
+                consumed(n);
             }
-            int readLength = first.read(b, off, len);
-            if (readLength < len) {
-                finishedFirst = true;
-                readLength += second.read(b, off + readLength, len - readLength);
-            }
-            return readLength;
+            return n;
         }
 
         @Override
-        public void close() throws IOException {
-            first.close();
-            second.close();
+        public int available() throws IOException {
+            return framed.available();
+        }
+
+        @Override
+        public void close() {
+            // the rest of the body is not read here: see drain()
+        }
+
+        private void consumed(long n) {
+            consumed += n;
+            if (consumed > maxBodySize) {
+                limitExceeded = true;
+                throw new ContentLengthExceededException(maxBodySize, consumed);
+            }
+        }
+
+        /**
+         * Reads the rest of the body, but no more than the size limit allows.
+         *
+         * @return Whether the body was read to its end, so that the connection can carry another request
+         */
+        boolean drain() {
+            byte[] buffer = new byte[DRAIN_BUFFER_SIZE];
+            if (limitExceeded) {
+                linger(buffer);
+                return false;
+            }
+            try {
+                while (true) {
+                    long remaining = maxBodySize - consumed;
+                    int len = remaining >= DRAIN_BUFFER_SIZE ? DRAIN_BUFFER_SIZE : (int) remaining + 1;
+                    int n = framed.read(buffer, 0, len);
+                    if (n < 0) {
+                        return true;
+                    }
+                    consumed += n;
+                    if (consumed > maxBodySize) {
+                        limitExceeded = true;
+                        linger(buffer);
+                        return false;
+                    }
+                }
+            } catch (IOException | RuntimeException e) {
+                return false;
+            }
+        }
+
+        /**
+         * Reads a little more of a body over the limit before the connection is closed: closing it with unread
+         * input resets it, which can discard the response before the client reads it.
+         */
+        private void linger(byte[] buffer) {
+            try {
+                long read = 0;
+                while (read < LINGER_SIZE) {
+                    int n = framed.read(buffer, 0, buffer.length);
+                    if (n < 0) {
+                        return;
+                    }
+                    read += n;
+                }
+            } catch (IOException | RuntimeException e) {
+                // the connection is closed anyway
+            }
         }
     }
 

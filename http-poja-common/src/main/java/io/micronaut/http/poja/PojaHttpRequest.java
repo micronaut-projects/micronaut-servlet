@@ -248,7 +248,10 @@ public abstract class PojaHttpRequest<B, REQ, RES>
      *
      * @return Whether the request carries a body
      * @since 6.2.0
+     * @deprecated No longer used: the runtime gives the body its framing delimits, an empty one when there is none
      */
+    @Deprecated(since = "6.3.0", forRemoval = true)
+    @SuppressWarnings("java:S1133")
     protected boolean hasBody() {
         long contentLength = getContentLength();
         if (contentLength > 0) {
