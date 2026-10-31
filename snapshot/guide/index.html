@@ -15,7 +15,7 @@
     <script>hljs.initHighlightingOnLoad();</script>
     <link rel="stylesheet" href="../css/multi-language-sample.css"/>
     <script src="../js/docs.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.5.13/clipboard.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.11/clipboard.min.js"></script>
     <script type="text/javascript">
         function addJsClass(el) {
             var classes = document.body.className.split(" ");
@@ -23,7 +23,9 @@
             document.body.className = classes.join(" ");
         }
     </script>
-
+    <style type="text/css">
+        .lang-java { display: block }; .lang-python { display: block }; .lang-kotlin { display: block }; .lang-groovy { display: block }; .lang-scala { display: block }; 
+    </style>
 </head>
 
 <body class="body" id="docs" onload="addJsClass();" onhashchange="highlightMenu()">
@@ -52,25 +54,29 @@
                                 
                                 <div class="toc-item" style="margin-left:0"><a href="#servletAnnotation"><strong>4</strong><span>Servlet Annotation Support</span></a></div>
                                 
-                                <div class="toc-item" style="margin-left:0"><a href="#warDeployment"><strong>5</strong><span>WAR Deployment</span></a></div>
+                                <div class="toc-item" style="margin-left:0"><a href="#websocket"><strong>5</strong><span>WebSocket Support</span></a></div>
                                 
-                                <div class="toc-item" style="margin-left:0"><a href="#jetty"><strong>6</strong><span>Jetty Server</span></a></div>
+                                <div class="toc-item" style="margin-left:0"><a href="#warDeployment"><strong>6</strong><span>WAR Deployment</span></a></div>
                                 
-                                <div class="toc-item" style="margin-left:0"><a href="#tomcat"><strong>7</strong><span>Tomcat Server</span></a></div>
+                                <div class="toc-item" style="margin-left:0"><a href="#jetty"><strong>7</strong><span>Jetty Server</span></a></div>
                                 
-                                <div class="toc-item" style="margin-left:0"><a href="#undertow"><strong>8</strong><span>Undertow Server</span></a></div>
+                                <div class="toc-item" style="margin-left:0"><a href="#tomcat"><strong>8</strong><span>Tomcat Server</span></a></div>
                                 
-                                <div class="toc-item" style="margin-left:0"><a href="#httpServer"><strong>9</strong><span>Built-In Java HTTP Server Runtime</span></a></div>
+                                <div class="toc-item" style="margin-left:0"><a href="#undertow"><strong>9</strong><span>Undertow Server</span></a></div>
                                 
-                                <div class="toc-item" style="margin-left:0"><a href="#httpPoja"><strong>10</strong><span>HTTP POJA Application</span></a></div>
+                                <div class="toc-item" style="margin-left:0"><a href="#httpServer"><strong>10</strong><span>Built-In Java HTTP Server Runtime</span></a></div>
                                 
-                                <div class="toc-item" style="margin-left:0"><a href="#knownIssues"><strong>11</strong><span>Known Issues</span></a></div>
+                                <div class="toc-item" style="margin-left:0"><a href="#httpPoja"><strong>11</strong><span>HTTP POJA Application</span></a></div>
                                 
-                                <div class="toc-item" style="margin-left:0"><a href="#faq"><strong>12</strong><span>FAQ</span></a></div>
+                                <div class="toc-item" style="margin-left:0"><a href="#parity"><strong>12</strong><span>Parity with the Netty Server</span></a></div>
                                 
-                                <div class="toc-item" style="margin-left:0"><a href="#breaks"><strong>13</strong><span>Breaking Changes</span></a></div>
+                                <div class="toc-item" style="margin-left:0"><a href="#knownIssues"><strong>13</strong><span>Known Issues</span></a></div>
                                 
-                                <div class="toc-item" style="margin-left:0"><a href="#repository"><strong>14</strong><span>Repository</span></a></div>
+                                <div class="toc-item" style="margin-left:0"><a href="#faq"><strong>14</strong><span>FAQ</span></a></div>
+                                
+                                <div class="toc-item" style="margin-left:0"><a href="#breaks"><strong>15</strong><span>Breaking Changes</span></a></div>
+                                
+                                <div class="toc-item" style="margin-left:0"><a href="#repository"><strong>16</strong><span>Repository</span></a></div>
                                 
                             </div>
                         </div>
@@ -109,31 +115,37 @@
         
         <div class="toc-item" style="margin-left:0px" id="toc-item-servletAnnotation"><a href="#servletAnnotation"><strong>4</strong><span>Servlet Annotation Support</span></a></div>
         
-        <div class="toc-item" style="margin-left:0px" id="toc-item-warDeployment"><a href="#warDeployment"><strong>5</strong><span>WAR Deployment</span></a></div>
+        <div class="toc-item" style="margin-left:0px" id="toc-item-websocket"><a href="#websocket"><strong>5</strong><span>WebSocket Support</span></a></div>
         
-        <div class="toc-item" style="margin-left:10px" id="toc-item-versioning"><a href="#versioning"><strong>5.1</strong><span>Container version considerations</span></a></div>
+        <div class="toc-item" style="margin-left:0px" id="toc-item-warDeployment"><a href="#warDeployment"><strong>6</strong><span>WAR Deployment</span></a></div>
         
-        <div class="toc-item" style="margin-left:10px" id="toc-item-externalConfig"><a href="#externalConfig"><strong>5.2</strong><span>External Configuration</span></a></div>
+        <div class="toc-item" style="margin-left:10px" id="toc-item-versioning"><a href="#versioning"><strong>6.1</strong><span>Container version considerations</span></a></div>
         
-        <div class="toc-item" style="margin-left:10px" id="toc-item-warContext"><a href="#warContext"><strong>5.3</strong><span>WAR Context path</span></a></div>
+        <div class="toc-item" style="margin-left:10px" id="toc-item-payara"><a href="#payara"><strong>6.2</strong><span>Payara deployment</span></a></div>
         
-        <div class="toc-item" style="margin-left:0px" id="toc-item-jetty"><a href="#jetty"><strong>6</strong><span>Jetty Server</span></a></div>
+        <div class="toc-item" style="margin-left:10px" id="toc-item-externalConfig"><a href="#externalConfig"><strong>6.3</strong><span>External Configuration</span></a></div>
         
-        <div class="toc-item" style="margin-left:0px" id="toc-item-tomcat"><a href="#tomcat"><strong>7</strong><span>Tomcat Server</span></a></div>
+        <div class="toc-item" style="margin-left:10px" id="toc-item-warContext"><a href="#warContext"><strong>6.4</strong><span>WAR Context path</span></a></div>
         
-        <div class="toc-item" style="margin-left:0px" id="toc-item-undertow"><a href="#undertow"><strong>8</strong><span>Undertow Server</span></a></div>
+        <div class="toc-item" style="margin-left:0px" id="toc-item-jetty"><a href="#jetty"><strong>7</strong><span>Jetty Server</span></a></div>
         
-        <div class="toc-item" style="margin-left:0px" id="toc-item-httpServer"><a href="#httpServer"><strong>9</strong><span>Built-In Java HTTP Server Runtime</span></a></div>
+        <div class="toc-item" style="margin-left:0px" id="toc-item-tomcat"><a href="#tomcat"><strong>8</strong><span>Tomcat Server</span></a></div>
         
-        <div class="toc-item" style="margin-left:0px" id="toc-item-httpPoja"><a href="#httpPoja"><strong>10</strong><span>HTTP POJA Application</span></a></div>
+        <div class="toc-item" style="margin-left:0px" id="toc-item-undertow"><a href="#undertow"><strong>9</strong><span>Undertow Server</span></a></div>
         
-        <div class="toc-item" style="margin-left:0px" id="toc-item-knownIssues"><a href="#knownIssues"><strong>11</strong><span>Known Issues</span></a></div>
+        <div class="toc-item" style="margin-left:0px" id="toc-item-httpServer"><a href="#httpServer"><strong>10</strong><span>Built-In Java HTTP Server Runtime</span></a></div>
         
-        <div class="toc-item" style="margin-left:0px" id="toc-item-faq"><a href="#faq"><strong>12</strong><span>FAQ</span></a></div>
+        <div class="toc-item" style="margin-left:0px" id="toc-item-httpPoja"><a href="#httpPoja"><strong>11</strong><span>HTTP POJA Application</span></a></div>
         
-        <div class="toc-item" style="margin-left:0px" id="toc-item-breaks"><a href="#breaks"><strong>13</strong><span>Breaking Changes</span></a></div>
+        <div class="toc-item" style="margin-left:0px" id="toc-item-parity"><a href="#parity"><strong>12</strong><span>Parity with the Netty Server</span></a></div>
         
-        <div class="toc-item" style="margin-left:0px" id="toc-item-repository"><a href="#repository"><strong>14</strong><span>Repository</span></a></div>
+        <div class="toc-item" style="margin-left:0px" id="toc-item-knownIssues"><a href="#knownIssues"><strong>13</strong><span>Known Issues</span></a></div>
+        
+        <div class="toc-item" style="margin-left:0px" id="toc-item-faq"><a href="#faq"><strong>14</strong><span>FAQ</span></a></div>
+        
+        <div class="toc-item" style="margin-left:0px" id="toc-item-breaks"><a href="#breaks"><strong>15</strong><span>Breaking Changes</span></a></div>
+        
+        <div class="toc-item" style="margin-left:0px" id="toc-item-repository"><a href="#repository"><strong>16</strong><span>Repository</span></a></div>
         
         </div>
     </div>
@@ -143,13 +155,13 @@
         <h1>Micronaut Servlet</h1>
         <p></p>
         <p>Provides integration between Micronaut and the Servlet API</p>
-        <p><strong>Version:</strong> 5.6.2-SNAPSHOT </p>
+        <p><strong>Version:</strong> 6.2.3-SNAPSHOT </p>
     </div>
     
 <h1 id="introduction"><a class="anchor" href="#introduction"></a>1 Introduction</h1>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/5.6.x/src/main/docs/guide/introduction.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/6.2.x/src/main/docs/guide/introduction.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -178,7 +190,7 @@
 <h1 id="releaseHistory"><a class="anchor" href="#releaseHistory"></a>2 Release History</h1>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/5.6.x/src/main/docs/guide/releaseHistory.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/6.2.x/src/main/docs/guide/releaseHistory.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -194,7 +206,7 @@
 <h1 id="servletApi"><a class="anchor" href="#servletApi"></a>3 Working with the Servlet API</h1>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/5.6.x/src/main/docs/guide/servletApi.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/6.2.x/src/main/docs/guide/servletApi.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -207,23 +219,97 @@
 <p>There are a couple of additional extensions within Micronaut Servlet that make it easier to work with the Servlet API which are detailed in the following sections.</p>
 </div>
 <div class="sect2">
+<h3 id="_threading_model">Threading Model</h3>
+<div class="paragraph">
+<p>On a container that supports asynchronous servlets (Jetty, Tomcat and Undertow) a request is handled as follows:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>A request without a body, or with a body that declares a <code>Content-Length</code> no larger than <code>micronaut.server.max-request-buffer-size</code> (10MB by default) and is not a form submission, is handled entirely on the container thread that received it. The body, if any, is read on that thread before the route runs, as a blocking servlet application would, and the response is written from the same thread unless the route returns a reactive or asynchronous type.</p>
+</li>
+<li>
+<p>A request with a larger body or a chunked body is dispatched through <code>AsyncContext.start</code> and its body is read through a <code>ReadListener</code> as it arrives, so no container thread waits for it.</p>
+</li>
+<li>
+<p>A form or multipart body is dispatched the same way, but its fields are not streamed: the container parses them itself when the route asks for its parameters or parts. A URL-encoded form without a declared length is the one exception, which the servlet runtime reads through <code>micronaut.server.max-request-size</code> and decodes itself, since the container would otherwise parse it unbounded.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Reactive and asynchronous return types complete the response from whichever thread produces the result, and <code>@ExecuteOn</code> moves the route to the named executor as on the Netty server. When <code>micronaut.servlet.async-supported</code> is <code>false</code>, or on the built-in JDK server, every request is handled on the container thread and its body is read from a blocking stream.</p>
+</div>
+</div>
+<div class="sect2">
 <h3 id="_injecting_the_servlet_request_and_response">Injecting the Servlet Request and Response</h3>
 <div class="paragraph">
 <p>You can receive the <code>HttpServletRequest</code> and <code>HttpServletResponse</code> objects directly as parameters:</p>
 </div>
-<div class="listingblock">
+<div class="listingblock multi-language-sample">
 <div class="title">Using the Request and Response</div>
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@Get("/hello")
 void process(
-        HttpServletRequest request, <i class="conum" data-value="1"></i><b>(1)</b>
-        HttpServletResponse response) <i class="conum" data-value="2"></i><b>(2)</b>
+        HttpServletRequest request, // <b class="conum">(1)</b>
+        HttpServletResponse response) // <b class="conum">(2)</b>
         throws IOException {
     response.addHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_PLAIN);
     response.setStatus(HttpStatus.ACCEPTED.getCode());
     try (final PrintWriter writer = response.getWriter()) {
         writer.append("Hello ").append(request.getParameter("name"));
         writer.flush();
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title">Using the Request and Response</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">@Get("/hello")
+def process(
+    self,
+    request: HttpServletRequest,  # <b class="conum">(1)</b>
+    response: HttpServletResponse,  # <b class="conum">(2)</b>
+) -&gt; None:
+    response.addHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_PLAIN)
+    response.setStatus(HttpStatus.ACCEPTED.getCode())
+    writer = response.getWriter()
+    try:
+        writer.append("Hello ").append(request.getParameter("name"))
+        writer.flush()
+    finally:
+        writer.close()</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title">Using the Request and Response</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">@Get("/hello")
+fun process(
+    request: HttpServletRequest, // <b class="conum">(1)</b>
+    response: HttpServletResponse // <b class="conum">(2)</b>
+) {
+    response.addHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_PLAIN)
+    response.status = HttpStatus.ACCEPTED.code
+    response.writer.use { writer -&gt;
+        writer.append("Hello ").append(request.getParameter("name"))
+        writer.flush()
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title">Using the Request and Response</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">@Get("/hello")
+void process(
+        HttpServletRequest request, // <b class="conum">(1)</b>
+        HttpServletResponse response) { // <b class="conum">(2)</b>
+    response.addHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_PLAIN)
+    response.setStatus(HttpStatus.ACCEPTED.code)
+    response.writer.withCloseable { writer -&gt;
+        writer.append("Hello ").append(request.getParameter("name"))
+        writer.flush()
     }
 }</code></pre>
 </div>
@@ -246,19 +332,66 @@ void process(
 <div class="paragraph">
 <p>Writing to the response and reading from the request can be simplified with Micronaut&#8217;s <code>Readable</code> and <code>Writable</code> interfaces:</p>
 </div>
-<div class="listingblock">
+<div class="listingblock multi-language-sample">
 <div class="title">Using Readable and Writable</div>
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">import io.micronaut.core.io.Readable;
 import io.micronaut.core.io.Writable;
 
 @Post(value = "/writable", processes = "text/plain")
-Writable readAndWrite(@Body Readable readable) throws IOException {
+Writable readAndWrite(@Body Readable readable) {
     return out -&gt; {
         try (BufferedReader reader = new BufferedReader(readable.asReader())) {
             out.append("Hello ").append(reader.readLine());
         }
     };
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title">Using Readable and Writable</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from micronaut.core.io import Readable, Writable
+
+
+@Post(value="/writable", processes="text/plain")
+def read_and_write(self, readable: Annotated[Readable, Body]) -&gt; Writable:
+    def write_to(out: Writer) -&gt; None:
+        reader = BufferedReader(readable.asReader())
+        try:
+            out.append("Hello ").append(reader.readLine())
+        finally:
+            reader.close()
+    return write_to</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title">Using Readable and Writable</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">import io.micronaut.core.io.Readable
+import io.micronaut.core.io.Writable
+
+@Post(value = "/writable", processes = ["text/plain"])
+fun readAndWrite(@Body readable: Readable) = Writable { out -&gt;
+    BufferedReader(readable.asReader()).use { reader -&gt;
+        out.append("Hello ").append(reader.readLine())
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title">Using Readable and Writable</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">import io.micronaut.core.io.Readable
+import io.micronaut.core.io.Writable
+
+@Post(value = "/writable", processes = "text/plain")
+Writable readAndWrite(@Body Readable readable) {
+    return { out -&gt;
+        new BufferedReader(readable.asReader()).withCloseable { reader -&gt;
+            out.append("Hello ").append(reader.readLine())
+        }
+    } as Writable
 }</code></pre>
 </div>
 </div>
@@ -268,18 +401,63 @@ Writable readAndWrite(@Body Readable readable) throws IOException {
 <div class="paragraph">
 <p>Multipart support is improved with the ability to inject parts using the annotation <code>io.micronaut.http.annotation.Part</code>. For example:</p>
 </div>
-<div class="listingblock">
-<div class="title">Using <code>@Part</code></div>
+<div class="listingblock multi-language-sample">
+<div class="title">Using @Part</div>
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@Post(value = "/multipart", consumes = MediaType.MULTIPART_FORM_DATA, produces = "text/plain")
 String multipart(
-        String attribute, <i class="conum" data-value="1"></i><b>(1)</b>
-        @Part("one") Person person, <i class="conum" data-value="2"></i><b>(2)</b>
-        @Part("two") String text, <i class="conum" data-value="3"></i><b>(3)</b>
-        @Part("three") byte[] bytes, <i class="conum" data-value="4"></i><b>(4)</b>
-        @Part("four") jakarta.servlet.http.Part raw, <i class="conum" data-value="5"></i><b>(5)</b>
-        @Part("five") CompletedPart part) { <i class="conum" data-value="6"></i><b>(6)</b>
+        String attribute, // <b class="conum">(1)</b>
+        @Part("one") Person person, // <b class="conum">(2)</b>
+        @Part("two") String text, // <b class="conum">(3)</b>
+        @Part("three") byte[] bytes, // <b class="conum">(4)</b>
+        @Part("four") jakarta.servlet.http.Part raw, // <b class="conum">(5)</b>
+        @Part("five") CompletedPart part) { // <b class="conum">(6)</b>
     return "Ok";
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title">Using @Part</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">@Post(value="/multipart", consumes=MediaType.MULTIPART_FORM_DATA, produces="text/plain")
+def multipart(
+    self,
+    attribute: str,  # <b class="conum">(1)</b>
+    person: Annotated[Person, Part("one")],  # <b class="conum">(2)</b>
+    text: Annotated[str, Part("two")],  # <b class="conum">(3)</b>
+    data: Annotated[bytes, Part("three")],  # <b class="conum">(4)</b>
+    raw: Annotated[ServletPart, Part("four")],  # <b class="conum">(5)</b>
+    part: Annotated[CompletedPart, Part("five")],  # <b class="conum">(6)</b>
+) -&gt; str:
+    return "Ok"</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title">Using @Part</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">@Post(value = "/multipart", consumes = [MediaType.MULTIPART_FORM_DATA], produces = ["text/plain"])
+fun multipart(
+    attribute: String, // <b class="conum">(1)</b>
+    @Part("one") person: Person, // <b class="conum">(2)</b>
+    @Part("two") text: String, // <b class="conum">(3)</b>
+    @Part("three") bytes: ByteArray, // <b class="conum">(4)</b>
+    @Part("four") raw: jakarta.servlet.http.Part, // <b class="conum">(5)</b>
+    @Part("five") part: CompletedPart // <b class="conum">(6)</b>
+): String = "Ok"</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title">Using @Part</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">@Post(value = "/multipart", consumes = MediaType.MULTIPART_FORM_DATA, produces = "text/plain")
+String multipart(
+        String attribute, // <b class="conum">(1)</b>
+        @Part("one") Person person, // <b class="conum">(2)</b>
+        @Part("two") String text, // <b class="conum">(3)</b>
+        @Part("three") byte[] bytes, // <b class="conum">(4)</b>
+        @Part("four") jakarta.servlet.http.Part raw, // <b class="conum">(5)</b>
+        @Part("five") CompletedPart part) { // <b class="conum">(6)</b>
+    return "Ok"
 }</code></pre>
 </div>
 </div>
@@ -316,7 +494,7 @@ String multipart(
 <h1 id="servletAnnotation"><a class="anchor" href="#servletAnnotation"></a>4 Servlet Annotation Support</h1>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/5.6.x/src/main/docs/guide/servletAnnotation.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/6.2.x/src/main/docs/guide/servletAnnotation.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -342,7 +520,17 @@ String multipart(
     &lt;/path&gt;
 &lt;/annotationProcessorPaths&gt;</code></pre>
 </div>
-</div></p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="pyronaut">[tool.pyronaut.dependencies]
+build = [
+    <span class="hljs-string">"io.micronaut.servlet:micronaut-servlet-processor"</span>,
+]</code></pre>
+</div>
+</div>
+</p>
 </div>
 <div class="paragraph">
 <p>The following annotations can then be used from the Servlet API to add additional servlets, filters and listeners as beans:</p>
@@ -425,6 +613,95 @@ public class MyFilterFactory {
 }</code></pre>
 </div>
 </div>
+<div class="listingblock multi-language-sample">
+<div class="title">Adding a Filter with a Factory</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from jakarta.servlet import Filter, FilterChain, GenericFilter, ServletRequest, ServletResponse
+from micronaut.context.annotation import Factory
+from micronaut.core.annotation import Order
+from micronaut.core.order import Ordered
+from micronaut.servlet.api.annotation import ServletFilterBean
+
+
+class RunFirstFilter(GenericFilter):
+
+    def doFilter(self, request: ServletRequest, response: ServletResponse, chain: FilterChain) -&gt; None:
+        request.setAttribute("runFirst", True)
+        chain.doFilter(request, response)
+
+
+@Factory  # <b class="conum">(1)</b>
+class MyFilterFactory:
+
+    @ServletFilterBean(
+        filterName="another",  # <b class="conum">(2)</b>
+        value=["/extra-filter/*", "${my.filter.mapping}"])  # <b class="conum">(3)</b>
+    @Order(Ordered.HIGHEST_PRECEDENCE)  # <b class="conum">(4)</b>
+    def my_other_filter(self) -&gt; Filter:
+        return RunFirstFilter()</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title">Adding a Filter with a Factory</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">import io.micronaut.context.annotation.Factory
+import io.micronaut.core.annotation.Order
+import io.micronaut.core.order.Ordered
+import io.micronaut.servlet.api.annotation.ServletFilterBean
+import jakarta.servlet.Filter
+import jakarta.servlet.FilterChain
+import jakarta.servlet.GenericFilter
+import jakarta.servlet.ServletRequest
+import jakarta.servlet.ServletResponse
+
+@Factory // <b class="conum">(1)</b>
+class MyFilterFactory {
+
+    @ServletFilterBean(
+        filterName = "another", // <b class="conum">(2)</b>
+        value = ["/extra-filter/*", "\${my.filter.mapping}"]) // <b class="conum">(3)</b>
+    @Order(Ordered.HIGHEST_PRECEDENCE) // <b class="conum">(4)</b>
+    fun myOtherFilter(): Filter = object : GenericFilter() {
+        override fun doFilter(request: ServletRequest, response: ServletResponse, chain: FilterChain) {
+            request.setAttribute("runFirst", true)
+            chain.doFilter(request, response)
+        }
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title">Adding a Filter with a Factory</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">import io.micronaut.context.annotation.Factory
+import io.micronaut.core.annotation.Order
+import io.micronaut.core.order.Ordered
+import io.micronaut.servlet.api.annotation.ServletFilterBean
+import jakarta.servlet.Filter
+import jakarta.servlet.FilterChain
+import jakarta.servlet.GenericFilter
+import jakarta.servlet.ServletRequest
+import jakarta.servlet.ServletResponse
+
+@Factory // <b class="conum">(1)</b>
+class MyFilterFactory {
+
+    @ServletFilterBean(
+        filterName = "another", // <b class="conum">(2)</b>
+        value = ["/extra-filter/*", '${my.filter.mapping}']) // <b class="conum">(3)</b>
+    @Order(Ordered.HIGHEST_PRECEDENCE) // <b class="conum">(4)</b>
+    Filter myOtherFilter() {
+        return new GenericFilter() {
+            @Override
+            void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) {
+                request.setAttribute("runFirst", true)
+                chain.doFilter(request, response)
+            }
+        }
+    }
+}</code></pre>
+</div>
+</div>
 <div class="colist arabic">
 <table>
 <tr>
@@ -457,11 +734,1079 @@ Servlet Filters are not to be confused with <a href="https://docs.micronaut.io/l
 </tr>
 </table>
 </div>
+<div class="paragraph">
+<p>The same processor maps the Jakarta WebSocket annotations - <code>@ServerEndpoint</code>, <code>@ClientEndpoint</code>, <code>@OnOpen</code>,
+<code>@OnMessage</code>, <code>@OnClose</code>, <code>@OnError</code> and <code>@PathParam</code> - onto Micronaut&#8217;s WebSocket support.
+See the <a href="#websocket">WebSocket section</a>.</p>
+</div>
 
-<h1 id="warDeployment"><a class="anchor" href="#warDeployment"></a>5 WAR Deployment</h1>
+<h1 id="websocket"><a class="anchor" href="#websocket"></a>5 WebSocket Support</h1>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/5.6.x/src/main/docs/guide/warDeployment.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/6.2.x/src/main/docs/guide/websocket.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>Micronaut&#8217;s WebSocket programming model works on Jetty, Tomcat and Undertow. The
+<code>@ServerWebSocket</code> beans, the <code>WebSocketSession</code>, the <code>WebSocketBroadcaster</code> and the
+argument binding of <code>@OnOpen</code>, <code>@OnMessage</code>, <code>@OnClose</code> and <code>@OnError</code> behave the same as
+they do on the Netty server.</p>
+</div>
+<div class="paragraph">
+<p>To enable it, add the WebSocket module:</p>
+</div>
+<div class="paragraph">
+<p>        <div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">implementation(<span class="hljs-string">"io.micronaut.servlet:micronaut-servlet-websocket")</span></code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
+    &lt;groupId&gt;io.micronaut.servlet&lt;/groupId&gt;
+    &lt;artifactId&gt;micronaut-servlet-websocket&lt;/artifactId&gt;
+&lt;/dependency&gt;</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="pyronaut">[tool.pyronaut.dependencies]
+runtime = [
+    <span class="hljs-string">"io.micronaut.servlet:micronaut-servlet-websocket"</span>,
+]</code></pre>
+</div>
+</div>
+</p>
+</div>
+<div class="paragraph">
+<p>and the Jakarta WebSocket implementation of the container you are using, which is a
+separate artifact in all three cases:</p>
+</div>
+<div class="paragraph">
+<div class="title">Jetty</div>
+<p>        <div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">runtimeOnly(<span class="hljs-string">"org.eclipse.jetty.ee10.websocket:jetty-ee10-websocket-jakarta-server")</span></code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
+    &lt;groupId&gt;org.eclipse.jetty.ee10.websocket&lt;/groupId&gt;
+    &lt;artifactId&gt;jetty-ee10-websocket-jakarta-server&lt;/artifactId&gt;
+    &lt;scope&gt;runtime&lt;/scope&gt;
+&lt;/dependency&gt;</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="pyronaut">[tool.pyronaut.dependencies]
+runtime = [
+    <span class="hljs-string">"org.eclipse.jetty.ee10.websocket:jetty-ee10-websocket-jakarta-server"</span>,
+]</code></pre>
+</div>
+</div>
+</p>
+</div>
+<div class="paragraph">
+<div class="title">Tomcat</div>
+<p>        <div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">runtimeOnly(<span class="hljs-string">"org.apache.tomcat.embed:tomcat-embed-websocket")</span></code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
+    &lt;groupId&gt;org.apache.tomcat.embed&lt;/groupId&gt;
+    &lt;artifactId&gt;tomcat-embed-websocket&lt;/artifactId&gt;
+    &lt;scope&gt;runtime&lt;/scope&gt;
+&lt;/dependency&gt;</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="pyronaut">[tool.pyronaut.dependencies]
+runtime = [
+    <span class="hljs-string">"org.apache.tomcat.embed:tomcat-embed-websocket"</span>,
+]</code></pre>
+</div>
+</div>
+</p>
+</div>
+<div class="paragraph">
+<div class="title">Undertow</div>
+<p>        <div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">runtimeOnly(<span class="hljs-string">"io.undertow:undertow-websockets-jsr")</span></code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
+    &lt;groupId&gt;io.undertow&lt;/groupId&gt;
+    &lt;artifactId&gt;undertow-websockets-jsr&lt;/artifactId&gt;
+    &lt;scope&gt;runtime&lt;/scope&gt;
+&lt;/dependency&gt;</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="pyronaut">[tool.pyronaut.dependencies]
+runtime = [
+    <span class="hljs-string">"io.undertow:undertow-websockets-jsr"</span>,
+]</code></pre>
+</div>
+</div>
+</p>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+<div class="paragraph">
+<p>The Jetty artifact pulls in <code>jetty-ee10-annotations</code>, which only Jetty&#8217;s <code>WebAppContext</code>
+configuration uses and which the embedded server never loads. You can exclude it:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">runtimeOnly("org.eclipse.jetty.ee10.websocket:jetty-ee10-websocket-jakarta-server") {
+    exclude group: "org.eclipse.jetty.ee10", module: "jetty-ee10-annotations"
+}</code></pre>
+</div>
+</div>
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>An endpoint is written exactly as it is on the Netty server:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@ServerWebSocket("/ws/chat/{topic}/{username}") // <b class="conum">(1)</b>
+public class ChatServerWebSocket {
+
+    private final WebSocketBroadcaster broadcaster;
+
+    public ChatServerWebSocket(WebSocketBroadcaster broadcaster) {
+        this.broadcaster = broadcaster;
+    }
+
+    @OnOpen // <b class="conum">(2)</b>
+    public void onOpen(String topic, String username, WebSocketSession session) {
+        broadcaster.broadcastSync("[" + username + "] Joined!", isValid(topic, session));
+    }
+
+    @OnMessage // <b class="conum">(3)</b>
+    public void onMessage(String topic, String username, String message, WebSocketSession session) {
+        broadcaster.broadcastSync("[" + username + "] " + message, isValid(topic, session)); // <b class="conum">(4)</b>
+    }
+
+    @OnClose // <b class="conum">(5)</b>
+    public void onClose(String topic, String username, WebSocketSession session) {
+        broadcaster.broadcastSync("[" + username + "] Disconnected!", isValid(topic, session));
+    }
+
+    private Predicate&lt;WebSocketSession&gt; isValid(String topic, WebSocketSession session) {
+        return s -&gt; s != session &amp;&amp; topic.equalsIgnoreCase(s.getUriVariables().get("topic", String.class, null));
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">@ServerWebSocket("/ws/chat/{topic}/{username}")  # <b class="conum">(1)</b>
+class ChatServerWebSocket:
+
+    def __init__(self, broadcaster: WebSocketBroadcaster):
+        self.broadcaster = broadcaster
+
+    @OnOpen  # <b class="conum">(2)</b>
+    def on_open(self, topic: str, username: str, session: WebSocketSession) -&gt; None:
+        self.broadcaster.broadcastSync("[" + username + "] Joined!", self.is_valid(topic, session))
+
+    @OnMessage  # <b class="conum">(3)</b>
+    def on_message(self, topic: str, username: str, message: str, session: WebSocketSession) -&gt; None:
+        self.broadcaster.broadcastSync("[" + username + "] " + message, self.is_valid(topic, session))  # <b class="conum">(4)</b>
+
+    @OnClose  # <b class="conum">(5)</b>
+    def on_close(self, topic: str, username: str, session: WebSocketSession) -&gt; None:
+        self.broadcaster.broadcastSync("[" + username + "] Disconnected!", self.is_valid(topic, session))
+
+    def is_valid(self, topic: str, session: WebSocketSession):
+        return lambda s: s != session and topic.lower() == str(s.getUriVariables().get("topic", String, None)).lower()</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">@ServerWebSocket("/ws/chat/{topic}/{username}") // <b class="conum">(1)</b>
+class ChatServerWebSocket(private val broadcaster: WebSocketBroadcaster) {
+
+    @OnOpen // <b class="conum">(2)</b>
+    fun onOpen(topic: String, username: String, session: WebSocketSession) {
+        broadcaster.broadcastSync("[$username] Joined!", isValid(topic, session))
+    }
+
+    @OnMessage // <b class="conum">(3)</b>
+    fun onMessage(topic: String, username: String, message: String, session: WebSocketSession) {
+        broadcaster.broadcastSync("[$username] $message", isValid(topic, session)) // <b class="conum">(4)</b>
+    }
+
+    @OnClose // <b class="conum">(5)</b>
+    fun onClose(topic: String, username: String, session: WebSocketSession) {
+        broadcaster.broadcastSync("[$username] Disconnected!", isValid(topic, session))
+    }
+
+    private fun isValid(topic: String, session: WebSocketSession) = Predicate&lt;WebSocketSession&gt; {
+        it !== session &amp;&amp; topic.equals(it.uriVariables.get("topic", String::class.java).orElse(null), ignoreCase = true)
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">@ServerWebSocket("/ws/chat/{topic}/{username}") // <b class="conum">(1)</b>
+class ChatServerWebSocket {
+
+    private final WebSocketBroadcaster broadcaster
+
+    ChatServerWebSocket(WebSocketBroadcaster broadcaster) {
+        this.broadcaster = broadcaster
+    }
+
+    @OnOpen // <b class="conum">(2)</b>
+    void onOpen(String topic, String username, WebSocketSession session) {
+        broadcaster.broadcastSync("[" + username + "] Joined!", isValid(topic, session))
+    }
+
+    @OnMessage // <b class="conum">(3)</b>
+    void onMessage(String topic, String username, String message, WebSocketSession session) {
+        broadcaster.broadcastSync("[" + username + "] " + message, isValid(topic, session)) // <b class="conum">(4)</b>
+    }
+
+    @OnClose // <b class="conum">(5)</b>
+    void onClose(String topic, String username, WebSocketSession session) {
+        broadcaster.broadcastSync("[" + username + "] Disconnected!", isValid(topic, session))
+    }
+
+    private Predicate&lt;WebSocketSession&gt; isValid(String topic, WebSocketSession session) {
+        return { WebSocketSession s -&gt;
+            s !== session &amp;&amp; topic.equalsIgnoreCase(s.getUriVariables().get("topic", String, null))
+        }
+    }
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>The <code>@ServerWebSocket</code> annotation defines the URI the endpoint is mapped to, including
+any path variables.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td><code>@OnOpen</code> runs once the handshake has completed. Its arguments are bound from the path
+variables, the originating request and the session.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td><code>@OnMessage</code> receives each message. The single argument that cannot be bound from
+anywhere else is the message body.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="4"></i><b>4</b></td>
+<td><code>WebSocketBroadcaster</code> sends a message to every open session that matches the given
+predicate.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="5"></i><b>5</b></td>
+<td><code>@OnClose</code> runs when the connection is closed, whichever side closed it.</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Clients are written with <code>@ClientWebSocket</code> and are unchanged from the Netty server:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@ClientWebSocket("/ws/chat/{topic}/{username}") // <b class="conum">(1)</b>
+public abstract class ChatClientWebSocket implements AutoCloseable { // <b class="conum">(2)</b>
+
+    private final Collection&lt;String&gt; replies = new ConcurrentLinkedQueue&lt;&gt;();
+
+    @OnMessage
+    public void onMessage(String message) {
+        replies.add(message); // <b class="conum">(3)</b>
+    }
+
+    public abstract void send(String message); // <b class="conum">(4)</b>
+
+    public Collection&lt;String&gt; getReplies() {
+        return replies;
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">@ClientWebSocket("/ws/chat/{topic}/{username}")  # <b class="conum">(1)</b>
+class ChatClientWebSocket(ABC, AutoCloseable):  # <b class="conum">(2)</b>
+
+    def __init__(self):
+        self.replies = ConcurrentLinkedQueue()
+
+    @OnMessage
+    def on_message(self, message: str) -&gt; None:
+        self.replies.add(message)  # <b class="conum">(3)</b>
+
+    @abstractmethod
+    def send(self, message: str) -&gt; None:  # <b class="conum">(4)</b>
+        ...
+
+    def get_replies(self) -&gt; Collection[str]:
+        return self.replies</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">@ClientWebSocket("/ws/chat/{topic}/{username}") // <b class="conum">(1)</b>
+abstract class ChatClientWebSocket : AutoCloseable { // <b class="conum">(2)</b>
+
+    val replies: MutableCollection&lt;String&gt; = ConcurrentLinkedQueue()
+
+    @OnMessage
+    fun onMessage(message: String) {
+        replies.add(message) // <b class="conum">(3)</b>
+    }
+
+    abstract fun send(message: String) // <b class="conum">(4)</b>
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">@ClientWebSocket("/ws/chat/{topic}/{username}") // <b class="conum">(1)</b>
+abstract class ChatClientWebSocket implements AutoCloseable { // <b class="conum">(2)</b>
+
+    private final Collection&lt;String&gt; replies = new ConcurrentLinkedQueue&lt;&gt;()
+
+    @OnMessage
+    void onMessage(String message) {
+        replies.add(message) // <b class="conum">(3)</b>
+    }
+
+    abstract void send(String message) // <b class="conum">(4)</b>
+
+    Collection&lt;String&gt; getReplies() {
+        return replies
+    }
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>The client endpoint is mapped to the same URI template.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>The class is abstract so that Micronaut can implement the send methods.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td><code>@OnMessage</code> receives messages sent by the server.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="4"></i><b>4</b></td>
+<td>Any abstract method whose name begins with <code>send</code> or <code>broadcast</code> is implemented to send
+a message over the session.</td>
+</tr>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_jakarta_websocket_annotations">Jakarta WebSocket annotations</h3>
+<div class="paragraph">
+<p>An endpoint can also be written with the
+<a href="https://jakarta.ee/specifications/websocket/2.1/apidocs/">Jakarta WebSocket</a> annotations,
+<code>@ServerEndpoint</code>, <code>@OnOpen</code>, <code>@OnMessage</code>, <code>@OnClose</code>, <code>@OnError</code> and <code>@PathParam</code>, in the
+same way that <code>@WebServlet</code> and <code>@WebFilter</code> can be used to register servlets and filters.
+This needs the annotation processor:</p>
+</div>
+<div class="paragraph">
+<p>        <div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">annotationProcessor(<span class="hljs-string">"io.micronaut.servlet:micronaut-servlet-processor")</span></code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;annotationProcessorPaths&gt;
+    &lt;path&gt;
+        &lt;groupId&gt;io.micronaut.servlet&lt;/groupId&gt;
+        &lt;artifactId&gt;micronaut-servlet-processor&lt;/artifactId&gt;
+    &lt;/path&gt;
+&lt;/annotationProcessorPaths&gt;</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="pyronaut">[tool.pyronaut.dependencies]
+build = [
+    <span class="hljs-string">"io.micronaut.servlet:micronaut-servlet-processor"</span>,
+]</code></pre>
+</div>
+</div>
+</p>
+</div>
+<div class="paragraph">
+<p>The processor maps the Jakarta annotations onto their Micronaut equivalents at compilation
+time, so the endpoint is a <code>@ServerWebSocket</code> bean and takes the same path as one: the
+handshake goes through the Micronaut router and filter chain, and the handlers are invoked
+through the compiled bean metadata. The container never scans the class and nothing is
+reflected on, so a Jakarta endpoint works in a native image as any Micronaut bean does.</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">import jakarta.websocket.CloseReason;
+import jakarta.websocket.OnClose;
+import jakarta.websocket.OnMessage;
+import jakarta.websocket.OnOpen;
+import jakarta.websocket.Session;
+import jakarta.websocket.server.PathParam;
+import jakarta.websocket.server.ServerEndpoint;
+
+import java.io.IOException;
+
+@ServerEndpoint("/ws/echo/{room}") // <b class="conum">(1)</b>
+public class EchoEndpoint {
+
+    private String room;
+
+    @OnOpen
+    public void onOpen(Session session, @PathParam("room") String room) throws IOException { // <b class="conum">(2)</b>
+        this.room = room;
+        session.getBasicRemote().sendText("Welcome to " + room); // <b class="conum">(3)</b>
+    }
+
+    @OnMessage
+    public String onMessage(String message) { // <b class="conum">(4)</b>
+        return "[" + room + "] " + message;
+    }
+
+    @OnClose
+    public void onClose(CloseReason reason) { // <b class="conum">(5)</b>
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">import jakarta.websocket.CloseReason
+import jakarta.websocket.OnClose
+import jakarta.websocket.OnMessage
+import jakarta.websocket.OnOpen
+import jakarta.websocket.Session
+import jakarta.websocket.server.PathParam
+import jakarta.websocket.server.ServerEndpoint
+
+@ServerEndpoint("/ws/echo/{room}") // <b class="conum">(1)</b>
+class EchoEndpoint {
+
+    private lateinit var room: String
+
+    @OnOpen
+    fun onOpen(session: Session, @PathParam("room") room: String) { // <b class="conum">(2)</b>
+        this.room = room
+        session.basicRemote.sendText("Welcome to $room") // <b class="conum">(3)</b>
+    }
+
+    @OnMessage
+    fun onMessage(message: String): String { // <b class="conum">(4)</b>
+        return "[$room] $message"
+    }
+
+    @OnClose
+    fun onClose(reason: CloseReason) { // <b class="conum">(5)</b>
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">import jakarta.websocket.CloseReason
+import jakarta.websocket.OnClose
+import jakarta.websocket.OnMessage
+import jakarta.websocket.OnOpen
+import jakarta.websocket.Session
+import jakarta.websocket.server.PathParam
+import jakarta.websocket.server.ServerEndpoint
+
+@ServerEndpoint("/ws/echo/{room}") // <b class="conum">(1)</b>
+class EchoEndpoint {
+
+    private String room
+
+    @OnOpen
+    void onOpen(Session session, @PathParam("room") String room) { // <b class="conum">(2)</b>
+        this.room = room
+        session.basicRemote.sendText("Welcome to " + room) // <b class="conum">(3)</b>
+    }
+
+    @OnMessage
+    String onMessage(String message) { // <b class="conum">(4)</b>
+        "[" + room + "] " + message
+    }
+
+    @OnClose
+    void onClose(CloseReason reason) { // <b class="conum">(5)</b>
+    }
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td><code>@ServerEndpoint</code> maps the endpoint. The URI template syntax is the same as
+<code>@ServerWebSocket&#8217;s, and `subprotocols</code> is honoured.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>A handler can take the container&#8217;s <code>jakarta.websocket.Session</code> and <code>EndpointConfig</code> by
+type, <code>@PathParam</code> binds a path variable under the name it declares, and everything a
+Micronaut handler can take - the <code>WebSocketSession</code>, <code>@Header</code>, <code>@QueryValue</code>, the
+<code>HttpRequest</code> - can be taken too.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>The <code>Session</code> is the container&#8217;s own, so <code>getBasicRemote()</code>, <code>getAsyncRemote()</code>,
+<code>getOpenSessions()</code> and <code>getUserProperties()</code> all work as they do under the container.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="4"></i><b>4</b></td>
+<td>A value returned by <code>@OnMessage</code> is sent to the peer, as the specification asks. An
+endpoint may declare one text, one binary and one pong <code>@OnMessage</code> method, chosen by the
+type of the message parameter.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="5"></i><b>5</b></td>
+<td><code>@OnClose</code> may take the Jakarta <code>CloseReason</code>, <code>@OnError</code> the <code>Throwable</code>.</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Unless the class declares a scope of its own, one endpoint instance is created per
+connection, which is the Jakarta contract and lets the endpoint keep the session and its
+state in fields. An explicit <code>@Singleton</code> shares one instance between all connections.</p>
+</div>
+<div class="paragraph">
+<p>The processor reports at compilation time what could not work at runtime: a server endpoint
+without an <code>@OnMessage</code> method, more than one handler for a message category, a partial
+message handler (the <code>boolean</code> last-part parameter, since messages are always delivered
+whole), and a <code>maxMessageSize</code> beyond <code>Integer.MAX_VALUE</code>.</p>
+</div>
+<div class="sect3">
+<h4 id="_decoders_encoders_and_the_configurator">Decoders, encoders and the configurator</h4>
+<div class="paragraph">
+<p><code>decoders</code>, <code>encoders</code> and <code>configurator</code> name classes the container would instantiate with
+<code>Class.newInstance()</code>. Here the annotation processor generates an introspection for every
+class the endpoint names, so a class with a public no-argument constructor - the Jakarta
+contract - is instantiated through that, without reflection, and needs nothing else. A class
+is resolved through the first of these that can produce it:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>As a bean, when the class carries a scope such as <code>@Singleton</code> or <code>@Prototype</code>. The bean
+can inject an <code>ObjectMapper</code> or anything else, and its scope decides whether it is shared.</p>
+</li>
+<li>
+<p>Through its generated introspection, when it has a no-argument constructor.</p>
+</li>
+<li>
+<p>Reflectively, when <code>io.micronaut:micronaut-reflection</code> is on the classpath <em>and</em> the type
+matches a <code>micronaut.introspection.allow-reflection</code> pattern. That is the same switch that
+lets the shared introspector describe a type reflectively, so there is one place to opt a
+package into reflection. This is only needed for a class whose constructor takes arguments
+without being a bean; they are then injected.</p>
+<div class="openblock">
+<div class="content">
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-properties hljs" data-lang="properties">micronaut.introspection.allow-reflection[0]=com.example.legacy.codecs.*</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">micronaut:
+  introspection:
+    allow-reflection:
+      - com.example.legacy.codecs.*</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">[micronaut.introspection]
+allow-reflection = ["com.example.legacy.codecs.*"]</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy-config hljs" data-lang="groovy-config">micronaut {
+  introspection {
+    allowReflection = ["com.example.legacy.codecs.*"]
+  }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-hocon hljs" data-lang="hocon">{
+  micronaut {
+    introspection {
+      allow-reflection = ["com.example.legacy.codecs.*"]
+    }
+  }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json-config hljs" data-lang="json-config">{
+  "micronaut": {
+    "introspection": {
+      "allow-reflection": ["com.example.legacy.codecs.*"]
+    }
+  }
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>A class none of these can produce - one whose constructor takes arguments, when
+<code>micronaut-reflection</code> is not on the compile classpath - is reported at compilation time.</p>
+</div>
+<div class="paragraph">
+<p>Decoders run before Micronaut&#8217;s own conversion and message body readers, and encoders apply
+to the value an <code>@OnMessage</code> method returns, before Micronaut&#8217;s message body writers. Either
+can be left out: a message type no decoder produces is read by the <code>MessageBodyReader</code> for the
+media type the handler <code>@Consumes</code> (JSON by default), and a return value no encoder accepts is
+written by the <code>MessageBodyWriter</code> for the media type it <code>@Produces</code> (JSON by default), exactly
+as for a Micronaut endpoint. The type an encoder handles is read from its bean definition, or
+from its generic signature when <code>micronaut-reflection</code> is present; an encoder whose type is
+unknown is offered every value and stands aside for one it cannot encode.</p>
+</div>
+<div class="paragraph">
+<p><code>RemoteEndpoint#sendObject</code> on the raw session is served by the container, which instantiates
+the encoders itself, reflectively; the encoders are therefore only passed to the container for
+classes the reflection policy allows. Without that, return a value from the handler or send
+through the Micronaut <code>WebSocketSession</code> instead.</p>
+</div>
+<div class="paragraph">
+<p>A declared configurator has its <code>modifyHandshake</code>, <code>checkOrigin</code>, <code>getNegotiatedSubprotocol</code>
+and <code>getNegotiatedExtensions</code> honoured; an origin must pass both its check and the
+<a href="#websocket-origin">Micronaut policy</a>. Its <code>getEndpointInstance</code> is not called: the endpoint
+is always the bean.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_client_endpoints">Client endpoints</h4>
+<div class="paragraph">
+<p>A <code>@ClientEndpoint</code> is supported the same way. The class is a plain bean whose handlers the
+processor makes executable, so unlike under a Jakarta container - which needs a public
+no-argument constructor - it can inject its dependencies through its constructor. It is opened
+through the <code>jakarta.websocket.WebSocketContainer</code> bean rather than
+<code>ContainerProvider.getWebSocketContainer()</code>, whose result depends on which implementation
+<code>ServiceLoader</code> happens to find first.</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">import jakarta.websocket.ClientEndpoint;
+import jakarta.websocket.CloseReason;
+import jakarta.websocket.OnClose;
+import jakarta.websocket.OnMessage;
+import jakarta.websocket.OnOpen;
+import jakarta.websocket.Session;
+
+import java.io.IOException;
+import java.util.Collection;
+import java.util.concurrent.ConcurrentLinkedQueue;
+
+@ClientEndpoint // <b class="conum">(1)</b>
+public class EchoClientEndpoint {
+
+    private final Collection&lt;String&gt; replies = new ConcurrentLinkedQueue&lt;&gt;();
+    private Session session;
+
+    @OnOpen
+    public void onOpen(Session session) { // <b class="conum">(2)</b>
+        this.session = session;
+    }
+
+    @OnMessage
+    public void onMessage(String message) { // <b class="conum">(3)</b>
+        replies.add(message);
+    }
+
+    @OnClose
+    public void onClose(CloseReason reason) {
+        // the session is gone; nothing to release
+    }
+
+    public void send(String message) throws IOException {
+        session.getBasicRemote().sendText(message); // <b class="conum">(4)</b>
+    }
+
+    public Collection&lt;String&gt; getReplies() {
+        return replies;
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">import jakarta.websocket.ClientEndpoint
+import jakarta.websocket.CloseReason
+import jakarta.websocket.OnClose
+import jakarta.websocket.OnMessage
+import jakarta.websocket.OnOpen
+import jakarta.websocket.Session
+import java.util.concurrent.ConcurrentLinkedQueue
+
+@ClientEndpoint // <b class="conum">(1)</b>
+class EchoClientEndpoint {
+
+    val replies: MutableCollection&lt;String&gt; = ConcurrentLinkedQueue()
+    private lateinit var session: Session
+
+    @OnOpen
+    fun onOpen(session: Session) { // <b class="conum">(2)</b>
+        this.session = session
+    }
+
+    @OnMessage
+    fun onMessage(message: String) { // <b class="conum">(3)</b>
+        replies.add(message)
+    }
+
+    @OnClose
+    fun onClose(reason: CloseReason) {
+        // the session is gone; nothing to release
+    }
+
+    fun send(message: String) {
+        session.basicRemote.sendText(message) // <b class="conum">(4)</b>
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">import jakarta.websocket.ClientEndpoint
+import jakarta.websocket.CloseReason
+import jakarta.websocket.OnClose
+import jakarta.websocket.OnMessage
+import jakarta.websocket.OnOpen
+import jakarta.websocket.Session
+
+import java.util.concurrent.ConcurrentLinkedQueue
+
+@ClientEndpoint // <b class="conum">(1)</b>
+class EchoClientEndpoint {
+
+    final Collection&lt;String&gt; replies = new ConcurrentLinkedQueue&lt;&gt;()
+    private Session session
+
+    @OnOpen
+    void onOpen(Session session) { // <b class="conum">(2)</b>
+        this.session = session
+    }
+
+    @OnMessage
+    void onMessage(String message) { // <b class="conum">(3)</b>
+        replies.add(message)
+    }
+
+    @OnClose
+    void onClose(CloseReason reason) {
+        // the session is gone; nothing to release
+    }
+
+    void send(String message) {
+        session.basicRemote.sendText(message) // <b class="conum">(4)</b>
+    }
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td><code>@ClientEndpoint</code> takes <code>subprotocols</code>, <code>decoders</code>, <code>encoders</code> and <code>configurator</code>, which are
+honoured as for a <code>@ServerEndpoint</code>; the URI comes from <code>connectToServer</code>.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>The handlers take what a server endpoint&#8217;s do: the container&#8217;s <code>Session</code>, the
+<code>EndpointConfig</code>, the Jakarta <code>CloseReason</code>, the <code>Throwable</code>, and anything a Micronaut handler
+binds, such as a <code>@Header</code> of the handshake request.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>One text, one binary and one pong <code>@OnMessage</code> may be declared, and a value one returns is
+sent to the server. Unlike a server endpoint a client need not declare any: a client that only
+sends is valid.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="4"></i><b>4</b></td>
+<td>Sending goes through the container&#8217;s session. The class&#8217;s own methods are its own, whatever
+their names.</td>
+</tr>
+</table>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">WebSocketContainer container = embeddedServer.applicationContext.getBean(WebSocketContainer) // <b class="conum">(1)</b>
+EchoClientEndpoint client = new EchoClientEndpoint()
+Session session = container.connectToServer(client, URI.create("ws://localhost:${embeddedServer.port}/ws/echo/lobby")) // <b class="conum">(2)</b></code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>The container is a bean; inject it where the connection is opened.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td><code>connectToServer</code> takes the endpoint class, which creates one instance per connection, or an
+instance. It returns once <code>@OnOpen</code> has completed, and throws a <code>DeploymentException</code> carrying
+the cause when it failed or did not complete within <code>micronaut.servlet.websocket.connect-timeout</code>
+(30 seconds by default), in which case the session is closed.</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>The connection itself is opened by the servlet container&#8217;s Jakarta client - the same
+<code>ServerContainer</code> the server side upgrades through is also a client container on Jetty, Tomcat
+and Undertow - so the <code>Session</code> a handler receives is the container&#8217;s own, and the handlers are
+invoked through the compiled metadata: the container never scans or instantiates the class.
+A <code>@ClientEndpoint</code> class compiled without the processor is handed to the container as it is,
+which then does both reflectively. <code>@PathParam</code> is rejected on a client endpoint, which has no
+URI template to bind it from, and Micronaut&#8217;s <code>WebSocketClient</code> does not open a
+<code>@ClientEndpoint</code>; a client for it is a <code>@ClientWebSocket</code>.</p>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_filters_and_security_run_on_the_handshake">Filters and security run on the handshake</h3>
+<div class="paragraph">
+<p>The upgrade request reaches the Micronaut servlet like any other request, so the Micronaut
+filter chain, including <code>micronaut-security</code>, runs against it before the connection is
+handed to the container. A filter that produces its own response cancels the upgrade and
+that response is written as an ordinary HTTP response, so <code>@Secured</code> on a <code>@ServerWebSocket</code>
+class rejects the handshake with a <code>401</code> rather than opening a socket.</p>
+</div>
+<div class="paragraph">
+<p>Servlet filters registered with <a href="../api/io/micronaut/servlet/api/annotation/ServletFilterBean.html">@ServletFilterBean</a> still run
+before the Micronaut servlet, and therefore before Micronaut filters, exactly as they do
+for HTTP requests.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="websocket-origin">Origin checking</h3>
+<div class="paragraph">
+<p>When the endpoint declares <a href="../api/io/micronaut/http/server/cors/CrossOrigin.html">@CrossOrigin</a>, or when
+<code>micronaut.server.cors.enabled</code> is set, the handshake is refused unless the <code>Origin</code> header
+is same-origin or matches an allowed origin. A <code>@CrossOrigin</code> on the endpoint states the
+policy for that endpoint and is used on its own; otherwise the global CORS configurations
+apply. This check happens
+during the handshake rather than on the response, because a browser applies its usual CORS
+response check to ordinary requests but not to a WebSocket handshake, so nothing else would
+stop a hostile page from opening an authenticated socket.</p>
+</div>
+<div class="paragraph">
+<p>With no <code>@CrossOrigin</code> and CORS disabled every origin is accepted, matching the Netty
+server.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+<code>@PreMatching</code> filters do not run on the handshake. The upgrade is
+matched to its route before the filter chain runs, so only filters resolved after route
+matching apply. The Netty server behaves the same way.
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_configuration">Configuration</h3>
+<a id="io.micronaut.servlet.websocket.ServletWebSocketConfiguration" href="#io.micronaut.servlet.websocket.ServletWebSocketConfiguration">&#128279;</a>
+<table class="tableblock frame-all grid-all stretch">
+<caption class="title">Table 1. Configuration Properties for <a href="../api/io/micronaut/servlet/websocket/ServletWebSocketConfiguration.html">ServletWebSocketConfiguration</a></caption>
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Property</th>
+<th class="tableblock halign-left valign-top">Type</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-left valign-top">Default value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.servlet.websocket.enabled</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Whether WebSocket support is enabled. Defaults to {@code true}.</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.servlet.websocket.max-text-message-size</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">int</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The maximum size in bytes of an inbound text message. Default value (65536).</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.servlet.websocket.max-binary-message-size</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">int</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The maximum size in bytes of an inbound binary message. Default value (65536).</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.servlet.websocket.idle-timeout</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.time.Duration</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">How long a session may stay idle before it is closed, or {@code null} to
+ inherit {@code micronaut.server.idle-timeout}</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.servlet.websocket.async-send-timeout</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.time.Duration</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">How long an asynchronous send may take before it fails, or {@code null} to
+ use the container default</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.servlet.websocket.connect-timeout</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.time.Duration</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">How long {@code WebSocketContainer#connectToServer} waits for a client endpoint&#8217;s
+ {@code @OnOpen} to complete before failing the connection. Default value 30 seconds.</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.servlet.websocket.max-pending-sends</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">int</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The number of queued sends beyond which a session reports that it is not
+ writable. Default value (64).</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>Message sizes and the idle timeout are always applied explicitly, because the three
+containers ship different defaults. The values above match those of the Netty server. When
+<code>micronaut.servlet.websocket.idle-timeout</code> is not set, <code>micronaut.server.idle-timeout</code> is
+used, and an idle session is closed with close code <code>1001</code>.</p>
+</div>
+<div class="paragraph">
+<p>An explicit <code>maxPayloadLength</code> on <code>@OnMessage</code> takes precedence over the configured message
+sizes for that endpoint.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_differences_from_the_netty_server">Differences from the Netty server</h3>
+<div class="ulist">
+<ul>
+<li>
+<p><code>maxPayloadLength</code> bounds a whole message here, whereas on Netty it bounds a single frame.
+Handlers always receive whole messages on both servers, and a message over the limit closes
+the session with close code <code>1009</code>.</p>
+</li>
+<li>
+<p><code>WebSocketSession#getId()</code> is the identifier the container assigns, not the
+<code>Sec-WebSocket-Key</code> header.</p>
+</li>
+<li>
+<p>Outbound writes are queued per session with one write outstanding on the container at a
+time, because Jakarta containers reject a second asynchronous send while one is in flight.
+<code>WebSocketSession#isWritable()</code> reports <code>false</code> once more than
+<code>micronaut.servlet.websocket.max-pending-sends</code> writes are queued.</p>
+</li>
+<li>
+<p>The HTTP request that produced the handshake is copied before the protocol switch, since a
+servlet request is only valid for the duration of its dispatch. Handler arguments bound
+from the request, such as <code>@Header</code> and <code>@QueryValue</code>, therefore see the values as they
+were at handshake time. The authenticated principal is carried over with it, including one
+supplied by container-managed authentication in a WAR.</p>
+</li>
+<li>
+<p>The handshake enforces the configured CORS origins, which the Netty server does not.</p>
+</li>
+<li>
+<p>Handlers for one session are dispatched as each message arrives rather than being
+serialised, so with a multi-threaded <code>@ExecuteOn</code> executor two messages on the same
+session can run concurrently and complete out of order, and a message handler can overlap
+<code>@OnOpen</code>. This matches the Netty server. An endpoint that needs ordering should either
+keep its handlers non-blocking, so they run on the container thread that delivered the
+message, or synchronize on the session itself.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_unsupported_runtimes">Unsupported runtimes</h3>
+<div class="paragraph">
+<p>WebSocket is not available on the built-in Java HTTP server runtime or on POJA.
+<code>com.sun.net.httpserver.HttpServer</code> has no protocol upgrade API and no <code>ServletContext</code>, and
+a POJA application answers one request at a time over a single stream, so neither can hold a
+long lived full duplex connection.</p>
+</div>
+<div class="paragraph">
+<p>WAR deployment is supported on any container implementing Jakarta WebSocket 2.1. On an older
+container the upgrade is answered with a <code>501</code>, and a warning is logged the first time an
+upgrade is attempted.</p>
+</div>
+</div>
+
+<h1 id="warDeployment"><a class="anchor" href="#warDeployment"></a>6 WAR Deployment</h1>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/6.2.x/src/main/docs/guide/warDeployment.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -488,7 +1833,17 @@ Servlet Filters are not to be confused with <a href="https://docs.micronaut.io/l
     &lt;scope&gt;provided&lt;/scope&gt;
 &lt;/dependency&gt;</code></pre>
 </div>
-</div></p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="pyronaut">[tool.pyronaut.dependencies]
+build = [
+    <span class="hljs-string">"io.micronaut.servlet:micronaut-http-server-jetty"</span>,
+]</code></pre>
+</div>
+</div>
+</p>
 </div>
 <div class="paragraph">
 <p>Then make sure you include <code>micronaut-servlet-engine</code> dependency in your build configuration:</p>
@@ -507,7 +1862,17 @@ Servlet Filters are not to be confused with <a href="https://docs.micronaut.io/l
     &lt;artifactId&gt;micronaut-servlet-engine&lt;/artifactId&gt;
 &lt;/dependency&gt;</code></pre>
 </div>
-</div></p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="pyronaut">[tool.pyronaut.dependencies]
+runtime = [
+    <span class="hljs-string">"io.micronaut.servlet:micronaut-servlet-engine"</span>,
+]</code></pre>
+</div>
+</div>
+</p>
 </div>
 <div class="paragraph">
 <p>Then alter your build configuration to build a WAR file. In Gradle this can be done by applying the WAR plugin:</p>
@@ -537,10 +1902,10 @@ Micronaut will load using <a href="../api/io/micronaut/servlet/engine/initialize
 </table>
 </div>
 
-<h2 id="versioning"><a class="anchor" href="#versioning"></a>5.1 Container version considerations</h2>
+<h2 id="versioning"><a class="anchor" href="#versioning"></a>6.1 Container version considerations</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/5.6.x/src/main/docs/guide/warDeployment/versioning.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/6.2.x/src/main/docs/guide/warDeployment/versioning.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -558,10 +1923,48 @@ And Micronaut 4.0.0 WAR files cannot be run on Tomcat 9 or earlier.</p>
 <p>If you have a Micronaut 3 based WAR file that you wish to deploy to Tomcat 10, you need to deploy it to the <code>$CATALINA_BASE/webapps-javaee</code> directory instead of the usual <code>$CATALINA_BASE/webapps</code>, and Tomcat will perform a conversion to jakarta.servlet.</p>
 </div>
 
-<h2 id="externalConfig"><a class="anchor" href="#externalConfig"></a>5.2 External Configuration</h2>
+<h2 id="payara"><a class="anchor" href="#payara"></a>6.2 Payara deployment</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/5.6.x/src/main/docs/guide/warDeployment/externalConfig.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/6.2.x/src/main/docs/guide/warDeployment/payara.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>Payara scans application classes and libraries for Jakarta lifecycle annotations during deployment.
+Micronaut applications packaged as WAR files include internal lifecycle beans from Micronaut Context, for example
+<code>io.micronaut.scheduling.io.watch.DefaultWatchThread</code>, and Payara can reject those classes before Micronaut starts.</p>
+</div>
+<div class="paragraph">
+<p>For Micronaut 4 and later, only Payara 6 or later is supported because Micronaut uses the <code>jakarta.servlet</code> API.</p>
+</div>
+<div class="paragraph">
+<p>When deploying to Payara, add an application <code>web.xml</code> with <code>metadata-complete="true"</code> so the container does not try
+to discover lifecycle annotations from Micronaut libraries:</p>
+</div>
+<div class="listingblock">
+<div class="title">src/main/webapp/WEB-INF/web.xml</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;web-app xmlns="https://jakarta.ee/xml/ns/jakartaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd"
+         version="6.0"
+         metadata-complete="true"&gt;
+&lt;/web-app&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This deployment descriptor complements the <code>web-fragment.xml</code> packaged in <code>micronaut-servlet-engine</code> and prevents
+Payara from treating Micronaut internal lifecycle methods as container lifecycle callbacks.</p>
+</div>
+
+<h2 id="externalConfig"><a class="anchor" href="#externalConfig"></a>6.3 External Configuration</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/6.2.x/src/main/docs/guide/warDeployment/externalConfig.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -575,12 +1978,9 @@ When running as a WAR file, this can be problematic if you wish to run multiple 
 <p>To allow an external location per application, it is necessary to write our own replacement for <a href="../api/io/micronaut/servlet/engine/initializer/MicronautServletInitializer.html">MicronautServletInitializer</a>.
 The following example will look for configuration in the <code>/tmp</code> directory and on the classpath in the <code>/some/path</code> directory.</p>
 </div>
-<div class="listingblock">
-<div class="title">src/main/java/example/CustomMicronautServletInitializer.java</div>
+<div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">package example;
-
-import io.micronaut.context.ApplicationContext;
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.ApplicationContextBuilder;
 import io.micronaut.servlet.engine.initializer.MicronautServletInitializer;
 import jakarta.servlet.ServletContext;
@@ -601,13 +2001,69 @@ public class CustomInitializer extends MicronautServletInitializer {
 }</code></pre>
 </div>
 </div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">import io.micronaut.context.ApplicationContext
+import io.micronaut.context.ApplicationContextBuilder
+import io.micronaut.servlet.engine.initializer.MicronautServletInitializer
+import jakarta.servlet.ServletContext
+
+class CustomInitializer : MicronautServletInitializer() {
+
+    override fun buildApplicationContext(ctx: ServletContext): ApplicationContextBuilder =
+        ApplicationContext
+            .builder()
+            .overrideConfigLocations(
+                "file:/tmp",
+                "classpath:/some/path"
+            )
+            .classLoader(ctx.classLoader)
+            .singletons(ctx)
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">import io.micronaut.context.ApplicationContext
+import io.micronaut.context.ApplicationContextBuilder
+import io.micronaut.servlet.engine.initializer.MicronautServletInitializer
+import jakarta.servlet.ServletContext
+
+class CustomInitializer extends MicronautServletInitializer {
+
+    @Override
+    protected ApplicationContextBuilder buildApplicationContext(ServletContext ctx) {
+        return ApplicationContext
+                .builder()
+                .overrideConfigLocations(
+                    "file:/tmp",
+                    "classpath:/some/path"
+                )
+                .classLoader(ctx.classLoader)
+                .singletons(ctx)
+    }
+}</code></pre>
+</div>
+</div>
+<div class="admonitionblock note lang-python">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+The servlet container instantiates the initializer itself, from the <code>META-INF/services</code> entry below, before any application context and therefore before the Python runtime exists. Write the initializer in Java, Kotlin or Groovy as shown above; the application it starts can be written in Python.
+</td>
+</tr>
+</table>
+</div>
 <div class="paragraph">
-<p>We can then use Java&#8217;s Service Provider Interface to register this class as the initializer by pointing to it in the <code>META-INF/services/jakarta.servlet.ServletContainerInitializer</code> file.</p>
+<p>We can then use Java&#8217;s Service Provider Interface to register this class as the initializer by pointing to it in the <code>META-INF/services/jakarta.servlet.ServletContainerInitializer</code> file, with the package the class is in (the example above is compiled as part of this documentation, hence its package):</p>
 </div>
 <div class="listingblock">
 <div class="title">src/main/resources/META-INF/services/jakarta.servlet.ServletContainerInitializer</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-text hljs" data-lang="text">example.CustomInitializer</code></pre>
+<pre class="highlightjs highlight"><code class="language-text hljs" data-lang="text">io.micronaut.servlet.docs.war.CustomInitializer</code></pre>
 </div>
 </div>
 <div class="admonitionblock note">
@@ -623,10 +2079,10 @@ Some servlet containers may limit the locations that are accessible from applica
 </table>
 </div>
 
-<h2 id="warContext"><a class="anchor" href="#warContext"></a>5.3 WAR Context path</h2>
+<h2 id="warContext"><a class="anchor" href="#warContext"></a>6.4 WAR Context path</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/5.6.x/src/main/docs/guide/warDeployment/warContext.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/6.2.x/src/main/docs/guide/warDeployment/warContext.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -639,10 +2095,10 @@ Some servlet containers may limit the locations that are accessible from applica
 <p>If you are deploying a WAR called <code>myproject-1.0.war</code> to Tomcat, Jetty, etc. the context path will be set to <code>/myproject-1.0</code>, and cannot be overridden via application configuration.</p>
 </div>
 
-<h1 id="jetty"><a class="anchor" href="#jetty"></a>6 Jetty Server</h1>
+<h1 id="jetty"><a class="anchor" href="#jetty"></a>7 Jetty Server</h1>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/5.6.x/src/main/docs/guide/jetty.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/6.2.x/src/main/docs/guide/jetty.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -665,7 +2121,17 @@ Some servlet containers may limit the locations that are accessible from applica
     &lt;artifactId&gt;micronaut-http-server-jetty&lt;/artifactId&gt;
 &lt;/dependency&gt;</code></pre>
 </div>
-</div></p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="pyronaut">[tool.pyronaut.dependencies]
+runtime = [
+    <span class="hljs-string">"io.micronaut.servlet:micronaut-http-server-jetty"</span>,
+]</code></pre>
+</div>
+</div>
+</p>
 </div>
 <div class="admonitionblock note">
 <table>
@@ -721,6 +2187,12 @@ If you plan to produce a WAR file then the dependency should be <code>developmen
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.thread-selection</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/scheduling/executor/ThreadSelection.html">ThreadSelection</a></p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.redispatch-non-blocking-only</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
 <td class="tableblock halign-left valign-top"></td>
 <td class="tableblock halign-left valign-top"></td>
 </tr>
@@ -863,6 +2335,22 @@ If you plan to produce a WAR file then the dependency should be <code>developmen
 <td class="tableblock halign-left valign-top"></td>
 </tr>
 <tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.jetty.enabled</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Sets whether the Jetty runtime is enabled.</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.jetty.native-static-resources</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Serve static resources with Jetty&#8217;s own {@code ResourceHandler} instead of the Micronaut static resource
+ resolver. Jetty&#8217;s handler supports range requests and conditional caching natively, but sits outside the
+ Micronaut filter chain, so Micronaut filters (including CORS) do not see those requests and the
+ {@code cache-control} setting of each static resource configuration applies instead of
+ {@code micronaut.server.responses.file}. Default value (false).</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.jetty.init-parameters</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">java.util.Map</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Sets the servlet init parameters.</p></td>
@@ -871,9 +2359,53 @@ If you plan to produce a WAR file then the dependency should be <code>developmen
 </tbody>
 </table>
 <div class="paragraph">
+<p>To disable the Jetty runtime when it is present on the classpath:</p>
+</div>
+<div class="openblock">
+<div class="content">
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-properties hljs" data-lang="properties">micronaut.server.jetty.enabled=false</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">micronaut.server.jetty.enabled: false</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">"micronaut.server.jetty.enabled" = false</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy-config hljs" data-lang="groovy-config">micronaut.server.jetty.enabled = false</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-hocon hljs" data-lang="hocon">{
+  "micronaut.server.jetty.enabled" = false
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json-config hljs" data-lang="json-config">{
+  "micronaut.server.jetty.enabled": false
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>This is useful when multiple servlet runtimes are available and you want Micronaut to ignore Jetty during startup.</p>
+</div>
+<div class="paragraph">
 <p>Or you can register a <code>BeanCreatedEventListener</code>:</p>
 </div>
-<div class="listingblock">
+<div class="listingblock multi-language-sample">
 <div class="title">Jetty Server Customization</div>
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">import io.micronaut.context.event.BeanCreatedEvent;
@@ -886,10 +2418,111 @@ public class JettyServerCustomizer implements BeanCreatedEventListener&lt;Server
     @Override
     public Server onCreated(BeanCreatedEvent&lt;Server&gt; event) {
         Server jettyServer = event.getBean();
-        // perform customizations...
+        // perform customizations, for example:
+        jettyServer.setStopTimeout(5000);
         return jettyServer;
     }
 }</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title">Jetty Server Customization</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from jakarta.inject import Singleton
+from micronaut.context.event import BeanCreatedEvent, BeanCreatedEventListener
+from org.eclipse.jetty.server import Server
+
+@Singleton
+class JettyServerCustomizer(BeanCreatedEventListener[Server]):
+
+    def onCreated(self, event: BeanCreatedEvent[Server]) -&gt; Server:
+        jetty_server = event.getBean()
+        # perform customizations, for example:
+        jetty_server.setStopTimeout(5000)
+        return jetty_server</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title">Jetty Server Customization</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">import io.micronaut.context.event.BeanCreatedEvent
+import io.micronaut.context.event.BeanCreatedEventListener
+import org.eclipse.jetty.server.Server
+import jakarta.inject.Singleton
+
+@Singleton
+class JettyServerCustomizer : BeanCreatedEventListener&lt;Server&gt; {
+    override fun onCreated(event: BeanCreatedEvent&lt;Server&gt;): Server {
+        val jettyServer = event.bean
+        // perform customizations, for example:
+        jettyServer.stopTimeout = 5000
+        return jettyServer
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title">Jetty Server Customization</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">import io.micronaut.context.event.BeanCreatedEvent
+import io.micronaut.context.event.BeanCreatedEventListener
+import org.eclipse.jetty.server.Server
+import jakarta.inject.Singleton
+
+@Singleton
+class JettyServerCustomizer implements BeanCreatedEventListener&lt;Server&gt; {
+    @Override
+    Server onCreated(BeanCreatedEvent&lt;Server&gt; event) {
+        Server jettyServer = event.bean
+        // perform customizations, for example:
+        jettyServer.stopTimeout = 5000
+        return jettyServer
+    }
+}</code></pre>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_static_resources">Static Resources</h3>
+<div class="paragraph">
+<p>Static resources configured with <code>micronaut.router.static-resources</code> are served by the Micronaut static resource resolver, as on the other runtimes, so filters, CORS and the <code>micronaut.server.responses.file</code> settings apply to them. Because the resolver runs inside the Micronaut servlet, static resource paths must fall under <code>micronaut.servlet.mapping</code> (the default <code>/<strong></code> covers everything); a narrowed mapping such as <code>/api/</strong></code> leaves paths outside it unreachable, as on Tomcat and Undertow. To have Jetty&#8217;s own <code>ResourceHandler</code> serve them instead, which supports range requests natively, works outside the servlet mapping, but bypasses the Micronaut filter chain, set:</p>
+</div>
+<div class="openblock">
+<div class="content">
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-properties hljs" data-lang="properties">micronaut.server.jetty.native-static-resources=true</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">micronaut.server.jetty.native-static-resources: true</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">"micronaut.server.jetty.native-static-resources" = true</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy-config hljs" data-lang="groovy-config">micronaut.server.jetty.nativeStaticResources = true</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-hocon hljs" data-lang="hocon">{
+  "micronaut.server.jetty.native-static-resources" = true
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json-config hljs" data-lang="json-config">{
+  "micronaut.server.jetty.native-static-resources": true
+}</code></pre>
+</div>
+</div>
+</div>
 </div>
 </div>
 <div class="sect2">
@@ -919,10 +2552,10 @@ micronaut.server.jetty.access-log.pattern: &gt;
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">"micronaut.server.jetty.access-log.enabled"=true
-"micronaut.server.jetty.access-log.filename"="/tmp/access.log"
-"micronaut.server.jetty.access-log.retain-days"=10
-"micronaut.server.jetty.access-log.pattern"="%{client}a - %u %t \"%r\" %s %O"</code></pre>
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">"micronaut.server.jetty.access-log.enabled" = true
+"micronaut.server.jetty.access-log.filename" = "/tmp/access.log"
+"micronaut.server.jetty.access-log.retain-days" = 10
+"micronaut.server.jetty.access-log.pattern" = "%{client}a - %u %t "%r" %s %O"</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -976,7 +2609,17 @@ micronaut.server.jetty.accessLog.pattern = "%{client}a - %u %t \"%r\" %s %O"</co
     &lt;artifactId&gt;logback-access-common&lt;/artifactId&gt;
 &lt;/dependency&gt;</code></pre>
 </div>
-</div></p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="pyronaut">[tool.pyronaut.dependencies]
+runtime = [
+    <span class="hljs-string">"ch.qos.logback.access:logback-access-common"</span>,
+]</code></pre>
+</div>
+</div>
+</p>
 </div>
 <div class="paragraph">
 <p>By default, it will check for logback-access.xml in resources folder.</p>
@@ -984,10 +2627,10 @@ micronaut.server.jetty.accessLog.pattern = "%{client}a - %u %t \"%r\" %s %O"</co
 </div>
 </div>
 
-<h1 id="tomcat"><a class="anchor" href="#tomcat"></a>7 Tomcat Server</h1>
+<h1 id="tomcat"><a class="anchor" href="#tomcat"></a>8 Tomcat Server</h1>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/5.6.x/src/main/docs/guide/tomcat.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/6.2.x/src/main/docs/guide/tomcat.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -1010,7 +2653,17 @@ micronaut.server.jetty.accessLog.pattern = "%{client}a - %u %t \"%r\" %s %O"</co
     &lt;artifactId&gt;micronaut-http-server-tomcat&lt;/artifactId&gt;
 &lt;/dependency&gt;</code></pre>
 </div>
-</div></p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="pyronaut">[tool.pyronaut.dependencies]
+runtime = [
+    <span class="hljs-string">"io.micronaut.servlet:micronaut-http-server-tomcat"</span>,
+]</code></pre>
+</div>
+</div>
+</p>
 </div>
 <div class="admonitionblock note">
 <table>
@@ -1066,6 +2719,12 @@ If you plan to produce a WAR file then the dependency should be <code>developmen
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.thread-selection</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/scheduling/executor/ThreadSelection.html">ThreadSelection</a></p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.redispatch-non-blocking-only</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
 <td class="tableblock halign-left valign-top"></td>
 <td class="tableblock halign-left valign-top"></td>
 </tr>
@@ -1213,12 +2872,62 @@ If you plan to produce a WAR file then the dependency should be <code>developmen
 <td class="tableblock halign-left valign-top"><p class="tableblock">The protocol to use. Defaults to org.apache.coyote.http11.Http11NioProtocol.</p></td>
 <td class="tableblock halign-left valign-top"></td>
 </tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.tomcat.enabled</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Sets whether the Tomcat runtime is enabled.</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
 </tbody>
 </table>
 <div class="paragraph">
+<p>To disable the Tomcat runtime when it is present on the classpath:</p>
+</div>
+<div class="openblock">
+<div class="content">
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-properties hljs" data-lang="properties">micronaut.server.tomcat.enabled=false</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">micronaut.server.tomcat.enabled: false</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">"micronaut.server.tomcat.enabled" = false</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy-config hljs" data-lang="groovy-config">micronaut.server.tomcat.enabled = false</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-hocon hljs" data-lang="hocon">{
+  "micronaut.server.tomcat.enabled" = false
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json-config hljs" data-lang="json-config">{
+  "micronaut.server.tomcat.enabled": false
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>This is useful when multiple servlet runtimes are available and you want Micronaut to ignore Tomcat during startup.</p>
+</div>
+<div class="paragraph">
 <p>Or you can register a <code>BeanCreatedEventListener</code>:</p>
 </div>
-<div class="listingblock">
+<div class="listingblock multi-language-sample">
 <div class="title">Tomcat Server Customization</div>
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">import io.micronaut.context.event.BeanCreatedEvent;
@@ -1231,8 +2940,65 @@ public class TomcatServerCustomizer implements BeanCreatedEventListener&lt;Tomca
     @Override
     public Tomcat onCreated(BeanCreatedEvent&lt;Tomcat&gt; event) {
         Tomcat tomcat = event.getBean();
-        // perform customizations...
+        // perform customizations, for example:
+        tomcat.getServer().setUtilityThreads(2);
         return tomcat;
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title">Tomcat Server Customization</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from jakarta.inject import Singleton
+from micronaut.context.event import BeanCreatedEvent, BeanCreatedEventListener
+from org.apache.catalina.startup import Tomcat
+
+@Singleton
+class TomcatServerCustomizer(BeanCreatedEventListener[Tomcat]):
+
+    def onCreated(self, event: BeanCreatedEvent[Tomcat]) -&gt; Tomcat:
+        tomcat = event.getBean()
+        # perform customizations, for example:
+        tomcat.getServer().setUtilityThreads(2)
+        return tomcat</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title">Tomcat Server Customization</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">import io.micronaut.context.event.BeanCreatedEvent
+import io.micronaut.context.event.BeanCreatedEventListener
+import org.apache.catalina.startup.Tomcat
+import jakarta.inject.Singleton
+
+@Singleton
+class TomcatServerCustomizer : BeanCreatedEventListener&lt;Tomcat&gt; {
+    override fun onCreated(event: BeanCreatedEvent&lt;Tomcat&gt;): Tomcat {
+        val tomcat = event.bean
+        // perform customizations, for example:
+        tomcat.server.utilityThreads = 2
+        return tomcat
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title">Tomcat Server Customization</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">import io.micronaut.context.event.BeanCreatedEvent
+import io.micronaut.context.event.BeanCreatedEventListener
+import org.apache.catalina.startup.Tomcat
+import jakarta.inject.Singleton
+
+@Singleton
+class TomcatServerCustomizer implements BeanCreatedEventListener&lt;Tomcat&gt; {
+    @Override
+    Tomcat onCreated(BeanCreatedEvent&lt;Tomcat&gt; event) {
+        Tomcat tomcat = event.bean
+        // perform customizations, for example:
+        tomcat.server.utilityThreads = 2
+        return tomcat
     }
 }</code></pre>
 </div>
@@ -1261,9 +3027,9 @@ micronaut.server.tomcat.access-log.directory: /var/logs</code></pre>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">"micronaut.server.tomcat.access-log.enabled"="true,"
-"micronaut.server.tomcat.access-log.pattern"="combined"
-"micronaut.server.tomcat.access-log.directory"="/var/logs"</code></pre>
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">"micronaut.server.tomcat.access-log.enabled" = "true,"
+"micronaut.server.tomcat.access-log.pattern" = "combined"
+"micronaut.server.tomcat.access-log.directory" = "/var/logs"</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -1295,10 +3061,10 @@ micronaut.server.tomcat.accessLog.directory = "/var/logs"</code></pre>
 </div>
 </div>
 
-<h1 id="undertow"><a class="anchor" href="#undertow"></a>8 Undertow Server</h1>
+<h1 id="undertow"><a class="anchor" href="#undertow"></a>9 Undertow Server</h1>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/5.6.x/src/main/docs/guide/undertow.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/6.2.x/src/main/docs/guide/undertow.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -1321,7 +3087,17 @@ micronaut.server.tomcat.accessLog.directory = "/var/logs"</code></pre>
     &lt;artifactId&gt;micronaut-http-server-undertow&lt;/artifactId&gt;
 &lt;/dependency&gt;</code></pre>
 </div>
-</div></p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="pyronaut">[tool.pyronaut.dependencies]
+runtime = [
+    <span class="hljs-string">"io.micronaut.servlet:micronaut-http-server-undertow"</span>,
+]</code></pre>
+</div>
+</div>
+</p>
 </div>
 <div class="admonitionblock warning">
 <table>
@@ -1377,6 +3153,12 @@ If you plan to produce a WAR file then the dependency should be <code>developmen
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.thread-selection</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/scheduling/executor/ThreadSelection.html">ThreadSelection</a></p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.redispatch-non-blocking-only</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
 <td class="tableblock halign-left valign-top"></td>
 <td class="tableblock halign-left valign-top"></td>
 </tr>
@@ -1519,6 +3301,12 @@ If you plan to produce a WAR file then the dependency should be <code>developmen
 <td class="tableblock halign-left valign-top"></td>
 </tr>
 <tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.undertow.enabled</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Sets whether the Undertow runtime is enabled.</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.undertow.worker-options</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">java.util.Map</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Sets the worker options.</p></td>
@@ -1539,9 +3327,53 @@ If you plan to produce a WAR file then the dependency should be <code>developmen
 </tbody>
 </table>
 <div class="paragraph">
+<p>To disable the Undertow runtime when it is present on the classpath:</p>
+</div>
+<div class="openblock">
+<div class="content">
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-properties hljs" data-lang="properties">micronaut.server.undertow.enabled=false</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">micronaut.server.undertow.enabled: false</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">"micronaut.server.undertow.enabled" = false</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy-config hljs" data-lang="groovy-config">micronaut.server.undertow.enabled = false</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-hocon hljs" data-lang="hocon">{
+  "micronaut.server.undertow.enabled" = false
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json-config hljs" data-lang="json-config">{
+  "micronaut.server.undertow.enabled": false
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>This is useful when multiple servlet runtimes are available and you want Micronaut to ignore Undertow during startup.</p>
+</div>
+<div class="paragraph">
 <p>Or you can register a <code>BeanCreatedEventListener</code>:</p>
 </div>
-<div class="listingblock">
+<div class="listingblock multi-language-sample">
 <div class="title">Undertow Server Customization</div>
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">import io.micronaut.context.event.BeanCreatedEvent;
@@ -1554,8 +3386,65 @@ public class UndertowServerCustomizer implements BeanCreatedEventListener&lt;Und
     @Override
     public Undertow.Builder onCreated(BeanCreatedEvent&lt;Undertow.Builder&gt; event) {
         Undertow.Builder undertowBuilder = event.getBean();
-        // perform customizations...
+        // perform customizations, for example:
+        undertowBuilder.setIoThreads(2);
         return undertowBuilder;
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title">Undertow Server Customization</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from io.undertow import Undertow
+from jakarta.inject import Singleton
+from micronaut.context.event import BeanCreatedEvent, BeanCreatedEventListener
+
+@Singleton
+class UndertowServerCustomizer(BeanCreatedEventListener[Undertow.Builder]):
+
+    def onCreated(self, event: BeanCreatedEvent[Undertow.Builder]) -&gt; Undertow.Builder:
+        undertow_builder = event.getBean()
+        # perform customizations, for example:
+        undertow_builder.setIoThreads(2)
+        return undertow_builder</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title">Undertow Server Customization</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">import io.micronaut.context.event.BeanCreatedEvent
+import io.micronaut.context.event.BeanCreatedEventListener
+import io.undertow.Undertow
+import jakarta.inject.Singleton
+
+@Singleton
+class UndertowServerCustomizer : BeanCreatedEventListener&lt;Undertow.Builder&gt; {
+    override fun onCreated(event: BeanCreatedEvent&lt;Undertow.Builder&gt;): Undertow.Builder {
+        val undertowBuilder = event.bean
+        // perform customizations, for example:
+        undertowBuilder.setIoThreads(2)
+        return undertowBuilder
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title">Undertow Server Customization</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">import io.micronaut.context.event.BeanCreatedEvent
+import io.micronaut.context.event.BeanCreatedEventListener
+import io.undertow.Undertow
+import jakarta.inject.Singleton
+
+@Singleton
+class UndertowServerCustomizer implements BeanCreatedEventListener&lt;Undertow.Builder&gt; {
+    @Override
+    Undertow.Builder onCreated(BeanCreatedEvent&lt;Undertow.Builder&gt; event) {
+        Undertow.Builder undertowBuilder = event.bean
+        // perform customizations, for example:
+        undertowBuilder.setIoThreads(2)
+        return undertowBuilder
     }
 }</code></pre>
 </div>
@@ -1584,9 +3473,9 @@ micronaut.server.undertow.access-log.output-directory: /var/logs</code></pre>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">"micronaut.server.undertow.access-log.enabled"="true,"
-"micronaut.server.undertow.access-log.pattern"="combined"
-"micronaut.server.undertow.access-log.output-directory"="/var/logs"</code></pre>
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">"micronaut.server.undertow.access-log.enabled" = "true,"
+"micronaut.server.undertow.access-log.pattern" = "combined"
+"micronaut.server.undertow.access-log.output-directory" = "/var/logs"</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -1618,10 +3507,10 @@ micronaut.server.undertow.accessLog.outputDirectory = "/var/logs"</code></pre>
 </div>
 </div>
 
-<h1 id="httpServer"><a class="anchor" href="#httpServer"></a>9 Built-In Java HTTP Server Runtime</h1>
+<h1 id="httpServer"><a class="anchor" href="#httpServer"></a>10 Built-In Java HTTP Server Runtime</h1>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/5.6.x/src/main/docs/guide/httpServer.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/6.2.x/src/main/docs/guide/httpServer.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -1644,20 +3533,352 @@ micronaut.server.undertow.accessLog.outputDirectory = "/var/logs"</code></pre>
     &lt;artifactId&gt;micronaut-http-server-jdk&lt;/artifactId&gt;
 &lt;/dependency&gt;</code></pre>
 </div>
-</div></p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="pyronaut">[tool.pyronaut.dependencies]
+runtime = [
+    <span class="hljs-string">"io.micronaut.servlet:micronaut-http-server-jdk"</span>,
+]</code></pre>
+</div>
+</div>
+</p>
+</div>
+<div class="paragraph">
+<p>To customize the built-in JDK HTTP server runtime you can use the following configuration properties:</p>
+</div>
+<a id="io.micronaut.servlet.http.server.jdk.JdkHttpServerConfiguration" href="#io.micronaut.servlet.http.server.jdk.JdkHttpServerConfiguration">&#128279;</a>
+<table class="tableblock frame-all grid-all stretch">
+<caption class="title">Table 1. Configuration Properties for <a href="../api/io/micronaut/servlet/http/server/jdk/JdkHttpServerConfiguration.html">JdkHttpServerConfiguration</a></caption>
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Property</th>
+<th class="tableblock halign-left valign-top">Type</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-left valign-top">Default value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.http-version</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/http/HttpVersion.html">HttpVersion</a></p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.thread-selection</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/scheduling/executor/ThreadSelection.html">ThreadSelection</a></p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.redispatch-non-blocking-only</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.default-charset</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.nio.charset.Charset</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.port</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">int</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.host</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.lang.String</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.read-timeout</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.lang.Integer</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.max-request-size</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">long</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.max-request-buffer-size</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">long</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.read-idle-timeout</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.time.Duration</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.write-idle-timeout</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.time.Duration</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.idle-timeout</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.time.Duration</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.server-header</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.lang.String</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.date-header</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.log-handled-exceptions</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.error-response-include-message</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/http/server/HttpServerConfiguration.ErrorResponseIncludeMessageMode.html">HttpServerConfiguration$ErrorResponseIncludeMessageMode</a></p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.client-address-header</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.lang.String</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.context-path</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.lang.String</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.dual-protocol</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.http-to-https-redirect</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.dispatch-options-requests</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.validate-url</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.escape-html-url</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.not-found-on-missing-body</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.semicolon-is-normal-char</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.max-params</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">int</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.jdk.enabled</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Sets whether the JDK HTTP server runtime is enabled.</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>To disable the built-in JDK HTTP server runtime when it is present on the classpath:</p>
+</div>
+<div class="openblock">
+<div class="content">
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-properties hljs" data-lang="properties">micronaut.server.jdk.enabled=false</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">micronaut.server.jdk.enabled: false</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">"micronaut.server.jdk.enabled" = false</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy-config hljs" data-lang="groovy-config">micronaut.server.jdk.enabled = false</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-hocon hljs" data-lang="hocon">{
+  "micronaut.server.jdk.enabled" = false
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json-config hljs" data-lang="json-config">{
+  "micronaut.server.jdk.enabled": false
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_https">HTTPS</h4>
+<div class="paragraph">
+<p>The built-in server supports TLS through the same <a href="https://docs.micronaut.io/latest/guide/index.html#https">SSL configuration</a> as the other runtimes. With <code>micronaut.ssl.enabled</code> set to <code>true</code> the server listens for HTTPS on <code>micronaut.server.ssl.port</code> (default <code>8443</code>, or a random port in the <code>test</code> environment) instead of the HTTP port. The key store, trust store, protocols, ciphers and client authentication are read from <code>micronaut.server.ssl</code>. Unlike the servlet containers the built-in server has a single listener, so it does not also serve plain HTTP when TLS is enabled.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_access_log">Access Log</h4>
+<div class="paragraph">
+<p>The built-in server can write an access log in the common log format, one line per request, to an SLF4J logger:</p>
+</div>
+<div class="openblock">
+<div class="content">
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-properties hljs" data-lang="properties">micronaut.server.jdk.access-logger.enabled=true
+micronaut.server.jdk.access-logger.logger-name=HTTP_ACCESS_LOGGER
+micronaut.server.jdk.access-logger.exclusions[0]=/health.*</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">micronaut:
+  server:
+    jdk:
+      access-logger:
+        enabled: true
+        logger-name: HTTP_ACCESS_LOGGER
+        exclusions:
+          - /health.*</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">[micronaut.server.jdk.access-logger]
+enabled = true
+logger-name = "HTTP_ACCESS_LOGGER"
+exclusions = ["/health.*"]</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy-config hljs" data-lang="groovy-config">micronaut {
+  server {
+    jdk {
+      accessLogger {
+        enabled = true
+        loggerName = "HTTP_ACCESS_LOGGER"
+        exclusions = ["/health.*"]
+      }
+    }
+  }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-hocon hljs" data-lang="hocon">{
+  micronaut {
+    server {
+      jdk {
+        access-logger {
+          enabled = true
+          logger-name = "HTTP_ACCESS_LOGGER"
+          exclusions = ["/health.*"]
+        }
+      }
+    }
+  }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json-config hljs" data-lang="json-config">{
+  "micronaut": {
+    "server": {
+      "jdk": {
+        "access-logger": {
+          "enabled": true,
+          "logger-name": "HTTP_ACCESS_LOGGER",
+          "exclusions": ["/health.*"]
+        }
+      }
+    }
+  }
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p><code>logger-name</code> defaults to <code>HTTP_ACCESS_LOGGER</code>, as on the Netty server, and <code>exclusions</code> are regular expressions matched against the request path. Beans of type <code>com.sun.net.httpserver.Filter</code> are applied to every context of the server in bean order, which is how the access log is installed and can be used for other per-exchange concerns.</p>
+</div>
 </div>
 
-<h1 id="httpPoja"><a class="anchor" href="#httpPoja"></a>10 HTTP POJA Application</h1>
+<h1 id="httpPoja"><a class="anchor" href="#httpPoja"></a>11 HTTP POJA Application</h1>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/5.6.x/src/main/docs/guide/httpPoja.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/6.2.x/src/main/docs/guide/httpPoja.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
 
 
 <div class="paragraph">
-<p>HTTP POJA allows creating Micronaut applications that consume respond to HTTP requests with streams. By default, the application will read requests from standard input stream and write responses to standard output. The requests can only be answered in a serial manner.
+<p>HTTP POJA allows creating Micronaut applications that consume and respond to HTTP requests with streams. By default, the application will read requests from standard input stream and write responses to standard output. The requests can only be answered in a serial manner.
+Blocking work also stays on the POJA request thread by default, so using <code>@ExecuteOn(TaskExecutors.BLOCKING)</code> does not create additional Micronaut executor threads for POJA applications. If you need different behavior, configure the <code>blocking</code> executor explicitly with the standard <code>micronaut.executors.blocking.*</code> properties.
 Currently HTTP POJA is based on <a href="https://hc.apache.org/httpcomponents-core-5.2.x/">Apache HTTP Core library</a>.</p>
 </div>
 <div class="paragraph">
@@ -1680,7 +3901,17 @@ Currently HTTP POJA is based on <a href="https://hc.apache.org/httpcomponents-co
     &lt;artifactId&gt;micronaut-http-poja-apache&lt;/artifactId&gt;
 &lt;/dependency&gt;</code></pre>
 </div>
-</div></p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="pyronaut">[tool.pyronaut.dependencies]
+runtime = [
+    <span class="hljs-string">"io.micronaut.servlet:micronaut-http-poja-apache"</span>,
+]</code></pre>
+</div>
+</div>
+</p>
 </div>
 <div class="paragraph">
 <p>        <div class="listingblock multi-language-sample">
@@ -1697,10 +3928,17 @@ Currently HTTP POJA is based on <a href="https://hc.apache.org/httpcomponents-co
     &lt;scope&gt;test&lt;/scope&gt;
 &lt;/dependency&gt;</code></pre>
 </div>
-</div></p>
 </div>
-<div class="paragraph">
-<p>The embedded test server supports multiple connections, including clients using connection pools. Requests within each connection are processed sequentially, and disconnecting one client does not stop the other connections.</p>
+<div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="pyronaut">[tool.pyronaut.dependencies]
+test = [
+    <span class="hljs-string">"io.micronaut.servlet:micronaut-http-poja-test"</span>,
+]</code></pre>
+</div>
+</div>
+</p>
 </div>
 <div class="paragraph">
 <p>To customize the HTTP POJA you can use the following configuration properties:</p>
@@ -1746,6 +3984,76 @@ Currently HTTP POJA is based on <a href="https://hc.apache.org/httpcomponents-co
 </tr>
 </tbody>
 </table>
+<a id="io.micronaut.http.poja.apache.ApacheRuntimeConfiguration" href="#io.micronaut.http.poja.apache.ApacheRuntimeConfiguration">&#128279;</a>
+<table class="tableblock frame-all grid-all stretch">
+<caption class="title">Table 2. Configuration Properties for <a href="../api/io/micronaut/http/poja/apache/ApacheRuntimeConfiguration.html">ApacheRuntimeConfiguration</a></caption>
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Property</th>
+<th class="tableblock halign-left valign-top">Type</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-left valign-top">Default value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>poja.apache.enabled</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Sets whether the Apache POJA runtime is enabled.</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>To disable the Apache HTTP POJA runtime when it is present on the classpath:</p>
+</div>
+<div class="openblock">
+<div class="content">
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-properties hljs" data-lang="properties">poja.apache.enabled=false</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">poja.apache.enabled: false</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">"poja.apache.enabled" = false</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy-config hljs" data-lang="groovy-config">poja.apache.enabled = false</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-hocon hljs" data-lang="hocon">{
+  "poja.apache.enabled" = false
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json-config hljs" data-lang="json-config">{
+  "poja.apache.enabled": false
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>This is useful when multiple Micronaut runtimes are available and you want Micronaut to ignore the POJA runtime during startup.</p>
+</div>
 <div class="sect2">
 <h3 id="_use_http_poja_with_launchd_on_macos">Use HTTP POJA with launchd on MacOS</h3>
 <div class="paragraph">
@@ -1950,36 +4258,251 @@ sudo systemctl start examplepoja.socket</code></pre>
 </div>
 </div>
 
-<h1 id="knownIssues"><a class="anchor" href="#knownIssues"></a>11 Known Issues</h1>
+<h1 id="parity"><a class="anchor" href="#parity"></a>12 Parity with the Netty Server</h1>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/5.6.x/src/main/docs/guide/knownIssues.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/6.2.x/src/main/docs/guide/parity.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
 
 
 <div class="paragraph">
-<p>There are some known issues with Servlet integration to the Micronaut Framework</p>
+<p>The servlet runtimes implement the same <a href="https://docs.micronaut.io/latest/guide/index.html#httpServer">Micronaut HTTP server</a> contract as the default Netty server and are checked against the same HTTP server TCK. The table below records where each runtime stands for the capabilities that have historically differed. "Yes" means supported and covered by a test in this repository or in the TCK.</p>
 </div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 8.3333%;">
+<col style="width: 8.3333%;">
+<col style="width: 8.3333%;">
+<col style="width: 8.3333%;">
+<col style="width: 8.3333%;">
+<col style="width: 33.3335%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Capability</th>
+<th class="tableblock halign-left valign-top">Jetty</th>
+<th class="tableblock halign-left valign-top">Tomcat</th>
+<th class="tableblock halign-left valign-top">Undertow</th>
+<th class="tableblock halign-left valign-top">JDK <code>HttpServer</code></th>
+<th class="tableblock halign-left valign-top">POJA</th>
+<th class="tableblock halign-left valign-top">Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Request bodies streamed as they arrive</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Blocking</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Blocking</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Containers with asynchronous support read a large or chunked body through a <code>ReadListener</code>; a body with a declared length up to <code>micronaut.server.max-request-buffer-size</code> is read on the container thread before the route runs. Either way <code>micronaut.server.max-request-size</code> is the limit past which a body is refused. The JDK server and POJA read from a blocking stream.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Request without <code>Content-Length</code> or <code>Transfer-Encoding</code> has no body</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">RFC 9112 framing. POJA still decodes a body that was never sent.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Multipart: <code>CompletedFileUpload</code>, <code>@Part</code>, <code>MultipartBody</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Parsed by the container (<code>getParts()</code>), enabled by default since 6.2. An unannotated <code>StreamingFileUpload</code> argument is not supported. The JDK server and POJA do not parse multipart.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.max-request-size</code> → 413</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Applies to text, JSON, form and multipart bodies; a declared length over the limit is refused without reading the body.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Content-Length</code> on complete responses</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Bodies that are complete when the route returns announce their length; streamed bodies are chunked.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Body-less responses: HEAD, 204, 304</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">File responses: <code>SystemFile</code>, <code>StreamedFile</code>, conditional 304</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Cache-Control</code> and <code>Last-Modified</code> follow <code>micronaut.server.responses.file</code>. Byte ranges (206) are served by the containers, not by the JDK server or POJA.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Server-sent events</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Events are flushed as they are produced.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Response compression</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.servlet.compression.*</code>, on by default, wired to each container&#8217;s own encoder. Compressed responses carry <code>Vary: Accept-Encoding</code>; Jetty sends it on every compressible response.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">HTTP/2</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.server.http-version: 2.0</code>. Jetty and Tomcat support h2c; Undertow enables its native HTTP/2 over TLS.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">TLS</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Shared <code>micronaut.server.ssl</code> configuration. The containers listen on both ports; the JDK server listens for HTTPS only when TLS is enabled.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Virtual threads (<code>micronaut.servlet.enable-virtual-threads</code>)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Tomcat keeps its virtual-thread executor when <code>max-threads</code> is set, and logs that the limit does not apply; Undertow supplies one to the servlet deployment; the JDK server uses one for its handlers. Virtual threads are not pooled, so <code>max-threads</code> bounds concurrency only when they are off.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Graceful shutdown (<code>micronaut.lifecycle.graceful-shutdown.enabled</code>)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The server stops accepting (Jetty connector shutdown, Tomcat connector pause, Undertow 503) and waits for in-flight requests within the grace period. The JDK server only waits.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Access log</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Each container&#8217;s own log; the JDK server under <code>micronaut.server.jdk.access-logger</code>.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ProxyHttpClient</code> inside a server filter</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The proxied response body is forwarded. POJA has no server to proxy to.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Cookie attributes (SameSite, Max-Age, several <code>Set-Cookie</code>)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Static resources: mappings, <code>index.html</code>, context path</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">One resolver on every runtime, inside the filter chain. Jetty&#8217;s own handler is available with <code>micronaut.server.jetty.native-static-resources</code>.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">WebSocket (<code>@ServerWebSocket</code>)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Bridged onto each container&#8217;s Jakarta WebSocket implementation.</p></td>
+</tr>
+</tbody>
+</table>
 <div class="sect2">
-<h3 id="_httpproxyclient_and_server_filters">HttpProxyClient and Server Filters</h3>
+<h3 id="_runtime_positioning">Runtime positioning</h3>
 <div class="paragraph">
-<p>It is not currently possible to use the HttpProxyClient with Servlet Filters.</p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_error_handlers_re_reading_the_request_body">Error handlers re-reading the request body</h3>
-<div class="paragraph">
-<p>Local error handlers that require the request body to be reparsed will not work in Servlet based applications.
-The body is read from the request input-stream and so attempting to reparse it for the error handler will fail.</p>
+<p>Jetty, Tomcat and Undertow are full runtimes for production use. The built-in JDK <code>HttpServer</code> runtime is intended for development and small tools: it has no HTTP/2, no compression and no multipart parsing, and it keeps at most 200 idle connections. POJA (plain old Java application) runs one request at a time over standard input and output and receives correctness fixes only.</p>
 </div>
 </div>
 
-<h1 id="faq"><a class="anchor" href="#faq"></a>12 FAQ</h1>
+<h1 id="knownIssues"><a class="anchor" href="#knownIssues"></a>13 Known Issues</h1>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/5.6.x/src/main/docs/guide/faq.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/6.2.x/src/main/docs/guide/knownIssues.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>There are some known issues with Servlet integration to the Micronaut Framework. See also <a href="parity.html">Parity with the Netty server</a> for what each runtime supports.</p>
+</div>
+<div class="sect2">
+<h3 id="_payara_deployment_annotation_scanning">Payara deployment annotation scanning</h3>
+<div class="paragraph">
+<p>Payara may scan Micronaut libraries in a WAR for Jakarta lifecycle annotations before Micronaut starts.
+When that happens, deployment can fail on internal Micronaut classes such as <code>DefaultWatchThread</code>.</p>
+</div>
+<div class="paragraph">
+<p>Add an application <code>src/main/webapp/WEB-INF/web.xml</code> with <code>metadata-complete="true"</code> as described in the
+<a href="warDeployment/payara.html">Payara deployment</a> section.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_static_resources_outside_the_servlet_mapping">Static resources outside the servlet mapping</h3>
+<div class="paragraph">
+<p>Static resources are served by the Micronaut servlet, so their paths must fall under <code>micronaut.servlet.mapping</code>. A narrowed mapping such as <code>/api/*</code> leaves paths outside it unreachable on every container; on Jetty, <code>micronaut.server.jetty.native-static-resources</code> serves them with the container&#8217;s own handler instead.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_unannotated_streamingfileupload_arguments">Unannotated <code>StreamingFileUpload</code> arguments</h3>
+<div class="paragraph">
+<p>A <code>StreamingFileUpload</code> controller argument without <code>@Part</code> is not bound on the servlet runtimes, because the container has already parsed the multipart body. Annotate the argument with <code>@Part</code>, or use <code>CompletedFileUpload</code>.</p>
+</div>
+</div>
+
+<h1 id="faq"><a class="anchor" href="#faq"></a>14 FAQ</h1>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/6.2.x/src/main/docs/guide/faq.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -1997,7 +4520,7 @@ The body is read from the request input-stream and so attempting to reparse it f
 <div class="sect3">
 <h4 id="_how_do_i_configure_multipart_handling">How do I configure Multipart handling?</h4>
 <div class="paragraph">
-<p>Multipart handling is disabled by default. You can enable it with the <a href="https://docs.micronaut.io/latest/guide/configurationreference.html#io.micronaut.http.server.HttpServerConfiguration$MultipartConfiguration">following configuration properties</a>.</p>
+<p>Multipart handling is enabled by default, as it is on the Netty server. Set <code>micronaut.server.multipart.enabled</code> to <code>false</code> to turn it off, and see the <a href="https://docs.micronaut.io/latest/guide/configurationreference.html#io.micronaut.http.server.HttpServerConfiguration$MultipartConfiguration">configuration properties</a> for the limits that apply to uploads.</p>
 </div>
 </div>
 <div class="sect3">
@@ -2012,11 +4535,17 @@ The body is read from the request input-stream and so attempting to reparse it f
 <p>See <a href="https://docs.micronaut.io/latest/guide/index.html#https">Securing the Server with HTTPS</a> and the <a href="https://docs.micronaut.io/latest/guide/configurationreference.html#io.micronaut.http.ssl.ServerSslConfiguration$DefaultKeyStoreConfiguration">configuration properties</a> for <a href="https://docs.micronaut.io/latest/api/io/micronaut/http/ssl/ServerSslConfiguration.html">ServerSslConfiguration</a>.</p>
 </div>
 </div>
+<div class="sect3">
+<h4 id="_how_do_i_shut_the_server_down_gracefully">How do I shut the server down gracefully?</h4>
+<div class="paragraph">
+<p>Set <code>micronaut.lifecycle.graceful-shutdown.enabled</code> to <code>true</code>, as for the Netty server. When the application stops, the embedded server first stops taking new requests and then waits, for up to the configured grace period, for the requests already in progress to complete before the container is stopped. How new requests are refused depends on the container: Jetty stops accepting connections, Tomcat pauses its connectors, and Undertow answers new requests with <code>503 Service Unavailable</code>. The built-in Java HTTP server only waits for in-flight requests.</p>
+</div>
+</div>
 
-<h1 id="breaks"><a class="anchor" href="#breaks"></a>13 Breaking Changes</h1>
+<h1 id="breaks"><a class="anchor" href="#breaks"></a>15 Breaking Changes</h1>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/5.6.x/src/main/docs/guide/breaks.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/6.2.x/src/main/docs/guide/breaks.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -2024,6 +4553,92 @@ The body is read from the request input-stream and so attempting to reparse it f
 
 <div class="paragraph">
 <p>This section documents breaking changes between Micronaut Servlet versions:</p>
+</div>
+<div class="sect1">
+<h2 id="_micronaut_servlet_6_2_0">Micronaut Servlet 6.2.0</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_the_request_size_limit_applies_to_every_body">The request size limit applies to every body</h3>
+<div class="paragraph">
+<p><code>micronaut.server.max-request-size</code> (10MB by default) was only passed to the container&#8217;s multipart configuration, so a plain JSON, text or binary body of any size was accepted. The servlet runtimes now enforce it as the Netty server does: a body that declares a larger <code>Content-Length</code> is refused with <code>413 Request Entity Too Large</code> without being read, and a body without a declared length is cut off with the same status once it grows past the limit. That includes a URL-encoded form without a declared length, whose fields are decoded from bytes that passed through the limit rather than parsed by the container unbounded. Raise <code>micronaut.server.max-request-size</code> for applications that receive larger bodies.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_jetty_serves_static_resources_through_the_micronaut_resolver">Jetty serves static resources through the Micronaut resolver</h3>
+<div class="paragraph">
+<p>Jetty served <code>micronaut.router.static-resources</code> with its own <code>ResourceHandler</code>, outside the Micronaut servlet, while Tomcat, Undertow, the JDK server and the Netty server all resolve them with Micronaut&#8217;s <code>StaticResourceResolver</code> inside the request pipeline. Jetty now uses the shared path too, so static resources behave the same on every runtime:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Micronaut filters see static resource requests. In particular the CORS filter applies, so a request from an origin that is not allowed is refused with <code>403 Forbidden</code>, where Jetty&#8217;s handler answered <code>200</code> without CORS headers.</p>
+</li>
+<li>
+<p>The <code>Cache-Control</code> header comes from <code>micronaut.server.responses.file</code> (<code>private, max-age=60</code> by default), and conditional requests with <code>If-Modified-Since</code> receive <code>304 Not Modified</code>.</p>
+</li>
+<li>
+<p>The Jetty-only <code>micronaut.router.static-resources.*.cache-control</code> setting is not applied.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Set <code>micronaut.server.jetty.native-static-resources</code> to <code>true</code> to restore Jetty&#8217;s <code>ResourceHandler</code>, including the <code>cache-control</code> setting and its own CORS handling.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_responses_are_compressed_by_default">Responses are compressed by default</h3>
+<div class="paragraph">
+<p>Servlet containers did not compress responses at all, while the Netty server compresses anything above 1KB that the client accepts. <code>micronaut.servlet.compression.enabled</code> now defaults to <code>true</code>, and is wired to each container&#8217;s own encoder rather than reimplemented as a filter, so the cases that make compression awkward, HEAD, ranges, already encoded bodies and the <code>Vary</code> header, are settled by code that already handles them.</p>
+</div>
+<div class="paragraph">
+<p>Two things change for Jetty, Tomcat and Undertow applications:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>A response over <code>micronaut.servlet.compression.threshold</code> (1KB) whose content type is in <code>micronaut.servlet.compression.content-types</code> is sent gzipped when the client sends <code>Accept-Encoding: gzip</code>.</p>
+</li>
+<li>
+<p>Those responses carry <code>Vary: Accept-Encoding</code>, which is required so a cache does not serve a compressed body to a client that cannot read it.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Set <code>micronaut.servlet.compression.enabled</code> to <code>false</code> to restore the previous behaviour. The JDK server runtime does not support compression.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_virtual_threads_take_effect_on_undertow_and_set_thread_limits_aside">Virtual threads take effect on Undertow, and set thread limits aside</h3>
+<div class="paragraph">
+<p><code>micronaut.servlet.enable-virtual-threads</code> has defaulted to <code>true</code> since Micronaut Servlet 4, but it only took effect on Jetty and Tomcat. Undertow ignored it and ran every servlet invocation on its XNIO worker pool, eight threads per core by default, so a blocking controller was capped at that pool&#8217;s size. On JDK 21 and later Undertow now runs the servlet deployment on a virtual thread per request, as the other containers do.</p>
+</div>
+<div class="paragraph">
+<p>A consequence on Tomcat and Undertow: virtual threads are not pooled, so <code>micronaut.servlet.max-threads</code> and <code>micronaut.servlet.min-threads</code> no longer bound request concurrency while they are enabled. Tomcat used to replace its virtual-thread executor with a platform pool of that size, silently turning virtual threads off; it now keeps the virtual threads and logs a warning that the limit does not apply. Undertow&#8217;s <code>WORKER_TASK_MAX_THREADS</code> still sizes the worker pool that accepts connections, but not the threads that run routes. An application that relied on <code>max-threads</code> to cap load on a downstream resource, such as a JDBC pool, should set <code>micronaut.servlet.enable-virtual-threads</code> to <code>false</code> to size a platform pool as before, or bound the resource itself.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_multipart_handling_is_enabled_by_default">Multipart handling is enabled by default</h3>
+<div class="paragraph">
+<p><code>micronaut.server.multipart.enabled</code> has no default of its own. Its <code>isEnabled()</code> reported <code>false</code> when the property was unset, while the Netty server and the shared request lifecycle read the raw value and treat unset as enabled. The servlet configuration followed <code>isEnabled()</code>, so no <code>MultipartConfigElement</code> was registered and the container never parsed multipart bodies: parts reached no controller argument and <code>getParts()</code> was unavailable.</p>
+</div>
+<div class="paragraph">
+<p>Servlet containers now follow the same rule as the rest of the framework, so an unset value means enabled.</p>
+</div>
+<div class="paragraph">
+<p>Two consequences for Jetty, Tomcat and Undertow applications:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Multipart requests are parsed where they previously were not, so <code>@Part</code> arguments, <code>CompletedFileUpload</code> and <code>getParts()</code> start working without configuration.</p>
+</li>
+<li>
+<p>Micronaut&#8217;s multipart limits now apply to those uploads. <code>micronaut.server.multipart.max-file-size</code> defaults to 1MB and <code>micronaut.server.max-request-size</code> to 10MB, so an upload that previously passed unchecked may now be rejected. Raise the limits, or set <code>micronaut.server.multipart.enabled</code> to <code>false</code> to restore the previous behaviour.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
 </div>
 <div class="sect1">
 <h2 id="_micronaut_servlet_5_0_0">Micronaut Servlet 5.0.0</h2>
@@ -2060,10 +4675,10 @@ To restore the original functionality, you need to configure <code>micronaut.ser
 </div>
 </div>
 
-<h1 id="repository"><a class="anchor" href="#repository"></a>14 Repository</h1>
+<h1 id="repository"><a class="anchor" href="#repository"></a>16 Repository</h1>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/5.6.x/src/main/docs/guide/repository.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-servlet/edit/6.2.x/src/main/docs/guide/repository.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
