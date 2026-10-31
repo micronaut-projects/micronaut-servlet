@@ -20,6 +20,7 @@ import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.convert.value.ConvertibleMultiValues;
 import io.micronaut.core.io.buffer.ByteBufferFactory;
 import io.micronaut.core.util.SupplierUtil;
+import io.micronaut.http.uri.QueryStringDecoder;
 import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpMethod;
 import io.micronaut.http.MediaType;
@@ -32,7 +33,12 @@ import io.micronaut.http.body.stream.InputStreamByteBody;
 import io.micronaut.http.body.MessageBodyHandlerRegistry;
 import io.micronaut.http.cookie.Cookie;
 import io.micronaut.http.cookie.Cookies;
+import io.micronaut.http.poja.PojaConnection;
 import io.micronaut.http.poja.PojaHttpRequest;
+import io.micronaut.http.server.exceptions.InternalServerException;
+import io.micronaut.http.body.stream.BodySizeLimits;
+import io.micronaut.http.exceptions.ContentLengthExceededException;
+import reactor.core.publisher.Flux;
 import io.micronaut.http.poja.apache.exception.ApacheServletBadRequestException;
 import io.micronaut.http.poja.exception.NoPojaRequestException;
 import io.micronaut.http.poja.util.MultiValueHeaders;
@@ -56,11 +62,11 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
@@ -88,10 +94,32 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
     private URI uri;
     private final MultiValueHeaders headers;
     private final MultiValuesQueryParameters queryParameters;
-    private final SimpleCookies cookies;
+    /**
+     * The parameters, resolved when first asked for: those of a form are read from the body.
+     */
+    private @Nullable MultiValuesQueryParameters parameters;
+    private Supplier<MultiValuesQueryParameters> parametersSource;
+    /**
+     * The cookies of the {@code Cookie} headers they were parsed from, parsed again once the headers change, e.g.
+     * when a filter adds a cookie to a request wrapper.
+     */
+    private SimpleCookies cookies;
+    private List<String> cookieHeaders;
+    /**
+     * The cookies added with {@link #cookie(Cookie)}, which stay whatever the headers.
+     */
+    private final Map<String, Cookie> addedCookies = new LinkedHashMap<>();
 
-    private final ByteBody byteBody;
-    private final Supplier<MultiValuesQueryParameters> formParameters;
+    /**
+     * The body, created when first asked for: a small body is then read whole, like on the servlet engine.
+     */
+    private final Supplier<ByteBody> byteBody;
+    /**
+     * The body as the framing delimits it, which has to be consumed before the next request on the connection.
+     */
+    private final FramedBodyStream framedBody;
+    private final ByteBodyFactory byteBodyFactory;
+    private @Nullable ContentLengthExceededException bodyTooLarge;
 
     private ApacheServletHttpResponse<?> primaryResponse;
 
@@ -115,7 +143,38 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
         ExecutorService ioExecutor,
         ByteBufferFactory<?, ?> byteBufferFactory
     ) {
-        super(conversionService, messageBodyHandlerRegistry);
+        this(inputStream, responseContext, sessionInputBuffer, conversionService, messageBodyHandlerRegistry, ioExecutor,
+            byteBufferFactory, PojaConnection.UNKNOWN, BodySizeLimits.UNLIMITED);
+    }
+
+    /**
+     * Create an Apache-based request, on a connection whose addresses are known, applying the server's body size limits.
+     *
+     * @param inputStream The input stream
+     * @param responseContext The response context
+     * @param sessionInputBuffer Input buffer for parsing
+     * @param conversionService The conversion service
+     * @param messageBodyHandlerRegistry The message body handler registry
+     * @param ioExecutor The executor service
+     * @param byteBufferFactory The byte buffer factory
+     * @param connection The addresses of the connection
+     * @param bodySizeLimits The limits from {@code micronaut.server.max-request-size} and
+     *                       {@code micronaut.server.max-request-buffer-size}
+     * @since 6.2.0
+     */
+    @SuppressWarnings("java:S107")
+    public ApacheServletHttpRequest(
+        InputStream inputStream,
+        ApacheResponseContext responseContext,
+        SessionInputBuffer sessionInputBuffer,
+        ConversionService conversionService,
+        MessageBodyHandlerRegistry messageBodyHandlerRegistry,
+        ExecutorService ioExecutor,
+        ByteBufferFactory<?, ?> byteBufferFactory,
+        PojaConnection connection,
+        BodySizeLimits bodySizeLimits
+    ) {
+        super(conversionService, messageBodyHandlerRegistry, connection);
         this.responseContext = responseContext;
         DefaultHttpRequestParser parser = new DefaultHttpRequestParser();
 
@@ -129,6 +188,7 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
         }
 
         method = HttpMethod.parse(request.getMethod());
+        responseContext.headRequest = method == HttpMethod.HEAD;
         try {
             uri = request.getUri();
         } catch (URISyntaxException e) {
@@ -136,23 +196,109 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
         }
         headers = createHeaders(request.getHeaders(), conversionService);
         queryParameters = parseQueryParameters(uri, conversionService);
-        cookies = parseCookies(request, conversionService);
-        formParameters = SupplierUtil.memoized(this::resolveFormParameters);
+        cookieHeaders = new ArrayList<>(headers.getAll(HttpHeaders.COOKIE));
+        cookies = parseCookies(cookieHeaders, conversionService);
+        parametersSource = this::resolveParameters;
 
-        Header connection = request.getFirstHeader(HttpHeaders.CONNECTION);
-        if (connection != null && connection.getValue().equalsIgnoreCase(CONNECTION_CLOSE)) {
+        Header connectionHeader = request.getFirstHeader(HttpHeaders.CONNECTION);
+        if (connectionHeader != null && connectionHeader.getValue().equalsIgnoreCase(CONNECTION_CLOSE)) {
             responseContext.connectionClose = true;
         }
 
-        long contentLength = getContentLength();
-        if (!getMethod().permitsRequestBody()) {
-            contentLength = 0;
-        }
+        // the framing delimits the body whatever the method (RFC 9112 6): a body of a GET is consumed as well, so
+        // that it cannot be read as another request
+        long contentLength = framedContentLength(request);
         OptionalLong optionalContentLength = contentLength >= 0 ? OptionalLong.of(contentLength) : OptionalLong.empty();
-        InputStream bodyStream = createBodyStream(inputStream, contentLength, sessionInputBuffer);
-        byteBody = InputStreamByteBody.create(
-            bodyStream, optionalContentLength, ioExecutor, ByteBodyFactory.createDefault(byteBufferFactory));
+        long maxBodySize = bodySizeLimits.maxBodySize();
+        FramedBodyStream bodyStream = new FramedBodyStream(createBodyStream(inputStream, contentLength, sessionInputBuffer), maxBodySize);
+        this.framedBody = bodyStream;
+        byteBodyFactory = ByteBodyFactory.createDefault(byteBufferFactory);
+        // a chunked transfer coding wins over a Content-Length, which the body must not be checked against either
+        MultiValueHeaders bodyHeaders = contentLength < 0 && headers.contains(HttpHeaders.CONTENT_LENGTH)
+            ? createHeaders(Arrays.stream(request.getHeaders())
+                .filter(header -> !HttpHeaders.CONTENT_LENGTH.equalsIgnoreCase(header.getName()))
+                .toArray(Header[]::new), conversionService)
+            : headers;
+        if (contentLength > maxBodySize) {
+            // refused without reading a byte: every read of the body fails, so a route that binds it answers 413
+            // as on the Netty server, and the unread bytes close the connection
+            ContentLengthExceededException tooLarge = new ContentLengthExceededException(maxBodySize, contentLength);
+            bodyTooLarge = tooLarge;
+            responseContext.connectionClose = true;
+            byteBody = SupplierUtil.memoized(() -> byteBodyFactory.adapt(Flux.error(tooLarge), optionalContentLength));
+        } else if (!method.permitsRequestBody()) {
+            // the body has no meaning for the method: the route sees none, and it is consumed after the response
+            byteBody = SupplierUtil.memoized(byteBodyFactory::createEmpty);
+        } else {
+            // the framed stream keeps a chunked body within the limit too
+            InputStream limitedBody = bodyStream;
+            long length = contentLength;
+            byteBody = SupplierUtil.memoized(() -> {
+                if (length == 0) {
+                    // no body by the framing rules: an empty body, as on the servlet engine, which a required body
+                    // argument refuses
+                    return byteBodyFactory.createEmpty();
+                }
+                if (length > 0 && length <= bodySizeLimits.maxBufferSize()) {
+                    // a body that fits the buffer is read whole on the request thread, like on the servlet engine
+                    try {
+                        return byteBodyFactory.copyOf(limitedBody);
+                    } catch (IOException e) {
+                        throw new InternalServerException("Error reading request body: " + e.getMessage(), e);
+                    }
+                }
+                // read through the size limits, like on the servlet engine: what is buffered to decode the body in
+                // memory is bounded by micronaut.server.max-request-buffer-size
+                return byteBodyFactory.adapt(
+                    InputStreamByteBody.create(limitedBody, optionalContentLength, ioExecutor, byteBodyFactory).toReadBufferPublisher(),
+                    bodySizeLimits, bodyHeaders, null);
+            });
+        }
         primaryResponse = new ApacheServletHttpResponse<>(responseContext, conversionService);
+    }
+
+    /**
+     * The length of the body as its framing gives it (RFC 9112 6.3): a chunked transfer coding wins over a
+     * Content-Length, which then cannot be trusted for the connection either, a Content-Length that is not a single
+     * non-negative number is refused, and a request with neither has no body.
+     *
+     * @param request The request
+     * @return The length, or -1 for a chunked body
+     */
+    private long framedContentLength(ClassicHttpRequest request) {
+        Header[] contentLengths = request.getHeaders(HttpHeaders.CONTENT_LENGTH);
+        long contentLength = 0;
+        for (Header header : contentLengths) {
+            String text = header.getValue().trim();
+            // digits only (RFC 9110 8.6): no sign, which Long.parseLong would accept
+            if (text.isEmpty() || !text.chars().allMatch(c -> c >= '0' && c <= '9')) {
+                throw new ApacheServletBadRequestException("Invalid Content-Length header: " + header.getValue(), null);
+            }
+            long value;
+            try {
+                value = Long.parseLong(text);
+            } catch (NumberFormatException e) {
+                throw new ApacheServletBadRequestException("Invalid Content-Length header: " + header.getValue(), e);
+            }
+            if (contentLength != value && header != contentLengths[0]) {
+                throw new ApacheServletBadRequestException("Invalid Content-Length header: " + header.getValue(), null);
+            }
+            contentLength = value;
+        }
+        Header[] transferEncodings = request.getHeaders(HttpHeaders.TRANSFER_ENCODING);
+        if (transferEncodings.length > 0) {
+            String last = transferEncodings[transferEncodings.length - 1].getValue();
+            int comma = last.lastIndexOf(',');
+            if (!TRANSFER_ENCODING_CHUNKED.equalsIgnoreCase(last.substring(comma + 1).trim())) {
+                throw new ApacheServletBadRequestException("The final transfer coding of the request is not chunked: " + last, null);
+            }
+            if (contentLengths.length > 0) {
+                // a request with both may be an attempt to smuggle another one: the connection is not reused
+                responseContext.connectionClose = true;
+            }
+            return -1;
+        }
+        return contentLength;
     }
 
     /**
@@ -170,10 +316,8 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
             bodyStream = new ContentLengthInputStream(sessionInputBuffer, inputStream, contentLength);
         } else if (contentLength == 0) {
             bodyStream = EmptyInputStream.INSTANCE;
-        } else if (TRANSFER_ENCODING_CHUNKED.equalsIgnoreCase(headers.get(HttpHeaders.TRANSFER_ENCODING))) {
-            bodyStream = new ChunkedInputStream(sessionInputBuffer, inputStream);
         } else {
-            bodyStream = EmptyInputStream.INSTANCE;
+            bodyStream = new ChunkedInputStream(sessionInputBuffer, inputStream);
         }
         return bodyStream;
     }
@@ -197,21 +341,60 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
 
     @Override
     public @NonNull Cookies getCookies() {
+        List<String> current = headers.getAll(HttpHeaders.COOKIE);
+        if (!current.equals(cookieHeaders)) {
+            cookieHeaders = new ArrayList<>(current);
+            cookies = parseCookies(current, conversionService);
+            addedCookies.values().forEach(cookie -> cookies.put(cookie.getName(), cookie));
+        }
         return cookies;
     }
 
     @Override
     public @NonNull MutableHttpParameters getParameters() {
-        MediaType contentType = getContentType().orElse(null);
-        if (contentType != null && contentType.matches(MediaType.APPLICATION_FORM_URLENCODED_TYPE)) {
-            return formParameters.get();
+        MultiValuesQueryParameters current = parameters;
+        if (current == null) {
+            current = parametersSource.get();
+            parameters = current;
         }
-        return queryParameters;
+        return current;
     }
 
     @Override
     public @NonNull HttpMethod getMethod() {
         return method;
+    }
+
+    @Override
+    protected String getNativeMethodName() {
+        return request.getMethod();
+    }
+
+    @Override
+    public void close() {
+        runDisposalResources();
+    }
+
+    @Override
+    public boolean abortResponse(Throwable failure) {
+        responseContext.abort();
+        return true;
+    }
+
+    /**
+     * Consumes what the route left of the body, so that the next request on the connection starts at its own
+     * request line; a body over the size limit is not read, and the connection is closed instead.
+     */
+    void discardUnreadBody() {
+        if (bodyTooLarge != null || responseContext.connectionClose) {
+            responseContext.connectionClose = true;
+            return;
+        }
+        // read to its end, the declared length or the last chunk, but not past the size limit: a body that does not
+        // end within it closes the connection
+        if (!framedBody.drain()) {
+            responseContext.connectionClose = true;
+        }
     }
 
     @Override
@@ -221,19 +404,37 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
 
     @Override
     public MutableHttpRequest<B> cookie(Cookie cookie) {
+        addedCookies.put(cookie.getName(), cookie);
+        // brought up to date with the headers first
+        getCookies();
         cookies.put(cookie.getName(), cookie);
         return this;
     }
 
     @Override
     public MutableHttpRequest<B> uri(URI uri) {
+        // the query parameters follow the URI: those of the previous URI are replaced, the fields of a form kept.
+        // Applied when the parameters are first read, so that the form is not read for a change of the URI
+        Map<String, List<String>> previousQuery = new QueryStringDecoder(getUri()).parameters();
+        Map<String, List<String>> newQuery = new QueryStringDecoder(uri).parameters();
+        MultiValuesQueryParameters current = parameters;
+        Supplier<MultiValuesQueryParameters> base = current != null ? () -> current : parametersSource;
+        this.parametersSource = () -> {
+            Map<CharSequence, List<String>> values = new LinkedHashMap<>();
+            newQuery.forEach((name, list) -> values.put(name, new ArrayList<>(list)));
+            MultiValuesQueryParameters previous = base.get();
+            for (String name : previous.names()) {
+                List<String> rest = new ArrayList<>(previous.getAll(name));
+                previousQuery.getOrDefault(name, List.of()).forEach(rest::remove);
+                if (!rest.isEmpty()) {
+                    values.computeIfAbsent(name, k -> new ArrayList<>()).addAll(rest);
+                }
+            }
+            return new MultiValuesQueryParameters(values, conversionService);
+        };
+        this.parameters = null;
         this.uri = uri;
         return this;
-    }
-
-    @Override
-    public <T> MutableHttpRequest<T> body(@Nullable T body) {
-        throw new UnsupportedOperationException("Could not change request body");
     }
 
     @Override
@@ -242,14 +443,13 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
     }
 
     @Override
-    @SuppressWarnings("unchecked")
-    public @NonNull Optional<B> getBody() {
-        return (Optional<B>) getBody(Object.class);
+    public @NonNull ByteBody byteBody() {
+        return byteBody.get();
     }
 
     @Override
-    public @NonNull ByteBody byteBody() {
-        return byteBody;
+    public @NonNull ByteBodyFactory byteBodyFactory() {
+        return byteBodyFactory;
     }
 
     @Override
@@ -257,12 +457,11 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
         // Not implemented
     }
 
-    private SimpleCookies parseCookies(ClassicHttpRequest request, ConversionService conversionService) {
+    private static SimpleCookies parseCookies(List<String> cookieHeaders, ConversionService conversionService) {
         SimpleCookies cookies = new SimpleCookies(conversionService);
 
         // Manually parse cookies from the response headers
-        for (Header header : request.getHeaders(HttpHeaders.COOKIE)) {
-            String cookie = header.getValue();
+        for (String cookie : cookieHeaders) {
 
             String name = null;
             int start = 0;
@@ -308,13 +507,24 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
         return new MultiValuesQueryParameters(map, conversionService);
     }
 
-    private MultiValuesQueryParameters resolveFormParameters() {
+    /**
+     * The parameters of the request: the query parameters, and the fields of a URL encoded form.
+     */
+    private MultiValuesQueryParameters resolveParameters() {
         Map<CharSequence, List<String>> merged = new LinkedHashMap<>();
         for (String name : queryParameters.names()) {
             List<String> values = queryParameters.getAll(name);
             if (!values.isEmpty()) {
                 merged.put(name, new ArrayList<>(values));
             }
+        }
+        MediaType contentType = getContentType().orElse(null);
+        if (contentType == null || !contentType.matches(MediaType.APPLICATION_FORM_URLENCODED_TYPE) || isBodySet()) {
+            return new MultiValuesQueryParameters(merged, conversionService);
+        }
+        if (bodyTooLarge != null) {
+            // the fields are read from the body, which is over the limit
+            throw bodyTooLarge;
         }
         ConvertibleMultiValues<CharSequence> formData = getFormData();
         for (String name : formData.names()) {
@@ -332,56 +542,109 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
     }
 
     /**
-     * An input stream that would initially delegate to the first input stream
-     * and then to the second one. Created specifically to be used with {@link ByteBody}.
+     * The body as its framing delimits it. Closing it does not read the rest of the body, e.g. when a route or a
+     * publisher cancels: what is left is consumed by {@link #drain()} once the response is sent, bounded by
+     * {@code micronaut.server.max-request-size}.
      */
-    private static final class CombinedInputStream extends InputStream {
+    private static final class FramedBodyStream extends InputStream {
 
-        private final InputStream first;
-        private final InputStream second;
-        private boolean finishedFirst;
+        private static final int DRAIN_BUFFER_SIZE = 8192;
+        private static final long LINGER_SIZE = 64 * 1024L;
 
-        /**
-         * Create the input stream from first stream and second stream.
-         *
-         * @param first The first stream
-         * @param second The second stream
-         */
-        CombinedInputStream(InputStream first, InputStream second) {
-            this.first = first;
-            this.second = second;
+        private final InputStream framed;
+        private final long maxBodySize;
+        private long consumed;
+        private boolean limitExceeded;
+
+        FramedBodyStream(InputStream framed, long maxBodySize) {
+            this.framed = framed;
+            this.maxBodySize = maxBodySize;
         }
 
         @Override
         public int read() throws IOException {
-            if (finishedFirst) {
-                return second.read();
+            int b = framed.read();
+            if (b >= 0) {
+                consumed(1);
             }
-            int result = first.read();
-            if (result == -1) {
-                finishedFirst = true;
-                return second.read();
-            }
-            return result;
+            return b;
         }
 
         @Override
         public int read(byte[] b, int off, int len) throws IOException {
-            if (finishedFirst) {
-                return second.read(b, off, len);
+            int n = framed.read(b, off, len);
+            if (n > 0) {
+                consumed(n);
             }
-            int readLength = first.read(b, off, len);
-            if (readLength < len) {
-                finishedFirst = true;
-                readLength += second.read(b, off + readLength, len - readLength);
-            }
-            return readLength;
+            return n;
         }
 
         @Override
-        public void close() throws IOException {
-            first.close();
-            second.close();
+        public int available() throws IOException {
+            return framed.available();
+        }
+
+        @Override
+        public void close() {
+            // the rest of the body is not read here: see drain()
+        }
+
+        private void consumed(long n) {
+            consumed += n;
+            if (consumed > maxBodySize) {
+                limitExceeded = true;
+                throw new ContentLengthExceededException(maxBodySize, consumed);
+            }
+        }
+
+        /**
+         * Reads the rest of the body, but no more than the size limit allows.
+         *
+         * @return Whether the body was read to its end, so that the connection can carry another request
+         */
+        boolean drain() {
+            byte[] buffer = new byte[DRAIN_BUFFER_SIZE];
+            if (limitExceeded) {
+                linger(buffer);
+                return false;
+            }
+            try {
+                while (true) {
+                    long remaining = maxBodySize - consumed;
+                    int len = remaining >= DRAIN_BUFFER_SIZE ? DRAIN_BUFFER_SIZE : (int) remaining + 1;
+                    int n = framed.read(buffer, 0, len);
+                    if (n < 0) {
+                        return true;
+                    }
+                    consumed += n;
+                    if (consumed > maxBodySize) {
+                        limitExceeded = true;
+                        linger(buffer);
+                        return false;
+                    }
+                }
+            } catch (IOException | RuntimeException e) {
+                return false;
+            }
+        }
+
+        /**
+         * Reads a little more of a body over the limit before the connection is closed: closing it with unread
+         * input resets it, which can discard the response before the client reads it.
+         */
+        private void linger(byte[] buffer) {
+            try {
+                long read = 0;
+                while (read < LINGER_SIZE) {
+                    int n = framed.read(buffer, 0, buffer.length);
+                    if (n < 0) {
+                        return;
+                    }
+                    read += n;
+                }
+            } catch (IOException | RuntimeException e) {
+                // the connection is closed anyway
+            }
         }
     }
 

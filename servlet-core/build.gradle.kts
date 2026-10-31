@@ -11,4 +11,5 @@ dependencies {
     implementation(mn.micronaut.router)
     implementation(mnReactor.micronaut.reactor)
     testAnnotationProcessor(mn.micronaut.inject.java)
+    testImplementation(mn.micronaut.json.core)
 }

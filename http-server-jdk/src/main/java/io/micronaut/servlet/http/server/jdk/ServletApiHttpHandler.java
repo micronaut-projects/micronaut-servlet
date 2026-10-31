@@ -63,10 +63,19 @@ final class ServletApiHttpHandler implements HttpHandler {
             httpExchange,
             rsp -> populateAndSendResponseHeaders(rsp, httpExchange)
         );
-        HttpServletRequest request = new HttpExchangeHttpServletRequest(httpExchange, formUrlEncodedDecoder);
+        HttpExchangeHttpServletRequest request = new HttpExchangeHttpServletRequest(httpExchange, formUrlEncodedDecoder);
         boolean completed = false;
         try {
             httpHandler.exchange(request, response);
+            Runnable upgradedConnection = request.upgradedConnection();
+            if (upgradedConnection != null) {
+                // the exchange switched protocols: its response is the 101 already sent, and the connection is run
+                // on this thread until it ends
+                response.setCommitted(true);
+                completed = true;
+                upgradedConnection.run();
+                return;
+            }
             // nothing requested the output stream, so the response has no body and the headers are still unsent
             response.commitHeaders();
             completed = true;

@@ -43,7 +43,12 @@ import io.micronaut.servlet.engine.ServletCompressionConfiguration;
 import io.micronaut.servlet.http.server.ServletServerFactory;
 import io.micronaut.servlet.http.server.ServletStaticResourceConfiguration;
 import jakarta.inject.Singleton;
+import java.util.Optional;
 import java.util.Set;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import io.micronaut.context.exceptions.ConfigurationException;
+import org.apache.coyote.AbstractProtocol;
 import org.apache.catalina.Container;
 import org.apache.catalina.Context;
 import org.apache.catalina.connector.Connector;
@@ -280,6 +285,25 @@ public class TomcatFactory extends ServletServerFactory {
         }
     }
 
+    /**
+     * Binds the connector to {@code micronaut.server.host} when it is configured, as the JDK and Netty servers do.
+     * Without it Tomcat keeps listening on every interface.
+     *
+     * @param connector The connector
+     */
+    private void applyConfiguredHost(Connector connector) {
+        Optional<String> host = getServerConfiguration().getHost();
+        if (host.isEmpty() || !(connector.getProtocolHandler() instanceof AbstractProtocol<?> protocol)) {
+            return;
+        }
+        try {
+            // set on the protocol rather than through Connector.setProperty("address"), which needs reflection
+            protocol.setAddress(InetAddress.getByName(host.get()));
+        } catch (UnknownHostException e) {
+            throw new ConfigurationException("Unknown micronaut.server.host: " + host.get(), e);
+        }
+    }
+
     private static Connector cloneConnectorSettings(Connector serverConnector) {
         Connector newConnector = new Connector(serverConnector.getProtocol());
         ProtocolHandler protocolHandler = serverConnector.getProtocolHandler();
@@ -291,6 +315,10 @@ public class TomcatFactory extends ServletServerFactory {
             newConnector.setProperty(CLIENT_AUTH, "false");
             newConnector.setProperty("sslProtocol", "TLS");
             newConnector.setProperty("SSLEnabled", "true");
+        }
+        if (serverConnector.getProtocolHandler() instanceof AbstractProtocol<?> source
+            && newConnector.getProtocolHandler() instanceof AbstractProtocol<?> target) {
+            target.setAddress(source.getAddress());
         }
         newConnector.setAllowBackslash(serverConnector.getAllowBackslash());
         newConnector.setAllowTrace(serverConnector.getAllowTrace());
@@ -349,6 +377,7 @@ public class TomcatFactory extends ServletServerFactory {
     protected Connector tomcatConnector() {
         final Connector tomcatConnector = getServerConfiguration().getTomcatConnector();
         tomcatConnector.setPort(getConfiguredPort());
+        applyConfiguredHost(tomcatConnector);
         return tomcatConnector;
     }
 
@@ -373,6 +402,7 @@ public class TomcatFactory extends ServletServerFactory {
         sslHostConfig.addCertificate(certificate);
         httpsConnector.addSslHostConfig(sslHostConfig);
         httpsConnector.setPort(sslPort);
+        applyConfiguredHost(httpsConnector);
         httpsConnector.setSecure(true);
         httpsConnector.setScheme("https");
         httpsConnector.setProperty(CLIENT_AUTH, "false");

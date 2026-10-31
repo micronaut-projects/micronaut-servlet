@@ -29,7 +29,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URL;
 import java.util.Map;
 import java.util.Optional;
 
@@ -44,7 +46,7 @@ public class PojaApacheServerUnderTest implements ServerUnderTest {
     private final int port;
 
     public PojaApacheServerUnderTest(Map<String, Object> properties) {
-        properties.put("micronaut.server.context-path", "/");
+        properties.putIfAbsent("micronaut.server.context-path", "/");
         properties.put("endpoints.health.service-ready-indicator-enabled", StringUtils.FALSE);
         properties.put("endpoints.refresh.enabled", StringUtils.FALSE);
         properties.put("micronaut.security.enabled", StringUtils.FALSE);
@@ -57,7 +59,12 @@ public class PojaApacheServerUnderTest implements ServerUnderTest {
             .start();
         application = applicationContext.findBean(TestingServerlessEmbeddedApplication.class)
             .orElseThrow(() -> new IllegalStateException("TestingServerlessApplication bean is required"));
-        application.start();
+        try {
+            application.start();
+        } catch (RuntimeException e) {
+            applicationContext.close();
+            throw e;
+        }
         port = application.getPort();
         client = applicationContext.createBean(HttpClient.class, URI.create("http://localhost:" + port)).toBlocking();
     }
@@ -84,6 +91,15 @@ public class PojaApacheServerUnderTest implements ServerUnderTest {
     @Override
     public Optional<Integer> getPort() {
         return Optional.of(port);
+    }
+
+    @Override
+    public Optional<URL> getURL() {
+        try {
+            return Optional.of(URI.create("http://localhost:" + port).toURL());
+        } catch (MalformedURLException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     @Override

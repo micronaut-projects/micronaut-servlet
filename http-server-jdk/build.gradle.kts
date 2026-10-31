@@ -4,9 +4,19 @@ plugins {
 }
 dependencies {
     api(projects.micronautServletEngine)
+    // an application that uses WebSocket adds the Jakarta WebSocket API along with
+    // micronaut-servlet-websocket: the ServerContainer of this runtime is only a bean then
+    compileOnly(libs.managed.jakarta.websocket.api)
+    compileOnly(libs.managed.jakarta.websocket.client.api)
+    // the route an upgrade matched identifies its endpoint, for Session.getOpenSessions()
+    compileOnly(projects.micronautServletWebsocket)
     testAnnotationProcessor(mnSerde.micronaut.serde.processor)
     testImplementation(mnSerde.micronaut.serde.jackson)
     testImplementation(mnLogging.logback.classic)
+    // a WebSocket handshake on the HttpServer provider of the JDK is refused
+    testImplementation(projects.micronautServletWebsocket)
+    testImplementation(libs.managed.jakarta.websocket.api)
+    testImplementation(libs.managed.jakarta.websocket.client.api)
 }
 
 micronautBuild {

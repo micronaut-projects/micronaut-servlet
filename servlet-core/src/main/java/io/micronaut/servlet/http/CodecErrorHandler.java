@@ -29,7 +29,8 @@ import jakarta.inject.Singleton;
 import java.util.Optional;
 
 /**
- * Error mapper for {@link CodecException}.
+ * Error mapper for a request body the servlet runtime could not decode: {@code 400 Bad Request}. Other
+ * {@link CodecException}s, e.g. of a message body writer, are answered like on the Netty server.
  *
  * @author Denis Stepanov
  * @since 4.0.0
@@ -37,7 +38,7 @@ import java.util.Optional;
 @Singleton
 @Produces
 @Secondary
-final class CodecErrorHandler implements ExceptionHandler<CodecException, HttpResponse<?>> {
+final class CodecErrorHandler implements ExceptionHandler<RequestBodyDecodingException, HttpResponse<?>> {
     private final ErrorResponseProcessor<?> responseProcessor;
 
     public CodecErrorHandler(ErrorResponseProcessor<?> responseProcessor) {
@@ -45,7 +46,7 @@ final class CodecErrorHandler implements ExceptionHandler<CodecException, HttpRe
     }
 
     @Override
-    public HttpResponse<?> handle(HttpRequest request, CodecException exception) {
+    public HttpResponse<?> handle(HttpRequest request, RequestBodyDecodingException exception) {
         return this.responseProcessor.processResponse(ErrorContext.builder(request).cause(exception).error(new Error() {
             @Override
             public String getMessage() {

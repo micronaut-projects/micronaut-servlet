@@ -1,0 +1,6 @@
+# Known failures of the server TCK fuzz suite (io.micronaut.http.server.tck.tests.fuzz.HttpServerFuzzTest) on Undertow.
+# One entry per line: [engine[,engine]:]regex matched against the start of the case name => reason.
+# The engine is matched against the lower-case class name of the embedded server.
+# Run them anyway with -Dfuzz.runKnown=true.
+undertow:mp boundary-like bytes inside a file|undertow:mp .* crlf-in-content => container quirk: the multipart parser of the container treats '--boundaryX' inside the content as a delimiter
+undertow:mp part order|undertow:mp random# => container quirk: Undertow groups the parts by name, so getParts() is not in arrival order

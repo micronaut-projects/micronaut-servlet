@@ -25,12 +25,16 @@ import io.micronaut.runtime.server.EmbeddedServer;
 import io.micronaut.runtime.server.event.ServerShutdownEvent;
 import io.micronaut.runtime.server.event.ServerStartupEvent;
 import io.micronaut.servlet.http.ServletHttpHandler;
+import io.micronaut.core.util.CollectionUtils;
+import io.micronaut.web.router.Router;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
@@ -131,6 +135,7 @@ public abstract class AbstractServletServer<T> implements EmbeddedServer, Gracef
                 applicationContext.start();
             }
             startServer();
+            applyDefaultPorts();
             applicationContext.publishEvent(new ServerStartupEvent(this));
         } catch (Exception e) {
             throw new HttpServerException(
@@ -138,6 +143,26 @@ public abstract class AbstractServletServer<T> implements EmbeddedServer, Gracef
             );
         }
         return this;
+    }
+
+    /**
+     * The routes without a port answer on the default ports only when some routes have a port,
+     * like for the Netty server.
+     */
+    private void applyDefaultPorts() {
+        applicationContext.findBean(Router.class).ifPresent(router -> {
+            if (CollectionUtils.isNotEmpty(router.getExposedPorts())) {
+                router.applyDefaultPorts(List.copyOf(getDefaultPorts()));
+            }
+        });
+    }
+
+    /**
+     * @return The ports the routes without a port answer on: the port of the server by default
+     * @since 6.2.0
+     */
+    protected Set<Integer> getDefaultPorts() {
+        return Set.of(getPort());
     }
 
     @Override

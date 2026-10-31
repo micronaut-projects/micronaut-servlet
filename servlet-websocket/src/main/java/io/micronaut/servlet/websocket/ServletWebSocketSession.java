@@ -31,6 +31,8 @@ import jakarta.websocket.SendHandler;
 import jakarta.websocket.Session;
 import org.jspecify.annotations.Nullable;
 import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
@@ -44,6 +46,7 @@ import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -76,6 +79,11 @@ public final class ServletWebSocketSession implements WebSocketSession {
     private final Queue<PendingSend> sendQueue = new ConcurrentLinkedQueue<>();
     private final AtomicInteger pendingSends = new AtomicInteger();
     private final AtomicBoolean sending = new AtomicBoolean();
+    /**
+     * The {@link #sendAllAsync} calls that send, completed with {@code false} by the close.
+     */
+    private final Set<CompletableFuture<Boolean>> sendingAll = ConcurrentHashMap.newKeySet();
+    private volatile boolean closeReceived;
 
     /**
      * Default constructor.
@@ -192,6 +200,63 @@ public final class ServletWebSocketSession implements WebSocketSession {
         EncodedMessage encoded = encoder.encode(message, mediaType != null ? mediaType : MediaType.APPLICATION_JSON_TYPE);
         return enqueue(new PendingSend(encoded, false, new CompletableFuture<>()))
             .thenApply(ignored -> message);
+    }
+
+    /**
+     * Sends the messages of a publisher like {@link WebSocketSession#sendAllAsync(Publisher, MediaType)},
+     * and stops once the session closes or the peer sent its close: the future then completes
+     * with {@code false} and the publisher is cancelled, e.g. a stream that never completes.
+     */
+    @Override
+    public CompletableFuture<Boolean> sendAllAsync(Publisher<?> messages, MediaType mediaType) {
+        if (closeReceived) {
+            // e.g. from the close handler: the peer closed, nothing is sent after its close
+            messages.subscribe(new Subscriber<Object>() {
+                @Override
+                public void onSubscribe(Subscription subscription) {
+                    subscription.cancel();
+                }
+
+                @Override
+                public void onNext(Object message) {
+                    // cancelled: the publisher may still emit what it had
+                }
+
+                @Override
+                public void onError(Throwable throwable) {
+                    // cancelled: nothing to report
+                }
+
+                @Override
+                public void onComplete() {
+                    // cancelled: nothing to report
+                }
+            });
+            return CompletableFuture.completedFuture(false);
+        }
+        CompletableFuture<Boolean> sent = WebSocketSession.super.sendAllAsync(messages, mediaType);
+        if (sent.isDone()) {
+            return sent;
+        }
+        sendingAll.add(sent);
+        sent.whenComplete((ignored, error) -> sendingAll.remove(sent));
+        if (closeReceived) {
+            // the close arrived meanwhile
+            sent.complete(false);
+        }
+        return sent;
+    }
+
+    /**
+     * The peer sent its close, or the session closed: an endpoint sends no data after it
+     * (RFC 6455, 5.5.1), so the publishers of {@link #sendAllAsync} stop, and their futures
+     * complete with {@code false}.
+     */
+    void closeReceived() {
+        closeReceived = true;
+        for (CompletableFuture<Boolean> sent : sendingAll) {
+            sent.complete(false);
+        }
     }
 
     @Override

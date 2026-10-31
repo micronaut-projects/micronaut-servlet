@@ -221,6 +221,11 @@ public class UndertowFactory extends ServletServerFactory {
                 builder.setServerOption(Options.WORKER_TASK_CORE_THREADS, servletConfiguration.getMinThreads());
             }
         }
+        // Undertow refuses an entity over 2MB by default, regardless of micronaut.server.max-request-size. The server
+        // enforces that limit itself and answers 413, where Undertow would drop the connection: Undertow's own limit
+        // is off, unless a server option below sets it
+        builder.setServerOption(UndertowOptions.MAX_ENTITY_SIZE, -1L);
+        builder.setServerOption(UndertowOptions.MULTIPART_MAX_ENTITY_SIZE, -1L);
         Map<String, String> serverOptions = configuration.getServerOptions();
         serverOptions.forEach((key, value) -> {
             Object opt = ReflectionUtils.findDeclaredField(UndertowOptions.class, key)
@@ -395,7 +400,10 @@ public class UndertowFactory extends ServletServerFactory {
         DeploymentInfo deploymentInfo = Servlets.deployment()
             .setDeploymentName(servletConfiguration.getName())
             .setClassLoader(getEnvironment().getClassLoader())
-            .setContextPath(cp);
+            .setContextPath(cp)
+            // a multipart filename or field without a charset of its own is UTF-8, like on the other servers,
+            // not ISO-8859-1, Undertow's default
+            .setDefaultRequestEncoding(getServerConfiguration().getDefaultCharset().name());
         if (servletConfiguration.isEnableVirtualThreads()) {
             // without this every servlet invocation runs on the XNIO worker pool, eight threads per core by default,
             // and enable-virtual-threads was silently ignored: a blocking controller capped out at that pool's size

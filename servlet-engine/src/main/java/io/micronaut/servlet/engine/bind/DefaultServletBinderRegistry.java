@@ -24,100 +24,78 @@ import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.annotation.Part;
-import io.micronaut.http.bind.DefaultRequestBinderRegistry;
-import io.micronaut.http.bind.binders.DefaultBodyAnnotationBinder;
+import io.micronaut.http.bind.binders.AnnotatedRequestArgumentBinder;
 import io.micronaut.http.bind.binders.RequestArgumentBinder;
+import io.micronaut.http.bind.binders.TypedRequestArgumentBinder;
 import io.micronaut.http.body.MessageBodyHandlerRegistry;
-import io.micronaut.http.multipart.CompletedPart;
 import io.micronaut.http.server.HttpServerConfiguration;
+import io.micronaut.http.server.binding.DefaultServerRequestBinderRegistry;
+import io.micronaut.http.server.binding.ServerBodyAnnotationBinder;
 import io.micronaut.http.server.multipart.FormFactory;
-import io.micronaut.json.JsonMapper;
-import io.micronaut.servlet.http.ServletBinderRegistry;
-import io.micronaut.servlet.http.ServletBodyBinder;
+import io.micronaut.servlet.http.ServletServerRequestBinderRegistry;
 import jakarta.inject.Singleton;
-import jakarta.servlet.ServletConfig;
-import jakarta.servlet.ServletContext;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 
 import java.util.List;
 
 /**
- * Replaces the {@link DefaultRequestBinderRegistry} with one capable of binding from servlet requests.
- *
- * @param <T> The type
+ * The binders of the servlet engine: the shared binders of the server, plus the objects of the Servlet API and
+ * the parts of the container.
  * @author graemerocher
  * @since 1.0.0
  */
 @Singleton
 @Secondary
-@Replaces(DefaultRequestBinderRegistry.class)
+@Replaces(DefaultServerRequestBinderRegistry.class)
 @Internal
-class DefaultServletBinderRegistry<T> extends ServletBinderRegistry<T> {
-
-    private final HttpServerConfiguration configuration;
+class DefaultServletBinderRegistry extends ServletServerRequestBinderRegistry {
 
     /**
      * Default constructor.
      *
-     * @param messageBodyHandlerRegistry  The message body handler registry
-     * @param conversionService           The conversion service
-     * @param binders                     Any registered binders
-     * @param defaultBodyAnnotationBinder The delegate default body binder
-     * @param jsonMapper                  The JSON mapper
+     * @param conversionService          The conversion service
+     * @param binders                    Any registered binders
+     * @param bodyBinder                 The body binder
+     * @param formFactory                The form factory
+     * @param messageBodyHandlerRegistry The message body handler registry
+     * @param configuration              The server configuration
      */
-    public DefaultServletBinderRegistry(MessageBodyHandlerRegistry messageBodyHandlerRegistry,
-                                        ConversionService conversionService,
-                                        List<RequestArgumentBinder<?>> binders,
-                                        DefaultBodyAnnotationBinder<T> defaultBodyAnnotationBinder,
-                                        BeanProvider<FormFactory> formFactoryProvider,
-                                        JsonMapper jsonMapper,
-                                        HttpServerConfiguration configuration) {
-        super(messageBodyHandlerRegistry, conversionService, (List) binders, defaultBodyAnnotationBinder, jsonMapper);
-        this.configuration = configuration;
-        byType.put(HttpServletRequest.class, new ServletRequestBinder());
-        byType.put(HttpServletResponse.class, new ServletResponseBinder());
-        byType.put(ServletConfig.class, new ServletConfigBinder());
-        byType.put(ServletContext.class, new ServletContextBinder());
-        byType.put(CompletedPart.class, new CompletedPartRequestArgumentBinder(configuration));
-        byAnnotation.put(Part.class, new ServletPartBinder<>(conversionService, formFactoryProvider, messageBodyHandlerRegistry, configuration));
-    }
-
-    @Override
-    protected ServletBodyBinder<T> newServletBodyBinder(MessageBodyHandlerRegistry messageBodyHandlerRegistry,
-                                                        ConversionService conversionService,
-                                                        DefaultBodyAnnotationBinder<T> defaultBodyAnnotationBinder,
-                                                        JsonMapper jsonMapper) {
-        return new DefaultServletBodyBinder<>(conversionService, messageBodyHandlerRegistry, defaultBodyAnnotationBinder, jsonMapper);
+    @SuppressWarnings({"rawtypes", "java:S3740"}) // the binders of the registry of core
+    DefaultServletBinderRegistry(ConversionService conversionService,
+                                 List<RequestArgumentBinder> binders,
+                                 ServerBodyAnnotationBinder<Object> bodyBinder,
+                                 BeanProvider<FormFactory> formFactory,
+                                 MessageBodyHandlerRegistry messageBodyHandlerRegistry,
+                                 HttpServerConfiguration configuration) {
+        super(conversionService, binders, bodyBinder, formFactory);
+        addArgumentBinder(new ServletRequestBinder());
+        addArgumentBinder(new ServletResponseBinder());
+        addArgumentBinder(new ServletConfigBinder());
+        addArgumentBinder(new ServletContextBinder());
+        addArgumentBinder(new ContainerPartBinder(new ServletPartBinder<>(conversionService, formFactory, messageBodyHandlerRegistry, configuration)));
     }
 
     /**
-     * Overridden body binder.
+     * A {@code @Part jakarta.servlet.http.Part} argument: the part of the container itself.
      *
-     * @param <T> The type
+     * @param delegate The binder of the container parts
      */
-    private class DefaultServletBodyBinder<T> extends ServletBodyBinder<T> {
+    @SuppressWarnings("removal")
+    private record ContainerPartBinder(ServletPartBinder<jakarta.servlet.http.Part> delegate)
+        implements AnnotatedRequestArgumentBinder<Part, jakarta.servlet.http.Part>, TypedRequestArgumentBinder<jakarta.servlet.http.Part> {
 
-        /**
-         * Default constructor.
-         *
-         * @param conversionService           The conversion service
-         * @param messageBodyHandlerRegistry  The message body handler registry
-         * @param defaultBodyAnnotationBinder The delegate default body binder
-         * @param jsonMapper                  The json mapper
-         */
-        protected DefaultServletBodyBinder(ConversionService conversionService, MessageBodyHandlerRegistry messageBodyHandlerRegistry, DefaultBodyAnnotationBinder<T> defaultBodyAnnotationBinder, JsonMapper jsonMapper) {
-            super(conversionService, messageBodyHandlerRegistry, defaultBodyAnnotationBinder, jsonMapper);
+        @Override
+        public Class<Part> getAnnotationType() {
+            return Part.class;
         }
 
         @Override
-        public BindingResult bind(ArgumentConversionContext context, HttpRequest source) {
-            Argument<?> argument = context.getArgument();
-            Class<?> type = argument.getType();
-            if (CompletedPart.class.isAssignableFrom(type)) {
-                return new CompletedPartRequestArgumentBinder(configuration).bind(context, source);
-            }
-            return super.bind(context, source);
+        public Argument<jakarta.servlet.http.Part> argumentType() {
+            return Argument.of(jakarta.servlet.http.Part.class);
+        }
+
+        @Override
+        public BindingResult<jakarta.servlet.http.Part> bind(ArgumentConversionContext<jakarta.servlet.http.Part> context, HttpRequest<?> source) {
+            return delegate.bind(context, source);
         }
     }
 }

@@ -36,6 +36,7 @@ import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MutableHttpHeaders;
 import io.micronaut.http.body.AvailableByteBody;
+import io.micronaut.http.body.CloseableByteBody;
 import io.micronaut.http.body.ByteBody;
 import io.micronaut.http.body.ByteBodyFactory;
 import io.micronaut.http.body.MessageBodyHandlerRegistry;
@@ -44,6 +45,7 @@ import io.micronaut.http.context.ServerHttpRequestContext;
 import io.micronaut.http.context.event.HttpRequestReceivedEvent;
 import io.micronaut.http.context.event.HttpRequestTerminatedEvent;
 import io.micronaut.http.exceptions.HttpStatusException;
+import io.micronaut.http.server.binding.AsyncRequestBodyFactory;
 import io.micronaut.http.server.HttpServerConfiguration;
 import io.micronaut.http.server.RequestLifecycle;
 import io.micronaut.http.server.ResponseLifecycle;
@@ -61,6 +63,7 @@ import io.micronaut.web.router.resource.StaticResourceResolver;
 import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import reactor.core.publisher.Flux;
 
 import java.io.EOFException;
 import java.io.File;
@@ -110,6 +113,10 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
     private final Supplier<ServletWebSocketUpgrader> webSocketUpgrader;
     private final Supplier<Router> router;
     /**
+     * Gives the requests their {@link io.micronaut.http.body.AsyncRequestBody#of(HttpRequest)}.
+     */
+    private final Supplier<AsyncRequestBodyFactory> asyncRequestBodies;
+    /**
      * Typed publishers resolve their listeners once; publishing through the context would look them up, with the
      * bean resolution that entails, on every request.
      */
@@ -142,6 +149,7 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
         this.ioExecutor = SupplierUtil.memoized(() -> applicationContext.getBean(Executor.class, Qualifiers.byName(TaskExecutors.BLOCKING)));
         this.webSocketUpgrader = SupplierUtil.memoized(() -> applicationContext.findBean(ServletWebSocketUpgrader.class).orElse(null));
         this.router = SupplierUtil.memoized(() -> applicationContext.getBean(Router.class));
+        this.asyncRequestBodies = SupplierUtil.memoized(() -> applicationContext.getBean(AsyncRequestBodyFactory.class));
         this.requestReceivedPublisher = SupplierUtil.memoized(() -> applicationContext.getEventPublisher(HttpRequestReceivedEvent.class));
         this.requestTerminatedPublisher = SupplierUtil.memoized(() -> applicationContext.getEventPublisher(HttpRequestTerminatedEvent.class));
     }
@@ -242,7 +250,20 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
         ByteBody body = byteBodyResponse.byteBody();
         if (body instanceof AvailableByteBody available && available.length() == 0) {
             // special case, don't call getOutputStream. the controller may have written manually.
+            if (body instanceof CloseableByteBody closeable) {
+                // the body is taken, e.g. the stream of an emitter, which then knows the response ended
+                closeable.close();
+            }
             onComplete.run();
+        } else if (body.expectedLength().orElse(-1) == 0) {
+            // declared empty, e.g. the stream of an emitter that ended when its handler returned: nothing is written,
+            // and a container need not ask for the bytes, but the body is read to its end so that its producer ends
+            servletResponse.getHeaders().set(HttpHeaders.CONTENT_LENGTH, "0");
+            Flux.from(body.move().toByteArrayPublisher()).subscribe(
+                ignored -> { },
+                t -> onComplete.run(),
+                onComplete
+            );
         } else if (async && !writesInline(body, onContainerThread)) {
             // a body that is still being produced is written as it arrives, through a WriteListener; a body that
             // is already complete is written below on this thread instead, because the listener costs a dispatch
@@ -250,11 +271,22 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
             servletResponse.stream(body.move()).whenComplete((ignored, t) -> {
                 if (t != null) {
                     logWriteFailure(t);
+                    // the body was being streamed: some of it may be in the container's buffer only, which does
+                    // not report the response committed, but the response cannot be answered with an error any more
+                    abort(exchange, t);
                 }
                 onComplete.run();
             });
         } else {
-            writeBlocking(body, servletResponse);
+            try {
+                writeBlocking(body, servletResponse);
+            } catch (RuntimeException t) {
+                if (!servletResponse.isCommitted()) {
+                    throw t;
+                }
+                logWriteFailure(t);
+                abortCommitted(exchange, servletResponse, t);
+            }
             onComplete.run();
         }
     }
@@ -317,6 +349,23 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
             }
         } catch (IOException e) {
             throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, Optional.ofNullable(e.getMessage()).orElse(e.toString()));
+        }
+    }
+
+    /**
+     * A body that fails once the response was committed cannot be answered with an error any more: the
+     * connection is dropped, so that the client sees a truncated response rather than one that looks complete.
+     */
+    private static void abortCommitted(ServletExchange<?, ?> exchange, ServletHttpResponse<?, ?> servletResponse, Throwable t) {
+        if (servletResponse.isCommitted()) {
+            abort(exchange, t);
+        }
+    }
+
+    private static void abort(ServletExchange<?, ?> exchange, Throwable t) {
+        if (!exchange.getRequest().abortResponse(t) && LOG.isDebugEnabled()) {
+            LOG.debug("The connection of request [{} - {}] cannot be dropped: the failed response ends like a complete one",
+                exchange.getRequest().getMethodName(), exchange.getRequest().getUri());
         }
     }
 
@@ -395,6 +444,10 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
         };
 
         final HttpRequest<Object> req = exchange.getRequest();
+        if (req instanceof AsyncRequestBodySourceHolder holder) {
+            // every request that runs the filters, those of a WebSocket upgrade too
+            holder.setAsyncRequestBodySource(asyncRequestBodies.get());
+        }
         requestReceivedPublisher.get().publishEvent(new HttpRequestReceivedEvent(req));
 
         ServletWebSocketUpgrader upgrader = resolveWebSocketUpgrader(req);
@@ -425,38 +478,44 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
                               ServletRequestLifecycle lc,
                               Runnable requestTerminated) {
         exchange.getRequest().executeAsync(ctx -> PropagatedContext.getOrEmpty().plus(new ServerHttpRequestContext(req)).propagate(() -> {
-            Runnable finish = completeOnce(ctx, req, requestTerminated);
+            AsyncCompletion completion = new AsyncCompletion(ctx, req, requestTerminated);
+            Runnable finish = completion::finish;
             // a container that times the request out, or loses its connection, ends the execution before the
-            // route's publisher does: the request still has to be released and counted as done
-            ctx.onEndedByContainer(finish);
+            // route's publisher does, or while the unread body is drained: the request still has to be released
+            // and counted as done, without waiting for the body
+            ctx.onEndedByContainer(completion::terminate);
             // the thread the container runs the route on, whether it dispatched or not; a flow that completes
             // on it may write blocking, one that completes elsewhere is a different matter
             Thread containerThread = Thread.currentThread();
             lc.handleNormal(req)
-                .flatMap(response -> process(response, req, exchange.getResponse()))
-                .onComplete((bbhr, t) -> completeAsync(exchange, bbhr, t, Thread.currentThread() == containerThread, finish));
+                .flatMap(response -> process(response, req, exchange.getResponse(), lc))
+                .onComplete((bbhr, t) -> {
+                    if (ctx.isEndedByContainer()) {
+                        // the container ended the request, e.g. the client aborted it: its request and response may
+                        // be recycled and serving another request, so nothing is written to them, and the body of
+                        // the response is closed so that its stream or producer is released
+                        closeResponseBody(bbhr);
+                        completion.terminate();
+                        return;
+                    }
+                    completeAsync(exchange, bbhr, t, Thread.currentThread() == containerThread, finish);
+                });
             return null;
         }));
     }
 
     /**
-     * Completes the async context exactly once, however the exchange ends: completing it twice throws, and a
-     * container that completed it itself (on an asynchronous timeout or error) must not stop the request from
-     * being accounted for and its resources released.
+     * Closes the body of a response that is not written, e.g. because the container ended the request.
      */
-    private Runnable completeOnce(ServletHttpRequest.AsyncExecution ctx, HttpRequest<Object> req, Runnable requestTerminated) {
-        AtomicBoolean finished = new AtomicBoolean();
-        return () -> {
-            if (finished.compareAndSet(false, true)) {
-                try {
-                    ctx.complete();
-                } catch (IllegalStateException alreadyCompleted) {
-                    LOG.debug("Async context already completed for request [{} - {}]", req.getMethodName(), req.getUri(), alreadyCompleted);
-                } finally {
-                    requestTerminated.run();
-                }
+    private static void closeResponseBody(@Nullable ExecutionResult result) {
+        ByteBodyHttpResponse<?> response = result == null ? null : result.byteBodyHttpResponse();
+        if (response != null) {
+            try {
+                response.close();
+            } catch (RuntimeException e) {
+                LOG.debug("Failed to close the body of an unwritten response", e);
             }
-        };
+        }
     }
 
     private void completeAsync(ServletExchange<REQ, RES> exchange, @Nullable ExecutionResult result, @Nullable Throwable failure, boolean onContainerThread, Runnable finish) {
@@ -500,7 +559,7 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
                                  Runnable requestTerminated) {
         ExecutionResult executionResult;
         CompletableFuture<ExecutionResult> cfExecutionResult = PropagatedContext.getOrEmpty().plus(new ServerHttpRequestContext(req)).propagate(() -> lc.handleNormal(req)
-            .flatMap(response -> process(response, req, exchange.getResponse())).toCompletableFuture());
+            .flatMap(response -> process(response, req, exchange.getResponse(), lc)).toCompletableFuture());
         try {
             executionResult = cfExecutionResult.get();
         } catch (InterruptedException ie) {
@@ -515,8 +574,10 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
         try {
             transfer(executionResult, exchange, false, true, requestTerminated);
         } finally {
+            // the body the route did not read is read and dropped, as on the asynchronous path: a server like the
+            // JDK one otherwise drops the connection while the client is still sending it.
             // transfer throws on a write failure, before it can run the callback itself
-            requestTerminated.run();
+            exchange.getRequest().discardUnreadBody(requestTerminated);
         }
     }
 
@@ -566,7 +627,7 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
 
         ExecutionResult executionResult;
         try {
-            executionResult = process(filteredResponse, req, exchange.getResponse()).toCompletableFuture().get();
+            executionResult = process(filteredResponse, req, exchange.getResponse(), null).toCompletableFuture().get();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             exchange.getResponse().status(HttpStatus.SERVICE_UNAVAILABLE);
@@ -627,11 +688,20 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
 
     private ExecutionFlow<ExecutionResult> process(HttpResponse<?> response,
                                                    HttpRequest<Object> req,
-                                                   ServletHttpResponse<?, ?> shr) {
+                                                   ServletHttpResponse<?, ?> shr,
+                                                   @Nullable ServletRequestLifecycle lc) {
         if (shr.isCommitted()) {
             return ExecutionFlow.just(new ExecutionResult(null));
         }
-        return new ServletResponseLifecycle(req).encodeHttpResponseSafe(req, response).map(ExecutionResult::new);
+        // a body that fails before anything was sent, e.g. the first element of a stream, is answered by the
+        // exception handlers and the error routes, like on the other runtimes
+        if (lc == null) {
+            return new ServletResponseLifecycle(req).encodeHttpResponseSafe(req, response).map(ExecutionResult::new);
+        }
+        PropagatedContext context = PropagatedContext.getOrEmpty();
+        return new ServletResponseLifecycle(req)
+            .encodeHttpResponseSafe(req, response, failure -> context.propagate(() -> lc.writeError(req, failure)))
+            .map(ExecutionResult::new);
     }
 
     private static void handleFallback(ServletHttpResponse<?, ?> shr, Throwable t) {
@@ -712,6 +782,10 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
             return normalFlow(request);
         }
 
+        ExecutionFlow<HttpResponse<?>> writeError(HttpRequest<?> request, Throwable failure) {
+            return onWriteError(request, failure);
+        }
+
         @Override
         protected @Nullable FileCustomizableResponseType findFile(HttpRequest<?> request) {
             return matchFile(request.getPath()).orElse(null);
@@ -761,6 +835,62 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
                 }
             }
             return super.encodeNoBody(response);
+        }
+    }
+
+    /**
+     * Completes the async context exactly once, however the exchange ends: completing it twice throws, and a
+     * container that completed it itself (on an asynchronous timeout or error) must not stop the request from
+     * being accounted for and its resources released. Finishing first drops the body nobody read; the container
+     * ending the execution, even while that body is being dropped, terminates the request right away.
+     */
+    private static final class AsyncCompletion {
+        private final ServletHttpRequest.AsyncExecution ctx;
+        private final HttpRequest<Object> req;
+        private final Runnable requestTerminated;
+        private final AtomicBoolean drainStarted = new AtomicBoolean();
+        private final AtomicBoolean completed = new AtomicBoolean();
+
+        AsyncCompletion(ServletHttpRequest.AsyncExecution ctx, HttpRequest<Object> req, Runnable requestTerminated) {
+            this.ctx = ctx;
+            this.req = req;
+            this.requestTerminated = requestTerminated;
+        }
+
+        /**
+         * The response was written: the body nobody read is dropped first, so the connection stays open, then the
+         * context completes.
+         */
+        void finish() {
+            if (!drainStarted.compareAndSet(false, true)) {
+                return;
+            }
+            if (req instanceof ServletHttpRequest<?, ?> servletRequest) {
+                servletRequest.discardUnreadBody(this::complete);
+            } else {
+                complete();
+            }
+        }
+
+        /**
+         * The container ended the execution: the request is terminated without waiting for its body.
+         */
+        void terminate() {
+            drainStarted.set(true);
+            complete();
+        }
+
+        private void complete() {
+            if (!completed.compareAndSet(false, true)) {
+                return;
+            }
+            try {
+                ctx.complete();
+            } catch (IllegalStateException alreadyCompleted) {
+                LOG.debug("Async context already completed for request [{} - {}]", req.getMethodName(), req.getUri(), alreadyCompleted);
+            } finally {
+                requestTerminated.run();
+            }
         }
     }
 
