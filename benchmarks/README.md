@@ -9,10 +9,8 @@ JSON out). Each runtime has a task: `runNetty`, `runTomcat`, `runJetty`, `runUnd
 
 Properties:
 
-- `-PservletVersion=` the `io.micronaut.servlet` version to run (default `6.2.0-SNAPSHOT`, resolved from Maven
-  local first). Publish a work-in-progress build with
-  `./gradlew -PprojectVersion=6.2.0-MYCHANGE-SNAPSHOT :micronaut-servlet-api:publishToMavenLocal ...` for the
-  API, core, engine and the four server modules.
+- `-PservletVersion=` the `io.micronaut.servlet` version to run (default `6.2.0-SNAPSHOT`, resolved from the Central
+  snapshots repository).
 - `-PmnVersion=` the micronaut-core BOM version (default `5.2.0`).
 - `-Pvt=true|false` overrides `micronaut.servlet.enable-virtual-threads`; `-Ploom` turns on Netty's loom-carrier
   event loop; `-Pjvmextra="..."` appends JVM arguments.
