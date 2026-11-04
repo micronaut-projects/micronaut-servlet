@@ -47,7 +47,6 @@ import io.micronaut.http.server.binding.ServerBodyAnnotationBinder;
 import io.micronaut.http.server.binding.ServerRequestBody;
 import io.micronaut.http.server.multipart.FormFactory;
 import io.micronaut.http.server.multipart.FormRouteCompleter;
-import io.micronaut.http.server.multipart.MultipartBody;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 
@@ -82,7 +81,6 @@ public class ServletServerRequestBinderRegistry extends DefaultServerRequestBind
                                               BeanProvider<FormFactory> formFactory) {
         super(conversionService, binders, bodyBinder, formFactory);
         addArgumentBinder(new SizeLimitInputStreamBinder(new InputStreamBodyBinder(bodyBinder)));
-        addArgumentBinder(new OrderedMultipartBodyBinder(formFactory));
         OrderedPublisherPartBinder publisherPartBinder = new OrderedPublisherPartBinder(new PublisherPartUploadBinder(conversionService, formFactory), formFactory);
         addArgumentBinder(publisherPartBinder);
         addArgumentBinder(new OrderedPublisherAnnotatedPartBinder(publisherPartBinder));
@@ -185,35 +183,6 @@ public class ServletServerRequestBinderRegistry extends DefaultServerRequestBind
             return registry.findArgumentBinder(part)
                 .map(binder -> binder.bind(context.with(part), source))
                 .orElse(BindingResult.unsatisfied());
-        }
-    }
-
-    /**
-     * The completed parts of a {@code MultipartBody}, in the order of the form, as the parts of a servlet request
-     * complete in any order.
-     *
-     * @param formFactory The form factory
-     */
-    private record OrderedMultipartBodyBinder(BeanProvider<FormFactory> formFactory) implements NonBlockingBodyArgumentBinder<MultipartBody> {
-
-        @Override
-        public Argument<MultipartBody> argumentType() {
-            return Argument.of(MultipartBody.class);
-        }
-
-        @Override
-        public BindingResult<MultipartBody> bind(ArgumentConversionContext<MultipartBody> context, HttpRequest<?> source) {
-            // the request itself, or e.g. the mutable view of the request that a filter continued with
-            FormCapableHttpRequest<?> form = FormBinding.formRequest(source);
-            if (form == null || !form.hasFormBody()) {
-                return BindingResult.empty();
-            }
-            FormFactory factory = formFactory.get();
-            Flux<? extends CompletedPart> parts = Flux.from(form.getRawFormFields())
-                .flatMapSequential(raw -> ReactiveExecutionFlow.toPublisher(factory.completePart(form, raw)))
-                .doOnDiscard(CompletedPart.class, part -> part.closeAsync(factory.getDiskWriteExecutor()));
-            MultipartBody body = parts::subscribe;
-            return () -> Optional.of(body);
         }
     }
 
