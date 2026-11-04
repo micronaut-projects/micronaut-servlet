@@ -39,9 +39,37 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class HttpExchangeHttpServletRequestTest {
+
+    @Test
+    void anAbsentDateHeaderIsMinusOne() {
+        HttpExchangeHttpServletRequest request = newRequest("GET", "/", new Headers(), "");
+
+        assertEquals(-1L, request.getDateHeader("If-Modified-Since"));
+    }
+
+    @Test
+    void aDateHeaderIsParsedInEveryHttpDateFormat() {
+        for (String date : List.of("Sun, 06 Nov 1994 08:49:37 GMT", "Sunday, 06-Nov-94 08:49:37 GMT", "Sun Nov  6 08:49:37 1994")) {
+            Headers headers = new Headers();
+            headers.add("If-Modified-Since", date);
+            HttpExchangeHttpServletRequest request = newRequest("GET", "/", headers, "");
+
+            assertEquals(784111777000L, request.getDateHeader("If-Modified-Since"), date);
+        }
+    }
+
+    @Test
+    void aMalformedDateHeaderIsAnIllegalArgument() {
+        Headers headers = new Headers();
+        headers.add("If-Modified-Since", "yesterday");
+        HttpExchangeHttpServletRequest request = newRequest("GET", "/", headers, "");
+
+        assertThrows(IllegalArgumentException.class, () -> request.getDateHeader("If-Modified-Since"));
+    }
 
     @Test
     void anAbsentContentLengthIsUnknownRatherThanEmpty() {

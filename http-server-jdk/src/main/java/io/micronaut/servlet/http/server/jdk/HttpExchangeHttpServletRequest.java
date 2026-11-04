@@ -21,6 +21,7 @@ import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
+import io.micronaut.http.HttpDates;
 import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.cookie.ServerCookieDecoder;
@@ -54,6 +55,7 @@ import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.Principal;
+import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
@@ -373,7 +375,15 @@ final class HttpExchangeHttpServletRequest implements HttpServletRequest, Upgrad
 
     @Override
     public long getDateHeader(String name) {
-        throw new UnsupportedOperationException("Not implemented");
+        String value = getHeader(name);
+        if (value == null) {
+            return -1;
+        }
+        ZonedDateTime date = HttpDates.parse(value);
+        if (date == null) {
+            throw new IllegalArgumentException("Header " + name + " is not a date: " + value);
+        }
+        return date.toInstant().toEpochMilli();
     }
 
     @Override

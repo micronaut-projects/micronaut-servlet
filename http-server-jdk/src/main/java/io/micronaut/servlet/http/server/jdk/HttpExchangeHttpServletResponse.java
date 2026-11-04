@@ -22,6 +22,7 @@ import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpMethod;
+import io.micronaut.http.HttpDates;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.cookie.SameSite;
 import io.micronaut.http.cookie.ServerCookieEncoder;
@@ -37,9 +38,6 @@ import java.io.PrintWriter;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -57,8 +55,6 @@ import java.util.TreeMap;
 @Internal
 final class HttpExchangeHttpServletResponse implements HttpServletResponse {
     private static final int DEFAULT_STATUS = HttpStatus.OK.getCode();
-    private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter
-        .ofPattern("EEE, dd MMM yyyy HH:mm:ss 'GMT'", Locale.ENGLISH);
 
     /**
      * Attribute names that the conversion to a Micronaut cookie carries and the encoder therefore writes itself,
@@ -369,7 +365,7 @@ final class HttpExchangeHttpServletResponse implements HttpServletResponse {
     }
 
     private static String formatDate(long millis) {
-        return DATE_FORMAT.format(ZonedDateTime.ofInstant(Instant.ofEpochMilli(millis), ZoneOffset.UTC));
+        return HttpDates.format(Instant.ofEpochMilli(millis));
     }
 
     @Override
