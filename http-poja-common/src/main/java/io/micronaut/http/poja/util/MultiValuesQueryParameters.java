@@ -19,6 +19,7 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.convert.ConversionService;
+import io.micronaut.core.convert.TypeConverter;
 import io.micronaut.core.convert.value.MutableConvertibleMultiValuesMap;
 import io.micronaut.http.MutableHttpParameters;
 
@@ -69,6 +70,16 @@ public record MultiValuesQueryParameters(
     @Override
     public Collection<List<String>> values() {
         return queryParams.values();
+    }
+
+    @Override
+    public <T> Optional<T> get(CharSequence name, ArgumentConversionContext<T> conversionContext, TypeConverter<String, T> converter) {
+        return queryParams.get(name, conversionContext, converter);
+    }
+
+    @Override
+    public ConversionService getConversionService() {
+        return queryParams.getConversionService();
     }
 
     @Override

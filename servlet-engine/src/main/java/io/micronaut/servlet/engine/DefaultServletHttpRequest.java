@@ -21,6 +21,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.convert.ConversionService;
+import io.micronaut.core.convert.TypeConverter;
 import io.micronaut.core.convert.value.MutableConvertibleValues;
 import io.micronaut.core.io.buffer.ByteArrayBufferFactory;
 import io.micronaut.core.io.buffer.ReadBufferFactory;
@@ -1483,6 +1484,24 @@ public final class DefaultServletHttpRequest<B> implements
         }
 
         @Override
+        public <T> Optional<T> get(CharSequence name, ArgumentConversionContext<T> conversionContext, TypeConverter<String, T> converter) {
+            MutableHttpHeaders copy = changed;
+            if (copy != null) {
+                return copy.get(name, conversionContext, converter);
+            }
+            final String v = get(name);
+            if (v != null) {
+                return converter.convert(v, conversionContext.getArgument().getType(), conversionContext);
+            }
+            return Optional.empty();
+        }
+
+        @Override
+        public ConversionService getConversionService() {
+            return conversionService;
+        }
+
+        @Override
         public MutableHttpHeaders add(CharSequence header, CharSequence value) {
             changed().add(header, value);
             return this;
@@ -1700,6 +1719,27 @@ public final class DefaultServletHttpRequest<B> implements
                 }
             }
             return Optional.empty();
+        }
+
+        @Override
+        public <T> Optional<T> get(CharSequence name, ArgumentConversionContext<T> conversionContext, TypeConverter<String, T> converter) {
+            Class<T> rawType = conversionContext.getArgument().getType();
+            if (rawType == Optional.class || Iterable.class.isAssignableFrom(rawType) || rawType.isArray()) {
+                return get(name, conversionContext);
+            }
+            final String v = get(name);
+            if (v == null) {
+                return Optional.empty();
+            }
+            if (rawType.isInstance(v)) {
+                return Optional.of(rawType.cast(v));
+            }
+            return converter.convert(v, rawType, conversionContext);
+        }
+
+        @Override
+        public ConversionService getConversionService() {
+            return conversionService;
         }
     }
 }
