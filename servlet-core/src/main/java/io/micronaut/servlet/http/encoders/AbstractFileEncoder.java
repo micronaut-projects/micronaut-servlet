@@ -64,7 +64,7 @@ public abstract class AbstractFileEncoder<T extends FileCustomizableResponseType
         headers.date(now);
 
         // Add cache headers
-        // TODO: Make configurable
+        // not configurable yet
         LocalDateTime cacheSeconds = now.plus(60, ChronoUnit.SECONDS);
         if (response.header(HttpHeaders.EXPIRES) == null) {
             headers.expires(cacheSeconds);
