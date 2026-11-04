@@ -16,12 +16,14 @@
 package io.micronaut.servlet.jetty;
 
 import io.micronaut.context.annotation.Retain;
-import io.micronaut.context.reload.RequestAdmission;
 import io.micronaut.context.env.DevelopmentActive;
+import io.micronaut.context.reload.RequestAdmission;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.http.server.HttpServerConfiguration;
 import io.micronaut.http.ssl.SslConfiguration;
 import io.micronaut.servlet.engine.MicronautServletConfiguration;
+import io.micronaut.servlet.http.server.DevelopmentRequestGate;
+import io.micronaut.servlet.http.server.DevelopmentRequestGate.Generation;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Singleton;
 import org.eclipse.jetty.http.HttpHeader;
@@ -44,17 +46,11 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * The Jetty server kept across the restarts of the application in development mode, with its connectors, so that the
@@ -63,15 +59,11 @@ import java.util.concurrent.atomic.AtomicInteger;
  * servlet context with that generation's servlets, filters and listeners, its static resources and its compression,
  * which each generation builds anew with its own mappings, and its request log is the running generation's.
  *
- * <p>While one generation stops and the next starts, a request to any mapping, Micronaut's or not, waits for the next
- * generation, for {@link RequestAdmission#holdTimeout()} at most, after which it is answered with a 503 and a
- * {@code Retry-After}. The requests in flight on the stopping generation may finish on it, for
+ * <p>The gate is a {@link DevelopmentRequestGate}: while the development launcher's {@link RequestAdmission} says a
+ * batch of changes compiles or applies, and while one generation stops and the next starts, a request to any mapping,
+ * Micronaut's or not, waits, for {@link RequestAdmission#holdTimeout()} at most, after which it is answered with a 503
+ * and a {@code Retry-After}. The requests in flight on the stopping generation may finish on it, for
  * {@link RequestAdmission#drainTimeout()} at most, before its handlers stop.</p>
- *
- * <p>While the development launcher compiles and applies a batch of changes, its {@link RequestAdmission} holds every
- * request as well, so that a servlet that is not Micronaut's is not answered by a generation about to be replaced.
- * Once admitted, a request is served by the generation that runs then: the one it arrived on, which a restart drains
- * before it stops, or the next one.</p>
  *
  * <p>Retained across restarts until a change under {@value HttpServerConfiguration#PREFIX}, which configures the
  * server, its connectors, Jetty and the access log, {@value MicronautServletConfiguration#PREFIX}, which configures the
@@ -90,42 +82,22 @@ import java.util.concurrent.atomic.AtomicInteger;
 final class RetainedJettyServer {
 
     private static final Logger LOG = LoggerFactory.getLogger(RetainedJettyServer.class);
-    private static final String RETRY_AFTER_SECONDS = "1";
-    /**
-     * How long a request waits for the next generation without a development launcher, which otherwise sets it.
-     */
-    private static final Duration DEFAULT_HOLD_TIMEOUT = Duration.ofSeconds(30);
-    /**
-     * How long a restart waits for the requests in flight without a development launcher, which otherwise sets it.
-     */
-    private static final Duration DEFAULT_DRAIN_TIMEOUT = Duration.ofSeconds(10);
     private static final String GENERATION_ATTRIBUTE = RetainedJettyServer.class.getName() + ".generation";
 
     private final Object lock = new Object();
-    private final GenerationGate gate = new GenerationGate();
+    private final DevelopmentRequestGate<Served> gate = new DevelopmentRequestGate<>();
+    private final GateHandler handler = new GateHandler();
     private final GenerationRequestLog requestLog = new GenerationRequestLog();
-    /**
-     * The requests waiting for the next generation.
-     */
-    private final List<HeldRequest> held = new ArrayList<>();
     private @Nullable Server server;
     private @Nullable String connectors;
-    private volatile @Nullable Generation current;
     /**
-     * The handlers of the generation that uses the server, until it starts.
+     * What the generation that uses the server serves, until it starts.
      */
-    private @Nullable Handler staged;
-    private @Nullable RequestLog stagedLog;
-    private @Nullable Executor stagedExecutor;
+    private @Nullable Served staged;
     /**
      * The virtual threads executor of the kept thread pool, which runs each task on the running generation's.
      */
     private final GenerationExecutor virtualThreads = new GenerationExecutor();
-    private boolean closed;
-    /**
-     * The development launcher's admission: requests wait while a batch of changes compiles and applies.
-     */
-    private volatile @Nullable RequestAdmission admission;
 
     /**
      * Created once, as the first generation starts, and kept from then on.
@@ -140,17 +112,7 @@ final class RetainedJettyServer {
      * @param admission The admission, if any
      */
     void admission(@Nullable RequestAdmission admission) {
-        this.admission = admission;
-    }
-
-    private Duration holdTimeout() {
-        RequestAdmission current = admission;
-        return current != null ? current.holdTimeout() : DEFAULT_HOLD_TIMEOUT;
-    }
-
-    private Duration drainTimeout() {
-        RequestAdmission current = admission;
-        return current != null ? current.drainTimeout() : DEFAULT_DRAIN_TIMEOUT;
+        gate.admission(admission);
     }
 
     /**
@@ -188,14 +150,17 @@ final class RetainedJettyServer {
                 // the requests run on virtual threads of the generation's executor, which the kept pool must not keep
                 pool.setVirtualThreadsExecutor(virtualThreads);
             }
-            built.setHandler(gate);
+            built.setHandler(handler);
             // whether a generation logs requests may change from one generation to the next, by a request log bean
             built.setRequestLog(requestLog);
             server = built;
             connectors = signature;
-            closed = false;
         }
-        stop(released);
+        if (released != null) {
+            closeGate();
+            stop(released);
+        }
+        gate.open();
         return built;
     }
 
@@ -218,42 +183,26 @@ final class RetainedJettyServer {
      * @return The generation
      * @throws Exception If the server or the handlers cannot start
      */
-    Generation start() throws Exception {
+    Generation<Served> start() throws Exception {
         Server kept;
-        Handler handler;
-        RequestLog log;
-        Executor executor;
+        Served served;
         synchronized (lock) {
             kept = server;
-            handler = staged;
-            log = stagedLog;
-            executor = stagedExecutor;
+            served = staged;
             staged = null;
-            stagedLog = null;
-            stagedExecutor = null;
         }
-        if (kept == null || handler == null) {
+        if (kept == null || served == null) {
             throw new IllegalStateException("No generation staged its handlers in the retained Jetty server");
         }
         if (!kept.isStarted()) {
             kept.start();
         }
-        handler.setServer(kept);
-        if (log instanceof LifeCycle cycle) {
+        served.handler.setServer(kept);
+        if (served.requestLog instanceof LifeCycle cycle) {
             cycle.start();
         }
-        handler.start();
-        Generation generation = new Generation(handler, log, executor);
-        List<HeldRequest> waiting;
-        synchronized (lock) {
-            current = generation;
-            waiting = new ArrayList<>(held);
-            held.clear();
-        }
-        for (HeldRequest request : waiting) {
-            dispatch(kept, request);
-        }
-        return generation;
+        served.handler.start();
+        return gate.start(served);
     }
 
     /**
@@ -262,13 +211,8 @@ final class RetainedJettyServer {
      * @param generation The generation
      * @return A future that completes once no request of the generation is in flight
      */
-    CompletableFuture<Void> retire(Generation generation) {
-        synchronized (lock) {
-            if (current == generation) {
-                current = null;
-            }
-        }
-        return generation.retire();
+    CompletableFuture<Void> retire(Generation<Served> generation) {
+        return gate.retire(generation);
     }
 
     /**
@@ -276,20 +220,9 @@ final class RetainedJettyServer {
      *
      * @param generation The generation
      */
-    void stop(Generation generation) {
-        CompletableFuture<Void> idle = retire(generation);
-        Duration timeout = drainTimeout();
-        try {
-            idle.get(timeout.toMillis(), TimeUnit.MILLISECONDS);
-        } catch (TimeoutException e) {
-            LOG.warn("Requests were still in flight on the stopping generation after {} ms; its handlers stop anyway (micronaut.dev.requests.drain-timeout)",
-                timeout.toMillis());
-        } catch (ExecutionException e) {
-            LOG.debug("Draining the stopping generation failed", e);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-        generation.stop();
+    void stop(Generation<Served> generation) {
+        gate.drain(generation);
+        stopServed(generation);
     }
 
     /**
@@ -297,41 +230,54 @@ final class RetainedJettyServer {
      */
     @PreDestroy
     void close() {
-        synchronized (lock) {
-            closed = true;
-        }
         release();
     }
 
     private void release() {
         Server released;
-        Generation running;
-        List<HeldRequest> waiting;
         synchronized (lock) {
             released = server;
-            running = current;
             server = null;
             connectors = null;
-            current = null;
             staged = null;
-            stagedLog = null;
-            stagedExecutor = null;
-            waiting = new ArrayList<>(held);
-            held.clear();
         }
-        for (HeldRequest request : waiting) {
-            request.unavailable("The application stopped");
-        }
-        if (running != null) {
-            running.stop();
-        }
+        closeGate();
         stop(released);
     }
 
+    private void closeGate() {
+        Generation<Served> running = gate.close("The application stopped");
+        if (running != null) {
+            stopServed(running);
+        }
+    }
+
+    private static void stopServed(Generation<Served> generation) {
+        if (!generation.stop()) {
+            return;
+        }
+        Served served = generation.served();
+        try {
+            served.handler.stop();
+        } catch (Exception e) {
+            LOG.debug("Cannot stop the handlers of the stopping generation", e);
+        }
+        if (served.requestLog instanceof LifeCycle cycle) {
+            try {
+                cycle.stop();
+            } catch (Exception e) {
+                LOG.debug("Cannot stop the request log of the stopping generation", e);
+            }
+        }
+    }
+
     private void stage(Server built) {
-        staged = built.getHandler();
-        stagedLog = built.getRequestLog();
-        stagedExecutor = built.getThreadPool() instanceof QueuedThreadPool pool ? pool.getVirtualThreadsExecutor() : null;
+        Handler handlers = built.getHandler();
+        if (handlers == null) {
+            throw new IllegalStateException("The generation's Jetty server has no handler");
+        }
+        staged = new Served(handlers, built.getRequestLog(),
+            built.getThreadPool() instanceof QueuedThreadPool pool ? pool.getVirtualThreadsExecutor() : null);
         // the generation's server is not started: it keeps nothing the kept one needs
         built.setHandler((Handler) null);
         built.setRequestLog(null);
@@ -367,152 +313,62 @@ final class RetainedJettyServer {
         return signature.toString();
     }
 
-    private @Nullable Generation hold(Request request, Response response, Callback callback) {
-        HeldRequest waiting = new HeldRequest(request, response, callback);
-        Server kept;
+    private @Nullable Server kept() {
         synchronized (lock) {
-            Generation running = current;
-            if (running != null) {
-                return running;
-            }
-            kept = server;
-            if (kept != null && !closed) {
-                held.add(waiting);
-            }
-        }
-        if (kept == null) {
-            waiting.unavailable("The application is not running");
-            return null;
-        }
-        Duration timeout = holdTimeout();
-        waiting.timeout = kept.getScheduler().schedule(() -> {
-            synchronized (lock) {
-                held.remove(waiting);
-            }
-            waiting.unavailable("The application is restarting and did not finish within " + timeout.toMillis() + " ms; retry shortly.");
-        }, timeout.toMillis(), TimeUnit.MILLISECONDS);
-        return null;
-    }
-
-    /**
-     * Holds a request while a batch of changes is in progress, until it is admitted, or answers it with a 503 after the
-     * hold timeout.
-     */
-    private void holdForAdmission(RequestAdmission batch, Request request, Response response, Callback callback) {
-        HeldRequest waiting = new HeldRequest(request, response, callback);
-        Server kept;
-        synchronized (lock) {
-            kept = closed ? null : server;
-        }
-        if (kept == null) {
-            waiting.unavailable("The application is not running");
-            return;
-        }
-        Duration timeout = holdTimeout();
-        waiting.timeout = kept.getScheduler().schedule(
-            () -> waiting.unavailable("The application is reloading and did not finish within " + timeout.toMillis() + " ms; retry shortly."),
-            timeout.toMillis(), TimeUnit.MILLISECONDS);
-        batch.whenAdmitted().thenRun(() -> admitted(kept, waiting));
-    }
-
-    /**
-     * A request held while a batch was in progress is admitted: once the batch is done, or as a restart is about to stop
-     * the running generation. It is counted on the running generation right away, on the thread that admits it, so that
-     * a restart drains it as a request in flight on the generation it arrived on; while none runs, it waits for the
-     * next one.
-     */
-    private void admitted(Server kept, HeldRequest waiting) {
-        if (!waiting.claim()) {
-            // answered with a 503 meanwhile
-            return;
-        }
-        Generation running = current;
-        Generation entered = running != null && running.enter() ? running : null;
-        try {
-            kept.getThreadPool().execute(() -> {
-                try {
-                    boolean handled = entered != null
-                        ? gate.handleEntered(entered, waiting.request, waiting.response, waiting.callback)
-                        : gate.handleOn(null, waiting.request, waiting.response, waiting.callback);
-                    if (!handled) {
-                        Response.writeError(waiting.request, waiting.response, waiting.callback, HttpStatus.NOT_FOUND_404);
-                    }
-                } catch (Throwable e) {
-                    Response.writeError(waiting.request, waiting.response, waiting.callback, e);
-                }
-            });
-        } catch (RejectedExecutionException e) {
-            if (entered != null) {
-                entered.exit();
-            }
-            waiting.reject("The server is stopping");
-        }
-    }
-
-    private void dispatch(Server kept, HeldRequest request) {
-        try {
-            kept.getThreadPool().execute(() -> {
-                if (request.claim()) {
-                    try {
-                        if (!gate.handleOn(current, request.request, request.response, request.callback)) {
-                            Response.writeError(request.request, request.response, request.callback, HttpStatus.NOT_FOUND_404);
-                        }
-                    } catch (Throwable e) {
-                        Response.writeError(request.request, request.response, request.callback, e);
-                    }
-                }
-            });
-        } catch (RejectedExecutionException e) {
-            request.unavailable("The server is stopping");
+            return server;
         }
     }
 
     /**
-     * The handler of the kept server: hands each request to the handlers of the running generation, or holds it until
-     * the next one runs.
+     * What a generation serves: its handlers, with its servlet context, its request log, and the executor of its
+     * virtual threads.
+     *
+     * @param handler The handlers
+     * @param requestLog The request log
+     * @param executor The executor of virtual threads
      */
-    private final class GenerationGate extends Handler.Abstract {
+    record Served(Handler handler, @Nullable RequestLog requestLog, @Nullable Executor executor) {
+    }
+
+    /**
+     * The handler of the kept server: hands each request to the handlers of the running generation, or holds it in the
+     * gate until it may proceed.
+     */
+    private final class GateHandler extends Handler.Abstract {
 
         @Override
         public boolean handle(Request request, Response response, Callback callback) throws Exception {
-            RequestAdmission batch = admission;
-            if (batch != null && !batch.isAdmitted()) {
-                // a batch of changes compiles or applies: the running generation may be about to be replaced
-                holdForAdmission(batch, request, response, callback);
-                return true;
-            }
-            Generation running = current;
+            HeldRequest[] waiting = new HeldRequest[1];
+            Generation<Served> running = gate.admit(() -> waiting[0] = new HeldRequest(request, response, callback));
             if (running == null) {
-                running = hold(request, response, callback);
-                if (running == null) {
-                    return true;
-                }
-            }
-            return handleOn(running, request, response, callback);
-        }
-
-        boolean handleOn(@Nullable Generation running, Request request, Response response, Callback callback) throws Exception {
-            if (running == null || !running.enter()) {
-                // retired meanwhile: waits for the next one
-                Generation next = hold(request, response, callback);
-                return next == null || handleOn(next, request, response, callback);
+                schedule(waiting[0]);
+                return true;
             }
             return handleEntered(running, request, response, callback);
         }
 
-        boolean handleEntered(Generation running, Request request, Response response, Callback callback) throws Exception {
+        boolean handleEntered(Generation<Served> running, Request request, Response response, Callback callback) throws Exception {
             // the request is logged by the request log of the generation that served it, even once that one retired
             request.setAttribute(GENERATION_ATTRIBUTE, running);
             TrackedCallback tracked = new TrackedCallback(callback, running);
             boolean handled = false;
             try {
-                handled = running.handler.handle(request, response, tracked);
+                handled = running.served().handler.handle(request, response, tracked);
                 return handled;
             } finally {
                 if (!handled) {
                     tracked.release();
                 }
             }
+        }
+
+        private void schedule(@Nullable HeldRequest waiting) {
+            Server kept = kept();
+            if (waiting == null || kept == null) {
+                return;
+            }
+            long timeout = gate.holdTimeout().toMillis();
+            waiting.timeout = kept.getScheduler().schedule(() -> gate.expire(waiting), timeout, TimeUnit.MILLISECONDS);
         }
     }
 
@@ -522,9 +378,12 @@ final class RetainedJettyServer {
      */
     private final class GenerationRequestLog implements RequestLog {
         @Override
+        @SuppressWarnings("unchecked")
         public void log(Request request, Response response) {
-            Generation running = request.getAttribute(GENERATION_ATTRIBUTE) instanceof Generation served ? served : current;
-            RequestLog log = running == null ? null : running.requestLog;
+            Generation<Served> running = request.getAttribute(GENERATION_ATTRIBUTE) instanceof Generation<?> served
+                ? (Generation<Served>) served
+                : gate.current();
+            RequestLog log = running == null ? null : running.served().requestLog;
             if (log != null) {
                 log.log(request, response);
             }
@@ -541,8 +400,8 @@ final class RetainedJettyServer {
 
         @Override
         public void execute(Runnable task) {
-            Generation running = current;
-            Executor executor = running == null ? null : running.executor;
+            Generation<Served> running = gate.current();
+            Executor executor = running == null ? null : running.served().executor;
             if (executor != null) {
                 try {
                     executor.execute(task);
@@ -556,76 +415,14 @@ final class RetainedJettyServer {
     }
 
     /**
-     * What a generation serves: its handlers, with its servlet context, and its request log. Each of its requests is
-     * counted, so that it can be waited for as the generation stops.
-     */
-    static final class Generation {
-        private final Handler handler;
-        private final @Nullable RequestLog requestLog;
-        private final @Nullable Executor executor;
-        private final AtomicInteger active = new AtomicInteger();
-        private final CompletableFuture<Void> idle = new CompletableFuture<>();
-        private volatile boolean retired;
-        private final AtomicBoolean stopped = new AtomicBoolean();
-
-        Generation(Handler handler, @Nullable RequestLog requestLog, @Nullable Executor executor) {
-            this.handler = handler;
-            this.requestLog = requestLog;
-            this.executor = executor;
-        }
-
-        boolean enter() {
-            active.incrementAndGet();
-            if (retired) {
-                exit();
-                return false;
-            }
-            return true;
-        }
-
-        void exit() {
-            if (active.decrementAndGet() == 0 && retired) {
-                idle.complete(null);
-            }
-        }
-
-        CompletableFuture<Void> retire() {
-            retired = true;
-            if (active.get() == 0) {
-                idle.complete(null);
-            }
-            return idle;
-        }
-
-        void stop() {
-            if (!stopped.compareAndSet(false, true)) {
-                return;
-            }
-            retired = true;
-            try {
-                handler.stop();
-            } catch (Exception e) {
-                LOG.debug("Cannot stop the handlers of the stopping generation", e);
-            }
-            if (requestLog instanceof LifeCycle cycle) {
-                try {
-                    cycle.stop();
-                } catch (Exception e) {
-                    LOG.debug("Cannot stop the request log of the stopping generation", e);
-                }
-            }
-        }
-    }
-
-    /**
      * Counts a request of a generation as finished once it completes.
      */
     private static final class TrackedCallback implements Callback {
         private final Callback delegate;
-        private final Generation generation;
+        private final Generation<Served> generation;
         private final AtomicBoolean released = new AtomicBoolean();
 
-        TrackedCallback(Callback delegate, Generation generation) {
+        TrackedCallback(Callback delegate, Generation<Served> generation) {
             this.delegate = delegate;
             this.generation = generation;
         }
@@ -655,14 +452,13 @@ final class RetainedJettyServer {
     }
 
     /**
-     * A request waiting for the next generation: dispatched to it once it runs, or answered with a 503, whichever comes
-     * first.
+     * A request held by the gate: resumed on a thread of the kept pool once it may proceed, or answered with a 503,
+     * whichever comes first.
      */
-    private static final class HeldRequest {
+    private final class HeldRequest extends DevelopmentRequestGate.HeldRequest<Served> {
         private final Request request;
         private final Response response;
         private final Callback callback;
-        private final AtomicBoolean claimed = new AtomicBoolean();
         private volatile Scheduler.@Nullable Task timeout;
 
         HeldRequest(Request request, Response response, Callback callback) {
@@ -671,30 +467,46 @@ final class RetainedJettyServer {
             this.callback = callback;
         }
 
-        boolean claim() {
-            if (!claimed.compareAndSet(false, true)) {
-                return false;
-            }
+        @Override
+        protected void claimed() {
             Scheduler.Task task = timeout;
             if (task != null) {
                 task.cancel();
             }
-            return true;
         }
 
-        void unavailable(String message) {
-            if (claim()) {
-                reject(message);
+        @Override
+        protected void resume(@Nullable Generation<Served> entered) {
+            Server kept = kept();
+            try {
+                if (kept == null) {
+                    throw new RejectedExecutionException("The server is stopped");
+                }
+                kept.getThreadPool().execute(() -> {
+                    try {
+                        boolean handled = entered != null
+                            ? handler.handleEntered(entered, request, response, callback)
+                            : handler.handle(request, response, callback);
+                        if (!handled) {
+                            Response.writeError(request, response, callback, HttpStatus.NOT_FOUND_404);
+                        }
+                    } catch (Throwable e) {
+                        Response.writeError(request, response, callback, e);
+                    }
+                });
+            } catch (RejectedExecutionException e) {
+                if (entered != null) {
+                    entered.exit();
+                }
+                reject("The server is stopping");
             }
         }
 
-        /**
-         * Answers the claimed request with a 503.
-         */
-        void reject(String message) {
+        @Override
+        protected void reject(String message) {
             try {
                 response.setStatus(HttpStatus.SERVICE_UNAVAILABLE_503);
-                response.getHeaders().put(HttpHeader.RETRY_AFTER, RETRY_AFTER_SECONDS);
+                response.getHeaders().put(HttpHeader.RETRY_AFTER, DevelopmentRequestGate.RETRY_AFTER_SECONDS);
                 response.getHeaders().put(HttpHeader.CONTENT_TYPE, "text/plain;charset=utf-8");
                 Content.Sink.write(response, true, message, callback);
             } catch (Throwable e) {
