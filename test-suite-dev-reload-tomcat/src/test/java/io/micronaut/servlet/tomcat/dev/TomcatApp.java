@@ -247,6 +247,15 @@ final class TomcatApp {
                 }
             }
 
+            @WebServlet("/plain-meta-csp")
+            public static class MetaCsp extends HttpServlet {
+                @Override
+                protected void doGet(HttpServletRequest req, HttpServletResponse res) throws IOException {
+                    res.setContentType("text/html;charset=UTF-8");
+                    res.getWriter().write(PAGE.replace("<head>", "<head><meta http-equiv='Content-Security-Policy' content='script-src self'>"));
+                }
+            }
+
             @WebServlet("/plain-late-csp")
             public static class LateCsp extends HttpServlet {
                 @Override

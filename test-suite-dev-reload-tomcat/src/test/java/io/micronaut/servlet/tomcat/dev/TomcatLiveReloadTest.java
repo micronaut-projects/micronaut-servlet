@@ -52,7 +52,7 @@ class TomcatLiveReloadTest {
             TomcatApp.liveReloadSources(harness);
             harness.start();
             int liveReloadPort = harness.runtime().liveReload().map(LiveReloadServer::port).orElseThrow();
-            String expected = TomcatApp.PAGE.replace("</body>", LiveReloadServer.scriptTag(liveReloadPort) + "</body>");
+            String expected = TomcatApp.PAGE.replace("</body>", io.micronaut.dev.livereload.LiveReloadScript.tag(liveReloadPort) + "</body>");
             HttpClient client = HttpClient.newHttpClient();
 
             for (String path : new String[] {"/plain-writer", "/plain-stream", "/page", "/site/index.html"}) {
@@ -75,6 +75,11 @@ class TomcatLiveReloadTest {
             // a page flushed before its closing body tag is streamed: it goes out as written
             HttpResponse<byte[]> streamed = get(client, port, "/plain-streamed");
             assertEquals(TomcatApp.PAGE, new String(streamed.body(), StandardCharsets.UTF_8));
+
+            // a page that declares a policy itself would have the script blocked: sent as written
+            HttpResponse<byte[]> metaPolicy = get(client, port, "/plain-meta-csp");
+            assertEquals(TomcatApp.PAGE.replace("<head>", "<head><meta http-equiv='Content-Security-Policy' content='script-src self'>"),
+                new String(metaPolicy.body(), StandardCharsets.UTF_8));
 
             // a policy set after the page was written, a partial response and an asynchronous request the servlet
             // dispatches: sent as written

@@ -52,7 +52,7 @@ class UndertowLiveReloadTest {
             UndertowApp.liveReloadSources(harness);
             harness.start();
             int liveReloadPort = harness.runtime().liveReload().map(LiveReloadServer::port).orElseThrow();
-            String expected = UndertowApp.PAGE.replace("</body>", LiveReloadServer.scriptTag(liveReloadPort) + "</body>");
+            String expected = UndertowApp.PAGE.replace("</body>", io.micronaut.dev.livereload.LiveReloadScript.tag(liveReloadPort) + "</body>");
             HttpClient client = HttpClient.newHttpClient();
 
             for (String path : new String[] {"/plain-writer", "/plain-stream", "/page", "/site/index.html"}) {

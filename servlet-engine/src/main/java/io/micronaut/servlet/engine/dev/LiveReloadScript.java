@@ -21,12 +21,14 @@ import io.micronaut.dev.livereload.LiveReloadServer;
 import org.jspecify.annotations.Nullable;
 
 import java.nio.charset.StandardCharsets;
+import java.util.regex.Pattern;
 
 /**
  * The LiveReload script tag of the development runtime and how it goes into an HTML page, shared by the servlet filter
- * and the containers' own static resources: the tag is {@link LiveReloadServer#scriptTag(int)}, as
- * {@code micronaut-dev}'s filter puts it in Micronaut's responses, and goes before the last closing body tag. The page
- * is searched as bytes, without being decoded, which holds for the ASCII-compatible charsets of HTML pages.
+ * and the containers' own static resources: the tag is the one {@code micronaut-dev}'s filter puts in
+ * Micronaut's responses, and goes before the last closing body tag, unless the page declares a Content-Security-Policy
+ * in a {@code <meta>} element, which would block the script, as that filter leaves such a page alone too. The page is
+ * searched as bytes, without being decoded, which holds for the ASCII-compatible charsets of HTML pages.
  *
  * @author graemerocher
  * @since 6.3.0
@@ -40,6 +42,8 @@ public final class LiveReloadScript {
     public static final int MAX_BUFFERED = 8 * 1024 * 1024;
 
     private static final byte[] BODY_END = "</body>".getBytes(StandardCharsets.US_ASCII);
+    // a policy a page declares itself applies as the header does; http-equiv as a whole attribute name, not data-http-equiv
+    private static final Pattern CSP_META = Pattern.compile("<meta\\s(?:[^>]*\\s)?http-equiv\\s*=\\s*[\"']?\\s*content-security-policy\\s*[\"'\\s/>]", Pattern.CASE_INSENSITIVE);
 
     private LiveReloadScript() {
     }
@@ -55,7 +59,7 @@ public final class LiveReloadScript {
         if (server == null || !runtime.manifest().liveReload().injectScript()) {
             return null;
         }
-        return LiveReloadServer.scriptTag(server.port()).getBytes(StandardCharsets.US_ASCII);
+        return io.micronaut.dev.livereload.LiveReloadScript.tag(server.port()).getBytes(StandardCharsets.US_ASCII);
     }
 
     /**
@@ -99,11 +103,13 @@ public final class LiveReloadScript {
      *
      * @param page The page
      * @param tag The tag
-     * @return The page with the tag, or null if it has no closing body tag or carries the tag already
+     * @return The page with the tag, or null if it has no closing body tag, carries the tag already or declares a
+     * Content-Security-Policy in a {@code <meta>} element
      */
     public static byte @Nullable [] inject(byte[] page, byte[] tag) {
         int end = lastIndexOfIgnoreCase(page, page.length, BODY_END);
-        if (end < 0 || lastIndexOfIgnoreCase(page, page.length, tag) >= 0) {
+        if (end < 0 || lastIndexOfIgnoreCase(page, page.length, tag) >= 0
+            || CSP_META.matcher(new String(page, StandardCharsets.ISO_8859_1)).find()) {
             return null;
         }
         byte[] injected = new byte[page.length + tag.length];

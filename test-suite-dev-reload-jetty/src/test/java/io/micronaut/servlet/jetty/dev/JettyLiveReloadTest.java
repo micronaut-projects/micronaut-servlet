@@ -53,7 +53,7 @@ class JettyLiveReloadTest {
             JettyApp.liveReloadSources(harness);
             harness.start();
             int liveReloadPort = harness.runtime().liveReload().map(LiveReloadServer::port).orElseThrow();
-            String expected = JettyApp.PAGE.replace("</body>", LiveReloadServer.scriptTag(liveReloadPort) + "</body>");
+            String expected = JettyApp.PAGE.replace("</body>", io.micronaut.dev.livereload.LiveReloadScript.tag(liveReloadPort) + "</body>");
             HttpClient client = HttpClient.newHttpClient();
 
             for (String path : new String[] {"/plain-writer", "/plain-stream", "/page", "/site/index.html"}) {
@@ -99,7 +99,7 @@ class JettyLiveReloadTest {
             JettyApp.liveReloadSources(harness);
             harness.start();
             int liveReloadPort = harness.runtime().liveReload().map(LiveReloadServer::port).orElseThrow();
-            String expected = JettyApp.PAGE.replace("</body>", LiveReloadServer.scriptTag(liveReloadPort) + "</body>");
+            String expected = JettyApp.PAGE.replace("</body>", io.micronaut.dev.livereload.LiveReloadScript.tag(liveReloadPort) + "</body>");
             HttpClient client = HttpClient.newHttpClient();
 
             HttpResponse<byte[]> page = get(client, port, "/site/index.html");
