@@ -37,6 +37,11 @@ final class ApacheResponseContext implements Closeable {
      * Whether the request was a {@code HEAD} request, whose response has the headers of a {@code GET} but no body.
      */
     boolean headRequest = false;
+    /**
+     * Run once the response is sent and before the connection is closed, e.g. to read some of an unread body.
+     */
+    @Nullable
+    Runnable beforeClose;
     @Nullable
     ApacheServletHttpResponse<?> primaryResponse;
 
@@ -123,6 +128,10 @@ final class ApacheResponseContext implements Closeable {
         outputBuffer.flush(out);
 
         if (connectionClose) {
+            out.flush();
+            if (beforeClose != null && !aborted) {
+                beforeClose.run();
+            }
             out.close();
         }
     }

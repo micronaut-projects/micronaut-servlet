@@ -33,6 +33,8 @@ import org.jspecify.annotations.Nullable;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.BindException;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -90,7 +92,17 @@ public class TestingServerlessEmbeddedApplication implements EmbeddedServer {
 
     private ServerSocket createServerSocket(int port) {
         try {
-            return new ServerSocket(port);
+            // bound to the loopback address the client connects to, and not shared: bound to the wildcard address, or
+            // with SO_REUSEADDR, the port could also be bound by another process, which might then get the connections
+            ServerSocket socket = new ServerSocket();
+            try {
+                socket.setReuseAddress(false);
+                socket.bind(new InetSocketAddress(InetAddress.getLoopbackAddress(), port));
+            } catch (IOException e) {
+                socket.close();
+                throw e;
+            }
+            return socket;
         } catch (BindException e) {
             // like the other servers, so that a caller can try another port
             throw new ServerStartupException("Could not bind port " + port + ": " + e.getMessage(), e);
@@ -245,7 +257,7 @@ public class TestingServerlessEmbeddedApplication implements EmbeddedServer {
 
     @Override
     public URI getURI() {
-        return URI.create("http://localhost:" + getPort());
+        return URI.create("http://" + InetAddress.getLoopbackAddress().getHostAddress() + ":" + getPort());
     }
 
     @Override

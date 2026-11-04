@@ -47,7 +47,8 @@ class ApacheFramingSpec extends Specification {
         then:
         response.startsWith('HTTP/1.1 200')
         response.endsWith('ignored')
-        endless.produced < MAX_REQUEST_SIZE + 64 * 1024 + 3 * 8192
+        // the chunk headers aside
+        endless.produced < (MAX_REQUEST_SIZE + 2 * 1024 * 1024) * 263 / 256 + 3 * 8192
     }
 
     void "an endless chunked body that the route reads answers 413"() {
@@ -60,7 +61,81 @@ class ApacheFramingSpec extends Specification {
 
         then:
         response.startsWith('HTTP/1.1 413')
-        endless.produced < MAX_REQUEST_SIZE + 64 * 1024 + 3 * 8192
+        // the chunk headers aside
+        endless.produced < (MAX_REQUEST_SIZE + 2 * 1024 * 1024) * 263 / 256 + 3 * 8192
+    }
+
+    void "the 413 for #name body over the limit is sent before the rest of the body is read"() {
+        given:
+        def out = new ByteArrayOutputStream()
+        def endless = new EndlessChunkedInputStream(head)
+        endless.onProduced(MAX_REQUEST_SIZE + 16 * 1024) { endless.sentBefore = out.size() }
+
+        when:
+        String response = serve(endless, out)
+
+        then:
+        response.startsWith('HTTP/1.1 413')
+        endless.sentBefore == response.getBytes(StandardCharsets.UTF_8).length
+
+        where:
+        name               | head
+        'a chunked'        | "POST /framing/echo HTTP/1.1\r\nHost: h\r\nContent-Type: text/plain\r\nTransfer-Encoding: chunked\r\n\r\n"
+        'a declared large' | "POST /framing/echo HTTP/1.1\r\nHost: h\r\nContent-Type: text/plain\r\nContent-Length: ${100L * 1024 * 1024}\r\n\r\n"
+    }
+
+    void "a client still sending #name body over the limit receives the whole 413, without a reset"() {
+        given:
+        ServerSocket server = new ServerSocket(0, 0, InetAddress.getLoopbackAddress())
+        Thread serving = Thread.start {
+            server.accept().withCloseable { Socket socket ->
+                try {
+                    application.serve(socket.inputStream, socket.outputStream, PojaConnection.of(socket))
+                } catch (RuntimeException | IOException ignored) {
+                    // the connection is closed
+                }
+            }
+        }
+        Socket client = new Socket(InetAddress.getLoopbackAddress(), server.localPort)
+        Thread sending = Thread.start {
+            try {
+                client.outputStream.write(head.getBytes(StandardCharsets.UTF_8))
+                byte[] piece = ('100\r\n' + ('x' * 256) + '\r\n').getBytes(StandardCharsets.UTF_8)
+                for (int i = 0; i < 4 * 1024; i++) {
+                    // a slow client: the rest of its body is still on the way when the response arrives
+                    client.outputStream.write(piece)
+                    if (i % 64 == 0) {
+                        Thread.sleep(1)
+                    }
+                }
+                if (head.contains('chunked')) {
+                    client.outputStream.write('0\r\n\r\n'.getBytes(StandardCharsets.UTF_8))
+                }
+            } catch (IOException ignored) {
+                // the server closed the connection
+            }
+        }
+
+        when:
+        // read while the body is still sent, as a client does: the response must arrive before the connection is
+        // closed, as a reset would discard it
+        String response = new String(client.inputStream.readAllBytes(), StandardCharsets.UTF_8)
+
+        then:
+        response.startsWith('HTTP/1.1 413')
+        response.contains('Content-Length: ')
+        response.endsWith('}')
+
+        cleanup:
+        client?.close()
+        sending?.join(10_000)
+        serving?.join(10_000)
+        server?.close()
+
+        where:
+        name               | head
+        'a chunked'        | "POST /framing/echo HTTP/1.1\r\nHost: h\r\nContent-Type: text/plain\r\nTransfer-Encoding: chunked\r\n\r\n"
+        'a declared large' | "POST /framing/echo HTTP/1.1\r\nHost: h\r\nContent-Type: text/plain\r\nContent-Length: ${4 * 1024 * 263}\r\n\r\n"
     }
 
     void "a chunked body over the limit answers 413 and is not followed by another request"() {
@@ -215,10 +290,18 @@ class ApacheFramingSpec extends Specification {
         private final byte[] chunk
         private int position
         long produced
+        long sentBefore = -1
+        private long threshold = Long.MAX_VALUE
+        private Runnable atThreshold
 
         EndlessChunkedInputStream(String head) {
             this.head = head.getBytes(StandardCharsets.UTF_8)
             this.chunk = ("100\r\n" + ('x' * 256) + "\r\n").getBytes(StandardCharsets.UTF_8)
+        }
+
+        void onProduced(long count, Runnable action) {
+            threshold = count
+            atThreshold = action
         }
 
         @Override
@@ -238,6 +321,9 @@ class ApacheFramingSpec extends Specification {
                     b[off + n++] = chunk[i]
                     position++
                     produced++
+                    if (produced == threshold) {
+                        atThreshold.run()
+                    }
                 }
                 if (produced > 100L * 1024 * 1024) {
                     throw new IOException("read too far")

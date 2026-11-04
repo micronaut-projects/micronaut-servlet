@@ -386,14 +386,22 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
      * request line; a body over the size limit is not read, and the connection is closed instead.
      */
     void discardUnreadBody() {
-        if (bodyTooLarge != null || responseContext.connectionClose) {
+        if (bodyTooLarge != null) {
+            // not a byte of it was read: some is read once the response is sent, before the connection is closed
             responseContext.connectionClose = true;
+            responseContext.beforeClose = framedBody::linger;
+            return;
+        }
+        if (responseContext.connectionClose) {
             return;
         }
         // read to its end, the declared length or the last chunk, but not past the size limit: a body that does not
         // end within it closes the connection
         if (!framedBody.drain()) {
             responseContext.connectionClose = true;
+            if (framedBody.limitExceeded) {
+                responseContext.beforeClose = framedBody::linger;
+            }
         }
     }
 
@@ -549,7 +557,11 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
     private static final class FramedBodyStream extends InputStream {
 
         private static final int DRAIN_BUFFER_SIZE = 8192;
-        private static final long LINGER_SIZE = 64 * 1024L;
+        /**
+         * How much of a body over the limit is read before the connection is closed, as Tomcat's
+         * {@code maxSwallowSize}: enough for a client to read the response while it is still sending.
+         */
+        private static final long LINGER_SIZE = 2 * 1024 * 1024L;
 
         private final InputStream framed;
         private final long maxBodySize;
@@ -605,7 +617,6 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
         boolean drain() {
             byte[] buffer = new byte[DRAIN_BUFFER_SIZE];
             if (limitExceeded) {
-                linger(buffer);
                 return false;
             }
             try {
@@ -619,7 +630,6 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
                     consumed += n;
                     if (consumed > maxBodySize) {
                         limitExceeded = true;
-                        linger(buffer);
                         return false;
                     }
                 }
@@ -629,10 +639,11 @@ public final class ApacheServletHttpRequest<B> extends PojaHttpRequest<B, Classi
         }
 
         /**
-         * Reads a little more of a body over the limit before the connection is closed: closing it with unread
-         * input resets it, which can discard the response before the client reads it.
+         * Reads a little more of a body over the limit once the response is sent, before the connection is closed:
+         * closing it with unread input resets it, which can discard the response before the client reads it.
          */
-        private void linger(byte[] buffer) {
+        void linger() {
+            byte[] buffer = new byte[DRAIN_BUFFER_SIZE];
             try {
                 long read = 0;
                 while (read < LINGER_SIZE) {
