@@ -190,6 +190,144 @@ final class UndertowApp {
         }
         """;
 
+    /**
+     * An HTML page, as each servlet and route of the LiveReload test writes it.
+     */
+    static final String PAGE = "<html><head><title>page</title></head><body><p>hi</p></body></html>";
+
+    /**
+     * A body that is not HTML, though it reads like the end of a page.
+     */
+    static final String NOT_HTML = "{\"html\":\"</body>\"}";
+
+    private static final String LIVE_RELOAD_SERVLETS = """
+        package example;
+
+        import jakarta.servlet.annotation.WebServlet;
+        import jakarta.servlet.http.HttpServlet;
+        import jakarta.servlet.http.HttpServletRequest;
+        import jakarta.servlet.http.HttpServletResponse;
+        import java.io.IOException;
+        import java.nio.charset.StandardCharsets;
+
+        public final class LiveReloadServlets {
+
+            static final String PAGE = "%s";
+            static final String NOT_HTML = "%s";
+
+            @WebServlet("/plain-writer")
+            public static class Writer extends HttpServlet {
+                @Override
+                protected void doGet(HttpServletRequest req, HttpServletResponse res) throws IOException {
+                    res.setContentType("text/html;charset=UTF-8");
+                    res.getWriter().write(PAGE);
+                }
+            }
+
+            @WebServlet("/plain-stream")
+            public static class Stream extends HttpServlet {
+                @Override
+                protected void doGet(HttpServletRequest req, HttpServletResponse res) throws IOException {
+                    byte[] page = PAGE.getBytes(StandardCharsets.UTF_8);
+                    res.setContentType("text/html");
+                    res.setContentLength(page.length);
+                    res.getOutputStream().write(page);
+                }
+            }
+
+            @WebServlet("/plain-streamed")
+            public static class Streamed extends HttpServlet {
+                @Override
+                protected void doGet(HttpServletRequest req, HttpServletResponse res) throws IOException {
+                    res.setContentType("text/html;charset=UTF-8");
+                    int end = PAGE.indexOf("</body>");
+                    res.getWriter().write(PAGE.substring(0, end));
+                    res.flushBuffer();
+                    res.getWriter().write(PAGE.substring(end));
+                }
+            }
+
+            @WebServlet("/plain-late-csp")
+            public static class LateCsp extends HttpServlet {
+                @Override
+                protected void doGet(HttpServletRequest req, HttpServletResponse res) throws IOException {
+                    res.setContentType("text/html;charset=UTF-8");
+                    res.getWriter().write(PAGE);
+                    res.setHeader("Content-Security-Policy", "script-src 'self'");
+                }
+            }
+
+            @WebServlet("/plain-partial")
+            public static class Partial extends HttpServlet {
+                @Override
+                protected void doGet(HttpServletRequest req, HttpServletResponse res) throws IOException {
+                    res.setStatus(206);
+                    res.setContentType("text/html;charset=UTF-8");
+                    res.getWriter().write(PAGE);
+                }
+            }
+
+            @WebServlet(value = "/plain-async-dispatch", asyncSupported = true)
+            public static class AsyncDispatch extends HttpServlet {
+                @Override
+                protected void doGet(HttpServletRequest req, HttpServletResponse res) throws IOException {
+                    res.setContentType("text/html;charset=UTF-8");
+                    res.getWriter().write(PAGE.substring(0, 10));
+                    req.startAsync().dispatch("/plain-async-rest");
+                }
+            }
+
+            @WebServlet(value = "/plain-async-rest", asyncSupported = true)
+            public static class AsyncRest extends HttpServlet {
+                @Override
+                protected void doGet(HttpServletRequest req, HttpServletResponse res) throws IOException {
+                    res.getWriter().write(PAGE.substring(10));
+                }
+            }
+
+            @WebServlet("/plain-json")
+            public static class Json extends HttpServlet {
+                @Override
+                protected void doGet(HttpServletRequest req, HttpServletResponse res) throws IOException {
+                    res.setContentType("application/json");
+                    res.getWriter().write(NOT_HTML);
+                }
+            }
+        }
+        """;
+
+    private static final String LIVE_RELOAD_CONTROLLER = """
+        package example;
+
+        import io.micronaut.http.MediaType;
+        import io.micronaut.http.annotation.Controller;
+        import io.micronaut.http.annotation.Get;
+        import io.micronaut.http.annotation.Produces;
+
+        @Controller("/page")
+        public class PageController {
+            @Get
+            @Produces(MediaType.TEXT_HTML)
+            public String page() {
+                return "%s";
+            }
+        }
+        """;
+
+    /**
+     * The servlets, the route and the static files of the LiveReload test.
+     *
+     * @param harness The harness
+     */
+    static void liveReloadSources(ReloadHarness harness) {
+        String page = PAGE.replace("\"", "\\\"");
+        String notHtml = NOT_HTML.replace("\"", "\\\"");
+        harness.source("example.LiveReloadServlets", LIVE_RELOAD_SERVLETS.formatted(page, notHtml));
+        harness.source("example.PageController", LIVE_RELOAD_CONTROLLER.formatted(page));
+        harness.resource("site/index.html", PAGE);
+        harness.resource("site/notes.txt", NOT_HTML);
+    }
+
     private static final HttpClient CLIENT = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(30)).build();
 
     private UndertowApp() {
