@@ -26,6 +26,7 @@ import io.micronaut.core.io.Readable;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.BasicHttpAttributes;
 import io.micronaut.http.HttpRequest;
+import io.micronaut.http.exceptions.BufferLengthExceededException;
 import io.micronaut.http.exceptions.ContentLengthExceededException;
 import io.micronaut.http.body.DirectByteBodyAccess;
 import io.micronaut.http.HttpRequestWrapper;
@@ -61,6 +62,7 @@ import java.io.ByteArrayInputStream;
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.Array;
 import java.nio.charset.Charset;
@@ -90,6 +92,7 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
     private final MessageBodyHandlerRegistry messageBodyHandlerRegistry;
     private final DefaultBodyAnnotationBinder<T> defaultBodyAnnotationBinder;
     private final @Nullable JsonMapper jsonMapper;
+    private final long maxBufferSize;
 
     /**
      * Default constructor.
@@ -103,10 +106,47 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
                                 MessageBodyHandlerRegistry messageBodyHandlerRegistry,
                                 DefaultBodyAnnotationBinder<T> defaultBodyAnnotationBinder,
                                 @Nullable JsonMapper jsonMapper) {
+        this(conversionService, messageBodyHandlerRegistry, defaultBodyAnnotationBinder, jsonMapper, Long.MAX_VALUE);
+    }
+
+    /**
+     * @param conversionService           The conversion service
+     * @param messageBodyHandlerRegistry  The message body handler registry
+     * @param defaultBodyAnnotationBinder The delegate default body binder
+     * @param jsonMapper                  The JSON mapper, or {@code null} without {@code micronaut-json-core}
+     * @param maxBufferSize               The most bytes of a body decoded in memory, see
+     *                                    {@code micronaut.server.max-request-buffer-size}
+     */
+    ServletBodyBinder(ConversionService conversionService,
+                      MessageBodyHandlerRegistry messageBodyHandlerRegistry,
+                      DefaultBodyAnnotationBinder<T> defaultBodyAnnotationBinder,
+                      @Nullable JsonMapper jsonMapper,
+                      long maxBufferSize) {
         this.conversionService = conversionService;
         this.messageBodyHandlerRegistry = messageBodyHandlerRegistry;
         this.defaultBodyAnnotationBinder = defaultBodyAnnotationBinder;
         this.jsonMapper = jsonMapper;
+        this.maxBufferSize = maxBufferSize;
+    }
+
+    /**
+     * The stream a body is decoded from in memory, held to the buffer limit like the body a controller binds. The
+     * stream of the servlet request is a streaming read of the body, which the body does not hold to that limit: a
+     * body too large to buffer was decoded whenever the read subscribed before its bytes arrived.
+     */
+    private InputStream bufferedStream(ServletHttpRequest<?, ?> servletHttpRequest) throws IOException {
+        InputStream stream = servletHttpRequest.getInputStream();
+        return maxBufferSize == Long.MAX_VALUE ? stream : new BufferLimitInputStream(stream, maxBufferSize);
+    }
+
+    /**
+     * The reader a text body is read from in memory, held to the buffer limit, see {@link #bufferedStream}.
+     */
+    private BufferedReader bufferedReader(ServletHttpRequest<?, ?> servletHttpRequest) throws IOException {
+        if (maxBufferSize == Long.MAX_VALUE) {
+            return servletHttpRequest.getReader();
+        }
+        return new BufferedReader(new InputStreamReader(bufferedStream(servletHttpRequest), servletHttpRequest.getCharacterEncoding()));
     }
 
     @Override
@@ -169,7 +209,7 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
                 }
             }
             if (CharSequence.class.isAssignableFrom(type) && name == null) {
-                try (BufferedReader bufferedReader = servletHttpRequest.getReader()) {
+                try (BufferedReader bufferedReader = bufferedReader(servletHttpRequest)) {
                     String text = IOUtils.readText(bufferedReader);
                     // a request without content has no body, like on the other runtimes
                     return () -> text.isEmpty() ? Optional.empty() : (Optional<T>) Optional.of(text);
@@ -247,7 +287,7 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
                 Argument<Map<String, Object>> mapArgument = Argument.mapOf(String.class, Object.class);
                 MessageBodyReader<Map<String, Object>> reader = messageBodyHandlerRegistry.findReader(mapArgument, mediaType).orElse(null);
                 if (reader != null) {
-                    try (InputStream inputStream = servletHttpRequest.getInputStream()) {
+                    try (InputStream inputStream = bufferedStream(servletHttpRequest)) {
                         Map<String, Object> map = reader.read(mapArgument, mediaType, source.getHeaders(), inputStream);
                         Object value = map == null ? null : map.get(name);
                         T content = conversionService.convert(value, argument).orElse(null);
@@ -293,7 +333,7 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
                     Object publisher = asPublisher(context, source, servletHttpRequest, mediaType, bodyReader, type, name);
                     return () -> (Optional<T>) Optional.ofNullable(publisher);
                 }
-                try (InputStream is = servletHttpRequest.getInputStream()) {
+                try (InputStream is = bufferedStream(servletHttpRequest)) {
                     @SuppressWarnings("unchecked")
                     Argument<Object> bodyArgument = (Argument<Object>) (Argument<?>) context.getArgument();
                     Object content = bodyReader.read(bodyArgument, mediaType, source.getHeaders(), is);
@@ -309,7 +349,7 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
             }
 
             if (byte[].class.isAssignableFrom(type)) {
-                try (InputStream inputStream = servletHttpRequest.getInputStream()) {
+                try (InputStream inputStream = bufferedStream(servletHttpRequest)) {
                     byte[] content = inputStream.readAllBytes();
                     return () -> Optional.of((T) content);
                 } catch (IOException e) {
@@ -323,7 +363,7 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
                 Argument<List<?>> listArgument = (Argument<List<?>>) (Argument<?>) Argument.of(List.class, componentArgument);
                 MessageBodyReader<List<?>> reader = messageBodyHandlerRegistry.findReader(listArgument, mediaType).orElse(null);
                 if (reader != null) {
-                    try (InputStream inputStream = servletHttpRequest.getInputStream()) {
+                    try (InputStream inputStream = bufferedStream(servletHttpRequest)) {
                         List<?> list = reader.read(listArgument, mediaType, source.getHeaders(), inputStream);
                         if (list == null) {
                             list = List.of();
@@ -342,7 +382,7 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
             } else {
                 MessageBodyReader<T> reader = messageBodyHandlerRegistry.findReader(argument, mediaType).orElse(null);
                 if (reader != null) {
-                    try (InputStream inputStream = servletHttpRequest.getInputStream()) {
+                    try (InputStream inputStream = bufferedStream(servletHttpRequest)) {
                         T content = reader.read(argument, mediaType, source.getHeaders(), inputStream);
                         if (content != null && source == servletHttpRequest && servletHttpRequest instanceof ParsedBodyHolder parsedBody) {
                             parsedBody.setParsedBody(content);
@@ -661,6 +701,54 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
         @Override
         public String getName() {
             return servletHttpRequest.getPath();
+        }
+    }
+
+    /**
+     * Fails a read past {@code micronaut.server.max-request-buffer-size} with a {@link BufferLengthExceededException},
+     * which answers {@code 413 Request Entity Too Large}, for a body that is decoded in memory.
+     */
+    private static final class BufferLimitInputStream extends FilterInputStream {
+        private final long limit;
+        private long read;
+
+        BufferLimitInputStream(InputStream in, long limit) {
+            super(in);
+            this.limit = limit;
+        }
+
+        @Override
+        public int read() throws IOException {
+            int b = in.read();
+            if (b >= 0) {
+                count(1);
+            }
+            return b;
+        }
+
+        @Override
+        public int read(byte[] b, int off, int len) throws IOException {
+            int n = in.read(b, off, len);
+            if (n > 0) {
+                count(n);
+            }
+            return n;
+        }
+
+        @Override
+        public long skip(long n) throws IOException {
+            long skipped = in.skip(n);
+            if (skipped > 0) {
+                count(skipped);
+            }
+            return skipped;
+        }
+
+        private void count(long n) {
+            read += n;
+            if (read > limit) {
+                throw new BufferLengthExceededException(limit, read);
+            }
         }
     }
 

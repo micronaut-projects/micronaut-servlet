@@ -61,6 +61,7 @@ public class ServletServerBodyAnnotationBinder<T> extends ServerBodyAnnotationBi
      * runtime dependency), and a type of an injection point must be present to load the bean definition.
      */
     private final BeanLocator beanLocator;
+    private final BeanProvider<FormFactory> formFactory;
     private final AtomicReference<ServletBodyBinder<T>> detachedBinder = new AtomicReference<>();
 
     /**
@@ -76,6 +77,7 @@ public class ServletServerBodyAnnotationBinder<T> extends ServerBodyAnnotationBi
         super(conversionService, bodyHandlerRegistry, formFactory);
         this.servletBodyHandlerRegistry = bodyHandlerRegistry;
         this.beanLocator = beanLocator;
+        this.formFactory = formFactory;
     }
 
     /**
@@ -141,7 +143,9 @@ public class ServletServerBodyAnnotationBinder<T> extends ServerBodyAnnotationBi
     ServletBodyBinder<T> servletBodyBinder() {
         ServletBodyBinder<T> binder = detachedBinder.get();
         if (binder == null) {
-            binder = new ServletBodyBinder<>(conversionService, servletBodyHandlerRegistry, new DefaultBodyAnnotationBinder<>(conversionService), jsonMapper());
+            // a body decoded in memory is held to the buffer limit, like the body of a controller
+            long maxBufferSize = formFactory.get().getConfiguration().getMaxRequestBufferSize();
+            binder = new ServletBodyBinder<>(conversionService, servletBodyHandlerRegistry, new DefaultBodyAnnotationBinder<>(conversionService), jsonMapper(), maxBufferSize);
             if (!detachedBinder.compareAndSet(null, binder)) {
                 binder = detachedBinder.get();
             }
