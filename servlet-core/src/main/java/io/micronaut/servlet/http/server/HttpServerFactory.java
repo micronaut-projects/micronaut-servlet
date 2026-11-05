@@ -117,19 +117,21 @@ public class HttpServerFactory {
         Set<Integer> exposedPorts = router != null ? router.getExposedPorts() : Set.of();
         for (Integer exposedPort : exposedPorts) {
             if (exposedPort != server.getAddress().getPort()) {
+                // created unbound: the server is bound when the embedded server starts, so that a port in use
+                // is a startup failure the caller can retry
                 HttpServer portServer = server instanceof HttpsServer httpsServer
-                    ? httpsServer(httpServerConfiguration, exposedPort, httpsServer.getHttpsConfigurator())
-                    : HttpServer.create(serverAddress(httpServerConfiguration, exposedPort), 0);
+                    ? httpsServer(httpsServer.getHttpsConfigurator())
+                    : HttpServer.create();
                 portServer.setExecutor(executorService);
                 addContexts(portServer, httpHandlers, ordered);
-                exposedPortServers.add(portServer);
+                exposedPortServers.add(portServer, serverAddress(httpServerConfiguration, exposedPort));
             }
         }
         return server;
     }
 
-    private static HttpsServer httpsServer(HttpServerConfiguration httpServerConfiguration, int port, HttpsConfigurator configurator) throws IOException {
-        HttpsServer server = HttpsServer.create(serverAddress(httpServerConfiguration, port), 0);
+    private static HttpsServer httpsServer(HttpsConfigurator configurator) throws IOException {
+        HttpsServer server = HttpsServer.create();
         server.setHttpsConfigurator(configurator);
         return server;
     }

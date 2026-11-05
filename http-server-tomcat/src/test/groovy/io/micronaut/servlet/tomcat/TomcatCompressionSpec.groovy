@@ -66,7 +66,10 @@ class TomcatCompressionSpec extends Specification {
 
     void "a port exposed by a route compresses like the main one"() {
         given: "a connector Tomcat creates for the route's port, cloned from the main one"
-        EmbeddedServer server = ApplicationContext.run(EmbeddedServer, ['spec.name': 'TomcatCompressionSpec'])
+        EmbeddedServer server = ApplicationContext.run(EmbeddedServer, [
+            'spec.name'                          : 'TomcatCompressionSpec',
+            'tomcat-compression-spec.extra-port' : true,
+        ])
 
         when:
         HttpResponse<byte[]> response = send(server, "http://localhost:$ExtraPortController.PORT/compression-extra/large", 'gzip')
@@ -155,6 +158,8 @@ class TomcatCompressionSpec extends Specification {
     }
 
     @Requires(property = 'spec.name', value = 'TomcatCompressionSpec')
+    // only in the server of the test of the extra port: a connector that cannot bind its port fails the start
+    @Requires(property = 'tomcat-compression-spec.extra-port', value = 'true')
     @Controller(value = '/compression-extra', port = '18447')
     static class ExtraPortController {
 

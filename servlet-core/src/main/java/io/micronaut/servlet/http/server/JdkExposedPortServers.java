@@ -20,6 +20,8 @@ import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.Internal;
 import jakarta.inject.Singleton;
 
+import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -34,26 +36,39 @@ import java.util.concurrent.CopyOnWriteArrayList;
 @Singleton
 final class JdkExposedPortServers {
 
-    private final List<HttpServer> servers = new CopyOnWriteArrayList<>();
+    private final List<PortServer> servers = new CopyOnWriteArrayList<>();
+    private final List<HttpServer> started = new CopyOnWriteArrayList<>();
 
     /**
-     * @param server A server on the port of a route
+     * @param server  An unbound server on the port of a route
+     * @param address The address the server listens on once started
      */
-    void add(HttpServer server) {
-        servers.add(server);
+    void add(HttpServer server, InetSocketAddress address) {
+        servers.add(new PortServer(server, address));
     }
 
     /**
-     * Starts the servers.
+     * Binds and starts the servers. They are bound on start rather than when they are created, so that a port
+     * already in use fails the start of the embedded server, as for the servlet containers.
+     *
+     * @throws IOException if a server cannot be bound, such as a {@link java.net.BindException}
      */
-    void start() {
-        servers.forEach(HttpServer::start);
+    void start() throws IOException {
+        for (PortServer portServer : servers) {
+            portServer.server().bind(portServer.address(), 0);
+            portServer.server().start();
+            started.add(portServer.server());
+        }
     }
 
     /**
-     * Stops the servers.
+     * Stops the servers that were started.
      */
     void stop() {
-        servers.forEach(server -> server.stop(0));
+        started.forEach(server -> server.stop(0));
+        started.clear();
+    }
+
+    private record PortServer(HttpServer server, InetSocketAddress address) {
     }
 }

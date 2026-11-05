@@ -19,6 +19,7 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.http.server.exceptions.HttpServerException;
+import io.micronaut.http.server.exceptions.ServerStartupException;
 import io.micronaut.runtime.ApplicationConfiguration;
 import io.micronaut.runtime.graceful.GracefulShutdownCapable;
 import io.micronaut.runtime.server.EmbeddedServer;
@@ -31,6 +32,7 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.BindException;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
@@ -138,11 +140,41 @@ public abstract class AbstractServletServer<T> implements EmbeddedServer, Gracef
             applyDefaultPorts();
             applicationContext.publishEvent(new ServerStartupEvent(this));
         } catch (Exception e) {
+            BindException bindException = findBindException(e);
+            if (bindException != null) {
+                // like the Netty server: a port in use is a startup failure caused by the bind exception,
+                // so that a caller that chose the port can retry with another one
+                stopAfterFailedStart();
+                throw new ServerStartupException(
+                        "Unable to start HTTP server: " + bindException.getMessage(), bindException
+                );
+            }
             throw new HttpServerException(
                     "Error starting HTTP server: " + e.getMessage(), e
             );
         }
         return this;
+    }
+
+    private void stopAfterFailedStart() {
+        try {
+            stopServer();
+        } catch (Exception e) {
+            LOG.debug("Error stopping the HTTP server after a failed start", e);
+        }
+    }
+
+    @Nullable
+    private static BindException findBindException(Throwable e) {
+        for (Throwable t = e; t != null; t = t.getCause()) {
+            if (t instanceof BindException bindException) {
+                return bindException;
+            }
+            if (t.getCause() == t) {
+                break;
+            }
+        }
+        return null;
     }
 
     /**
