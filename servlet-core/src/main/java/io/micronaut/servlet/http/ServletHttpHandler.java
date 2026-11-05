@@ -69,7 +69,6 @@ import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Paths;
@@ -96,7 +95,6 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
      * Logger to be used by subclasses for logging.
      */
     protected static final Logger LOG = LoggerFactory.getLogger(ServletHttpHandler.class);
-    private static final int STREAM_BUFFER_SIZE = 8192;
     /**
      * The largest complete body written with a blocking write from a thread that is not the container's: it fits
      * the response buffer of the containers, so the write fills a buffer rather than waiting on the socket, and a
@@ -331,21 +329,18 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
 
     /**
      * Writes the body on the current thread. A body still being produced, such as an event stream, is flushed as
-     * each piece arrives so that the client sees it then rather than when the stream ends.
+     * each piece arrives so that the client sees it then rather than when the stream ends, and a failure of it only
+     * once the pieces that arrived before it were written, see {@link BlockingBodyWriter}.
      */
     private static void writeBlocking(ByteBody body, ServletHttpResponse<?, ?> servletResponse) {
         body.expectedLength().ifPresent(l -> servletResponse.getHeaders().set(HttpHeaders.CONTENT_LENGTH, String.valueOf(l)));
-        try (InputStream is = body.toInputStream()) {
-            OutputStream out = servletResponse.getOutputStream();
+        try {
             if (body instanceof AvailableByteBody) {
-                is.transferTo(out);
-            } else {
-                byte[] buffer = new byte[STREAM_BUFFER_SIZE];
-                int read;
-                while ((read = is.read(buffer)) != -1) {
-                    out.write(buffer, 0, read);
-                    out.flush();
+                try (InputStream is = body.toInputStream()) {
+                    is.transferTo(servletResponse.getOutputStream());
                 }
+            } else {
+                BlockingBodyWriter.write(body.toByteArrayPublisher(), servletResponse.getOutputStream());
             }
         } catch (IOException e) {
             throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, Optional.ofNullable(e.getMessage()).orElse(e.toString()));
