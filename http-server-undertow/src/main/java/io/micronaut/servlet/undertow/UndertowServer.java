@@ -55,6 +55,7 @@ public class UndertowServer extends AbstractServletServer<Undertow> {
     private static final Duration EXCHANGE_DRAIN_TIMEOUT = Duration.ofSeconds(30);
 
     private Map<String, Undertow.ListenerInfo> listenersByProtocol = new HashMap<>();
+    private volatile boolean started;
 
     /**
      * Default constructor.
@@ -91,6 +92,7 @@ public class UndertowServer extends AbstractServletServer<Undertow> {
     protected void startServer() throws Exception {
         Undertow server = getServer();
         server.start();
+        started = true;
         this.listenersByProtocol = new HashMap<>();
         for (Undertow.ListenerInfo listenerInfo : server.getListenerInfo()) {
             if (!listenersByProtocol.containsKey(listenerInfo.getProtcol())) {
@@ -101,7 +103,13 @@ public class UndertowServer extends AbstractServletServer<Undertow> {
 
     @Override
     protected void stopServer() throws Exception {
-        getServer().stop();
+        // a start that failed, e.g. on a port in use, already shut the worker of Undertow down, and its IO threads
+        // closed the listeners they held: stopping it again closes the listeners bound before the failure on those
+        // threads, which waits forever for a thread that is gone
+        if (started) {
+            started = false;
+            getServer().stop();
+        }
         getApplicationContext().findBean(UndertowFactory.class).ifPresent(UndertowFactory::shutdownHandlerExecutor);
     }
 
