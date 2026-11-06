@@ -22,8 +22,6 @@ import org.jspecify.annotations.Nullable;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -39,7 +37,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author Jonas Konrad
  */
 final class ServletStreamPublisher implements Publisher<ByteBuffer>, Subscription, ReadListener {
-    private static final Logger LOG = LoggerFactory.getLogger(ServletStreamPublisher.class);
+    private static final int READ_BUFFER_SIZE = 8192;
 
     private final Queue<Runnable> tasks = new ConcurrentLinkedQueue<>();
     private final AtomicReference<WorkState> state = new AtomicReference<>(WorkState.IDLE);
@@ -54,9 +52,42 @@ final class ServletStreamPublisher implements Publisher<ByteBuffer>, Subscriptio
     private boolean downstreamDone;
     private @Nullable Throwable error;
     private @Nullable Subscriber<? super ByteBuffer> downstream;
+    /**
+     * Runs once the rest of the body was dropped, while it is being dropped, see {@link #discard}.
+     */
+    private @Nullable Runnable discarded;
+    private final long maxDiscarded;
+    private long discardLimit = Long.MAX_VALUE;
+    private long discardedBytes;
+    private byte @Nullable [] discardBuffer;
+    /**
+     * The bytes of the body not read yet by its declared length, or {@code -1} if it declares none.
+     */
+    private long remaining;
 
-    ServletStreamPublisher(ThrowingSupplier<ServletInputStream, IOException> upstreamSupplier) {
+    /**
+     * @param upstreamSupplier The stream of the request
+     * @param maxDiscarded     The most bytes of a body nobody reads that are dropped before the connection is
+     *                         dropped instead, the size limit of the server
+     * @param contentLength    The declared length of the body, or {@code -1} if it declares none, which sizes the
+     *                         read buffers
+     */
+    ServletStreamPublisher(ThrowingSupplier<ServletInputStream, IOException> upstreamSupplier, long maxDiscarded, long contentLength) {
         this.upstreamSupplier = upstreamSupplier;
+        this.maxDiscarded = maxDiscarded;
+        this.remaining = contentLength;
+    }
+
+    /**
+     * @return A buffer for the next read: no larger than what is left of a body with a declared length, and bounded
+     * for a body without one
+     */
+    private byte[] readBuffer() {
+        if (remaining < 0) {
+            return new byte[READ_BUFFER_SIZE];
+        }
+        // at least one byte, for the read that sees the end of the body
+        return new byte[(int) Math.max(1, Math.min(remaining, READ_BUFFER_SIZE))];
     }
 
     /**
@@ -116,17 +147,24 @@ final class ServletStreamPublisher implements Publisher<ByteBuffer>, Subscriptio
     }
 
     private void forwardSome() {
+        if (downstreamDone) {
+            // e.g. a publisher that only drops the body, see discard, which has no downstream
+            return;
+        }
         Subscriber<? super ByteBuffer> currentDownstream = downstream();
         while (!downstreamDone && demand > 0 && (upstreamReady || upstreamDone)) {
             if (!upstreamDone) {
                 try {
-                    byte[] arr = new byte[4096];
+                    byte[] arr = readBuffer();
                     ServletInputStream currentUpstream = upstream();
                     int n = currentUpstream.read(arr);
                     if (n == -1) {
                         upstreamDone = true;
                     } else {
                         demand--;
+                        if (remaining > 0) {
+                            remaining = Math.max(0, remaining - n);
+                        }
                         currentDownstream.onNext(ByteBuffer.wrap(arr, 0, n));
                         upstreamReady = currentUpstream.isReady();
                     }
@@ -156,23 +194,99 @@ final class ServletStreamPublisher implements Publisher<ByteBuffer>, Subscriptio
 
     @Override
     public void cancel() {
+        // the rest of the body is read and dropped, like the Netty server does: closing the stream would have the
+        // container drop the connection while the client is still sending, which it sees as a broken pipe
+        discard(maxDiscarded, () -> { });
+    }
+
+    /**
+     * Reads the rest of the body and drops it, e.g. the body the route did not read, then runs the callback,
+     * once: the response of the request can then complete without the connection being dropped.
+     *
+     * @param limit The most bytes to drop: past it the callback runs, and the container drops the connection
+     * @param done  Runs once the body has been read, failed or passed the limit
+     */
+    void discard(long limit, Runnable done) {
         submit(() -> {
-            if (upstream != null) {
+            downstreamDone = true;
+            Runnable previous = discarded;
+            discarded = previous == null ? done : () -> {
+                previous.run();
+                done.run();
+            };
+            discardLimit = Math.min(discardLimit, limit);
+            if (!upstreamListenerRegistered) {
+                upstreamListenerRegistered = true;
                 try {
-                    upstream.close();
-                } catch (IOException e) {
-                    LOG.debug("Failed to close request body for cancellation", e);
+                    ServletInputStream stream = upstreamSupplier.get();
+                    upstream = stream;
+                    if (stream.isFinished()) {
+                        // e.g. the container parsed a form from it: there is nothing left to drop
+                        upstreamDone = true;
+                    } else {
+                        stream.setReadListener(this);
+                    }
+                } catch (IOException | IllegalStateException e) {
+                    // e.g. the stream was already read another way: there is nothing to drop
+                    upstreamDone = true;
                 }
             }
-            downstreamDone = true;
+            drain();
         });
+    }
+
+    /**
+     * @return Whether the body was not read to its end by {@link #discard}, which stopped at its limit: to be
+     * called from its callback
+     */
+    boolean isDiscardIncomplete() {
+        return !upstreamDone;
+    }
+
+    private void drain() {
+        while (!upstreamDone && upstreamReady && discardedBytes <= discardLimit) {
+            try {
+                byte[] buffer = discardBuffer;
+                if (buffer == null) {
+                    buffer = new byte[4096];
+                    discardBuffer = buffer;
+                }
+                int n = upstream().read(buffer);
+                if (n == -1) {
+                    upstreamDone = true;
+                } else {
+                    discardedBytes += n;
+                    upstreamReady = upstream().isReady();
+                }
+            } catch (IOException | RuntimeException e) {
+                // e.g. the client aborted the request and the container recycled the stream: nothing more to drop
+                upstreamDone = true;
+            }
+        }
+        if (upstreamDone || discardedBytes > discardLimit) {
+            Runnable done = discarded;
+            discarded = null;
+            if (done != null) {
+                done.run();
+            }
+        }
     }
 
     @Override
     public void onDataAvailable() {
         submit(() -> {
-            upstreamReady = upstream().isReady();
-            forwardSome();
+            try {
+                upstreamReady = upstream().isReady();
+            } catch (RuntimeException e) {
+                // e.g. the client aborted the request and the container recycled the stream
+                error = e;
+                upstreamDone = true;
+            }
+            if (discarded != null) {
+                drain();
+            } else {
+                forwardSome();
+            }
         });
     }
 
@@ -180,7 +294,11 @@ final class ServletStreamPublisher implements Publisher<ByteBuffer>, Subscriptio
     public void onAllDataRead() {
         submit(() -> {
             upstreamDone = true;
-            forwardSome();
+            if (discarded != null) {
+                drain();
+            } else {
+                forwardSome();
+            }
         });
     }
 
@@ -189,7 +307,11 @@ final class ServletStreamPublisher implements Publisher<ByteBuffer>, Subscriptio
         submit(() -> {
             error = t;
             upstreamDone = true;
-            forwardSome();
+            if (discarded != null) {
+                drain();
+            } else {
+                forwardSome();
+            }
         });
     }
 

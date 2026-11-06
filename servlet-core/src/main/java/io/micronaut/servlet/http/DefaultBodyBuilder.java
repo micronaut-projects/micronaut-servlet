@@ -30,7 +30,6 @@ import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.Body;
 import io.micronaut.http.body.MessageBodyHandlerRegistry;
 import io.micronaut.http.body.MessageBodyReader;
-import io.micronaut.http.codec.CodecException;
 import io.micronaut.http.exceptions.HttpException;
 import io.micronaut.inject.ExecutionHandle;
 import io.micronaut.web.router.RouteMatch;
@@ -83,7 +82,7 @@ public class DefaultBodyBuilder implements BodyBuilder {
             if (httpException != null) {
                 throw httpException;
             }
-            throw new CodecException("Error decoding request body: " + e.getMessage(), e);
+            throw new RequestBodyDecodingException("Error decoding request body: " + e.getMessage(), e);
         }
     }
 

@@ -183,6 +183,10 @@ public class JettyFactory extends ServletServerFactory {
         }
 
         final ServletContextHandler contextHandler = newJettyContext(server, contextPath);
+        // Jetty refuses a URL-encoded form over 200000 bytes by default, a limit of its own on top of
+        // micronaut.server.max-request-size, which the server enforces itself and answers with 413
+        long maxRequestSize = getServerConfiguration().getMaxRequestSize();
+        contextHandler.setMaxFormContentSize(maxRequestSize > 0 && maxRequestSize < Integer.MAX_VALUE ? (int) maxRequestSize : -1);
         server.setHandler(contextHandler);
         configureServletInitializer(server, contextHandler, servletContainerInitializers);
         ResourceFactory resourceFactory = ResourceFactory.of(server);

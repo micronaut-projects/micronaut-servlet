@@ -19,6 +19,7 @@ plugins {
 
 dependencies {
     implementation(projects.micronautHttpPojaCommon)
+    implementation(mn.micronaut.router)
     api(mn.micronaut.inject.java)
 
     testImplementation(mn.micronaut.http.client)

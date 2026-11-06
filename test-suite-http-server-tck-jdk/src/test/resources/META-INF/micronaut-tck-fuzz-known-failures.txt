@@ -1,0 +1,5 @@
+# Known failures of the server TCK fuzz suite (io.micronaut.http.server.tck.tests.fuzz.HttpServerFuzzTest) on the JDK HTTP server.
+# One entry per line: [engine[,engine]:]regex matched against the start of the case name => reason.
+# The engine is matched against the lower-case class name of the embedded server.
+# Run them anyway with -Dfuzz.runKnown=true.
+httpserverembeddedserver:mp |httpserverembeddedserver:transport client disconnect mid-upload /f/mp-streaming|httpserverembeddedserver:transport client disconnect mid-upload /fn/parts|httpserverembeddedserver:transport next request after an aborted chunked upload /f/mp|httpserverembeddedserver:transport next request after an aborted chunked upload /fn/parts => the JDK server does not implement multipart (HttpExchangeHttpServletRequest#getPart: UnsupportedOperationException -> 500)

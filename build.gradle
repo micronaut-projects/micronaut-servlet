@@ -5,6 +5,15 @@ plugins {
 repositories {
     mavenCentral()
 }
+allprojects {
+    repositories {
+        mavenCentral()
+        maven {
+            url = 'https://central.sonatype.com/repository/maven-snapshots/'
+            mavenContent { snapshotsOnly() }
+        }
+    }
+}
 configurations.all {
     resolutionStrategy {
         preferProjectModules()

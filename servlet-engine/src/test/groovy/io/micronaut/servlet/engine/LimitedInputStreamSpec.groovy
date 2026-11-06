@@ -1,5 +1,6 @@
 package io.micronaut.servlet.engine
 
+import io.micronaut.servlet.http.LimitedInputStream
 import io.micronaut.http.exceptions.ContentLengthExceededException
 import spock.lang.Specification
 

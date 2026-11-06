@@ -28,6 +28,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -162,7 +163,7 @@ public class JettyServer extends AbstractServletServer<Server> {
     @Override
     public URL getURL() {
         try {
-            return getServer().getURI().toURL();
+            return getURI().toURL();
         } catch (MalformedURLException e) {
             throw new HttpServerException(Optional.ofNullable(e.getMessage()).orElse(e.toString()), e);
         }
@@ -170,7 +171,14 @@ public class JettyServer extends AbstractServletServer<Server> {
 
     @Override
     public URI getURI() {
-        return getServer().getURI();
+        // the URI of the Jetty server includes the context path: the URI of the server does not,
+        // like for the other servers, see getContextURI()
+        URI uri = getServer().getURI();
+        try {
+            return new URI(uri.getScheme(), null, uri.getHost(), uri.getPort(), null, null, null);
+        } catch (URISyntaxException e) {
+            throw new HttpServerException(Optional.ofNullable(e.getMessage()).orElse(e.toString()), e);
+        }
     }
 
     @Override

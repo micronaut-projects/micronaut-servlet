@@ -1,0 +1,32 @@
+plugins {
+    id("io.micronaut.build.internal.servlet.implementation")
+}
+
+// The WebSocket tests of the servlet runtimes, run on the built-in JDK HTTP server with the
+// HttpServer provider of io.github.robaho:httpserver, which keeps the connection open after a
+// 101 Switching Protocols. The tests of http-server-jdk run on the provider of the JDK, which
+// does not, so that one is not on their classpath.
+dependencies {
+    testImplementation(projects.micronautHttpServerJdk)
+    testImplementation(projects.micronautServletWebsocket)
+    testImplementation(libs.robaho.httpserver)
+    testImplementation(libs.managed.jakarta.websocket.api)
+    testImplementation(libs.managed.jakarta.websocket.client.api)
+    // Maps the Jakarta WebSocket annotations of the test endpoints.
+    testAnnotationProcessor(projects.micronautServletProcessor)
+    testAnnotationProcessor(mnSerde.micronaut.serde.processor)
+    testImplementation(mnSerde.micronaut.serde.jackson)
+    // Exercises the reflective route for Jakarta decoders, encoders and configurators.
+    testImplementation(mn.micronaut.reflection)
+    testImplementation(libs.junit.jupiter.engine)
+    testImplementation(mnLogging.logback.classic)
+}
+
+// The WebSocket routes of the route builder are tested alike on each servlet runtime.
+sourceSets.test.java.srcDir(rootProject.file('servlet-websocket/src/routeTest/java'))
+
+micronautBuild {
+    binaryCompatibility {
+        enabled = false
+    }
+}

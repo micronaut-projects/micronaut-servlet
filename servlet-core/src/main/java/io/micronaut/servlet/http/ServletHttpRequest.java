@@ -92,6 +92,30 @@ public interface ServletHttpRequest<N, B> extends HttpRequest<B> {
     }
 
     /**
+     * Reads what is left of the body, e.g. the body a route did not read, and drops it, then runs the
+     * callback: the response then completes without the container dropping the connection while the client is
+     * still sending, like the Netty server.
+     *
+     * @param then Runs once the body is read, at once if there is nothing to read
+     * @since 6.3.0
+     */
+    default void discardUnreadBody(Runnable then) {
+        then.run();
+    }
+
+    /**
+     * Drops the connection of a response whose body failed after it was committed, so that the client sees a
+     * truncated response, not one that looks complete.
+     *
+     * @param failure The failure of the body
+     * @return Whether the connection was dropped
+     * @since 6.3.0
+     */
+    default boolean abortResponse(Throwable failure) {
+        return false;
+    }
+
+    /**
      * Async execution callback.
      *
      * @author Denis Stepanov
@@ -133,6 +157,17 @@ public interface ServletHttpRequest<N, B> extends HttpRequest<B> {
          */
         default void onEndedByContainer(Runnable hook) {
             // the container never ends the execution itself
+        }
+
+        /**
+         * Whether the container ended the asynchronous execution itself, e.g. because the client aborted the
+         * request: its request and response may then be recycled, and nothing is written to them any more.
+         *
+         * @return Whether the container ended the execution
+         * @since 6.3.0
+         */
+        default boolean isEndedByContainer() {
+            return false;
         }
 
     }

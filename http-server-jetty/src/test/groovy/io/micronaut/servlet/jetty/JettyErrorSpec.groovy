@@ -12,6 +12,7 @@ import io.micronaut.http.annotation.Produces
 import io.micronaut.http.annotation.Status
 import io.micronaut.http.client.HttpClient
 import io.micronaut.http.client.annotation.Client
+import io.micronaut.http.client.exceptions.HttpClientException
 import io.micronaut.http.client.exceptions.HttpClientResponseException
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
@@ -55,9 +56,8 @@ class JettyErrorSpec extends Specification {
         client.toBlocking().exchange("/errors/stream-delayed", Integer[].class)
 
         then:
-        HttpClientResponseException ex = thrown()
-        ex.status == HttpStatus.OK
-        ex.message.contains("Unexpected end-of-input")
+        // the connection is dropped, like on the Netty server, rather than ending a truncated body like a complete one
+        thrown(HttpClientException)
     }
 
     @Requires(property = "spec.name", value = "JettyErrorSpec")

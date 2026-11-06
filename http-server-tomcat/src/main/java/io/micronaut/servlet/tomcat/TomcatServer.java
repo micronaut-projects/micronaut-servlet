@@ -82,6 +82,10 @@ public class TomcatServer extends AbstractServletServer<Tomcat> {
     protected void startServer() throws Exception {
         if (running.compareAndSet(false, true)) {
             Tomcat server = getServer();
+            for (Connector connector : server.getService().findConnectors()) {
+                // a connector that cannot bind its port otherwise only logs the failure and the server starts without it
+                connector.setThrowOnFailure(true);
+            }
             server.start();
         }
     }

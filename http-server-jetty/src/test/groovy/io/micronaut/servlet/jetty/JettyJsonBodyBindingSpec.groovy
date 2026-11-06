@@ -83,7 +83,7 @@ class JettyJsonBodyBindingSpec extends Specification {
 
         then:
         def e = thrown(HttpClientResponseException)
-        e.response.getBody(Map).get()._embedded.errors[0].message.contains """Unable to decode request body: Error decoding JSON stream for type [json]: Unrecognized token 'The'"""
+        e.response.getBody(Map).get()._embedded.errors[0].message.contains """Invalid JSON: Unrecognized token 'The'"""
         e.response.status == HttpStatus.BAD_REQUEST
 
         when:
@@ -298,7 +298,7 @@ class JettyJsonBodyBindingSpec extends Specification {
         def e = thrown(HttpClientResponseException)
         def response = e.response
         response.status() == HttpStatus.BAD_REQUEST
-        response.body().toString().contains("Error decoding request body: Error decoding JSON stream for type [B]: Unexpected token START_ARRAY")
+        response.body().toString().contains("Unexpected token START_ARRAY")
     }
 
     @Requires(property = 'spec.name', value = 'JettyJsonBodyBindingSpec')

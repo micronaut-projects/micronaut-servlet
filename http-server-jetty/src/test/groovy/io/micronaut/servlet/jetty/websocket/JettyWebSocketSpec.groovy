@@ -191,4 +191,28 @@ class JettyWebSocketSpec extends Specification {
             client.closeReason != null
         }
     }
+
+    void "the stream an annotated endpoint sends completes once the peer closes"() {
+        given:
+        PollingConditions conditions = new PollingConditions(timeout: 15, delay: 0.2)
+        NeverEndingSendServerWebSocket server = embeddedServer.applicationContext.getBean(NeverEndingSendServerWebSocket)
+
+        when:
+        ErrorsClientWebSocket client = Flux.from(wsClient.connect(ErrorsClientWebSocket, "/ws/never-ending-send")).blockFirst()
+
+        then:
+        conditions.eventually {
+            server.sent != null
+        }
+        !server.sent.done
+
+        when:
+        client.close()
+
+        then:
+        conditions.eventually {
+            server.sent.done
+        }
+        server.sent.get() == false
+    }
 }

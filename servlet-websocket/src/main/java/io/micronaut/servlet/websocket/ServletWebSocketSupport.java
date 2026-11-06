@@ -19,6 +19,7 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.http.bind.RequestBinderRegistry;
+import io.micronaut.http.bind.ServerRequestBinderRegistry;
 import io.micronaut.http.body.MessageBodyHandlerRegistry;
 import io.micronaut.http.server.HttpServerConfiguration;
 import io.micronaut.http.server.CoroutineHelper;
@@ -80,7 +81,9 @@ public final class ServletWebSocketSupport {
                                    HttpServerConfiguration serverConfiguration,
                                    JakartaEndpointComponents components) {
         this.applicationContext = applicationContext;
-        this.binderRegistry = new WebSocketStateBinderRegistry(requestBinderRegistry, conversionService);
+        // the registry of the server routes, with the binders of the servlet runtime, when the injected one is the generic one
+        RequestBinderRegistry serverRegistry = ServerRequestBinderRegistry.find(applicationContext).orElse(requestBinderRegistry);
+        this.binderRegistry = new WebSocketStateBinderRegistry(serverRegistry, conversionService);
         this.conversionService = conversionService;
         this.messageBodyHandlerRegistry = messageBodyHandlerRegistry;
         this.encoder = encoder;

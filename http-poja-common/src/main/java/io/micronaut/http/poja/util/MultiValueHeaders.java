@@ -19,6 +19,7 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.convert.ConversionService;
+import io.micronaut.core.convert.TypeConverter;
 import io.micronaut.core.convert.value.MutableConvertibleMultiValuesMap;
 import io.micronaut.http.MutableHttpHeaders;
 
@@ -62,6 +63,16 @@ public record MultiValueHeaders(
     @Override
     public Collection<List<String>> values() {
         return headers.values();
+    }
+
+    @Override
+    public <T> Optional<T> get(CharSequence name, ArgumentConversionContext<T> conversionContext, TypeConverter<String, T> converter) {
+        return headers.get(standardizeHeader(name), conversionContext, converter);
+    }
+
+    @Override
+    public ConversionService getConversionService() {
+        return headers.getConversionService();
     }
 
     @Override

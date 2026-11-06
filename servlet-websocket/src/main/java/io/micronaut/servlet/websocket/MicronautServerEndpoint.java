@@ -25,6 +25,8 @@ import io.micronaut.websocket.event.WebSocketSessionOpenEvent;
 import jakarta.websocket.EndpointConfig;
 import jakarta.websocket.Session;
 import org.jspecify.annotations.Nullable;
+
+import java.util.concurrent.Executor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -112,6 +114,11 @@ public class MicronautServerEndpoint extends AbstractMicronautEndpoint {
     @Override
     protected PropagatedContext propagatedContext() {
         return PropagatedContext.getOrEmpty().plus(new ServerHttpRequestContext(context.originatingRequest()));
+    }
+
+    @Override
+    protected @Nullable Executor routeExecutor() {
+        return context == null ? null : context.routeExecutor();
     }
 
     @Override

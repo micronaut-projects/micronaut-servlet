@@ -73,8 +73,8 @@ The servlet runtimes implement the same https://docs.micronaut.io/latest/guide/i
 |One resolver on every runtime, inside the filter chain. Jetty's own handler is available with `micronaut.server.jetty.native-static-resources`.
 
 |WebSocket (`@ServerWebSocket`)
-|Yes |Yes |Yes |No |No
-|Bridged onto each container's Jakarta WebSocket implementation.
+|Yes |Yes |Yes |With `io.github.robaho:httpserver` |No
+|Bridged onto each container's Jakarta WebSocket implementation. The JDK server needs an `HttpServer` provider that can switch protocols, which the one of the JDK cannot: see <<websocket-jdk, WebSocket on the built-in JDK HTTP server>>.
 |===
 
 === Runtime positioning

@@ -20,6 +20,8 @@ import org.jspecify.annotations.Nullable;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.util.SupplierUtil;
 import io.micronaut.http.body.stream.BodySizeLimits;
+import io.micronaut.http.form.FormConfiguration;
+import io.micronaut.http.server.HttpServerConfiguration;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.servlet.http.BodyBuilder;
 import io.micronaut.servlet.http.SSLSessionProvider;
@@ -34,6 +36,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import javax.net.ssl.SSLSession;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ForkJoinPool;
+import java.util.List;
 import java.util.function.Supplier;
 
 /**
@@ -45,9 +48,30 @@ import java.util.function.Supplier;
 @Singleton
 public class DefaultServletHttpHandler extends ServletHttpHandler<HttpServletRequest, HttpServletResponse> {
 
+    /**
+     * The default of {@code micronaut.http.forms.max-decoded-key-value-parameters}.
+     */
+    private static final int DEFAULT_MAX_FORM_FIELDS = 1024;
+
     private final Executor ioExecutor;
     private final @Nullable SSLSessionProvider sslSessionProvider;
     private final Supplier<BodySizeLimits> bodySizeLimits = SupplierUtil.memoized(this::bodySizeLimits);
+    private final Supplier<List<ServletConnectionAborter>> aborters = SupplierUtil.memoized(
+        () -> List.copyOf(applicationContext.getBeansOfType(ServletConnectionAborter.class)));
+    /**
+     * The limits of the forms the engine decodes itself, from {@code micronaut.http.forms.max-decoded-key-value-parameters}
+     * and {@code micronaut.server.multipart.max-file-size}.
+     */
+    private final Supplier<FormLimits> formLimits = SupplierUtil.memoized(() -> new FormLimits(
+        applicationContext.findBean(FormConfiguration.class)
+            .map(FormConfiguration::getMaxDecodedKeyValueParameters)
+            .orElse(DEFAULT_MAX_FORM_FIELDS),
+        applicationContext.findBean(HttpServerConfiguration.class)
+            .map(configuration -> configuration.getMultipart().getMaxFileSize())
+            .orElse(Long.MAX_VALUE)));
+    /**
+     * Whether a route takes the body as an {@link io.micronaut.http.body.AsyncRequestBody}, computed once per route.
+     */
     private final Supplier<BodyBuilder> bodyBuilder = SupplierUtil.memoized(() -> applicationContext.getBean(BodyBuilder.class));
 
     /**
@@ -104,7 +128,11 @@ public class DefaultServletHttpHandler extends ServletHttpHandler<HttpServletReq
     protected ServletExchange<HttpServletRequest, HttpServletResponse> createExchange(
             HttpServletRequest request,
             HttpServletResponse response) {
-        return new DefaultServletHttpRequest<>(applicationContext.getConversionService(), request, response, getMessageBodyHandlerRegistry(), bodyBuilder.get(), ioExecutor, sslSessionProvider, bodySizeLimits.get());
+        DefaultServletHttpRequest<Object> servletRequest = new DefaultServletHttpRequest<>(applicationContext.getConversionService(), request, response, getMessageBodyHandlerRegistry(), bodyBuilder.get(), ioExecutor, sslSessionProvider, bodySizeLimits.get(),
+            aborters.get());
+        FormLimits limits = formLimits.get();
+        servletRequest.setFormLimits(limits.maxFields(), limits.maxFileSize());
+        return servletRequest;
     }
 
     @Override
@@ -116,5 +144,12 @@ public class DefaultServletHttpHandler extends ServletHttpHandler<HttpServletReq
     @Override
     public boolean isRunning() {
         return getApplicationContext().isRunning();
+    }
+
+    /**
+     * @param maxFields   The most fields of a form
+     * @param maxFileSize The most bytes of a file of a multipart form
+     */
+    private record FormLimits(int maxFields, long maxFileSize) {
     }
 }

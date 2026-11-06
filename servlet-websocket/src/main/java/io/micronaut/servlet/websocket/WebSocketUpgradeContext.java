@@ -21,6 +21,8 @@ import io.micronaut.web.router.UriRouteMatch;
 import io.micronaut.websocket.context.WebSocketBean;
 import org.jspecify.annotations.Nullable;
 
+import java.util.concurrent.Executor;
+
 /**
  * The per-upgrade state a {@link MicronautServerEndpoint} needs, passed to the endpoint
  * through the user properties of the {@code ServerEndpointConfig} created for the upgrade.
@@ -30,6 +32,8 @@ import org.jspecify.annotations.Nullable;
  * @param routeMatch         The matched route
  * @param support            The shared services
  * @param jakartaEndpoint    What a {@code @ServerEndpoint} declared, or {@code null} for a Micronaut endpoint
+ * @param routeExecutor      The executor of a WebSocket route of the route builder, which runs its handlers,
+ *                           or {@code null} for a bean, whose methods select their executor
  * @author graemerocher
  * @since 6.2.0
  */
@@ -38,7 +42,8 @@ public record WebSocketUpgradeContext(WebSocketBean<Object> webSocketBean,
                                       HttpRequest<?> originatingRequest,
                                       UriRouteMatch<?, ?> routeMatch,
                                       ServletWebSocketSupport support,
-                                      @Nullable JakartaEndpoint jakartaEndpoint) {
+                                      @Nullable JakartaEndpoint jakartaEndpoint,
+                                      @Nullable Executor routeExecutor) {
 
     /**
      * Constructor for a Micronaut {@code @ServerWebSocket}.
@@ -52,6 +57,23 @@ public record WebSocketUpgradeContext(WebSocketBean<Object> webSocketBean,
                                    HttpRequest<?> originatingRequest,
                                    UriRouteMatch<?, ?> routeMatch,
                                    ServletWebSocketSupport support) {
-        this(webSocketBean, originatingRequest, routeMatch, support, null);
+        this(webSocketBean, originatingRequest, routeMatch, support, null, null);
+    }
+
+    /**
+     * Constructor for a Micronaut {@code @ServerWebSocket} or a Jakarta {@code @ServerEndpoint}.
+     *
+     * @param webSocketBean      The WebSocket bean
+     * @param originatingRequest The handshake request
+     * @param routeMatch         The matched route
+     * @param support            The shared services
+     * @param jakartaEndpoint    What a {@code @ServerEndpoint} declared, or {@code null} for a Micronaut endpoint
+     */
+    public WebSocketUpgradeContext(WebSocketBean<Object> webSocketBean,
+                                   HttpRequest<?> originatingRequest,
+                                   UriRouteMatch<?, ?> routeMatch,
+                                   ServletWebSocketSupport support,
+                                   @Nullable JakartaEndpoint jakartaEndpoint) {
+        this(webSocketBean, originatingRequest, routeMatch, support, jakartaEndpoint, null);
     }
 }

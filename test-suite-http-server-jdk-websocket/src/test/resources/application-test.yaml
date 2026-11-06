@@ -1,0 +1,4 @@
+# micronaut-security is disabled unless a test enables it
+micronaut:
+  security:
+    enabled: false

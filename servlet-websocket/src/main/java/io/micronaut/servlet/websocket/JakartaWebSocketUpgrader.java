@@ -16,6 +16,7 @@
 package io.micronaut.servlet.websocket;
 
 import io.micronaut.context.BeanContext;
+import io.micronaut.context.BeanProvider;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.util.StringUtils;
@@ -30,6 +31,7 @@ import io.micronaut.servlet.http.ServletExchange;
 import io.micronaut.servlet.http.websocket.ServletWebSocketUpgrader;
 import io.micronaut.web.router.UriRouteMatch;
 import io.micronaut.websocket.annotation.ServerWebSocket;
+import io.micronaut.web.router.websocket.WebSocketRouteEndpoint;
 import io.micronaut.websocket.context.WebSocketBean;
 import io.micronaut.websocket.context.WebSocketBeanRegistry;
 import jakarta.inject.Singleton;
@@ -78,6 +80,7 @@ public final class JakartaWebSocketUpgrader implements ServletWebSocketUpgrader 
     private final HttpServerConfiguration serverConfiguration;
     private final HttpHostResolver httpHostResolver;
     private final WebSocketBeanRegistry webSocketBeanRegistry;
+    private final BeanProvider<ServerContainer> runtimeContainer;
     private final Map<Class<?>, Optional<JakartaEndpoint>> jakartaEndpoints = new ConcurrentHashMap<>();
     private final Map<Class<?>, ServerEndpointConfig.Configurator> configurators = new ConcurrentHashMap<>();
 
@@ -89,13 +92,17 @@ public final class JakartaWebSocketUpgrader implements ServletWebSocketUpgrader 
      * @param configuration       The WebSocket configuration
      * @param serverConfiguration The server configuration, used for the CORS policy
      * @param httpHostResolver    Resolves the host of the handshake, so a same-origin socket is recognised
+     * @param runtimeContainer    The container of a runtime without a servlet context, which publishes it as a
+     *                            bean instead: the one of the built-in JDK HTTP server
      */
     public JakartaWebSocketUpgrader(BeanContext beanContext,
                                     ServletWebSocketSupport support,
                                     ServletWebSocketConfiguration configuration,
                                     HttpServerConfiguration serverConfiguration,
-                                    HttpHostResolver httpHostResolver) {
+                                    HttpHostResolver httpHostResolver,
+                                    BeanProvider<ServerContainer> runtimeContainer) {
         this.support = support;
+        this.runtimeContainer = runtimeContainer;
         this.configuration = configuration;
         this.serverConfiguration = serverConfiguration;
         this.httpHostResolver = httpHostResolver;
@@ -115,10 +122,18 @@ public final class JakartaWebSocketUpgrader implements ServletWebSocketUpgrader 
             throw notImplemented("WebSocket upgrade requires a servlet request and response");
         }
 
-        ServerContainer container = resolveServerContainer(servletRequest);
+        ServerContainer container = runtimeContainer.isPresent()
+            ? runtimeContainer.get()
+            : resolveServerContainer(servletRequest);
         Class<?> declaringType = routeMatch.getRouteInfo().getDeclaringType();
-        WebSocketBean<Object> webSocketBean = (WebSocketBean<Object>) webSocketBeanRegistry.getWebSocket(declaringType);
-        JakartaEndpoint jakartaEndpoint = jakartaEndpoints
+        // a WebSocket route of the route builder carries its endpoint, a @ServerWebSocket route is to a bean
+        WebSocketRouteEndpoint routeEndpoint = routeMatch.getRouteInfo()
+            .getAttribute(WebSocketRouteEndpoint.ROUTE_ATTRIBUTE, WebSocketRouteEndpoint.class)
+            .orElse(null);
+        WebSocketBean<Object> webSocketBean = routeEndpoint != null
+            ? routeEndpoint
+            : (WebSocketBean<Object>) webSocketBeanRegistry.getWebSocket(declaringType);
+        JakartaEndpoint jakartaEndpoint = routeEndpoint != null ? null : jakartaEndpoints
             .computeIfAbsent(declaringType, type -> Optional.ofNullable(JakartaEndpoint.of(webSocketBean.getBeanDefinition())))
             .orElse(null);
 
@@ -129,7 +144,10 @@ public final class JakartaWebSocketUpgrader implements ServletWebSocketUpgrader 
             WebSocketHandshakeRequest.snapshot(request),
             routeMatch,
             support,
-            jakartaEndpoint
+            jakartaEndpoint,
+            // the handlers of a WebSocket route run on the executor of the route, the thread of
+            // the container by default
+            routeEndpoint == null ? null : routeMatch.getRouteInfo().getExecutor(serverConfiguration)
         );
 
         ServerEndpointConfig.Builder builder = ServerEndpointConfig.Builder
@@ -157,7 +175,7 @@ public final class JakartaWebSocketUpgrader implements ServletWebSocketUpgrader 
         endpointConfig.getUserProperties().put(MicronautServerEndpoint.CONTEXT_PROPERTY, context);
 
         if (LOG.isDebugEnabled()) {
-            LOG.debug("Upgrading request [{}] to WebSocket endpoint [{}]", request.getPath(), declaringType.getName());
+            LOG.debug("Upgrading request [{}] to WebSocket endpoint [{}]", request.getPath(), routeEndpoint != null ? routeEndpoint : declaringType.getName());
         }
         try {
             container.upgradeHttpToWebSocket(servletRequest, servletResponse, endpointConfig, pathParameters(routeMatch));
@@ -216,6 +234,9 @@ public final class JakartaWebSocketUpgrader implements ServletWebSocketUpgrader 
     }
 
     static List<String> subprotocols(WebSocketBean<?> webSocketBean) {
+        if (webSocketBean instanceof WebSocketRouteEndpoint) {
+            return webSocketBean.getSubprotocols();
+        }
         String value = webSocketBean.getBeanDefinition()
             .stringValue(ServerWebSocket.class, "subprotocols")
             .orElse("");

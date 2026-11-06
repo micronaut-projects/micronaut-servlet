@@ -35,6 +35,7 @@ public class JdkHttpServerConfiguration extends HttpServerConfiguration implemen
 
     private boolean enabled = true;
     private AccessLogger accessLogger = new AccessLogger();
+    private WebSocketUpgrade websocket = WebSocketUpgrade.AUTO;
 
     /**
      * Default constructor.
@@ -68,6 +69,32 @@ public class JdkHttpServerConfiguration extends HttpServerConfiguration implemen
     public void setAccessLogger(AccessLogger accessLogger) {
         if (accessLogger != null) {
             this.accessLogger = accessLogger;
+        }
+    }
+
+    /**
+     * Whether a WebSocket handshake is upgraded. {@code auto}, the default, upgrades it when the
+     * {@code com.sun.net.httpserver} provider is known to keep the connection open after a
+     * {@code 101 Switching Protocols}, which the provider of the JDK does not: today that is
+     * {@code io.github.robaho:httpserver}. {@code enabled} upgrades it with any provider, for one
+     * that supports it but is not known to, and {@code disabled} never does.
+     *
+     * @return Whether a WebSocket handshake is upgraded
+     * @since 6.2.0
+     */
+    public WebSocketUpgrade getWebsocket() {
+        return websocket;
+    }
+
+    /**
+     * Sets whether a WebSocket handshake is upgraded. Default value ({@code auto}).
+     *
+     * @param websocket Whether a WebSocket handshake is upgraded
+     * @since 6.2.0
+     */
+    public void setWebsocket(WebSocketUpgrade websocket) {
+        if (websocket != null) {
+            this.websocket = websocket;
         }
     }
 
@@ -145,5 +172,25 @@ public class JdkHttpServerConfiguration extends HttpServerConfiguration implemen
         public void setExclusions(List<String> exclusions) {
             this.exclusions = exclusions == null ? Collections.emptyList() : exclusions;
         }
+    }
+
+    /**
+     * Whether a WebSocket handshake is upgraded, see {@link #getWebsocket()}.
+     *
+     * @since 6.2.0
+     */
+    public enum WebSocketUpgrade {
+        /**
+         * When the {@code com.sun.net.httpserver} provider is known to support it.
+         */
+        AUTO,
+        /**
+         * Whatever the provider.
+         */
+        ENABLED,
+        /**
+         * Never.
+         */
+        DISABLED
     }
 }

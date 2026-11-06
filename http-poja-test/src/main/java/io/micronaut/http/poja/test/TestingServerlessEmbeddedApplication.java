@@ -15,7 +15,9 @@
  */
 package io.micronaut.http.poja.test;
 
+import io.micronaut.http.poja.PojaConnection;
 import io.micronaut.http.poja.PojaHttpServerlessApplication;
+import io.micronaut.web.router.Router;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Replaces;
 import io.micronaut.context.annotation.Requires;
@@ -23,18 +25,24 @@ import io.micronaut.context.env.Environment;
 import io.micronaut.runtime.ApplicationConfiguration;
 import io.micronaut.runtime.EmbeddedApplication;
 import io.micronaut.runtime.server.EmbeddedServer;
+import io.micronaut.http.server.exceptions.ServerStartupException;
 import jakarta.inject.Singleton;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.net.BindException;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URI;
 import java.net.URL;
+import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -60,6 +68,10 @@ public class TestingServerlessEmbeddedApplication implements EmbeddedServer {
     private final AtomicBoolean isRunning = new AtomicBoolean(false);
     private final Set<Socket> activeConnections = ConcurrentHashMap.newKeySet();
     private @Nullable ServerSocket serverSocket;
+    /**
+     * The sockets of the ports routes declare besides the port of the server.
+     */
+    private final List<ServerSocket> routePortSockets = new CopyOnWriteArrayList<>();
     private @Nullable ExecutorService connectionExecutor;
     private int port;
 
@@ -75,8 +87,25 @@ public class TestingServerlessEmbeddedApplication implements EmbeddedServer {
     }
 
     private ServerSocket createServerSocket() {
+        return createServerSocket(0);
+    }
+
+    private ServerSocket createServerSocket(int port) {
         try {
-            return new ServerSocket(0);
+            // bound to the loopback address the client connects to, and not shared: bound to the wildcard address, or
+            // with SO_REUSEADDR, the port could also be bound by another process, which might then get the connections
+            ServerSocket socket = new ServerSocket();
+            try {
+                socket.setReuseAddress(false);
+                socket.bind(new InetSocketAddress(InetAddress.getLoopbackAddress(), port));
+            } catch (IOException e) {
+                socket.close();
+                throw e;
+            }
+            return socket;
+        } catch (BindException e) {
+            // like the other servers, so that a caller can try another port
+            throw new ServerStartupException("Could not bind port " + port + ": " + e.getMessage(), e);
         } catch (IOException e) {
             throw new UncheckedIOException("Could not bind", e);
         }
@@ -97,6 +126,32 @@ public class TestingServerlessEmbeddedApplication implements EmbeddedServer {
         });
         this.connectionExecutor = createdConnectionExecutor;
 
+        accept(createdServerSocket, createdConnectionExecutor);
+        // the routes of a port answer on that port only, so the server listens on it too
+        Router router = getApplicationContext().findBean(Router.class).orElse(null);
+        Set<Integer> exposedPorts = router == null ? Set.of() : router.getExposedPorts();
+        if (router != null && !exposedPorts.isEmpty()) {
+            // and the routes without a port answer on the port of the server only, like for the Netty server
+            router.applyDefaultPorts(List.of(port));
+        }
+        try {
+            for (Integer exposedPort : exposedPorts) {
+                if (exposedPort != null && exposedPort > 0 && exposedPort != port) {
+                    ServerSocket routePortSocket = createServerSocket(exposedPort);
+                    routePortSockets.add(routePortSocket);
+                    accept(routePortSocket, createdConnectionExecutor);
+                }
+            }
+        } catch (RuntimeException e) {
+            // the sockets already bound are released, e.g. to start again on another port
+            stop();
+            throw e;
+        }
+
+        return this;
+    }
+
+    private void accept(ServerSocket createdServerSocket, ExecutorService createdConnectionExecutor) {
         // Run the thread that sends requests to the server
         Thread acceptThread = new Thread(() -> {
             while (!createdServerSocket.isClosed()) {
@@ -113,13 +168,13 @@ public class TestingServerlessEmbeddedApplication implements EmbeddedServer {
         });
         acceptThread.setDaemon(true);
         acceptThread.start();
-
-        return this;
     }
 
     private void handleConnection(Socket socket) {
         try (socket) {
-            application.start(socket.getInputStream(), socket.getOutputStream());
+            // one connection of many: its end does not stop the application, as the end of the channel of a
+            // serverless application does
+            application.serve(socket.getInputStream(), socket.getOutputStream(), PojaConnection.of(socket));
         } catch (java.net.SocketException ignored) {
             // Socket closed
         } catch (IOException e) {
@@ -155,6 +210,14 @@ public class TestingServerlessEmbeddedApplication implements EmbeddedServer {
             }
         }
         this.serverSocket = null;
+        for (ServerSocket routePortSocket : routePortSockets) {
+            try {
+                routePortSocket.close();
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        }
+        routePortSockets.clear();
         return this;
     }
 
@@ -194,7 +257,7 @@ public class TestingServerlessEmbeddedApplication implements EmbeddedServer {
 
     @Override
     public URI getURI() {
-        return URI.create("http://localhost:" + getPort());
+        return URI.create("http://" + InetAddress.getLoopbackAddress().getHostAddress() + ":" + getPort());
     }
 
     @Override
