@@ -141,7 +141,7 @@ public class TomcatFactory extends ServletServerFactory {
         // bind when the connectors start, after the context and the Micronaut servlet, rather than in init(), so a
         // connection accepted by the port is served rather than queued until the application is ready
         for (Connector c : tomcat.getService().findConnectors()) {
-            c.setProperty("bindOnInit", "false");
+            c.setProperty("bindOnInit", Boolean.FALSE.toString());
         }
 
         TomcatConfiguration serverConfiguration = getServerConfiguration();
