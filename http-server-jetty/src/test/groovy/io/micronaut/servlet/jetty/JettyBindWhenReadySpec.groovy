@@ -26,6 +26,7 @@ class JettyBindWhenReadySpec extends Specification {
 
         then:
         probe.port == port
+        probe.invoked
         !probe.acceptedDuringStartup
         SocketUtils.isTcpPortAvailable(port) == false
 
@@ -38,6 +39,7 @@ class JettyBindWhenReadySpec extends Specification {
     static class PortProbe implements ServletContainerInitializer {
 
         int port
+        boolean invoked
         boolean acceptedDuringStartup
 
         PortProbe(ApplicationContext context) {
@@ -46,8 +48,9 @@ class JettyBindWhenReadySpec extends Specification {
 
         @Override
         void onStartup(Set<Class<?>> c, ServletContext ctx) {
+            invoked = true
             try (Socket socket = new Socket()) {
-                socket.connect(new InetSocketAddress("localhost", port), 200)
+                socket.connect(new InetSocketAddress(InetAddress.loopbackAddress, port), 200)
                 acceptedDuringStartup = true
             } catch (IOException ignored) {
                 acceptedDuringStartup = false
