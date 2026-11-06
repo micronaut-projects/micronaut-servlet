@@ -28,10 +28,19 @@ class JettyBindWhenReadySpec extends Specification {
         probe.port == port
         probe.invoked
         !probe.acceptedDuringStartup
-        SocketUtils.isTcpPortAvailable(port) == false
+        accepts(port)
 
         cleanup:
         server?.close()
+    }
+
+    static boolean accepts(int port) {
+        try (Socket socket = new Socket()) {
+            socket.connect(new InetSocketAddress(InetAddress.loopbackAddress, port), 200)
+            return true
+        } catch (IOException ignored) {
+            return false
+        }
     }
 
     @Singleton
@@ -49,12 +58,7 @@ class JettyBindWhenReadySpec extends Specification {
         @Override
         void onStartup(Set<Class<?>> c, ServletContext ctx) {
             invoked = true
-            try (Socket socket = new Socket()) {
-                socket.connect(new InetSocketAddress(InetAddress.loopbackAddress, port), 200)
-                acceptedDuringStartup = true
-            } catch (IOException ignored) {
-                acceptedDuringStartup = false
-            }
+            acceptedDuringStartup = JettyBindWhenReadySpec.accepts(port)
         }
     }
 }
