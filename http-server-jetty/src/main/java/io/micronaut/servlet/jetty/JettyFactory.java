@@ -177,6 +177,9 @@ public class JettyFactory extends ServletServerFactory {
         String contextPath = getContextPath();
 
         Server server = newServer(applicationContext, configuration);
+        // open the connectors only once the context and the Micronaut servlet have started, so a connection
+        // accepted by the port is served rather than queued until the application is ready
+        server.setOpenEarly(false);
 
         if (requestLog != null) {
             server.setRequestLog(requestLog);

@@ -16,6 +16,8 @@
 package io.micronaut.servlet.tomcat;
 
 import io.micronaut.context.annotation.Requires;
+import io.micronaut.core.annotation.ReflectionConfig;
+import io.micronaut.core.annotation.ReflectionConfig.ReflectiveMethodConfig;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.util.CollectionUtils;
@@ -50,9 +52,11 @@ import org.apache.catalina.connector.Connector;
 import org.apache.catalina.core.ContainerBase;
 import org.apache.catalina.core.StandardThreadExecutor;
 import org.apache.catalina.startup.Tomcat;
+import org.apache.coyote.AbstractProtocol;
 import org.apache.coyote.http11.AbstractHttp11Protocol;
 import org.apache.coyote.ProtocolHandler;
 import org.apache.coyote.http2.Http2Protocol;
+import org.apache.tomcat.util.net.AbstractEndpoint;
 import org.apache.tomcat.util.net.SSLHostConfig;
 import org.apache.tomcat.util.net.SSLHostConfigCertificate;
 import org.slf4j.Logger;
@@ -64,6 +68,9 @@ import org.slf4j.LoggerFactory;
  * @author graemerocher
  * @since 1.0.0
  */
+// Connector.setProperty("bindOnInit", ...) reaches the endpoint through IntrospectionUtils
+@ReflectionConfig(type = AbstractProtocol.class, methods = @ReflectiveMethodConfig(name = "setProperty", parameterTypes = {String.class, String.class}))
+@ReflectionConfig(type = AbstractEndpoint.class, methods = @ReflectiveMethodConfig(name = "setBindOnInit", parameterTypes = boolean.class))
 @Factory
 public class TomcatFactory extends ServletServerFactory {
 
@@ -138,6 +145,11 @@ public class TomcatFactory extends ServletServerFactory {
 
         configureServletInitializer(context, servletInitializers);
         configureConnectors(tomcat, connector, httpsConnector);
+        // bind when the connectors start, after the context and the Micronaut servlet, rather than in init(), so a
+        // connection accepted by the port is served rather than queued until the application is ready
+        for (Connector c : tomcat.getService().findConnectors()) {
+            c.setProperty("bindOnInit", Boolean.FALSE.toString());
+        }
 
         TomcatConfiguration serverConfiguration = getServerConfiguration();
         serverConfiguration.getAccessLogConfiguration().ifPresent(accessValve -> {
