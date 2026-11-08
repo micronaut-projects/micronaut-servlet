@@ -1,5 +1,5 @@
 [versions]
-micronaut = "5.2.20"
+micronaut = "5.2.22"
 managed-servlet-api = '6.1.0'
 managed-jakarta-websocket-api = "2.2.0"
 kotest-runner = "6.2.6"
