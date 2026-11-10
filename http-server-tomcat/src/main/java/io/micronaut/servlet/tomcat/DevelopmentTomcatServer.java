@@ -17,6 +17,7 @@ package io.micronaut.servlet.tomcat;
 
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Replaces;
+import io.micronaut.context.annotation.Value;
 import io.micronaut.context.env.DevelopmentActive;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.context.reload.RequestAdmission;
@@ -24,12 +25,15 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.runtime.ApplicationConfiguration;
 import io.micronaut.runtime.server.event.ServerShutdownEvent;
 import io.micronaut.servlet.http.server.DevelopmentRequestGate;
+import io.micronaut.servlet.http.server.DevelopmentSessionStore;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import org.apache.catalina.Container;
 import org.apache.catalina.Context;
 import org.apache.catalina.startup.Tomcat;
 import org.jspecify.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
@@ -39,7 +43,10 @@ import java.util.concurrent.CompletionStage;
  * starting it deploys them in the kept server, and stopping it, or shutting it down gracefully, retires this generation
  * while the kept server, its ports and its executors stay for the next one. It hands the kept server the development
  * launcher's {@link RequestAdmission}, which holds requests while a batch of changes is in progress and sets the hold
- * and drain timeouts.
+ * and drain timeouts. The contexts of this generation that have no session manager of their own get a
+ * {@link DevelopmentSessionManager}, which saves their sessions in the {@link DevelopmentSessionStore} as they stop and
+ * restores those of the previous generation as they start, unless {@value DevelopmentSessionStore#PERSIST_PROPERTY} is
+ * false.
  *
  * @author graemerocher
  * @since 6.3.0
@@ -62,17 +69,36 @@ final class DevelopmentTomcatServer extends TomcatServer {
      * @param serverShutdownEventPublisher The publisher of the server shutdown event
      * @param tomcat The server this generation built
      * @param retained The server kept across restarts
+     * @param sessions The container sessions kept across restarts
+     * @param persistSessions Whether the sessions are kept across restarts
      */
     @Inject
     DevelopmentTomcatServer(ApplicationContext applicationContext,
                             ApplicationConfiguration applicationConfiguration,
                             @Nullable ApplicationEventPublisher<ServerShutdownEvent> serverShutdownEventPublisher,
                             Tomcat tomcat,
-                            RetainedTomcatServer retained) {
-        super(applicationContext, applicationConfiguration, serverShutdownEventPublisher, retained.serve(tomcat));
+                            RetainedTomcatServer retained,
+                            DevelopmentSessionStore sessions,
+                            @Value("${" + DevelopmentSessionStore.PERSIST_PROPERTY + ":true}") boolean persistSessions) {
+        super(applicationContext, applicationConfiguration, serverShutdownEventPublisher,
+            retained.serve(persistSessions ? withSessions(tomcat, sessions, applicationContext.getClassLoader()) : tomcat));
         this.retained = retained;
         // the launcher's, looked up once per generation: none without a launcher
         retained.admission(RequestAdmission.current());
+    }
+
+    /**
+     * Has the contexts of the server save and restore their sessions across restarts.
+     */
+    private static Tomcat withSessions(Tomcat tomcat, DevelopmentSessionStore sessions, ClassLoader classLoader) {
+        List<Context> contexts = new ArrayList<>();
+        for (Container child : tomcat.getHost().findChildren()) {
+            if (child instanceof Context context) {
+                contexts.add(context);
+            }
+        }
+        DevelopmentSessionManager.install(contexts, sessions, classLoader);
+        return tomcat;
     }
 
     @Override

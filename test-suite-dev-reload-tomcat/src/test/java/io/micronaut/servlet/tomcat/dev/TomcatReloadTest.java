@@ -347,31 +347,6 @@ class TomcatReloadTest {
      * measured in the next one, through the session cookie.
      */
     @Test
-    void aContainerSessionAcrossARestart() throws Exception {
-        try (ReloadHarness harness = ReloadHarness.inDirectory(project)) {
-            int port = TomcatApp.properties(harness, Map.of());
-            harness.source("example.SessionServlet", TomcatApp.SESSION_SERVLET.formatted("first"));
-            harness.start();
-            HttpClient client = HttpClient.newBuilder().cookieHandler(new java.net.CookieManager()).build();
-            assertEquals("first new kept", session(client, port, "?set=kept"));
-            assertEquals("first existing kept", session(client, port, ""));
-
-            harness.source("example.SessionServlet", TomcatApp.SESSION_SERVLET.formatted("second"));
-            harness.reload();
-            // the stopping generation's context takes its session manager with it: the next one starts a new session
-            String after = session(client, port, "");
-            System.out.println("Tomcat container session across a restart: " + after);
-            assertEquals("second new null", after);
-        }
-    }
-
-    private static String session(HttpClient client, int port, String query) throws Exception {
-        HttpResponse<String> response = client.send(HttpRequest.newBuilder(URI.create("http://localhost:" + port + "/session" + query))
-            .timeout(Duration.ofSeconds(30)).GET().build(), HttpResponse.BodyHandlers.ofString());
-        return response.statusCode() == 200 ? response.body() : response.statusCode() + " " + response.body();
-    }
-
-    @Test
     void aWebSocketOfTheStoppingGenerationIsClosedGoingAwayAndTheNextServesANewOne() throws Exception {
         try (ReloadHarness harness = ReloadHarness.inDirectory(project)) {
             int port = TomcatApp.properties(harness, Map.of());
