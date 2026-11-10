@@ -4,6 +4,8 @@ plugins {
 
 dependencies {
     implementation libs.undertow.servlet
+    // development mode gives the JSR-356 containers of the deployments the worker of the kept server, when present
+    compileOnly libs.undertow.websockets.jsr
     testImplementation libs.bcpkix
     testImplementation(mnSerde.micronaut.serde.jackson)
     testAnnotationProcessor(mnSerde.micronaut.serde.processor)
