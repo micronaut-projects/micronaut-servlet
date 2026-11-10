@@ -21,9 +21,12 @@ import io.micronaut.http.multipart.CompletedFileUpload
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import org.reactivestreams.Publisher
+import reactor.core.publisher.Flux
+import reactor.core.publisher.Mono
 import spock.lang.Specification
 
 import java.nio.charset.StandardCharsets
+import java.time.Duration
 
 /**
  * @author Graeme Rocher
@@ -351,6 +354,17 @@ class JettyHttpPostSpec extends Specification {
         '{"title":"some book","pages":1}'                                        | '[{"title":"some book","pages":1}]'                                      | 'single entry'
     }
 
+    void 'test a JSON array body is published at the demand of a subscriber that takes one book at a time'() {
+        when:
+        String data = client.toBlocking().retrieve(
+                HttpRequest.POST("/post/one-at-a-time", '[{"title":"a","pages":1},{"title":"b","pages":2},{"title":"c","pages":3},{"title":"d","pages":4}]'),
+                String
+        )
+
+        then:
+        data == '["a","b","c","d"]'
+    }
+
     void 'test @SingleResult publisher with #desc'() {
         when:
         String data = client.toBlocking().retrieve(
@@ -405,6 +419,16 @@ class JettyHttpPostSpec extends Specification {
         @Post('/publisher')
         Publisher<Book> publisher(@Body Publisher<Book> bookPublisher) {
             return bookPublisher
+        }
+
+        @Post('/one-at-a-time')
+        @SingleResult
+        Publisher<List<String>> oneAtATime(@Body Publisher<Book> bookPublisher) {
+            // asks for the next book only once the previous one is handled, later, as a response written item by
+            // item does: every book of the body is in one chunk, so a parser that ignores the demand overflows
+            return Flux.from(bookPublisher)
+                    .concatMap({ Book book -> Mono.just(book.title).delayElement(Duration.ofMillis(10)) }, 1)
+                    .collectList()
         }
 
         @Post('/single-publisher')
