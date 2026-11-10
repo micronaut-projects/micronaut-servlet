@@ -18,6 +18,8 @@ dependencies {
         exclude(group: "org.eclipse.jetty.ee10", module: "jetty-ee10-annotations")
     }
     testImplementation(mn.micronaut.dev.tck)
+    // the LiveReload server, whose script the HTML pages get
+    testImplementation(mn.micronaut.dev.livereload)
     // the reload harness compiles the application under test with the processors on the test classpath
     testImplementation(mn.micronaut.inject.java)
     testImplementation(mnSerde.micronaut.serde.jackson)

@@ -10,6 +10,8 @@ dependencies {
     api(libs.managed.servlet.api)
 
     implementation(mnReactor.micronaut.reactor)
+    // the LiveReload script filter exists only when the development launcher runs the application
+    compileOnly(mn.micronaut.dev)
     compileOnly(mn.micronaut.discovery.core)
     implementation(mn.micronaut.jackson.core)
 
