@@ -71,12 +71,16 @@ class JsonChunkParserSpec extends Specification {
         thrown(Exception)
     }
 
-    void "malformed JSON fails"() {
+    void "malformed JSON fails after the values parsed before it, in the same chunk too"() {
+        given:
+        List<Integer> received = []
+
         when:
-        values(chunks('[{"n":1},', '{"n":}]')).collectList().block()
+        values(chunks('[{"n":1},', '{"n":2},{"n":}]')).doOnNext { received << it }.collectList().block()
 
         then:
         thrown(Exception)
+        received == [1, 2]
     }
 
     private Flux<Integer> values(Flux<byte[]> body) {

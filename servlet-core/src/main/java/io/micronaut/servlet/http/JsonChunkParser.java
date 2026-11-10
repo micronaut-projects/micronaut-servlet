@@ -83,16 +83,16 @@ final class JsonChunkParser implements Subscriber<JsonNode>, Subscription {
     }
 
     private Flux<JsonNode> drain() {
-        Throwable error = failure;
-        if (error != null) {
-            return Flux.error(error);
-        }
+        Flux<JsonNode> nodes;
         if (parsed.isEmpty()) {
-            return Flux.empty();
+            nodes = Flux.empty();
+        } else {
+            nodes = Flux.fromIterable(parsed);
+            parsed = new ArrayList<>();
         }
-        List<JsonNode> nodes = parsed;
-        parsed = new ArrayList<>();
-        return Flux.fromIterable(nodes);
+        Throwable error = failure;
+        // the nodes parsed before an error in the same chunk are published ahead of it
+        return error == null ? nodes : nodes.concatWith(Flux.error(error));
     }
 
     // the parser's subscription to the chunks: they are fed one at a time, whatever it asks for
