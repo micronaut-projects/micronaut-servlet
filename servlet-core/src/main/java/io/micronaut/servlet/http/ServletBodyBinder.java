@@ -421,10 +421,7 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
 
     private Flux<Object> streamJson(ServerHttpRequest<?> serverRequest, Argument<Object> typeArgument) {
         Processor<byte[], JsonNode> reactiveParser = jsonMapper.createReactiveParser(p -> serverRequest.byteBody().toByteArrayPublisher().subscribe(p), true);
-        // the parser emits every node of a chunk as it parses it, whatever the demand, and a subscriber that requests
-        // one item at a time, as the response of a route returning this body does, keeps only one
         return Flux.from(reactiveParser)
-            .onBackpressureBuffer()
             .map(node -> {
                 try {
                     return jsonMapper.readValueFromTree(node, typeArgument);
