@@ -239,10 +239,19 @@ final class RetainedJettyServer {
             kept.start();
         }
         handler.setServer(kept);
-        if (log instanceof LifeCycle cycle) {
-            cycle.start();
+        try {
+            if (log instanceof LifeCycle cycle) {
+                cycle.start();
+            }
+            handler.start();
+        } catch (Exception | Error e) {
+            // a generation that cannot start keeps nothing running: its request log, or what its handlers started
+            stopQuietly(handler);
+            if (log instanceof LifeCycle cycle) {
+                stopQuietly(cycle);
+            }
+            throw e;
         }
-        handler.start();
         Generation generation = new Generation(handler, log, executor);
         List<HeldRequest> waiting;
         synchronized (lock) {
@@ -337,6 +346,14 @@ final class RetainedJettyServer {
         built.setRequestLog(null);
     }
 
+    private static void stopQuietly(LifeCycle component) {
+        try {
+            component.stop();
+        } catch (Exception e) {
+            LOG.debug("Cannot stop a component of a Jetty generation that failed to start", e);
+        }
+    }
+
     private static void stop(@Nullable Server released) {
         if (released == null) {
             return;
@@ -375,8 +392,9 @@ final class RetainedJettyServer {
             if (running != null) {
                 return running;
             }
-            kept = server;
-            if (kept != null && !closed) {
+            // once closed, the server's scheduler stops: a request is not held for a timeout that may never run
+            kept = closed ? null : server;
+            if (kept != null) {
                 held.add(waiting);
             }
         }
