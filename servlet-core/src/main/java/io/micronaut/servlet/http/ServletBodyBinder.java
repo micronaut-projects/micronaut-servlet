@@ -40,12 +40,10 @@ import io.micronaut.http.exceptions.HttpException;
 import io.micronaut.http.form.FormCapableHttpRequest;
 import io.micronaut.http.multipart.RawFormField;
 import io.micronaut.json.JsonMapper;
-import io.micronaut.json.tree.JsonNode;
 import io.micronaut.web.router.RouteAttributes;
 import io.micronaut.web.router.RouteInfo;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
-import org.reactivestreams.Processor;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -420,8 +418,7 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
     }
 
     private Flux<Object> streamJson(ServerHttpRequest<?> serverRequest, Argument<Object> typeArgument) {
-        Processor<byte[], JsonNode> reactiveParser = jsonMapper.createReactiveParser(p -> serverRequest.byteBody().toByteArrayPublisher().subscribe(p), true);
-        return Flux.from(reactiveParser)
+        return JsonChunkParser.parse(jsonMapper, Flux.defer(() -> serverRequest.byteBody().toByteArrayPublisher()))
             .map(node -> {
                 try {
                     return jsonMapper.readValueFromTree(node, typeArgument);
