@@ -40,12 +40,10 @@ import io.micronaut.http.exceptions.HttpException;
 import io.micronaut.http.form.FormCapableHttpRequest;
 import io.micronaut.http.multipart.RawFormField;
 import io.micronaut.json.JsonMapper;
-import io.micronaut.json.tree.JsonNode;
 import io.micronaut.web.router.RouteAttributes;
 import io.micronaut.web.router.RouteInfo;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
-import org.reactivestreams.Processor;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -420,11 +418,7 @@ public class ServletBodyBinder<T> implements AnnotatedRequestArgumentBinder<Body
     }
 
     private Flux<Object> streamJson(ServerHttpRequest<?> serverRequest, Argument<Object> typeArgument) {
-        Processor<byte[], JsonNode> reactiveParser = jsonMapper.createReactiveParser(p -> serverRequest.byteBody().toByteArrayPublisher().subscribe(p), true);
-        // the parser emits every node of a chunk as it parses it, whatever the demand, and a subscriber that requests
-        // one item at a time, as the response of a route returning this body does, keeps only one
-        return Flux.from(reactiveParser)
-            .onBackpressureBuffer()
+        return JsonChunkParser.parse(jsonMapper, Flux.defer(() -> serverRequest.byteBody().toByteArrayPublisher()))
             .map(node -> {
                 try {
                     return jsonMapper.readValueFromTree(node, typeArgument);
