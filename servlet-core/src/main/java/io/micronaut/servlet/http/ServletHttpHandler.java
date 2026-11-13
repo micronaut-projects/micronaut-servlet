@@ -234,7 +234,10 @@ public abstract class ServletHttpHandler<REQ, RES> implements AutoCloseable, Lif
             try (InputStream is = byteBodyResponse.byteBody().toInputStream()) {
                 is.transferTo(servletResponse.getOutputStream());
             } catch (IOException e) {
-                throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+                HttpStatusException failure = new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+                // keep the cause, so that a runtime can tell a client disconnect from a failure to produce the body
+                failure.initCause(e);
+                throw failure;
             }
             onComplete.run();
         }

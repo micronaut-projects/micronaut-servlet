@@ -16,7 +16,9 @@
 package io.micronaut.http.poja.apache.exception;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.http.HttpStatus;
 import io.micronaut.http.server.exceptions.HttpServerException;
+import io.micronaut.core.annotation.Nullable;
 
 /**
  * An exception that gets thrown in case of a bad request sent by user.
@@ -25,14 +27,44 @@ import io.micronaut.http.server.exceptions.HttpServerException;
 @Internal
 public final class ApacheServletBadRequestException extends HttpServerException {
 
+    private final HttpStatus status;
+
+    /**
+     * Create an apache bad request exception.
+     *
+     * @param message The message to send to user
+     */
+    public ApacheServletBadRequestException(String message) {
+        this(message, null, HttpStatus.BAD_REQUEST);
+    }
+
     /**
      * Create an apache bad request exception.
      *
      * @param message The message to send to user
      * @param cause The cause
      */
-    public ApacheServletBadRequestException(String message, Exception cause) {
+    public ApacheServletBadRequestException(String message, @Nullable Exception cause) {
+        this(message, cause, HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * Create an apache bad request exception with a specific status.
+     *
+     * @param message The message to send to user
+     * @param cause The cause
+     * @param status The response status
+     */
+    public ApacheServletBadRequestException(String message, @Nullable Exception cause, HttpStatus status) {
         super(message, cause);
+        this.status = status;
+    }
+
+    /**
+     * @return The response status
+     */
+    public HttpStatus getStatus() {
+        return status;
     }
 
 }

@@ -30,6 +30,7 @@ import java.io.OutputStream;
 import java.nio.channels.Channel;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
+import java.nio.channels.SocketChannel;
 import java.nio.channels.WritableByteChannel;
 
 /**
@@ -131,7 +132,7 @@ public abstract class PojaHttpServerlessApplication<REQ, RES> implements Embedde
                 channel = System.inheritedChannel();
             }
             if (channel != null) {
-                try (InputStream in = Channels.newInputStream((ReadableByteChannel) channel);
+                try (InputStream in = channelInputStream(channel);
                      OutputStream out = Channels.newOutputStream((WritableByteChannel) channel)) {
                     return start(in, out);
                 }
@@ -141,6 +142,22 @@ public abstract class PojaHttpServerlessApplication<REQ, RES> implements Embedde
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    /**
+     * The input stream of an inherited channel. On Java 17 the stream of {@link Channels#newInputStream} reports
+     * nothing available for a socket channel, while the runtime relies on {@link InputStream#available()} to discard
+     * input the client has already sent before it closes the connection, so the socket's own stream is used.
+     *
+     * @param channel The inherited channel
+     * @return The input stream
+     * @throws IOException If the stream cannot be created
+     */
+    private static InputStream channelInputStream(Channel channel) throws IOException {
+        if (channel instanceof SocketChannel socketChannel && socketChannel.isBlocking()) {
+            return socketChannel.socket().getInputStream();
+        }
+        return Channels.newInputStream((ReadableByteChannel) channel);
     }
 
     /**

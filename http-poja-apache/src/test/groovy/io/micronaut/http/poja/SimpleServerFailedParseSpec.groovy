@@ -23,6 +23,7 @@ class SimpleServerFailedParseSpec extends Specification {
         then:
         response == SimpleServerSpec.unindent("""
         HTTP/1.1 400 Bad Request\r
+        Connection: close\r
         Transfer-Encoding: chunked\r
         \r
         20\r
