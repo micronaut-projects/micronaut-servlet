@@ -82,6 +82,8 @@ import java.net.URLDecoder;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.Principal;
+import java.security.cert.Certificate;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -118,6 +120,7 @@ public final class DefaultServletHttpRequest<B> implements
 
     private static final String NULL_KEY = "Attribute key cannot be null";
     private static final String NULL_PARAMETER_NAME = "Parameter name cannot be null";
+    private static final String X509_CERTIFICATE_ATTRIBUTE = "jakarta.servlet.request.X509Certificate";
 
     private final ConversionService conversionService;
     private final HttpServletRequest delegate;
@@ -782,6 +785,20 @@ public final class DefaultServletHttpRequest<B> implements
             return sslSessionProvider.getSSLSession(this);
         }
         return ServletHttpRequest.super.getSslSession();
+    }
+
+    @Override
+    public Optional<Certificate> getCertificate() {
+        Optional<Certificate> certificate = ServletHttpRequest.super.getCertificate();
+        if (certificate.isPresent()) {
+            return certificate;
+        }
+        // containers without an SSLSessionProvider (Tomcat, Undertow) expose the verified client chain as the
+        // standard servlet request attribute
+        if (delegate.getAttribute(X509_CERTIFICATE_ATTRIBUTE) instanceof X509Certificate[] chain && chain.length > 0) {
+            return Optional.of(chain[0]);
+        }
+        return Optional.empty();
     }
 
     @Override

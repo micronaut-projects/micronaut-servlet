@@ -61,6 +61,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import javax.net.ssl.SSLContext;
 import org.xnio.Option;
 import org.xnio.Options;
+import org.xnio.Sequence;
+import org.xnio.SslClientAuthMode;
 
 /**
  * Factory for the undertow server.
@@ -181,6 +183,8 @@ public class UndertowFactory extends ServletServerFactory {
             int finalSslPort = sslPort;
             SSLContext sslContext = build(sslConfiguration).orElse(null);
             if (sslContext != null) {
+                // applied before the user supplied socket options so that those can still override them
+                applySslSocketOptions(builder, sslConfiguration);
                 builder.addHttpsListener(
                     finalSslPort,
                     host,
@@ -221,6 +225,7 @@ public class UndertowFactory extends ServletServerFactory {
                 builder.setServerOption(Options.WORKER_TASK_CORE_THREADS, servletConfiguration.getMinThreads());
             }
         }
+        ClassLoader optionClassLoader = getEnvironment().getClassLoader();
         Map<String, String> serverOptions = configuration.getServerOptions();
         serverOptions.forEach((key, value) -> {
             Object opt = ReflectionUtils.findDeclaredField(UndertowOptions.class, key)
@@ -234,8 +239,7 @@ public class UndertowFactory extends ServletServerFactory {
                     }).orElse(null);
 
             if (opt instanceof Option) {
-                //noinspection unchecked
-                builder.setServerOption((Option<Object>) opt, value);
+                setServerOption(builder, (Option<?>) opt, value, optionClassLoader);
             } else {
                 builder.setServerOption(Option.simple(UndertowOptions.class, key, String.class), value);
             }
@@ -245,8 +249,7 @@ public class UndertowFactory extends ServletServerFactory {
             Object opt = getOptionValue(key);
 
             if (opt instanceof Option) {
-                //noinspection unchecked
-                builder.setWorkerOption((Option<Object>) opt, value);
+                setWorkerOption(builder, (Option<?>) opt, value, optionClassLoader);
             } else {
                 builder.setWorkerOption(Option.simple(Options.class, key, String.class), value);
             }
@@ -256,8 +259,7 @@ public class UndertowFactory extends ServletServerFactory {
             Object opt = getOptionValue(key);
 
             if (opt instanceof Option) {
-                //noinspection unchecked
-                builder.setSocketOption((Option<Object>) opt, value);
+                setSocketOption(builder, (Option<?>) opt, value, optionClassLoader);
             } else {
                 builder.setSocketOption(Option.simple(Options.class, key, String.class), value);
             }
@@ -426,4 +428,37 @@ public class UndertowFactory extends ServletServerFactory {
         return deploymentInfo;
     }
 
+    private static void applySslSocketOptions(Undertow.Builder builder, SslConfiguration sslConfiguration) {
+        // only set when configured, so that a mode set directly on the builder is kept. When unset, XNIO does not
+        // request a client certificate (NOT_REQUESTED), like Tomcat (certificateVerification none); note that Jetty
+        // instead defaults to NEED when micronaut.ssl.client-authentication is not configured
+        sslConfiguration.getClientAuthentication().ifPresent(clientAuthentication ->
+            builder.setSocketOption(Options.SSL_CLIENT_AUTH_MODE, switch (clientAuthentication) {
+                case NEED -> SslClientAuthMode.REQUIRED;
+                case WANT -> SslClientAuthMode.REQUESTED;
+            })
+        );
+        sslConfiguration.getProtocols().ifPresent(protocols ->
+            builder.setSocketOption(Options.SSL_ENABLED_PROTOCOLS, Sequence.of(protocols))
+        );
+        sslConfiguration.getCiphers().ifPresent(ciphers ->
+            builder.setSocketOption(Options.SSL_ENABLED_CIPHER_SUITES, Sequence.of(ciphers))
+        );
+    }
+
+    // configuration values are strings, so typed options (for example SSL_CLIENT_AUTH_MODE or
+    // SSL_ENABLED_PROTOCOLS) are parsed into the option's type rather than stored as strings, which XNIO would
+    // reject with a ClassCastException when the option is read. An option type XNIO has no parser for (only
+    // SSL_RNG_OPTIONS, an OptionMap) now fails at startup with an IllegalArgumentException instead
+    private static <T> void setServerOption(Undertow.Builder builder, Option<T> option, String value, ClassLoader classLoader) {
+        builder.setServerOption(option, option.parseValue(value, classLoader));
+    }
+
+    private static <T> void setWorkerOption(Undertow.Builder builder, Option<T> option, String value, ClassLoader classLoader) {
+        builder.setWorkerOption(option, option.parseValue(value, classLoader));
+    }
+
+    private static <T> void setSocketOption(Undertow.Builder builder, Option<T> option, String value, ClassLoader classLoader) {
+        builder.setSocketOption(option, option.parseValue(value, classLoader));
+    }
 }
