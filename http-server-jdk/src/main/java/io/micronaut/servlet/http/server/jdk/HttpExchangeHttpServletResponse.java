@@ -47,6 +47,7 @@ final class HttpExchangeHttpServletResponse implements HttpServletResponse {
     private final ServletOutputStream outputStream;
     private int status = DEFAULT_STATUS;
     private boolean committed = false;
+    private boolean headersSent = false;
 
     HttpExchangeHttpServletResponse(HttpExchange httpExchange, OutputStreamRequestedCallback callback) {
         this.outputStream = new HttpExchangeServletOutputStream(httpExchange);
@@ -84,8 +85,24 @@ final class HttpExchangeHttpServletResponse implements HttpServletResponse {
 
     @Override
     public ServletOutputStream getOutputStream() {
-        callback.onOutputStreamRequested(this);
+        // the callback sends the status line and headers, which can only happen once per exchange
+        if (!headersSent) {
+            headersSent = true;
+            callback.onOutputStreamRequested(this);
+        }
         return outputStream;
+    }
+
+    /**
+     * Whether the status line and headers have gone out. Deliberately separate from {@link #isCommitted()}: this
+     * response has no buffer and sends them as soon as the body stream is asked for, earlier than a buffering
+     * container would commit, and reporting that as committed would make the handler skip encoding the body it is
+     * about to write.
+     *
+     * @return Whether the headers have been sent
+     */
+    boolean isHeadersSent() {
+        return headersSent;
     }
 
     @Override

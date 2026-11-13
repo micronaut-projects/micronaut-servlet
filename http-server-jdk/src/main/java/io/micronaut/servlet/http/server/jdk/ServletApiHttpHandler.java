@@ -19,6 +19,7 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Experimental;
+import io.micronaut.http.HttpStatus;
 import io.micronaut.http.form.FormUrlEncodedDecoder;
 import io.micronaut.servlet.http.ServletHttpHandler;
 import jakarta.inject.Singleton;
@@ -38,10 +39,12 @@ import java.util.ArrayList;
 @Singleton
 final class ServletApiHttpHandler implements HttpHandler {
     private static final Logger LOG = LoggerFactory.getLogger(ServletApiHttpHandler.class);
+    /**
+     * Passed to {@link HttpExchange#sendResponseHeaders(int, long)} when the response carries no body at all.
+     */
+    private static final long NO_BODY = -1L;
     private final ServletHttpHandler<HttpServletRequest, HttpServletResponse> httpHandler;
     private final FormUrlEncodedDecoder formUrlEncodedDecoder;
-    private boolean headersSent = false;
-
     ServletApiHttpHandler(ServletHttpHandler<HttpServletRequest,
         HttpServletResponse> httpHandler,
                           FormUrlEncodedDecoder formUrlEncodedDecoder) {
@@ -51,22 +54,49 @@ final class ServletApiHttpHandler implements HttpHandler {
 
     @Override
     public void handle(HttpExchange httpExchange) throws IOException {
+        // all per-request state lives on the request and response objects; this handler is a singleton
         HttpExchangeHttpServletResponse response = new HttpExchangeHttpServletResponse(httpExchange, rsp -> {
             try {
                 populateAndSendResponseHeaders(rsp, httpExchange);
             } catch (IOException e) {
                 LOG.error(e.getMessage(), e);
             }
-            headersSent = true;
         });
-        HttpServletRequest request = new HttpExchangeHttpServletRequest(httpExchange, formUrlEncodedDecoder);
-        httpHandler.exchange(request, response);
-        if (!headersSent) {
+        HttpExchangeHttpServletRequest request = new HttpExchangeHttpServletRequest(httpExchange, formUrlEncodedDecoder);
+        if (!request.hasValidHostHeader()) {
+            // the JDK server accepts any Host header, which would otherwise end up in URLs built from the request
+            httpExchange.sendResponseHeaders(HttpStatus.BAD_REQUEST.getCode(), NO_BODY);
+            httpExchange.close();
+            return;
+        }
+        serviceOrFail(request, response);
+        if (!response.isHeadersSent()) {
             // if the headers have not been sent, e.g. nothing was written to the outpustream and hence no callback, then send them now
             populateAndSendResponseHeaders(response, httpExchange);
         }
         response.setCommitted(true);
         httpExchange.close();
+    }
+
+    /**
+     * Runs the request through the servlet handler, which answers an invalid request URI with a 400 itself. Any other
+     * exception thrown before the headers went out becomes a 500; once they are out the status cannot change, so the
+     * exception is rethrown and the exchange is left for the JDK server to drop.
+     *
+     * @param request The request
+     * @param response The response
+     */
+    private void serviceOrFail(HttpServletRequest request, HttpExchangeHttpServletResponse response) {
+        try {
+            httpHandler.service(request, response);
+        } catch (RuntimeException e) {
+            if (response.isHeadersSent()) {
+                throw e;
+            }
+            LOG.error("Unexpected error handling request [{} {}]: {}", request.getMethod(), request.getRequestURI(), e.getMessage(), e);
+            response.reset();
+            response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.getCode());
+        }
     }
 
     void populateAndSendResponseHeaders(HttpServletResponse response,

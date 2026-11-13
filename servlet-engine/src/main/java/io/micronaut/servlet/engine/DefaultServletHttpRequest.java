@@ -156,6 +156,8 @@ public final class DefaultServletHttpRequest<B> implements
                               Executor ioExecutor,
                               @Nullable SSLSessionProvider sslSessionProvider) {
         super();
+        // parsed first, so that a request the server cannot represent is rejected before anything else is set up
+        this.uri = parseRequestUri(delegate);
         this.conversionService = conversionService;
         this.delegate = delegate;
         this.codecRegistry = codecRegistry;
@@ -168,14 +170,6 @@ public final class DefaultServletHttpRequest<B> implements
             this.byteBody = InputStreamByteBody.create(new LazyDelegateInputStream(delegate), length, ioExecutor, ByteBodyFactory.createDefault(ByteArrayBufferFactory.INSTANCE));
         }
 
-        String requestURI = delegate.getRequestURI();
-
-        String queryString = delegate.getQueryString();
-        if (StringUtils.isNotEmpty(queryString)) {
-            requestURI = requestURI + "?" + queryString;
-        }
-
-        this.uri = URI.create(requestURI);
         HttpMethod method;
         try {
             method = HttpMethod.valueOf(delegate.getMethod());
@@ -329,10 +323,33 @@ public final class DefaultServletHttpRequest<B> implements
     @Override
     public InetSocketAddress getRemoteAddress() {
         ServletRequest servletRequest = delegate();
+        // the address rather than the host name: a container with host name lookups enabled would otherwise have
+        // the name resolved again here, on every call
         return new InetSocketAddress(
-            servletRequest.getRemoteHost(),
+            servletRequest.getRemoteAddr(),
             servletRequest.getRemotePort()
         );
+    }
+
+    /**
+     * Parses the request URI and query string the container passed on.
+     *
+     * @param delegate The servlet request
+     * @return The request URI
+     * @throws InvalidRequestUriException if they do not form a valid URI, for example a malformed escape sequence in
+     * the query string
+     */
+    private static URI parseRequestUri(HttpServletRequest delegate) {
+        String requestURI = delegate.getRequestURI();
+        String queryString = delegate.getQueryString();
+        if (StringUtils.isNotEmpty(queryString)) {
+            requestURI = requestURI + "?" + queryString;
+        }
+        try {
+            return URI.create(requestURI);
+        } catch (IllegalArgumentException e) {
+            throw new InvalidRequestUriException(e);
+        }
     }
 
     private ServletRequest delegate() {
