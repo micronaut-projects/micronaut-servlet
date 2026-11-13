@@ -9,6 +9,7 @@ import io.micronaut.test.support.TestPropertyProvider
 import jakarta.inject.Inject
 import org.eclipse.jetty.server.Server
 import spock.lang.Specification
+import spock.util.concurrent.PollingConditions
 
 import java.nio.file.Files
 import java.nio.file.Path
@@ -41,12 +42,14 @@ class JettyAccessLogbackSpec extends Specification implements TestPropertyProvid
 
         when:
         Path logPath = Paths.get("logs/test-access.log")
-        List<String> lines = Files.readAllLines(logPath)
 
         then:
-        !lines.isEmpty()
-        lines.get(0).contains("\"GET /test HTTP/1.1\" 401")
-        lines.get(0).contains("logback")
+        new PollingConditions(timeout: 5, delay: 0.1).eventually {
+            List<String> lines = Files.exists(logPath) ? Files.readAllLines(logPath) : []
+            assert !lines.isEmpty()
+            assert lines.get(0).contains("\"GET /test HTTP/1.1\" 401")
+            assert lines.get(0).contains("logback")
+        }
     }
 
     @Override
