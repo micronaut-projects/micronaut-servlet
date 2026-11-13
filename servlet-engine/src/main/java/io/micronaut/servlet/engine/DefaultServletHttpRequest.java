@@ -516,6 +516,28 @@ public final class DefaultServletHttpRequest<B> implements
         byteBody.close();
     }
 
+    @Override
+    public Optional<SSLSession> getSslSession() {
+        if (sslSessionProvider != null) {
+            return sslSessionProvider.getSSLSession(this);
+        }
+        return ServletHttpRequest.super.getSslSession();
+    }
+
+    @Override
+    public Optional<Certificate> getCertificate() {
+        Optional<Certificate> certificate = ServletHttpRequest.super.getCertificate();
+        if (certificate.isPresent()) {
+            return certificate;
+        }
+        // containers without an SSLSessionProvider (Tomcat, Undertow) expose the verified client chain as the
+        // standard servlet request attribute
+        if (delegate.getAttribute(X509_CERTIFICATE_ATTRIBUTE) instanceof X509Certificate[] chain && chain.length > 0) {
+            return Optional.of(chain[0]);
+        }
+        return Optional.empty();
+    }
+
     /**
      * The servlet request headers.
      */
@@ -637,25 +659,4 @@ public final class DefaultServletHttpRequest<B> implements
         }
     }
 
-    @Override
-    public Optional<SSLSession> getSslSession() {
-        if (sslSessionProvider != null) {
-            return sslSessionProvider.getSSLSession(this);
-        }
-        return ServletHttpRequest.super.getSslSession();
-    }
-
-    @Override
-    public Optional<Certificate> getCertificate() {
-        Optional<Certificate> certificate = ServletHttpRequest.super.getCertificate();
-        if (certificate.isPresent()) {
-            return certificate;
-        }
-        // containers without an SSLSessionProvider (Tomcat, Undertow) expose the verified client chain as the
-        // standard servlet request attribute
-        if (delegate.getAttribute(X509_CERTIFICATE_ATTRIBUTE) instanceof X509Certificate[] chain && chain.length > 0) {
-            return Optional.of(chain[0]);
-        }
-        return Optional.empty();
-    }
 }
