@@ -216,62 +216,6 @@ final class HttpExchangeHttpServletRequest implements HttpServletRequest {
         return authority;
     }
 
-    /**
-     * The host and port of a {@code Host} header.
-     *
-     * @param host The host name or address, IPv6 addresses without their brackets
-     * @param port The port, or -1 if the header has none
-     */
-    private record Authority(String host, int port) {
-
-        /**
-         * A reg-name restricted to the characters host names use, an IPv4 address, or a bracketed IPv6 address,
-         * followed by an optional port. Deliberately stricter than RFC 3986, which also allows sub-delimiters and
-         * percent-encoding in a reg-name: those have no place in a host name and would only be reflected into URLs.
-         */
-        private static final Pattern HOST_HEADER = Pattern.compile("(\\[[0-9A-Fa-f:.]+]|[A-Za-z0-9._-]+)(?::([0-9]{0,5}))?");
-        private static final int MAX_PORT = 65535;
-
-        static @Nullable Authority parse(@Nullable List<String> hosts) {
-            if (hosts == null || hosts.size() != 1) {
-                return null;
-            }
-            Matcher matcher = HOST_HEADER.matcher(hosts.get(0).trim());
-            if (!matcher.matches()) {
-                return null;
-            }
-            String host = matcher.group(1);
-            if (host.startsWith("[")) {
-                host = host.substring(1, host.length() - 1);
-                if (!isIpv6Literal(host)) {
-                    return null;
-                }
-            }
-            String portText = matcher.group(2);
-            int port = -1;
-            if (StringUtils.isNotEmpty(portText)) {
-                port = Integer.parseInt(portText);
-                if (port > MAX_PORT) {
-                    return null;
-                }
-            }
-            return new Authority(host, port);
-        }
-
-        /**
-         * @param address The contents of the brackets
-         * @return Whether they are an IPv6 address. Left to {@link URI}, which checks the syntax without resolving
-         * anything
-         */
-        private static boolean isIpv6Literal(String address) {
-            try {
-                return URI.create("http://[" + address + "]/").getHost() != null;
-            } catch (IllegalArgumentException e) {
-                return false;
-            }
-        }
-    }
-
     @Override
     public Object getAttribute(String name) {
         return attributes.get(name);
@@ -670,5 +614,61 @@ final class HttpExchangeHttpServletRequest implements HttpServletRequest {
         }
 
         return mergedMap;
+    }
+
+    /**
+     * The host and port of a {@code Host} header.
+     *
+     * @param host The host name or address, IPv6 addresses without their brackets
+     * @param port The port, or -1 if the header has none
+     */
+    private record Authority(String host, int port) {
+
+        /**
+         * A reg-name restricted to the characters host names use, an IPv4 address, or a bracketed IPv6 address,
+         * followed by an optional port. Deliberately stricter than RFC 3986, which also allows sub-delimiters and
+         * percent-encoding in a reg-name: those have no place in a host name and would only be reflected into URLs.
+         */
+        private static final Pattern HOST_HEADER = Pattern.compile("(\\[[0-9A-Fa-f:.]+]|[A-Za-z0-9._-]+)(?::([0-9]{0,5}))?");
+        private static final int MAX_PORT = 65535;
+
+        static @Nullable Authority parse(@Nullable List<String> hosts) {
+            if (hosts == null || hosts.size() != 1) {
+                return null;
+            }
+            Matcher matcher = HOST_HEADER.matcher(hosts.get(0).trim());
+            if (!matcher.matches()) {
+                return null;
+            }
+            String host = matcher.group(1);
+            if (host.startsWith("[")) {
+                host = host.substring(1, host.length() - 1);
+                if (!isIpv6Literal(host)) {
+                    return null;
+                }
+            }
+            String portText = matcher.group(2);
+            int port = -1;
+            if (StringUtils.isNotEmpty(portText)) {
+                port = Integer.parseInt(portText);
+                if (port > MAX_PORT) {
+                    return null;
+                }
+            }
+            return new Authority(host, port);
+        }
+
+        /**
+         * @param address The contents of the brackets
+         * @return Whether they are an IPv6 address. Left to {@link URI}, which checks the syntax without resolving
+         * anything
+         */
+        private static boolean isIpv6Literal(String address) {
+            try {
+                return URI.create("http://[" + address + "]/").getHost() != null;
+            } catch (IllegalArgumentException e) {
+                return false;
+            }
+        }
     }
 }
