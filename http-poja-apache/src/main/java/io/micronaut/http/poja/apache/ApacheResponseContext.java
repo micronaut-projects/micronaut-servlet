@@ -16,6 +16,7 @@
 package io.micronaut.http.poja.apache;
 
 import io.micronaut.http.HttpHeaders;
+import io.micronaut.http.HttpStatus;
 import io.micronaut.http.server.exceptions.HttpServerException;
 import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.apache.hc.core5.http.Header;
@@ -23,8 +24,10 @@ import org.apache.hc.core5.http.HttpException;
 import org.apache.hc.core5.http.impl.io.ChunkedOutputStream;
 import org.apache.hc.core5.http.impl.io.ContentLengthOutputStream;
 import org.apache.hc.core5.http.impl.io.DefaultHttpResponseWriter;
+import org.apache.hc.core5.http.impl.io.IdentityOutputStream;
 import org.apache.hc.core5.http.impl.io.SessionOutputBufferImpl;
 import org.apache.hc.core5.http.io.SessionOutputBuffer;
+import org.apache.hc.core5.http.message.BasicClassicHttpResponse;
 import org.jspecify.annotations.Nullable;
 
 import java.io.Closeable;
@@ -33,6 +36,8 @@ import java.io.OutputStream;
 
 final class ApacheResponseContext implements Closeable {
     boolean connectionClose = false;
+    // the request is HTTP/1.0, so a body without a length is delimited by closing the connection, never chunked
+    boolean closeDelimited = false;
     @Nullable
     ApacheServletHttpResponse<?> primaryResponse;
 
@@ -40,17 +45,38 @@ final class ApacheResponseContext implements Closeable {
     private final OutputStream out;
     @Nullable
     private OutputStream bodyStream;
+    private boolean aborted;
 
     ApacheResponseContext(ApacheServletConfiguration configuration, OutputStream out) {
         this.out = out;
         outputBuffer = new SessionOutputBufferImpl(configuration.outputBufferSize());
     }
 
-    boolean isCommitted() {
+    synchronized boolean isCommitted() {
         return bodyStream != null;
     }
 
-    OutputStream commit(ClassicHttpResponse headers) throws IOException {
+    /**
+     * Send the interim {@code 100 Continue} response a client sending {@code Expect: 100-continue} waits for
+     * before it sends the body, unless the final response has already been committed.
+     *
+     * @return Whether the interim response was sent
+     * @throws IOException If the response could not be written
+     */
+    synchronized boolean sendContinue() throws IOException {
+        if (isCommitted()) {
+            return false;
+        }
+        try {
+            new DefaultHttpResponseWriter().write(new BasicClassicHttpResponse(HttpStatus.CONTINUE.getCode(), "Continue"), outputBuffer, out);
+        } catch (HttpException e) {
+            throw new HttpServerException("Could not write the 100 Continue response", e);
+        }
+        outputBuffer.flush(out);
+        return true;
+    }
+
+    synchronized OutputStream commit(ClassicHttpResponse headers) throws IOException {
         if (isCommitted()) {
             throw new IllegalStateException("Response has already been committed");
         }
@@ -60,7 +86,12 @@ final class ApacheResponseContext implements Closeable {
         long contentLength = contentLengthStr == null ? -1 : Long.parseLong(contentLengthStr.getValue());
         if (contentLength < 0) {
             headers.removeHeaders(HttpHeaders.CONTENT_LENGTH);
-            headers.addHeader(HttpHeaders.TRANSFER_ENCODING, "chunked");
+            if (closeDelimited) {
+                // RFC 9112 section 6.1: no Transfer-Encoding in a response to an HTTP/1.0 request
+                connectionClose = true;
+            } else {
+                headers.addHeader(HttpHeaders.TRANSFER_ENCODING, "chunked");
+            }
         }
 
         Header connection = headers.getFirstHeader(HttpHeaders.CONNECTION);
@@ -75,20 +106,64 @@ final class ApacheResponseContext implements Closeable {
             throw new HttpServerException("Could not write response headers", e);
         }
 
-        OutputStream s = contentLength < 0 ? new ChunkedOutputStream(outputBuffer, out, 0) : new ContentLengthOutputStream(outputBuffer, out, contentLength);
+        OutputStream s;
+        if (contentLength >= 0) {
+            s = new ContentLengthOutputStream(outputBuffer, out, contentLength);
+        } else if (closeDelimited) {
+            s = new IdentityOutputStream(outputBuffer, out);
+        } else {
+            s = new ChunkedOutputStream(outputBuffer, out, 0);
+        }
         bodyStream = s;
         return s;
     }
 
-    @Override
-    public void close() throws IOException {
+    /**
+     * Complete the response body and flush it, leaving the connection open.
+     *
+     * @throws IOException If the response could not be written
+     */
+    void finish() throws IOException {
         if (bodyStream != null) {
             bodyStream.close();
         }
         outputBuffer.flush(out);
+    }
 
+    /**
+     * Give up on the response: the connection is closed without completing it, so that a client sees a response
+     * that failed part way as truncated rather than as complete.
+     */
+    void abort() {
+        aborted = true;
+        connectionClose = true;
+    }
+
+    private void flushQuietly() {
+        // what was written so far is sent, without the end of the body
+        try {
+            if (bodyStream != null) {
+                bodyStream.flush();
+            }
+            outputBuffer.flush(out);
+        } catch (IOException e) {
+            // the connection is gone already
+        }
+    }
+
+    @Override
+    public void close() throws IOException {
+        if (aborted) {
+            flushQuietly();
+        } else {
+            finish();
+        }
         if (connectionClose) {
-            out.close();
+            try {
+                out.close();
+            } catch (IOException e) {
+                // the connection is gone already
+            }
         }
     }
 }

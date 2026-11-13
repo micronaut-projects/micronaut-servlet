@@ -22,6 +22,7 @@ import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.convert.value.MutableConvertibleMultiValuesMap;
 import io.micronaut.http.MutableHttpHeaders;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -91,8 +92,17 @@ public record MultiValueHeaders(
     ) {
         MutableConvertibleMultiValuesMap<String> map
             = new MutableConvertibleMultiValuesMap<>(new LinkedHashMap<>(), conversionService);
-        for (String key: headers.keySet()) {
-            map.put(standardizeHeader(key), headers.get(key));
+        for (Map.Entry<String, List<String>> entry : headers.entrySet()) {
+            String name = standardizeHeader(entry.getKey());
+            List<String> existing = map.getAll(name);
+            if (existing.isEmpty()) {
+                map.put(name, entry.getValue());
+            } else {
+                // names that only differ in case are merged, rather than the last one winning
+                List<String> merged = new ArrayList<>(existing);
+                merged.addAll(entry.getValue());
+                map.put(name, merged);
+            }
         }
         return map;
     }
