@@ -64,7 +64,6 @@ import org.apache.tomcat.util.net.SSLHostConfigCertificate;
 public class TomcatFactory extends ServletServerFactory {
 
     private static final String HTTPS = "HTTPS";
-    private static final String CLIENT_AUTH = "clientAuth";
     private final Router router;
 
     /**
@@ -231,8 +230,7 @@ public class TomcatFactory extends ServletServerFactory {
             newConnector.addSslHostConfig(sslHostConfig);
             newConnector.setSecure(true);
             newConnector.setScheme("https");
-            newConnector.setProperty(CLIENT_AUTH, "false");
-            newConnector.setProperty("sslProtocol", "TLS");
+            // client authentication and the SSL protocol live on the shared SSLHostConfig
             newConnector.setProperty("SSLEnabled", "true");
         }
         newConnector.setAllowBackslash(serverConnector.getAllowBackslash());
@@ -318,21 +316,24 @@ public class TomcatFactory extends ServletServerFactory {
         httpsConnector.setPort(sslPort);
         httpsConnector.setSecure(true);
         httpsConnector.setScheme("https");
-        httpsConnector.setProperty(CLIENT_AUTH, "false");
-        httpsConnector.setProperty("sslProtocol", protocol);
         httpsConnector.setProperty("SSLEnabled", "true");
+        // Tomcat 10.1+ no longer supports the per-connector SSL attributes (clientAuth, sslProtocol),
+        // so they must be configured on the SSLHostConfig
+        sslHostConfig.setSslProtocol(protocol);
+        sslConfiguration.getProtocols().ifPresent(protocols ->
+            // "+" rather than ",", which Tomcat only accepts for compatibility and warns about for each protocol after the first
+            sslHostConfig.setProtocols(String.join("+", protocols))
+        );
         sslConfiguration.getCiphers().ifPresent(cyphers ->
             sslHostConfig.setCiphers(String.join(",", cyphers))
         );
-        sslConfiguration.getClientAuthentication().ifPresent(ca ->
-            httpsConnector.setProperty(CLIENT_AUTH, ca == ClientAuthentication.WANT ? "want" : "true")
-        );
+        sslHostConfig.setCertificateVerification(certificateVerification(sslConfiguration.getClientAuthentication().orElse(null)));
 
 
         SslConfiguration.KeyStoreConfiguration keyStoreConfig = sslConfiguration.getKeyStore();
         keyStoreConfig.getPassword().ifPresent(certificate::setCertificateKeystorePassword);
         keyStoreConfig.getPath().ifPresent(certificate::setCertificateKeystoreFile);
-        keyStoreConfig.getProvider().ifPresent(certificate::setCertificateKeystorePassword);
+        keyStoreConfig.getProvider().ifPresent(certificate::setCertificateKeystoreProvider);
         keyStoreConfig.getType().ifPresent(certificate::setCertificateKeystoreType);
 
         SslConfiguration.TrustStoreConfiguration trustStore = sslConfiguration.getTrustStore();
@@ -345,5 +346,17 @@ public class TomcatFactory extends ServletServerFactory {
         keyConfig.getAlias().ifPresent(certificate::setCertificateKeyAlias);
         keyConfig.getPassword().ifPresent(certificate::setCertificateKeyPassword);
         return httpsConnector;
+    }
+
+    private static String certificateVerification(@Nullable ClientAuthentication clientAuthentication) {
+        // unset means no client certificate is requested, like Undertow (NOT_REQUESTED); note that Jetty instead
+        // defaults to NEED when micronaut.ssl.client-authentication is not configured
+        if (clientAuthentication == null) {
+            return "none";
+        }
+        return switch (clientAuthentication) {
+            case NEED -> "required";
+            case WANT -> "optional";
+        };
     }
 }

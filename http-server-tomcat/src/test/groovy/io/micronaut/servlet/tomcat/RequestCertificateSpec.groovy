@@ -11,10 +11,14 @@ import io.micronaut.runtime.server.EmbeddedServer
 import io.netty.handler.ssl.util.SelfSignedCertificate
 import reactor.core.publisher.Flux
 import spock.lang.AutoCleanup
-import spock.lang.PendingFeature
 import spock.lang.Shared
 import spock.lang.Specification
 
+import javax.net.ssl.SSLContext
+import javax.net.ssl.SSLHandshakeException
+import javax.net.ssl.SSLParameters
+import javax.net.ssl.TrustManagerFactory
+import java.net.http.HttpResponse
 import java.nio.file.Files
 import java.nio.file.Path
 import java.security.KeyStore
@@ -33,7 +37,6 @@ class RequestCertificateSpec extends Specification {
     @Shared @AutoCleanup ApplicationContext applicationContext = embeddedServer.applicationContext
     @Shared @AutoCleanup HttpClient httpClient = applicationContext.createBean(HttpClient, "https://localhost:"+server.getPort())
 
-    @PendingFeature(reason = "Missing Tomcat SSL Session Provider")
     void "test certificate extraction"() {
         when:
         def response = Flux.from(httpClient
@@ -42,6 +45,35 @@ class RequestCertificateSpec extends Specification {
         then:
         response.code() == HttpStatus.OK.code
         response.body() == "CN=localhost"
+    }
+
+    void "test client without certificate is rejected"() {
+        given:
+        // pinned to TLSv1.2 so that the rejected certificate fails the handshake itself: with TLSv1.3 the client may
+        // send the request before reading the certificate_required alert and see a connection reset instead
+        def client = java.net.http.HttpClient.newBuilder()
+                .sslContext(trustOnlySslContext())
+                .sslParameters(new SSLParameters(null, ['TLSv1.2'] as String[]))
+                .build()
+
+        when:
+        client.send(java.net.http.HttpRequest.newBuilder(URI.create("https://localhost:${server.port}/ssl")).build(),
+                HttpResponse.BodyHandlers.ofString())
+
+        then:
+        thrown(SSLHandshakeException)
+    }
+
+    private SSLContext trustOnlySslContext() {
+        KeyStore ts = KeyStore.getInstance("JKS")
+        try (InputStream is = Files.newInputStream(trustStorePath)) {
+            ts.load(is, "123456".toCharArray())
+        }
+        TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
+        tmf.init(ts)
+        SSLContext context = SSLContext.getInstance("TLS")
+        context.init(null, tmf.getTrustManagers(), null)
+        context
     }
 
     void cleanupSpec() {
