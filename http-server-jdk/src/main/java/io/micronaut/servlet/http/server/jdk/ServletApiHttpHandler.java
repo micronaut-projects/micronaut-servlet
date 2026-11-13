@@ -19,11 +19,14 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Experimental;
+import io.micronaut.http.HttpStatus;
 import io.micronaut.http.form.FormUrlEncodedDecoder;
 import io.micronaut.servlet.http.ServletHttpHandler;
 import jakarta.inject.Singleton;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -35,6 +38,8 @@ import java.util.ArrayList;
 @Requires(missingBeans = HttpHandler.class)
 @Singleton
 final class ServletApiHttpHandler implements HttpHandler {
+    private static final Logger LOG = LoggerFactory.getLogger(ServletApiHttpHandler.class);
+
     /**
      * Passed to {@link HttpExchange#sendResponseHeaders(int, long)} when the response carries no body at all.
      */
@@ -63,10 +68,16 @@ final class ServletApiHttpHandler implements HttpHandler {
             httpExchange,
             rsp -> populateAndSendResponseHeaders(rsp, httpExchange)
         );
-        HttpServletRequest request = new HttpExchangeHttpServletRequest(httpExchange, formUrlEncodedDecoder);
+        HttpExchangeHttpServletRequest request = new HttpExchangeHttpServletRequest(httpExchange, formUrlEncodedDecoder);
+        if (!request.hasValidHostHeader()) {
+            // the JDK server accepts any Host header, which would otherwise end up in URLs built from the request
+            httpExchange.sendResponseHeaders(HttpStatus.BAD_REQUEST.getCode(), NO_BODY);
+            httpExchange.close();
+            return;
+        }
         boolean completed = false;
         try {
-            httpHandler.exchange(request, response);
+            serviceOrFail(request, response);
             // nothing requested the output stream, so the response has no body and the headers are still unsent
             response.commitHeaders();
             completed = true;
@@ -80,6 +91,27 @@ final class ServletApiHttpHandler implements HttpHandler {
             // write a well-formed terminator and hand the client a complete looking response with a truncated body.
             // Leaving it open makes the JDK server drop the connection, which is what a truncated transfer should
             // look like
+        }
+    }
+
+    /**
+     * Runs the request through the servlet handler, which answers an invalid request URI with a 400 itself. Any other
+     * exception thrown before the headers went out becomes a 500; once they are out the status cannot change, so the
+     * exception is rethrown and the exchange is left for the JDK server to drop.
+     *
+     * @param request The request
+     * @param response The response
+     */
+    private void serviceOrFail(HttpServletRequest request, HttpExchangeHttpServletResponse response) {
+        try {
+            httpHandler.service(request, response);
+        } catch (RuntimeException e) {
+            if (response.isHeadersSent()) {
+                throw e;
+            }
+            LOG.error("Unexpected error handling request [{} {}]: {}", request.getMethod(), request.getRequestURI(), e.getMessage(), e);
+            response.reset();
+            response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.getCode());
         }
     }
 

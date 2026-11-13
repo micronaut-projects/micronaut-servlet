@@ -50,6 +50,7 @@ import org.apache.catalina.connector.Connector;
 import org.apache.catalina.core.ContainerBase;
 import org.apache.catalina.core.StandardThreadExecutor;
 import org.apache.catalina.startup.Tomcat;
+import org.apache.catalina.valves.ErrorReportValve;
 import org.apache.coyote.http11.AbstractHttp11Protocol;
 import org.apache.coyote.ProtocolHandler;
 import org.apache.coyote.http2.Http2Protocol;
@@ -338,6 +339,12 @@ public class TomcatFactory extends ServletServerFactory {
         Tomcat tomcat = new Tomcat();
         tomcat.getHost().setAutoDeploy(false);
         tomcat.setHostname(getConfiguredHost());
+        // the host only installs its default error report valve when none is configured, so this one replaces it.
+        // The default renders the stack trace and the Tomcat version into error pages the container produces itself
+        ErrorReportValve errorReportValve = new ErrorReportValve();
+        errorReportValve.setShowReport(false);
+        errorReportValve.setShowServerInfo(false);
+        tomcat.getHost().getPipeline().addValve(errorReportValve);
         return tomcat;
     }
 

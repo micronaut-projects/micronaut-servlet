@@ -19,6 +19,7 @@ import io.micronaut.context.ApplicationContext;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.util.SupplierUtil;
+import io.micronaut.http.HttpStatus;
 import io.micronaut.http.body.stream.BodySizeLimits;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.servlet.http.BodyBuilder;
@@ -30,8 +31,11 @@ import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.SSLSession;
+import java.io.IOException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ForkJoinPool;
 import java.util.function.Supplier;
@@ -44,6 +48,8 @@ import java.util.function.Supplier;
  */
 @Singleton
 public class DefaultServletHttpHandler extends ServletHttpHandler<HttpServletRequest, HttpServletResponse> {
+
+    private static final Logger LOG = LoggerFactory.getLogger(DefaultServletHttpHandler.class);
 
     private final Executor ioExecutor;
     private final @Nullable SSLSessionProvider sslSessionProvider;
@@ -109,8 +115,55 @@ public class DefaultServletHttpHandler extends ServletHttpHandler<HttpServletReq
 
     @Override
     public void service(HttpServletRequest request, HttpServletResponse response) {
-        final ServletExchange<HttpServletRequest, HttpServletResponse> exchange = createExchange(request, response);
+        final ServletExchange<HttpServletRequest, HttpServletResponse> exchange;
+        try {
+            exchange = createExchange(request, response);
+        } catch (InvalidRequestUriException e) {
+            rejectInvalidRequestUri(response, e);
+            return;
+        }
         service(exchange);
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * @throws InvalidRequestUriException if the request URI cannot be parsed. The response has already been answered
+     * with a 400 by then; the exception only tells the caller that there is no exchange
+     */
+    @Override
+    public ServletExchange<HttpServletRequest, HttpServletResponse> exchange(HttpServletRequest request, HttpServletResponse response) {
+        final ServletExchange<HttpServletRequest, HttpServletResponse> exchange;
+        try {
+            exchange = createExchange(request, response);
+        } catch (InvalidRequestUriException e) {
+            rejectInvalidRequestUri(response, e);
+            throw e;
+        }
+        return exchange(exchange);
+    }
+
+    /**
+     * Answers a request whose URI cannot be parsed with a 400. Without this the exception escaped to the container,
+     * which either dropped the connection or rendered its own error page with the stack trace.
+     *
+     * @param response The servlet response
+     * @param e The parse failure
+     */
+    private static void rejectInvalidRequestUri(HttpServletResponse response, InvalidRequestUriException e) {
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Rejecting a request with an invalid URI: {}", e.getMessage());
+        }
+        if (response.isCommitted()) {
+            return;
+        }
+        try {
+            response.sendError(HttpStatus.BAD_REQUEST.getCode());
+        } catch (IOException | IllegalStateException ex) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Could not send the 400 response for an invalid request URI", ex);
+            }
+        }
     }
 
     @Override

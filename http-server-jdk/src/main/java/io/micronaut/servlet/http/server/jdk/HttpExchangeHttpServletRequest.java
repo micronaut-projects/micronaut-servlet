@@ -51,6 +51,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.security.Principal;
 import java.util.Collection;
@@ -61,6 +62,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static io.micronaut.http.util.HttpHeadersUtil.parseCharacterEncoding;
 
@@ -76,6 +79,8 @@ final class HttpExchangeHttpServletRequest implements HttpServletRequest {
     private final FormUrlEncodedDecoder formUrlEncodedDecoder;
     private final Map<String, @Nullable Object> attributes = new HashMap<>();
     private @Nullable Map<String, String[]>  parameters;
+    private @Nullable Authority authority;
+    private boolean authorityParsed;
 
     HttpExchangeHttpServletRequest(HttpExchange httpExchange,
                                    FormUrlEncodedDecoder formUrlEncodedDecoder) {
@@ -86,7 +91,12 @@ final class HttpExchangeHttpServletRequest implements HttpServletRequest {
 
     @Override
     public Cookie[] getCookies() {
-        String cookieValue = exchange.getRequestHeaders().getFirst(HttpHeaders.COOKIE);
+        // a client may split its cookies over several Cookie headers, so all of them are decoded, not just the first
+        List<String> cookieHeaders = exchange.getRequestHeaders().get(HttpHeaders.COOKIE);
+        if (CollectionUtils.isEmpty(cookieHeaders)) {
+            return new Cookie[0];
+        }
+        String cookieValue = String.join("; ", cookieHeaders);
         if (StringUtils.isEmpty(cookieValue)) {
             return new Cookie[0];
         }
@@ -149,12 +159,117 @@ final class HttpExchangeHttpServletRequest implements HttpServletRequest {
 
     @Override
     public String getRequestURI() {
-        return exchange.getRequestURI().getPath();
+        // the Servlet API defines the request URI as the raw, still percent-encoded path. The decoded form would be
+        // decoded a second time when the engine parses it into a URI, and an encoded '?', '#' or '/' would change
+        // the structure of the request
+        String rawPath = exchange.getRequestURI().getRawPath();
+        return StringUtils.isEmpty(rawPath) ? "/" : rawPath;
     }
 
     @Override
     public StringBuffer getRequestURL() {
-        return new StringBuffer(exchange.getRequestURI().toString());
+        StringBuffer url = new StringBuffer();
+        String scheme = getScheme();
+        int port = getServerPort();
+        url.append(scheme).append("://").append(hostForUrl(getServerName()));
+        if (port > 0 && !isDefaultPort(scheme, port)) {
+            url.append(':').append(port);
+        }
+        return url.append(getRequestURI());
+    }
+
+    private static String hostForUrl(String host) {
+        return host.indexOf(':') >= 0 ? "[" + host + "]" : host;
+    }
+
+    private static boolean isDefaultPort(String scheme, int port) {
+        return ("http".equals(scheme) && port == 80) || ("https".equals(scheme) && port == 443);
+    }
+
+    /**
+     * Whether the {@code Host} header is acceptable: absent or empty, or a single header holding a host name, an IPv4
+     * address or a bracketed IPv6 address, with an optional port. The JDK server does not check it, and anything else
+     * would be reflected into {@link #getServerName()} and {@link #getRequestURL()}.
+     *
+     * @return {@code false} if the request is to be rejected with a 400, as Tomcat and Jetty do
+     */
+    boolean hasValidHostHeader() {
+        List<String> hosts = exchange.getRequestHeaders().get(HttpHeaders.HOST);
+        if (CollectionUtils.isEmpty(hosts)) {
+            return true;
+        }
+        if (hosts.size() > 1) {
+            return false;
+        }
+        return hosts.get(0).isBlank() || authority() != null;
+    }
+
+    /**
+     * @return The host and port from the {@code Host} header, parsed once per request, or {@code null} if there is no
+     * usable one
+     */
+    private @Nullable Authority authority() {
+        if (!authorityParsed) {
+            authority = Authority.parse(exchange.getRequestHeaders().get(HttpHeaders.HOST));
+            authorityParsed = true;
+        }
+        return authority;
+    }
+
+    /**
+     * The host and port of a {@code Host} header.
+     *
+     * @param host The host name or address, IPv6 addresses without their brackets
+     * @param port The port, or -1 if the header has none
+     */
+    private record Authority(String host, int port) {
+
+        /**
+         * A reg-name restricted to the characters host names use, an IPv4 address, or a bracketed IPv6 address,
+         * followed by an optional port. Deliberately stricter than RFC 3986, which also allows sub-delimiters and
+         * percent-encoding in a reg-name: those have no place in a host name and would only be reflected into URLs.
+         */
+        private static final Pattern HOST_HEADER = Pattern.compile("(\\[[0-9A-Fa-f:.]+]|[A-Za-z0-9._-]+)(?::([0-9]{0,5}))?");
+        private static final int MAX_PORT = 65535;
+
+        static @Nullable Authority parse(@Nullable List<String> hosts) {
+            if (hosts == null || hosts.size() != 1) {
+                return null;
+            }
+            Matcher matcher = HOST_HEADER.matcher(hosts.get(0).trim());
+            if (!matcher.matches()) {
+                return null;
+            }
+            String host = matcher.group(1);
+            if (host.startsWith("[")) {
+                host = host.substring(1, host.length() - 1);
+                if (!isIpv6Literal(host)) {
+                    return null;
+                }
+            }
+            String portText = matcher.group(2);
+            int port = -1;
+            if (StringUtils.isNotEmpty(portText)) {
+                port = Integer.parseInt(portText);
+                if (port > MAX_PORT) {
+                    return null;
+                }
+            }
+            return new Authority(host, port);
+        }
+
+        /**
+         * @param address The contents of the brackets
+         * @return Whether they are an IPv6 address. Left to {@link URI}, which checks the syntax without resolving
+         * anything
+         */
+        private static boolean isIpv6Literal(String address) {
+            try {
+                return URI.create("http://[" + address + "]/").getHost() != null;
+            } catch (IllegalArgumentException _) {
+                return false;
+            }
+        }
     }
 
     @Override
@@ -260,12 +375,18 @@ final class HttpExchangeHttpServletRequest implements HttpServletRequest {
 
     @Override
     public String getServerName() {
-        return exchange.getLocalAddress().getHostName();
+        // as the Servlet API specifies, the server name comes from the Host header. Falling back to the local address
+        // uses the host string rather than getHostName(), which would do a reverse DNS lookup on every request
+        Authority authority = authority();
+        return authority != null ? authority.host() : exchange.getLocalAddress().getHostString();
     }
 
     @Override
     public int getServerPort() {
-        return exchange.getLocalAddress().getPort();
+        // the Servlet API: the port of the Host header if it has one, otherwise the port the connection was accepted
+        // on, which is also what Tomcat reports
+        Authority authority = authority();
+        return authority != null && authority.port() > 0 ? authority.port() : exchange.getLocalAddress().getPort();
     }
 
     @Override
@@ -281,7 +402,9 @@ final class HttpExchangeHttpServletRequest implements HttpServletRequest {
 
     @Override
     public String getRemoteHost() {
-        return exchange.getRemoteAddress().getHostName();
+        // no reverse DNS lookup: a client with a slow PTR record could otherwise hold up handler threads. This is
+        // what servlet containers do with host name lookups disabled, their default
+        return getRemoteAddr();
     }
 
     @Override
@@ -315,7 +438,8 @@ final class HttpExchangeHttpServletRequest implements HttpServletRequest {
 
     @Override
     public String getLocalName() {
-        return exchange.getLocalAddress().getHostName();
+        // the host string avoids a reverse DNS lookup per request
+        return exchange.getLocalAddress().getHostString();
     }
 
     @Override

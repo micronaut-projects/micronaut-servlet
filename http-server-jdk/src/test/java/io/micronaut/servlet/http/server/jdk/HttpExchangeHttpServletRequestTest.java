@@ -199,6 +199,104 @@ class HttpExchangeHttpServletRequestTest {
         assertFalse(request.isAsyncSupported(), "the JDK server has no asynchronous dispatch");
     }
 
+    @Test
+    void theRequestUriIsTheRawPath() {
+        HttpExchangeHttpServletRequest request = newRequest("GET", "/a%2520b/c%3Fd%23e%2Ff?x=%20", new Headers(), "");
+
+        assertEquals("/a%2520b/c%3Fd%23e%2Ff", request.getRequestURI());
+        assertEquals("x=%20", request.getQueryString());
+    }
+
+    @Test
+    void theRequestUrlIsBuiltFromTheHostHeaderAndTheRawPath() {
+        Headers headers = new Headers();
+        headers.add("Host", "example.com:8080");
+        HttpExchangeHttpServletRequest request = newRequest("GET", "/a%20b?x=1", headers, "");
+
+        assertEquals("example.com", request.getServerName());
+        assertEquals(8080, request.getServerPort());
+        assertEquals("http://example.com:8080/a%20b", request.getRequestURL().toString());
+    }
+
+    @Test
+    void aHostHeaderWithoutAPortUsesThePortTheConnectionWasAcceptedOn() {
+        Headers headers = new Headers();
+        headers.add("Host", "[::1]");
+        HttpExchangeHttpServletRequest request = newRequest("GET", "/", headers, "");
+
+        assertTrue(request.hasValidHostHeader());
+        assertEquals("::1", request.getServerName());
+        assertEquals(8080, request.getServerPort(), "the local port, as the Servlet API and Tomcat have it");
+        assertEquals("http://[::1]:8080/", request.getRequestURL().toString());
+    }
+
+    @Test
+    void aHostNameWithAnUnderscoreIsAccepted() {
+        Headers headers = new Headers();
+        headers.add("Host", "my_service:9000");
+        HttpExchangeHttpServletRequest request = newRequest("GET", "/", headers, "");
+
+        assertTrue(request.hasValidHostHeader());
+        assertEquals("my_service", request.getServerName());
+        assertEquals(9000, request.getServerPort());
+    }
+
+    @Test
+    void anEmptyHostHeaderFallsBackToTheLocalAddress() {
+        Headers headers = new Headers();
+        headers.add("Host", "");
+        HttpExchangeHttpServletRequest request = newRequest("GET", "/", headers, "");
+
+        assertTrue(request.hasValidHostHeader());
+        assertEquals("127.0.0.1", request.getServerName());
+        assertEquals(8080, request.getServerPort());
+    }
+
+    @Test
+    void aMalformedHostHeaderIsNotReflected() {
+        for (String host : List.of("evil.example/phish?x", "a b", "example.com:8080:1", "example.com:99999", "user@example.com", "[::1", "[::::]", "[1.2.3.4]")) {
+            Headers headers = new Headers();
+            headers.add("Host", host);
+            HttpExchangeHttpServletRequest request = newRequest("GET", "/", headers, "");
+
+            assertFalse(request.hasValidHostHeader(), host);
+            assertEquals("127.0.0.1", request.getServerName(), host);
+            assertEquals(8080, request.getServerPort(), host);
+        }
+    }
+
+    @Test
+    void repeatedHostHeadersAreRejected() {
+        Headers headers = new Headers();
+        headers.add("Host", "a.example");
+        headers.add("Host", "b.example");
+        HttpExchangeHttpServletRequest request = newRequest("GET", "/", headers, "");
+
+        assertFalse(request.hasValidHostHeader());
+        assertEquals("127.0.0.1", request.getServerName());
+    }
+
+    @Test
+    void withoutAHostHeaderTheLocalAddressIsUsedWithoutALookup() {
+        HttpExchangeHttpServletRequest request = newRequest("GET", "/", new Headers(), "");
+
+        assertEquals("127.0.0.1", request.getServerName());
+        assertEquals("127.0.0.1", request.getRemoteHost(), "no reverse lookup of the client address");
+    }
+
+    @Test
+    void cookiesFromEveryCookieHeaderAreDecoded() {
+        Headers headers = new Headers();
+        headers.add("Cookie", "a=1");
+        headers.add("Cookie", "b=2; c=3");
+        HttpExchangeHttpServletRequest request = newRequest("GET", "/", headers, "");
+
+        Cookie[] cookies = request.getCookies();
+        assertEquals(3, cookies.length);
+        assertEquals("a", cookies[0].getName());
+        assertEquals("c", cookies[2].getName());
+    }
+
     private static HttpExchangeHttpServletRequest newRequest(String method, String uri, Headers headers, String body) {
         return newRequest(method, uri, headers, body.getBytes(StandardCharsets.UTF_8));
     }

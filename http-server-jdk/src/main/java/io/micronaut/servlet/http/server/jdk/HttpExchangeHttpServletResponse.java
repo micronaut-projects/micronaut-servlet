@@ -101,6 +101,13 @@ final class HttpExchangeHttpServletResponse implements HttpServletResponse {
     }
 
     /**
+     * @return Whether the status line and headers have gone out, after which the status can no longer change
+     */
+    boolean isHeadersSent() {
+        return headersSent;
+    }
+
+    /**
      * @return Whether anything asked for the response body stream, which is how this response learns that a body is
      * about to be written
      */
