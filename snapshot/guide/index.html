@@ -3964,23 +3964,38 @@ test = [
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>poja.apache.input-buffer-size</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">int</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">The size of the buffer that is used to read and parse the HTTP request
-                        (in bytes). Default value is 8192 (8Kb).</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The input buffer size</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">8192</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>poja.apache.output-buffer-size</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">int</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">The size of the buffer that is used to write the HTTP response
-                        (in bytes). Default value is 8192 (8Kb).</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The output buffer size</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">8192</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>poja.apache.use-inherited-channel</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">When true, the inherited channel will be used by if present.
-                            Otherwise, STDIN and STDOUT will be used.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Whether to use the inherited channel</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>poja.apache.max-line-length</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">int</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The maximum line length</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">8192</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>poja.apache.max-header-count</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">int</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The maximum number of headers</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">100</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>poja.apache.discard-timeout</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.time.Duration</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">How long to wait for an unread request body</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">10s</p></td>
 </tr>
 </tbody>
 </table>
@@ -4010,6 +4025,9 @@ test = [
 </tr>
 </tbody>
 </table>
+<div class="paragraph">
+<p>Requests are framed strictly: a request that carries both <code>Content-Length</code> and <code>Transfer-Encoding</code>, a <code>Transfer-Encoding</code> other than <code>chunked</code>, or an invalid <code>Content-Length</code> is answered with <code>400 Bad Request</code> and the connection is closed. A request body the application does not read is consumed before the next request is parsed, within <code>poja.apache.discard-timeout</code> (on standard input, where the wait cannot be bounded, the connection is closed instead), <code>micronaut.server.max-request-size</code> limits the size of a body, and <code>poja.apache.max-line-length</code> and <code>poja.apache.max-header-count</code> limit the request line and headers.</p>
+</div>
 <div class="paragraph">
 <p>To disable the Apache HTTP POJA runtime when it is present on the classpath:</p>
 </div>

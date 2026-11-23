@@ -61,10 +61,12 @@ loadScripts(document, 'script');</script>
 <li><a href="#constructor-detail" tabindex="0">Constructor Details</a>
 <ol class="toc-list">
 <li><a href="#%3Cinit%3E(java.io.InputStream,io.micronaut.http.poja.apache.ApacheResponseContext,org.apache.hc.core5.http.io.SessionInputBuffer,io.micronaut.core.convert.ConversionService,io.micronaut.http.body.MessageBodyHandlerRegistry,java.util.concurrent.ExecutorService,io.micronaut.core.io.buffer.ByteBufferFactory)" tabindex="0">ApacheServletHttpRequest(InputStream, ApacheResponseContext, SessionInputBuffer, ConversionService, MessageBodyHandlerRegistry, ExecutorService, ByteBufferFactory)</a></li>
+<li><a href="#%3Cinit%3E(java.io.InputStream,io.micronaut.http.poja.apache.ApacheResponseContext,org.apache.hc.core5.http.io.SessionInputBuffer,io.micronaut.core.convert.ConversionService,io.micronaut.http.body.MessageBodyHandlerRegistry,java.util.concurrent.ExecutorService,io.micronaut.core.io.buffer.ByteBufferFactory,org.apache.hc.core5.http.config.Http1Config,long)" tabindex="0">ApacheServletHttpRequest(InputStream, ApacheResponseContext, SessionInputBuffer, ConversionService, MessageBodyHandlerRegistry, ExecutorService, ByteBufferFactory, Http1Config, long)</a></li>
 </ol>
 </li>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
 <ol class="toc-list">
+<li><a href="#close()" tabindex="0">close()</a></li>
 <li><a href="#getResponse()" tabindex="0">getResponse()</a></li>
 <li><a href="#createResponse()" tabindex="0">createResponse()</a></li>
 <li><a href="#getNativeRequest()" tabindex="0">getNativeRequest()</a></li>
@@ -155,6 +157,18 @@ loadScripts(document, 'script');</script>
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ExecutorService.html" title="class or interface in java.util.concurrent" class="external-link">ExecutorService</a>&nbsp;ioExecutor,
  io.micronaut.core.io.buffer.ByteBufferFactory&lt;?,<wbr>?&gt;&nbsp;byteBufferFactory)</code></div>
 <div class="col-last even-row-color">
+<div class="block">Create an Apache-based request with the default line and header limits and no body size limit.</div>
+</div>
+<div class="col-constructor-name odd-row-color"><code><a href="#%3Cinit%3E(java.io.InputStream,io.micronaut.http.poja.apache.ApacheResponseContext,org.apache.hc.core5.http.io.SessionInputBuffer,io.micronaut.core.convert.ConversionService,io.micronaut.http.body.MessageBodyHandlerRegistry,java.util.concurrent.ExecutorService,io.micronaut.core.io.buffer.ByteBufferFactory,org.apache.hc.core5.http.config.Http1Config,long)" class="member-name-link">ApacheServletHttpRequest</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/InputStream.html" title="class or interface in java.io" class="external-link">InputStream</a>&nbsp;inputStream,
+ io.micronaut.http.poja.apache.ApacheResponseContext&nbsp;responseContext,
+ org.apache.hc.core5.http.io.SessionInputBuffer&nbsp;sessionInputBuffer,
+ io.micronaut.core.convert.ConversionService&nbsp;conversionService,
+ io.micronaut.http.body.MessageBodyHandlerRegistry&nbsp;messageBodyHandlerRegistry,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ExecutorService.html" title="class or interface in java.util.concurrent" class="external-link">ExecutorService</a>&nbsp;ioExecutor,
+ io.micronaut.core.io.buffer.ByteBufferFactory&lt;?,<wbr>?&gt;&nbsp;byteBufferFactory,
+ org.apache.hc.core5.http.config.Http1Config&nbsp;http1Config,
+ long&nbsp;maxBodySize)</code></div>
+<div class="col-last odd-row-color">
 <div class="block">Create an Apache-based request.</div>
 </div>
 </div>
@@ -177,46 +191,49 @@ loadScripts(document, 'script');</script>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull io.micronaut.http.body.ByteBody</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#byteBody()" class="member-name-link">byteBody</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>io.micronaut.http.MutableHttpRequest<wbr>&lt;<a href="#type-param-B" title="type parameter in ApacheServletHttpRequest">B</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#cookie(io.micronaut.http.cookie.Cookie)" class="member-name-link">cookie</a><wbr>(io.micronaut.http.cookie.Cookie&nbsp;cookie)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../../../servlet/http/ServletHttpResponse.html" title="interface in io.micronaut.servlet.http">ServletHttpResponse</a><wbr>&lt;org.apache.hc.core5.http.ClassicHttpResponse, ?&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#createResponse()" class="member-name-link">createResponse</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Create a new, empty response for this exchange.</div>
-</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a><wbr>&lt;<a href="#type-param-B" title="type parameter in ApacheServletHttpRequest">B</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getBody()" class="member-name-link">getBody</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull io.micronaut.http.cookie.Cookies</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getCookies()" class="member-name-link">getCookies</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull io.micronaut.http.MutableHttpHeaders</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getHeaders()" class="member-name-link">getHeaders</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull io.micronaut.http.HttpMethod</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getMethod()" class="member-name-link">getMethod</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>org.apache.hc.core5.http.ClassicHttpRequest</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getNativeRequest()" class="member-name-link">getNativeRequest</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull io.micronaut.http.MutableHttpParameters</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getParameters()" class="member-name-link">getParameters</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../../../servlet/http/ServletHttpResponse.html" title="interface in io.micronaut.servlet.http">ServletHttpResponse</a><wbr>&lt;org.apache.hc.core5.http.ClassicHttpResponse, ?&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getResponse()" class="member-name-link">getResponse</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Get the current response, the last response created by <a href="../../../servlet/http/ServletExchange.html#createResponse()"><code>ServletExchange.createResponse()</code></a>.</div>
-</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/net/URI.html" title="class or interface in java.net" class="external-link">URI</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getUri()" class="member-name-link">getUri</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setConversionService(io.micronaut.core.convert.ConversionService)" class="member-name-link">setConversionService</a><wbr>(@NonNull io.micronaut.core.convert.ConversionService&nbsp;conversionService)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#close()" class="member-name-link">close</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>io.micronaut.http.MutableHttpRequest<wbr>&lt;<a href="#type-param-B" title="type parameter in ApacheServletHttpRequest">B</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#uri(java.net.URI)" class="member-name-link">uri</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/net/URI.html" title="class or interface in java.net" class="external-link">URI</a>&nbsp;uri)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#cookie(io.micronaut.http.cookie.Cookie)" class="member-name-link">cookie</a><wbr>(io.micronaut.http.cookie.Cookie&nbsp;cookie)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../../../servlet/http/ServletHttpResponse.html" title="interface in io.micronaut.servlet.http">ServletHttpResponse</a><wbr>&lt;org.apache.hc.core5.http.ClassicHttpResponse, ?&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#createResponse()" class="member-name-link">createResponse</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Create a new, empty response for this exchange.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a><wbr>&lt;<a href="#type-param-B" title="type parameter in ApacheServletHttpRequest">B</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getBody()" class="member-name-link">getBody</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull io.micronaut.http.cookie.Cookies</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getCookies()" class="member-name-link">getCookies</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull io.micronaut.http.MutableHttpHeaders</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getHeaders()" class="member-name-link">getHeaders</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull io.micronaut.http.HttpMethod</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getMethod()" class="member-name-link">getMethod</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>org.apache.hc.core5.http.ClassicHttpRequest</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getNativeRequest()" class="member-name-link">getNativeRequest</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull io.micronaut.http.MutableHttpParameters</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getParameters()" class="member-name-link">getParameters</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../../../servlet/http/ServletHttpResponse.html" title="interface in io.micronaut.servlet.http">ServletHttpResponse</a><wbr>&lt;org.apache.hc.core5.http.ClassicHttpResponse, ?&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getResponse()" class="member-name-link">getResponse</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Get the current response, the last response created by <a href="../../../servlet/http/ServletExchange.html#createResponse()"><code>ServletExchange.createResponse()</code></a>.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/net/URI.html" title="class or interface in java.net" class="external-link">URI</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getUri()" class="member-name-link">getUri</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setConversionService(io.micronaut.core.convert.ConversionService)" class="member-name-link">setConversionService</a><wbr>(@NonNull io.micronaut.core.convert.ConversionService&nbsp;conversionService)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>io.micronaut.http.MutableHttpRequest<wbr>&lt;<a href="#type-param-B" title="type parameter in ApacheServletHttpRequest">B</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#uri(java.net.URI)" class="member-name-link">uri</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/net/URI.html" title="class or interface in java.net" class="external-link">URI</a>&nbsp;uri)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 </div>
 </div>
 </div>
@@ -248,9 +265,6 @@ loadScripts(document, 'script');</script>
 <h3 id="methods-inherited-from-class-io.micronaut.http.ServerHttpRequest">Methods inherited from interface&nbsp;io.micronaut.http.ServerHttpRequest</h3>
 <code>byteBodyFactory</code></div>
 <div class="inherited-list">
-<h3 id="methods-inherited-from-class-io.micronaut.servlet.http.ServletExchange">Methods inherited from interface&nbsp;<a href="../../../servlet/http/ServletExchange.html#method-summary" title="interface in io.micronaut.servlet.http">ServletExchange</a></h3>
-<code><a href="../../../servlet/http/ServletExchange.html#close()" title="close()">close</a></code></div>
-<div class="inherited-list">
 <h3 id="methods-inherited-from-class-io.micronaut.servlet.http.ServletHttpRequest">Methods inherited from interface&nbsp;<a href="../../../servlet/http/ServletHttpRequest.html#method-summary" title="interface in io.micronaut.servlet.http">ServletHttpRequest</a></h3>
 <code><a href="../../../servlet/http/ServletHttpRequest.html#executeAsync(io.micronaut.servlet.http.ServletHttpRequest.AsyncExecutionCallback)" title="executeAsync(ServletHttpRequest.AsyncExecutionCallback)">executeAsync</a>, <a href="../../../servlet/http/ServletHttpRequest.html#getContextPath()" title="getContextPath()">getContextPath</a>, <a href="../../../servlet/http/ServletHttpRequest.html#isAsyncSupported()" title="isAsyncSupported()">isAsyncSupported</a></code></div>
 </section>
@@ -275,7 +289,7 @@ loadScripts(document, 'script');</script>
  io.micronaut.http.body.MessageBodyHandlerRegistry&nbsp;messageBodyHandlerRegistry,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ExecutorService.html" title="class or interface in java.util.concurrent" class="external-link">ExecutorService</a>&nbsp;ioExecutor,
  io.micronaut.core.io.buffer.ByteBufferFactory&lt;?,<wbr>?&gt;&nbsp;byteBufferFactory)</span></div>
-<div class="block">Create an Apache-based request.</div>
+<div class="block">Create an Apache-based request with the default line and header limits and no body size limit.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>inputStream</code> - The input stream</dd>
@@ -289,6 +303,35 @@ loadScripts(document, 'script');</script>
 </div>
 </section>
 </li>
+<li>
+<section class="detail" id="&lt;init&gt;(java.io.InputStream,io.micronaut.http.poja.apache.ApacheResponseContext,org.apache.hc.core5.http.io.SessionInputBuffer,io.micronaut.core.convert.ConversionService,io.micronaut.http.body.MessageBodyHandlerRegistry,java.util.concurrent.ExecutorService,io.micronaut.core.io.buffer.ByteBufferFactory,org.apache.hc.core5.http.config.Http1Config,long)">
+<h3>ApacheServletHttpRequest</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">ApacheServletHttpRequest</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/InputStream.html" title="class or interface in java.io" class="external-link">InputStream</a>&nbsp;inputStream,
+ io.micronaut.http.poja.apache.ApacheResponseContext&nbsp;responseContext,
+ org.apache.hc.core5.http.io.SessionInputBuffer&nbsp;sessionInputBuffer,
+ io.micronaut.core.convert.ConversionService&nbsp;conversionService,
+ io.micronaut.http.body.MessageBodyHandlerRegistry&nbsp;messageBodyHandlerRegistry,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ExecutorService.html" title="class or interface in java.util.concurrent" class="external-link">ExecutorService</a>&nbsp;ioExecutor,
+ io.micronaut.core.io.buffer.ByteBufferFactory&lt;?,<wbr>?&gt;&nbsp;byteBufferFactory,
+ org.apache.hc.core5.http.config.Http1Config&nbsp;http1Config,
+ long&nbsp;maxBodySize)</span></div>
+<div class="block">Create an Apache-based request.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>inputStream</code> - The input stream</dd>
+<dd><code>responseContext</code> - The response context</dd>
+<dd><code>sessionInputBuffer</code> - Input buffer for parsing</dd>
+<dd><code>conversionService</code> - The conversion service</dd>
+<dd><code>messageBodyHandlerRegistry</code> - The message body handler registry</dd>
+<dd><code>ioExecutor</code> - The executor service</dd>
+<dd><code>byteBufferFactory</code> - The byte buffer factory</dd>
+<dd><code>http1Config</code> - The HTTP/1.1 parsing limits</dd>
+<dd><code>maxBodySize</code> - The maximum body size (<code>micronaut.server.max-request-size</code>), negative for no limit</dd>
+</dl>
+</div>
+</section>
+</li>
 </ul>
 </section>
 </li>
@@ -297,6 +340,14 @@ loadScripts(document, 'script');</script>
 <section class="method-details" id="method-detail">
 <h2>Method Details</h2>
 <ul class="member-list">
+<li>
+<section class="detail" id="close()">
+<h3>close</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">close</span>()</div>
+</div>
+</section>
+</li>
 <li>
 <section class="detail" id="getResponse()">
 <h3>getResponse</h3>

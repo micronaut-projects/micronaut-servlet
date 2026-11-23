@@ -135,9 +135,17 @@ server and the client side.</div>
 <dd>
 <div class="block">An exception that gets thrown in case of a bad request sent by user.</div>
 </dd>
+<dt><a href="io/micronaut/http/poja/apache/exception/ApacheServletBadRequestException.html#%3Cinit%3E(java.lang.String)" class="member-name-link">ApacheServletBadRequestException(String)</a> - Constructor for exception class io.micronaut.http.poja.apache.exception.<a href="io/micronaut/http/poja/apache/exception/ApacheServletBadRequestException.html" title="class in io.micronaut.http.poja.apache.exception">ApacheServletBadRequestException</a></dt>
+<dd>
+<div class="block">Create an apache bad request exception.</div>
+</dd>
 <dt><a href="io/micronaut/http/poja/apache/exception/ApacheServletBadRequestException.html#%3Cinit%3E(java.lang.String,java.lang.Exception)" class="member-name-link">ApacheServletBadRequestException(String, Exception)</a> - Constructor for exception class io.micronaut.http.poja.apache.exception.<a href="io/micronaut/http/poja/apache/exception/ApacheServletBadRequestException.html" title="class in io.micronaut.http.poja.apache.exception">ApacheServletBadRequestException</a></dt>
 <dd>
 <div class="block">Create an apache bad request exception.</div>
+</dd>
+<dt><a href="io/micronaut/http/poja/apache/exception/ApacheServletBadRequestException.html#%3Cinit%3E(java.lang.String,java.lang.Exception,io.micronaut.http.HttpStatus)" class="member-name-link">ApacheServletBadRequestException(String, Exception, HttpStatus)</a> - Constructor for exception class io.micronaut.http.poja.apache.exception.<a href="io/micronaut/http/poja/apache/exception/ApacheServletBadRequestException.html" title="class in io.micronaut.http.poja.apache.exception">ApacheServletBadRequestException</a></dt>
+<dd>
+<div class="block">Create an apache bad request exception with a specific status.</div>
 </dd>
 <dt><a href="io/micronaut/http/poja/apache/ApacheServletConfiguration.html" class="type-name-link" title="class in io.micronaut.http.poja.apache">ApacheServletConfiguration</a> - Record Class in <a href="io/micronaut/http/poja/apache/package-summary.html">io.micronaut.http.poja.apache</a></dt>
 <dd>
@@ -145,13 +153,21 @@ server and the client side.</div>
 </dd>
 <dt><a href="io/micronaut/http/poja/apache/ApacheServletConfiguration.html#%3Cinit%3E(int,int,boolean)" class="member-name-link">ApacheServletConfiguration(int, int, boolean)</a> - Constructor for record class io.micronaut.http.poja.apache.<a href="io/micronaut/http/poja/apache/ApacheServletConfiguration.html" title="class in io.micronaut.http.poja.apache">ApacheServletConfiguration</a></dt>
 <dd>
-<div class="block">Creates an instance of a <code>ApacheServletConfiguration</code> record class.</div>
+<div class="block">Constructor that applies the default line and header limits and discard timeout.</div>
+</dd>
+<dt><a href="io/micronaut/http/poja/apache/ApacheServletConfiguration.html#%3Cinit%3E(int,int,boolean,int,int,java.time.Duration)" class="member-name-link">ApacheServletConfiguration(int, int, boolean, int, int, Duration)</a> - Constructor for record class io.micronaut.http.poja.apache.<a href="io/micronaut/http/poja/apache/ApacheServletConfiguration.html" title="class in io.micronaut.http.poja.apache">ApacheServletConfiguration</a></dt>
+<dd>
+<div class="block">Canonical constructor.</div>
 </dd>
 <dt><a href="io/micronaut/http/poja/apache/ApacheServletHttpRequest.html" class="type-name-link" title="class in io.micronaut.http.poja.apache">ApacheServletHttpRequest&lt;B&gt;</a> - Class in <a href="io/micronaut/http/poja/apache/package-summary.html">io.micronaut.http.poja.apache</a></dt>
 <dd>
 <div class="block">An implementation of the POJA Http Request based on Apache.</div>
 </dd>
 <dt><a href="io/micronaut/http/poja/apache/ApacheServletHttpRequest.html#%3Cinit%3E(java.io.InputStream,io.micronaut.http.poja.apache.ApacheResponseContext,org.apache.hc.core5.http.io.SessionInputBuffer,io.micronaut.core.convert.ConversionService,io.micronaut.http.body.MessageBodyHandlerRegistry,java.util.concurrent.ExecutorService,io.micronaut.core.io.buffer.ByteBufferFactory)" class="member-name-link">ApacheServletHttpRequest(InputStream, ApacheResponseContext, SessionInputBuffer, ConversionService, MessageBodyHandlerRegistry, ExecutorService, ByteBufferFactory)</a> - Constructor for class io.micronaut.http.poja.apache.<a href="io/micronaut/http/poja/apache/ApacheServletHttpRequest.html" title="class in io.micronaut.http.poja.apache">ApacheServletHttpRequest</a></dt>
+<dd>
+<div class="block">Create an Apache-based request with the default line and header limits and no body size limit.</div>
+</dd>
+<dt><a href="io/micronaut/http/poja/apache/ApacheServletHttpRequest.html#%3Cinit%3E(java.io.InputStream,io.micronaut.http.poja.apache.ApacheResponseContext,org.apache.hc.core5.http.io.SessionInputBuffer,io.micronaut.core.convert.ConversionService,io.micronaut.http.body.MessageBodyHandlerRegistry,java.util.concurrent.ExecutorService,io.micronaut.core.io.buffer.ByteBufferFactory,org.apache.hc.core5.http.config.Http1Config,long)" class="member-name-link">ApacheServletHttpRequest(InputStream, ApacheResponseContext, SessionInputBuffer, ConversionService, MessageBodyHandlerRegistry, ExecutorService, ByteBufferFactory, Http1Config, long)</a> - Constructor for class io.micronaut.http.poja.apache.<a href="io/micronaut/http/poja/apache/ApacheServletHttpRequest.html" title="class in io.micronaut.http.poja.apache">ApacheServletHttpRequest</a></dt>
 <dd>
 <div class="block">Create an Apache-based request.</div>
 </dd>
@@ -296,6 +312,8 @@ for runtimes to apply while a request body is read.</div>
 <dt><a href="io/micronaut/servlet/websocket/ServletWebSocketSession.html#clear()" class="member-name-link">clear()</a> - Method in class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/ServletWebSocketSession.html" title="class in io.micronaut.servlet.websocket">ServletWebSocketSession</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/websocket/JakartaEndpoint.html#CLIENT_ENDPOINT" class="member-name-link">CLIENT_ENDPOINT</a> - Static variable in record class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/JakartaEndpoint.html" title="class in io.micronaut.servlet.websocket">JakartaEndpoint</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/http/poja/apache/ApacheServletHttpRequest.html#close()" class="member-name-link">close()</a> - Method in class io.micronaut.http.poja.apache.<a href="io/micronaut/http/poja/apache/ApacheServletHttpRequest.html" title="class in io.micronaut.http.poja.apache">ApacheServletHttpRequest</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/http/poja/util/LimitingInputStream.html#close()" class="member-name-link">close()</a> - Method in class io.micronaut.http.poja.util.<a href="io/micronaut/http/poja/util/LimitingInputStream.html" title="class in io.micronaut.http.poja.util">LimitingInputStream</a></dt>
 <dd>&nbsp;</dd>
@@ -449,6 +467,10 @@ anyway.</div>
 <dd>
 <div class="block">The default time a client connection's <code>@OnOpen</code> may take.</div>
 </dd>
+<dt><a href="io/micronaut/http/poja/apache/ApacheServletConfiguration.html#DEFAULT_DISCARD_TIMEOUT" class="member-name-link">DEFAULT_DISCARD_TIMEOUT</a> - Static variable in record class io.micronaut.http.poja.apache.<a href="io/micronaut/http/poja/apache/ApacheServletConfiguration.html" title="class in io.micronaut.http.poja.apache">ApacheServletConfiguration</a></dt>
+<dd>
+<div class="block">The default time to wait for an unread request body.</div>
+</dd>
 <dt><a href="io/micronaut/servlet/engine/ServletCompressionConfiguration.html#DEFAULT_ENABLED" class="member-name-link">DEFAULT_ENABLED</a> - Static variable in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/ServletCompressionConfiguration.html" title="class in io.micronaut.servlet.engine">ServletCompressionConfiguration</a></dt>
 <dd>
 <div class="block">Whether compression is enabled by default.</div>
@@ -456,6 +478,14 @@ anyway.</div>
 <dt><a href="io/micronaut/servlet/http/server/jdk/JdkHttpServerConfiguration.AccessLogger.html#DEFAULT_LOGGER_NAME" class="member-name-link">DEFAULT_LOGGER_NAME</a> - Static variable in class io.micronaut.servlet.http.server.jdk.<a href="io/micronaut/servlet/http/server/jdk/JdkHttpServerConfiguration.AccessLogger.html" title="class in io.micronaut.servlet.http.server.jdk">JdkHttpServerConfiguration.AccessLogger</a></dt>
 <dd>
 <div class="block">The default logger name.</div>
+</dd>
+<dt><a href="io/micronaut/http/poja/apache/ApacheServletConfiguration.html#DEFAULT_MAX_HEADER_COUNT" class="member-name-link">DEFAULT_MAX_HEADER_COUNT</a> - Static variable in record class io.micronaut.http.poja.apache.<a href="io/micronaut/http/poja/apache/ApacheServletConfiguration.html" title="class in io.micronaut.http.poja.apache">ApacheServletConfiguration</a></dt>
+<dd>
+<div class="block">The default maximum number of headers.</div>
+</dd>
+<dt><a href="io/micronaut/http/poja/apache/ApacheServletConfiguration.html#DEFAULT_MAX_LINE_LENGTH" class="member-name-link">DEFAULT_MAX_LINE_LENGTH</a> - Static variable in record class io.micronaut.http.poja.apache.<a href="io/micronaut/http/poja/apache/ApacheServletConfiguration.html" title="class in io.micronaut.http.poja.apache">ApacheServletConfiguration</a></dt>
+<dd>
+<div class="block">The default maximum line length.</div>
 </dd>
 <dt><a href="io/micronaut/servlet/websocket/ServletWebSocketConfiguration.html#DEFAULT_MAX_MESSAGE_SIZE" class="member-name-link">DEFAULT_MAX_MESSAGE_SIZE</a> - Static variable in class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/ServletWebSocketConfiguration.html" title="class in io.micronaut.servlet.websocket">ServletWebSocketConfiguration</a></dt>
 <dd>
@@ -555,6 +585,10 @@ no longer writable.</div>
 </dd>
 <dt><a href="io/micronaut/servlet/engine/DefaultMicronautServlet.html#destroy()" class="member-name-link">destroy()</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/DefaultMicronautServlet.html" title="class in io.micronaut.servlet.engine">DefaultMicronautServlet</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/http/poja/apache/ApacheServletConfiguration.html#discardTimeout()" class="member-name-link">discardTimeout()</a> - Method in record class io.micronaut.http.poja.apache.<a href="io/micronaut/http/poja/apache/ApacheServletConfiguration.html" title="class in io.micronaut.http.poja.apache">ApacheServletConfiguration</a></dt>
+<dd>
+<div class="block">Returns the value of the <a href="./io/micronaut/http/poja/apache/ApacheServletConfiguration.html#param-discardTimeout"><code>discardTimeout</code></a> record component.</div>
+</dd>
 <dt><a href="io/micronaut/servlet/http/server/DiscoveryServerStartedEventPublisher.html" class="type-name-link" title="class in io.micronaut.servlet.http.server">DiscoveryServerStartedEventPublisher</a> - Class in <a href="io/micronaut/servlet/http/server/package-summary.html">io.micronaut.servlet.http.server</a></dt>
 <dd>
 <div class="block">Publishes a <code>ServiceReadyEvent</code> when the server starts if there is an <code>ApplicationConfiguration.getName()</code> set.</div>
@@ -658,6 +692,10 @@ implements.</div>
 <div class="block">Indicates whether some other object is "equal to" this one.</div>
 </dd>
 <dt><a href="io/micronaut/servlet/http/ServletHttpHandler.html#exchange(io.micronaut.servlet.http.ServletExchange)" class="member-name-link">exchange(ServletExchange)</a> - Method in class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ServletHttpHandler.html" title="class in io.micronaut.servlet.http">ServletHttpHandler</a></dt>
+<dd>
+<div class="block">Handle the give native request and response and return the <a href="io/micronaut/servlet/http/ServletExchange.html" title="interface in io.micronaut.servlet.http"><code>ServletExchange</code></a> object.</div>
+</dd>
+<dt><a href="io/micronaut/servlet/engine/DefaultServletHttpHandler.html#exchange(jakarta.servlet.http.HttpServletRequest,jakarta.servlet.http.HttpServletResponse)" class="member-name-link">exchange(HttpServletRequest, HttpServletResponse)</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/DefaultServletHttpHandler.html" title="class in io.micronaut.servlet.engine">DefaultServletHttpHandler</a></dt>
 <dd>
 <div class="block">Handle the give native request and response and return the <a href="io/micronaut/servlet/http/ServletExchange.html" title="interface in io.micronaut.servlet.http"><code>ServletExchange</code></a> object.</div>
 </dd>
@@ -811,6 +849,8 @@ thread pool, to run the specified <a href="io/micronaut/servlet/http/ServletHttp
 <dd>
 <div class="block">For Jetty based servers, allow configuring the cache control header for static resource mappings (defaults to <a href="io/micronaut/servlet/http/server/ServletStaticResourceConfiguration.html#DEFAULT_CACHE_CONTROL_HEADER">"private,max-age=60"</a>).</div>
 </dd>
+<dt><a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html#getCertificate()" class="member-name-link">getCertificate()</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html" title="class in io.micronaut.servlet.engine">DefaultServletHttpRequest</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html#getCharacterEncoding()" class="member-name-link">getCharacterEncoding()</a> - Method in class io.micronaut.servlet.engine.<a href="io/micronaut/servlet/engine/DefaultServletHttpRequest.html" title="class in io.micronaut.servlet.engine">DefaultServletHttpRequest</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/websocket/ServletWebSocketConfiguration.html#getCompression()" class="member-name-link">getCompression()</a> - Method in class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/ServletWebSocketConfiguration.html" title="class in io.micronaut.servlet.websocket">ServletWebSocketConfiguration</a></dt>
@@ -1155,6 +1195,8 @@ thread pool, to run the specified <a href="io/micronaut/servlet/http/ServletHttp
 &nbsp;</dd>
 <dt><a href="io/micronaut/servlet/http/server/ServletServerFactory.html#getStaticResourceConfigurations()" class="member-name-link">getStaticResourceConfigurations()</a> - Method in class io.micronaut.servlet.http.server.<a href="io/micronaut/servlet/http/server/ServletServerFactory.html" title="class in io.micronaut.servlet.http.server">ServletServerFactory</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/http/poja/apache/exception/ApacheServletBadRequestException.html#getStatus()" class="member-name-link">getStatus()</a> - Method in exception class io.micronaut.http.poja.apache.exception.<a href="io/micronaut/http/poja/apache/exception/ApacheServletBadRequestException.html" title="class in io.micronaut.http.poja.apache.exception">ApacheServletBadRequestException</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/websocket/ServletWebSocketSession.html#getSubprotocol()" class="member-name-link">getSubprotocol()</a> - Method in class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/ServletWebSocketSession.html" title="class in io.micronaut.servlet.websocket">ServletWebSocketSession</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/annotation/processor/JakartaWebSocketVisitor.html#getSupportedAnnotationNames()" class="member-name-link">getSupportedAnnotationNames()</a> - Method in class io.micronaut.servlet.annotation.processor.<a href="io/micronaut/servlet/annotation/processor/JakartaWebSocketVisitor.html" title="class in io.micronaut.servlet.annotation.processor">JakartaWebSocketVisitor</a></dt>
@@ -1301,6 +1343,11 @@ thread pool, to run the specified <a href="io/micronaut/servlet/http/ServletHttp
 <dt><a href="io/micronaut/servlet/websocket/JakartaEndpointComponents.html#instantiate(java.lang.Class)" class="member-name-link">instantiate(Class)</a> - Method in class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/JakartaEndpointComponents.html" title="class in io.micronaut.servlet.websocket">JakartaEndpointComponents</a></dt>
 <dd>
 <div class="block">Creates an instance of the component.</div>
+</dd>
+<dt><a href="io/micronaut/servlet/engine/InvalidRequestUriException.html" class="type-name-link" title="class in io.micronaut.servlet.engine">InvalidRequestUriException</a> - Exception Class in <a href="io/micronaut/servlet/engine/package-summary.html">io.micronaut.servlet.engine</a></dt>
+<dd>
+<div class="block">Thrown when the request URI and query string the container passed on do not form a valid URI, for example because
+of a malformed escape sequence in the query string.</div>
 </dd>
 <dt><a href="io/micronaut/http/poja/package-summary.html">io.micronaut.http.poja</a> - package io.micronaut.http.poja</dt>
 <dd>
@@ -1733,6 +1780,14 @@ implementation.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html#maxCapacity()" class="member-name-link">maxCapacity()</a> - Method in class io.micronaut.servlet.http.<a href="io/micronaut/servlet/http/ByteArrayByteBuffer.html" title="class in io.micronaut.servlet.http">ByteArrayByteBuffer</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/http/poja/apache/ApacheServletConfiguration.html#maxHeaderCount()" class="member-name-link">maxHeaderCount()</a> - Method in record class io.micronaut.http.poja.apache.<a href="io/micronaut/http/poja/apache/ApacheServletConfiguration.html" title="class in io.micronaut.http.poja.apache">ApacheServletConfiguration</a></dt>
+<dd>
+<div class="block">Returns the value of the <a href="./io/micronaut/http/poja/apache/ApacheServletConfiguration.html#param-maxHeaderCount"><code>maxHeaderCount</code></a> record component.</div>
+</dd>
+<dt><a href="io/micronaut/http/poja/apache/ApacheServletConfiguration.html#maxLineLength()" class="member-name-link">maxLineLength()</a> - Method in record class io.micronaut.http.poja.apache.<a href="io/micronaut/http/poja/apache/ApacheServletConfiguration.html" title="class in io.micronaut.http.poja.apache">ApacheServletConfiguration</a></dt>
+<dd>
+<div class="block">Returns the value of the <a href="./io/micronaut/http/poja/apache/ApacheServletConfiguration.html#param-maxLineLength"><code>maxLineLength</code></a> record component.</div>
+</dd>
 <dt><a href="io/micronaut/http/poja/PojaHttpRequest.html#messageBodyHandlerRegistry" class="member-name-link">messageBodyHandlerRegistry</a> - Variable in class io.micronaut.http.poja.<a href="io/micronaut/http/poja/PojaHttpRequest.html" title="class in io.micronaut.http.poja">PojaHttpRequest</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/servlet/websocket/ServletWebSocketSupport.html#messageBodyHandlerRegistry()" class="member-name-link">messageBodyHandlerRegistry()</a> - Method in class io.micronaut.servlet.websocket.<a href="io/micronaut/servlet/websocket/ServletWebSocketSupport.html" title="class in io.micronaut.servlet.websocket">ServletWebSocketSupport</a></dt>
@@ -2216,6 +2271,8 @@ class's generic signature.</div>
 <dd>
 <div class="block">Do job in the asynchronous way.</div>
 </dd>
+<dt><a href="io/micronaut/http/poja/apache/ApacheServerlessApplication.html#runIndefinitely(io.micronaut.servlet.http.ServletHttpHandler,java.io.InputStream,java.io.OutputStream)" class="member-name-link">runIndefinitely(ServletHttpHandler, InputStream, OutputStream)</a> - Method in class io.micronaut.http.poja.apache.<a href="io/micronaut/http/poja/apache/ApacheServerlessApplication.html" title="class in io.micronaut.http.poja.apache">ApacheServerlessApplication</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/http/poja/PojaHttpServerlessApplication.html#runIndefinitely(io.micronaut.servlet.http.ServletHttpHandler,java.io.InputStream,java.io.OutputStream)" class="member-name-link">runIndefinitely(ServletHttpHandler, InputStream, OutputStream)</a> - Method in class io.micronaut.http.poja.<a href="io/micronaut/http/poja/PojaHttpServerlessApplication.html" title="class in io.micronaut.http.poja">PojaHttpServerlessApplication</a></dt>
 <dd>
 <div class="block">A method to start the application in a loop.</div>
